@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研究方法工具箱 3.0 (Puter.js 驅動) - 台灣教育處方籤</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #3b82f6, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1), padding 0.5s ease-in-out;
+            padding: 0 1.5rem;
+        }
+        .accordion-content.open {
+            max-height: 3000px; /* Increased for more content */
+            padding: 1rem 1.5rem 1.5rem;
+        }
+        .accordion-icon {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .accordion-header.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; line-height: 1.2; }
+        .tag-quant { background-color: #e0f2fe; color: #0369a1; }
+        .tag-qual { background-color: #dcfce7; color: #15803d; }
+        .tag-mixed { background-color: #f3e8ff; color: #6b21a8; }
+        .tool-link { transition: all 0.2s ease-in-out; }
+        .tool-link:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .prose h4 { font-weight: 700; margin-top: 1.5em; margin-bottom: 0.75em; display: flex; align-items: center; }
+        .prose h4 .lucide { margin-right: 0.5rem; color: #3b82f6; }
+        .search-input:focus { outline: none; box-shadow: 0 0 0 2px #3b82f6; }
+
+        /* Gemini/Puter.js Feature Styles */
+        .gemini-btn {
+            background: linear-gradient(45deg, #3b82f6, #14b8a6);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .gemini-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+        }
+        .idea-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #E2E8F0; /* Lighter grey for background */
+            border-bottom-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2">
+                <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7h-2a5 5 0 0 1-5 5v2z"/><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 12a7 7 0 0 0-7-7V3a9 9 0 0 1 9 9h-2z"/><path d="M3 12a7 7 0 0 0 7 7v2a9 9 0 0 1-9-9H3z"/><path d="M12 5a7 7 0 0 0-7 7H3a9 9 0 0 1 9-9v2z"/></svg>
+                <span class="text-xl font-bold text-slate-800">台灣教育處方籤</span>
+            </a>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="font-semibold text-blue-600 border-b-2 border-blue-600 pb-1">自主學習啟航站</a>
+                <a href="#" class="text-slate-600 hover:text-blue-600 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-slate-600 hover:text-blue-600 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-slate-600 hover:text-blue-600 transition duration-300">進階資源探索區</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-md hover:bg-slate-100">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-4 pt-2 pb-4 space-y-2">
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-600 bg-blue-50">自主學習啟航站</a>
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800">學習歷程煉金室</a>
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800">未來生涯GPS</a>
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800">進階資源探索區</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <section class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                研究方法<span class="gradient-text">智慧工具箱 3.0</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
+                從靈感發想到成果產出，您的 AI 研究夥伴在此。像科學家一樣思考，像設計師一樣創造。
+            </p>
+        </section>
+
+        <section id="idea-generator" class="max-w-4xl mx-auto mb-12 p-6 bg-white rounded-2xl shadow-lg border border-slate-200/80">
+            <div class="flex items-center mb-4">
+                <i data-lucide="brain-circuit" class="w-8 h-8 text-blue-600 mr-3"></i>
+                <h2 class="text-2xl font-bold text-slate-800">✨ 研究靈感產生器</h2>
+            </div>
+            <p class="text-slate-600 mb-4">卡關了嗎？輸入您感興趣的領域，讓 AI 幫您發想可行的研究題目！</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="idea-input" placeholder="例如：環境保護、心理健康、手機遊戲..." class="flex-grow pl-4 pr-4 py-3 rounded-full bg-slate-50 border border-slate-300 search-input transition-shadow duration-300">
+                <button id="generate-idea-btn" class="gemini-btn font-bold py-3 px-6 rounded-full flex items-center justify-center space-x-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span>產生靈感</span>
+                </button>
+            </div>
+            <div id="idea-output" class="mt-6">
+                </div>
+        </section>
+
+        <section class="max-w-4xl mx-auto mb-8">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="或是在下方搜尋特定的研究方法..." class="w-full pl-12 pr-4 py-3 rounded-full bg-white shadow-md border border-slate-200 search-input transition-shadow duration-300">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </section>
+
+        <section class="max-w-4xl mx-auto">
+            <div id="methodology-accordion" class="space-y-4">
+                </div>
+             <p id="no-results" class="text-center text-slate-500 py-8 hidden">找不到符合條件的研究方法喔！</p>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 mt-20">
+        <div class="container mx-auto px-6 py-10 text-center">
+            <p>&copy; <span id="footer-year"></span> 台灣教育處方籤 - 為台灣學子打造最強大的學習後盾。</p>
+        </div>
+    </footer>
+    
+    <div id="input-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-11/12 max-w-md">
+            <h3 id="modal-title" class="text-lg font-bold mb-4">需要您的協助</h3>
+            <p id="modal-description" class="text-slate-600 mb-4">請輸入您的研究主題，AI 才能為您量身打造建議。</p>
+            <input type="text" id="modal-input" class="w-full p-2 border rounded-md mb-4" placeholder="例如：高中生的睡眠品質與學業壓力">
+            <div class="flex justify-end space-x-2">
+                <button id="modal-cancel" class="px-4 py-2 bg-slate-200 rounded-md">取消</button>
+                <button id="modal-submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">送出</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA: Research Methods (with Gemini feature placeholders) ---
+            const methods = [
+                {
+                    id: 'literature-review',
+                    title: '文獻探討法',
+                    category: '基礎',
+                    type: ['tag-qual'],
+                    keywords: ['文獻', '探討', '回顧', '資料', 'literature', 'review'],
+                    icon: 'book-open-check',
+                    content: `
+                        <div class="prose max-w-none prose-slate">
+                            <h4><i data-lucide="help-circle"></i>這是什麼？</h4>
+                            <p>文獻探討是所有研究的起點。簡單來說，就是有系統地去查找、閱讀、並整理跟你的主題相關的既有研究或資料，站在巨人的肩膀上，了解前人已經發現了什麼，還有哪些問題值得繼續探究。</p>
+                            <h4><i data-lucide="lightbulb"></i>範例情境</h4>
+                            <p>你想研究「高中生使用社群媒體與學習焦慮的關係」。你需要先透過文獻探討，了解國內外學者對於社群媒體使用、學習焦慮的定義，以及兩者之間可能存在的關聯性研究。</p>
+                            <h4><i data-lucide="list-checks"></i>執行SOP</h4>
+                            <ol>
+                                <li><strong>確立主題與關鍵字：</strong> 將研究主題拆解成核心關鍵字 (如: 社群媒體, 學習焦慮, 高中生)。</li>
+                                <li><strong>選擇搜尋平台：</strong> 根據需求選擇學術或公開資料庫。</li>
+                                <li><strong>篩選與速讀：</strong> 瀏覽標題與摘要，判斷關聯性，快速找出核心文獻。</li>
+                                <li><strong>精讀與筆記：</strong> 詳細閱讀高關聯度文章，使用筆記工具記錄重點、研究方法與結論。</li>
+                                <li><strong>綜合與評述：</strong> 整理所有資料，用自己的話寫出該領域的發展脈絡、主要觀點與待解決的問題，並提出你的切入點。</li>
+                            </ol>
+                            <h4><i data-lucide="alert-triangle"></i>注意事項</h4>
+                            <p>避免只是「複製貼上」和「資料堆砌」！文獻探討的精髓在於「對話」與「評述」，要能比較不同文獻的觀點，並提出自己的洞見。</p>
+                            <h4><i data-lucide="wrench"></i>推薦工具</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                                <a href="https://scholar.google.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Google Scholar</strong><p class="text-sm text-slate-500">最普及的學術搜尋引擎。</p></a>
+                                <a href="https://ndltd.ncl.edu.tw/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">臺灣博碩士論文網</strong><p class="text-sm text-slate-500">尋找台灣學位論文必備。</p></a>
+                                <a href="https://www.airitilibrary.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">華藝線上圖書館</strong><p class="text-sm text-slate-500">收錄大量中文學術期刊。</p></a>
+                            </div>
+                        </div>`
+                },
+                {
+                    id: 'survey-method',
+                    title: '問卷調查法',
+                    category: '量化',
+                    type: ['tag-quant'],
+                    keywords: ['問卷', '調查', '量化', '統計', 'survey', 'questionnaire'],
+                    icon: 'clipboard-list',
+                    content: `
+                        <div class="prose max-w-none prose-slate">
+                            <h4><i data-lucide="help-circle"></i>這是什麼？</h4>
+                            <p>透過設計一系列標準化的問題，向特定群體（樣本）進行調查，以蒐集大量的量化數據，來了解該群體的普遍狀況、態度或行為，並進行統計分析。</p>
+                            <h4><i data-lucide="lightbulb"></i>範例情境</h4>
+                            <p>你想了解「本校學生對於線上學習平台的滿意度」。你可以設計一份問卷，包含平台易用性、課程內容品質、互動性等面向的題目，對全校或特定年級的學生進行普查。</p>
+                            <h4><i data-lucide="list-checks"></i>執行SOP</h4>
+                            <ol>
+                                <li><strong>定義研究目標與變項：</strong> 清楚定義你想測量的概念 (如: 滿意度)，並將其操作化為具體題目。</li>
+                                <li><strong>設計問卷初稿：</strong> 題目用詞需清晰、中立、無引導性。多使用「李克特量表」(如: 非常同意到非常不同意)。</li>
+                                <li><strong>專家與前測：</strong> 邀請老師或同學幫忙檢視問卷，並找少量目標對象試填，確保題目語意清晰、流程順暢。</li>
+                                <li><strong>發放與回收：</strong> 決定發放管道 (線上/紙本) 與抽樣方式，並努力提高有效回收率。</li>
+                                <li><strong>數據分析與視覺化：</strong> 使用統計軟體(如Excel, SPSS)或線上工具分析數據，並製作成清晰的圖表 (如長條圖、圓餅圖)。</li>
+                            </ol>
+                            <h4><i data-lucide="alert-triangle"></i>注意事項</h4>
+                            <p>問卷的「樣本代表性」至關重要。如果你的樣本有偏誤 (例如只問了功課好的同學)，那麼研究結論就無法推論到整個群體。題目的信度與效度也是問卷品質的關鍵。</p>
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <h5 class="font-bold flex items-center"><i data-lucide="brain-circuit" class="w-5 h-5 mr-2 text-blue-600"></i>✨ AI 問卷小幫手</h5>
+                                <p class="text-sm text-slate-600 mt-1 mb-3">輸入您的研究主題，讓 AI 幫您草擬問卷題目！</p>
+                                <button class="gemini-assistant-btn w-full text-sm font-bold py-2 px-4 rounded-full flex items-center justify-center space-x-2 gemini-btn" data-type="survey">
+                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                    <span>產生問卷題目建議</span>
+                                </button>
+                                <div class="gemini-output mt-4 text-sm"></div>
+                            </div>
+                            <h4><i data-lucide="wrench"></i>推薦工具</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                                <a href="https://www.google.com/forms/about/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Google Forms</strong><p class="text-sm text-slate-500">免費、易用，適合入門。</p></a>
+                                <a href="https://www.surveycake.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">SurveyCake</strong><p class="text-sm text-slate-500">介面美觀，題型多元。</p></a>
+                                <a href="https://www.typeform.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Typeform</strong><p class="text-sm text-slate-500">互動式體驗，回收率高。</p></a>
+                            </div>
+                        </div>`
+                },
+                {
+                    id: 'interview-method',
+                    title: '訪談法',
+                    category: '質性',
+                    type: ['tag-qual'],
+                    keywords: ['訪談', '質性', '深度', 'interview'],
+                    icon: 'users',
+                    content: `
+                        <div class="prose max-w-none prose-slate">
+                            <h4><i data-lucide="help-circle"></i>這是什麼？</h4>
+                            <p>透過與受訪者進行一對一或一對多的深入對話，來獲取質性的、有故事性的、深層的資訊。訪談可以是結構化的（照稿問）、半結構化的（有大綱但可追問）或非結構化的（開放式聊天）。高中生專題建議從「半結構化訪談」入手。</p>
+                            <h4><i data-lucide="lightbulb"></i>範例情境</h4>
+                            <p>你想探討「校園流浪貓議題中，不同身份關係人（學生、老師、行政人員）的觀點與難處」。問卷很難呈現複雜的立場，此時深度訪談就是最好的方法。</p>
+                            <h4><i data-lucide="list-checks"></i>執行SOP</h4>
+                            <ol>
+                                <li><strong>確定訪談對象與目的：</strong> 根據研究問題，找到最能提供關鍵資訊的人，並思考你想從他身上得到什麼。</li>
+                                <li><strong>擬定訪綱：</strong> 設計幾個核心的開放式問題作為主軸，並準備一些可追問的備用問題。</li>
+                                <li><strong>邀約與準備：</strong> 正式邀約對方，說明研究目的與保密原則，並準備好錄音與筆記工具。</li>
+                                <li><strong>進行訪談：</strong> 營造輕鬆信任的氛圍，專心傾聽，適時追問，避免價值判斷。</li>
+                                <li><strong>整理與分析：</strong> 將錄音轉成逐字稿，反覆閱讀，並從中進行編碼(Coding)，找出重複出現的主題(Theme)與洞見。</li>
+                            </ol>
+                            <h4><i data-lucide="alert-triangle"></i>注意事項</h4>
+                            <p>訪談前務必徵得對方「知情同意」，並告知錄音用途。訪談者的角色是「傾聽者」而非「辯論者」。有時最精彩的內容，都來自於不經意的追問與沉默的片刻。</p>
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <h5 class="font-bold flex items-center"><i data-lucide="brain-circuit" class="w-5 h-5 mr-2 text-blue-600"></i>✨ AI 訪綱小幫手</h5>
+                                <p class="text-sm text-slate-600 mt-1 mb-3">輸入您的研究主題，讓 AI 幫您草擬訪談大綱！</p>
+                                <button class="gemini-assistant-btn w-full text-sm font-bold py-2 px-4 rounded-full flex items-center justify-center space-x-2 gemini-btn" data-type="interview">
+                                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                    <span>產生訪綱建議</span>
+                                </button>
+                                <div class="gemini-output mt-4 text-sm"></div>
+                            </div>
+                            <h4><i data-lucide="wrench"></i>推薦工具</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                                <a href="https://otter.ai/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Otter.ai</strong><p class="text-sm text-slate-500">AI語音轉文字，節省時間。</p></a>
+                                <a href="https://goodnotes.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">GoodNotes/Notability</strong><p class="text-sm text-slate-500">訪談筆記與錄音同步。</p></a>
+                                <a href="https://miro.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Miro/FigJam</strong><p class="text-sm text-slate-500">線上白板，分析逐字稿。</p></a>
+                            </div>
+                        </div>`
+                },
+                {
+                    id: 'observation-method',
+                    title: '觀察法',
+                    category: '質性',
+                    type: ['tag-qual'],
+                    keywords: ['觀察', '質性', '田野', 'observation', 'fieldwork'],
+                    icon: 'binoculars',
+                    content: `
+                        <div class="prose max-w-none prose-slate">
+                            <h4><i data-lucide="help-circle"></i>這是什麼？</h4>
+                            <p>研究者親身進入一個場域，直接觀察研究對象在自然情境下的行為、互動與環境。觀察可以是「參與式觀察」（親身投入活動）或「非參與式觀察」（作為旁觀者）。</p>
+                            <h4><i data-lucide="lightbulb"></i>範例情境</h4>
+                            <p>你想研究「下課時間，學校籃球場的使用情況與學生的互動模式」。你可以固定時間到籃球場邊，記錄下誰在使用、他們在做什麼、如何互動、是否有衝突等。</p>
+                            <h4><i data-lucide="list-checks"></i>執行SOP</h4>
+                            <ol>
+                                <li><strong>選定場域與對象：</strong> 明確你要觀察的時間、地點、人物。</li>
+                                <li><strong>設計觀察紀錄表：</strong> 預先設計好要記錄的項目，例如：時間、地點、人物特徵、行為描述、對話片段、你的反思。</li>
+                                <li><strong>進入場域進行觀察：</strong> 保持低調，盡量不干擾現場。詳細、客觀地記錄下你看到和聽到的一切。</li>
+                                <li><strong>撰寫田野筆記：</strong> 觀察結束後，盡快將潦草的紀錄擴寫成詳細的「田野筆記」，並加入自己的省思。</li>
+                                <li><strong>分析與詮釋：</strong> 反覆閱讀田野筆記，尋找行為模式、特殊事件，並試圖理解其背後的意義。</li>
+                            </ol>
+                            <h4><i data-lucide="alert-triangle"></i>注意事項</h4>
+                            <p>務必區分「事實描述」與「個人詮釋」。例如，「他皺了眉頭」是事實，「他看起來很生氣」是詮釋。初期應專注於前者。研究倫理很重要，若涉及敏感議題或私人空間，需特別謹慎。</p>
+                            <h4><i data-lucide="wrench"></i>推薦工具</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                                <a href="#" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">筆記本與筆</strong><p class="text-sm text-slate-500">最可靠、最不具侵入性的工具。</p></a>
+                                <a href="https://evernote.com/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Evernote</strong><p class="text-sm text-slate-500">方便拍照、錄音與文字整合。</p></a>
+                                <a href="https://www.notion.so/" target="_blank" class="tool-link block p-3 bg-white border rounded-lg hover:border-blue-400"><strong class="text-blue-600">Notion</strong><p class="text-sm text-slate-500">建立結構化的觀察資料庫。</p></a>
+                            </div>
+                        </div>`
+                }
+            ];
+
+            // --- DOM Elements ---
+            const accordionContainer = document.getElementById('methodology-accordion');
+            const searchInput = document.getElementById('search-input');
+            const noResultsMsg = document.getElementById('no-results');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const footerYear = document.getElementById('footer-year');
+            const ideaInput = document.getElementById('idea-input');
+            const generateIdeaBtn = document.getElementById('generate-idea-btn');
+            const ideaOutput = document.getElementById('idea-output');
+            
+            // Modal elements
+            const inputModal = document.getElementById('input-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+            const modalInput = document.getElementById('modal-input');
+            const modalCancel = document.getElementById('modal-cancel');
+            const modalSubmit = document.getElementById('modal-submit');
+
+
+            // --- ✨ 步驟 2: 移除舊的 callGemini 函式，因為 Puter.js 會處理一切 ---
+            // (舊的 callGemini 函式已被刪除)
+
+
+            // --- Functions ---
+            const showLoader = (container) => {
+                container.innerHTML = '<div class="flex justify-center items-center p-4"><div class="loader"></div></div>';
+            };
+            
+            // ✨ 步驟 3.1: 修改函式以使用 Puter.js
+            const handleGenerateIdeas = async () => {
+                const topic = ideaInput.value.trim();
+                if (!topic) {
+                    alert('請先輸入您感興趣的領域！');
+                    return;
+                }
+                
+                showLoader(ideaOutput);
+                generateIdeaBtn.disabled = true;
+                
+                // 為了讓 Puter.js 能穩定回傳 JSON，我們在提示中明確要求格式
+                const prompt = `你是一位充滿創意的指導老師，專門協助台灣高中生發想自主學習專題。請根據以下主題：「${topic}」，生成 4 個具體、有趣、且適合高中生能力範圍的研究題目。
+                請**嚴格地**只回傳一個 JSON 格式的陣列，不要有任何其他文字或說明。
+                陣列中每個物件應包含兩個鍵： "question" (研究題目) 和 "method" (建議的研究方法，例如：問卷調查法、訪談法、觀察法)。
+                範例格式:
+                [
+                    {"question": "探索手搖飲文化對高中生消費習慣的影響", "method": "問卷調查法"},
+                    {"question": "分析校園午餐的營養均衡問題", "method": "觀察法與內容分析法"}
+                ]`;
+
+                try {
+                    // 使用 puter.ai.chat 呼叫 AI
+                    const response = await puter.ai.chat(prompt, {
+                        model: 'google/gemini-2.0-flash-lite-001' // 選擇一個快速且免費的模型
+                    });
+
+                    // 嘗試解析 AI 回傳的內容
+                    const ideas = JSON.parse(response.message.content);
+                    
+                    ideaOutput.innerHTML = '<h3 class="text-xl font-bold mb-4 text-slate-700">這是一些靈感，供您參考：</h3>';
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+                    
+                    ideas.forEach((idea, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'idea-card';
+                        card.style.animationDelay = `${index * 100}ms`;
+                        card.innerHTML = `
+                            <p class="font-bold text-blue-700">${idea.question}</p>
+                            <p class="text-sm text-slate-500 mt-2"><strong>建議方法：</strong>${idea.method}</p>
+                        `;
+                        grid.appendChild(card);
+                    });
+                    ideaOutput.appendChild(grid);
+                } catch (error) {
+                    console.error('Error calling Puter.js or parsing JSON:', error);
+                    ideaOutput.innerHTML = `<p class="text-red-500 text-center">糟糕！靈感產生器好像罷工了，請稍後再試一次。可能是 AI 回應格式錯誤或網路問題。</p>`;
+                } finally {
+                    generateIdeaBtn.disabled = false;
+                }
+            };
+            
+            // ✨ 步驟 3.2: 修改函式以使用 Puter.js (串流模式)
+            const handleGenerateAssistantContent = (e) => {
+                const button = e.target.closest('.gemini-assistant-btn');
+                if (!button) return;
+
+                const type = button.dataset.type;
+                const outputContainer = button.nextElementSibling;
+                
+                const showModal = (resolve) => {
+                    modalInput.value = '';
+                    inputModal.style.display = 'flex';
+                    
+                    const submitHandler = () => {
+                        const topic = modalInput.value.trim();
+                        if (topic) {
+                            inputModal.style.display = 'none';
+                            cleanup();
+                            resolve(topic);
+                        } else {
+                            alert('請輸入您的研究主題！');
+                        }
+                    };
+                    
+                    const cancelHandler = () => {
+                        inputModal.style.display = 'none';
+                        cleanup();
+                        resolve(null);
+                    };
+
+                    const cleanup = () => {
+                        modalSubmit.removeEventListener('click', submitHandler);
+                        modalCancel.removeEventListener('click', cancelHandler);
+                    };
+
+                    modalSubmit.addEventListener('click', submitHandler);
+                    modalCancel.addEventListener('click', cancelHandler);
+                };
+                
+                new Promise(showModal).then(async (topic) => {
+                    if (!topic) return;
+
+                    showLoader(outputContainer);
+                    button.disabled = true;
+                    
+                    let prompt = '';
+                    if (type === 'interview') {
+                        prompt = `你是一位經驗豐富的研究員。一位台灣高中生正在為他們關於「${topic}」的專題研究準備訪談。請為他們草擬一份半結構式的訪談大綱，包含 5-7 個核心的開放式問題，能幫助他們深入挖掘受訪者的想法與經驗。請用 Markdown 格式化回應。`;
+                    } else if (type === 'survey') {
+                        prompt = `你是一位問卷設計專家。一位台灣高中生正在為他們關於「${topic}」的專題研究設計問卷。請為他們建議 3-4 個選擇題（可使用李克特量表）和 1-2 個開放式問題，來有效測量相關的變項。請用 Markdown 格式化回應。`;
+                    }
+
+                    try {
+                        // 使用 puter.ai.chat 並啟用流式輸出 (stream: true)
+                        const responseStream = await puter.ai.chat(prompt, {
+                            model: 'google/gemini-2.0-flash-lite-001',
+                            stream: true
+                        });
+                        
+                        // 清空載入動畫，準備接收串流內容
+                        outputContainer.innerHTML = '';
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'p-3 bg-slate-100 rounded-md';
+                        outputContainer.appendChild(responseDiv);
+                        
+                        // 處理流式回應
+                        for await (const part of responseStream) {
+                            if (part?.text) {
+                                // 將收到的文字片段轉換格式後附加到 Div 中
+                                responseDiv.innerHTML += part.text
+                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                    .replace(/\n/g, '<br>');
+                            }
+                        }
+
+                    } catch (error) {
+                        console.error('Error calling Puter.js stream:', error);
+                        outputContainer.innerHTML = `<p class="text-red-500 text-center">糟糕！AI 小幫手暫時無法回應，請稍後再試。</p>`;
+                    } finally {
+                        button.disabled = false;
+                    }
+                });
+            };
+
+            const renderMethods = (filter = '') => {
+                accordionContainer.innerHTML = '';
+                const lowerCaseFilter = filter.toLowerCase();
+
+                const filteredMethods = methods.filter(method => 
+                    method.title.toLowerCase().includes(lowerCaseFilter) ||
+                    method.keywords.some(kw => kw.toLowerCase().includes(lowerCaseFilter))
+                );
+
+                if (filteredMethods.length === 0) {
+                    noResultsMsg.classList.remove('hidden');
+                } else {
+                    noResultsMsg.classList.add('hidden');
+                }
+
+                filteredMethods.forEach(method => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-white rounded-xl shadow-sm border border-slate-200/80 transition-shadow duration-300 hover:shadow-lg';
+                    item.dataset.id = method.id;
+
+                    const tagsHtml = method.type.map(tagClass => {
+                        let tagName = '';
+                        if (tagClass === 'tag-quant') tagName = '量化';
+                        if (tagClass === 'tag-qual') tagName = '質性';
+                        if (tagClass === 'tag-mixed') tagName = '混合';
+                        return `<span class="tag ${tagClass}">${tagName}</span>`;
+                    }).join(' ');
+
+                    item.innerHTML = `
+                        <div class="accordion-header flex justify-between items-center p-5 cursor-pointer">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="${method.icon}" class="w-6 h-6 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">${method.title}</h3>
+                                    <div class="mt-1 flex items-center gap-2">${tagsHtml}</div>
+                                </div>
+                            </div>
+                            <div class="accordion-icon text-slate-500">
+                                <i data-lucide="chevron-down" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                        <div class="accordion-content">
+                            ${method.content}
+                        </div>
+                    `;
+                    accordionContainer.appendChild(item);
+                });
+                
+                lucide.createIcons();
+            };
+            
+            const handleAccordionClick = (e) => {
+                const header = e.target.closest('.accordion-header');
+                if (!header) return;
+
+                const content = header.nextElementSibling;
+                const isOpen = content.classList.contains('open');
+
+                document.querySelectorAll('.accordion-content.open').forEach(openContent => {
+                    if (openContent !== content) {
+                        openContent.classList.remove('open');
+                        openContent.previousElementSibling.classList.remove('open');
+                    }
+                });
+
+                header.classList.toggle('open', !isOpen);
+                content.classList.toggle('open', !isOpen);
+            };
+
+            // --- Initial Setup & Event Listeners ---
+            footerYear.textContent = new Date().getFullYear();
+            renderMethods();
+            
+            generateIdeaBtn.addEventListener('click', handleGenerateIdeas);
+            ideaInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleGenerateIdeas();
+            });
+            
+            accordionContainer.addEventListener('click', (e) => {
+                handleAccordionClick(e);
+                handleGenerateAssistantContent(e);
+            });
+            
+            searchInput.addEventListener('input', (e) => renderMethods(e.target.value));
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        });
+    </script>
+</body>
+</html>
