@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主題書單推薦 - 台灣教育處方籤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .book-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .theme-nav-link {
+             scroll-margin-top: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-purple-600 font-semibold transition duration-300">進階資源探索區</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                主題書單<span class="gradient-text">推薦</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                閱讀經典，是與偉大心靈對話的最佳方式。我們為你精選了各領域的必讀書單。
+            </p>
+        </section>
+
+        <!-- Navigation for themes -->
+        <nav class="sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4 mb-12">
+            <div id="theme-navigation" class="flex flex-wrap justify-center gap-3 md:gap-4 bg-white p-3 rounded-full shadow-sm">
+                <!-- Theme navigation links will be injected here -->
+            </div>
+        </nav>
+
+        <!-- Reading Lists Section -->
+        <section id="reading-lists-container" class="space-y-20">
+            <!-- Reading lists will be injected here -->
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
+        </div>
+    </footer>
+
+    <script>
+        const readingLists = [
+            {
+                id: 'social-insight',
+                theme: '社會洞察力',
+                description: '想理解我們身處的社會是如何運作的？這幾本書將為你提供剖析社會的銳利眼光。',
+                books: [
+                    { title: '人類大歷史', author: 'Yuval Noah Harari', recommendation: '從宏觀視角俯瞰人類發展，建立你的歷史感與大局觀。', cover_url: 'https://images.pexels.com/photos/1319854/pexels-photo-1319854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['歷史', '社會學'] },
+                    { title: '快思慢想', author: 'Daniel Kahneman', recommendation: '諾貝爾獎得主帶你認識大腦的兩種思考系統，看穿人類的非理性決策。', cover_url: 'https://images.pexels.com/photos/3747488/pexels-photo-3747488.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['心理學', '經濟學'] },
+                    { title: '槍炮、病菌與鋼鐵', author: 'Jared Diamond', recommendation: '解答「為何是歐洲人征服世界？」這個大哉問，理解地理環境如何塑造人類文明。', cover_url: 'https://images.pexels.com/photos/2228580/pexels-photo-2228580.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['人類學', '地理'] },
+                    { title: '正義：一場思辨之旅', author: 'Michael J. Sandel', recommendation: '哈佛大學最受歡迎的公開課，透過一個個思想實驗，帶你探討何謂「正義」。', cover_url: 'https://images.pexels.com/photos/261763/pexels-photo-261763.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['哲學', '思辨'] }
+                ]
+            },
+            {
+                id: 'tech-future',
+                theme: 'AI 與未來科技',
+                description: '人工智慧將如何改變我們的世界？這份書單是進入 AI 領域，思考科技與人類未來的最佳起點。',
+                books: [
+                    { title: 'AI新世界', author: '李開復', recommendation: '全面介紹 AI 的發展現況與未來趨勢，以及它將對各行各業帶來的衝擊。', cover_url: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['AI', '趨勢'] },
+                    { title: '深度學習', author: 'Ian Goodfellow et al.', recommendation: 'AI領域的經典教科書，內容硬核，適合想深入了解技術原理的你。俗稱「花書」。', cover_url: 'https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['教科書', '技術'] },
+                    { title: '人類plus：AI衝擊與我們的未來', author: 'Max Tegmark', recommendation: '從物理學家的角度，探討生命、智慧與宇宙的終極問題，以及AI在其中的角色。', cover_url: 'https://images.pexels.com/photos/1612960/pexels-photo-1612960.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['哲學', '未來學'] },
+                    { title: '演算法的力量', author: 'Brian Christian et al.', recommendation: '用生活化的例子解釋電腦科學中的核心演算法，讓你學會像電腦科學家一樣思考。', cover_url: 'https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['演算法', '科普'] }
+                ]
+            },
+            {
+                id: 'business-thinking',
+                theme: '商業思維入門',
+                description: '想了解商業世界是如何運作的嗎？這幾本書將為你建立基本的商業認知與策略思維。',
+                books: [
+                    { title: '從0到1', author: 'Peter Thiel', recommendation: '矽谷創投教父教你如何思考「創新」，從創造獨佔市場，而非陷入紅海競爭。', cover_url: 'https://images.pexels.com/photos/210600/pexels-photo-210600.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['創業', '策略'] },
+                    { title: '原則：生活和工作', author: 'Ray Dalio', recommendation: '全球最大避險基金創辦人分享他一生奉行的處事原則，學習如何系統性地做出好決策。', cover_url: 'https://images.pexels.com/photos/7567543/pexels-photo-7567543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['決策', '人生哲學'] },
+                    { title: '精實創業', author: 'Eric Ries', recommendation: '學習如何快速驗證你的點子，以最小成本開發產品，是現代網路創業的必讀聖經。', cover_url: 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['創業', '方法論'] },
+                    { title: '行銷4.0', author: 'Philip Kotler', recommendation: '行銷學之父帶你了解在數位時代，行銷如何從傳統走向社群、從單向推播走向互動連結。', cover_url: 'https://images.pexels.com/photos/590016/pexels-photo-590016.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['行銷', '數位轉型'] }
+                ]
+            },
+            {
+                id: 'self-growth',
+                theme: '自我成長與學習方法',
+                description: '除了學科知識，學習「如何學習」以及「如何成長」是更重要的課題。',
+                books: [
+                    { title: '原子習慣', author: 'James Clear', recommendation: '建立微小而持續的好習慣，讓複利效應為你的人生帶來巨大改變。', cover_url: 'https://images.pexels.com/photos/159866/books-book-pages-read-literature-159866.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['習慣養成', '生產力'] },
+                    { title: '刻意練習', author: 'Anders Ericsson', recommendation: '揭開天才的秘密，告訴你如何透過有目標、有回饋的練習，成為任何領域的專家。', cover_url: 'https://images.pexels.com/photos/207700/pexels-photo-207700.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['學習方法', '技能提升'] },
+                    { title: '心流', author: 'Mihaly Csikszentmihalyi', recommendation: '探索那種完全沉浸在某項活動中，忘記時間流逝的「最優體驗」，找到你真正的熱情所在。', cover_url: 'https://images.pexels.com/photos/301920/pexels-photo-301920.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['心理學', '專注力'] },
+                    { title: '如何閱讀一本書', author: 'Mortimer J. Adler', recommendation: '閱讀的經典指南，教你如何從「基礎閱讀」進階到「分析閱讀」與「主題閱讀」。', cover_url: 'https://images.pexels.com/photos/297642/pexels-photo-297642.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', tags: ['閱讀方法', '經典'] }
+                ]
+            }
+        ];
+
+        const container = document.getElementById('reading-lists-container');
+        const navContainer = document.getElementById('theme-navigation');
+
+        function renderContent() {
+            // Render navigation
+            navContainer.innerHTML = '';
+            readingLists.forEach(list => {
+                const link = document.createElement('a');
+                link.href = `#${list.id}`;
+                link.className = "bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-full hover:bg-purple-100 hover:text-purple-800 transition";
+                link.textContent = list.theme;
+                navContainer.appendChild(link);
+            });
+
+            // Render book lists
+            container.innerHTML = '';
+            readingLists.forEach(list => {
+                const section = document.createElement('section');
+                section.id = list.id;
+                section.className = 'theme-nav-link';
+                
+                let booksHtml = '';
+                list.books.forEach(book => {
+                    let tagsHtml = '';
+                    book.tags.forEach(tag => {
+                        tagsHtml += `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${tag}</span>`;
+                    });
+
+                    booksHtml += `
+                        <div class="book-card bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                            <img src="${book.cover_url}" alt="${book.title}" class="w-full h-64 md:h-80 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/300x450/e5e7eb/4b5563?text=Image+Not+Found';">
+                            <div class="p-4 flex-grow flex flex-col">
+                                <h4 class="font-bold text-lg text-gray-900 truncate">${book.title}</h4>
+                                <p class="text-sm text-gray-600 mb-2">${book.author}</p>
+                                <p class="text-sm text-gray-700 flex-grow">${book.recommendation}</p>
+                                <div class="mt-4">
+                                    ${tagsHtml}
+                                </div>
+                                <a href="https://www.google.com/search?tbm=bks&q=${encodeURIComponent(book.title + ' ' + book.author)}" target="_blank" rel="noopener noreferrer" class="mt-4 block w-full text-center bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-600 transition duration-300">
+                                    尋找此書
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                section.innerHTML = `
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold">${list.theme}</h2>
+                        <p class="text-gray-600 mt-2">${list.description}</p>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        ${booksHtml}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        renderContent();
+    </script>
+</body>
+</html>
