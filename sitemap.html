@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網站地圖 - 台灣教育處方籤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #6b7280, #111827);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sitemap-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sitemap-link:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">關於我們</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                網站<span class="gradient-text">地圖</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                快速找到你想前往的頁面，一覽網站完整架構。
+            </p>
+        </section>
+
+        <!-- Sitemap Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <!-- Column 1: 自主學習啟航站 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-blue-600 mb-4">自主學習啟航站</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">主題靈感產生器</span><p class="text-sm text-gray-500">透過AI與策展，找到你的研究主題。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">計畫範本庫</span><p class="text-sm text-gray-500">參考優質範本，學習如何規劃。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">學習資源地圖</span><p class="text-sm text-gray-500">精選全球最優質的線上學習資源。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">研究方法工具箱</span><p class="text-sm text-gray-500">學習文獻探討、問卷、訪談等方法。</p></a></li>
+                </ul>
+            </div>
+
+            <!-- Column 2: 學習歷程煉金室 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-green-600 mb-4">學習歷程煉金室</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">優質範例藝廊</span><p class="text-sm text-gray-500">觀摩跨學科的優質檔案與亮點分析。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">反思引導提問集</span><p class="text-sm text-gray-500">透過提問與AI，深化你的學習心得。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">多元表現資料庫</span><p class="text-sm text-gray-500">匯集全台的營隊、競賽與志工資訊。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">線上製作工具箱</span><p class="text-sm text-gray-500">精選簡報、心智圖、筆記等實用工具。</p></a></li>
+                </ul>
+            </div>
+
+            <!-- Column 3: 未來生涯GPS -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold text-purple-600 mb-4">未來生涯GPS</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">大學科系羅盤</span><p class="text-sm text-gray-500">探索18學群與核心素養的對應關係。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">學長姐真心話</span><p class="text-sm text-gray-500">閱讀來自各校系學長姐的真實經驗。</p></a></li>
+                    <li><a href="#" class="sitemap-link"><span class="font-semibold">核心素養對照表</span><p class="text-sm text-gray-500">了解三面九項的內涵與實踐方法。</p></a></li>
+                </ul>
+            </div>
+
+            <!-- Column 4: 進階資源 & 其他 -->
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold text-pink-600 mb-4">進階資源探索區</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="sitemap-link"><span class="font-semibold">線上課程精選</span><p class="text-sm text-gray-500">精選 Coursera、edX 等頂尖課程。</p></a></li>
+                        <li><a href="#" class="sitemap-link"><span class="font-semibold">國內外競賽資訊</span><p class="text-sm text-gray-500">匯集指標性競賽，挑戰自我。</p></a></li>
+                        <li><a href="#" class="sitemap-link"><span class="font-semibold">主題書單推薦</span><p class="text-sm text-gray-500">透過經典閱讀，建立知識體系。</p></a></li>
+                    </ul>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">關於本站</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="sitemap-link"><span class="font-semibold">關於我們</span><p class="text-sm text-gray-500">了解我們的使命、故事與團隊。</p></a></li>
+                    </ul>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
+        </div>
+    </footer>
+
+</body>
+</html>
