@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反思引導提問集 - 台灣教育處方籤 (Puter.js 整合版)</title>
+    
+    <script src="https://js.puter.com/v2/"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f7faff; /* A lighter, slightly blueish gray */
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #06b6d4;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .category-btn.active {
+            background-color: #0891b2;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgb(8 145 178 / 38%);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold">
+                <a href="#" class="flex items-center gap-2 text-blue-600">
+                    <i data-feather="edit-3"></i>
+                    <span>台灣教育處方籤</span>
+                </a>
+            </div>
+            <div id="desktop-menu" class="hidden md:flex space-x-8 items-center">
+                <a href="#situational-questions" class="text-gray-600 hover:text-blue-500 transition duration-300">情境提問</a>
+                <a href="#star-method" class="text-gray-600 hover:text-blue-500 transition duration-300">STAR原則</a>
+                <a href="#ai-assistant" class="text-gray-600 hover:text-blue-500 transition duration-300">AI追問</a>
+            </div>
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-blue-500">
+                <i data-feather="menu" class="w-6 h-6"></i>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#situational-questions" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">情境提問</a>
+            <a href="#star-method" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">STAR原則</a>
+            <a href="#ai-assistant" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">AI追問</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section class="text-center mb-16">
+            <div class="w-full h-64 rounded-2xl overflow-hidden mb-8 shadow-lg">
+                <img src="https://images.pexels.com/photos/313690/pexels-photo-313690.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" class="w-full h-full object-cover" alt="書寫與思考的圖像">
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+                反思引導<span class="gradient-text">提問集</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                好的反思，從問對問題開始。讓我們的提問工具，引導你寫出有深度、有故事的學習心得。
+            </p>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            
+            <div id="situational-questions" class="lg:col-span-2">
+                <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
+                    <h2 class="text-2xl font-bold mb-2">情境式提問產生器</h2>
+                    <p class="text-gray-600 mb-6">選擇你參與的活動情境，讓我們為你點亮思考的火花。點擊按鈕可更換問題！</p>
+                    <div id="reflection-category-btns" class="flex flex-wrap gap-3 mb-6">
+                        </div>
+                    <div id="reflection-question-output" class="bg-gray-100 p-6 rounded-lg flex-grow flex items-center justify-center transition-all duration-300 min-h-[150px]">
+                        <div class="text-center text-gray-500">
+                            <i data-feather="coffee" class="w-12 h-12 mx-auto mb-2"></i>
+                            <p>請選擇一個情境，開始你的深度反思之旅。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="star-method" class="lg:col-span-1">
+                <div class="bg-white p-8 rounded-xl shadow-lg h-full">
+                    <h2 class="text-2xl font-bold mb-6">反思小技巧：STAR 原則</h2>
+                    <p class="text-gray-600 mb-6">不知道如何組織你的故事？試試看 STAR 原則，讓你的反思更有結構！</p>
+                    <div class="space-y-5">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-cyan-100 text-cyan-700 rounded-lg p-3"><i data-feather="map-pin"></i></div>
+                            <div>
+                                <h4 class="font-bold text-lg text-cyan-700">S (Situation): 情境</h4>
+                                <p class="text-gray-700">當時發生了什麼事？人、事、時、地、物是什麼？</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-cyan-100 text-cyan-700 rounded-lg p-3"><i data-feather="target"></i></div>
+                            <div>
+                                <h4 class="font-bold text-lg text-cyan-700">T (Task): 任務</h4>
+                                <p class="text-gray-700">在那個情境下，你的任務或被賦予的目標是什麼？</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 bg-cyan-100 text-cyan-700 rounded-lg p-3"><i data-feather="tool"></i></div>
+                            <div>
+                                <h4 class="font-bold text-lg text-cyan-700">A (Action): 行動</h4>
+                                <p class="text-gray-700">你採取了哪些具體行動來完成任務？為什麼這麼做？</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                           <div class="flex-shrink-0 bg-cyan-100 text-cyan-700 rounded-lg p-3"><i data-feather="award"></i></div>
+                            <div>
+                                <h4 class="font-bold text-lg text-cyan-700">R (Result): 結果與反思</h4>
+                                <p class="text-gray-700">行動帶來什麼結果？從中你學到什麼？未來如何改進？</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section id="ai-assistant" class="mt-16 bg-white p-8 rounded-xl shadow-lg">
+             <h2 class="text-2xl font-bold mb-2 flex items-center gap-2">
+                <i data-feather="sparkles" class="text-blue-500"></i>
+                <span>AI 個人化反思教練</span>
+             </h2>
+             <p class="text-gray-600 mb-6">覺得上面的問題還不夠？簡述你的活動或專題，讓 AI 為你量身打造更深入的追問，挖掘你沒想過的亮點。</p>
+             <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                 <input type="text" id="aiInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition" placeholder="例如：我參加了學校的科展，主題是水質淨化...">
+                 <button id="generateAiBtn" class="w-full sm:w-auto bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2 shrink-0">
+                     <span>產生個人化問題</span>
+                 </button>
+             </div>
+             <div id="aiResult" class="mt-6 space-y-3">
+                 </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10 text-center">
+            <p>&copy; 2025 台灣教育處方籤. All Rights Reserved.</p>
+        </div>
+    </footer>
+    
+    <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+        已複製到剪貼簿！
+    </div>
+
+    <script>
+        // --- Static Question Generator Logic (Unchanged) ---
+        const reflectionData = { '專題研究': ['這個研究主題最初吸引你的地方是什麼？和你個人有什麼連結？', '在研究過程中，你遇到的最大技術或知識瓶頸是什麼？你如何尋找資源並克服它？', '如果能重來一次，你會對研究方法或流程做哪些關鍵修改？為什麼？', '這個研究結果，對你個人或你關心的社群有什麼具體的意義或應用價值？', '完成這次專題後，你對這個領域產生了哪些新的、更深入的問題？'], '社團幹部': ['擔任幹部期間，最有成就感的一件事是什麼？它如何體現你的領導力？', '請舉一個與團隊成員溝通協調、化解衝突的具體例子。你從中學到什麼？', '這個經驗如何改變了你對「領導」或「團隊合作」的看法？', '你從中學習到最重要的軟實力是什麼？（例如：時間管理、公開演說、同理心）', '卸下幹部職務後，你希望為這個社團留下什麼樣的制度或文化？'], '志工服務': ['參與這次志工服務的初衷是什麼？服務結束後，初衷有改變嗎？', '服務過程中，印象最深刻的一個人或一件事是什麼？它帶給你什麼衝擊？', '這次經驗是否改變了你對某些社會議題的看法？請具體說明。', '你認為自己為服務對象帶來了什麼？他們又為你帶來了什麼意想不到的收穫？', '未來你會如何運用這次的經驗，持續關心或參與相關議題？'], '競賽參與': ['準備競賽的過程中，你如何規劃你的時間與進度？哪個環節最困難？', '這次競-賽讓你發現自己在哪方面的知識或技能需要加強？你打算如何補足？', '無論輸贏，你認為從這次競賽中學到最重要的事是什麼？（關於自己、團隊或學科）', '你如何與隊友（如果有的話）分工合作與磨合？你們如何做決策？', '這次經驗對你未來的學習或生涯規劃有什麼樣的啟發？'], '課堂學習': ['這堂課中，哪個概念或單元讓你感到最困難或最挑戰？你是如何搞懂它的？', '老師的哪一種教學方式讓你印象最深刻？對你的學習有什麼幫助？', '你會如何將這門課學到的知識，應用到解決一個真實世界的問題上？', '除了課本內容，你是否曾主動尋找延伸資料？有什麼有趣的發現？', '這門課的學習，如何影響了你對某個學科領域的興趣？'] };
+        const categoryBtnsContainer = document.getElementById('reflection-category-btns');
+        const questionOutput = document.getElementById('reflection-question-output');
+        function renderCategoryButtons() { Object.keys(reflectionData).forEach(category => { const button = document.createElement('button'); button.className = 'category-btn px-4 py-2 font-semibold text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-300'; button.textContent = category; button.onclick = () => generateQuestion(category, button); categoryBtnsContainer.appendChild(button); }); }
+        function generateQuestion(category, clickedButton) { const questions = reflectionData[category]; const randomIndex = Math.floor(Math.random() * questions.length); const selectedQuestion = questions[randomIndex]; questionOutput.innerHTML = `<p class="text-xl font-semibold text-center text-cyan-800 fade-in">${selectedQuestion}</p>`; categoryBtnsContainer.querySelectorAll('button').forEach(btn => { btn.classList.remove('active'); }); clickedButton.classList.add('active'); }
+
+        // --- AI Generator Logic ---
+        const generateAiBtn = document.getElementById('generateAiBtn');
+        const aiInput = document.getElementById('aiInput');
+        const aiResult = document.getElementById('aiResult');
+
+        function showLoader(element) {
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        }
+
+        generateAiBtn.addEventListener('click', async () => {
+            const description = aiInput.value.trim();
+            if (!description) {
+                aiResult.innerHTML = '<p class="text-red-500 text-center font-semibold fade-in">請先簡述你的活動或專題！</p>';
+                return;
+            }
+
+            showLoader(aiResult);
+
+            // ✅ 步驟 2: 強化 Prompt，明確要求 JSON 格式
+            const prompt = `
+                你是一位專業且溫暖的學習歷程檔案顧問。請針對以下學生提供的活動描述，以鼓勵的口吻，生成 3 個能引導他進行深度反思的個人化追問。
+                您的回覆「必須」是純粹的 JSON 格式，不包含任何額外文字或 markdown 符號。
+
+                JSON 格式如下:
+                {
+                  "questions": [
+                    "問題一",
+                    "問題二",
+                    "問題三"
+                  ]
+                }
+                
+                學生描述：「${description}」
+            `;
+            
+            // ✅ 步驟 3: 使用 Puter.js 呼叫 AI
+            try {
+                const ai_response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-flash-1.5',
+                    temperature: 0.7 // 稍高溫度以獲取更多元的問題
+                });
+
+                const jsonString = ai_response?.message?.content;
+                if (!jsonString) {
+                    throw new Error("AI 回應為空，無法解析。");
+                }
+                
+                let parsedJson;
+                try {
+                    parsedJson = JSON.parse(jsonString);
+                } catch (parseError) {
+                    console.error("無法將 AI 回應解析為 JSON:", jsonString);
+                    throw new Error("AI 回應的格式不是有效的 JSON，請再試一次。");
+                }
+
+                if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+                    displayAIQuestions(parsedJson.questions);
+                } else {
+                    throw new Error("AI 回應的 JSON 缺少 'questions' 陣列。");
+                }
+                
+            } catch (error) {
+                console.error("Puter.js AI call failed:", error);
+                aiResult.innerHTML = `<p class="text-red-500 text-center font-semibold fade-in">抱歉，產生問題時發生錯誤。請檢查網路連線或稍後再試。</p>`;
+            }
+        });
+
+        function displayAIQuestions(questions) {
+            aiResult.innerHTML = '';
+            questions.forEach((q, index) => {
+                const qElement = document.createElement('div');
+                qElement.className = 'bg-cyan-50 border-l-4 border-cyan-500 p-4 rounded-r-lg flex justify-between items-center fade-in';
+                qElement.style.animationDelay = `${index * 100}ms`;
+                
+                qElement.innerHTML = `
+                    <p class="text-gray-800 pr-4">${q}</p>
+                    <button class="copy-btn flex-shrink-0 p-2 rounded-full hover:bg-cyan-200 transition-colors" title="複製問題">
+                        <i data-feather="copy" class="w-5 h-5 text-cyan-700"></i>
+                    </button>
+                `;
+                aiResult.appendChild(qElement);
+                
+                qElement.querySelector('.copy-btn').addEventListener('click', () => {
+                    copyToClipboard(q);
+                });
+            });
+            feather.replace(); // Re-render icons
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const notification = document.getElementById('copy-notification');
+                notification.style.opacity = 1;
+                setTimeout(() => {
+                    notification.style.opacity = 0;
+                }, 2000);
+            }).catch(err => {
+                console.error('無法複製文字: ', err);
+            });
+        }
+        
+        // --- Mobile Menu Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // --- Initializations ---
+        document.addEventListener('DOMContentLoaded', () => {
+             renderCategoryButtons();
+             feather.replace();
+        });
+
+    </script>
+</body>
+</html>
