@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>未來生涯GPS 2.0 - 台灣教育處方籤</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <script src="https://js.puter.com/v2/"></script>
+
+    <style>
+        /* 基本字體設定 */
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 標題漸層文字效果 */
+        .gradient-text {
+            background: linear-gradient(45deg, #8b5cf6, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        /* 左側學群按鈕樣式 */
+        .cluster-btn {
+            transition: all 0.3s ease-in-out;
+            transform-origin: left;
+        }
+        .cluster-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            transform: scale(1.03);
+            box-shadow: 0 4px 14px 0 rgb(79 70 229 / 39%);
+        }
+        .cluster-btn:hover:not(.active) {
+            background-color: #eef2ff;
+            color: #4338ca;
+        }
+
+        /* 右側資訊卡片切換時的淡入效果 */
+        #cluster-details.fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* AI 聊天室樣式 */
+        .chat-bubble-ai {
+            background-color: #eef2ff;
+            border-radius: 20px 20px 20px 5px;
+        }
+        .chat-bubble-user {
+            background-color: #dcfce7;
+            border-radius: 20px 20px 5px 20px;
+        }
+        
+        /* Tab 樣式 */
+        .tab-btn {
+            padding: 0.5rem 0.25rem;
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-btn.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
+                <ion-icon name="compass-outline"></ion-icon>
+                <span>台灣教育處方籤</span>
+            </a>
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">學習歷程煉金室</a>
+                <a href="#explorer" class="text-indigo-600 font-semibold transition-colors duration-300">未來生涯GPS</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">進階資源探索區</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 focus:outline-none">
+                    <ion-icon name="menu-outline" class="w-8 h-8"></ion-icon>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 space-y-2">
+            <a href="#" class="block text-gray-600 hover:text-indigo-600 py-2">自主學習啟航站</a>
+            <a href="#" class="block text-gray-600 hover:text-indigo-600 py-2">學習歷程煉金室</a>
+            <a href="#explorer" class="block text-indigo-600 font-semibold py-2">未來生涯GPS</a>
+            <a href="#" class="block text-gray-600 hover:text-indigo-600 py-2">進階資源探索區</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-12">
+        
+        <section class="text-center mb-20">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 mb-4 leading-tight">
+                未來生涯<span class="gradient-text">GPS</span> 2.0
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                將你的高中學習，精準定位到未來方向。結合 AI 學涯導師，探索大學學群，聆聽學長姐的真實建議。
+            </p>
+        </section>
+
+        <section id="ai-advisor" class="mb-20">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 max-w-4xl mx-auto">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="bg-indigo-100 p-3 rounded-full">
+                        <ion-icon name="sparkles-outline" class="text-3xl text-indigo-600"></ion-icon>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">AI 學涯導師</h2>
+                        <p class="text-gray-600">對未來感到迷惘嗎？試著問我問題吧！</p>
+                    </div>
+                </div>
+                
+                <div id="chat-window" class="h-64 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4 space-y-4">
+                    <div class="flex gap-2 items-end">
+                        <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <ion-icon name="sparkles" class="text-indigo-600"></ion-icon>
+                        </div>
+                        <div class="chat-bubble-ai p-3 max-w-lg">
+                            <p class="text-sm sm:text-base">你好！我是 AI 學涯導師。你可以告訴我你喜歡的科目、興趣，或任何對未來科系的疑問，我會試著給你一些建議。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" class="flex-grow bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
+                    <button id="chat-submit" class="bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
+                        <span class="hidden sm:inline">發送</span>
+                        <ion-icon name="send-outline" class="sm:hidden text-xl"></ion-icon>
+                    </button>
+                </div>
+                <div id="loading-indicator" class="text-center text-sm text-gray-500 mt-2 hidden">AI 思考中...</div>
+            </div>
+        </section>
+
+        <section id="explorer" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">大學科系羅盤</h2>
+                <p class="text-gray-600 mt-2">點選左方學群，或使用搜尋來快速探索。</p>
+            </div>
+            <div class="flex flex-col md:flex-row gap-8">
+                
+                <div class="md:w-1/3 lg:w-1/4 flex flex-col gap-4">
+                    <div class="relative">
+                        <input type="text" id="search-bar" class="w-full bg-gray-100 border-2 border-transparent rounded-full py-3 pl-10 pr-4 focus:outline-none focus:border-indigo-300 transition-colors" placeholder="搜尋學群...">
+                        <ion-icon name="search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
+                    </div>
+                    <div id="cluster-list" class="space-y-2 overflow-y-auto max-h-[60vh] pr-2">
+                        </div>
+                </div>
+                
+                <div id="cluster-details" class="md:w-2/3 lg:w-3/4 bg-slate-50 p-4 sm:p-6 rounded-xl min-h-[300px]">
+                    </div>
+            </div>
+        </section>
+        
+        <section class="mt-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">學長姐真心話</h2>
+                <p class="text-lg text-gray-600 mt-2">讓走過這條路的人，告訴你最真實的風景。</p>
+            </div>
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform hover:-translate-y-1">
+                    <img class="w-24 h-24 rounded-full mb-4 object-cover shadow-md ring-4 ring-white" src="https://placehold.co/100x100/a78bfa/FFFFFF?text=學姊" alt="王同學頭像">
+                    <h3 class="font-bold text-xl text-gray-900">王同學</h3>
+                    <p class="text-indigo-600 font-semibold mb-4">陽明交通大學 生物科技學系</p>
+                    <p class="text-gray-700 italic">「高中時的科展經驗，不只是為了得獎。從中學到的實驗設計和解決問題的能力，才是在大學真正派上用場的關鍵。」</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform hover:-translate-y-1">
+                    <img class="w-24 h-24 rounded-full mb-4 object-cover shadow-md ring-4 ring-white" src="https://placehold.co/100x100/7dd3fc/FFFFFF?text=學長" alt="林同學頭像">
+                    <h3 class="font-bold text-xl text-gray-900">政治大學 傳播學院</h3>
+                    <p class="text-gray-700 italic">「不要害怕在學習歷程中放入看似『不務正業』的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。」</p>
+                </div>
+            </div>
+            <div class="text-center mt-12">
+                <a href="#" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                    查看更多訪談
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10 text-center text-gray-400">
+            <p>&copy; 2025 台灣教育處方籤. All Rights Reserved.</p>
+            <p class="text-sm mt-2">為 108 課綱學子打造的生涯探索資源站</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- 資料庫 (Data) ---
+        // 這是網站的核心資料，我們在這裡加入了更多有用的欄位
+        const majorData = [
+            { id: 'engineering', name: '工程學群', icon: 'settings-outline', description: '應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['電機工程', '機械工程', '土木工程', '化學工程'], subjects: ['物理', '數學', '化學'], careers: ['半導體工程師', '結構技師', '廠務工程師'], portfolio_tips: '強調數理科目的學習成果，並附上參加過的科學競賽、程式設計或模型製作等實作經驗。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=1' },
+            { id: 'info', name: '資訊學群', icon: 'code-slash-outline', description: '專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。', competencies: ['系統思考與解決問題', '規劃執行與創新應變'], majors: ['資訊工程', '資訊管理', '數據科學', '人工智慧'], subjects: ['數學', '資訊科技', '物理'], careers: ['軟體工程師', '資料分析師', 'AI工程師', '資安專家'], portfolio_tips: '展示你的程式作品集(例如 GitHub)，或參與過的資訊競賽(如APCS)。自主學習新程式語言或技術的經驗會非常加分。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=2' },
+            { id: 'management', name: '管理學群', icon: 'business-outline', description: '學習組織、領導、規劃與控制等管理職能，以達成組織目標。', competencies: ['人際關係與團隊合作', '規劃執行與創新應變'], majors: ['企業管理', '財務管理', '行銷管理', '國際企業'], subjects: ['公民與社會', '數學', '英文'], careers: ['專案經理', '行銷企劃', '人力資源', '管理顧問'], portfolio_tips: '呈現擔任社團幹部、班級幹部的領導經驗，或舉辦活動的企劃與執行過程。商業競賽的參與也是很好的材料。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=4' },
+            { id: 'finance', name: '財經學群', icon: 'cash-outline', description: '研究金融市場、投資、公司理財與經濟現象，是資本社會的運作基礎。', competencies: ['系統思考與解決問題', '符號運用與溝通表達'], majors: ['財務金融', '經濟學', '會計學', '風險管理'], subjects: ['數學', '公民與社會', '英文'], careers: ['銀行行員', '證券分析師', '會計師', '理財專員'], portfolio_tips: '可以整理自己關注的財經新聞、閱讀相關書籍的心得，或參加模擬投資競賽的經驗。對數字的敏感度與分析能力是重點。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=5' },
+            { id: 'social_psychology', name: '社會與心理學群', icon: 'people-outline', description: '關心人類的心理歷程、社會行為與結構，旨在理解並改善個人與社會的福祉。', competencies: ['人際關係與團隊合作', '道德實踐與公民意識'], majors: ['社會學', '心理學', '社會工作', '輔導與諮商'], subjects: ['公民與社會', '歷史', '國文'], careers: ['臨床心理師', '社工師', '人力資源', '市調人員'], portfolio_tips: '展現對社會議題的關懷，例如撰寫小論文、參與志工服務的經驗與反思。同理心與溝通能力的展現很重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=7' },
+            { id: 'mass_comm', name: '大眾傳播學群', icon: 'film-outline', description: '學習訊息的產製、傳遞與效果，包含新聞、廣告、廣播、影視等領域。', competencies: ['符號運用與溝通表達', '科技資訊與媒體素養'], majors: ['新聞學', '廣告學', '廣播電視電影', '公共關係'], subjects: ['國文', '英文', '公民與社會'], careers: ['記者', '導演', '廣告文案', '社群小編'], portfolio_tips: '經營個人品牌(部落格、IG、YouTube頻道)是最好的作品集。也可以附上自己拍攝的影片、寫作的文案或採訪報導。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=8' },
+            { id: 'design', name: '設計學群', icon: 'color-palette-outline', description: '結合美感與實用性，解決生活中的問題，從平面設計到建築設計皆屬此範疇。', competencies: ['藝術涵養與美感素養', '系統思考與解決問題'], majors: ['視覺傳達設計', '工業設計', '建築設計', '服裝設計'], subjects: ['美術', '生活科技', '數學'], careers: ['平面設計師', 'UI/UX設計師', '建築師', '產品設計師'], portfolio_tips: '作品集是唯一的重點！整理你的繪畫、攝影、模型、數位創作等作品，並說明創作理念。展現你的美感與創意。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=13' },
+            { id: 'life_sci', name: '生命科學學群', icon: 'leaf-outline', description: '探討生命的奧秘，從分子、細胞到生態系，是生物科技與醫學研究的基礎。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['生命科學', '生物科技', '分子生物', '生態學'], subjects: ['生物', '化學', '物理'], careers: ['生物研究員', '藥廠研發', '農業技術專家'], portfolio_tips: '生物奧林匹亞、科展經驗是絕佳材料。也可以呈現對特定生物議題(如基因編輯)的深入探討報告。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=15' },
+            { id: 'medicine', name: '醫藥衛生學群', icon: 'medkit-outline', description: '致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。', competencies: ['道德實踐與公民意識', '身心素質與自我精進'], majors: ['醫學', '牙醫學', '藥學', '護理'], subjects: ['生物', '化學', '英文'], careers: ['醫師', '藥師', '護理師', '物理治療師'], portfolio_tips: '除了在校成績，更要展現強烈的服務熱忱與抗壓性。參加醫療相關營隊、志工服務的經驗與反思非常重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=16' },
+        ];
+
+        // --- DOM 元素選擇 ---
+        const clusterListContainer = document.getElementById('cluster-list');
+        const clusterDetailsContainer = document.getElementById('cluster-details');
+        const searchBar = document.getElementById('search-bar');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const chatInput = document.getElementById('chat-input');
+        const chatSubmit = document.getElementById('chat-submit');
+        const chatWindow = document.getElementById('chat-window');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        // --- 大學科系羅盤 (Major Explorer) 相關函式 ---
+
+        function renderClusterDetails(clusterId) {
+            const cluster = majorData.find(c => c.id === clusterId);
+            if (!cluster) {
+                clusterDetailsContainer.innerHTML = `<p class="text-center text-gray-500">請先從左側選擇一個學群。</p>`;
+                return;
+            }
+            
+            clusterDetailsContainer.innerHTML = `
+                <div class="flex items-start gap-4 mb-4">
+                    <div class="bg-indigo-100 p-3 rounded-xl">
+                        <ion-icon name="${cluster.icon}" class="text-3xl text-indigo-600"></ion-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900">${cluster.name}</h3>
+                        <p class="text-gray-600">${cluster.description}</p>
+                    </div>
+                </div>
+
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                        <button class="tab-btn active" data-tab="competencies">核心素養</button>
+                        <button class="tab-btn" data-tab="careers">未來出路</button>
+                        <button class="tab-btn" data-tab="portfolio">歷程建議</button>
+                    </nav>
+                </div>
+
+                <div id="tab-content-area" class="text-gray-700">
+                    <div id="tab-competencies" class="tab-panel">
+                        <h4 class="font-bold text-lg mb-3">對應核心素養</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${cluster.competencies.map(c => `<span class="inline-block bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${c}</span>`).join('')}
+                        </div>
+                        <h4 class="font-bold text-lg mt-4 mb-3">建議修習科目</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${cluster.subjects.map(s => `<span class="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div id="tab-careers" class="tab-panel hidden">
+                        <h4 class="font-bold text-lg mb-3">可能的職業發展</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            ${cluster.careers.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div id="tab-portfolio" class="tab-panel hidden">
+                        <h4 class="font-bold text-lg mb-3">學習歷程準備方向</h4>
+                        <p>${cluster.portfolio_tips}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <a href="${cluster.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        前往 ColleGo! 深入了解 <ion-icon name="arrow-forward-outline"></ion-icon>
+                    </a>
+                </div>
+            `;
+            
+            addTabEventListeners();
+            clusterDetailsContainer.classList.remove('fade-in');
+            void clusterDetailsContainer.offsetWidth; // Trigger reflow
+            clusterDetailsContainer.classList.add('fade-in');
+        }
+
+        function handleClusterClick(e) {
+            const button = e.target.closest('.cluster-btn');
+            if (!button) return;
+
+            const currentActive = clusterListContainer.querySelector('.active');
+            if (currentActive) currentActive.classList.remove('active');
+            button.classList.add('active');
+            
+            const clusterId = button.dataset.id;
+            renderClusterDetails(clusterId);
+        }
+
+        function filterClusters() {
+            const searchTerm = searchBar.value.toLowerCase();
+            const filteredData = majorData.filter(cluster => cluster.name.toLowerCase().includes(searchTerm));
+            renderClusterList(filteredData);
+        }
+        
+        function renderClusterList(data) {
+            const currentActiveId = clusterListContainer.querySelector('.active')?.dataset.id;
+            clusterListContainer.innerHTML = '';
+            data.forEach((cluster) => {
+                const button = document.createElement('button');
+                button.className = 'cluster-btn w-full text-left px-4 py-3 rounded-lg font-semibold flex items-center gap-3';
+                button.dataset.id = cluster.id;
+                button.innerHTML = `<ion-icon name="${cluster.icon}" class="text-xl"></ion-icon> <span>${cluster.name}</span>`;
+                if(cluster.id === currentActiveId) button.classList.add('active');
+                clusterListContainer.appendChild(button);
+            });
+        }
+        
+        function initializeExplorer() {
+            renderClusterList(majorData);
+            
+            if (majorData.length > 0) {
+                const firstButton = clusterListContainer.querySelector('.cluster-btn');
+                if (firstButton) {
+                    firstButton.classList.add('active');
+                    renderClusterDetails(majorData[0].id);
+                }
+            }
+
+            clusterListContainer.addEventListener('click', handleClusterClick);
+            searchBar.addEventListener('input', filterClusters);
+        }
+
+        function addTabEventListeners() {
+            const tabContainer = clusterDetailsContainer.querySelector('[aria-label="Tabs"]');
+            if (!tabContainer) return;
+
+            tabContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.tab-btn');
+                if (!button) return;
+                
+                tabContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                clusterDetailsContainer.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+                const tabId = button.dataset.tab;
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            });
+        }
+
+        // --- ✨ 步驟 2: 修改 AI 聊天機器人函式以使用 Puter.js ---
+
+        /**
+         * 將訊息新增到聊天視窗
+         * @param {string} message - 訊息內容 (可以是 HTML)
+         * @param {'user' | 'ai'} sender - 發送者
+         * @returns {HTMLElement | null} - 如果是 AI 訊息，返回包含訊息的 <p> 元素，以便後續更新
+         */
+        function addMessageToChat(message, sender) {
+            const messageWrapper = document.createElement('div');
+            let textElement = null;
+
+            if (sender === 'user') {
+                messageWrapper.className = 'flex gap-2 items-end justify-end';
+                messageWrapper.innerHTML = `
+                    <div class="chat-bubble-user p-3 max-w-lg">
+                        <p class="text-sm sm:text-base text-gray-800">${message}</p>
+                    </div>
+                    <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <ion-icon name="person" class="text-green-700"></ion-icon>
+                    </div>
+                `;
+            } else { // sender === 'ai'
+                messageWrapper.className = 'flex gap-2 items-end';
+                messageWrapper.innerHTML = `
+                    <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <ion-icon name="sparkles" class="text-indigo-600"></ion-icon>
+                    </div>
+                    <div class="chat-bubble-ai p-3 max-w-lg">
+                        <p class="text-sm sm:text-base">${message}</p>
+                    </div>
+                `;
+                textElement = messageWrapper.querySelector('p');
+            }
+            chatWindow.appendChild(messageWrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return textElement;
+        }
+
+        /**
+         * 處理使用者發送聊天訊息的事件 (已用 Puter.js 升級)
+         */
+        async function handleChatSubmit() {
+            const userInput = chatInput.value.trim();
+            if (!userInput) return;
+
+            addMessageToChat(userInput, 'user');
+            chatInput.value = '';
+            loadingIndicator.classList.remove('hidden');
+            chatSubmit.disabled = true;
+
+            const context = majorData.map(c => 
+                `學群: ${c.name}\n簡介: ${c.description}\n適合特質: ${c.competencies.join(', ')}\n未來出路: ${c.careers.join(', ')}`
+            ).join('\n\n');
+
+            const prompt = `
+                你是一位專業的高中生學涯輔導老師，請用親切、鼓勵的語氣回答問題。
+                請依據以下台灣的大學學群資料作為你回答的主要參考依據：
+                ---
+                ${context}
+                ---
+                現在，請根據以上資料，回答這位高中生的問題：
+                「${userInput}」
+                
+                你的回答應該包含：
+                1. 根據學生的興趣，推薦1-2個最相關的學群。
+                2. 簡單說明為什麼推薦這些學群。
+                3. 給予一個具體的下一步探索建議。
+                回答請簡潔，總長度不要超過200字。
+            `;
+            
+            // ✨ 步驟 3: 使用 Puter.js 進行流式 API 呼叫
+            try {
+                // 預先建立一個空的 AI 訊息框，並取得其文字容器
+                const aiTextElement = addMessageToChat('', 'ai');
+                if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
+
+                // 使用流式輸出來獲取回應
+                const responseStream = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.0-flash-lite-001',
+                    stream: true
+                });
+
+                // 逐字將 AI 回應填入文字容器
+                for await (const part of responseStream) {
+                    if (part?.text) {
+                        aiTextElement.innerHTML += part.text.replace(/\n/g, '<br>');
+                        chatWindow.scrollTop = chatWindow.scrollHeight; // 持續滾動到底部
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error calling Puter.js AI:", error);
+                addMessageToChat("哎呀，連線好像有點問題，請稍後再試一次。", 'ai');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                chatSubmit.disabled = false;
+                chatInput.focus(); // 讓使用者可以馬上問下一個問題
+            }
+        }
+
+        // --- 漢堡選單 (Mobile Menu) ---
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuButton.querySelector('ion-icon');
+            icon.name = mobileMenu.classList.contains('hidden') ? 'menu-outline' : 'close-outline';
+        });
+
+        // --- 事件監聽器綁定 ---
+        chatSubmit.addEventListener('click', handleChatSubmit);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { // 按下 Enter 但非 Shift+Enter
+                e.preventDefault(); // 防止換行
+                handleChatSubmit();
+            }
+        });
+
+        // --- 程式進入點 ---
+        initializeExplorer();
+    });
+    </script>
+</body>
+</html>
