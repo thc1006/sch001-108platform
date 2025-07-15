@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上課程精選 - 台灣教育處方籤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .course-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-purple-600 font-semibold transition duration-300">進階資源探索區</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                線上課程<span class="gradient-text">精選</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                提前與世界一流的知識接軌。我們為你精選了最適合高中生進修的線上課程。
+            </p>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                        <input type="text" id="search-input" placeholder="課程、學校、老師..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">學科領域</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">全部領域</option>
+                            <option value="程式基礎">程式基礎</option>
+                            <option value="AI與數據科學">AI與數據科學</option>
+                            <option value="商業管理">商業管理</option>
+                            <option value="人文社會">人文社會</option>
+                            <option value="自然科學">自然科學</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="platform-filter" class="font-bold text-gray-700 text-sm">課程平台</label>
+                        <select id="platform-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">所有平台</option>
+                            <option value="Coursera">Coursera</option>
+                            <option value="edX">edX</option>
+                            <option value="Khan Academy">Khan Academy</option>
+                            <option value="Hahow">Hahow</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="language-filter" class="font-bold text-gray-700 text-sm">授課語言</label>
+                        <select id="language-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">所有語言</option>
+                            <option value="中文">中文</option>
+                            <option value="英文">英文</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course Grid -->
+        <section>
+            <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Course cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到課程</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或探索其他類別的課程。</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
+        </div>
+    </footer>
+
+    <script>
+        const coursesData = [
+            {
+                title: 'Machine Learning for Everyone',
+                provider: 'DeepLearning.AI',
+                platform: 'Coursera',
+                category: 'AI與數據科學',
+                difficulty: '入門',
+                language: '英文',
+                certificate: true,
+                tags: ['AI', '機器學習', '吳恩達'],
+                description: '由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。',
+                url: 'https://www.coursera.org/learn/machine-learning-for-everyone',
+                thumbnail_url: 'https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: 'Python for Everybody',
+                provider: '密西根大學',
+                platform: 'Coursera',
+                category: '程式基礎',
+                difficulty: '入門',
+                language: '英文',
+                certificate: true,
+                tags: ['Python', '程式設計', '資料處理'],
+                description: '全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。',
+                url: 'https://www.coursera.org/specializations/python',
+                thumbnail_url: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: 'CS50\'s Introduction to Computer Science',
+                provider: '哈佛大學',
+                platform: 'edX',
+                category: '程式基礎',
+                difficulty: '中階',
+                language: '英文',
+                certificate: true,
+                tags: ['計算機科學', 'C語言', '演算法'],
+                description: '哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。',
+                url: 'https://www.edx.org/course/introduction-computer-science-harvardx-cs50x',
+                thumbnail_url: 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: '行銷入門：帶你快速成為實戰派的行銷人',
+                provider: 'Frank Chiu',
+                platform: 'Hahow',
+                category: '商業管理',
+                difficulty: '入門',
+                language: '中文',
+                certificate: true,
+                tags: ['行銷', '市場分析', '品牌'],
+                description: '台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。',
+                url: 'https://hahow.in/courses/59649c2e5344340700c511a8',
+                thumbnail_url: 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: 'The Science of Well-Being',
+                provider: '耶魯大學',
+                platform: 'Coursera',
+                category: '人文社會',
+                difficulty: '入門',
+                language: '英文',
+                certificate: true,
+                tags: ['心理學', '幸福感', '正向心理學'],
+                description: '耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。',
+                url: 'https://www.coursera.org/learn/the-science-of-well-being',
+                thumbnail_url: 'https://images.pexels.com/photos/3771089/pexels-photo-3771089.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: '基礎微積分',
+                provider: '國立台灣大學',
+                platform: 'Khan Academy',
+                category: '自然科學',
+                difficulty: '入門',
+                language: '中文',
+                certificate: false,
+                tags: ['微積分', '數學', '台大'],
+                description: '由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。',
+                url: 'https://www.khanacademy.org/math/calculus-1',
+                thumbnail_url: 'https://images.pexels.com/photos/590045/pexels-photo-590045.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: 'Google 數據分析專業證書',
+                provider: 'Google',
+                platform: 'Coursera',
+                category: 'AI與數據科學',
+                difficulty: '中階',
+                language: '英文',
+                certificate: true,
+                tags: ['數據分析', 'SQL', 'Tableau', 'R語言'],
+                description: 'Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。',
+                url: 'https://www.coursera.org/professional-certificates/google-data-analytics',
+                thumbnail_url: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: '經濟學原理',
+                provider: '國立清華大學',
+                platform: 'Khan Academy',
+                category: '商業管理',
+                difficulty: '入門',
+                language: '中文',
+                certificate: false,
+                tags: ['經濟學', '個體經濟', '總體經濟'],
+                description: '清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。',
+                url: 'https://www.khanacademy.org/science/economics',
+                thumbnail_url: 'https://images.pexels.com/photos/7876255/pexels-photo-7876255.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            }
+        ];
+
+        const courseGrid = document.getElementById('course-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const platformFilter = document.getElementById('platform-filter');
+        const languageFilter = document.getElementById('language-filter');
+
+        function renderCourses() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedPlatform = platformFilter.value;
+            const selectedLanguage = languageFilter.value;
+
+            const filteredCourses = coursesData.filter(course => {
+                const searchCorpus = `${course.title} ${course.provider} ${course.tags.join(' ')}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
+                const matchesPlatform = selectedPlatform === 'all' || course.platform === selectedPlatform;
+                const matchesLanguage = selectedLanguage === 'all' || course.language === selectedLanguage;
+                return matchesSearch && matchesCategory && matchesPlatform && matchesLanguage;
+            });
+
+            courseGrid.innerHTML = '';
+
+            if (filteredCourses.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredCourses.forEach(course => {
+                    const card = document.createElement('div');
+                    card.className = 'course-card bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
+
+                    let tagsHtml = '';
+                    course.tags.forEach(tag => {
+                        tagsHtml += `<span class="inline-block bg-purple-100 text-purple-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${tag}</span>`;
+                    });
+
+                    card.innerHTML = `
+                        <img src="${course.thumbnail_url}" alt="${course.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                        <div class="p-6 flex-grow flex flex-col">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-sm font-bold text-purple-600">${course.platform} - ${course.provider}</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.language === '中文' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}">${course.language}</span>
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.difficulty === '入門' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${course.difficulty}</span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-2 h-14">${course.title}</h3>
+                                <p class="text-sm text-gray-700 mb-4">${course.description}</p>
+                            </div>
+                            <div class="mt-4">
+                                ${tagsHtml}
+                            </div>
+                        </div>
+                        <div class="p-4 bg-gray-50 flex justify-between items-center">
+                             <span class="text-xs font-semibold ${course.certificate ? 'text-green-600' : 'text-gray-500'}">${course.certificate ? '✓ 提供證書' : '✗ 無證書'}</span>
+                            <a href="${course.url}" target="_blank" rel="noopener noreferrer" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
+                                前往課程
+                            </a>
+                        </div>
+                    `;
+                    courseGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderCourses);
+        categoryFilter.addEventListener('change', renderCourses);
+        platformFilter.addEventListener('change', renderCourses);
+        languageFilter.addEventListener('change', renderCourses);
+
+        // Initial Render
+        renderCourses();
+    </script>
+</body>
+</html>
