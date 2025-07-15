@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核心素養互動對照表 (Puter.js 整合版) - 台灣教育處方籤</title>
+
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .competency-card.highlight {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px #8b5cf6, 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border-color: #8b5cf6;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8b5cf6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold">
+                <a href="#" class="flex items-center gap-2 text-indigo-600">
+                    <i data-feather="compass"></i>
+                    <span>台灣教育處方籤</span>
+                </a>
+            </div>
+            <div id="desktop-menu" class="hidden md:flex space-x-8 items-center">
+                <a href="#competency-grid" class="text-gray-600 hover:text-indigo-500 transition duration-300">三面九項</a>
+                <a href="#ai-analyst" class="text-gray-600 hover:text-indigo-500 transition duration-300">AI 分析師</a>
+            </div>
+             <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-indigo-500">
+                <i data-feather="menu" class="w-6 h-6"></i>
+            </button>
+        </nav>
+         <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#competency-grid" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">三面九項</a>
+            <a href="#ai-analyst" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">AI 分析師</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+                核心素養<span class="gradient-text">互動探索</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                將抽象的「三面九項」轉化為具體行動。點擊卡片展開詳細說明，或透過學群篩選，找到你的能力優勢。
+            </p>
+        </section>
+        
+        <section class="mb-12 p-4 bg-white rounded-xl shadow-md sticky top-[76px] z-30">
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <label for="cluster-filter" class="font-bold text-gray-700 shrink-0"><i data-feather="filter" class="inline-block -mt-1"></i> 依學群篩選：</label>
+                <select id="cluster-filter" class="w-full bg-gray-100 border-2 border-gray-200 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-indigo-500">
+                    <option value="all">顯示所有</option>
+                    </select>
+            </div>
+        </section>
+
+        <section id="competency-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            </section>
+        
+        <section id="ai-analyst" class="mt-20">
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                 <h2 class="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
+                    <i data-feather="cpu" class="text-indigo-500"></i>
+                    <span>AI 素養分析師</span>
+                 </h2>
+                 <p class="text-gray-600 mb-6">將你的活動經驗貼在下方，讓 AI 幫你分析其中對應了哪些核心素養，並提供寫作建議！</p>
+                 <div class="mb-4">
+                     <textarea id="ai-input" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" rows="4" placeholder="例如：我參加了學校的科展，從找資料、設計實驗到分析數據都自己來。過程中雖然失敗很多次，但也學會了怎麼解決問題，最後有拿到佳作。"></textarea>
+                 </div>
+                 <button id="ai-generate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2">
+                     <i data-feather="zap"></i>
+                     <span>開始分析</span>
+                 </button>
+                 <div id="ai-result" class="mt-6">
+                     </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10 text-center">
+            <p>&copy; 2025 台灣教育處方籤. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const competencyData = { "自主行動": { icon: 'user-check', color: 'indigo', items: [ { name: 'A1 身心素質與自我精進', description: '具備良好身心狀態與正向價值觀，持續學習、追求更好的自己。', examples: ['規律運動，維持健康生活', '參與正念或冥想活動，提升專注力', '閱讀課外讀物，主動拓展視野', '設定短期學習目標（如學會一個新技能）並努力達成'], clusters: ['醫藥衛生', '遊憩運動', '教育'] }, { name: 'A2 系統思考與解決問題', description: '能理解問題的複雜性，分析背後成因，並提出有效的解決方案。', examples: ['製作心智圖分析課文或社會議題的架構', '參與科展，從零開始設計實驗流程', '學習程式設計，解決生活中的不便', '分析一個歷史事件的多方因果關係'], clusters: ['工程', '資訊', '財經', '生命科學', '法政'] }, { name: 'A3 規劃執行與創新應變', description: '能夠制定計畫、有效執行，並在面對變化時，發揮創意、彈性調整。', examples: ['完成一份完整的自主學習計畫與成果', '擔任社團幹部，從籌辦到執行一場活動', '規劃家庭旅遊或班級出遊的完整行程', '在小組報告中，主動提出新的呈現方式（如拍影片、做網站）'], clusters: ['管理', '設計', '大眾傳播', '建築'] } ] }, "溝通互動": { icon: 'message-circle', color: 'blue', items: [ { name: 'B1 符號運用與溝通表達', description: '善用語言、文字、圖表等多元符號，清晰表達想法並理解他人。', examples: ['上台進行一場有結構、有吸引力的口頭報告', '撰寫一篇結構完整、論點清晰的小論文', '將複雜數據製作成易懂的資訊圖表 (Infographic)', '學習一種新的外語或程式語言並實際應用'], clusters: ['外語', '文史哲', '大眾傳播', '財經', '藝術'] }, { name: 'B2 科技資訊與媒體素養', description: '能有效運用科技與資訊，並具備判讀、思辨媒體訊息的能力。', examples: ['學習使用試算表或統計軟體分析數據', '針對一個網路熱議事件，進行事實查核與來源分析', '經營一個有主題的社群帳號或部落格', '學習影片剪輯或修圖軟體，製作個人作品'], clusters: ['資訊', '工程', '生命科學', '大眾傳播', '管理'] }, { name: 'B3 藝術涵養與美感素養', description: '能感知、欣賞與創作美的事物，並將美感融入生活之中。', examples: ['參觀美術館或表演藝術活動，並寫下心得評論', '學習一項樂器或繪畫技巧，並完成一項作品', '為班級或社團活動設計海報或文宣品', '留意生活周遭的建築、產品或服裝設計細節'], clusters: ['藝術', '設計', '建築', '文史哲'] } ] }, "社會參與": { icon: 'users', color: 'purple', items: [ { name: 'C1 道德實踐與公民意識', description: '具備道德判斷力，關心公共議題，並以負責任的態度參與社會。', examples: ['長期參與一項志工服務，並反思其意義', '針對一項公共政策（如交通、環保）提出自己的看法與建議', '了解選舉制度與民主運作，並與家人朋友討論', '在團隊中展現誠信與責任感，完成被託付的任務'], clusters: ['法政', '社會與心理', '教育', '農林漁牧'] }, { name: 'C2 人際關係與團隊合作', description: '能與他人建立正向的互動關係，並在團隊中有效溝通、分工合作。', examples: ['在小組報告中，扮演促進討論或協調衝突的角色', '參加球隊等團體性社團，學習團隊默契與策略', '學習傾聽並尊重與自己不同的意見', '組織讀書會，與同學共學、解決課業問題'], clusters: ['管理', '社會與心理', '教育', '遊憩運動', '醫藥衛生'] }, { name: 'C3 多元文化與國際理解', description: '尊重並欣賞不同文化，並具備全球視野，關心國際事務。', examples: ['學習一種新住民語言或原住民文化', '深入研究一個國家的歷史、文化或社會現況', '關注一項國際新聞或全球議題（如 SDGs），並提出觀點', '透過網路或實體活動，與外國朋友進行文化交流'], clusters: ['外語', '文史哲', '法政', '地球環境'] } ] } };
+
+        const gridContainer = document.getElementById('competency-grid');
+        const filterSelect = document.getElementById('cluster-filter');
+
+        function renderCompetencies() {
+            gridContainer.innerHTML = '';
+            const allClusters = new Set();
+
+            for (const face in competencyData) {
+                const faceData = competencyData[face];
+                const column = document.createElement('div');
+                column.className = 'space-y-8';
+
+                let itemsHtml = '';
+                faceData.items.forEach(item => {
+                    item.clusters.forEach(cl => allClusters.add(cl));
+                    const examplesHtml = item.examples.map(ex => `<li class="flex items-start gap-2"><i data-feather="arrow-right" class="w-4 h-4 text-${faceData.color}-500 mt-1 shrink-0"></i><span>${ex}</span></li>`).join('');
+                    const clustersHtml = item.clusters.map(cl => `<span class="cluster-tag inline-block bg-gray-200 text-gray-700 text-xs font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${cl}</span>`).join('');
+                    itemsHtml += `<div class="competency-card bg-white rounded-lg shadow-md border-2 border-transparent transition-all duration-300" data-clusters='${JSON.stringify(item.clusters)}'><button class="accordion-toggle w-full text-left p-4 flex justify-between items-center"><span class="font-bold text-lg text-gray-800">${item.name}</span><i data-feather="chevron-down" class="transition-transform"></i></button><div class="accordion-content px-4 pb-4"><p class="text-gray-600 text-sm mb-4">${item.description}</p><h5 class="font-semibold text-sm mb-2 text-gray-800">如何展現這項素養？</h5><ul class="space-y-1.5 text-sm text-gray-700 mb-4">${examplesHtml}</ul><h5 class="font-semibold text-sm mb-2 text-gray-800">相關大學學群</h5><div>${clustersHtml}</div></div></div>`;
+                });
+
+                column.innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6 sticky top-[150px]"><div class="flex items-center text-${faceData.color}-600"><i data-feather="${faceData.icon}" class="w-8 h-8"></i><h3 class="text-2xl font-bold ml-3">${face}</h3></div></div><div class="space-y-6">${itemsHtml}</div>`;
+                gridContainer.appendChild(column);
+            }
+            
+            const sortedClusters = [...allClusters].sort();
+            sortedClusters.forEach(cl => { const option = document.createElement('option'); option.value = cl; option.textContent = cl; filterSelect.appendChild(option); });
+
+            document.querySelectorAll('.accordion-toggle').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('i');
+                    button.parentElement.classList.toggle('is-open');
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        if (icon) icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+        }
+        
+        filterSelect.addEventListener('change', (e) => {
+            const selectedCluster = e.target.value;
+            document.querySelectorAll('.competency-card').forEach(card => {
+                if (selectedCluster === 'all') {
+                    card.classList.remove('highlight');
+                    card.style.opacity = '1';
+                } else {
+                    const cardClusters = JSON.parse(card.dataset.clusters);
+                    if (cardClusters.includes(selectedCluster)) {
+                        card.classList.add('highlight');
+                        card.style.opacity = '1';
+                    } else {
+                        card.classList.remove('highlight');
+                        card.style.opacity = '0.4';
+                    }
+                }
+            });
+        });
+
+        // --- AI Analyst Logic ---
+        const aiInput = document.getElementById('ai-input');
+        const aiGenerateBtn = document.getElementById('ai-generate-btn');
+        const aiResultContainer = document.getElementById('ai-result');
+
+        aiGenerateBtn.addEventListener('click', async () => {
+            const userInput = aiInput.value.trim();
+            if (!userInput) {
+                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">請先輸入你的活動經驗描述！</p>`;
+                return;
+            }
+            
+            aiResultContainer.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+            
+            // ✅ 步驟 2: 強化 Prompt
+            const prompt = `你是一位專業的108課綱學習歷程顧問。請根據以下學生描述的活動經驗，分析其中最能體現的2-3項核心素養（從A1-C3中選擇），並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。\n\n學生描述：「${userInput}」`;
+
+            // ✅ 步驟 3: 使用 Puter.js 呼叫 AI
+            try {
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-pro',
+                    temperature: 0.5
+                });
+
+                const text = response?.message?.content;
+                if (!text) {
+                    throw new Error("AI 未能提供有效的分析結果。");
+                }
+                
+                // 原有的格式化邏輯保持不變，非常棒！
+                let htmlResult = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n\s?\*\s/g, '<li class="flex items-start gap-2"><i data-feather="check" class="w-5 h-5 text-green-500 mt-1 shrink-0"></i><span>')
+                    .replace(/(\n\s?\*\s.*)/g, '$1</span></li>')
+                    .replace(/\n/g, '<br>');
+
+                // 修正：確保即使第一個項目沒有前導換行符也能被捕捉
+                if (htmlResult.startsWith('<li')) {
+                    htmlResult = `<ul>${htmlResult}</ul>`;
+                } else {
+                    htmlResult = `<ul class="space-y-3">${htmlResult}</ul>`;
+                }
+
+                aiResultContainer.innerHTML = `<div class="prose max-w-none p-4 bg-indigo-50 rounded-lg">${htmlResult}</div>`;
+                feather.replace(); // Re-render icons after adding new ones
+
+            } catch (error) {
+                console.error("Puter.js AI call failed:", error);
+                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">抱歉，分析時發生錯誤。請稍後再試。</p>`;
+            }
+        });
+        
+        // --- Mobile Menu Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+             mobileMenu.classList.toggle('hidden');
+        });
+
+        // Initial Render
+        renderCompetencies();
+        feather.replace();
+    </script>
+</body>
+</html>
