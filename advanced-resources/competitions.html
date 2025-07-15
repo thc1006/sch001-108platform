@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國內外競賽資訊 - 台灣教育處方籤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #ec4899, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .competition-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .competition-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-purple-600 font-semibold transition duration-300">進階資源探索區</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                國內外競賽<span class="gradient-text">資訊</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                將你的知識付諸實踐，挑戰自我。這裡匯集了各類指標性競賽，讓你的才華被看見。
+            </p>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                        <input type="text" id="search-input" placeholder="競賽名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                    <div>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">競賽領域</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">全部領域</option>
+                            <option value="科學">科學</option>
+                            <option value="數理">數理</option>
+                            <option value="資訊">資訊</option>
+                            <option value="語文人文">語文人文</option>
+                            <option value="商業管理">商業管理</option>
+                            <option value="藝術設計">藝術設計</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="level-filter" class="font-bold text-gray-700 text-sm">競賽級別</label>
+                        <select id="level-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有級別</option>
+                            <option value="校際/地區">校際/地區</option>
+                            <option value="全國">全國</option>
+                            <option value="國際">國際</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="form-filter" class="font-bold text-gray-700 text-sm">參賽形式</label>
+                        <select id="form-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有形式</option>
+                            <option value="個人">個人</option>
+                            <option value="團體">團體</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Competition Grid -->
+        <section>
+            <div id="competition-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Competition cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到競賽</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或探索其他類別的競賽。</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
+        </div>
+    </footer>
+
+    <script>
+        const competitionsData = [
+            {
+                title: '全國中小學科學展覽會',
+                organizer: '國立臺灣科學教育館',
+                category: '科學',
+                level: '全國',
+                form: '團體',
+                description: '台灣歷史最悠久、規模最盛大的中學生科學研究競賽，是展現探究與實作能力的最佳舞台。',
+                deadline: '2026-03-15',
+                url: 'https://twsf.ntsec.gov.tw/'
+            },
+            {
+                title: '旺宏科學獎',
+                organizer: '旺宏電子股份有限公司',
+                category: '科學',
+                level: '全國',
+                form: '個人/團體',
+                description: '有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。',
+                deadline: '2025-07-10',
+                url: 'https://www.mxeduc.org.tw/ScienceAward'
+            },
+            {
+                title: 'TRML 台灣地區數學聯賽',
+                organizer: '中華民國數學會',
+                category: '數理',
+                level: '全國',
+                form: '團體',
+                description: '結合個人賽、團體賽與思考賽，考驗數學解題能力與團隊合作默契，是數學愛好者的年度盛事。',
+                deadline: '2025-08-20',
+                url: 'https://trml.math.ntu.edu.tw/'
+            },
+            {
+                title: '全國高中生資訊應用競賽',
+                organizer: '多所大學輪流主辦',
+                category: '資訊',
+                level: '全國',
+                form: '團體',
+                description: '分為多個組別，如軟體設計、數位內容等，旨在提升高中生的資訊應用與創新能力。',
+                deadline: '2025-11-10',
+                url: 'https://sa.ncyu.edu.tw/'
+            },
+            {
+                title: '外交小尖兵',
+                organizer: '外交部',
+                category: '語文人文',
+                level: '全國',
+                form: '團體',
+                description: '以英語為工具，探討國際議題，培養青年學子的國際視野與英語演說能力。',
+                deadline: '2025-09-15',
+                url: 'https://youthambassadors.mofa.gov.tw/'
+            },
+            {
+                title: '全國高中生商業個案大賽',
+                organizer: '台灣大學管理學院',
+                category: '商業管理',
+                level: '全國',
+                form: '團體',
+                description: '模擬真實的商業情境，要求參賽隊伍分析個案並提出解決方案，是商管潛力人才的競技場。',
+                deadline: '2026-02-28',
+                url: 'https://www.ntu-tbas.com/'
+            },
+            {
+                title: '台灣國際學生創意設計大賽',
+                organizer: '教育部',
+                category: '藝術設計',
+                level: '國際',
+                form: '個人/團體',
+                description: '全球規模最大的學生設計競賽之一，分為產品設計、視覺設計、數位動畫三大類，是與世界好手交流的絕佳機會。',
+                deadline: '2025-07-15',
+                url: 'https://www.tisdc.org/'
+            },
+            {
+                title: '國際數學奧林匹亞 (IMO)',
+                organizer: '各國數學學會',
+                category: '數理',
+                level: '國際',
+                form: '個人',
+                description: '世界最高等級的中學生數學競賽，需經過國內層層選拔，代表國家爭取榮譽。',
+                deadline: '2026-01-15',
+                url: 'https://www.imo-official.org/'
+            },
+            {
+                title: '國際資訊奧林匹亞 (IOI)',
+                organizer: '各國資訊學會',
+                category: '資訊',
+                level: '國際',
+                form: '個人',
+                description: '全球中學生程式設計與演算法的頂級競賽，考驗參賽者的邏輯思維與解題能力。',
+                deadline: '2025-12-20',
+                url: 'https://ioinformatics.org/'
+            },
+            {
+                title: '全國學生美術比賽',
+                organizer: '國立臺灣藝術教育館',
+                category: '藝術設計',
+                level: '全國',
+                form: '個人',
+                description: '台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等多種類別。',
+                deadline: '2025-10-20',
+                url: 'https://web.arte.gov.tw/nsac/index_news.aspx'
+            }
+        ];
+
+        const competitionGrid = document.getElementById('competition-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const levelFilter = document.getElementById('level-filter');
+        const formFilter = document.getElementById('form-filter');
+
+        function getStatus(deadline) {
+            if (!deadline) {
+                return { text: '依官網', color: 'bg-gray-200 text-gray-700' };
+            }
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { text: '已截止', color: 'bg-gray-200 text-gray-700' };
+            } else if (diffDays <= 30) {
+                return { text: '即將截止', color: 'bg-red-100 text-red-800' };
+            } else {
+                return { text: '報名中', color: 'bg-green-100 text-green-800' };
+            }
+        }
+
+        function renderCompetitions() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedLevel = levelFilter.value;
+            const selectedForm = formFilter.value;
+
+            const filteredCompetitions = competitionsData.filter(comp => {
+                const searchCorpus = `${comp.title} ${comp.organizer}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || comp.category === selectedCategory;
+                const matchesLevel = selectedLevel === 'all' || comp.level === selectedLevel;
+                const matchesForm = selectedForm === 'all' || comp.form.includes(selectedForm);
+                return matchesSearch && matchesCategory && matchesLevel && matchesForm;
+            });
+
+            competitionGrid.innerHTML = '';
+
+            if (filteredCompetitions.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredCompetitions.forEach(comp => {
+                    const card = document.createElement('div');
+                    card.className = 'competition-card bg-white rounded-lg shadow-md flex flex-col';
+                    
+                    const status = getStatus(comp.deadline);
+
+                    card.innerHTML = `
+                        <div class="p-6 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="text-sm font-bold text-pink-600">${comp.category}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.level}</span>
+                                     <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.form}</span>
+                                </div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color} flex-shrink-0">${status.text}</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${comp.title}</h3>
+                            <p class="text-sm text-gray-500 mb-4">主辦單位：${comp.organizer}</p>
+                            <p class="text-gray-700">${comp.description}</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-500">報名截止</p>
+                                <p class="font-semibold text-gray-700">${comp.deadline ? comp.deadline : '依官網公告'}</p>
+                            </div>
+                            <a href="${comp.url}" target="_blank" rel="noopener noreferrer" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300">
+                                前往官網
+                            </a>
+                        </div>
+                    `;
+                    competitionGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderCompetitions);
+        categoryFilter.addEventListener('change', renderCompetitions);
+        levelFilter.addEventListener('change', renderCompetitions);
+        formFilter.addEventListener('change', renderCompetitions);
+
+        // Initial Render
+        renderCompetitions();
+    </script>
+</body>
+</html>
