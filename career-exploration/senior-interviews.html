@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學長姐真心話 - 台灣教育處方籤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f9f9fb;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .filter-btn.active {
+            background-color: #9333ea;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgb(147 51 234 / 38%);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            max-height: 90vh;
+            transition: all 0.3s ease-out;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        .modal.flex .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .interview-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .interview-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .tab-btn.active {
+            border-bottom-color: #a855f7;
+            color: #a855f7;
+            font-weight: 700;
+        }
+        .prose {
+             --tw-prose-body: #374151;
+             --tw-prose-headings: #111827;
+             --tw-prose-links: #9333ea;
+             --tw-prose-bold: #111827;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold">
+                <a href="#" class="flex items-center gap-2 text-purple-600">
+                    <i data-feather="message-circle"></i>
+                    <span>台灣教育處方籤</span>
+                </a>
+            </div>
+            <div id="desktop-menu" class="hidden md:flex space-x-8 items-center">
+                <a href="#interviews" class="text-gray-600 hover:text-purple-600 transition duration-300">學長姐訪談</a>
+                <a href="#" class="text-gray-600 hover:text-purple-600 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-purple-600 transition duration-300">進階資源探索區</a>
+            </div>
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-purple-600">
+                <i data-feather="menu" class="w-6 h-6"></i>
+            </button>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white">
+            <a href="#interviews" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">學長姐訪談</a>
+            <a href="#" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">學習歷程煉金室</a>
+            <a href="#" class="block py-2 px-6 text-gray-600 hover:bg-gray-100">進階資源探索區</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+             <div class="w-full h-72 rounded-2xl overflow-hidden mb-8 shadow-lg">
+                <img src="https://images.pexels.com/photos/1595385/pexels-photo-1595385.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" class="w-full h-full object-cover" alt="一群學生在討論">
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+                學長姐<span class="gradient-text">真心話</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                讓走過這條路的人，告訴你最真實的風景。這裡沒有標準答案，只有最真誠的經驗分享。
+            </p>
+        </section>
+
+        <!-- Filters and Search -->
+        <section id="interviews" class="mb-12 sticky top-[76px] z-30 bg-gray-100/80 backdrop-blur-md py-4 rounded-xl">
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
+                <!-- Search Box -->
+                <div class="relative w-full md:w-auto">
+                    <input type="text" id="search-box" placeholder="搜尋科系、學校或關鍵字..." class="pl-10 pr-4 py-2 w-full md:w-64 border-2 border-gray-200 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
+                    </div>
+                </div>
+                <!-- Category Filters -->
+                <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊學群">資訊</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群">法政</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群">傳播</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群">生科</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="管理學群">管理</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interview Grid -->
+        <section>
+            <div id="interview-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Interview cards will be injected here -->
+            </div>
+            <p id="no-results" class="text-center text-gray-500 py-16 hidden">找不到符合條件的訪談，試試看別的關鍵字吧！</p>
+        </section>
+    </main>
+
+    <!-- Interview Detail Modal -->
+    <div id="interviewModal" class="modal fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
+        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+    
+    <!-- Copy Notification -->
+    <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+        連結已複製！
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10 text-center">
+            <p>&copy; 2025 台灣教育處方籤. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const interviewData = [
+            {
+                id: 'info-01',
+                name: '陳同學',
+                major: '資訊工程學系',
+                university: '台灣大學',
+                category: '資訊學群',
+                quote: '學習歷程的重點不是「做了什麼」，而是從中「學到什麼」，以及「為什麼這件事對你有意義」。',
+                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=chen&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
+                content_html: `<div class="prose max-w-none"><h4>Q1: 高中時，你是如何探索跟準備資工領域的？</h4><p>其實我一開始也不是很確定。高一時我參加了學校的程式設計社，那是我第一次真正接觸寫程式。我發現我對「解決問題」這件事很有熱情，而程式碼就是我的工具。我的自主學習就鎖定做一個 Discord Bot，雖然很簡單，但從無到有的過程讓我學到非常多，也成為我學習歷程中最重要的專案。</p><h4>Q2: 大學的資工系生活，跟想像中一樣嗎？</h4><p>可以說既一樣也不一樣。一樣的是，每天真的都在跟程式碼和數學奮鬥。不一樣的是，大學的學習更要求「自學能力」。教授只會教你核心概念，但大量的實作和新技術，都需要自己花時間去網路上找資源、看文件。高中時自主學習的經驗，這時候就派上用場了。</p><h4>Q3: 對想讀資工系的學弟妹，有什麼建議？</h4><p>第一，數學很重要，尤其是離散數學和線性代數，一定要打好基礎。第二，不要只為了刷題而學程式，試著去找一個你想解決的問題，然後用程式去實現它，這個過程會讓你學得更快、更快樂。最後，多去看看別人的程式碼(GitHub)，學習好的寫作風格，這對團隊合作非常重要。</p></div>`,
+                tips: [
+                    { title: "逛逛 GitHub", desc: "試著尋找一個你有興趣的開源專案，閱讀它的程式碼，了解大家如何協作。" },
+                    { title: "解題練手感", desc: "到 LeetCode 或 CodeSignal 網站，挑戰一些基礎的演算法題目，訓練邏輯思維。" },
+                    { title: "動手做個小專案", desc: "跟著網路上的教學，做一個天氣查詢 App 或是一個簡單的個人網頁，體驗開發的樂趣。" }
+                ]
+            },
+            {
+                id: 'comm-01',
+                name: '林同學',
+                major: '傳播學院',
+                university: '政治大學',
+                category: '大眾傳播學群',
+                quote: '不要害怕放入看似「不務正業」的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。',
+                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lin&hair=long&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
+                content_html: `<div class="prose max-w-none"><h4>Q1: 你在高中時如何發現自己對傳播的興趣？</h4><p>我高中時很喜歡追星(笑)，為了幫我的偶像宣傳，我開始自己學著剪影片、做圖、經營一個小小的粉絲專頁。過程中我發現，我對「如何把一個訊息包裝得有趣，讓更多人看見」這件事非常有興趣。這比課本上的知識更能吸引我，也讓我意識到自己可能適合讀傳播。</p><h4>Q2: 傳播學院都在學些什麼？會不會很「虛」？</h4><p>很多人都有這個誤解。傳播學院的課其實非常「實」。我們有新聞採寫、攝影、廣告企劃、公關策略等很多實作課。當然也有理論課，像是傳播理論、符號學，這些課幫助我們建立思考的框架，去分析媒體現象背後的原因。所以它既需要創意，也需要很強的_logic_al思辨能力。</p><h4>Q3: 給學弟妹的建議？</h4><p>多觀察、多思考、多創作。每天滑手機的時候，不要只是被動接收訊息，可以去想「為什麼這個廣告會紅？」、「這個YouTuber的影片好在哪裡？」。然後試著自己去產出內容，無論是寫一篇文案、拍一支短片，或是辦一個小活動，這些「作品」遠比考試成績更能證明你的熱情與潛力。</p></div>`,
+                tips: [
+                    { title: "開始你的內容創作", desc: "在 Instagram 或 Dcard 上建立一個主題帳號，分享你感興趣的事物，練習文案寫作與社群互動。" },
+                    { title: "試用線上設計工具", desc: "使用 Canva 或 Figma，為你的社群帳號設計貼文，或為學校報告製作精美的封面。" },
+                    { title: "分析你喜歡的媒體", desc: "找一個你喜歡的 YouTuber 或 Podcast，分析它的內容結構、視覺風格與目標受眾，並寫下你的觀察。" }
+                ]
+            },
+            {
+                id: 'law-01',
+                name: '張同學',
+                major: '法律學系',
+                university: '台北大學',
+                category: '法政學群',
+                quote: '法律不只是背法條，更重要的是理解法條背後的「為什麼」，以及它如何應用在活生生的人身上。',
+                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhang&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
+                content_html: `<div class="prose max-w-none"><h4>Q1: 很多人覺得法律系很無聊，當初為何選擇？</h4><p>我高二時參加了學校的模擬法庭社，那是我第一次接觸到一個真實的案件。我們需要分析證據、建構論點、進行辯論。我發現法律不只是死板的文字，它是一個充滿邏輯思辨和價值判斷的領域，這讓我非常著迷。</p><h4>Q2: 法律系的課業壓力是不是很大？</h4><p>是真的不輕鬆。閱讀量非常大，每週可能都要讀上百頁的判決和文章。考試也不是單純背誦，而是「申論題」，需要你把學到的法律概念，應用在一個虛構的案例中，去分析誰對誰錯。所以，除了記憶力，邏輯和寫作能力同等重要。</p><h4>Q3: 給想讀法律系的學弟妹的建議？</h4><p>第一，關心社會時事。法律是為了解決社會問題而存在的，多看新聞、多了解社會上發生的事，會讓你學習時更有感。第二，訓練自己的閱讀和寫作能力，試著去寫一些有條理、有邏輯的長文。第三，保持一顆開放的心，法律中有很多價值衝突，學會從不同角度思考，比找到「唯一正解」更重要。</p></div>`,
+                tips: [
+                    { title: "閱讀法院判決", desc: "到司法院的判決查詢系統，找一個你感興趣的案件（如：通姦除罪化），試著讀懂判決書的理由。" },
+                    { title: "關注法律白話文運動", desc: "追蹤「法律白話文運動」的網站或社群，他們用簡單的方式解釋複雜的法律議題。" },
+                    { title: "參與一場辯論", desc: "無論是參加學校的辯論社，或只是和同學針對一個議題進行深入的討論，都能訓練你的邏輯與口語表達。" }
+                ]
+            },
+            {
+                id: 'bio-01',
+                name: '王同學',
+                major: '生物科技學系',
+                university: '陽明交通大學',
+                category: '生命科學學群',
+                quote: '高中時的科展經驗，不只是為了得獎。從中學到的實驗設計和解決問題的能力，才是在大學真正派上用場的關鍵。',
+                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wang&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
+                content_html: `<div class="prose max-w-none"><h4>Q1: 你是如何確定自己對生命科學的興趣的？</h4><p>我從小就對生物很有興趣，但真正讓我下定決心的是高二的科展。我們的主題是研究一種益生菌的抑菌效果。從一開始的文獻探討、設計實驗、一次次失敗的嘗試，到最後看到培養皿上出現我們預期的結果，那種成就感是無可取代的。這個過程讓我確定，我想待在實驗室裡，解決跟生命相關的問題。</p><h4>Q2: 生科系都在做實驗嗎？</h4><p>實驗課確實佔了很大一部分，像是普生實驗、生化實驗、分生實驗等等，幾乎每門主科都有搭配的實驗課。但理論課也非常重，因為你需要有扎實的知識基礎，才能看懂文獻、設計實驗。所以絕對不是只有動手做而已。</p><h4>Q3: 給對生科領域有興趣的學弟妹的建議？</h4><p>英文能力非常、非常重要。因為最新的研究、頂尖的論文幾乎都是英文的。高中時可以多看一些科普的英文文章或影片。另外，要培養耐心和細心，做實驗常常會失敗，找出失敗的原因並改進，是生科人的日常。如果你享受這個過程，那這裡會很適合你。</p></div>`,
+                tips: [
+                    { title: "閱讀科普雜誌", desc: "試著閱讀《科學人》雜誌或關注 PanSci 泛科學網站，了解最新的科學進展。" },
+                    { title: "觀看學術演講", desc: "到 YouTube 搜尋 TED-Ed 或 CrashCourse 的生物相關影片，用有趣的方式學習新知。" },
+                    { title: "練習閱讀英文文獻", desc: "挑戰自己，找一篇簡單的英文科普報導，試著理解其中的專有名詞與核心概念。" }
+                ]
+            }
+        ];
+
+        const interviewGrid = document.getElementById('interview-grid');
+        const modal = document.getElementById('interviewModal');
+        const modalContent = document.getElementById('modal-content');
+        const filters = document.getElementById('category-filters');
+        const searchBox = document.getElementById('search-box');
+        const noResults = document.getElementById('no-results');
+
+        function renderInterviews(category = 'all', searchTerm = '') {
+            interviewGrid.innerHTML = '';
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+            const filteredData = interviewData.filter(p => {
+                const inCategory = category === 'all' || p.category === category;
+                const inSearch = !searchTerm || 
+                                 p.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.major.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.university.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.quote.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.category.toLowerCase().includes(lowerCaseSearchTerm);
+                return inCategory && inSearch;
+            });
+            
+            if (filteredData.length === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            filteredData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'interview-card bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer flex flex-col fade-in';
+                card.style.animationDelay = `${index * 50}ms`;
+                card.onclick = () => showModal(item.id);
+
+                card.innerHTML = `
+                    <div class="p-6 flex-grow flex flex-col">
+                        <p class="text-sm font-bold text-purple-600 mb-2">${item.category}</p>
+                        <blockquote class="text-lg font-semibold text-gray-800 flex-grow">“${item.quote}”</blockquote>
+                    </div>
+                    <div class="p-6 bg-gray-50 flex items-center border-t">
+                        <img src="${item.photo_url}" alt="${item.name}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <div>
+                            <p class="font-bold text-gray-900">${item.name}</p>
+                            <p class="text-sm text-gray-600">${item.university} ${item.major}</p>
+                        </div>
+                    </div>
+                `;
+                interviewGrid.appendChild(card);
+            });
+        }
+
+        function showModal(id) {
+            const item = interviewData.find(p => p.id === id);
+            if (!item) return;
+
+            const tipsHtml = item.tips.map(tip => `
+                <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                    <i data-feather="check-circle" class="w-5 h-5 text-purple-600 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <h5 class="font-bold text-gray-800">${tip.title}</h5>
+                        <p class="text-sm text-gray-600">${tip.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <img src="${item.photo_url}" alt="${item.name}" class="w-20 h-20 rounded-full object-cover shadow-md bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <div>
+                            <h3 class="text-2xl font-bold">${item.name}</h3>
+                            <p class="text-purple-600 font-semibold">${item.university} ${item.major}</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-7 h-7"></i></button>
+                </div>
+                <div class="border-b border-gray-200">
+                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
+                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'interview')">訪談內容</button>
+                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'tips')">探索TIPS</button>
+                    </nav>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow">
+                    <div class="tab-content-interview">${item.content_html}</div>
+                    <div class="tab-content-tips hidden space-y-4">${tipsHtml}</div>
+                </div>
+                <div class="p-4 bg-gray-50 border-t flex justify-end">
+                    <button onclick="copyLinkToClipboard('${id}')" class="flex items-center gap-2 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i data-feather="copy" class="w-4 h-4"></i>
+                        複製此訪談連結
+                    </button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            feather.replace();
+            modalContent.scrollTop = 0;
+            showTabContent(modalContent.querySelector('.tab-btn.active'), 'interview');
+        }
+        
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showTabContent(btn, tabName) {
+            const modalTabs = btn.closest('.modal-tabs');
+            modalTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const contentArea = modalContent.querySelector('.overflow-y-auto');
+            contentArea.querySelectorAll('[class^="tab-content-"]').forEach(c => c.classList.add('hidden'));
+            contentArea.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
+        }
+
+        function copyLinkToClipboard(id) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', id);
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = url.href;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const notification = document.getElementById('copy-notification');
+            notification.style.opacity = 1;
+            setTimeout(() => { notification.style.opacity = 0; }, 2000);
+        }
+
+        function handleFilterAndSearch() {
+            const activeCategory = filters.querySelector('.active').dataset.category;
+            const searchTerm = searchBox.value;
+            renderInterviews(activeCategory, searchTerm);
+        }
+
+        filters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filters.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                handleFilterAndSearch();
+            }
+        });
+
+        searchBox.addEventListener('input', handleFilterAndSearch);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                hideModal();
+            }
+        });
+        
+        function checkUrlForModal() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view');
+            if (viewId && interviewData.some(p => p.id === viewId)) {
+                showModal(viewId);
+            }
+        }
+        
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Initial Render
+        renderInterviews();
+        feather.replace();
+        checkUrlForModal();
+    </script>
+</body>
+</html>
