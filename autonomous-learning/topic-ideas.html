@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主題靈感產生器 - 台灣教育處方籤 (Puter.js 整合版)</title>
+    
+    <script src="https://js.puter.com/v2/"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* 簡易的加載動畫 */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .category-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#" class="text-blue-600 font-semibold transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
+            </div>
+            <button class="md:hidden flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-blue-500 hover:border-blue-500">
+                <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
+            </button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                主題靈感<span class="gradient-text">產生器</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+                點燃你的第一份好奇心。輸入興趣關鍵字，讓 AI 為你發想跨領域主題；或從下方精選主題中尋找靈感。
+            </p>
+        </section>
+
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+            <h2 class="text-2xl font-bold mb-2">✨ AI 幫我找靈感</h2>
+            <p class="text-gray-600 mb-6">輸入你的興趣（可以是多個，用逗號分隔），AI 將為你打造專屬的學習主題。</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="ideaInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：旅行、心理學、環保">
+                <button id="generateIdeaBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    <span>產生靈感</span>
+                </button>
+            </div>
+            <div id="ideaResult" class="mt-6 space-y-4">
+                </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-bold text-center mb-8">或是，從我們的精選主題庫尋找靈感</h2>
+            <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                <button class="category-btn active px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="all">全部主題</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="文史">文史</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="社會">社會</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="科普">科普</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="科技">科技</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="藝術">藝術</button>
+                <button class="category-btn px-4 py-2 font-semibold text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" data-category="生活">生活</button>
+            </div>
+
+            <div id="idea-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <div class="text-center">
+                <a href="#" class="text-2xl font-bold">台灣教育處方籤</a>
+                <p class="text-gray-400 mt-1">一個由關心台灣教育的學生與開發者發起的專案。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const staticIdeas = [
+            { title: '從《茶金》看台灣茶葉外銷的黃金年代', description: '結合戲劇與歷史文獻，探討1950年代台灣茶產業的興衰，以及其背後的國際政治經濟因素。', category: '文史' },
+            { title: '我家巷口的手搖飲店，為何能屹立不搖？', description: '運用地理資訊系統(GIS)與問卷調查，分析特定手搖飲店的客群、行銷策略與地點優勢。', category: '社會' },
+            { title: '台灣特有種「台灣犬」的基因與行為研究初探', description: '透過文獻蒐集與飼主訪談，整理台灣犬的歷史、外觀特徵，並探討其與其他犬種的行為差異。', category: '科普' },
+            { title: '用 Python 打造一個 Discord 訂便當機器人', description: '學習基礎 Python 程式設計與 API 串接，解決班級或社團中午訂餐的困擾，並分析訂餐數據。', category: '科技' },
+            { title: '重現經典電影場景：模型製作與光影實驗', description: '選擇一部喜愛的電影，以模型或電腦繪圖重現其經典場景，並分析其構圖、光線與色彩運用。', category: '藝術' },
+            { title: '斷捨離！極簡主義在我家房間的實踐與心理影響', description: '實際執行一個月的極簡生活，記錄整理過程、心境轉變，並對比消費主義的影響。', category: '生活' },
+            { title: '古地圖中的台北城：時空變遷下的都市發展', description: '比較清代、日治時期至今的台北地圖，分析西門町、大稻埕等區域的街道紋理與土地利用變化。', category: '文史' },
+            { title: '校園流浪貓 TNR 計畫的可行性評估與宣導', description: '研究TNR（捕捉、絕育、釋放）的原理與成效，並設計一套適合在校園推廣的宣導海報與懶人包。', category: '社會' },
+            { title: '為什麼飛機不會掉下來？白努力定律的實驗驗證', description: '利用風扇、紙張等簡易材料，設計實驗來驗證白努力定律，並解釋其在飛機機翼上的應用。', category: '科普' }
+        ];
+
+        const ideaGrid = document.getElementById('idea-grid');
+        const filters = document.getElementById('category-filters');
+
+        // --- Static Ideas Logic (Unchanged) ---
+        function renderStaticIdeas(category = 'all') {
+            ideaGrid.innerHTML = '';
+            const filteredIdeas = category === 'all' 
+                ? staticIdeas 
+                : staticIdeas.filter(idea => idea.category === category);
+
+            filteredIdeas.forEach(idea => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300';
+                card.innerHTML = `
+                    <span class="inline-block bg-gray-200 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${idea.category}</span>
+                    <h3 class="text-xl font-bold mt-3 mb-2">${idea.title}</h3>
+                    <p class="text-gray-600">${idea.description}</p>
+                `;
+                ideaGrid.appendChild(card);
+            });
+        }
+
+        filters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelector('.category-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                const category = e.target.dataset.category;
+                renderStaticIdeas(category);
+            }
+        });
+
+        // --- AI Integration ---
+        const generateIdeaBtn = document.getElementById('generateIdeaBtn');
+        const ideaInput = document.getElementById('ideaInput');
+        const ideaResult = document.getElementById('ideaResult');
+
+        function showLoader(element) {
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        }
+
+        generateIdeaBtn.addEventListener('click', async () => {
+            const interests = ideaInput.value.trim();
+            if (!interests) {
+                ideaResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的興趣關鍵字！</p>';
+                return;
+            }
+
+            showLoader(ideaResult);
+
+            // ✅ 步驟 2: 強化 Prompt，明確要求 JSON 格式
+            const prompt = `
+                您是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。
+                請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。
+                您的回覆「必須」是純粹的 JSON 格式，不包含任何額外文字或 markdown 符號。
+
+                JSON 格式如下:
+                {
+                  "ideas": [
+                    {
+                      "title": "主題一標題",
+                      "description": "主題一的簡短描述",
+                      "category": "文史 | 社會 | 科普 | 科技 | 藝術 | 生活"
+                    },
+                    {
+                      "title": "主題二標題",
+                      "description": "主題二的簡短描述",
+                      "category": "文史 | 社會 | 科普 | 科技 | 藝術 | 生活"
+                    },
+                    {
+                      "title": "主題三標題",
+                      "description": "主題三的簡短描述",
+                      "category": "文史 | 社會 | 科普 | 科技 | 藝術 | 生活"
+                    }
+                  ]
+                }
+            `;
+            
+            // ✅ 步驟 3: 使用 Puter.js 呼叫 AI
+            try {
+                const ai_response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-flash-1.5',
+                    temperature: 0.6
+                });
+                
+                const jsonString = ai_response?.message?.content;
+                if (!jsonString) {
+                    throw new Error("AI 回應為空，無法解析。");
+                }
+
+                let parsedJson;
+                try {
+                    parsedJson = JSON.parse(jsonString);
+                } catch (parseError) {
+                    console.error("無法將 AI 回應解析為 JSON:", jsonString);
+                    throw new Error("AI 回應的格式不是有效的 JSON，請再試一次。");
+                }
+
+                if (parsedJson.ideas && Array.isArray(parsedJson.ideas)) {
+                    displayIdeas(parsedJson.ideas);
+                } else {
+                    throw new Error("AI 回應的 JSON 缺少 'ideas' 陣列。");
+                }
+
+            } catch (error) {
+                console.error("Puter.js AI call failed:", error);
+                ideaResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生靈感時發生錯誤。請稍後再試。</p>`;
+            }
+        });
+
+        // ✅ 步驟 4: 修正函式名稱以匹配呼叫
+        function displayIdeas(ideas) {
+            ideaResult.innerHTML = '';
+            ideas.forEach(idea => {
+                const ideaElement = document.createElement('div');
+                ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg';
+                ideaElement.innerHTML = `
+                    <span class="inline-block bg-blue-200 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${idea.category}</span>
+                    <h4 class="font-bold text-lg text-blue-800 mt-2">${idea.title}</h4>
+                    <p class="text-gray-700 mt-1">${idea.description}</p>
+                `;
+                ideaResult.appendChild(ideaElement);
+            });
+        }
+        
+        // Initial render
+        renderStaticIdeas();
+
+    </script>
+</body>
+</html>
