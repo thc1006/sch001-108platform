@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多元表現資料庫 2.0 (Puter.js 智慧版) - 台灣教育處方籤</title>
+    
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@0.378.0/dist/lucide.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #0ea5e9, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .filter-btn.active {
+            background-color: #0369a1; /* A deeper sky for active state */
+            color: white;
+            box-shadow: 0 4px 14px 0 rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .activity-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e5e7eb;
+            background-color: white;
+        }
+        .activity-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        #mobile-menu {
+            transition: transform 0.3s ease-in-out;
+        }
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        /* Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0ea5e9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Prose styles for AI output */
+        .prose h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.75; }
+        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .prose li { margin-bottom: 0.5rem; }
+        .prose strong { font-weight: bold; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-black text-sky-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#" class="text-gray-600 hover:text-sky-500 transition duration-300">自主學習啟航站</a>
+                <a href="#" class="text-sky-600 font-semibold border-b-2 border-sky-500 pb-1">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-sky-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-gray-600 hover:text-sky-500 transition duration-300">進階資源探索區</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 hover:text-sky-600 focus:outline-none">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200">
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">自主學習啟航站</a>
+            <a href="#" class="block py-3 px-6 text-sky-600 font-semibold bg-sky-50">學習歷程煉金室</a>
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">未來生涯GPS</a>
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">進階資源探索區</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-12 md:py-16">
+        <section class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-black text-gray-900 mb-4 tracking-tight">
+                多元表現<span class="gradient-text">資料庫 2.0</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                探索課堂外的無限可能。讓 AI 助你智慧配對，找到最能豐富你學習歷程的活動。
+            </p>
+        </section>
+
+        <section class="mb-12 md:mb-16">
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-sky-100">
+                <div class="flex items-center mb-4">
+                    <svg data-lucide="scan-search" class="w-8 h-8 text-sky-500 mr-3"></svg>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800">AI 智慧配對</h2>
+                </div>
+                <p class="text-gray-600 mb-5">輸入你的「目標學群」或想培養的「關鍵能力」，AI 將為你推薦最適合的活動，並說明理由。</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="text" id="ai-matcher-input" placeholder="例如：資訊學群、社會服務熱忱、領導能力..." class="flex-grow w-full px-4 py-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 text-base" />
+                    <button id="ai-matcher-button" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                        <svg data-lucide="lightbulb" class="w-5 h-5 mr-2"></svg>
+                        <span>開始配對</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="filters" class="mb-12 sticky top-[73px] z-40 bg-gray-50/80 backdrop-blur-lg py-4 -mx-4 px-4">
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <div class="relative mb-6">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" data-lucide="search"></svg>
+                    </div>
+                    <input type="text" id="search-input" placeholder="或直接搜尋活動關鍵字，如「科展」、「台大」..." class="w-full pl-11 pr-4 py-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 text-lg" />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <label class="font-bold text-gray-700 text-base">活動類型：</label>
+                        <div id="category-filters" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                    <div>
+                        <label class="font-bold text-gray-700 text-base">舉辦地區：</label>
+                        <div id="location-filters" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"></div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-16 w-16 text-gray-400" data-lucide="folder-search"></svg>
+                <h3 class="mt-4 text-xl font-bold text-gray-800">找不到相符的活動</h3>
+                <p class="mt-2 text-gray-500">試著放寬你的篩選條件，或換個關鍵字看看。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 text-white mt-20">
+        <div class="container mx-auto px-6 py-12 text-center">
+             <p class="mb-4 text-gray-400">有很棒的活動資訊想分享嗎？</p>
+            <a href="mailto:suggest@example.com?subject=多元表現活動推薦" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                推薦一個活動
+            </a>
+            <p class="text-sm text-gray-500 mt-8">© 2025 台灣教育處方籤 - Puter.js 智慧版</p>
+        </div>
+    </footer>
+    
+    <button id="back-to-top" class="hidden fixed bottom-8 right-8 bg-sky-600 hover:bg-sky-700 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-opacity duration-300">
+        <svg data-lucide="arrow-up"></svg>
+    </button>
+
+    <div id="ai-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[100] p-4 hidden modal-overlay opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-content opacity-0 transform scale-95">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="ai-modal-title" class="text-xl font-bold text-gray-800">AI 生成內容</h3>
+                <button id="ai-modal-close" class="text-gray-400 hover:text-gray-800 transition-colors">
+                    <svg data-lucide="x"></svg>
+                </button>
+            </div>
+            <div id="ai-modal-body" class="p-6 overflow-y-auto prose"></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const initializeApp = () => {
+            // --- 資料庫 (Data) ---
+            const activities = [
+                { title: 'TRML 台灣地區數學聯賽', organizer: '中華民國數學會', categories: ['科學競賽'], description: '全台最具規模的高中數學競賽之一，考驗團隊合作與解題能力。', deadline: '2025-08-15', url: '#', location: '多地區', icon: 'calculator' },
+                { title: '台大杜鵑花節學系博覽會', organizer: '台灣大學', categories: ['校園活動', '人文營隊'], description: '認識台大各科系的絕佳機會，包含學長姐分享與校園導覽。', deadline: '2026-03-01', url: '#', location: '台北市', icon: 'school' },
+                { title: '伊甸基金會身障體驗志工', organizer: '伊甸社會福利基金會', categories: ['社會服務'], description: '透過實際體驗與服務，深入了解身心障礙朋友的需求與處境。', deadline: '2025-12-31', url: '#', location: '多地區', icon: 'heart-handshake' },
+                { title: 'Google CS First 程式設計課程', organizer: 'Google', categories: ['線上學習', '科學競賽'], description: '免費的線上程式入門課程，透過有趣的專案學習 Scratch 或 Python。', deadline: null, url: '#', location: '線上', icon: 'code-xml' },
+                { title: '台灣國際學生創意設計大賽', organizer: '教育部', categories: ['藝術設計', '國際交流'], description: '全球規模的學生設計競賽，是展現創意與設計實力的國際舞台。', deadline: '2025-07-15', url: '#', location: '線上', icon: 'globe' },
+                { title: '全國高中生人文經典會考', organizer: '台積電文教基金會', categories: ['人文營隊'], description: '鼓勵高中生閱讀人文經典，透過競賽深化閱讀理解與思辨能力。', deadline: '2025-10-01', url: '#', location: '多地區', icon: 'book-marked' },
+                { title: '物理奧林匹亞競賽國手選拔', organizer: '國立臺灣師範大學物理系', categories: ['科學競賽'], description: '挑戰物理知識的極限，爭取代表台灣參加國際賽事的榮譽。', deadline: '2025-09-20', url: '#', location: '多地區', icon: 'atom' },
+                { title: '流浪動物之家服務志工', organizer: '各縣市動物保護協會', categories: ['社會服務'], description: '參與收容所的日常照護工作，為流離失所的動物提供溫暖。', deadline: null, url: '#', location: '各縣市', icon: 'dog' },
+                { title: '新一代設計展', organizer: '台灣設計研究院', categories: ['藝術設計', '校園活動'], description: '觀摩全台設計科系畢業生的作品，是獲取靈感與了解趨勢的最佳場合。', deadline: '2026-05-20', url: '#', location: '台北市', icon: 'palette' },
+                { title: 'Coursera - The Science of Well-Being', organizer: '耶魯大學', categories: ['線上學習', '人文營隊'], description: '耶魯大學最受歡迎的線上課程，用科學方法探討如何提升幸福感。', deadline: null, url: '#', location: '線上', icon: 'brain-circuit' },
+                { title: '模擬聯合國會議 (MUN)', organizer: '各校模聯社', categories: ['國際交流', '人文營隊'], description: '扮演各國外交官，針對國際議題進行討論、辯論與協商，培養國際視野與口語表達能力。', deadline: null, url: '#', location: '多地區', icon: 'users' }
+            ];
+
+            // --- DOM 元素 ---
+            const activityGrid = document.getElementById('activity-grid');
+            const noResultsDiv = document.getElementById('no-results');
+            const searchInput = document.getElementById('search-input');
+            const categoryFiltersContainer = document.getElementById('category-filters');
+            const locationFiltersContainer = document.getElementById('location-filters');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const backToTopButton = document.getElementById('back-to-top');
+            const aiMatcherButton = document.getElementById('ai-matcher-button');
+            const aiMatcherInput = document.getElementById('ai-matcher-input');
+            const aiModal = document.getElementById('ai-modal');
+            const aiModalTitle = document.getElementById('ai-modal-title');
+            const aiModalBody = document.getElementById('ai-modal-body');
+            const aiModalClose = document.getElementById('ai-modal-close');
+
+            let currentFilters = { category: 'all', location: 'all', searchTerm: '' };
+
+            // ✅ 步驟 2: 改造核心 AI 呼叫函式
+            /**
+             * Calls the AI using Puter.js to generate text content.
+             * @param {string} prompt The prompt to send to the AI.
+             * @returns {Promise<string>} The generated text.
+             */
+            async function callAI(prompt) {
+                try {
+                    const response = await puter.ai.chat(prompt, {
+                        model: 'google/gemini-pro' // A good model for reasoning and text generation
+                    });
+
+                    const text = response?.message?.content;
+                    if (text) {
+                        return text;
+                    } else {
+                        console.error("Puter.js AI response is empty or invalid:", response);
+                        return "抱歉，AI 無法產生回應。";
+                    }
+                } catch (error) {
+                    console.error("Puter.js AI call failed:", error);
+                    return `抱歉，處理您的請求時發生錯誤: ${error.message}`;
+                }
+            }
+
+            // --- Modal ---
+            function openModal(title, content) {
+                aiModalTitle.textContent = title;
+                aiModalBody.innerHTML = content;
+                aiModal.classList.remove('hidden');
+                setTimeout(() => {
+                    aiModal.classList.remove('opacity-0');
+                    aiModal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95');
+                }, 10);
+            }
+
+            function closeModal() {
+                aiModal.classList.add('opacity-0');
+                aiModal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95');
+                setTimeout(() => aiModal.classList.add('hidden'), 300);
+            }
+
+            // --- Core Functions ---
+            function getActivityStatus(deadline) {
+                if (!deadline) return { text: '隨時可參加', color: 'bg-blue-100 text-blue-800' };
+                const now = new Date();
+                const deadlineDate = new Date(deadline);
+                const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+                if (diffDays < 0) return { text: '已截止', color: 'bg-gray-200 text-gray-700' };
+                if (diffDays <= 30) return { text: `剩 ${diffDays} 天截止`, color: 'bg-red-100 text-red-800' };
+                return { text: '報名中', color: 'bg-green-100 text-green-800' };
+            }
+
+            function renderActivities() {
+                const filtered = activities.filter(act =>
+                    (currentFilters.category === 'all' || act.categories.includes(currentFilters.category)) &&
+                    (currentFilters.location === 'all' || act.location === currentFilters.location) &&
+                    (currentFilters.searchTerm === '' || act.title.toLowerCase().includes(currentFilters.searchTerm) || act.organizer.toLowerCase().includes(currentFilters.searchTerm))
+                );
+                activityGrid.innerHTML = '';
+                if (filtered.length > 0) {
+                    noResultsDiv.classList.add('hidden');
+                    activityGrid.classList.remove('hidden');
+                    filtered.forEach(act => activityGrid.appendChild(createActivityCard(act)));
+                } else {
+                    noResultsDiv.classList.remove('hidden');
+                    activityGrid.classList.add('hidden');
+                }
+                lucide.createIcons();
+            }
+
+            function createActivityCard(activity) {
+                const card = document.createElement('div');
+                card.className = 'activity-card rounded-xl shadow-md flex flex-col';
+                const status = getActivityStatus(activity.deadline);
+                const categoriesHtml = activity.categories.map(cat => `<span class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-1 rounded-full">${cat}</span>`).join(' ');
+
+                card.innerHTML = `
+                    <div class="p-6 flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex flex-wrap gap-2">${categoriesHtml}</div>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${status.color}">${status.text}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">${activity.title}</h3>
+                        <p class="text-sm text-gray-500 mb-4 flex items-center"><svg data-lucide="building-2" class="w-4 h-4 mr-2"></svg>${activity.organizer}</p>
+                        <p class="text-gray-700 text-base">${activity.description}</p>
+                    </div>
+                    <div class="p-5 bg-gray-50 rounded-b-xl mt-auto">
+                        <div class="flex justify-between items-center">
+                            <button class="ai-highlight-button text-sm text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1.5" data-title="${activity.title}" data-description="${activity.description}">
+                                <svg data-lucide="sparkles" class="w-4 h-4"></svg>
+                                AI 分析亮點
+                            </button>
+                            <a href="${activity.url}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300 flex items-center gap-2">
+                                查看詳情 <svg data-lucide="arrow-right" class="w-4 h-4"></svg>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return card;
+            }
+
+            function generateFilterButtons(container, items, groupName) {
+                container.innerHTML = '';
+                ['all', ...items].forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn px-4 py-2 font-semibold text-sm bg-white border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100';
+                    button.textContent = item === 'all' ? '全部' : item;
+                    button.dataset.filterGroup = groupName;
+                    button.dataset.filter = item;
+                    if (item === 'all') button.classList.add('active');
+                    container.appendChild(button);
+                });
+            }
+
+            // --- Event Handlers ---
+            function handleFilterClick(e) {
+                const target = e.target.closest('.filter-btn');
+                if (!target) return;
+                currentFilters[target.dataset.filterGroup] = target.dataset.filter;
+                Array.from(target.parentElement.children).forEach(btn => btn.classList.remove('active'));
+                target.classList.add('active');
+                renderActivities();
+            }
+
+            let debounceTimer;
+            function handleSearchInput() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    currentFilters.searchTerm = searchInput.value.trim().toLowerCase();
+                    renderActivities();
+                }, 300);
+            }
+
+            // ✅ 步驟 3: 更新函式以使用新的 AI 呼叫
+            async function handleMatcherSubmit() {
+                const goal = aiMatcherInput.value.trim();
+                if (!goal) { alert("請先輸入你的目標學群或想培養的能力！"); return; }
+                openModal("✨ AI 智慧配對", '<div class="flex justify-center items-center h-48"><div class="loader"></div></div>');
+                const prompt = `你是一位專業的台灣高中生升學輔導老師。請根據以下 JSON 格式的可用「多元表現」活動列表，為一位學生進行智慧配對。學生的目標是：「${goal}」。請用繁體中文回答，以 Markdown 格式推薦 2-3 個最相關的活動，並針對每個活動說明「推薦理由」，解釋這個活動如何幫助學生探索興趣、累積能力，以及如何在學習歷程檔案中呈現。可用活動如下：\n\n${JSON.stringify(activities)}`;
+                
+                const result = await callAI(prompt);
+                aiModalBody.innerHTML = result.replace(/\n/g, '<br>');
+            }
+
+            async function handleHighlightClick(e) {
+                const target = e.target.closest('.ai-highlight-button');
+                if (!target) return;
+                const { title, description } = target.dataset;
+                openModal(`✨ ${title} - AI 亮點分析`, '<div class="flex justify-center items-center h-32"><div class="loader"></div></div>');
+                const prompt = `你是一位專業的台灣高中生升學輔導老師。請分析以下這個活動，並用繁體中文回答。活動名稱：「${title}」，描述：「${description}」。請用條列式說明，參加這個活動可以為「學習歷程檔案」帶來哪些具體的「亮點」或「可學習的關鍵能力」？`;
+                
+                const result = await callAI(prompt);
+                aiModalBody.innerHTML = result.replace(/\n/g, '<br>');
+            }
+
+            // --- Initialization ---
+            const allCategories = [...new Set(activities.flatMap(a => a.categories))];
+            const allLocations = [...new Set(activities.map(a => a.location))];
+            generateFilterButtons(categoryFiltersContainer, allCategories, 'category');
+            generateFilterButtons(locationFiltersContainer, allLocations, 'location');
+            renderActivities();
+
+            // Event Listeners
+            categoryFiltersContainer.addEventListener('click', handleFilterClick);
+            locationFiltersContainer.addEventListener('click', handleFilterClick);
+            searchInput.addEventListener('input', handleSearchInput);
+            aiMatcherButton.addEventListener('click', handleMatcherSubmit);
+            activityGrid.addEventListener('click', handleHighlightClick);
+            aiModalClose.addEventListener('click', closeModal);
+            aiModal.addEventListener('click', e => {
+                if (e.target.classList.contains('modal-overlay')) closeModal();
+            });
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            window.addEventListener('scroll', () => {
+                backToTopButton.classList.toggle('hidden', window.scrollY <= 300);
+            });
+            backToTopButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        };
+
+        const checkLucideAndInit = () => {
+            if (typeof lucide !== 'undefined') {
+                initializeApp();
+                lucide.createIcons(); // Initial icon render
+            } else {
+                setTimeout(checkLucideAndInit, 100);
+            }
+        };
+        checkLucideAndInit();
+    });
+    </script>
+</body>
+</html>
