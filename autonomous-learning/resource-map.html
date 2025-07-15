@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學習資源地圖 3.0 (Puter.js 智慧版) - 台灣教育處方籤</title>
+    
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@0.378.0/dist/lucide.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #4f46e5, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .filter-btn.active {
+            background-color: #4338ca;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .resource-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        .resource-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        #mobile-menu {
+            transition: transform 0.3s ease-in-out;
+        }
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        /* Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Markdown-like styling */
+        .prose h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.75; }
+        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .prose li { margin-bottom: 0.5rem; }
+        .prose strong { font-weight: bold; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-black text-indigo-600">
+                <a href="#">台灣教育處方籤</a>
+            </div>
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="#" class="text-indigo-600 font-semibold border-b-2 border-indigo-500 pb-1">自主學習啟航站</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-500 transition duration-300">學習歷程煉金室</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-500 transition duration-300">未來生涯GPS</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-500 transition duration-300">進階資源探索區</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 hover:text-indigo-600 focus:outline-none">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200">
+            <a href="#" class="block py-3 px-6 text-indigo-600 font-semibold bg-indigo-50">自主學習啟航站</a>
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">學習歷程煉金室</a>
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">未來生涯GPS</a>
+            <a href="#" class="block py-3 px-6 text-gray-600 hover:bg-gray-50">進階資源探索區</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-12 md:py-16">
+        <section class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-black text-gray-900 mb-4 tracking-tight">
+                學習資源<span class="gradient-text">地圖 3.0</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                精選全球優質資源，更有 AI 助你規劃學習路徑。輸入你的目標，啟動個人化學習計畫！
+            </p>
+        </section>
+
+        <section class="mb-12 md:mb-16">
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-indigo-100">
+                <div class="flex items-center mb-4">
+                    <svg data-lucide="sparkles" class="w-8 h-8 text-indigo-500 mr-3"></svg>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800">AI 學習規劃師</h2>
+                </div>
+                <p class="text-gray-600 mb-5">告訴 AI 你的學習目標，它會從下方的資源庫中，為你建議一條學習路徑。</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="text" id="ai-planner-input" placeholder="例如：我想學 Python 數據分析、準備物理科探究與實作..." class="flex-grow w-full px-4 py-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 text-base" />
+                    <button id="ai-planner-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                        <svg data-lucide="wand-2" class="w-5 h-5 mr-2"></svg>
+                        <span>產生學習計畫</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="filters" class="mb-12 sticky top-[73px] z-40 bg-gray-50/80 backdrop-blur-lg py-4 -mx-4 px-4">
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+                <div class="relative mb-6">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                         <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <input type="text" id="search-input" placeholder="或是在所有資源中搜尋關鍵字..." class="w-full pl-11 pr-4 py-3 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 text-lg" />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                        <label class="font-bold text-gray-700 text-base">資源類型：</label>
+                        <div id="type-filters" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                    <div>
+                        <label class="font-bold text-gray-700 text-base">學科領域：</label>
+                        <div id="category-filters" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"></div>
+            <div id="no-results" class="hidden text-center py-16">
+                <img src="https://placehold.co/300x200/e2e8f0/64748b?text=Oops!" alt="找不到資源" class="mx-auto mb-6 rounded-lg">
+                <p class="text-2xl font-bold text-gray-700 mb-2">哎呀！找不到符合條件的資源</p>
+                <p class="text-gray-500">試著放寬篩選條件或更換關鍵字吧！</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 text-white mt-20">
+        <div class="container mx-auto px-6 py-12 text-center">
+            <p class="mb-4 text-gray-400">找不到你需要的資源嗎？或是有超棒的網站想推薦給大家？</p>
+            <a href="mailto:suggest@example.com?subject=學習資源推薦" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition duration-300 inline-block">
+                推薦一個資源
+            </a>
+            <p class="text-sm text-gray-500 mt-8">© 2025 台灣教育處方籤 - Puter.js 智慧版</p>
+        </div>
+    </footer>
+    
+    <button id="back-to-top" class="hidden fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-opacity duration-300">
+        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+    </button>
+
+    <div id="ai-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[100] p-4 hidden modal-overlay opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-content opacity-0 transform scale-95">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="ai-modal-title" class="text-xl font-bold text-gray-800">AI 生成內容</h3>
+                <button id="ai-modal-close" class="text-gray-400 hover:text-gray-800 transition-colors">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div id="ai-modal-body" class="p-6 overflow-y-auto prose">
+                </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const initializeApp = () => {
+            // --- 資料庫 (Data) ---
+            const resources = [
+                { title: 'Coursera', description: '與全球頂尖大學合作的線上課程平台，提供從程式設計到心理學的各類課程，部分有證書。', url: 'https://www.coursera.org/', type: '線上課程', categories: ['科技', '社會', '文史', '藝術', '科普'], cost: '部分免費', language: '多國語言', icon: 'graduation-cap' },
+                { title: 'Khan Academy (可汗學院)', description: '完全免費的非營利教育組織，提供數學、科學、歷史等高品質教學影片與練習題，適合打好基礎。', url: 'https://www.khanacademy.org/', type: '線上課程', categories: ['科普', '科技', '文史'], cost: '完全免費', language: '多國語言', icon: 'book-open-check' },
+                { title: 'edX', description: '由哈佛和MIT創立的非營利課程平台，提供大量高品質的大學課程，涵蓋範圍極廣。', url: 'https://www.edx.org/', type: '線上課程', categories: ['科技', '科普', '社會', '文史'], cost: '部分免費', language: '英語為主', icon: 'school' },
+                { title: 'Hahow 好學校', description: '台灣最大的線上課程平台之一，課程內容多元且生活化，涵蓋設計、程式、手作、行銷等。', url: 'https://hahow.in/', type: '線上課程', categories: ['藝術', '科技', '生活'], cost: '付費為主', language: '中文', icon: 'lightbulb' },
+                { title: 'CrashCourse', description: '在YouTube上用生動有趣的動畫，快速講解歷史、文學、化學等各學科的核心概念。', url: 'https://www.youtube.com/@crashcourse', type: '知識型影片', categories: ['文史', '社會', '科普'], cost: '完全免費', language: '英語為主', icon: 'youtube' },
+                { title: 'Kurzgesagt – In a Nutshell', description: '以高品質動畫聞名的科普頻道，主題涵蓋宇宙、物理、生物與未來科技，能引發強烈的好奇心。', url: 'https://www.youtube.com/@kurzgesagt', type: '知識型影片', categories: ['科普'], cost: '完全免費', language: '多國語言', icon: 'rocket' },
+                { title: 'TED-Ed', description: 'TED 旗下的教育頻道，透過動畫解釋各種有趣問題，從「水熊蟲為何殺不死」到「如何辨識謊言」。', url: 'https://www.youtube.com/@TEDEd', type: '知識型影片', categories: ['科普', '社會', '文史'], cost: '完全免費', language: '多國語言', icon: 'message-square-quote' },
+                { title: 'PanSci 科學新聞網', description: '泛科學的 YouTube 頻道，將台灣的科學研究與時事議題結合，製作成有趣的科普影片。', url: 'https://www.youtube.com/@Pansci', type: '知識型影片', categories: ['科普', '社會'], cost: '完全免費', language: '中文', icon: 'flask-conical' },
+                { title: '啾啾鞋', description: '台灣知名知識型 YouTuber，用輕鬆幽默的方式破解網路謠言、介紹冷知識與科普新知。', url: 'https://www.youtube.com/@chuchushoe', type: '知識型影片', categories: ['科普', '生活'], cost: '完全免費', language: '中文', icon: 'footprints' },
+                { title: '故事 StoryStudio', description: '台灣的歷史普及網站，用有趣、有觀點的故事，帶你重新認識台灣史與世界史。', url: 'https://storystudio.tw/', type: '閱讀材料', categories: ['文史', '社會'], cost: '部分免費', language: '中文', icon: 'scroll-text' },
+                { title: '報導者', description: '非營利的深度報導媒體，專注於台灣的社會、環境、人權等重要議題，適合培養思辨能力。', url: 'https://www.twreporter.org/', type: '閱讀材料', categories: ['社會'], cost: '完全免費', language: '中文', icon: 'newspaper' },
+                { title: '泛科學 PanSci', description: '台灣最大的科學知識社群與媒體，將艱澀的科學知識轉化為有趣、易懂的文章與活動。', url: 'https://pansci.asia/', type: '閱讀材料', categories: ['科普'], cost: '完全免費', language: '中文', icon: 'atom' },
+                { title: '國立故宮博物院 開放資料', description: '故宮將大量藏品圖像及文物資料釋出，可免費下載使用，是進行歷史或藝術主題研究的寶庫。', url: 'https://theme.npm.edu.tw/opendata/', type: '閱讀材料', categories: ['文史', '藝術'], cost: '完全免費', language: '中文', icon: 'landmark' },
+                { title: 'Figma', description: '專業的雲端UI/UX設計工具，許多科技公司都在用。有免費方案，適合用來製作報告、簡報與介面原型。', url: 'https://www.figma.com/', type: '實用工具', categories: ['科技', '藝術'], cost: '免費增值', language: '英語為主', icon: 'figma' },
+                { title: 'Canva', description: '強大且易上手的線上設計平台，內建大量模板，讓你輕鬆製作出精美的海報、簡報與學習歷程封面。', url: 'https://www.canva.com/', type: '實用工具', categories: ['藝術', '生活'], cost: '免費增值', language: '多國語言', icon: 'palette' },
+                { title: 'Google Colab', description: 'Google提供的免費雲端Jupyter Notebook環境，不需安裝，即可直接在瀏覽器上撰寫並執行Python程式碼。', url: 'https://colab.research.google.com/', type: '實用工具', categories: ['科技'], cost: '免費增值', language: '多國語言', icon: 'code-xml' },
+                { title: 'Notion', description: '一款功能強大的筆記與專案管理工具，能整合筆記、待辦清單、資料庫，適合規劃自主學習計畫。', url: 'https://www.notion.so/', type: '實用工具', categories: ['科技', '生活'], cost: '免費增值', language: '多國語言', icon: 'notebook-tabs' },
+                { title: 'Zotero', description: '免費的開源文獻管理軟體，能幫助你收集、整理、引用和分享研究資料，寫報告神器。', url: 'https://www.zotero.org/', type: '實用工具', categories: ['科技', '文史', '社會'], cost: '完全免費', language: '多國語言', icon: 'folder-plus' },
+            ];
+
+            // --- DOM 元素 ---
+            const resourceGrid = document.getElementById('resource-grid');
+            const noResultsDiv = document.getElementById('no-results');
+            const searchInput = document.getElementById('search-input');
+            const typeFiltersContainer = document.getElementById('type-filters');
+            const categoryFiltersContainer = document.getElementById('category-filters');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const backToTopButton = document.getElementById('back-to-top');
+            const aiPlannerButton = document.getElementById('ai-planner-button');
+            const aiPlannerInput = document.getElementById('ai-planner-input');
+            const aiModal = document.getElementById('ai-modal');
+            const aiModalTitle = document.getElementById('ai-modal-title');
+            const aiModalBody = document.getElementById('ai-modal-body');
+            const aiModalClose = document.getElementById('ai-modal-close');
+
+            let currentFilters = { type: 'all', category: 'all', searchTerm: '' };
+
+            // ✅ 步驟 2: 改造核心 AI 呼叫函式
+            /**
+             * Calls the AI using Puter.js to generate text content.
+             * @param {string} prompt The prompt to send to the AI.
+             * @returns {Promise<string>} The generated text.
+             */
+            async function callAI(prompt) {
+                try {
+                    const response = await puter.ai.chat(prompt, {
+                        model: 'google/gemini-flash-1.5' // Using a fast and capable model
+                    });
+
+                    const text = response?.message?.content;
+                    if (text) {
+                        return text;
+                    } else {
+                        console.error("Puter.js AI response is empty or invalid:", response);
+                        return "抱歉，AI 無法產生回應。請查看主控台以獲取更多資訊。";
+                    }
+                } catch (error) {
+                    console.error("Puter.js AI call failed:", error);
+                    return `抱歉，處理您的請求時發生錯誤: ${error.message}`;
+                }
+            }
+
+            // --- Modal ---
+            function openModal(title, content) {
+                aiModalTitle.textContent = title;
+                aiModalBody.innerHTML = content;
+                aiModal.classList.remove('hidden');
+                setTimeout(() => {
+                    aiModal.querySelector('.modal-overlay').classList.remove('opacity-0');
+                    aiModal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95');
+                }, 10);
+            }
+
+            function closeModal() {
+                aiModal.querySelector('.modal-overlay').classList.add('opacity-0');
+                aiModal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95');
+                setTimeout(() => aiModal.classList.add('hidden'), 300);
+            }
+
+            // --- Core Functions ---
+            function renderResources() {
+                const filtered = resources.filter(r => 
+                    (currentFilters.type === 'all' || r.type === currentFilters.type) &&
+                    (currentFilters.category === 'all' || r.categories.includes(currentFilters.category)) &&
+                    (currentFilters.searchTerm === '' || r.title.toLowerCase().includes(currentFilters.searchTerm) || r.description.toLowerCase().includes(currentFilters.searchTerm))
+                );
+
+                resourceGrid.innerHTML = '';
+                if (filtered.length > 0) {
+                    noResultsDiv.classList.add('hidden');
+                    resourceGrid.classList.remove('hidden');
+                    filtered.forEach(resource => resourceGrid.appendChild(createResourceCard(resource)));
+                } else {
+                    noResultsDiv.classList.remove('hidden');
+                    resourceGrid.classList.add('hidden');
+                }
+                lucide.createIcons();
+            }
+
+            function createResourceCard(resource) {
+                const card = document.createElement('div');
+                card.className = 'resource-card bg-white p-6 rounded-xl shadow-md flex flex-col';
+                
+                const costColor = resource.cost === '完全免費' ? 'bg-green-100 text-green-800' : (resource.cost === '付費為主' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800');
+                const tagsHtml = resource.categories.map(cat => `<span class="tag bg-gray-100 text-gray-700">${cat}</span>`).join(' ');
+
+                card.innerHTML = `
+                    <div class="flex-grow">
+                        <a href="${resource.url}" target="_blank" rel="noopener noreferrer" class="block mb-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 flex-shrink-0 mr-4 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-7 h-7 text-indigo-600" data-lucide="${resource.icon}"></svg>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-900">${resource.title}</h3>
+                                </div>
+                                <span class="tag ${costColor}">${resource.cost}</span>
+                            </div>
+                            <p class="text-gray-600 mt-4 text-base leading-relaxed">${resource.description}</p>
+                        </a>
+                    </div>
+                    <div class="mt-auto flex flex-wrap gap-2 items-center justify-between">
+                        <div>
+                            <span class="tag bg-indigo-100 text-indigo-800">${resource.type}</span>
+                            ${tagsHtml}
+                        </div>
+                        <button class="ai-summary-button text-sm text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1" data-title="${resource.title}" data-description="${resource.description}">
+                            <svg data-lucide="sparkles" class="w-4 h-4"></svg>
+                            AI 摘要
+                        </button>
+                    </div>
+                `;
+                return card;
+            }
+
+            function generateFilterButtons(container, items, groupName) {
+                container.innerHTML = '';
+                ['all', ...items].forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn px-4 py-2 font-semibold text-sm bg-white border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100';
+                    button.textContent = item === 'all' ? '全部' : item;
+                    button.dataset.filterGroup = groupName;
+                    button.dataset.filter = item;
+                    if (item === 'all') button.classList.add('active');
+                    container.appendChild(button);
+                });
+            }
+
+            // --- Event Handlers ---
+            function handleFilterClick(e) {
+                const target = e.target.closest('.filter-btn');
+                if (!target) return;
+                currentFilters[target.dataset.filterGroup] = target.dataset.filter;
+                // Deactivate all buttons in the same group first
+                Array.from(target.parentElement.children).forEach(btn => btn.classList.remove('active'));
+                target.classList.add('active');
+                renderResources();
+            }
+
+            let debounceTimer;
+            function handleSearchInput() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    currentFilters.searchTerm = searchInput.value.trim().toLowerCase();
+                    renderResources();
+                }, 300);
+            }
+            
+            // ✅ 步驟 3: 更新函式以使用新的 AI 呼叫
+            async function handlePlannerSubmit() {
+                const goal = aiPlannerInput.value.trim();
+                if (!goal) {
+                    alert("請先輸入你的學習目標！");
+                    return;
+                }
+                openModal("✨ AI 學習規劃師", '<div class="flex justify-center items-center h-48"><div class="loader"></div></div>');
+                
+                const prompt = `你是一位專業的台灣高中生自主學習指導老師。請根據以下 JSON 格式的可用資源列表，為一位學生規劃一個學習計畫。學生的目標是：「${goal}」。請用繁體中文回答，以 Markdown 格式提供一個清晰、有步驟的學習路徑建議，並在每個步驟中推薦 1-2 個最相關的資源（請直接寫出資源名稱）。可用資源如下：\n\n${JSON.stringify(resources)}`;
+                
+                const result = await callAI(prompt);
+                aiModalBody.innerHTML = result.replace(/\n/g, '<br>'); // Simple markdown conversion
+            }
+
+            async function handleSummaryClick(e) {
+                const target = e.target.closest('.ai-summary-button');
+                if (!target) return;
+
+                const title = target.dataset.title;
+                const description = target.dataset.description;
+
+                openModal(`✨ ${title} - AI 摘要`, '<div class="flex justify-center items-center h-32"><div class="loader"></div></div>');
+                
+                const prompt = `請根據以下資訊，用繁體中文簡要說明從這個資源可以學到什麼，或它的主要用途是什麼。請用 2-3 句話總結，並可以條列式補充說明。資源名稱：「${title}」，描述：「${description}」`;
+                
+                const result = await callAI(prompt);
+                aiModalBody.innerHTML = result.replace(/\n/g, '<br>');
+            }
+
+            // --- Initialization ---
+            const allTypes = [...new Set(resources.map(r => r.type))];
+            const allCategories = [...new Set(resources.flatMap(r => r.categories))];
+            generateFilterButtons(typeFiltersContainer, allTypes, 'type');
+            generateFilterButtons(categoryFiltersContainer, allCategories, 'category');
+            renderResources();
+
+            // Event Listeners
+            typeFiltersContainer.addEventListener('click', handleFilterClick);
+            categoryFiltersContainer.addEventListener('click', handleFilterClick);
+            searchInput.addEventListener('input', handleSearchInput);
+            aiPlannerButton.addEventListener('click', handlePlannerSubmit);
+            resourceGrid.addEventListener('click', handleSummaryClick);
+            aiModalClose.addEventListener('click', closeModal);
+            aiModal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) closeModal();
+            });
+
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            window.addEventListener('scroll', () => {
+                backToTopButton.classList.toggle('hidden', window.scrollY <= 300);
+            });
+            backToTopButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        };
+
+        const checkLucideAndInit = () => {
+            if (typeof lucide !== 'undefined') {
+                initializeApp();
+            } else {
+                setTimeout(checkLucideAndInit, 100);
+            }
+        };
+        checkLucideAndInit();
+    });
+    </script>
+</body>
+</html>
