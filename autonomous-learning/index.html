@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自主學習啟航站 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://js.puter.com/v2/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -145,6 +144,7 @@
         </div>
     </footer>
 
+    <script src="https://js.puter.com/v2/"></script>
     <script>
         // --- AI Coach Logic ---
         const generateCoachBtn = document.getElementById('generateCoachBtn');
@@ -163,61 +163,33 @@
             }
             showLoader(coachResult);
 
-            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
-
-請以 JSON 格式回應，包含以下欄位：
-{
-  "suggested_topic": "將學生的模糊想法，聚焦為一個更具體的研究主題",
-  "research_questions": ["提供3個可以引導初步探索的開放式問題"],
-  "resource_types": ["建議3種適合這個主題的學習資源類型"]
-}
-
-請確保回應只包含有效的 JSON 格式，不要包含其他文字。`;
+            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。內容須包含：
+1.  **建議主題方向 (suggested_topic)**：將學生的模糊想法，聚焦為一個更具體的研究主題。
+2.  **初步研究問題 (research_questions)**：提供 3 個可以引導初步探索的開放式問題。
+3.  **推薦資源類型 (resource_types)**：建議 3 種適合這個主題的學習資源類型（例如：知識型影片、線上課程、學術論文、訪談專家等）。
+請以純 JSON 格式輸出，不要添加任何額外文字、Markdown 或解釋，結構為：{ "suggested_topic": "...", "research_questions": ["...", "...", "..."], "resource_types": ["...", "...", "..."] }`;
             
             try {
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.5-pro'
-                });
-                
-                // 取得回應內容
-                const responseText = response.message.content;
-                
-                // 嘗試解析 JSON
-                let parsedJson;
-                try {
-                    // 清理回應文字，移除可能的 markdown 代碼塊標記
-                    const cleanedText = responseText.replace(/``````/g, '').trim();
-                    parsedJson = JSON.parse(cleanedText);
-                } catch (parseError) {
-                    console.error("JSON 解析錯誤:", parseError);
-                    // 如果 JSON 解析失敗，顯示原始回應
-                    coachResult.innerHTML = `
-                        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
-                            <h4 class="font-bold mb-2">AI 教練的建議：</h4>
-                            <div class="whitespace-pre-wrap">${responseText}</div>
-                            <p class="mt-4 text-sm">現在，你可以帶著這些想法，前往下方的<a href="topic-ideas.html" class="font-semibold text-blue-600 hover:underline">「靈感探索」</a>或<a href="resource-map.html" class="font-semibold text-blue-600 hover:underline">「資源蒐集」</a>區塊，開始你的旅程！</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // 如果成功解析 JSON，顯示格式化內容
+                const response = await puter.ai.chat(prompt, { model: 'google/gemini-2.5-flash' });
+                let text = response.message.content;
+                // 清理可能的 Markdown code block
+                text = text.replace(/^``````$/, '').trim();
+                const parsedJson = JSON.parse(text);
                 displayAIStarterPack(parsedJson);
-                
             } catch (error) {
-                console.error("Error calling Puter AI:", error);
+                console.error("Error calling AI API:", error);
                 coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請稍後再試。</p>`;
             }
         });
 
         function displayAIStarterPack(data) {
-            const questionsHtml = data.research_questions ? data.research_questions.map(q => `<li>${q}</li>`).join('') : '';
-            const resourcesHtml = data.resource_types ? data.resource_types.map(r => `<span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${r}</span>`).join('') : '';
+            const questionsHtml = data.research_questions.map(q => `<li>${q}</li>`).join('');
+            const resourcesHtml = data.resource_types.map(r => `<span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${r}</span>`).join('');
 
             coachResult.innerHTML = `
                 <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none">
                     <h4>建議主題方向</h4>
-                    <p>${data.suggested_topic || '請重新嘗試生成建議'}</p>
+                    <p>${data.suggested_topic}</p>
                     <h4>你可以從這幾個問題開始探索：</h4>
                     <ul class="list-disc list-inside">${questionsHtml}</ul>
                     <h4>建議尋找的資源類型：</h4>
