@@ -4,6 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台灣教育處方籤 - 108課綱學習路徑導航手冊</title>
+    
+    <!-- 1. 基礎 SEO Meta 標籤 -->
+    <meta name="description" content="一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。">
+    <meta name="keywords" content="108課綱, 自主學習, 學習歷程, 多元表現, 生涯探索, 高中生, 開源, g0v, 台灣教育處方籤">
+    <meta name="author" content="台灣教育處方籤團隊">
+
+    <!-- 2. 社群分享優化 (Open Graph) -->
+    <meta property="og:title" content="台灣教育處方籤 - 108課綱學習路徑導航手冊" />
+    <meta property="og:description" content="我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://thc1006.github.io/sch001-108platform/" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/thumbnail.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card (讓 Twitter 的分享也很好看) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="台灣教育處方籤 - 108課綱學習路徑導航手冊">
+    <meta name="twitter:description" content="一個專為108課綱高中生設計的開源資源整合平台，旨在弭平城鄉教育資訊落差。">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/thumbnail.png">
+
+    <!-- 3. 進階 SEO 與 LLM 優化 (JSON-LD 結構化資料) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "台灣教育處方籤",
+      "url": "https://thc1006.github.io/sch001-108platform/",
+      "description": "一個專為108課綱高中生設計的學習路徑導航手冊，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.google.com/search?q=site:thc1006.github.io/sch001-108platform/ {search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "台灣教育處方籤",
+        "url": "https://thc1006.github.io/sch001-108platform/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/thumbnail.png"
+        }
+      }
+    }
+    </script>
+
+    <!-- 原有的 CSS 和字體連結 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,7 +133,7 @@
                         </a>
                     </div>
                     <div class="flex items-center justify-center p-4">
-                        <!-- New Inline SVG Illustration -->
+                        <!-- Inline SVG Illustration -->
                         <svg viewBox="0 0 200 200" class="w-full max-w-md">
                             <defs>
                                 <filter id="glow">
@@ -94,24 +144,17 @@
                                     </feMerge>
                                 </filter>
                             </defs>
-                            <!-- Background Circles -->
                             <circle cx="100" cy="100" r="95" fill="none" stroke="#eef2ff" stroke-width="2"/>
                             <circle cx="100" cy="100" r="75" fill="none" stroke="#e0e7ff" stroke-width="1.5"/>
-                            
-                            <!-- Compass Rose -->
                             <g opacity="0.8">
                                 <path d="M100 20 L110 95 L100 85 L90 95 Z" fill="#a5b4fc"/>
                                 <path d="M100 180 L110 105 L100 115 L90 105 Z" fill="#c7d2fe"/>
                                 <path d="M20 100 L95 110 L85 100 L95 90 Z" fill="#c7d2fe"/>
                                 <path d="M180 100 L105 110 L115 100 L105 90 Z" fill="#a5b4fc"/>
                             </g>
-                            
-                            <!-- Central Glowing Element -->
                             <circle cx="100" cy="100" r="25" fill="#4f46e5" class="svg-pulse" filter="url(#glow)"/>
                             <circle cx="100" cy="100" r="12" fill="white"/>
                             <path d="M100 90 L110 100 L100 110 L90 100 Z" fill="#4f46e5"/>
-
-                            <!-- Abstract path lines -->
                             <path d="M40 160 Q 80 130, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash"/>
                             <path d="M160 40 Q 120 70, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -0.5s;"/>
                             <path d="M45 45 Q 70 75, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -1s;"/>
@@ -129,7 +172,6 @@
                     <p class="text-gray-600 mt-2">無論你處在哪個階段，這裡都有你需要的起點。</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Path 1: Explore Direction -->
                     <a href="autonomous-learning/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
                         <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6 mx-auto">
                             <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
@@ -137,7 +179,6 @@
                         <h3 class="text-2xl font-bold mb-3">1. 探索方向</h3>
                         <p class="text-gray-600">感到迷惘，不知道自主學習要做什麼？從這裡開始，尋找你的主題與熱情所在。</p>
                     </a>
-                    <!-- Path 2: Build Portfolio -->
                     <a href="learning-portfolio/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
                         <div class="flex items-center justify-center h-20 w-20 rounded-full bg-teal-100 mb-6 mx-auto">
                             <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
@@ -145,7 +186,6 @@
                         <h3 class="text-2xl font-bold mb-3">2. 打造歷程</h3>
                         <p class="text-gray-600">將你的學習經驗與反思，淬鍊成一份能展現個人特質的精彩學習歷程檔案。</p>
                     </a>
-                    <!-- Path 3: Deepen Expertise -->
                     <a href="advanced-resources/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
                         <div class="flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6 mx-auto">
                            <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
