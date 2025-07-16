@@ -1,125 +1,127 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" class="scroll-smooth">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學習歷程煉金室 - 優質範例藝廊 | 台灣教育處方籤</title>
-    
-    <!-- Tailwind CSS -->
+    <title>優質範例藝廊 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Tailwind Typography Plugin for better text formatting -->
-    <script src="https://cdn.tailwindcss.com/3.4.1?plugins=typography"></script>
-    
-    <!-- Google Fonts: Inter for English, Noto Sans TC for Traditional Chinese -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Feather Icons for UI icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles */
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc; /* Use a slightly softer gray */
         }
         .gradient-text {
-            background: linear-gradient(45deg, #10b981, #06b6d4);
+            background: -webkit-linear-gradient(45deg, #22c55e, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
         }
         .filter-btn.active {
-            background-color: #059669; /* A deep green */
+            background-color: #059669;
             color: white;
-            box-shadow: 0 4px 14px 0 rgb(0 119 84 / 38%);
         }
         .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.6);
         }
         .modal-content {
             max-height: 90vh;
-            transition: all 0.3s ease-out;
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        .modal.flex .modal-content {
-            transform: translateY(0);
-            opacity: 1;
         }
         .tab-btn.active {
             border-bottom-color: #10b981;
             color: #10b981;
-            font-weight: 700;
+            font-weight: 600;
         }
-        .prose {
-            /* Customizing typography plugin styles */
-            --tw-prose-body: #374151;
-            --tw-prose-headings: #111827;
-            --tw-prose-lead: #4b5563;
-            --tw-prose-links: #059669;
-            --tw-prose-bold: #111827;
-            --tw-prose-counters: #6b7280;
-            --tw-prose-bullets: #059669;
+        .portfolio-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .portfolio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
     <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold">
-                <a href="#" class="flex items-center gap-2">
-                    <span class="text-green-600">台灣教育處方籤</span>
-                </a>
+            <div class="text-2xl font-bold text-blue-600">
+                <a href="../index.html">台灣教育處方籤</a>
             </div>
-            <div class="hidden md:flex space-x-8 items-center">
-                <a href="#hero" class="text-gray-600 hover:text-green-600 transition duration-300">首頁</a>
-                <a href="#gallery" class="text-green-600 font-semibold transition duration-300">範例藝廊</a>
-                <a href="#tools" class="text-gray-600 hover:text-green-600 transition duration-300">實用工具</a>
-                <a href="#footer" class="text-gray-600 hover:text-green-600 transition duration-300">關於我們</a>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="../autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="index.html" class="text-green-600 font-semibold transition duration-300">學習歷程煉金室</a>
+                <a href="../career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="../advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
             </div>
-            <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-green-600">
-                <i data-feather="menu"></i>
-            </button>
         </nav>
     </header>
 
     <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
         <!-- Page Hero Section -->
-        <section id="hero" class="text-center pt-8 pb-16">
-            <h1 class="text-4xl md:text-6xl font-black text-gray-800 mb-4 leading-tight">
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 優質範例<span class="gradient-text">藝廊</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                觀摩最好的作品，是成為更好的創作者的第一步。從這裡學習如何呈現你的獨特之處，讓你的學習歷程檔案脫穎而出。
+                觀摩最好的作品，是成為更好的創作者的第一步。從這裡學習如何呈現你的獨特之處。
             </p>
         </section>
 
-        <!-- Filters and Search -->
-        <section id="gallery" class="mb-12 sticky top-[80px] z-30 bg-gray-50/80 backdrop-blur-md py-4 rounded-xl">
-            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
-                <!-- Search Box -->
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="search-box" placeholder="搜尋關鍵字 (如：實驗、歷史...)" class="pl-10 pr-4 py-2 w-full md:w-64 border-2 border-gray-200 rounded-full focus:ring-2 focus:ring-green-500 focus:border-green-500 transition">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
-                    </div>
+        <!-- Featured Exhibit -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-center">本月特展</h2>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
+                <div class="md:w-1/2">
+                    <img src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="社會實踐報告" class="h-full w-full object-cover">
                 </div>
-                <!-- Category Filters -->
-                <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
-                    <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="自然科學">自然科學</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="社會科學">社會科學</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="語文">語文</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="藝術設計">藝術設計</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊工程">資訊工程</button>
+                <div class="p-8 md:w-1/2 flex flex-col justify-center">
+                    <p class="text-sm font-bold text-green-600 mb-1">社會科學</p>
+                    <h3 class="text-2xl font-bold mb-3">社會實踐報告：<br>「剩食」議題的社區田野調查</h3>
+                    <p class="text-gray-600 mb-4">這份報告不僅止於資料蒐集，作者實際走訪社區店家與里長，透過訪談與觀察，提出了具體的剩食解決方案，展現了強大的行動力與社會關懷。</p>
+                    <button onclick="showModal('social-02')" class="mt-4 inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 self-start">
+                        深度剖析此範例 &rarr;
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="font-bold text-gray-700 text-sm">學科領域</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                            <option value="all">全部領域</option>
+                            <option value="自然科學">自然科學</option>
+                            <option value="社會科學">社會科學</option>
+                            <option value="語文人文">語文人文</option>
+                            <option value="藝術設計">藝術設計</option>
+                            <option value="跨領域">跨領域</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold text-gray-700 text-sm">成果類型</label>
+                        <select id="type-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                            <option value="all">所有類型</option>
+                            <option value="課程學習成果">課程學習成果</option>
+                            <option value="多元表現">多元表現</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold text-gray-700 text-sm">能力標籤</label>
+                         <select id="tag-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                            <option value="all">所有能力</option>
+                            <option value="實驗設計">實驗設計</option>
+                            <option value="數據分析">數據分析</option>
+                            <option value="田野調查">田野調查</option>
+                            <option value="文學分析">文學分析</option>
+                            <option value="數位創作">數位創作</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </section>
@@ -127,401 +129,199 @@
         <!-- Portfolio Grid -->
         <section>
             <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Portfolio cards will be injected here by JavaScript -->
-            </div>
-            <p id="no-results" class="text-center text-gray-500 py-16 hidden">找不到符合條件的範例，試試看別的關鍵字吧！</p>
-        </section>
-
-        <!-- Essential Tools Section -->
-        <section id="tools" class="mt-24 pt-16">
-             <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-800">學習歷程<span class="gradient-text">實用工具箱</span></h2>
-                <p class="mt-4 text-lg text-gray-600">我們為你整理了製作學習歷程檔案時，最實用的線上資源。</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Tool Card 1: Canva -->
-                <a href="https://www.canva.com/" target="_blank" class="block bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:-translate-y-2">
-                    <h3 class="font-bold text-xl mb-2">Canva</h3>
-                    <p class="text-gray-600">強大的線上設計工具，內建大量模板，無論是報告封面、簡報、資訊圖表都能輕鬆搞定。</p>
-                </a>
-                <!-- Tool Card 2: Google Fonts -->
-                <a href="https://fonts.google.com/" target="_blank" class="block bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:-translate-y-2">
-                    <h3 class="font-bold text-xl mb-2">Google Fonts</h3>
-                    <p class="text-gray-600">免費的開源字型庫，為你的報告選擇兼具美感與可讀性的字體，提升專業感。</p>
-                </a>
-                <!-- Tool Card 3: Pexels -->
-                <a href="https://www.pexels.com/" target="_blank" class="block bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:-translate-y-2">
-                    <h3 class="font-bold text-xl mb-2">Pexels</h3>
-                    <p class="text-gray-600">高品質的免費圖庫，為你的報告和簡報找到最適合的配圖，合法使用免煩惱。</p>
-                </a>
+                <!-- Portfolio cards will be injected here -->
             </div>
         </section>
     </main>
 
     <!-- Portfolio Detail Modal -->
-    <div id="portfolioModal" class="modal fixed inset-0 z-50 items-center justify-center hidden">
+    <div id="portfolioModal" class="fixed inset-0 z-50 items-center justify-center hidden">
         <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
-        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-5xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
-            <!-- Modal content will be injected here by JavaScript -->
+        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-4xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
+            <!-- Modal content will be injected here -->
         </div>
     </div>
 
-    <!-- Copy Notification -->
-    <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
-        連結已複製！
-    </div>
-
     <!-- Footer -->
-    <footer id="footer" class="bg-gray-800 text-white mt-24">
-        <div class="container mx-auto px-6 py-10 text-center">
-            <p>&copy; 2025 台灣教育處方籤. All Rights Reserved.</p>
-            <p class="text-sm text-gray-400 mt-2">專為 108 課綱學生打造的學習資源整合平台</p>
+    <footer class="bg-gray-800 text-white mt-20">
+        <div class="container mx-auto px-6 py-10">
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
-        // --- DATA SOURCE ---
-        // In a real application, this would likely come from a server or a separate JSON file.
         const portfolioData = [
             {
                 id: 'science-01',
                 title: '探究與實作：校園植物葉面含菌量分析',
                 category: '自然科學',
-                tags: ['生物', '實驗設計', '數據分析', '探究實作'],
-                thumbnail_url: 'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-                preview_image_url: 'https://images.pexels.com/photos/3938022/pexels-photo-3938022.jpeg?auto=compress&cs=tinysrgb&w=800',
+                type: '課程學習成果',
+                tags: ['實驗設計', '數據分析'],
+                thumbnail_url: 'https://images.pexels.com/photos/3735747/pexels-photo-3735747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                preview_image_url: 'https://placehold.co/800x1131/e0e7ff/3730a3?text=探究與實作報告',
                 analysis_html: `
-                    <h4>1. 問題意識清晰，連結生活</h4>
-                    <p>報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光，展現觀察力。</p>
-                    <h4>2. 研究過程視覺化，易於理解</h4>
-                    <p>善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓審閱者能一目了然地理解整個研究過程。</p>
-                    <h4>3. 數據呈現與解讀，展現分析能力</h4>
-                    <p>不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼），體現數據素養。</p>
-                    <h4>4. 反思具體且有延伸性</h4>
-                    <p>心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。</p>
-                    <h4>5. 版面簡潔易讀，重視呈現</h4>
-                    <p>整體版面配置清爽，標題層次分明，字體與行距適中，讓教授在短時間內就能輕鬆閱讀，掌握重點。這是尊重讀者的表現。</p>
-                `,
-                resources: [
-                    { name: 'LIS 情境科學教材', url: 'https://lis.org.tw/', desc: '台灣最頂尖的探究式學習教材，透過高品質影片與教材引導思考。' },
-                    { name: '臺大科學教育發展中心 (CASE)', url: 'https://case.ntu.edu.tw/', desc: '提供大量科普文章與線上演講，深化特定科學領域的知識。' },
-                    { name: 'PhET 互動式模擬教學', url: 'https://phet.colorado.edu/zh_TW/', desc: '科羅拉多大學開發的免費科學模擬教材，把抽象概念變具體。' },
-                    { name: 'Google 圖表製作工具', url: 'https://workspace.google.com/products/sheets/', desc: '使用 Google 試算表，輕鬆製作專業的長條圖、圓餅圖等。' },
-                ]
+                    <div class="space-y-4">
+                        <div><strong class="text-green-700">問題意識：</strong>報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。</div>
+                        <div><strong class="text-green-700">研究過程：</strong>善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。</div>
+                        <div><strong class="text-green-700">成果展現：</strong>不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。</div>
+                        <div><strong class="text-green-700">深度反思：</strong>心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。</div>
+                    </div>`
             },
             {
-                id: 'social-01',
-                title: '小論文：從《茶金》看台灣茶葉外銷史的興衰',
+                id: 'social-02',
+                title: '社會實踐報告：「剩食」議題的社區田野調查',
                 category: '社會科學',
-                tags: ['歷史', '經濟', '文獻探討', '小論文'],
-                thumbnail_url: 'https://images.pexels.com/photos/590478/pexels-photo-590478.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-                preview_image_url: 'https://images.pexels.com/photos/164501/pexels-photo-164501.jpeg?auto=compress&cs=tinysrgb&w=800',
+                type: '多元表現',
+                tags: ['田野調查', '訪談'],
+                thumbnail_url: 'https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                preview_image_url: 'https://placehold.co/800x1131/dcfce7/166534?text=社會實踐報告',
                 analysis_html: `
-                    <h4>1. 題目具吸引力且範圍適中</h4>
-                    <p>結合熱門戲劇與歷史研究，題目本身就能引發興趣。且範圍聚焦於「茶葉外銷史」，避免了題目過於龐雜而無法深入的問題。</p>
-                    <h4>2. 結構完整，論證清晰</h4>
-                    <p>報告遵循標準的小論文格式（緒論、正文、結論），章節分明。正文部分能有效整合戲劇內容與真實史料，進行交叉比對與論證。</p>
-                    <h4>3. 善用註腳與參考文獻，態度嚴謹</h4>
-                    <p>內文引用資料時，皆清楚標明註腳，文末也附上完整的參考文獻列表（可使用 APA 格式），展現了嚴謹的學術研究態度。</p>
-                    <h4>4. 提出個人觀點，展現思辨</h4>
-                    <p>在結論部分，不僅是總結前文，更提出了自己對於「文化內容如何帶動歷史關注」的觀點，展現了獨立思考的能力。</p>
-                `,
-                resources: [
-                    { name: '中研院數位文化中心', url: 'https://ascdc.sinica.edu.tw/', desc: '台灣學術研究的寶庫，提供大量數位化地圖、檔案與影像資料。' },
-                    { name: '故事 StoryStudio', url: 'https://storystudio.tw/', desc: '用引人入勝的方式訴說台灣與世界的歷史，培養議題洞察力。' },
-                    { name: '全國碩博士論文網', url: 'https://ndltd.ncl.edu.tw/', desc: '尋找學術論文與研究報告，學習專業的寫作格式。' },
-                    { name: '沃草 Watchout', url: 'https://watchout.tw/', desc: '關注台灣國會與公共議題，培養公民思辨與媒體識讀能力。' },
-                ]
+                    <div class="space-y-4">
+                        <div><strong class="text-green-700">問題意識：</strong>從全球性的剩食議題，聚焦到「社區」這個可操作的範圍，展現了將大問題轉化為具體行動的能力。</div>
+                        <div><strong class="text-green-700">研究過程：</strong>綜合運用了多種研究方法。除了文獻探討，更實際走訪了5家便當店、2間超市，並深度訪談了里長，資料來源多元且具說服力。可參考本站<a href='methodology.html' class='text-blue-600 hover:underline'>研究方法工具箱</a>。</div>
+                        <div><strong class="text-green-700">成果展現：</strong>最終不只提出問題，更設計了一份「社區剩食共享地圖」的提案，並附上初步的宣傳文案，展現了強烈的解決問題導向。</div>
+                        <div><strong class="text-green-700">深度反思：</strong>反思中不僅提到執行的困難（如：店家不願受訪），更探討了背後的社會結構性問題，展現了超越表象的洞察力。</div>
+                    </div>`
             },
             {
                 id: 'art-01',
-                title: '作品集：我的城市速寫計畫 - 光影的追尋',
+                title: '作品集：我的城市速寫計畫',
                 category: '藝術設計',
-                tags: ['素描', '觀察力', '創作理念', '作品集'],
-                thumbnail_url: 'https://images.pexels.com/photos/196646/pexels-photo-196646.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-                preview_image_url: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=800',
+                type: '多元表現',
+                tags: ['創作實踐', '觀察力'],
+                thumbnail_url: 'https://images.pexels.com/photos/164543/pexels-photo-164543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                preview_image_url: 'https://placehold.co/800x1131/fce7f3/86198f?text=作品集範例',
                 analysis_html: `
-                    <h4>1. 主題連貫且具個人風格</h4>
-                    <p>整個作品集圍繞「城市速寫」與「光影」這個核心主題，風格統一，能清楚看見作者的個人筆觸與觀察視角，而不只是單張作品的集合。</p>
-                    <h4>2. 過程與成果並陳，展現思考軌跡</h4>
-                    <p>除了展示完成的作品，也附上了部分草稿、不同角度的嘗試，以及創作時的側拍照片。這讓作品集不只是成果展，更是創作歷程的完整紀錄。</p>
-                    <h4>3. 創作自述深刻，傳達作品靈魂</h4>
-                    <p>每張作品都附上簡短但深刻的創作理念，說明選擇該場景的原因、想表達的情感，以及在技法上的思考。這讓作品更有溫度與深度。</p>
-                    <h4>4. 排版設計具美感，本身即是作品</h4>
-                    <p>作品集的整體排版經過精心設計，留白、字體選擇、圖片配置都與作品風格相得益彰，本身就是一件完整的設計作品。</p>
-                `,
-                resources: [
-                    { name: 'Pinterest', url: 'https://www.pinterest.com/', desc: '全球最大的視覺靈感收集工具，建立屬於你的靈感牆 (Mood Board)。' },
-                    { name: 'Adobe Color', url: 'https://color.adobe.com/', desc: '專業的線上配色工具，學習色彩學並創造和諧的色彩計畫。' },
-                    { name: 'Behance', url: 'https://www.behance.net/', desc: '全球頂尖的設計師作品分享平台，尋找排版與創作靈感。' },
-                    { name: 'Figma', url: 'https://www.figma.com/', desc: '專業的線上協作設計工具，許多設計師用它來排版作品集。' },
-                ]
+                    <div class="space-y-4">
+                        <div><strong class="text-green-700">問題意識：</strong>創作理念清晰，闡述了為何選擇「城市速寫」作為主題，以及想透過畫筆記錄城市變遷的動機。</div>
+                        <div><strong class="text-green-700">研究過程：</strong>作品集呈現了從草稿、不同媒材的嘗試到最終作品的完整脈絡，讓觀者能理解其創作的演進過程。</div>
+                        <div><strong class="text-green-700">成果展現：</strong>作品風格統一，排版具有設計感，本身就是一件完整的設計作品。每張畫都附有簡短的文字，說明地點與創作當下的心情。</div>
+                        <div><strong class="text-green-700">深度反思：</strong>在總結中，作者反思了「速寫」如何改變他觀看城市的方式，並連結到對都市更新議題的關懷，提升了作品的層次。</div>
+                    </div>`
             },
             {
-                id: 'lang-01',
-                title: '文學評論：分析張愛玲小說中的色彩意象',
-                category: '語文',
-                tags: ['文學分析', '意象', '文本細讀', '閱讀心得'],
-                thumbnail_url: 'https://images.pexels.com/photos/261706/pexels-photo-261706.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-                preview_image_url: 'https://images.pexels.com/photos/3358707/pexels-photo-3358707.jpeg?auto=compress&cs=tinysrgb&w=800',
+                id: 'cross-domain-01',
+                title: '跨領域專題：用Python分析唐詩中的色彩意象',
+                category: '跨領域',
+                type: '課程學習成果',
+                tags: ['文學分析', '數據分析', '數位創作'],
+                thumbnail_url: 'https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                preview_image_url: 'https://placehold.co/800x1131/eef2ff/4338ca?text=跨領域專題報告',
                 analysis_html: `
-                    <h4>1. 切入點精準，小中見大</h4>
-                    <p>從「色彩意象」這個小而美的切入點來分析張愛玲的作品，展現了對文本的細膩感受力，也讓主題能談得深入，避免泛泛而談。</p>
-                    <h4>2. 文本證據充足，論述有力</h4>
-                    <p>報告中大量引用小說原文作為佐證，並對引文進行細緻的分析，論述有憑有據，極具說服力，而非空想。</p>
-                    <h4>3. 組織架構清晰，邏輯性強</h4>
-                    <p>以不同的顏色（如：紅色、白色、月色）作為篇章標題來組織全文，架構一目了然，也緊扣主題，引導讀者思路。</p>
-                    <h4>4. 文筆流暢優美，展現素養</h4>
-                    <p>除了分析本身，作者的文筆也展現了良好的文學素養，使得整篇報告讀來不僅具知識性，也富含美感。</p>
-                `,
-                resources: [
-                    { name: 'Openbook 閱讀誌', url: 'https://www.openbook.org.tw/', desc: '台灣具公信力的書評媒體，提供優質書評、書展及作家專訪。' },
-                    { name: '臺大開放式課程 (NTU OCW)', url: 'https://ocw.aca.ntu.edu.tw/ntuocw/index.php', desc: '觀摩頂尖大學的文學課程，如《紅樓夢》、《史記》等經典導讀。' },
-                    { name: '誠品線上', url: 'https://www.eslite.com/', desc: '不僅是書店，更有豐富的作家專訪與閱讀專題，拓展文學視野。' },
-                    { name: '全國新書資訊網', url: 'https://isbn.ncl.edu.tw/', desc: '查詢書籍資料與版本，做文學研究的好幫手。' },
-                ]
-            },
-            {
-                id: 'info-01',
-                title: '自主學習：用 Python 打造天氣查詢聊天機器人',
-                category: '資訊工程',
-                tags: ['Python', 'API串接', '自主學習', '聊天機器人'],
-                thumbnail_url: 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-                preview_image_url: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=800',
-                analysis_html: `
-                    <h4>1. 學習動機與目標明確</h4>
-                    <p>清楚說明為何選擇「聊天機器人」作為主題，以及預計達成的功能（查詢天氣），展現計畫性。</p>
-                    <h4>2. 記錄學習歷程與解決問題</h4>
-                    <p>報告中不僅呈現最終成果，更重要的是記錄了「如何從零開始學習」、「參考了哪些網路教學」、「遇到了什麼困難（例如：API Key 如何申請）」以及「如何解決」，這才是自主學習的核心精神。</p>
-                    <h4>3. 程式碼與成果展示清晰</h4>
-                    <p>附上部分關鍵程式碼，並加上註解說明其功能。同時，用截圖或 GIF 動圖展示聊天機器人的實際操作畫面，讓成果一目了然。</p>
-                    <h4>4. 心得反思與未來展望</h4>
-                    <p>反思這次專案的收穫，並提出未來可以優化的方向，例如「增加查詢未來天氣的功能」、「發布到 Line 平台上」，展現持續學習的熱情。</p>
-                `,
-                resources: [
-                    { name: 'freeCodeCamp', url: 'https://www.freecodecamp.org/', desc: '全球知名的免費編程學習平台，提供專案導向的完整學習路徑。' },
-                    { name: 'Replit', url: 'https://replit.com/', desc: '強大的線上IDE，無需安裝環境，打開瀏覽器就能開始寫程式與分享。' },
-                    { name: 'GitHub', url: 'https://github.com/', desc: '全球最大的程式碼託管平台，學習觀摩他人專案與進行版本控制。' },
-                    { name: '中央氣象署開放資料平台', url: 'https://opendata.cwa.gov.tw/', desc: '學習如何申請 API Key，獲取真實世界的天氣資料。' },
-                ]
+                    <div class="space-y-4">
+                        <div><strong class="text-green-700">問題意識：</strong>完美結合了「語文」與「資訊」兩個領域，題目「用Python分析唐詩」本身就極具創意與亮點。</div>
+                        <div><strong class="text-green-700">研究過程：</strong>作者清楚說明了如何蒐集唐詩資料庫、如何撰寫Python程式來進行斷詞與顏色詞彙的頻率統計，方法論清晰。</div>
+                        <div><strong class="text-green-700">成果展現：</strong>將統計結果製作成精美的圓餅圖與詞頻分析表，將量化數據視覺化，讓文學分析不再只是主觀感受，更有了數據支撐。</div>
+                        <div><strong class="text-green-700">深度反思：</strong>作者在反思中探討了「數位人文」這個新興領域的可能性與限制，並提出未來可進一步分析不同詩人（如李白、杜甫）用色習慣的差異，展現了優異的研究潛力。</div>
+                    </div>`
             }
         ];
 
-        // --- DOM Elements ---
         const portfolioGrid = document.getElementById('portfolio-grid');
         const modal = document.getElementById('portfolioModal');
         const modalContent = document.getElementById('modal-content');
-        const categoryFilters = document.getElementById('category-filters');
-        const searchBox = document.getElementById('search-box');
-        const noResults = document.getElementById('no-results');
+        const categoryFilter = document.getElementById('category-filter');
+        const typeFilter = document.getElementById('type-filter');
+        const tagFilter = document.getElementById('tag-filter');
 
-        // --- Functions ---
-
-        /**
-         * Renders the portfolio grid based on selected category and search term.
-         * @param {string} category - The category to filter by.
-         * @param {string} searchTerm - The search term to filter by.
-         */
-        function renderPortfolioGrid(category = 'all', searchTerm = '') {
-            portfolioGrid.innerHTML = '';
-            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        function renderPortfolioGrid() {
+            const selectedCategory = categoryFilter.value;
+            const selectedType = typeFilter.value;
+            const selectedTag = tagFilter.value;
 
             const filteredData = portfolioData.filter(p => {
-                const inCategory = category === 'all' || p.category === category;
-                const inSearch = !searchTerm || 
-                                 p.title.toLowerCase().includes(lowerCaseSearchTerm) ||
-                                 p.tags.some(tag => tag.toLowerCase().includes(lowerCaseSearchTerm));
-                return inCategory && inSearch;
+                const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+                const matchesType = selectedType === 'all' || p.type === selectedType;
+                const matchesTag = selectedTag === 'all' || p.tags.includes(selectedTag);
+                return matchesCategory && matchesType && matchesTag;
             });
-            
-            if (filteredData.length === 0) {
-                noResults.classList.remove('hidden');
-            } else {
-                noResults.classList.add('hidden');
-            }
 
+            portfolioGrid.innerHTML = '';
             filteredData.forEach(item => {
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2';
+                card.className = 'portfolio-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer flex flex-col';
                 card.onclick = () => showModal(item.id);
                 
-                const tagsHtml = item.tags.map(tag => 
-                    `<span class="inline-block bg-green-100 text-green-800 text-xs font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${tag}</span>`
-                ).join('');
-
                 card.innerHTML = `
-                    <div class="relative">
-                        <img src="${item.thumbnail_url}" alt="${item.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e2e8f0/475569?text=圖片載入失敗';">
-                        <div class="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">${item.category}</div>
+                    <img src="${item.thumbnail_url}" alt="${item.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                    <div class="p-6 flex-grow">
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm font-bold text-green-600">${item.category}</p>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${item.type}</span>
+                        </div>
+                        <h3 class="text-lg font-bold mt-2 h-14">${item.title}</h3>
                     </div>
-                    <div class="p-6">
-                        <h3 class="text-lg font-bold mb-3 h-14 text-gray-900">${item.title}</h3>
-                        <div class="mt-4">${tagsHtml}</div>
+                    <div class="px-6 pb-6 border-t border-gray-100 mt-auto pt-4">
+                        <p class="text-xs text-gray-500 font-semibold">相關能力：${item.tags.join(', ')}</p>
                     </div>
                 `;
                 portfolioGrid.appendChild(card);
             });
         }
 
-        /**
-         * Displays the modal with details of a specific portfolio item.
-         * @param {string} id - The ID of the portfolio item to show.
-         */
         function showModal(id) {
             const item = portfolioData.find(p => p.id === id);
             if (!item) return;
 
-            const resourcesHtml = item.resources.map(res => `
-                <a href="${res.url}" target="_blank" rel="noopener noreferrer" class="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-100 transition-colors">
-                    <div class="flex-shrink-0 text-green-600 mt-1"><i data-feather="link"></i></div>
-                    <div>
-                        <h5 class="font-bold text-gray-800">${res.name}</h5>
-                        <p class="text-sm text-gray-600">${res.desc}</p>
-                    </div>
-                </a>
-            `).join('');
-
             modalContent.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-green-600">${item.category}</p>
-                        <h3 class="text-2xl font-bold text-gray-900">${item.title}</h3>
+                        <p class="text-sm font-bold text-green-600">${item.category} / ${item.type}</p>
+                        <h3 class="text-2xl font-bold">${item.title}</h3>
                     </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-8 h-8"></i></button>
+                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
                 <div class="border-b border-gray-200">
                     <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
-                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'analysis')">亮點分析</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'preview')">範本預覽</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'resources')">實用資源</button>
+                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'preview')">範本預覽</button>
+                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'analysis')">亮點分析</button>
                     </nav>
                 </div>
                 <div class="p-6 overflow-y-auto flex-grow">
-                    <div class="tab-content-analysis prose max-w-none">
+                    <div class="tab-content-preview">
+                        <p class="text-sm text-gray-500 mb-4">這是一份關於「${item.title}」的學習成果報告。注意其排版、圖表使用與結論的呈現方式。（此為示意圖）</p>
+                        <img src="${item.preview_image_url}" alt="${item.title}" class="w-full h-auto rounded-md shadow-md border">
+                    </div>
+                    <div class="tab-content-analysis hidden prose max-w-none">
                         ${item.analysis_html}
                     </div>
-                    <div class="tab-content-preview hidden">
-                        <p class="text-sm text-gray-500 mb-4">這是一份關於「${item.title}」的學習成果報告。注意其排版、圖表使用與結論的呈現方式。（此為示意圖）</p>
-                        <img src="${item.preview_image_url}" alt="${item.title}" class="w-full h-auto rounded-md shadow-md border" onerror="this.onerror=null;this.src='https://placehold.co/800x1131/e2e8f0/475569?text=圖片載入失敗';">
-                    </div>
-                    <div class="tab-content-resources hidden">
-                        <h4 class="text-lg font-bold mb-4">推薦工具與延伸閱讀</h4>
-                        <div class="space-y-4">${resourcesHtml}</div>
-                    </div>
-                </div>
-                <div class="p-4 bg-gray-50 border-t flex justify-end">
-                    <button onclick="copyLinkToClipboard('${id}')" class="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                        <i data-feather="copy" class="w-4 h-4"></i>
-                        複製此範例連結
-                    </button>
                 </div>
             `;
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
-            feather.replace(); // Re-render icons in the modal
-            
-            // Set initial tab to analysis
-            showTabContent(modalContent.querySelector('.tab-btn'), 'analysis');
+            modalContent.scrollTop = 0;
         }
 
-        /**
-         * Hides the modal.
-         */
         function hideModal() {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.body.style.overflow = 'auto'; // Restore background scrolling
         }
 
-        /**
-         * Switches content within the modal tabs.
-         * @param {HTMLElement} btn - The clicked tab button.
-         * @param {string} tabName - The name of the tab to show.
-         */
         function showTabContent(btn, tabName) {
             const modalTabs = btn.closest('.modal-tabs');
             modalTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const contentArea = modalContent.querySelector('.overflow-y-auto');
-            contentArea.querySelectorAll('[class^="tab-content-"]').forEach(c => c.classList.add('hidden'));
-            contentArea.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
+            const preview = modalContent.querySelector('.tab-content-preview');
+            const analysis = modalContent.querySelector('.tab-content-analysis');
+
+            if (tabName === 'preview') {
+                preview.classList.remove('hidden');
+                analysis.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+                analysis.classList.remove('hidden');
+            }
         }
         
-        /**
-         * Copies a link to a specific portfolio item to the clipboard.
-         * @param {string} id - The ID of the portfolio item.
-         */
-        function copyLinkToClipboard(id) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('view', id);
-            
-            // Use a temporary textarea to copy text
-            const textarea = document.createElement('textarea');
-            textarea.value = url.href;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+        // --- Filter Logic ---
+        categoryFilter.addEventListener('change', renderPortfolioGrid);
+        typeFilter.addEventListener('change', renderPortfolioGrid);
+        tagFilter.addEventListener('change', renderPortfolioGrid);
 
-            // Show notification
-            const notification = document.getElementById('copy-notification');
-            notification.style.opacity = 1;
-            setTimeout(() => {
-                notification.style.opacity = 0;
-            }, 2000);
-        }
-
-        // --- Event Listeners ---
-
-        // Combined filter and search handler
-        function handleFilterAndSearch() {
-            const activeCategory = categoryFilters.querySelector('.active').dataset.category;
-            const searchTerm = searchBox.value;
-            renderPortfolioGrid(activeCategory, searchTerm);
-        }
-
-        // Category filter clicks
-        categoryFilters.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                categoryFilters.querySelector('.active').classList.remove('active');
-                e.target.classList.add('active');
-                handleFilterAndSearch();
-            }
-        });
-
-        // Search box input
-        searchBox.addEventListener('input', handleFilterAndSearch);
-
-        // Close modal with Escape key
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                hideModal();
-            }
-        });
-
-        // Check for a 'view' parameter in the URL on page load
-        function checkUrlForModal() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const viewId = urlParams.get('view');
-            if (viewId && portfolioData.some(p => p.id === viewId)) {
-                showModal(viewId);
-            }
-        }
-
-        // --- Initializations ---
-        
-        // Initial render of the portfolio grid
+        // Initial Render
         renderPortfolioGrid();
-        
-        // Render all icons on the page
-        feather.replace();
-
-        // Check URL for deep linking
-        checkUrlForModal();
-
     </script>
 </body>
 </html>
