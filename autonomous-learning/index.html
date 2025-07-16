@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學習歷程煉金室 - 台灣教育處方籤</title>
+    <title>自主學習啟航站 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
         }
         .gradient-text {
-            background: -webkit-linear-gradient(45deg, #22c55e, #06b6d4);
+            background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -32,11 +32,18 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .prose ul > li::marker {
-            color: #10b981;
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .prose h3 {
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .prose h4 {
            font-weight: 700;
+        }
+        .prose ul > li::marker {
+            color: #14b8a6;
         }
     </style>
 </head>
@@ -48,8 +55,8 @@
                 <a href="../index.html">台灣教育處方籤</a>
             </div>
             <div class="hidden md:flex space-x-6 items-center">
-                <a href="../autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
-                <a href="index.html" class="text-green-600 font-semibold transition duration-300">學習歷程煉金室</a>
+                <a href="index.html" class="text-blue-600 font-semibold transition duration-300">自主學習啟航站</a>
+                <a href="../learning-portfolio/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
                 <a href="../career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
                 <a href="../advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
             </div>
@@ -59,114 +66,116 @@
     <main class="container mx-auto px-6 py-12">
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                學習歷程<span class="gradient-text">煉金室</span>
+                自主學習<span class="gradient-text">啟航站</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                告別無效的檔案堆疊。將你的學習經驗與反思，淬鍊成展現個人特質的亮點。
+                從一個模糊的想法，到一份精彩的成果。讓我們陪你走完這趟探索之旅。
             </p>
         </section>
 
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
-             <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
-             <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
-             <div>
-                <textarea id="reflectionInput" class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="在這裡貼上你的心得反思文字..."></textarea>
-             </div>
-             <div class="mt-4 text-center">
-                <button id="analyzeBtn" class="bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2 mx-auto">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    <span>開始健檢</span>
+             <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
+             <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓他為你生成一份個人化的「學習啟動包」！</p>
+             <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
+                <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>請求指導</span>
                 </button>
              </div>
-             <div id="analysisResult" class="mt-6">
+             <div id="coachResult" class="mt-6">
                 </div>
         </section>
 
         <section>
-            <h2 class="text-2xl font-bold text-center mb-8">煉金室四大核心工房</h2>
+            <h2 class="text-2xl font-bold text-center mb-8">自主學習四步驟</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <a href="portfolio-gallery.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 mx-auto">
-                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                <a href="topic-ideas.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">1</span>
+                        <h3 class="text-xl font-bold">靈感探索</h3>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">優質範例藝廊</h3>
-                    <p class="text-gray-600 text-sm">觀摩最好的作品，建立你的標竿。</p>
+                    <p class="text-gray-600 text-sm">透過 AI 發想、靈感矩陣與趨勢議題，找到值得你深入研究的主題。</p>
                 </a>
-
-                <a href="reflection-guide.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-cyan-100 mb-4 mx-auto">
-                        <svg class="w-10 h-10 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <a href="plan-templates.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">2</span>
+                        <h3 class="text-xl font-bold">計畫擬定</h3>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">反思引導提問集</h3>
-                    <p class="text-gray-600 text-sm">問對問題，讓你的心得更有深度。</p>
+                    <p class="text-gray-600 text-sm">參考優質範本與 AI 草擬工具，將你的靈感化為具體、可執行的計畫。</p>
                 </a>
-
-                <a href="activity-database.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-sky-100 mb-4 mx-auto">
-                        <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.586-.586a2 2 0 012.828 0l.586.586M11 11a1 1 0 11-2 0 1 1 0 012 0zM13 11a1 1 0 11-2 0 1 1 0 012 0zM16.293 4.293l.586.586a2 2 0 010 2.828l-.586.586"></path></svg>
+                <a href="resource-map.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">3</span>
+                        <h3 class="text-xl font-bold">資源蒐集</h3>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">多元表現資料庫</h3>
-                    <p class="text-gray-600 text-sm">尋找能豐富你履歷的課外活動。</p>
+                    <p class="text-gray-600 text-sm">從我們為你精選的資源地圖中，找到最適合你的高品質學習材料。</p>
                 </a>
-                
-                <a href="tools.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
-                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-4 mx-auto">
-                        <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+                <a href="methodology.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">4</span>
+                        <h3 class="text-xl font-bold">方法學習</h3>
                     </div>
-                    <h3 class="text-xl font-bold mb-2">線上製作工具箱</h3>
-                    <p class="text-gray-600 text-sm">工欲善其事，必先利其器。</p>
+                    <p class="text-gray-600 text-sm">為你的研究增添學術深度，學習問卷、訪談、實驗等研究方法。</p>
                 </a>
             </div>
+        </section>
+
+        <section class="mt-16">
+             <h2 class="text-2xl font-bold text-center mb-8">聽聽專家怎麼說</h2>
+             <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-lg">
+                 <div class="aspect-w-16 aspect-h-9">
+                     <iframe src="https://www.youtube.com/embed/videoseries?list=PL04i_5v3k_c1y0a-t0Wk2-3J9-0g6t2nF" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
+                 </div>
+                 <div class="p-4">
+                     <h3 class="font-bold text-lg">【自主學習】系列影片</h3>
+                     <p class="text-sm text-gray-600 mt-1">由國立臺灣大學教學發展中心製作，從心態建立到成果呈現，提供最完整、最權威的自主學習指引。</p>
+                 </div>
+             </div>
         </section>
     </main>
 
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
-            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
+            <p class="text-center">© 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- AI Health Check Logic (Powered by Puter.js) ---
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const reflectionInput = document.getElementById('reflectionInput');
-        const analysisResult = document.getElementById('analysisResult');
+        // --- AI Coach Logic (Powered by Puter.js) ---
+        const generateCoachBtn = document.getElementById('generateCoachBtn');
+        const coachInput = document.getElementById('coachInput');
+        const coachResult = document.getElementById('coachResult');
 
         function showLoader(element) {
             element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
         }
-        
+
         // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
-        analyzeBtn.addEventListener('click', async () => {
-            const inputText = reflectionInput.value.trim();
-            if (!inputText) {
-                analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
+        generateCoachBtn.addEventListener('click', async () => {
+            const topic = coachInput.value.trim();
+            if (!topic) {
+                coachResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的初步想法！</p>';
                 return;
             }
-            showLoader(analysisResult);
-            analyzeBtn.disabled = true;
+            showLoader(coachResult);
+            generateCoachBtn.disabled = true;
 
             // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
             const prompt = `
-            你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。
+            你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
 
             請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
 
             JSON 結構範例:
             {
-              "overall_comment": "一段簡短的總評。",
-              "analysis": [
-                { "element": "S", "comment": "針對 S (情境) 的評論", "suggestion": "針對 S 的具體修改建議" },
-                { "element": "T", "comment": "針對 T (任務) 的評論", "suggestion": "針對 T 的具體修改建議" },
-                { "element": "A", "comment": "針對 A (行動) 的評論", "suggestion": "針對 A 的具體修改建議" },
-                { "element": "R", "comment": "針對 R (結果) 的評論", "suggestion": "針對 R 的具體修改建議" }
-              ],
-              "revised_example": "根據你的建議，提供一小段修改後的文字範例。"
+              "suggested_topic": "一個具體的研究主題",
+              "research_questions": ["問題一", "問題二", "問題三"],
+              "resource_types": ["資源類型一", "資源類型二", "資源類型三"]
             }
 
-            學生的文字如下：
-            「${inputText}」
+            你的任務是為主題「${topic}」生成這份 JSON 啟動包。
             `;
             
             try {
@@ -174,53 +183,37 @@
                 const response = await puter.ai.chat(prompt, {
                     model: 'google/gemini-2.0-flash-lite-001'
                 });
-
+                
                 // 嘗試解析 AI 回傳的純文字內容為 JSON
                 const parsedJson = JSON.parse(response.message.content);
 
-                if (parsedJson && parsedJson.analysis && parsedJson.analysis.length > 0) {
-                    displayAIAnalysis(parsedJson);
+                if (parsedJson && parsedJson.suggested_topic) {
+                    displayAIStarterPack(parsedJson);
                 } else {
                     throw new Error("AI 回應的 JSON 結構不符合預期。");
                 }
 
             } catch (error) {
                 console.error("Error calling Puter.js or parsing JSON:", error);
-                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請檢查文字內容或稍後再試。</p>`;
+                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請檢查你的想法是否清晰，或稍後再試。</p>`;
             } finally {
-                analyzeBtn.disabled = false;
+                generateCoachBtn.disabled = false;
             }
         });
 
-        function displayAIAnalysis(data) {
-            const analysisHtml = data.analysis.map(item => {
-                const colors = {
-                    S: { bg: 'bg-blue-100', text: 'text-blue-800' },
-                    T: { bg: 'bg-green-100', text: 'text-green-800' },
-                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-                    R: { bg: 'bg-red-100', text: 'text-red-800' },
-                };
-                const color = colors[item.element.toUpperCase()] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+        function displayAIStarterPack(data) {
+            const questionsHtml = data.research_questions.map(q => `<li>${q}</li>`).join('');
+            const resourcesHtml = data.resource_types.map(r => `<span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${r}</span>`).join('');
 
-                return `
-                    <div class="p-4 rounded-lg ${color.bg}">
-                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element.toUpperCase()]})</h4>
-                        <p class="text-sm text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
-                        <p class="text-sm text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
-                    </div>
-                `;
-            }).join('');
-
-            analysisResult.innerHTML = `
-                <div class="prose max-w-none bg-gray-50 p-6 rounded-lg">
-                    <h3>健檢總評</h3>
-                    <p>${data.overall_comment}</p>
-                    <h3>STAR 分析與建議</h3>
-                    <div class="space-y-4 not-prose">${analysisHtml}</div>
-                    <h3>修改範例</h3>
-                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50/50 p-4 rounded-r-lg">
-                        <p>${data.revised_example}</p>
-                    </blockquote>
+            coachResult.innerHTML = `
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none">
+                    <h4>建議主題方向</h4>
+                    <p>${data.suggested_topic}</p>
+                    <h4>你可以從這幾個問題開始探索：</h4>
+                    <ul class="list-disc list-inside">${questionsHtml}</ul>
+                    <h4>建議尋找的資源類型：</h4>
+                    <div class="not-prose flex flex-wrap">${resourcesHtml}</div>
+                    <p class="mt-4 text-sm">現在，你可以帶著這些想法，前往下方的<a href="topic-ideas.html" class="font-semibold text-blue-600 hover:underline">「靈感探索」</a>或<a href="resource-map.html" class="font-semibold text-blue-600 hover:underline">「資源蒐集」</a>區塊，開始你的旅程！</p>
                 </div>
             `;
         }
