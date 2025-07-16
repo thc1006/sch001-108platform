@@ -7,34 +7,61 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
         }
         .gradient-text {
-            background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
+            background: -webkit-linear-gradient(45deg, #4f46e5, #14b8a6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        /* SVG Animation */
+        .svg-pulse {
+            animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .svg-dash {
+            stroke-dasharray: 5 5;
+            animation: dash 1.5s linear infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
     <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
                 <a href="index.html">台灣教育處方籤</a>
             </div>
-            <div class="hidden md:flex space-x-6 items-center">
-                <a href="#features" class="text-gray-600 hover:text-blue-500 transition duration-300">核心功能</a>
-                <a href="#showcase" class="text-gray-600 hover:text-blue-500 transition duration-300">精選內容</a>
+            <div class="hidden md:flex space-x-8 items-center font-semibold">
+                <a href="autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習</a>
+                <a href="learning-portfolio/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程</a>
+                <a href="career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">生涯探索</a>
+                <a href="advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源</a>
                 <a href="about.html" class="text-gray-600 hover:text-blue-500 transition duration-300">關於我們</a>
             </div>
-            <button class="md:hidden flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-blue-500 hover:border-blue-500">
-                <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
-            </button>
         </nav>
     </header>
 
@@ -42,96 +69,129 @@
     <main>
         <!-- Hero Section -->
         <section class="bg-white">
-            <div class="container mx-auto px-6 py-20 md:py-32 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold text-gray-800 leading-tight mb-4">
-                    108課綱的學習迷航？<br class="hidden md:block">我們做你的<span class="gradient-text">指南針</span>。
-                </h1>
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-                    一個專為108課綱學生設計的學習路徑導航手冊，整合所有你需要的方法、資源與靈感，讓你不再迷惘。
-                </p>
-                
-                <!-- Persona-based Call to Action: Directly addressing "小美" and "小明" -->
-                <div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6">
-                    <a href="autonomous-learning/index.html" class="w-full md:w-auto bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition duration-300 ease-in-out">
-                        <div class="text-xl">我對未來很迷惘，需要方向</div>
-                        <div class="text-sm opacity-80">（自主學習 / 學習歷程 / 生涯探索）</div>
+            <div class="container mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="text-center md:text-left">
+                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-800 leading-tight mb-6">
+                            在 108 課綱的迷霧中，<br>為你點亮一盞<span class="gradient-text">燈</span>。
+                        </h1>
+                        <p class="text-lg md:text-xl text-gray-600 max-w-xl mx-auto md:mx-0 mb-8">
+                            我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感，陪你走好高中這段探索之旅。
+                        </p>
+                        <a href="#paths" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition duration-300 ease-in-out inline-block">
+                            開始你的探索之旅 &rarr;
+                        </a>
+                    </div>
+                    <div class="flex items-center justify-center p-4">
+                        <!-- New Inline SVG Illustration -->
+                        <svg viewBox="0 0 200 200" class="w-full max-w-md">
+                            <defs>
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur"></feGaussianBlur>
+                                    <feMerge>
+                                        <feMergeNode in="coloredBlur"></feMergeNode>
+                                        <feMergeNode in="SourceGraphic"></feMergeNode>
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <!-- Background Circles -->
+                            <circle cx="100" cy="100" r="95" fill="none" stroke="#eef2ff" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="75" fill="none" stroke="#e0e7ff" stroke-width="1.5"/>
+                            
+                            <!-- Compass Rose -->
+                            <g opacity="0.8">
+                                <path d="M100 20 L110 95 L100 85 L90 95 Z" fill="#a5b4fc"/>
+                                <path d="M100 180 L110 105 L100 115 L90 105 Z" fill="#c7d2fe"/>
+                                <path d="M20 100 L95 110 L85 100 L95 90 Z" fill="#c7d2fe"/>
+                                <path d="M180 100 L105 110 L115 100 L105 90 Z" fill="#a5b4fc"/>
+                            </g>
+                            
+                            <!-- Central Glowing Element -->
+                            <circle cx="100" cy="100" r="25" fill="#4f46e5" class="svg-pulse" filter="url(#glow)"/>
+                            <circle cx="100" cy="100" r="12" fill="white"/>
+                            <path d="M100 90 L110 100 L100 110 L90 100 Z" fill="#4f46e5"/>
+
+                            <!-- Abstract path lines -->
+                            <path d="M40 160 Q 80 130, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash"/>
+                            <path d="M160 40 Q 120 70, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -0.5s;"/>
+                            <path d="M45 45 Q 70 75, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -1s;"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exploration Paths Section -->
+        <section id="paths" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">選擇你的探索路徑</h2>
+                    <p class="text-gray-600 mt-2">無論你處在哪個階段，這裡都有你需要的起點。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Path 1: Explore Direction -->
+                    <a href="autonomous-learning/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+                        <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6 mx-auto">
+                            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">1. 探索方向</h3>
+                        <p class="text-gray-600">感到迷惘，不知道自主學習要做什麼？從這裡開始，尋找你的主題與熱情所在。</p>
                     </a>
-                    <a href="advanced-resources/index.html" class="w-full md:w-auto bg-teal-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-teal-600 transform hover:-translate-y-1 transition duration-300 ease-in-out">
-                        <div class="text-xl">我已有明確目標，需要資源</div>
-                        <div class="text-sm opacity-80">（進階課程 / 國內外競賽 / 深度書單）</div>
+                    <!-- Path 2: Build Portfolio -->
+                    <a href="learning-portfolio/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+                        <div class="flex items-center justify-center h-20 w-20 rounded-full bg-teal-100 mb-6 mx-auto">
+                            <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">2. 打造歷程</h3>
+                        <p class="text-gray-600">將你的學習經驗與反思，淬鍊成一份能展現個人特質的精彩學習歷程檔案。</p>
+                    </a>
+                    <!-- Path 3: Deepen Expertise -->
+                    <a href="advanced-resources/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+                        <div class="flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6 mx-auto">
+                           <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">3. 深化專業</h3>
+                        <p class="text-gray-600">已有明確目標？從這裡尋找頂尖的線上課程、競賽與書單，讓你的能力更上一層樓。</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Latest Resources Section -->
+        <section id="showcase" class="py-20 bg-gray-200/50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">最新資源快遞</h2>
+                    <p class="text-gray-600 mt-2">我們持續為你更新最實用的學習資源。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <a href="career-exploration/senior-interviews.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <p class="text-sm font-semibold text-purple-600 mb-2">學長姐真心話</p>
+                        <h4 class="font-bold text-lg mb-2">政大傳播學院 林同學</h4>
+                        <p class="text-sm text-gray-600">「不要害怕放入看似『不務正業』的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。」</p>
+                    </a>
+                    <a href="advanced-resources/competitions.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <p class="text-sm font-semibold text-red-600 mb-2">競賽資訊</p>
+                        <h4 class="font-bold text-lg mb-2">旺宏科學獎</h4>
+                        <p class="text-sm text-gray-600">有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。</p>
+                    </a>
+                    <a href="learning-portfolio/tools.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <p class="text-sm font-semibold text-orange-600 mb-2">工具箱推薦</p>
+                        <h4 class="font-bold text-lg mb-2">Notion - 你的第二大腦</h4>
+                        <p class="text-sm text-gray-600">一個全功能的數位工作區，非常適合用來建立個人知識庫與管理自主學習專案。</p>
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="features" class="py-20">
-            <div class="container mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold">為你打造的三大核心支援</h2>
-                    <p class="text-gray-600 mt-2">我們將所有關鍵資源，整合成三大主題，直擊你的學習痛點。</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Feature 1: Autonomous Learning -->
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
-                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-3">自主學習啟航站</h3>
-                        <p class="text-gray-600 mb-6">不知道要做什麼？這裡有豐富的主題靈感、計畫範本與研究方法，引導你從0到1完成一份精彩的自主學習計畫。</p>
-                        <a href="autonomous-learning/index.html" class="font-bold text-blue-600 hover:text-blue-800 transition duration-300">開始探索 &rarr;</a>
-                    </div>
-                    <!-- Feature 2: Learning Portfolio -->
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 mb-6">
-                            <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-3">學習歷程煉金室</h3>
-                        <p class="text-gray-600 mb-6">告別無效的檔案堆疊。參考優質範例，使用反思提問集，將你的學習經驗淬鍊成展現個人特質的亮點。</p>
-                        <a href="learning-portfolio/index.html" class="font-bold text-teal-600 hover:text-teal-800 transition duration-300">製作我的檔案 &rarr;</a>
-                    </div>
-                    <!-- Feature 3: Career Exploration -->
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mb-6">
-                            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-3">未來生涯GPS</h3>
-                        <p class="text-gray-600 mb-6">你的興趣與能力，能對應到大學的哪個學群？這裡有學長姐的真實經驗與科系對照表，為你的未來精準導航。</p>
-                        <a href="career-exploration/index.html" class="font-bold text-purple-600 hover:text-purple-800 transition duration-300">定位未來方向 &rarr;</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Showcase Section -->
-        <section id="showcase" class="py-20 bg-white">
-            <div class="container mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold">精選內容</h2>
-                    <p class="text-gray-600 mt-2">聽聽學長姐的建議，看看別人如何做到。</p>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <!-- Showcase 1: Senior Interview -->
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200">
-                        <h4 class="text-sm font-bold text-blue-600 mb-2">學長姐真心話</h4>
-                        <p class="text-2xl font-bold mb-4">「學習歷程的重點不是『做了什麼』，而是『學到什麼』，以及『為什麼這件事對你有意義』。」</p>
-                        <div class="flex items-center mt-6">
-                            <img class="w-16 h-16 rounded-full mr-4 object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text=學長" alt="陳同學頭像">
-                            <div>
-                                <p class="font-bold text-lg">陳同學</p>
-                                <p class="text-gray-600">台灣大學 資訊工程學系</p>
-                            </div>
-                        </div>
-                         <a href="career-exploration/senior-interviews.html" class="mt-6 inline-block bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-50 transition duration-300">閱讀完整訪談</a>
-                    </div>
-                    <!-- Showcase 2: Portfolio Example -->
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200">
-                         <h4 class="text-sm font-bold text-teal-600 mb-2">優質範例藝廊</h4>
-                        <h3 class="text-2xl font-bold mb-4">自主學習成果：<br>台南巷弄甜點的文化經濟學分析</h3>
-                        <p class="text-gray-600 mb-6">這份報告結合了田野調查、數據分析與歷史爬梳，深入探討了在地文化如何影響商業模式。排版清晰、反思深刻，是跨領域學習的絕佳範本。</p>
-                        <a href="learning-portfolio/portfolio-gallery.html" class="mt-6 inline-block bg-white text-teal-600 font-semibold py-2 px-4 border border-teal-200 rounded-lg hover:bg-teal-50 transition duration-300">查看完整報告</a>
-                    </div>
-                </div>
+        <!-- About Us Teaser -->
+         <section class="py-20">
+            <div class="container mx-auto px-6 text-center">
+                 <h2 class="text-3xl md:text-4xl font-bold">我們是誰？</h2>
+                 <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">一個由學生為學生發起的開源專案，源自 g0v 黑客松，致力於用科技與設計，弭平教育資訊的落差。</p>
+                 <a href="about.html" class="mt-6 inline-block text-blue-600 font-bold hover:underline">
+                    了解我們的故事 &rarr;
+                 </a>
             </div>
         </section>
 
@@ -140,10 +200,10 @@
     <!-- Footer -->
     <footer class="bg-gray-800 text-white">
         <div class="container mx-auto px-6 py-10">
-            <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
                 <div class="mb-6 md:mb-0">
                     <h3 class="text-2xl font-bold">台灣教育處方籤</h3>
-                    <p class="text-gray-400 mt-1">一個由關心台灣教育的學生與開發者發起的專案。</p>
+                    <p class="text-gray-400 mt-1">一個開源、共創的教育資源整合平台。</p>
                 </div>
                 <div class="flex space-x-6">
                     <a href="about.html" class="text-gray-400 hover:text-white transition duration-300">關於我們</a>
