@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" class="scroll-smooth">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學習歷程煉金室 v2.1 - 台灣教育處方籤 (Puter.js 整合版)</title>
-    
-    <script src="https://js.puter.com/v2/"></script>
-
+    <title>學習歷程煉金室 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://js.puter.com/v2/"></script>
+
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -21,56 +20,45 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #14b8a6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
         }
-        .modal-content {
-            max-height: 90vh;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        .tab-btn.active {
-            border-bottom-color: #10b981;
+        .prose ul > li::marker {
             color: #10b981;
         }
-        .tag-btn {
-            transition: all 0.2s ease-in-out;
-        }
-        .tag-btn.active {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .prose h3 {
+           font-weight: 700;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
-                <a href="#">台灣教育處方籤</a>
+                <a href="../index.html">台灣教育處方籤</a>
             </div>
             <div class="hidden md:flex space-x-6 items-center">
-                <a href="#gallery-section" class="text-gray-600 hover:text-green-500 transition duration-300">優質範例</a>
-                <a href="#reflection-section" class="text-gray-600 hover:text-cyan-500 transition duration-300">反思引導</a>
-                <a href="#activity-section" class="text-gray-600 hover:text-sky-500 transition duration-300">多元表現</a>
-                <a href="#ai-assistant-section" class="text-gray-600 hover:text-indigo-500 transition duration-300">AI 小助理</a>
-            </div>
-            <div class="md:hidden">
-                <button id="mobile-menu-btn" class="text-gray-600 focus:outline-none">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
+                <a href="../autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="index.html" class="text-green-600 font-semibold transition duration-300">學習歷程煉金室</a>
+                <a href="../career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="../advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
             </div>
         </nav>
-        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
-            <a href="#gallery-section" class="block py-2 text-gray-600 hover:text-green-500">優質範例</a>
-            <a href="#reflection-section" class="block py-2 text-gray-600 hover:text-cyan-500">反思引導</a>
-            <a href="#activity-section" class="block py-2 text-gray-600 hover:text-sky-500">多元表現</a>
-            <a href="#ai-assistant-section" class="block py-2 text-gray-600 hover:text-indigo-500">AI 小助理</a>
-        </div>
     </header>
 
     <main class="container mx-auto px-6 py-12">
-        <section class="text-center mb-20">
-            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-4 leading-tight">
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 學習歷程<span class="gradient-text">煉金室</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
@@ -78,218 +66,164 @@
             </p>
         </section>
 
-        <section id="gallery-section" class="mb-24">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold">優質範例藝廊</h2>
-                <p class="text-lg text-gray-600 mt-2">參考多元範例，學習如何呈現你的獨特之處。</p>
-            </div>
-            <div class="flex justify-center flex-wrap gap-3 mb-8" id="gallery-filters">
-                </div>
-            <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+             <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
+             <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
+             <div>
+                <textarea id="reflectionInput" class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="在這裡貼上你的心得反思文字..."></textarea>
+             </div>
+             <div class="mt-4 text-center">
+                <button id="analyzeBtn" class="bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2 mx-auto">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    <span>開始健檢</span>
+                </button>
+             </div>
+             <div id="analysisResult" class="mt-6">
                 </div>
         </section>
 
-        <section id="reflection-section" class="mb-24">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold">反思引導提問集</h2>
-                <p class="text-lg text-gray-600 mt-2">點擊下方類別，探索能深化你學習心得的問題。</p>
-            </div>
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-                <div id="reflection-category-btns" class="flex flex-wrap justify-center gap-3 mb-8">
+        <section>
+            <h2 class="text-2xl font-bold text-center mb-8">煉金室四大核心工房</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <a href="portfolio-gallery.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
                     </div>
-                <div id="reflection-question-output" class="bg-gray-50 p-6 rounded-lg min-h-[120px] flex items-center justify-center transition-all duration-300">
-                    <p class="text-gray-500">請選擇一個類別來產生問題。</p>
-                </div>
-            </div>
-        </section>
+                    <h3 class="text-xl font-bold mb-2">優質範例藝廊</h3>
+                    <p class="text-gray-600 text-sm">觀摩最好的作品，建立你的標竿。</p>
+                </a>
 
-        <section id="activity-section" class="mb-24">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold">多元表現資料庫</h2>
-                <p class="text-lg text-gray-600 mt-2">想豐富你的多元表現？從這裡尋找靈感與機會！</p>
-            </div>
-            <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-                <div class="flex justify-center flex-wrap gap-3 mb-8" id="activity-filters">
+                <a href="reflection-guide.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-cyan-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                <div id="activity-list" class="space-y-4">
-                    </div>
-            </div>
-        </section>
-        
-        <section id="ai-assistant-section" class="mb-24">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-bold">AI 學習反思小助理</h2>
-                <p class="text-lg text-gray-600 mt-2">將你的初步想法，交給 AI 助理進行潤飾與發想。</p>
-            </div>
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-                <div class="mb-4">
-                    <label for="ai-prompt" class="block text-sm font-medium text-gray-700 mb-2">1. 選擇或輸入一個引導問題 (可從上方提問集複製)：</label>
-                    <input type="text" id="ai-prompt" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="例如：這個研究主題最初吸引你的地方是什麼？">
-                </div>
-                <div class="mb-4">
-                    <label for="ai-input" class="block text-sm font-medium text-gray-700 mb-2">2. 在下方寫下你的初步想法或草稿：</label>
-                    <textarea id="ai-input" rows="6" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="我參加了關於校園植物含菌量的科展，因為疫情期間大家都很注重消毒，我就想知道平常接觸到的植物乾不乾淨..."></textarea>
-                </div>
-                <div class="text-center mb-4">
-                    <button id="ai-submit-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 disabled:bg-gray-400">
-                        <i class="fas fa-magic mr-2"></i>開始煉金
-                    </button>
-                </div>
-                <div id="ai-output-container" class="bg-indigo-50 p-6 rounded-lg min-h-[150px] hidden">
-                     <h4 class="font-bold text-indigo-800 mb-2">AI 潤飾建議：</h4>
-                     <div id="ai-output" class="text-gray-800 prose prose-sm max-w-none"></div>
-                </div>
-                 <div id="ai-loading" class="text-center hidden">
-                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-500"></i>
-                    <p class="mt-2 text-gray-600">AI 正在為您提煉文字...</p>
-                </div>
-            </div>
-        </section>
+                    <h3 class="text-xl font-bold mb-2">反思引導提問集</h3>
+                    <p class="text-gray-600 text-sm">問對問題，讓你的心得更有深度。</p>
+                </a>
 
+                <a href="activity-database.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-sky-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.586-.586a2 2 0 012.828 0l.586.586M11 11a1 1 0 11-2 0 1 1 0 012 0zM13 11a1 1 0 11-2 0 1 1 0 012 0zM16.293 4.293l.586.586a2 2 0 010 2.828l-.586.586"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">多元表現資料庫</h3>
+                    <p class="text-gray-600 text-sm">尋找能豐富你履歷的課外活動。</p>
+                </a>
+                
+                <a href="tools.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">線上製作工具箱</h3>
+                    <p class="text-gray-600 text-sm">工欲善其事，必先利其器。</p>
+                </a>
+            </div>
+        </section>
     </main>
-
-    <div id="portfolioModal" class="fixed inset-0 z-[100] items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="hidePortfolioModal()"></div>
-        <div class="modal-content bg-white w-11/12 md:max-w-4xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
-            <div class="p-6 border-b flex justify-between items-center">
-                <h3 id="modal-title" class="text-2xl font-bold"></h3>
-                <button onclick="hidePortfolioModal()" class="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
-            </div>
-            <div class="border-b border-gray-200">
-                <nav id="modalTabs" class="-mb-px flex space-x-6 px-6" aria-label="Tabs">
-                    <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTab('preview')">範本預覽</button>
-                    <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTab('analysis')">亮點分析</button>
-                </nav>
-            </div>
-            <div class="p-6 overflow-y-auto flex-grow">
-                <div id="tab-content-preview">
-                    <p id="modal-preview-desc" class="text-sm text-gray-500 mb-4"></p>
-                    <img id="modal-preview-img" src="" alt="範例圖片" class="w-full h-auto rounded-md shadow-md" onerror="this.onerror=null;this.src='https://placehold.co/800x1131/ef4444/ffffff?text=圖片載入失敗';">
-                </div>
-                <div id="tab-content-analysis" class="hidden prose max-w-none">
-                    </div>
-            </div>
-        </div>
-    </div>
 
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
-            <p class="text-center text-gray-400">&copy; 2025 台灣教育處方籤 - 升級版</p>
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- AI Health Check Logic (Powered by Puter.js) ---
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const reflectionInput = document.getElementById('reflectionInput');
+        const analysisResult = document.getElementById('analysisResult');
 
-        // --- Data Management (Unchanged) ---
-        const galleryData = { '全部': [{ id: 1, category: '自然科學', title: '探究與實作：校園植物含菌量', imgSrc: 'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '一份關於「校園植物含菌量」的探究與實作報告。', analysis: `<h4>1. 問題意識清晰</h4><p>報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。</p><h4>2. 研究過程視覺化</h4><p>善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。</p><h4>3. 數據呈現與解讀</h4><p>不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。</p><h4>4. 反思具體且有延伸性</h4><p>心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。</p><h4>5. 版面簡潔易讀</h4><p>整體版面配置清爽，標題層次分明，字體與行距適中，讓教授在短時間內就能輕鬆閱讀，掌握重點。</p>` }, { id: 2, category: '社會科學', title: '小論文：手機使用與人際疏離', imgSrc: 'https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '探討青少年手機成癮與現實人際關係變遷的關聯。', analysis: `<h4>1. 題目具時代感</h4><p>選題緊扣當代社會現象，容易引發共鳴，並展現學生對周遭世界的觀察力。</p><h4>2. 文獻探討扎實</h4><p>在研究方法中，引用了相關的心理學與社會學理論作為立論基礎，而不只是空談個人觀察，增加了報告的學術性。</p><h4>3. 採用質化研究</h4><p>透過深度訪談數名同學，記錄其真實心聲，讓報告充滿了「人味」，而不只是冰冷的數據。</p><h4>4. 結論提出具體建議</h4><p>除了分析現象，更提出了如「家庭數位公約」、「無手機社交活動」等具體可行的建議，展現解決問題的企圖心。</p>` }, { id: 3, category: '人文藝術', title: '作品集：我的城市速寫', imgSrc: 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '以一系列手繪速寫，記錄對居住城市的觀察與情感。', analysis: `<h4>1. 主題連貫性強</h4><p>整個作品集圍繞「城市速寫」主題，風格統一，能看出作者持續性的投入與觀察。</p><h4>2. 圖文並茂</h4><p>每張速寫旁都附上簡短的文字，說明創作當下的心境、觀察到的有趣細節，讓畫作更有故事性。</p><h4>3. 展現個人風格</h4><p>無論是筆觸、用色、構圖，都呈現出獨特的個人美感，辨識度高。</p><h4>4. 編排具巧思</h4><p>作品集的排版不呆板，透過版面大小、留白、文字配置的變化，創造出閱讀的節奏感。</p>` }, { id: 4, category: '資訊科技', title: '自主學習：Python 爬蟲專案', imgSrc: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '利用 Python 爬取 PTT 八卦版文章，並進行文字雲分析。', analysis: `<h4>1. 展現自主學習能力</h4><p>明確說明自己是如何從零開始，透過線上課程、技術部落格學習 Python 語法與爬蟲套件 (BeautifulSoup, Scrapy)。</p><h4>2. 程式碼與成果並陳</h4><p>除了展示最終的文字雲成果，也附上部分關鍵程式碼截圖，並加上註解說明其功能，證明是親手實作。</p><h4>3. 專案具趣味性與應用性</h4><p>選擇 PTT 作為目標，能引發熟悉網路文化的教授的興趣，且文字雲分析是數據視覺化的實際應用。</p><h4>4. 記錄踩坑與解法</h4><p>在心得中誠實記錄開發中遇到的困難（如：IP被封鎖、動態網頁內容抓取），以及自己是如何透過查資料、嘗試不同方法解決的，這比一帆風順的過程更能展現學習韌性。</p>` }], '自然科學': [{ id: 1, category: '自然科學', title: '探究與實作：校園植物含菌量', imgSrc: 'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '一份關於「校園植物含菌量」的探究與實作報告。', analysis: `<h4>1. 問題意識清晰</h4><p>報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。</p><h4>2. 研究過程視覺化</h4><p>善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。</p><h4>3. 數據呈現與解讀</h4><p>不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。</p><h4>4. 反思具體且有延伸性</h4><p>心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。</p><h4>5. 版面簡潔易讀</h4><p>整體版面配置清爽，標題層次分明，字體與行距適中，讓教授在短時間內就能輕鬆閱讀，掌握重點。</p>` }], '社會科學': [{ id: 2, category: '社會科學', title: '小論文：手機使用與人際疏離', imgSrc: 'https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '探討青少年手機成癮與現實人際關係變遷的關聯。', analysis: `<h4>1. 題目具時代感</h4><p>選題緊扣當代社會現象，容易引發共鳴，並展現學生對周遭世界的觀察力。</p><h4>2. 文獻探討扎實</h4><p>在研究方法中，引用了相關的心理學與社會學理論作為立論基礎，而不只是空談個人觀察，增加了報告的學術性。</p><h4>3. 採用質化研究</h4><p>透過深度訪談數名同學，記錄其真實心聲，讓報告充滿了「人味」，而不只是冰冷的數據。</p><h4>4. 結論提出具體建議</h4><p>除了分析現象，更提出了如「家庭數位公約」、「無手機社交活動」等具體可行的建議，展現解決問題的企圖心。</p>` }], '人文藝術': [{ id: 3, category: '人文藝術', title: '作品集：我的城市速寫', imgSrc: 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '以一系列手繪速寫，記錄對居住城市的觀察與情感。', analysis: `<h4>1. 主題連貫性強</h4><p>整個作品集圍繞「城市速寫」主題，風格統一，能看出作者持續性的投入與觀察。</p><h4>2. 圖文並茂</h4><p>每張速寫旁都附上簡短的文字，說明創作當下的心境、觀察到的有趣細節，讓畫作更有故事性。</p><h4>3. 展現個人風格</h4><p>無論是筆觸、用色、構圖，都呈現出獨特的個人美感，辨識度高。</p><h4>4. 編排具巧思</h4><p>作品集的排版不呆板，透過版面大小、留白、文字配置的變化，創造出閱讀的節奏感。</p>` }], '資訊科技': [{ id: 4, category: '資訊科技', title: '自主學習：Python 爬蟲專案', imgSrc: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', desc: '利用 Python 爬取 PTT 八卦版文章，並進行文字雲分析。', analysis: `<h4>1. 展現自主學習能力</h4><p>明確說明自己是如何從零開始，透過線上課程、技術部落格學習 Python 語法與爬蟲套件 (BeautifulSoup, Scrapy)。</p><h4>2. 程式碼與成果並陳</h4><p>除了展示最終的文字雲成果，也附上部分關鍵程式碼截圖，並加上註解說明其功能，證明是親手實作。</p><h4>3. 專案具趣味性與應用性</h4><p>選擇 PTT 作為目標，能引發熟悉網路文化的教授的興趣，且文字雲分析是數據視覺化的實際應用。</p><h4>4. 記錄踩坑與解法</h4><p>在心得中誠實記錄開發中遇到的困難（如：IP被封鎖、動態網頁內容抓取），以及自己是如何透過查資料、嘗試不同方法解決的，這比一帆風順的過程更能展現學習韌性。</p>` }] };
-        const reflectionData = { '專題研究': ['這個研究主題最初吸引你的地方是什麼？', '在研究過程中，你遇到的最大困難是什麼？你如何克服它？', '如果能重來一次，你會對研究方法或流程做哪些修改？為什麼？', '這個研究結果，對你個人或你關心的社群有什麼意義？', '完成這次專題後，你對這個領域產生了哪些新的問題？'], '社團幹部': ['擔任幹部期間，最有成就感的一件事是什麼？', '你如何與團隊成員溝通、協調衝突？請舉一個具體例子。', '這個經驗如何改變了你對「領導」的看法？', '你從中學習到最重要的軟實力是什麼？（例如：時間管理、公開演說）', '卸下幹部職務後，你希望為這個社團留下什麼？'], '志工服務': ['參與這次志工服務的初衷是什麼？', '服務過程中，印象最深刻的一個人或一件事是什麼？', '這次經驗是否改變了你對某些社會議題的看法？', '你認為自己為服務對象帶來了什麼？他們又為你帶來了什麼？', '未來你會如何持續關心這個議題？'], '競賽參與': ['準備競賽的過程中，你如何規劃你的時間與進度？', '這次競賽讓你發現自己在哪方面的知識或技能需要加強？', '無論輸贏，你認為從這次競賽中學到最重要的事是什麼？', '你如何與隊友（如果有的話）分工合作？', '這次經驗對你未來的學習或生涯規劃有什麼啟發？'] };
-        const activityData = { '全部': [{ title: 'TRML 數學競賽', category: '學科競賽', desc: '針對高中生的團隊數學競賽，考驗解題與團隊合作能力。', link: 'https://www.trml.com.tw/' }, { title: '臺灣國際科學展覽會 (TISF)', category: '學科競賽', desc: '全國規模最大的高中科學研究競賽，優勝者可代表台灣出國參賽。', link: 'https://twsf.ntsec.gov.tw/' }, { title: '台大杜鵑花節', category: '大學營隊', desc: '台灣大學各學系的年度盛事，提供科系介紹、校園導覽與學長姐經驗分享。', link: 'https://event.ntu.edu.tw/azaleafestival/' }, { title: '伊甸基金會志工服務', category: '志工服務', desc: '提供各類型的志工服務機會，包含身心障礙、長者關懷等。', link: 'https://www.eden.org.tw/volunteer.php' }, { title: 'Coursera 線上課程', category: '線上學習', desc: '與全球頂尖大學合作，提供大量免費或付費的線上課程，可深化特定領域知識。', link: 'https://www.coursera.org/' }, { title: '全國高中生人文經典會考', category: '學科競賽', desc: '鼓勵高中生閱讀人文經典，透過競賽深化閱讀理解與思辨能力。', link: '#' }, { title: '台積電青年築夢計畫', category: '專案計畫', desc: '鼓勵青年提出結合科技與社會關懷的專案，並提供實踐獎金。', link: 'https://www.tsmc-foundation.org/zh/project/youth-dream' }], '學科競賽': [{ title: 'TRML 數學競賽', category: '學科競賽', desc: '針對高中生的團隊數學競賽，考驗解題與團隊合作能力。', link: 'https://www.trml.com.tw/' }, { title: '臺灣國際科學展覽會 (TISF)', category: '學科競賽', desc: '全國規模最大的高中科學研究競賽，優勝者可代表台灣出國參賽。', link: 'https://twsf.ntsec.gov.tw/' }, { title: '全國高中生人文經典會考', category: '學科競賽', desc: '鼓勵高中生閱讀人文經典，透過競賽深化閱讀理解與思辨能力。', link: '#' }], '大學營隊': [{ title: '台大杜鵑花節', category: '大學營隊', desc: '台灣大學各學系的年度盛事，提供科系介紹、校園導覽與學長姐經驗分享。', link: 'https://event.ntu.edu.tw/azaleafestival/' }], '志工服務': [{ title: '伊甸基金會志工服務', category: '志工服務', desc: '提供各類型的志工服務機會，包含身心障礙、長者關懷等。', link: 'https://www.eden.org.tw/volunteer.php' }], '線上學習': [{ title: 'Coursera 線上課程', category: '線上學習', desc: '與全球頂尖大學合作，提供大量免費或付費的線上課程，可深化特定領域知識。', link: 'https://www.coursera.org/' }], '專案計畫': [{ title: '台積電青年築夢計畫', category: '專案計畫', desc: '鼓勵青年提出結合科技與社會關懷的專案，並提供實踐獎金。', link: 'https://www.tsmc-foundation.org/zh/project/youth-dream' }] };
-
-        // --- All the rendering and event handling logic (unchanged) ---
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuBtn.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
-        const galleryFiltersContainer = document.getElementById('gallery-filters');
-        const galleryGrid = document.getElementById('gallery-grid');
-        function renderGallery(filter = '全部') { galleryGrid.innerHTML = ''; const items = galleryData[filter]; items.forEach(item => { const card = document.createElement('div'); card.className = 'bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col cursor-pointer'; card.onclick = () => showPortfolioModal(item); card.innerHTML = `<div class="flex-shrink-0"><img src="${item.imgSrc}" alt="${item.title}" class="w-full h-48 object-cover rounded-lg mb-4" onerror="this.onerror=null;this.src='https://placehold.co/600x400/ef4444/ffffff?text=圖片載入失敗';"><span class="text-sm font-semibold text-green-600 bg-green-100 py-1 px-3 rounded-full">${item.category}</span><h3 class="text-xl font-bold my-3">${item.title}</h3><p class="text-gray-600 mb-6">${item.desc}</p></div><div class="mt-auto"><span class="w-full text-center text-green-600 font-bold py-3 px-6 rounded-lg">查看詳情 <i class="fas fa-arrow-right ml-2"></i></span></div>`; galleryGrid.appendChild(card); }); }
-        function renderGalleryFilters() { Object.keys(galleryData).forEach(category => { const button = document.createElement('button'); button.className = 'tag-btn px-4 py-2 font-semibold text-sm bg-white text-gray-800 rounded-full shadow-sm hover:bg-green-100 hover:text-green-800'; if (category === '全部') { button.classList.add('active', 'bg-green-500', 'text-white'); } button.textContent = category; button.onclick = (e) => { document.querySelectorAll('#gallery-filters .tag-btn').forEach(btn => btn.classList.remove('active', 'bg-green-500', 'text-white')); e.target.classList.add('active', 'bg-green-500', 'text-white'); renderGallery(category); }; galleryFiltersContainer.appendChild(button); }); }
-        const portfolioModal = document.getElementById('portfolioModal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalPreviewDesc = document.getElementById('modal-preview-desc');
-        const modalPreviewImg = document.getElementById('modal-preview-img');
-        const modalAnalysisContent = document.querySelector('#tab-content-analysis');
-        const modalTabs = document.getElementById('modalTabs');
-        const previewContent = document.getElementById('tab-content-preview');
-        const analysisContent = document.getElementById('tab-content-analysis');
-        window.showPortfolioModal = (item) => { modalTitle.textContent = item.title; modalPreviewDesc.textContent = item.desc; modalPreviewImg.src = item.imgSrc; modalPreviewImg.alt = item.title; modalAnalysisContent.innerHTML = item.analysis; portfolioModal.classList.remove('hidden'); portfolioModal.classList.add('flex'); document.body.style.overflow = 'hidden'; showTab('preview'); }
-        window.hidePortfolioModal = () => { portfolioModal.classList.add('hidden'); portfolioModal.classList.remove('flex'); document.body.style.overflow = 'auto'; }
-        window.showTab = (tabName) => { modalTabs.querySelectorAll('.tab-btn').forEach(btn => { btn.classList.remove('active'); btn.classList.add('text-gray-500', 'hover:text-gray-700', 'border-transparent'); }); const activeBtn = Array.from(modalTabs.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick').includes(tabName)); activeBtn.classList.add('active'); activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'border-transparent'); previewContent.classList.toggle('hidden', tabName !== 'preview'); analysisContent.classList.toggle('hidden', tabName !== 'analysis'); }
-        document.addEventListener('keydown', (e) => { if (e.key === "Escape") hidePortfolioModal(); });
-        const categoryBtnsContainer = document.getElementById('reflection-category-btns');
-        const questionOutput = document.getElementById('reflection-question-output');
-        function renderCategoryButtons() { Object.keys(reflectionData).forEach(category => { const button = document.createElement('button'); button.className = 'px-4 py-2 font-semibold text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-cyan-100 hover:text-cyan-800 transition'; button.textContent = category; button.onclick = () => generateQuestion(category); categoryBtnsContainer.appendChild(button); }); }
-        function generateQuestion(category) { const questions = reflectionData[category]; const randomIndex = Math.floor(Math.random() * questions.length); const selectedQuestion = questions[randomIndex]; questionOutput.innerHTML = `<p class="text-xl font-semibold text-center text-cyan-800 animate-fade-in">${selectedQuestion}</p>`; categoryBtnsContainer.querySelectorAll('button').forEach(btn => { btn.classList.toggle('bg-cyan-500', btn.textContent === category); btn.classList.toggle('text-white', btn.textContent === category); btn.classList.toggle('bg-gray-100', btn.textContent !== category); btn.classList.toggle('text-gray-800', btn.textContent !== category); }); }
-        const activityFiltersContainer = document.getElementById('activity-filters');
-        const activityList = document.getElementById('activity-list');
-        function renderActivities(filter = '全部') { activityList.innerHTML = ''; const items = activityData[filter]; if (!items || items.length === 0) { activityList.innerHTML = `<p class="text-center text-gray-500">此分類暫無活動資訊。</p>`; return; } items.forEach(item => { const card = document.createElement('div'); card.className = 'bg-gray-50 p-4 rounded-lg flex items-center justify-between hover:bg-gray-100 transition'; card.innerHTML = `<div><span class="text-xs font-semibold text-sky-600 bg-sky-100 py-1 px-2 rounded-full">${item.category}</span><h4 class="font-bold mt-1">${item.title}</h4><p class="text-sm text-gray-600">${item.desc}</p></div><a href="${item.link}" target="_blank" rel="noopener noreferrer" class="bg-sky-500 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-md hover:bg-sky-600 transition duration-300 ml-4 flex-shrink-0">前往查看</a>`; activityList.appendChild(card); }); }
-        function renderActivityFilters() { Object.keys(activityData).forEach(category => { const button = document.createElement('button'); button.className = 'tag-btn px-4 py-2 font-semibold text-sm bg-white text-gray-800 rounded-full shadow-sm hover:bg-sky-100 hover:text-sky-800'; if (category === '全部') { button.classList.add('active', 'bg-sky-500', 'text-white'); } button.textContent = category; button.onclick = (e) => { document.querySelectorAll('#activity-filters .tag-btn').forEach(btn => btn.classList.remove('active', 'bg-sky-500', 'text-white')); e.target.classList.add('active', 'bg-sky-500', 'text-white'); renderActivities(category); }; activityFiltersContainer.appendChild(button); }); }
+        function showLoader(element) {
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        }
         
-        // --- AI Assistant Logic ---
-        const aiSubmitBtn = document.getElementById('ai-submit-btn');
-        const aiPromptInput = document.getElementById('ai-prompt');
-        const aiInput = document.getElementById('ai-input');
-        const aiOutputContainer = document.getElementById('ai-output-container');
-        const aiOutput = document.getElementById('ai-output');
-        const aiLoading = document.getElementById('ai-loading');
-
-        aiSubmitBtn.addEventListener('click', async () => {
-            const userPrompt = aiPromptInput.value.trim();
-            const userInput = aiInput.value.trim();
-
-            if (!userInput) {
-                alert('請先在輸入框中寫下您的初步想法！');
+        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
+        analyzeBtn.addEventListener('click', async () => {
+            const inputText = reflectionInput.value.trim();
+            if (!inputText) {
+                analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
                 return;
             }
+            showLoader(analysisResult);
+            analyzeBtn.disabled = true;
 
-            const fullPrompt = `你是一位專業的學習歷程檔案指導老師。請根據以下引導問題和學生的初步想法，用繁體中文幫他潤飾成一段更完整、更有條理、更能展現反思深度的文字。請保留學生的核心想法，但用更精確的詞彙和流暢的句子來呈現。請直接提供潤飾後的文字，不需要加上額外的開頭或結語。
+            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
+            const prompt = `
+            你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。
 
-引導問題：${userPrompt || '（無）'}
+            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
 
-學生初步想法：
-"${userInput}"`;
+            JSON 結構範例:
+            {
+              "overall_comment": "一段簡短的總評。",
+              "analysis": [
+                { "element": "S", "comment": "針對 S (情境) 的評論", "suggestion": "針對 S 的具體修改建議" },
+                { "element": "T", "comment": "針對 T (任務) 的評論", "suggestion": "針對 T 的具體修改建議" },
+                { "element": "A", "comment": "針對 A (行動) 的評論", "suggestion": "針對 A 的具體修改建議" },
+                { "element": "R", "comment": "針對 R (結果) 的評論", "suggestion": "針對 R 的具體修改建議" }
+              ],
+              "revised_example": "根據你的建議，提供一小段修改後的文字範例。"
+            }
 
-            aiSubmitBtn.disabled = true;
-            aiLoading.classList.remove('hidden');
-            aiOutputContainer.classList.add('hidden');
+            學生的文字如下：
+            「${inputText}」
+            `;
             
             try {
-                // This is the part to be replaced
-                let chatHistory = [{ role: "user", parts: [{ text: fullPrompt }] }];
-                const payload = { contents: chatHistory };
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // 使用 Puter.js 呼叫 AI
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.0-flash-lite-001'
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`API 請求失敗，狀態碼：${response.status}`);
-                }
 
-                const result = await response.json();
-                
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    let htmlText = text.replace(/\n/g, '<br>');
-                    aiOutput.innerHTML = htmlText;
-                    aiOutputContainer.classList.remove('hidden');
+                // 嘗試解析 AI 回傳的純文字內容為 JSON
+                const parsedJson = JSON.parse(response.message.content);
+
+                if (parsedJson && parsedJson.analysis && parsedJson.analysis.length > 0) {
+                    displayAIAnalysis(parsedJson);
                 } else {
-                    throw new Error('從 API 收到的回應格式不正確。');
+                    throw new Error("AI 回應的 JSON 結構不符合預期。");
                 }
 
             } catch (error) {
-                console.error("AI Assistant Error:", error);
-                aiOutput.innerHTML = `<p class="text-red-600">抱歉，AI 助理發生錯誤，請稍後再試。(${error.message})</p>`;
-                aiOutputContainer.classList.remove('hidden');
+                console.error("Error calling Puter.js or parsing JSON:", error);
+                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請檢查文字內容或稍後再試。</p>`;
             } finally {
-                aiSubmitBtn.disabled = false;
-                aiLoading.classList.add('hidden');
+                analyzeBtn.disabled = false;
             }
         });
 
+        function displayAIAnalysis(data) {
+            const analysisHtml = data.analysis.map(item => {
+                const colors = {
+                    S: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                    T: { bg: 'bg-green-100', text: 'text-green-800' },
+                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                    R: { bg: 'bg-red-100', text: 'text-red-800' },
+                };
+                const color = colors[item.element.toUpperCase()] || { bg: 'bg-gray-100', text: 'text-gray-800' };
 
-        // --- Initial Render ---
-        renderGalleryFilters();
-        renderGallery();
-        renderCategoryButtons();
-        renderActivityFilters();
-        renderActivities();
+                return `
+                    <div class="p-4 rounded-lg ${color.bg}">
+                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element.toUpperCase()]})</h4>
+                        <p class="text-sm text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
+                        <p class="text-sm text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
+                    </div>
+                `;
+            }).join('');
+
+            analysisResult.innerHTML = `
+                <div class="prose max-w-none bg-gray-50 p-6 rounded-lg">
+                    <h3>健檢總評</h3>
+                    <p>${data.overall_comment}</p>
+                    <h3>STAR 分析與建議</h3>
+                    <div class="space-y-4 not-prose">${analysisHtml}</div>
+                    <h3>修改範例</h3>
+                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50/50 p-4 rounded-r-lg">
+                        <p>${data.revised_example}</p>
+                    </blockquote>
+                </div>
+            `;
+        }
     });
     </script>
 </body>
