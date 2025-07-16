@@ -17,6 +17,39 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        /* Timeline styling */
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2.5rem;
+            padding-left: 2.5rem;
+        }
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: -0.5rem;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        .timeline-item:last-child:before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 9999px;
+            border-width: 2px;
+            border-color: #e5e7eb;
+            background-color: white;
+        }
+        .timeline-dot.active {
+            background-color: #3b82f6;
+            border-color: #60a5fa;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -25,14 +58,14 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
-                <a href="#">台灣教育處方籤</a>
+                <a href="index.html">台灣教育處方籤</a>
             </div>
             <div class="hidden md:flex space-x-6 items-center">
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
-                 <a href="#" class="text-blue-600 font-semibold transition duration-300">關於我們</a>
+                <a href="autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="learning-portfolio/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
+                <a href="career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
+                <a href="about.html" class="text-blue-600 font-semibold transition duration-300">關於我們</a>
             </div>
         </nav>
     </header>
@@ -42,126 +75,101 @@
         <!-- 1. Our Mission -->
         <section class="bg-white">
             <div class="container mx-auto px-6 py-20 md:py-28 text-center">
+                 <p class="font-semibold text-blue-600 mb-2">Taiwan K-12 Education Resource Integration Platform</p>
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                     我們的<span class="gradient-text">使命</span>
                 </h1>
                 <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                    我們相信，教育的改變始於傾聽。從 2022 年開始，「台灣教育處方籤」團隊召集來自資訊圈的高中、大學生與助教，以設計思考工作坊的方式，深入探討 108 課綱在實施過程中的痛點與改進方向。每一條學習路徑都值得被理解，每一項制度都應該貼近需求。
+                    我們致力於為偏鄉高中生，建立一個學習歷程與升學資訊共享的開源平台，讓優質教育不再有城鄉差距，讓每個孩子都能適性揚才。
                 </p>
             </div>
         </section>
 
-        <!-- 2. Our Story -->
+        <!-- 2. Our Journey (Timeline) -->
         <section class="py-20">
             <div class="container mx-auto px-6">
-                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold">我們的故事</h2>
-                    <p class="text-gray-600 mt-2">一切，始於 2022 年的夏天。</p>
-                </div>
-                <div class="flex flex-col md:flex-row items-center gap-12">
-                    <div class="md:w-1/2">
-                        <img src="https://placehold.co/600x400/e0e7ff/3730a3?text=團隊會議" alt="團隊會議照片" class="rounded-lg shadow-xl w-full">
-                    </div>
-                    <div class="md:w-1/2">
-                        <h3 class="text-2xl font-bold mb-4">一個想為教育做點事的初心</h3>
-                        <p class="text-gray-700 mb-4">面對 108 課綱上路後的種種討論與爭議，<strong class="text-blue-600">邱耀陞</strong> 決定不能只是觀望。他發起了這個專案，希望用資訊圈熟悉的「設計思考」方法，邀請高中生、大學生與教育工作者，一起為複雜的教育議題，尋找更貼近使用者需求的解方。</p>
-                        <p class="text-gray-700">我們的第一場實體活動，在 <strong class="text-blue-600">2022年9月4日</strong>，於中央研究院人文社會科學館順利舉行，也為這個網站的誕生，奠定了最重要的基礎。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Our Method -->
-        <section class="py-20 bg-white">
-             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold">我們的方法</h2>
-                    <p class="text-gray-600 mt-2">我們用嚴謹的設計思考流程，確保每一個洞察都來自真實的聲音。</p>
+                    <h2 class="text-3xl md:text-4xl font-bold">我們的故事</h2>
+                    <p class="text-gray-600 mt-2">「沒有歹小孩，只有歹命小孩。」</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                    <div class="p-6">
-                        <h4 class="text-xl font-bold text-blue-600 mb-2">1. 探索與發散</h4>
-                        <p>透過 Google Forms 進行線上問卷調查，收集了 <strong class="text-gray-800">34 份</strong> 來自高中生與大學生的真實回饋，並透過 Miro 線上白板進行 KJ 法分類，找出關鍵痛點。</p>
+                <div class="max-w-3xl mx-auto">
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">緣起：一個來自屏東的看見</h3>
+                        <p class="text-sm text-gray-500 mb-2">創辦人 蔡秀吉</p>
+                        <p class="text-gray-700">「為什麼高中讀了三年，我什麼資源都不知道？」這是創辦人蔡秀吉離開屏東偏鄉，進入陽明交通大學後的第一個念頭。他看見了都市與鄉村學生之間巨大的資訊落差，並萌生了為家鄉後進傳承經驗的想法。</p>
                     </div>
-                    <div class="p-6">
-                        <h4 class="text-xl font-bold text-blue-600 mb-2">2. 定義與聚焦</h4>
-                        <p>根據質化與量化資料，我們定義出「小美」與「小明」兩類典型人物誌 (Persona)，並透過 HMW (我們如何能...) 的提問，將模糊的問題聚焦為可執行的挑戰。</p>
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">啟動：g0v 零時小學校</h3>
+                        <p class="text-sm text-gray-500 mb-2">2021</p>
+                        <p class="text-gray-700">帶著「把高速公路上的資源，引導到鄉間小路」的信念，蔡秀吉向 g0v 零時小學校提案，希望建立一個開源平台。這個想法獲得了肯定，並榮獲 **2021 年度獲獎團隊**，也因此認識了更多志同道合的夥伴。</p>
                     </div>
-                    <div class="p-6">
-                        <h4 class="text-xl font-bold text-blue-600 mb-2">3. 測試與驗證</h4>
-                        <p>在 Gather Town 虛擬空間中，我們舉辦了有 <strong class="text-gray-800">16 位</strong> 高中生與助教參與的試跑工作坊，透過 A/B Test 與腦力激盪，驗證我們的洞察，並共同發想解決方案。</p>
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">轉化：數位轉型與 AI 導入</h3>
+                        <p class="text-sm text-gray-500 mb-2">2025</p>
+                        <p class="text-gray-700">為了讓平台的影響力更廣、更深，我們決定進行數位轉型，將過往累積的經驗與資料，打造成一個更強大、更具互動性的線上資源網站，並導入 AI 技術，為學生提供個人化的學習引導。這，就是你眼前的「台灣教育處方籤」。</p>
+                    </div>
+                    <div class="timeline-item">
+                         <div class="timeline-dot"></div>
+                        <h3 class="text-xl font-bold mb-1">未來：咱無輸！</h3>
+                        <p class="text-gray-700">我們將持續與在地組織（如：創夢客）合作，並深入校園宣講。希望透過這個專案，讓更多學弟妹能像創辦人一樣，有自信地大喊「咱無輸！」</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 4. Core Team -->
-        <section class="py-20">
+        <!-- 3. Core Team -->
+        <section class="py-20 bg-white">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold">核心團隊</h2>
-                    <p class="text-gray-600 mt-2">一群來自四面八方，對教育充滿熱情的夥伴。</p>
+                    <p class="text-gray-600 mt-2">一群來自不同背景，想為教育做點事的夥伴。</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8">
                     <div class="text-center">
-                        <img src="https://placehold.co/150x150/dbeafe/1e3a8a?text=發起人" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">邱耀陞</h4>
-                        <p class="text-sm text-blue-600">發起人 & 主持人</p>
-                    </div>
-                    <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
+                        <img src="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/%E8%94%A1%E7%A7%80%E5%90%89.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
                         <h4 class="font-bold">蔡秀吉</h4>
-                        <p class="text-sm text-gray-500">網站建立者 & 助教</p>
+                        <p class="text-sm text-blue-600">創辦人 / 總召</p>
                     </div>
                     <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">張哲源</h4>
-                        <p class="text-sm text-gray-500">助教</p>
+                        <img src="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/%E5%90%B3%E6%81%A9%E6%81%A9.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">吳恩恩</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
                     </div>
                     <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">湯孟寰</h4>
-                        <p class="text-sm text-gray-500">助教</p>
+                        <img src="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/%E5%90%B3%E5%AE%9C%E6%A8%BA.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">吳宜樺</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
                     </div>
                     <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">張君祥</h4>
-                        <p class="text-sm text-gray-500">助教</p>
-                    </div>
-                    <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">黃筠庭</h4>
-                        <p class="text-sm text-gray-500">助教</p>
-                    </div>
-                    <div class="text-center">
-                        <img src="https://placehold.co/150x150/e0e7ff/3730a3?text=助教" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">張育慈</h4>
-                        <p class="text-sm text-gray-500">助教</p>
-                    </div>
-                     <div class="text-center">
-                        <img src="https://placehold.co/150x150/e5e7eb/4b5563?text=顧問" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md">
-                        <h4 class="font-bold">許茗捷 & 柯盈如</h4>
-                        <p class="text-sm text-gray-500">策展顧問</p>
+                        <img src="https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/%E6%B8%B8%E6%83%A0%E7%91%9C.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">游蕙伃</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 5. Special Thanks & Contact -->
-        <section class="py-20 bg-white">
+        <!-- 4. Project Links -->
+        <section class="py-20">
              <div class="container mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-8">特別感謝 & 聯絡我們</h2>
-                <p class="text-gray-600 mb-8">這個專案的誕生，感謝所有參與的學生、助教，以及以下單位的協力。</p>
-                <div class="flex justify-center items-center flex-wrap gap-8 mb-12">
-                     <p class="font-semibold text-gray-700">SITCON 學生計算機年會</p>
-                     <p class="font-semibold text-gray-700">108 課綱倡議組織</p>
-                     <p class="font-semibold text-gray-700">中央研究院</p>
-                     <p class="font-semibold text-gray-700">青年署 Let's Talk</p>
+                <h2 class="text-3xl md:text-4xl font-bold mb-8">深入了解我們的專案</h2>
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <a href="https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">專案提案</h4>
+                        <p class="text-sm text-gray-600 mt-1">查看我們在 g0v 零時小學校的完整提案內容。</p>
+                    </a>
+                    <a href="https://github.com/thc1006/sch001-108platform" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">開源資料</h4>
+                        <p class="text-sm text-gray-600 mt-1">本站所有程式碼與資料皆開源，歡迎上 GitHub 貢獻。</p>
+                    </a>
+                    <a href="https://youtu.be/BxKFVSTmiYI" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">介紹影片</h4>
+                        <p class="text-sm text-gray-600 mt-1">觀看我們的專案介紹影片，快速了解核心理念。</p>
+                    </a>
                 </div>
-                <p class="text-gray-700 mb-4">我們相信，對話是改變的開始。歡迎任何對 108 課綱感興趣的朋友與我們聯繫！</p>
-                <a href="mailto:contact@example.com" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300">
-                    聯絡我們
-                </a>
              </div>
         </section>
     </main>
