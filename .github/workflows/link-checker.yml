@@ -1,0 +1,40 @@
+# 工作流程的名稱
+name: Check Links on Live Site
+
+# 觸發此工作流程的事件
+on:
+  # 當有程式碼被 push 到 main 分支時
+  push:
+    branches: [ main ]
+  # 當有 pull request 目標是 main 分支時
+  pull_request:
+    branches: [ main ]
+  # 每週一的凌晨三點自動執行一次
+  schedule:
+    - cron: '0 3 * * 1'
+  # 允許手動觸發
+  workflow_dispatch:
+
+# 定義工作
+jobs:
+  link-check:
+    # 指定運行的虛擬環境
+    runs-on: ubuntu-latest
+    
+    # 工作的步驟
+    steps:
+      # 步驟一：使用 linkcheck Action
+      - name: Check Links
+        # 使用您提供的 linkcheck 工具
+        uses: linkcheck/linkcheck@v1
+        with:
+          # 要掃描的網站網址
+          url: https://thc1006.github.io/sch001-108platform/
+          # 啟用遞迴掃描，它會從首頁開始，爬取所有頁面
+          recursion: true
+          # 忽略特定的 URL，避免誤判 (例如 LinkedIn 會阻擋爬蟲)
+          ignore_urls: |
+            https://www.linkedin.com
+            https://www.youtube.com/watch?v=dQw4w9WgXcQ
+          # 顯示詳細的檢查過程
+          verbose: true
