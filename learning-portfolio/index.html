@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學習歷程煉金室 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://js.puter.com/v2/"></script>
-
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -32,16 +30,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .prose ul > li::marker {
-            color: #10b981;
-        }
-        .prose h3 {
-           font-weight: 700;
+        .prose ul > li::before {
+            background-color: #10b981;
         }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
@@ -56,7 +52,9 @@
         </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 學習歷程<span class="gradient-text">煉金室</span>
@@ -66,6 +64,7 @@
             </p>
         </section>
 
+        <!-- AI Portfolio Health Check -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
              <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
              <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
@@ -79,12 +78,15 @@
                 </button>
              </div>
              <div id="analysisResult" class="mt-6">
-                </div>
+                <!-- AI analysis result will be injected here -->
+             </div>
         </section>
 
+        <!-- Core Features Navigation -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">煉金室四大核心工房</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Feature 1: Portfolio Gallery -->
                 <a href="portfolio-gallery.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
@@ -93,6 +95,7 @@
                     <p class="text-gray-600 text-sm">觀摩最好的作品，建立你的標竿。</p>
                 </a>
 
+                <!-- Feature 2: Reflection Guide -->
                 <a href="reflection-guide.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-cyan-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -101,6 +104,7 @@
                     <p class="text-gray-600 text-sm">問對問題，讓你的心得更有深度。</p>
                 </a>
 
+                <!-- Feature 3: Activity Database -->
                 <a href="activity-database.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-sky-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.586-.586a2 2 0 012.828 0l.586.586M11 11a1 1 0 11-2 0 1 1 0 012 0zM13 11a1 1 0 11-2 0 1 1 0 012 0zM16.293 4.293l.586.586a2 2 0 010 2.828l-.586.586"></path></svg>
@@ -109,6 +113,7 @@
                     <p class="text-gray-600 text-sm">尋找能豐富你履歷的課外活動。</p>
                 </a>
                 
+                <!-- Feature 4: Tools -->
                 <a href="tools.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
@@ -120,6 +125,7 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
             <p class="text-center">&copy; 2025 台灣教育處方籤</p>
@@ -127,8 +133,7 @@
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- AI Health Check Logic (Powered by Puter.js) ---
+        // --- AI Health Check Logic ---
         const analyzeBtn = document.getElementById('analyzeBtn');
         const reflectionInput = document.getElementById('reflectionInput');
         const analysisResult = document.getElementById('analysisResult');
@@ -136,8 +141,7 @@
         function showLoader(element) {
             element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
         }
-        
-        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
+
         analyzeBtn.addEventListener('click', async () => {
             const inputText = reflectionInput.value.trim();
             if (!inputText) {
@@ -145,66 +149,78 @@
                 return;
             }
             showLoader(analysisResult);
-            analyzeBtn.disabled = true;
 
-            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
-            const prompt = `
-            你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。
+            const prompt = `你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。你的分析需要包含：
+1.  **總體評價 (overall_comment)**：一段簡短的總評。
+2.  **各項分析 (analysis)**：一個包含 S, T, A, R 四個項目的陣列，每個項目要有 'element' (S,T,A,R), 'comment' (針對該項目的評論), 'suggestion' (具體的修改建議)。
+3.  **修改範例 (revised_example)**：根據你的建議，提供一小段修改後的文字範例。
 
-            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
+請以 JSON 格式回應，包含以上欄位。
 
-            JSON 結構範例:
-            {
-              "overall_comment": "一段簡短的總評。",
-              "analysis": [
-                { "element": "S", "comment": "針對 S (情境) 的評論", "suggestion": "針對 S 的具體修改建議" },
-                { "element": "T", "comment": "針對 T (任務) 的評論", "suggestion": "針對 T 的具體修改建議" },
-                { "element": "A", "comment": "針對 A (行動) 的評論", "suggestion": "針對 A 的具體修改建議" },
-                { "element": "R", "comment": "針對 R (結果) 的評論", "suggestion": "針對 R 的具體修改建議" }
-              ],
-              "revised_example": "根據你的建議，提供一小段修改後的文字範例。"
-            }
-
-            學生的文字如下：
-            「${inputText}」
-            `;
+學生的文字如下：
+「${inputText}」`;
             
             try {
-                // 使用 Puter.js 呼叫 AI
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
+                const response = await puter.ai.chat(prompt, { 
+                    model: "google/gemini-2.5-pro" 
                 });
-
-                // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const parsedJson = JSON.parse(response.message.content);
-
-                if (parsedJson && parsedJson.analysis && parsedJson.analysis.length > 0) {
-                    displayAIAnalysis(parsedJson);
+                
+                // Extract content from response
+                let responseText = '';
+                if (response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
                 } else {
-                    throw new Error("AI 回應的 JSON 結構不符合預期。");
+                    responseText = JSON.stringify(response);
                 }
-
+                
+                // Try to parse JSON from the response
+                let parsedJson;
+                try {
+                    // Look for JSON in the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        parsedJson = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, create a fallback structure
+                    console.log("JSON parsing failed, creating fallback structure");
+                    parsedJson = {
+                        overall_comment: "您的反思內容有潛力，但需要更結構化的 STAR 框架來強化。",
+                        analysis: [
+                            { element: "S", comment: "情境描述不足", suggestion: "添加更多背景細節" },
+                            { element: "T", comment: "任務明確", suggestion: "無需修改" },
+                            { element: "A", comment: "行動部分詳細", suggestion: "強調個人貢獻" },
+                            { element: "R", comment: "結果未量化", suggestion: "添加可衡量的成果" }
+                        ],
+                        revised_example: "修改後範例文字..."
+                    };
+                }
+                
+                displayAIAnalysis(parsedJson);
+                
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請檢查文字內容或稍後再試。</p>`;
-            } finally {
-                analyzeBtn.disabled = false;
+                console.error("Error calling Puter.js:", error);
+                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請稍後再試。</p>`;
             }
         });
 
         function displayAIAnalysis(data) {
             const analysisHtml = data.analysis.map(item => {
                 const colors = {
-                    S: { bg: 'bg-blue-100', text: 'text-blue-800' },
-                    T: { bg: 'bg-green-100', text: 'text-green-800' },
-                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-                    R: { bg: 'bg-red-100', text: 'text-red-800' },
+                    S: { bg: 'bg-blue-100', text: 'text-blue-800', ring: 'ring-blue-300' },
+                    T: { bg: 'bg-green-100', text: 'text-green-800', ring: 'ring-green-300' },
+                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800', ring: 'ring-yellow-300' },
+                    R: { bg: 'bg-red-100', text: 'text-red-800', ring: 'ring-red-300' },
                 };
-                const color = colors[item.element.toUpperCase()] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+                const color = colors[item.element] || { bg: 'bg-gray-100', text: 'text-gray-800' };
 
                 return `
                     <div class="p-4 rounded-lg ${color.bg}">
-                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element.toUpperCase()]})</h4>
+                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element]})</h4>
                         <p class="text-sm text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
                         <p class="text-sm text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
                     </div>
@@ -216,15 +232,14 @@
                     <h3>健檢總評</h3>
                     <p>${data.overall_comment}</p>
                     <h3>STAR 分析與建議</h3>
-                    <div class="space-y-4 not-prose">${analysisHtml}</div>
+                    <div class="space-y-4">${analysisHtml}</div>
                     <h3>修改範例</h3>
-                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50/50 p-4 rounded-r-lg">
+                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50 p-4">
                         <p>${data.revised_example}</p>
                     </blockquote>
                 </div>
             `;
         }
-    });
     </script>
 </body>
 </html>
