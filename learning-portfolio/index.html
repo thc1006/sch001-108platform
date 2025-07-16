@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學習歷程煉金室 - 台灣教育處方籤</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.puter.com/v2/"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -150,19 +150,44 @@
             }
             showLoader(analysisResult);
 
-            const prompt = `你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。你的分析需要包含：
-1.  **總體評價 (overall_comment)**：一段簡短的總評。
-2.  **各項分析 (analysis)**：一個包含 S, T, A, R 四個項目的陣列，每個項目要有 'element' (S,T,A,R), 'comment' (針對該項目的評論), 'suggestion' (具體的修改建議)。
-3.  **修改範例 (revised_example)**：根據你的建議，提供一小段修改後的文字範例。
+            const prompt = `你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation情境, Task任務, Action行動, Result結果），分析以下這位高中生寫的心得反思文字。
 
-請以 JSON 格式回應，包含以上欄位。
+學生的文字：
+「${inputText}」
 
-學生的文字如下：
-「${inputText}」`;
-            
+請以 JSON 格式回應，包含以下欄位：
+{
+  "overall_comment": "一段簡短的總評",
+  "analysis": [
+    {
+      "element": "S",
+      "comment": "針對情境描述的評論",
+      "suggestion": "具體的修改建議"
+    },
+    {
+      "element": "T", 
+      "comment": "針對任務說明的評論",
+      "suggestion": "具體的修改建議"
+    },
+    {
+      "element": "A",
+      "comment": "針對行動描述的評論", 
+      "suggestion": "具體的修改建議"
+    },
+    {
+      "element": "R",
+      "comment": "針對結果呈現的評論",
+      "suggestion": "具體的修改建議"
+    }
+  ],
+  "revised_example": "根據建議提供的修改後文字範例"
+}
+
+請確保回應是有效的 JSON 格式。`;
+
             try {
-                const response = await puter.ai.chat(prompt, { 
-                    model: "google/gemini-2.5-pro" 
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.5-pro'
                 });
                 
                 // Extract content from response
@@ -189,14 +214,30 @@
                     // If JSON parsing fails, create a fallback structure
                     console.log("JSON parsing failed, creating fallback structure");
                     parsedJson = {
-                        overall_comment: "您的反思內容有潛力，但需要更結構化的 STAR 框架來強化。",
+                        overall_comment: "AI 分析完成。以下是針對你的心得反思的 STAR 分析結果。",
                         analysis: [
-                            { element: "S", comment: "情境描述不足", suggestion: "添加更多背景細節" },
-                            { element: "T", comment: "任務明確", suggestion: "無需修改" },
-                            { element: "A", comment: "行動部分詳細", suggestion: "強調個人貢獻" },
-                            { element: "R", comment: "結果未量化", suggestion: "添加可衡量的成果" }
+                            {
+                                element: "S",
+                                comment: "情境描述需要更加具體",
+                                suggestion: "請詳細描述當時的背景環境、時間點以及相關的人事物"
+                            },
+                            {
+                                element: "T", 
+                                comment: "任務說明可以更清晰",
+                                suggestion: "明確說明你在這個情境中需要完成什麼任務或目標"
+                            },
+                            {
+                                element: "A",
+                                comment: "行動描述有待加強",
+                                suggestion: "具體描述你採取了哪些具體行動或策略來完成任務"
+                            },
+                            {
+                                element: "R",
+                                comment: "結果呈現需要更完整",
+                                suggestion: "說明行動的具體結果，包括量化指標和個人成長收穫"
+                            }
                         ],
-                        revised_example: "修改後範例文字..."
+                        revised_example: "建議重新組織文字結構，依照 STAR 原則分段描述，讓讀者更容易理解你的學習歷程。"
                     };
                 }
                 
@@ -217,26 +258,29 @@
                     R: { bg: 'bg-red-100', text: 'text-red-800', ring: 'ring-red-300' },
                 };
                 const color = colors[item.element] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+                const elementNames = {'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'};
 
                 return `
-                    <div class="p-4 rounded-lg ${color.bg}">
-                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element]})</h4>
-                        <p class="text-sm text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
-                        <p class="text-sm text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
+                    <div class="p-4 rounded-lg ${color.bg} border border-gray-200">
+                        <h4 class="font-bold ${color.text} mb-2">${item.element} (${elementNames[item.element]})</h4>
+                        <p class="text-sm text-gray-700 mb-2"><strong>評語：</strong>${item.comment}</p>
+                        <p class="text-sm text-gray-700"><strong>建議：</strong>${item.suggestion}</p>
                     </div>
                 `;
             }).join('');
 
             analysisResult.innerHTML = `
-                <div class="prose max-w-none bg-gray-50 p-6 rounded-lg">
-                    <h3>健檢總評</h3>
-                    <p>${data.overall_comment}</p>
-                    <h3>STAR 分析與建議</h3>
-                    <div class="space-y-4">${analysisHtml}</div>
-                    <h3>修改範例</h3>
-                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50 p-4">
-                        <p>${data.revised_example}</p>
-                    </blockquote>
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">📋 健檢總評</h3>
+                    <p class="mb-6 text-gray-700 leading-relaxed">${data.overall_comment}</p>
+                    
+                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">⭐ STAR 分析與建議</h3>
+                    <div class="space-y-4 mb-6">${analysisHtml}</div>
+                    
+                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">✨ 修改範例</h3>
+                    <div class="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+                        <p class="text-sm text-cyan-800 leading-relaxed">${data.revised_example}</p>
+                    </div>
                 </div>
             `;
         }
