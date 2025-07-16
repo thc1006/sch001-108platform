@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>計畫範本庫 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://js.puter.com/v2/"></script>
-
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -38,9 +36,6 @@
         .modal-content {
             max-height: 90vh;
         }
-        .tab-btn {
-            transition: all 0.2s ease-in-out;
-        }
         .tab-btn.active {
             border-bottom-color: #10b981;
             color: #10b981;
@@ -50,20 +45,11 @@
             background-color: #059669;
             color: white;
         }
-        .prose ul, .prose ol {
-            padding-left: 1.5rem;
-        }
-        .prose ul > li::marker {
-           color: #6b7280;
-        }
-        .prose ol > li::marker {
-           font-weight: bold;
-           color: #6b7280;
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
@@ -78,7 +64,9 @@
         </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 計畫<span class="gradient-text">範本庫</span>
@@ -88,23 +76,27 @@
             </p>
         </section>
 
+        <!-- AI Plan Generator -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">✨ AI 計畫草擬工具</h2>
             <p class="text-gray-600 mb-6">輸入你的自主學習主題，AI 將為你草擬一份包含目標、方法、週次進度與產出規劃的完整計畫草案。</p>
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="planInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="例如：分析手搖飲店的行銷策略">
                 <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-600 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
-                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>產生計畫草案</span>
                 </button>
             </div>
             <div id="planResult" class="mt-6 space-y-4">
-                </div>
+                <!-- AI generated content will be injected here -->
+            </div>
         </section>
 
+        <!-- Curated Templates Section -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">精選計畫範本藝廊</h2>
-            <div id="filters-container" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 bg-white p-3 rounded-full shadow-sm">
+            <!-- Filters -->
+            <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 bg-white p-3 rounded-full shadow-sm">
                 <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="all">全部</button>
                 <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="社會科學">社會科學</button>
                 <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="資訊科技">資訊科技</button>
@@ -112,16 +104,20 @@
                 <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="自然科學">自然科學</button>
             </div>
             <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                </div>
+                <!-- Template cards will be injected by JavaScript -->
+            </div>
         </section>
     </main>
 
+    <!-- Template Detail Modal -->
     <div id="templateModal" class="fixed inset-0 z-50 items-center justify-center hidden">
         <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
         <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            </div>
+            <!-- Modal content will be injected here -->
+        </div>
     </div>
 
+    <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
             <p class="text-center">&copy; 2025 台灣教育處方籤</p>
@@ -129,8 +125,7 @@
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- Static Data for Template Gallery ---
+        // --- Static Data ---
         const staticTemplates = [
             {
                 id: 'social-science',
@@ -140,7 +135,7 @@
                 tags: ['市場調查', '數據分析', '消費者行為'],
                 plan_html: `
                     <h4 class="font-bold text-lg mb-2">學習目標</h4>
-                    <ul class="list-disc list-inside mb-4 text-gray-700 space-y-1">
+                    <ul class="list-disc list-inside mb-4 text-gray-700">
                         <li>學習市場調查的基本方法（問卷設計、訪談）。</li>
                         <li>運用Google表單與試算表進行初步的數據分析。</li>
                         <li>分析消費者行為，並提出該店成功的可能原因。</li>
@@ -173,7 +168,7 @@
                 tags: ['Python', 'API串接', '問題解決'],
                 plan_html: `
                     <h4 class="font-bold text-lg mb-2">學習目標</h4>
-                    <ul class="list-disc list-inside mb-4 text-gray-700 space-y-1">
+                    <ul class="list-disc list-inside mb-4 text-gray-700">
                         <li>掌握 Python 基礎語法與函數。</li>
                         <li>學習如何使用 Discord API 建立機器人。</li>
                         <li>實現菜單讀取、下單統計、自動提醒等核心功能。</li>
@@ -207,7 +202,7 @@
                 tags: ['模型製作', '攝影', '美學分析'],
                 plan_html: `
                      <h4 class="font-bold text-lg mb-2">學習目標</h4>
-                    <ul class="list-disc list-inside mb-4 text-gray-700 space-y-1">
+                    <ul class="list-disc list-inside mb-4 text-gray-700">
                         <li>分析電影《銀翼殺手》的視覺風格與美學。</li>
                         <li>學習使用廢棄材料製作場景模型。</li>
                         <li>實驗不同光源與拍攝角度，重現電影中的氛圍。</li>
@@ -239,7 +234,7 @@
                 tags: ['生物', '實驗設計', '變因控制'],
                 plan_html: `
                      <h4 class="font-bold text-lg mb-2">學習目標</h4>
-                    <ul class="list-disc list-inside mb-4 text-gray-700 space-y-1">
+                    <ul class="list-disc list-inside mb-4 text-gray-700">
                         <li>學習如何設計一個有對照組、控制變因的科學實驗。</li>
                         <li>練習系統性地觀察、記錄實驗數據。</li>
                         <li>從實驗結果中歸納出結論，並分析可能的誤差。</li>
@@ -267,57 +262,11 @@
             }
         ];
 
-        // --- Template Gallery and Modal Logic (This part is preserved) ---
+        // --- Template Grid & Modal Logic ---
         const templateGrid = document.getElementById('template-grid');
         const modal = document.getElementById('templateModal');
         const modalContent = document.getElementById('modal-content');
-        const filtersContainer = document.getElementById('filters-container');
-
-        // Global scope for modal functions
-        window.showTemplateModal = (id) => {
-            const template = staticTemplates.find(t => t.id === id);
-            if (!template) return;
-
-            modalContent.innerHTML = `
-                <div class="p-6 border-b flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-bold text-teal-600">${template.category} / ${template.type}</p>
-                        <h3 class="text-2xl font-bold">${template.title}</h3>
-                    </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
-                </div>
-                <div class="border-b border-gray-200">
-                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
-                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTab(this, 'plan_html')">計畫內容</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTab(this, 'commentary_html')">專家點評</button>
-                    </nav>
-                </div>
-                <div class="p-6 overflow-y-auto flex-grow prose max-w-none">
-                    <div class="tab-content-plan_html">${template.plan_html}</div>
-                    <div class="tab-content-commentary_html hidden">${template.commentary_html}</div>
-                </div>
-                 <div class="p-4 bg-gray-50 text-right rounded-b-lg border-t">
-                    <a href="#" class="bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 transition duration-300">下載此範本 (docx)</a>
-                </div>
-            `;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modalContent.scrollTop = 0;
-        }
-        
-        window.showTab = (btn, tabName) => {
-            modalContent.querySelectorAll('.modal-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            modalContent.querySelectorAll('.prose > div').forEach(div => div.classList.add('hidden'));
-            modalContent.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
-        }
-
-        window.hideModal = () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
+        const filters = document.querySelector('.flex.flex-wrap.justify-center');
 
         function renderTemplates(category = 'all') {
             templateGrid.innerHTML = '';
@@ -345,101 +294,9 @@
                 templateGrid.appendChild(card);
             });
         }
-        
-        filtersContainer.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                filtersContainer.querySelector('.active').classList.remove('active');
-                e.target.classList.add('active');
-                const category = e.target.dataset.filter;
-                renderTemplates(category);
-            }
-        });
 
-        // --- AI Plan Generator Logic (Powered by Puter.js) ---
-        const generatePlanBtn = document.getElementById('generatePlanBtn');
-        const planInput = document.getElementById('planInput');
-        const planResult = document.getElementById('planResult');
+        function showTemplateModal(id) {
+            const template = staticTemplates.find(t => t.id === id);
+            if (!template) return;
 
-        function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
-        }
-
-        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
-        generatePlanBtn.addEventListener('click', async () => {
-            const topic = planInput.value.trim();
-            if (!topic) {
-                planResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的自主學習主題！</p>';
-                return;
-            }
-            showLoader(planResult);
-            generatePlanBtn.disabled = true;
-
-            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
-            const prompt = `
-            你是一位專業的台灣高中教育顧問。請為一個自主學習主題：「${topic}」，設計一份計畫大綱。
-            
-            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
-            
-            JSON 結構範例:
-            {
-              "learning_objectives": ["目標一", "目標二", "目標三"],
-              "execution_methods": ["方法一", "方法二"],
-              "weekly_plan": [
-                {"week": "Week 1-2", "tasks": "任務說明一"},
-                {"week": "Week 3-4", "tasks": "任務說明二"},
-                {"week": "Week 5-6", "tasks": "任務說明三"},
-                {"week": "Week 7-8", "tasks": "任務說明四"}
-              ],
-              "expected_outcome": ["預期產出一", "預期產出二"]
-            }
-            `;
-            
-            try {
-                // 使用 Puter.js 呼叫 AI
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
-                });
-
-                // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const parsedJson = JSON.parse(response.message.content);
-
-                if (parsedJson && parsedJson.weekly_plan) {
-                    displayAIPlan(parsedJson);
-                } else {
-                    throw new Error("AI 回應的 JSON 結構不符合預期。");
-                }
-                
-            } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
-            } finally {
-                generatePlanBtn.disabled = false;
-            }
-        });
-
-        function displayAIPlan(data) {
-            const objectivesHtml = data.learning_objectives.map(obj => `<li>${obj}</li>`).join('');
-            const methodsHtml = data.execution_methods.map(met => `<li>${met}</li>`).join('');
-            const weeklyPlanHtml = data.weekly_plan.map(week => `<li><b>${week.week}:</b> ${week.tasks}</li>`).join('');
-            const outcomeHtml = data.expected_outcome.map(out => `<li>${out}</li>`).join('');
-
-            planResult.innerHTML = `
-                <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">
-                    <h4 class="text-teal-800 font-bold">學習目標</h4>
-                    <ul class="list-disc">${objectivesHtml}</ul>
-                    <h4 class="text-teal-800 font-bold">執行方法</h4>
-                    <ul class="list-disc">${methodsHtml}</ul>
-                    <h4 class="text-teal-800 font-bold">週次進度</h4>
-                    <ol class="list-decimal">${weeklyPlanHtml}</ol>
-                    <h4 class="text-teal-800 font-bold">預期產出</h4>
-                    <ul class="list-disc">${outcomeHtml}</ul>
-                </div>
-            `;
-        }
-        
-        // Initial Render for the static template gallery
-        renderTemplates();
-    });
-    </script>
-</body>
-</html>
+            modalContent.innerHTML = `
