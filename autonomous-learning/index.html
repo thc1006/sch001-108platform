@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自主學習啟航站 - 台灣教育處方籤</title>
+    <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,7 +145,6 @@
         </div>
     </footer>
 
-    <script src="https://js.puter.com/v2/"></script>
     <script>
         // --- AI Coach Logic ---
         const generateCoachBtn = document.getElementById('generateCoachBtn');
@@ -167,34 +167,63 @@
 1.  **建議主題方向 (suggested_topic)**：將學生的模糊想法，聚焦為一個更具體的研究主題。
 2.  **初步研究問題 (research_questions)**：提供 3 個可以引導初步探索的開放式問題。
 3.  **推薦資源類型 (resource_types)**：建議 3 種適合這個主題的學習資源類型（例如：知識型影片、線上課程、學術論文、訪談專家等）。
-請以純 JSON 格式輸出，不要添加任何額外文字、Markdown 或解釋，結構為：{ "suggested_topic": "...", "research_questions": ["...", "...", "..."], "resource_types": ["...", "...", "..."] }`;
+
+請用繁體中文回答，並將回應格式化為 JSON 格式。`;
             
             try {
-                const response = await puter.ai.chat(prompt, { model: 'google/gemini-2.5-flash' });
-                let text = response.message.content;
-                // 清理可能的 Markdown code block
-                text = text.replace(/^``````$/, '').trim();
-                const parsedJson = JSON.parse(text);
-                displayAIStarterPack(parsedJson);
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.5-flash'
+                });
+                
+                let jsonData;
+                try {
+                    // 嘗試解析JSON回應
+                    const jsonMatch = response.message.content.match(/``````/);
+                    if (jsonMatch) {
+                        jsonData = JSON.parse(jsonMatch[1]);
+                    } else {
+                        jsonData = JSON.parse(response.message.content);
+                    }
+                } catch (parseError) {
+                    // 如果解析失敗，嘗試從回應中提取結構化資訊
+                    throw new Error('回應格式不正確，無法解析JSON');
+                }
+                
+                displayAIStarterPack(jsonData);
             } catch (error) {
-                console.error("Error calling AI API:", error);
+                console.error("Error calling Puter AI:", error);
                 coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請稍後再試。</p>`;
             }
         });
 
         function displayAIStarterPack(data) {
-            const questionsHtml = data.research_questions.map(q => `<li>${q}</li>`).join('');
-            const resourcesHtml = data.resource_types.map(r => `<span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${r}</span>`).join('');
+            const questionsHtml = data.research_questions.map(q => `<li class="mb-2">${q}</li>`).join('');
+            const resourcesHtml = data.resource_types.map(r => `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+                    <p class="text-sm text-blue-800 leading-relaxed">${r}</p>
+                </div>
+            `).join('');
 
             coachResult.innerHTML = `
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none">
-                    <h4>建議主題方向</h4>
-                    <p>${data.suggested_topic}</p>
-                    <h4>你可以從這幾個問題開始探索：</h4>
-                    <ul class="list-disc list-inside">${questionsHtml}</ul>
-                    <h4>建議尋找的資源類型：</h4>
-                    <div class="flex flex-wrap">${resourcesHtml}</div>
-                    <p class="mt-4 text-sm">現在，你可以帶著這些想法，前往下方的<a href="topic-ideas.html" class="font-semibold text-blue-600 hover:underline">「靈感探索」</a>或<a href="resource-map.html" class="font-semibold text-blue-600 hover:underline">「資源蒐集」</a>區塊，開始你的旅程！</p>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                    <h4 class="text-lg font-semibold mb-3 text-blue-900">📋 建議主題方向</h4>
+                    <p class="mb-6 text-gray-700 leading-relaxed">${data.suggested_topic}</p>
+                    
+                    <h4 class="text-lg font-semibold mb-3 text-blue-900">❓ 你可以從這幾個問題開始探索：</h4>
+                    <ul class="list-disc list-inside mb-6 text-gray-700 space-y-2">${questionsHtml}</ul>
+                    
+                    <h4 class="text-lg font-semibold mb-3 text-blue-900">📚 建議尋找的資源類型：</h4>
+                    <div class="mb-6">${resourcesHtml}</div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-sm text-green-800">
+                            <strong>🚀 下一步：</strong>現在，你可以帶著這些想法，前往下方的
+                            <a href="topic-ideas.html" class="font-semibold text-green-600 hover:underline">「靈感探索」</a>
+                            或
+                            <a href="resource-map.html" class="font-semibold text-green-600 hover:underline">「資源蒐集」</a>
+                            區塊，開始你的旅程！
+                        </p>
+                    </div>
                 </div>
             `;
         }
