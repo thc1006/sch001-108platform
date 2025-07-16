@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自主學習啟航站 - 台灣教育處方籤</title>
-    
-    <script src="https://js.puter.com/v2/"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,9 +37,11 @@
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
     </style>
+    <script src="https://js.puter.com/v2/"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
@@ -57,7 +56,9 @@
         </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 自主學習<span class="gradient-text">啟航站</span>
@@ -67,23 +68,27 @@
             </p>
         </section>
 
+        <!-- AI Learning Coach -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
              <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
              <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓他為你生成一份個人化的「學習啟動包」！</p>
              <div class="flex flex-col sm:flex-row gap-3">
-                 <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
-                 <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
-                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                     <span>請求指導</span>
-                 </button>
-             </div>
-             <div id="coachResult" class="mt-6">
-                 </div>
+                <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
+                <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>請求指導</span>
+                </button>
+            </div>
+            <div id="coachResult" class="mt-6">
+                <!-- AI generated starter pack will be injected here -->
+            </div>
         </section>
 
+        <!-- Step-by-step Guide -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">自主學習四步驟</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Step 1 -->
                 <a href="topic-ideas.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">1</span>
@@ -91,6 +96,7 @@
                     </div>
                     <p class="text-gray-600 text-sm">透過 AI 發想、靈感矩陣與趨勢議題，找到值得你深入研究的主題。</p>
                 </a>
+                <!-- Step 2 -->
                 <a href="plan-templates.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">2</span>
@@ -98,6 +104,7 @@
                     </div>
                     <p class="text-gray-600 text-sm">參考優質範本與 AI 草擬工具，將你的靈感化為具體、可執行的計畫。</p>
                 </a>
+                <!-- Step 3 -->
                 <a href="resource-map.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">3</span>
@@ -105,6 +112,7 @@
                     </div>
                     <p class="text-gray-600 text-sm">從我們為你精選的資源地圖中，找到最適合你的高品質學習材料。</p>
                 </a>
+                <!-- Step 4 -->
                 <a href="methodology.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">4</span>
@@ -115,11 +123,12 @@
             </div>
         </section>
 
+        <!-- Embedded Video Resource -->
         <section class="mt-16">
              <h2 class="text-2xl font-bold text-center mb-8">聽聽專家怎麼說</h2>
              <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-lg">
                  <div class="aspect-w-16 aspect-h-9">
-                     <iframe src="https://www.youtube.com/embed/videoseries?list=PL-hY0_R7L4y_q_mO-5Y1J_t_Zg4Y_ZqZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
+                     <iframe src="https://www.youtube.com/embed/videoseries?list=PL04i_5v3k_c1y0a-t0Wk2-3J9-0g6t2nF" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
                  </div>
                  <div class="p-4">
                      <h3 class="font-bold text-lg">【自主學習】系列影片</h3>
@@ -129,19 +138,18 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
-            <p class="text-center">© 2025 台灣教育處方籤</p>
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
-        // --- AI Coach Logic (Updated with Puter.js) ---
+        // --- AI Coach Logic ---
         const generateCoachBtn = document.getElementById('generateCoachBtn');
         const coachInput = document.getElementById('coachInput');
         const coachResult = document.getElementById('coachResult');
-        // ✨ 步驟 2: 不再需要 API 金鑰
-        // const apiKey = ""; 
 
         function showLoader(element) {
             element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
@@ -155,34 +163,27 @@
             }
             showLoader(coachResult);
 
-            // ✨ 步驟 3: 優化 Prompt 以確保能穩定收到 JSON 格式
-            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
-內容須嚴格符合以下 JSON 格式：
-{
-  "suggested_topic": "將學生的模糊想法，聚焦為一個更具體的研究主題",
-  "research_questions": ["引導初步探索的開放式問題1", "問題2", "問題3"],
-  "resource_types": ["適合此主題的資源類型1", "資源類型2", "資源類型3"]
-}
-請直接回傳這個 JSON 物件，不要包含任何「\`\`\`json」之類的標記或任何其他的說明文字。`;
-            
-            // ✨ 步驟 4: 使用 puter.ai.chat() 取代 fetch
-            try {
-                const response = await puter.ai.chat(prompt, {
-                    // 使用教學文件中提供的免費模型
-                    model: 'google/gemini-2.0-flash-lite-001' 
-                });
+            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。內容須包含：
+1.  **建議主題方向 (suggested_topic)**：將學生的模糊想法，聚焦為一個更具體的研究主題。
+2.  **初步研究問題 (research_questions)**：提供 3 個可以引導初步探索的開放式問題。
+3.  **推薦資源類型 (resource_types)**：建議 3 種適合這個主題的學習資源類型（例如：知識型影片、線上課程、學術論文、訪談專家等）。
 
-                if (response.message && response.message.content) {
-                    // Puter.js 回傳的內容應該是 JSON 字串，我們將其解析
-                    const parsedJson = JSON.parse(response.message.content);
-                    displayAIStarterPack(parsedJson);
-                } else {
-                    throw new Error("從 API 收到的回應格式不正確。");
-                }
+請以嚴格的 JSON 格式回應，結構為：
+{
+  "suggested_topic": "string",
+  "research_questions": ["string1", "string2", "string3"],
+  "resource_types": ["string1", "string2", "string3"]
+}
+不要添加額外的文字或解釋，只輸出純 JSON。`;
+            
+            try {
+                const response = await puter.ai.chat(prompt, { model: "google/gemini-2.5-pro" });
+                const text = response.message.content;
+                const parsedJson = JSON.parse(text);
+                displayAIStarterPack(parsedJson);
             } catch (error) {
-                console.error("Error calling Puter.js AI:", error);
-                // ✨ 步驟 5: 更新錯誤訊息
-                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，AI 教練目前無法連線。請檢查你的網路連線或稍後再試。</p>`;
+                console.error("Error calling Puter AI:", error);
+                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請稍後再試。</p>`;
             }
         });
 
