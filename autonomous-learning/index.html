@@ -3,365 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自主學習啟航站 - 台灣教育處方籤 (Puter.js 整合版)</title>
-    
-    <script src="https://js.puter.com/v2/"></script>
-
+    <title>學習歷程煉金室 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://js.puter.com/v2/"></script>
+
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
         }
         .gradient-text {
-            background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
+            background: -webkit-linear-gradient(45deg, #22c55e, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .modal-content {
-            max-height: 80vh;
-        }
-        /* 簡易的加載動畫 */
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border-top: 4px solid #14b8a6;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .prose ul > li::marker {
+            color: #10b981;
+        }
+        .prose h3 {
+           font-weight: 700;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
-                <a href="#">台灣教育處方籤</a>
+                <a href="../index.html">台灣教育處方籤</a>
             </div>
             <div class="hidden md:flex space-x-6 items-center">
-                <a href="#" class="text-blue-600 font-semibold transition duration-300">自主學習啟航站</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">學習歷程煉金室</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
-                <a href="#" class="text-gray-600 hover:text-blue-500 transition duration-300">關於我們</a>
+                <a href="../autonomous-learning/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">自主學習啟航站</a>
+                <a href="index.html" class="text-green-600 font-semibold transition duration-300">學習歷程煉金室</a>
+                <a href="../career-exploration/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">未來生涯GPS</a>
+                <a href="../advanced-resources/index.html" class="text-gray-600 hover:text-blue-500 transition duration-300">進階資源探索區</a>
             </div>
-            <button class="md:hidden flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-blue-500 hover:border-blue-500">
-                <svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/></svg>
-            </button>
         </nav>
     </header>
 
-    <main>
-        <section class="bg-white py-16 md:py-24">
-            <div class="container mx-auto px-6 text-center">
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                    自主學習<span class="gradient-text">啟航站</span>
-                </h1>
-                <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-                    不知道要做什麼？從這裡開始，一步步打造你的專屬學習計畫。
-                </p>
-            </div>
+    <main class="container mx-auto px-6 py-12">
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                學習歷程<span class="gradient-text">煉金室</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                告別無效的檔案堆疊。將你的學習經驗與反思，淬鍊成展現個人特質的亮點。
+            </p>
         </section>
-        
-        <section class="py-10">
-            <div class="container mx-auto px-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col">
-                        <div class="flex-shrink-0">
-                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3">主題靈感產生器</h3>
-                            <p class="text-gray-600 mb-6">還沒有方向？從數百個跨領域主題中隨機探索，或依據你的興趣類別篩選，點燃你的第一份好奇心。</p>
-                        </div>
-                        <div class="mt-auto space-y-3">
-                            <button id="openIdeaModalBtn" class="w-full text-center bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
-                                ✨ AI 幫我找靈感
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col">
-                        <div class="flex-shrink-0">
-                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 mb-6">
-                                <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3">計畫範本庫</h3>
-                            <p class="text-gray-600 mb-6">參考學長姐的優質計畫書，學習如何設定具體、可行的目標。提供多種格式下載，並附上專家點評。</p>
-                        </div>
-                        <div class="mt-auto space-y-3">
-                             <button id="openPlanModalBtn" class="w-full text-center bg-teal-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-teal-600 transition duration-300">
-                                 ✨ AI 幫我擬大綱
-                             </button>
-                             <a href="#" class="block w-full text-center bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition duration-300">
-                                 查看靜態範本
-                             </a>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col">
-                        <div class="flex-shrink-0">
-                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mb-6">
-                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3">學習資源地圖</h3>
-                            <p class="text-gray-600 mb-6">我們為你策展了全球最優質的線上課程、知識型YouTube頻道與閱讀材料，讓你不必在資訊海中迷航。</p>
-                        </div>
-                        <div class="mt-auto">
-                            <a href="#" class="inline-block w-full text-center bg-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-purple-600 transition duration-300">
-                                探索學習資源
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col">
-                        <div class="flex-shrink-0">
-                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
-                                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3">研究方法工具箱</h3>
-                            <p class="text-gray-600 mb-6">想做問卷、訪談或數據分析？這裡有最簡單易懂的圖文教學，讓你快速上手，為你的計畫增添學術深度。</p>
-                        </div>
-                        <div class="mt-auto">
-                            <a href="#" class="inline-block w-full text-center bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-red-600 transition duration-300">
-                                學習研究方法
-                            </a>
-                        </div>
-                    </div>
-
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+             <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
+             <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
+             <div>
+                <textarea id="reflectionInput" class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="在這裡貼上你的心得反思文字..."></textarea>
+             </div>
+             <div class="mt-4 text-center">
+                <button id="analyzeBtn" class="bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2 mx-auto">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    <span>開始健檢</span>
+                </button>
+             </div>
+             <div id="analysisResult" class="mt-6">
                 </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-bold text-center mb-8">煉金室四大核心工房</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <a href="portfolio-gallery.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">優質範例藝廊</h3>
+                    <p class="text-gray-600 text-sm">觀摩最好的作品，建立你的標竿。</p>
+                </a>
+
+                <a href="reflection-guide.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-cyan-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">反思引導提問集</h3>
+                    <p class="text-gray-600 text-sm">問對問題，讓你的心得更有深度。</p>
+                </a>
+
+                <a href="activity-database.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-sky-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.586-.586a2 2 0 012.828 0l.586.586M11 11a1 1 0 11-2 0 1 1 0 012 0zM13 11a1 1 0 11-2 0 1 1 0 012 0zM16.293 4.293l.586.586a2 2 0 010 2.828l-.586.586"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">多元表現資料庫</h3>
+                    <p class="text-gray-600 text-sm">尋找能豐富你履歷的課外活動。</p>
+                </a>
+                
+                <a href="tools.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
+                    <div class="flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-4 mx-auto">
+                        <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">線上製作工具箱</h3>
+                    <p class="text-gray-600 text-sm">工欲善其事，必先利其器。</p>
+                </a>
             </div>
         </section>
     </main>
-    
-    <div id="ideaModal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0"></div>
-        <div class="modal-content bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-10 p-8 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-4">✨ AI 主題靈感產生器</h2>
-            <p class="text-gray-600 mb-6">請輸入你的興趣關鍵字（例如：歷史、貓咪、程式設計），AI 將為你發想跨領域的自主學習主題。</p>
-            <div class="flex gap-2 mb-4">
-                <input type="text" id="ideaInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：旅行、心理學、環保">
-                <button id="generateIdeaBtn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300">產生</button>
-            </div>
-            <div id="ideaResult" class="mt-6 space-y-4">
-                </div>
-            <div class="text-right mt-6">
-                <button id="closeIdeaModalBtn" class="text-gray-600 hover:text-gray-800">關閉</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="planModal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0"></div>
-        <div class="modal-content bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-lg z-10 p-8 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-4">✨ AI 計畫大綱產生器</h2>
-            <p class="text-gray-600 mb-6">請輸入你已確定的自主學習主題，AI 將為你草擬一份為期八週的學習計畫大綱。</p>
-            <div class="flex gap-2 mb-4">
-                <input type="text" id="planInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="例如：分析手搖飲店的行銷策略">
-                <button id="generatePlanBtn" class="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-600 transition duration-300">產生</button>
-            </div>
-            <div id="planResult" class="mt-6 space-y-4">
-                </div>
-            <div class="text-right mt-6">
-                <button id="closePlanModalBtn" class="text-gray-600 hover:text-gray-800">關閉</button>
-            </div>
-        </div>
-    </div>
-
 
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-6 md:mb-0">
-                    <h3 class="text-2xl font-bold">台灣教育處方籤</h3>
-                    <p class="text-gray-400 mt-1">一個由關心台灣教育的學生與開發者發起的專案。</p>
-                </div>
-                <div class="flex space-x-6">
-                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">關於我們</a>
-                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">網站地圖</a>
-                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">聯絡我們</a>
-                </div>
-            </div>
-            <div class="mt-8 border-t border-gray-700 pt-6 text-center text-gray-500 text-sm">
-                &copy; 2025 台灣教育處方籤. All Rights Reserved.
-            </div>
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
-        // --- Modal Control ---
-        const ideaModal = document.getElementById('ideaModal');
-        const openIdeaModalBtn = document.getElementById('openIdeaModalBtn');
-        const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- AI Health Check Logic (Powered by Puter.js) ---
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const reflectionInput = document.getElementById('reflectionInput');
+        const analysisResult = document.getElementById('analysisResult');
 
-        const planModal = document.getElementById('planModal');
-        const openPlanModalBtn = document.getElementById('openPlanModalBtn');
-        const closePlanModalBtn = document.getElementById('closePlanModalBtn');
-
-        function showModal(modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function hideModal(modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        openIdeaModalBtn.addEventListener('click', () => showModal(ideaModal));
-        closeIdeaModalBtn.addEventListener('click', () => hideModal(ideaModal));
-        ideaModal.querySelector('.modal-backdrop').addEventListener('click', () => hideModal(ideaModal));
-
-        openPlanModalBtn.addEventListener('click', () => showModal(planModal));
-        closePlanModalBtn.addEventListener('click', () => hideModal(planModal));
-        planModal.querySelector('.modal-backdrop').addEventListener('click', () => hideModal(planModal));
-        
-        // --- AI Integration ---
-        const generateIdeaBtn = document.getElementById('generateIdeaBtn');
-        const ideaInput = document.getElementById('ideaInput');
-        const ideaResult = document.getElementById('ideaResult');
-
-        const generatePlanBtn = document.getElementById('generatePlanBtn');
-        const planInput = document.getElementById('planInput');
-        const planResult = document.getElementById('planResult');
-        
-        // Function to show loading animation
         function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
         }
-
-        // ✅ 步驟 2: 建立一個共用的 AI 呼叫函式
-        async function callAI(prompt) {
-            const ai_response = await puter.ai.chat(prompt, {
-                model: 'google/gemini-flash-1.5',
-                temperature: 0.5,
-            });
-
-            const jsonString = ai_response?.message?.content;
-            if (!jsonString) {
-                throw new Error("AI 回應為空，無法解析。");
-            }
-            
-            try {
-                return JSON.parse(jsonString);
-            } catch (parseError) {
-                console.error("無法將 AI 回應解析為 JSON:", jsonString);
-                throw new Error("AI 回應的格式不是有效的 JSON，請再試一次。");
-            }
-        }
-
-        // --- Idea Generation Logic ---
-        generateIdeaBtn.addEventListener('click', async () => {
-            const interests = ideaInput.value.trim();
-            if (!interests) {
-                ideaResult.innerHTML = '<p class="text-red-500">請先輸入你的興趣關鍵字！</p>';
+        
+        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
+        analyzeBtn.addEventListener('click', async () => {
+            const inputText = reflectionInput.value.trim();
+            if (!inputText) {
+                analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
                 return;
             }
+            showLoader(analysisResult);
+            analyzeBtn.disabled = true;
 
-            showLoader(ideaResult);
-
-            // ✅ 步驟 3: 強化 Prompt
+            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
             const prompt = `
-                您是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。
-                請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。
-                您的回覆「必須」是純粹的 JSON 格式，不包含任何額外文字或 markdown 符號。
+            你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。
 
-                JSON 格式如下:
-                {
-                  "ideas": [
-                    { "title": "主題一標題", "description": "主題一的簡短描述" },
-                    { "title": "主題二標題", "description": "主題二的簡短描述" },
-                    { "title": "主題三標題", "description": "主題三的簡短描述" }
-                  ]
-                }
+            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
+
+            JSON 結構範例:
+            {
+              "overall_comment": "一段簡短的總評。",
+              "analysis": [
+                { "element": "S", "comment": "針對 S (情境) 的評論", "suggestion": "針對 S 的具體修改建議" },
+                { "element": "T", "comment": "針對 T (任務) 的評論", "suggestion": "針對 T 的具體修改建議" },
+                { "element": "A", "comment": "針對 A (行動) 的評論", "suggestion": "針對 A 的具體修改建議" },
+                { "element": "R", "comment": "針對 R (結果) 的評論", "suggestion": "針對 R 的具體修改建議" }
+              ],
+              "revised_example": "根據你的建議，提供一小段修改後的文字範例。"
+            }
+
+            學生的文字如下：
+            「${inputText}」
             `;
             
-            // ✅ 步驟 4: 使用新的 AI 呼叫函式
             try {
-                const parsedJson = await callAI(prompt);
-                displayIdeas(parsedJson.ideas);
-            } catch (error) {
-                console.error("Error calling AI for ideas:", error);
-                ideaResult.innerHTML = `<p class="text-red-500">抱歉，產生靈感時發生錯誤。請稍後再試。</p><p class="text-xs text-gray-500 mt-2">${error.message}</p>`;
-            }
-        });
-
-        function displayIdeas(ideas) {
-            ideaResult.innerHTML = '';
-            ideas.forEach(idea => {
-                const ideaElement = document.createElement('div');
-                ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg';
-                ideaElement.innerHTML = `
-                    <h4 class="font-bold text-lg text-blue-800">${idea.title}</h4>
-                    <p class="text-gray-700 mt-1">${idea.description}</p>
-                `;
-                ideaResult.appendChild(ideaElement);
-            });
-        }
-
-        // --- Plan Generation Logic ---
-        generatePlanBtn.addEventListener('click', async () => {
-            const topic = planInput.value.trim();
-            if (!topic) {
-                planResult.innerHTML = '<p class="text-red-500">請先輸入你的自主學習主題！</p>';
-                return;
-            }
-
-            showLoader(planResult);
-
-            // ✅ 步驟 3: 強化 Prompt
-            const prompt = `
-                你是一位專業的台灣高中教育顧問。請為一個自主學習主題：「${topic}」，設計一份為期 8 週的學習計畫大綱。
-                您的回覆「必須」是純粹的 JSON 格式，不包含任何額外文字或 markdown 符號。
-
-                JSON 格式如下:
-                {
-                  "weekly_plan": [
-                    { "week": "第一週：主題探索與資料搜集", "tasks": ["任務一", "任務二"] },
-                    { "week": "第二週：...", "tasks": ["...", "..."] }
-                  ]
-                }
-            `;
-            
-            // ✅ 步驟 4: 使用新的 AI 呼叫函式
-            try {
-                const parsedJson = await callAI(prompt);
-                displayPlan(parsedJson.weekly_plan);
-            } catch (error) {
-                console.error("Error calling AI for plan:", error);
-                planResult.innerHTML = `<p class="text-red-500">抱歉，產生計畫時發生錯誤。請稍後再試。</p><p class="text-xs text-gray-500 mt-2">${error.message}</p>`;
-            }
-        });
-
-        function displayPlan(plan) {
-            planResult.innerHTML = '';
-            plan.forEach(weekData => {
-                const weekElement = document.createElement('div');
-                weekElement.className = 'bg-teal-50 border-l-4 border-teal-500 p-4 rounded-r-lg';
-                
-                let tasksHtml = '<ul class="list-disc list-inside mt-2 space-y-1 text-gray-700">';
-                weekData.tasks.forEach(task => {
-                    tasksHtml += `<li>${task}</li>`;
+                // 使用 Puter.js 呼叫 AI
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.0-flash-lite-001'
                 });
-                tasksHtml += '</ul>';
 
-                weekElement.innerHTML = `
-                    <h4 class="font-bold text-lg text-teal-800">${weekData.week}</h4>
-                    ${tasksHtml}
+                // 嘗試解析 AI 回傳的純文字內容為 JSON
+                const parsedJson = JSON.parse(response.message.content);
+
+                if (parsedJson && parsedJson.analysis && parsedJson.analysis.length > 0) {
+                    displayAIAnalysis(parsedJson);
+                } else {
+                    throw new Error("AI 回應的 JSON 結構不符合預期。");
+                }
+
+            } catch (error) {
+                console.error("Error calling Puter.js or parsing JSON:", error);
+                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請檢查文字內容或稍後再試。</p>`;
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function displayAIAnalysis(data) {
+            const analysisHtml = data.analysis.map(item => {
+                const colors = {
+                    S: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                    T: { bg: 'bg-green-100', text: 'text-green-800' },
+                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                    R: { bg: 'bg-red-100', text: 'text-red-800' },
+                };
+                const color = colors[item.element.toUpperCase()] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+
+                return `
+                    <div class="p-4 rounded-lg ${color.bg}">
+                        <h4 class="font-bold ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'}[item.element.toUpperCase()]})</h4>
+                        <p class="text-sm text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
+                        <p class="text-sm text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
+                    </div>
                 `;
-                planResult.appendChild(weekElement);
-            });
+            }).join('');
+
+            analysisResult.innerHTML = `
+                <div class="prose max-w-none bg-gray-50 p-6 rounded-lg">
+                    <h3>健檢總評</h3>
+                    <p>${data.overall_comment}</p>
+                    <h3>STAR 分析與建議</h3>
+                    <div class="space-y-4 not-prose">${analysisHtml}</div>
+                    <h3>修改範例</h3>
+                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50/50 p-4 rounded-r-lg">
+                        <p>${data.revised_example}</p>
+                    </blockquote>
+                </div>
+            `;
         }
+    });
     </script>
 </body>
 </html>
