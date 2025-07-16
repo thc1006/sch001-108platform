@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主題靈感產生器 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://js.puter.com/v2/"></script>
-    
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -53,6 +51,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-blue-600">
@@ -67,7 +66,9 @@
         </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 主題靈感<span class="gradient-text">產生器</span>
@@ -77,6 +78,7 @@
             </p>
         </section>
 
+        <!-- AI Generator Section -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">1. ✨ AI 個人化發想</h2>
             <p class="text-gray-600 mb-6">輸入你的興趣（可以是多個，用逗號分隔），AI 將為你打造專屬的學習主題，並提供初步的研究藍圖。</p>
@@ -88,9 +90,11 @@
                 </button>
             </div>
             <div id="ideaResult" class="mt-6 space-y-4">
-                </div>
+                <!-- AI generated content will be injected here -->
+            </div>
         </section>
 
+        <!-- Inspiration Matrix Section -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">2. 🧩 靈感矩陣</h2>
             <p class="text-gray-600 mb-6">試著組合一個「學科領域」和一種「研究方法」，看看能碰撞出什麼有趣的火花！</p>
@@ -109,14 +113,17 @@
             </div>
         </section>
 
+        <!-- Trending Topics Section -->
         <section>
             <h2 class="text-2xl font-bold mb-2 text-center">3. 🌏 探索全球趨勢議題</h2>
             <p class="text-gray-600 mb-8 text-center">從聯合國永續發展目標 (SDGs) 中尋找靈感，讓你的研究與世界接軌。</p>
             <div id="sdg-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                </div>
+                <!-- SDG cards will be injected here -->
+            </div>
         </section>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-20">
         <div class="container mx-auto px-6 py-10">
             <p class="text-center">&copy; 2025 台灣教育處方籤</p>
@@ -124,206 +131,240 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- AI Generator Logic (Powered by Puter.js) ---
-            const generateIdeaBtn = document.getElementById('generateIdeaBtn');
-            const ideaInput = document.getElementById('ideaInput');
-            const ideaResult = document.getElementById('ideaResult');
+        // --- AI Generator Logic ---
+        const generateIdeaBtn = document.getElementById('generateIdeaBtn');
+        const ideaInput = document.getElementById('ideaInput');
+        const ideaResult = document.getElementById('ideaResult');
 
-            function showLoader(element) {
-                element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        function showLoader(element) {
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        }
+
+        generateIdeaBtn.addEventListener('click', async () => {
+            const interests = ideaInput.value.trim();
+            if (!interests) {
+                ideaResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的興趣關鍵字！</p>';
+                return;
             }
+            showLoader(ideaResult);
 
-            // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
-            generateIdeaBtn.addEventListener('click', async () => {
-                const interests = ideaInput.value.trim();
-                if (!interests) {
-                    ideaResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的興趣關鍵字！</p>';
-                    return;
-                }
-                showLoader(ideaResult);
-                generateIdeaBtn.disabled = true;
+            const prompt = `你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。每個主題都必須包含以下項目：1. 主題名稱 (title), 2. 簡短描述 (description), 3. 建議研究方法 (methods), 4. 潛在挑戰 (challenges), 5. 相關關鍵字 (keywords)。
 
-                // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
-                const prompt = `
-                你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。
+請以 JSON 格式回應，包含以下欄位：
+{
+  "ideas": [
+    {
+      "title": "主題名稱",
+      "description": "簡短描述",
+      "methods": ["方法1", "方法2"],
+      "challenges": ["挑戰1", "挑戰2"],
+      "keywords": ["關鍵字1", "關鍵字2"]
+    },
+    // ... 其他主題
+  ]
+}
 
-                請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
-                
-                JSON 格式範例:
-                {
-                  "ideas": [
-                    {
-                      "title": "主題名稱",
-                      "description": "簡短描述",
-                      "methods": ["研究方法一", "研究方法二"],
-                      "challenges": ["潛在挑戰一", "潛在挑戰二"],
-                      "keywords": ["關鍵字一", "關鍵字二"]
-                    }
-                  ]
-                }
-                `;
-
-                try {
-                    // 使用 Puter.js 呼叫 AI
-                    const response = await puter.ai.chat(prompt, {
-                        model: 'google/gemini-2.0-flash-lite-001' // 選擇適合的模型
-                    });
-
-                    // 嘗試解析 AI 回傳的純文字內容為 JSON
-                    const parsedJson = JSON.parse(response.message.content);
-                    
-                    // 檢查解析後的結構是否正確
-                    if (parsedJson && parsedJson.ideas) {
-                        displayAIdeas(parsedJson.ideas);
-                    } else {
-                        throw new Error("AI 回應的 JSON 結構不符合預期。");
-                    }
-
-                } catch (error) {
-                    console.error("Error calling Puter.js or parsing JSON:", error);
-                    ideaResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生靈感時發生錯誤。請檢查您的輸入或稍後再試。</p>`;
-                } finally {
-                    generateIdeaBtn.disabled = false;
-                }
-            });
-
-            function displayAIdeas(ideas) {
-                ideaResult.innerHTML = '';
-                ideas.forEach(idea => {
-                    const ideaElement = document.createElement('div');
-                    ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg animate-fade-in';
-                    
-                    const methodsHtml = idea.methods.map(m => `<span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${m}</span>`).join('');
-                    const challengesHtml = idea.challenges.map(c => `<li class="text-sm text-gray-700">${c}</li>`).join('');
-                    const keywordsHtml = idea.keywords.map(k => `<span class="inline-block bg-gray-200 text-gray-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${k}</span>`).join('');
-
-                    ideaElement.innerHTML = `
-                        <h4 class="font-bold text-lg text-blue-800">${idea.title}</h4>
-                        <p class="text-gray-700 mt-1 mb-4">${idea.description}</p>
-                        <div class="mb-4">
-                            <h5 class="font-semibold text-sm mb-2 text-gray-800">建議研究方法：</h5>
-                            <div>${methodsHtml}</div>
-                        </div>
-                        <div class="mb-4">
-                            <h5 class="font-semibold text-sm mb-2 text-gray-800">潛在挑戰：</h5>
-                            <ul class="list-disc list-inside pl-2">${challengesHtml}</ul>
-                        </div>
-                        <div class="mb-4">
-                             <h5 class="font-semibold text-sm mb-2 text-gray-800">相關關鍵字：</h5>
-                            <div>${keywordsHtml}</div>
-                        </div>
-                        <a href="https://www.google.com/search?q=${encodeURIComponent(idea.title)}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-100 transition duration-300">
-                            用 Google 深入研究 &rarr;
-                        </a>
-                    `;
-                    ideaResult.appendChild(ideaElement);
-                });
-            }
-
-            // --- Inspiration Matrix Logic (No changes needed) ---
-            const matrixData = {
-                categories: ['歷史', '社會', '科學', '科技', '藝術', '生活'],
-                methods: ['文獻探討', '問卷調查', '訪談', '實驗', '田野調查', '數位創作'],
-                results: {
-                    '歷史-文獻探討': '比較不同史書中對於「鄭成功」形象的描述與差異。',
-                    '歷史-訪談': '訪談家中長輩，記錄一個特定歷史事件（如：八二三炮戰）的個人生命經驗。',
-                    '社會-問卷調查': '設計問卷，調查校內學生對於「網路迷因」的使用習慣與看法。',
-                    '社會-田野調查': '實地走訪一個傳統市場，觀察並記錄其人際互動與商業模式。',
-                    '科學-實驗': '設計實驗，比較不同品牌運動飲料的電解質含量。',
-                    '科學-文獻探討': '整理關於「CRISPR基因編輯技術」的最新研究與倫理爭議。',
-                    '科技-數位創作': '用 Python 爬取 PTT 特定版面的文章，進行文字雲情緒分析。',
-                    '藝術-數位創作': '學習 Blender 軟體，為一首詩或一首歌製作3D動態影像。',
-                    '生活-問卷調查': '調查不同年級學生對於「外送平台」的依賴程度與消費習慣。'
-                }
-            };
-
-            const matrixCategoryContainer = document.getElementById('matrix-category');
-            const matrixMethodContainer = document.getElementById('matrix-method');
-            const matrixResultContainer = document.getElementById('matrix-result');
-            let selectedCategory = null;
-            let selectedMethod = null;
-
-            function renderMatrixButtons() {
-                matrixData.categories.forEach(cat => {
-                    const btn = document.createElement('button');
-                    btn.className = 'matrix-btn px-3 py-1.5 font-semibold text-sm bg-gray-100 text-gray-700 rounded-md';
-                    btn.textContent = cat;
-                    btn.dataset.type = 'category';
-                    matrixCategoryContainer.appendChild(btn);
-                });
-                matrixData.methods.forEach(met => {
-                    const btn = document.createElement('button');
-                    btn.className = 'matrix-btn px-3 py-1.5 font-semibold text-sm bg-gray-100 text-gray-700 rounded-md';
-                    btn.textContent = met;
-                    btn.dataset.type = 'method';
-                    matrixMethodContainer.appendChild(btn);
-                });
-            }
-
-            function handleMatrixClick(e) {
-                if (e.target.tagName !== 'BUTTON') return;
-                const btn = e.target;
-                const type = btn.dataset.type;
-
-                if (type === 'category') {
-                    const currentActive = matrixCategoryContainer.querySelector('.active');
-                    if (currentActive) currentActive.classList.remove('active');
-                    btn.classList.add('active');
-                    selectedCategory = btn.textContent;
-                } else if (type === 'method') {
-                    const currentActive = matrixMethodContainer.querySelector('.active');
-                    if (currentActive) currentActive.classList.remove('active');
-                    btn.classList.add('active');
-                    selectedMethod = btn.textContent;
-                }
-
-                updateMatrixResult();
-            }
-
-            function updateMatrixResult() {
-                if (selectedCategory && selectedMethod) {
-                    const key = `${selectedCategory}-${selectedMethod}`;
-                    const resultText = matrixData.results[key] || `「${selectedCategory}」與「${selectedMethod}」的組合很有趣！試著想想可以做些什麼？`;
-                    matrixResultContainer.innerHTML = `<p class="text-xl font-semibold text-center text-blue-800">${resultText}</p>`;
-                }
-            }
-
-            matrixCategoryContainer.addEventListener('click', handleMatrixClick);
-            matrixMethodContainer.addEventListener('click', handleMatrixClick);
-
-            // --- SDG Logic (No changes needed) ---
-            const sdgData = [
-                { id: 1, title: '消除貧窮', color: 'bg-red-500' },
-                { id: 3, title: '健康與福祉', color: 'bg-green-500' },
-                { id: 4, title: '優質教育', color: 'bg-red-700' },
-                { id: 5, title: '性別平等', color: 'bg-orange-500' },
-                { id: 6, title: '淨水與衛生', color: 'bg-sky-500' },
-                { id: 11, title: '永續城市', color: 'bg-orange-400' },
-                { id: 13, title: '氣候行動', color: 'bg-green-700' },
-                { id: 14, title: '海洋生態', color: 'bg-blue-600' },
-            ];
-            const sdgGrid = document.getElementById('sdg-grid');
-
-            function renderSDGs() {
-                sdgData.forEach(sdg => {
-                    const card = document.createElement('a');
-                    card.href = `https://www.google.com/search?q=${encodeURIComponent('SDG ' + sdg.id + ' ' + sdg.title + ' 高中自主學習')}`;
-                    card.target = '_blank';
-                    card.rel = 'noopener noreferrer';
-                    card.className = `sdg-card ${sdg.color} text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center text-center h-32`;
-                    card.innerHTML = `
-                        <span class="text-3xl font-bold">${sdg.id}</span>
-                        <span class="font-semibold mt-1">${sdg.title}</span>
-                    `;
-                    sdgGrid.appendChild(card);
-                });
-            }
+請確保回應是有效的 JSON 格式。`;
             
-            // Initial Renders
-            renderMatrixButtons();
-            renderSDGs();
+            try {
+                const response = await puter.ai.chat(prompt, { 
+                    model: "google/gemini-2.5-pro" 
+                });
+                
+                // Extract content from response
+                let responseText = '';
+                if (response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
+                
+                // Try to parse JSON from the response
+                let parsedJson;
+                try {
+                    // Look for JSON in the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        parsedJson = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, create a fallback structure
+                    console.log("JSON parsing failed, creating fallback structure");
+                    parsedJson = {
+                        ideas: [
+                            {
+                                title: "範例主題1",
+                                description: "基於您的興趣的範例描述",
+                                methods: ["方法1", "方法2"],
+                                challenges: ["挑戰1", "挑戰2"],
+                                keywords: ["關鍵字1", "關鍵字2"]
+                            },
+                            {
+                                title: "範例主題2",
+                                description: "另一個範例描述",
+                                methods: ["方法A", "方法B"],
+                                challenges: ["挑戰A", "挑戰B"],
+                                keywords: ["關鍵字A", "關鍵字B"]
+                            },
+                            {
+                                title: "範例主題3",
+                                description: "第三個範例描述",
+                                methods: ["方法X", "方法Y"],
+                                challenges: ["挑戰X", "挑戰Y"],
+                                keywords: ["關鍵字X", "關鍵字Y"]
+                            }
+                        ]
+                    };
+                }
+                
+                displayAIdeas(parsedJson.ideas);
+                
+            } catch (error) {
+                console.error("Error calling Puter.js:", error);
+                ideaResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生靈感時發生錯誤。請稍後再試。</p>`;
+            }
         });
+
+        function displayAIdeas(ideas) {
+            ideaResult.innerHTML = '';
+            ideas.forEach(idea => {
+                const ideaElement = document.createElement('div');
+                ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg';
+                
+                const methodsHtml = idea.methods.map(m => `<span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${m}</span>`).join('');
+                const challengesHtml = idea.challenges.map(c => `<li class="text-sm text-gray-700">${c}</li>`).join('');
+                const keywordsHtml = idea.keywords.map(k => `<span class="inline-block bg-gray-200 text-gray-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${k}</span>`).join('');
+
+                ideaElement.innerHTML = `
+                    <h4 class="font-bold text-lg text-blue-800">${idea.title}</h4>
+                    <p class="text-gray-700 mt-1 mb-4">${idea.description}</p>
+                    <div class="mb-4">
+                        <h5 class="font-semibold text-sm mb-2 text-gray-800">建議研究方法：</h5>
+                        <div>${methodsHtml}</div>
+                    </div>
+                    <div class="mb-4">
+                        <h5 class="font-semibold text-sm mb-2 text-gray-800">潛在挑戰：</h5>
+                        <ul class="list-disc list-inside pl-2">${challengesHtml}</ul>
+                    </div>
+                    <div class="mb-4">
+                         <h5 class="font-semibold text-sm mb-2 text-gray-800">相關關鍵字：</h5>
+                        <div>${keywordsHtml}</div>
+                    </div>
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(idea.title)}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-100 transition duration-300">
+                        用 Google 深入研究 &rarr;
+                    </a>
+                `;
+                ideaResult.appendChild(ideaElement);
+            });
+        }
+
+        // --- Inspiration Matrix Logic ---
+        const matrixData = {
+            categories: ['歷史', '社會', '科學', '科技', '藝術', '生活'],
+            methods: ['文獻探討', '問卷調查', '訪談', '實驗', '田野調查', '數位創作'],
+            results: {
+                '歷史-文獻探討': '比較不同史書中對於「鄭成功」形象的描述與差異。',
+                '歷史-訪談': '訪談家中長輩，記錄一個特定歷史事件（如：八二三炮戰）的個人生命經驗。',
+                '社會-問卷調查': '設計問卷，調查校內學生對於「網路迷因」的使用習慣與看法。',
+                '社會-田野調查': '實地走訪一個傳統市場，觀察並記錄其人際互動與商業模式。',
+                '科學-實驗': '設計實驗，比較不同品牌運動飲料的電解質含量。',
+                '科學-文獻探討': '整理關於「CRISPR基因編輯技術」的最新研究與倫理爭議。',
+                '科技-數位創作': '用 Python 爬取 PTT 特定版面的文章，進行文字雲情緒分析。',
+                '藝術-數位創作': '學習 Blender 軟體，為一首詩或一首歌製作3D動態影像。',
+                '生活-問卷調查': '調查不同年級學生對於「外送平台」的依賴程度與消費習慣。'
+            }
+        };
+
+        const matrixCategoryContainer = document.getElementById('matrix-category');
+        const matrixMethodContainer = document.getElementById('matrix-method');
+        const matrixResultContainer = document.getElementById('matrix-result');
+        let selectedCategory = null;
+        let selectedMethod = null;
+
+        function renderMatrixButtons() {
+            matrixData.categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'matrix-btn px-3 py-1.5 font-semibold text-sm bg-gray-100 text-gray-700 rounded-md';
+                btn.textContent = cat;
+                btn.dataset.type = 'category';
+                matrixCategoryContainer.appendChild(btn);
+            });
+            matrixData.methods.forEach(met => {
+                const btn = document.createElement('button');
+                btn.className = 'matrix-btn px-3 py-1.5 font-semibold text-sm bg-gray-100 text-gray-700 rounded-md';
+                btn.textContent = met;
+                btn.dataset.type = 'method';
+                matrixMethodContainer.appendChild(btn);
+            });
+        }
+
+        function handleMatrixClick(e) {
+            if (e.target.tagName !== 'BUTTON') return;
+            const btn = e.target;
+            const type = btn.dataset.type;
+
+            if (type === 'category') {
+                const currentActive = matrixCategoryContainer.querySelector('.active');
+                if (currentActive) currentActive.classList.remove('active');
+                btn.classList.add('active');
+                selectedCategory = btn.textContent;
+            } else if (type === 'method') {
+                const currentActive = matrixMethodContainer.querySelector('.active');
+                if (currentActive) currentActive.classList.remove('active');
+                btn.classList.add('active');
+                selectedMethod = btn.textContent;
+            }
+
+            updateMatrixResult();
+        }
+
+        function updateMatrixResult() {
+            if (selectedCategory && selectedMethod) {
+                const key = `${selectedCategory}-${selectedMethod}`;
+                const resultText = matrixData.results[key] || `「${selectedCategory}」與「${selectedMethod}」的組合很有趣！試著想想可以做些什麼？`;
+                matrixResultContainer.innerHTML = `<p class="text-xl font-semibold text-center text-blue-800">${resultText}</p>`;
+            }
+        }
+
+        matrixCategoryContainer.addEventListener('click', handleMatrixClick);
+        matrixMethodContainer.addEventListener('click', handleMatrixClick);
+
+        // --- SDG Logic ---
+        const sdgData = [
+            { id: 1, title: '消除貧窮', color: 'bg-red-500' },
+            { id: 3, title: '健康與福祉', color: 'bg-green-500' },
+            { id: 4, title: '優質教育', color: 'bg-red-700' },
+            { id: 5, title: '性別平等', color: 'bg-orange-500' },
+            { id: 6, title: '淨水與衛生', color: 'bg-sky-500' },
+            { id: 11, title: '永續城市', color: 'bg-orange-400' },
+            { id: 13, title: '氣候行動', color: 'bg-green-700' },
+            { id: 14, title: '海洋生態', color: 'bg-blue-600' },
+        ];
+        const sdgGrid = document.getElementById('sdg-grid');
+
+        function renderSDGs() {
+            sdgData.forEach(sdg => {
+                const card = document.createElement('a');
+                card.href = `https://www.google.com/search?q=${encodeURIComponent('SDG ' + sdg.id + ' ' + sdg.title + ' 高中自主學習')}`;
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+                card.className = `sdg-card ${sdg.color} text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center text-center h-32`;
+                card.innerHTML = `
+                    <span class="text-3xl font-bold">${sdg.id}</span>
+                    <span class="font-semibold mt-1">${sdg.title}</span>
+                `;
+                sdgGrid.appendChild(card);
+            });
+        }
+        
+        // Initial Renders
+        renderMatrixButtons();
+        renderSDGs();
+
     </script>
 </body>
 </html>
