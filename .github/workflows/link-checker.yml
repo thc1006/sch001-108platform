@@ -23,18 +23,24 @@ jobs:
     
     # 工作的步驟
     steps:
-      # 步驟一：使用 linkcheck Action
+      # 步驟一：使用新的 lychee-action 工具來檢查連結
       - name: Check Links
-        # 使用您提供的 linkcheck 工具
-        uses: linkcheck/linkcheck@v1
+        # 修正：使用 lycheeverse/lychee-action@v1 這個正確的工具
+        uses: lycheeverse/lychee-action@v1
         with:
-          # 要掃描的網站網址
-          url: https://thc1006.github.io/sch001-108platform/
-          # 啟用遞迴掃描，它會從首頁開始，爬取所有頁面
-          recursion: true
-          # 忽略特定的 URL，避免誤判 (例如 LinkedIn 會阻擋爬蟲)
-          ignore_urls: |
-            https://www.linkedin.com
-            https://www.youtube.com/watch?v=dQw4w9WgXcQ
-          # 顯示詳細的檢查過程
-          verbose: true
+          # --verbose 會顯示詳細的檢查過程
+          # --no-progress 不顯示進度條，讓日誌更乾淨
+          # 最後是要掃描的網址
+          args: --verbose --no-progress https://thc1006.github.io/sch001-108platform/
+        env:
+          # 如果遇到需要 Token 才能訪問的連結(例如某些GitHub API)，可以在此設定
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      # 步驟二：如果檢查失敗，將報告上傳，方便除錯
+      - name: Upload Report
+        # `if: failure()` 表示只有在上一步失敗時才執行此步驟
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lychee-report
+          path: lychee-report.md
