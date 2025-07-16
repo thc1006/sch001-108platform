@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自主學習啟航站 - 台灣教育處方籤</title>
+    
+    <script src="https://js.puter.com/v2/"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <script src="https://js.puter.com/v2/"></script>
-
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
@@ -38,12 +38,6 @@
         .step-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .prose h4 {
-           font-weight: 700;
-        }
-        .prose ul > li::marker {
-            color: #14b8a6;
         }
     </style>
 </head>
@@ -77,14 +71,14 @@
              <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
              <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓他為你生成一份個人化的「學習啟動包」！</p>
              <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
-                <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span>請求指導</span>
-                </button>
+                 <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
+                 <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                     <span>請求指導</span>
+                 </button>
              </div>
              <div id="coachResult" class="mt-6">
-                </div>
+                 </div>
         </section>
 
         <section>
@@ -125,7 +119,7 @@
              <h2 class="text-2xl font-bold text-center mb-8">聽聽專家怎麼說</h2>
              <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-lg">
                  <div class="aspect-w-16 aspect-h-9">
-                     <iframe src="https://www.youtube.com/embed/videoseries?list=PL04i_5v3k_c1y0a-t0Wk2-3J9-0g6t2nF" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
+                     <iframe src="https://www.youtube.com/embed/videoseries?list=PL-hY0_R7L4y_q_mO-5Y1J_t_Zg4Y_ZqZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
                  </div>
                  <div class="p-4">
                      <h3 class="font-bold text-lg">【自主學習】系列影片</h3>
@@ -142,17 +136,17 @@
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- AI Coach Logic (Powered by Puter.js) ---
+        // --- AI Coach Logic (Updated with Puter.js) ---
         const generateCoachBtn = document.getElementById('generateCoachBtn');
         const coachInput = document.getElementById('coachInput');
         const coachResult = document.getElementById('coachResult');
+        // ✨ 步驟 2: 不再需要 API 金鑰
+        // const apiKey = ""; 
 
         function showLoader(element) {
             element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
         }
 
-        // ✨ 步驟 2: 修改事件監聽器以使用 Puter.js
         generateCoachBtn.addEventListener('click', async () => {
             const topic = coachInput.value.trim();
             if (!topic) {
@@ -160,44 +154,35 @@
                 return;
             }
             showLoader(coachResult);
-            generateCoachBtn.disabled = true;
 
-            // ✨ 步驟 3: 強化 Prompt，明確要求 JSON 格式
-            const prompt = `
-            你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
-
-            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
-
-            JSON 結構範例:
-            {
-              "suggested_topic": "一個具體的研究主題",
-              "research_questions": ["問題一", "問題二", "問題三"],
-              "resource_types": ["資源類型一", "資源類型二", "資源類型三"]
-            }
-
-            你的任務是為主題「${topic}」生成這份 JSON 啟動包。
-            `;
+            // ✨ 步驟 3: 優化 Prompt 以確保能穩定收到 JSON 格式
+            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
+內容須嚴格符合以下 JSON 格式：
+{
+  "suggested_topic": "將學生的模糊想法，聚焦為一個更具體的研究主題",
+  "research_questions": ["引導初步探索的開放式問題1", "問題2", "問題3"],
+  "resource_types": ["適合此主題的資源類型1", "資源類型2", "資源類型3"]
+}
+請直接回傳這個 JSON 物件，不要包含任何「\`\`\`json」之類的標記或任何其他的說明文字。`;
             
+            // ✨ 步驟 4: 使用 puter.ai.chat() 取代 fetch
             try {
-                // 使用 Puter.js 呼叫 AI
                 const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
+                    // 使用教學文件中提供的免費模型
+                    model: 'google/gemini-2.0-flash-lite-001' 
                 });
-                
-                // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const parsedJson = JSON.parse(response.message.content);
 
-                if (parsedJson && parsedJson.suggested_topic) {
+                if (response.message && response.message.content) {
+                    // Puter.js 回傳的內容應該是 JSON 字串，我們將其解析
+                    const parsedJson = JSON.parse(response.message.content);
                     displayAIStarterPack(parsedJson);
                 } else {
-                    throw new Error("AI 回應的 JSON 結構不符合預期。");
+                    throw new Error("從 API 收到的回應格式不正確。");
                 }
-
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請檢查你的想法是否清晰，或稍後再試。</p>`;
-            } finally {
-                generateCoachBtn.disabled = false;
+                console.error("Error calling Puter.js AI:", error);
+                // ✨ 步驟 5: 更新錯誤訊息
+                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，AI 教練目前無法連線。請檢查你的網路連線或稍後再試。</p>`;
             }
         });
 
@@ -212,12 +197,11 @@
                     <h4>你可以從這幾個問題開始探索：</h4>
                     <ul class="list-disc list-inside">${questionsHtml}</ul>
                     <h4>建議尋找的資源類型：</h4>
-                    <div class="not-prose flex flex-wrap">${resourcesHtml}</div>
+                    <div class="flex flex-wrap">${resourcesHtml}</div>
                     <p class="mt-4 text-sm">現在，你可以帶著這些想法，前往下方的<a href="topic-ideas.html" class="font-semibold text-blue-600 hover:underline">「靈感探索」</a>或<a href="resource-map.html" class="font-semibold text-blue-600 hover:underline">「資源蒐集」</a>區塊，開始你的旅程！</p>
                 </div>
             `;
         }
-    });
     </script>
 </body>
 </html>
