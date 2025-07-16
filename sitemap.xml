@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- 主要頁面 -->
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/index.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/about.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/sitemap.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- 自主學習啟航站 -->
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/autonomous-learning/index.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/autonomous-learning/topic-ideas.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/autonomous-learning/plan-templates.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/autonomous-learning/resource-map.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/autonomous-learning/methodology.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 學習歷程煉金室 -->
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/learning-portfolio/index.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/learning-portfolio/portfolio-gallery.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/learning-portfolio/reflection-guide.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/learning-portfolio/activity-database.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/learning-portfolio/tools.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 未來生涯GPS -->
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/career-exploration/index.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/career-exploration/senior-interviews.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/career-exploration/competency-map.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 進階資源探索區 -->
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/advanced-resources/index.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/advanced-resources/online-courses.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/advanced-resources/competitions.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thc1006.github.io/sch001-108platform/advanced-resources/reading-list.html</loc>
+    <lastmod>2025-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>
