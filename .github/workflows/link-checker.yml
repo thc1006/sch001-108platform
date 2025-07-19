@@ -1,46 +1,46 @@
-# 工作流程的名稱
-name: Check Links on Live Site
+name: Build, Test and Deploy
 
-# 觸發此工作流程的事件
 on:
-  # 當有程式碼被 push 到 main 分支時
   push:
-    branches: [ main ]
-  # 當有 pull request 目標是 main 分支時
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
-  # 每週一的凌晨三點自動執行一次
-  schedule:
-    - cron: '0 3 * * 1'
-  # 允許手動觸發
-  workflow_dispatch:
+    branches: [ "main" ]
 
-# 定義工作
 jobs:
-  link-check:
-    # 指定運行的虛擬環境
+  build-and-index:
+    name: Build Search Index
     runs-on: ubuntu-latest
-    
-    # 工作的步驟
     steps:
-      # 步驟一：使用新的 lychee-action 工具來檢查連結
-      - name: Check Links
-        # 修正：使用 lycheeverse/lychee-action@v1 這個正確的工具
-        uses: lycheeverse/lychee-action@v1
-        with:
-          # --verbose 會顯示詳細的檢查過程
-          # --no-progress 不顯示進度條，讓日誌更乾淨
-          # 最後是要掃描的網址
-          args: --verbose --no-progress https://thc1006.github.io/sch001-108platform/
-        env:
-          # 如果遇到需要 Token 才能訪問的連結(例如某些GitHub API)，可以在此設定
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # 步驟二：如果檢查失敗，將報告上傳，方便除錯
-      - name: Upload Report
-        # `if: failure()` 表示只有在上一步失敗時才執行此步驟
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: lychee-report
-          path: lychee-report.md
+          node-version: '18' # 使用 LTS 版本
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build search index
+        run: node build-search-index.js
+
+      - name: Commit and push changes
+        if: github.ref == 'refs/heads/main' # 只在 push 到 main 分支時才自動 commit
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(bot): ✨ 自動更新搜尋索引"
+          file_pattern: 'search-index.json'
+
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    needs: build-and-index # 等待索引建立完成後再執行
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v1
+        with:
+          args: --verbose --no-progress './**/*.html' './**/*.md'
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -1,0 +1,15 @@
+{
+  "name": "sch001-108platform",
+  "version": "1.0.0",
+  "description": "> 高中生 108 課綱教育資源整合平台(Curriculum Guidelines of K-12 Basic Education Resource Integration Platform)",
+  "main": "search-index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.1.0"
+  }
+}
