@@ -1,0 +1,1333 @@
+[
+  {
+    "id": "page-1",
+    "title": "關於我們",
+    "content": "我們的使命",
+    "tags": [],
+    "url": "about.html"
+  },
+  {
+    "id": "page-2",
+    "title": "國內外競賽資訊",
+    "content": "國內外競賽資訊",
+    "tags": [],
+    "url": "advanced-resources/competitions.html"
+  },
+  {
+    "id": "competitions-3",
+    "title": "國內外競賽資訊 - 全國中小學科學展覽會",
+    "content": "台灣歷史最悠久、規模最盛大的中學生科學研究競賽，是展現探究與實作能力的最佳舞台。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-4",
+    "title": "國內外競賽資訊 - 旺宏科學獎",
+    "content": "有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-5",
+    "title": "國內外競賽資訊 - TRML 台灣地區數學聯賽",
+    "content": "結合個人賽、團體賽與思考賽，考驗數學解題能力與團隊合作默契，是數學愛好者的年度盛事。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-6",
+    "title": "國內外競賽資訊 - 全國高中生資訊應用競賽",
+    "content": "分為多個組別，如軟體設計、數位內容等，旨在提升高中生的資訊應用與創新能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-7",
+    "title": "國內外競賽資訊 - 外交小尖兵",
+    "content": "以英語為工具，探討國際議題，培養青年學子的國際視野與英語演說能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-8",
+    "title": "國內外競賽資訊 - 全國高中生商業個案大賽",
+    "content": "模擬真實的商業情境，要求參賽隊伍分析個案並提出解決方案，是商管潛力人才的競技場。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-9",
+    "title": "國內外競賽資訊 - 台灣國際學生創意設計大賽",
+    "content": "全球規模最大的學生設計競賽之一，分為產品設計、視覺設計、數位動畫三大類，是與世界好手交流的絕佳機會。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-10",
+    "title": "國內外競賽資訊 - 國際數學奧林匹亞 (IMO)",
+    "content": "世界最高等級的中學生數學競賽，需經過國內層層選拔，代表國家爭取榮譽。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-11",
+    "title": "國內外競賽資訊 - 國際資訊奧林匹亞 (IOI)",
+    "content": "全球中學生程式設計與演算法的頂級競賽，考驗參賽者的邏輯思維與解題能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-12",
+    "title": "國內外競賽資訊 - 全國學生美術比賽",
+    "content": "台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等多種類別。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "page-13",
+    "title": "進階資源探索區",
+    "content": "進階資源探索區",
+    "tags": [],
+    "url": "advanced-resources/index.html"
+  },
+  {
+    "id": "page-14",
+    "title": "線上課程精選",
+    "content": "線上課程精選",
+    "tags": [],
+    "url": "advanced-resources/online-courses.html"
+  },
+  {
+    "id": "courses-15",
+    "title": "線上課程精選 - Machine Learning for Everyone",
+    "content": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "AI",
+      "機器學習",
+      "吳恩達"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-16",
+    "title": "線上課程精選 - Python for Everybody",
+    "content": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "Python",
+      "程式設計",
+      "資料處理"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-17",
+    "title": "線上課程精選 - CS50's Introduction to Computer Science",
+    "content": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "計算機科學",
+      "C語言",
+      "演算法"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-18",
+    "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
+    "content": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "行銷",
+      "市場分析",
+      "品牌"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-19",
+    "title": "線上課程精選 - The Science of Well-Being",
+    "content": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "心理學",
+      "幸福感",
+      "正向心理學"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-20",
+    "title": "線上課程精選 - 基礎微積分",
+    "content": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "微積分",
+      "數學",
+      "台大"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-21",
+    "title": "線上課程精選 - Google 數據分析專業證書",
+    "content": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "數據分析",
+      "SQL",
+      "Tableau",
+      "R語言"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-22",
+    "title": "線上課程精選 - 經濟學原理",
+    "content": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "經濟學",
+      "個體經濟",
+      "總體經濟"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "page-23",
+    "title": "主題書單推薦",
+    "content": "主題書單推薦",
+    "tags": [],
+    "url": "advanced-resources/reading-list.html"
+  },
+  {
+    "id": "page-24",
+    "title": "自主學習啟航站",
+    "content": "自主學習啟航站",
+    "tags": [],
+    "url": "autonomous-learning/index.html"
+  },
+  {
+    "id": "page-25",
+    "title": "研究方法工具箱",
+    "content": "研究方法工具箱",
+    "tags": [],
+    "url": "autonomous-learning/methodology.html"
+  },
+  {
+    "id": "methods-literature-review",
+    "title": "研究方法工具箱 - 文獻探討法",
+    "content": "透過系統性地查找、閱讀、分析與你的主題相關的既有資料，來建立研究基礎。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-literature-review"
+  },
+  {
+    "id": "methods-survey-method",
+    "title": "研究方法工具箱 - 問卷調查法",
+    "content": "設計標準化問題，向特定群體進行調查，以蒐集大量的量化數據來進行統計分析。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-survey-method"
+  },
+  {
+    "id": "methods-interview-method",
+    "title": "研究方法工具箱 - 訪談法",
+    "content": "透過與受訪者進行深入的對話，來獲取質性的、有故事性的、深層的資訊。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-interview-method"
+  },
+  {
+    "id": "methods-case-study",
+    "title": "研究方法工具箱 - 個案研究法",
+    "content": "針對一個特定的「個案」（如：一個事件、一間公司、一個人物）進行全面而深入的探討。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-case-study"
+  },
+  {
+    "id": "methods-content-analysis",
+    "title": "研究方法工具箱 - 內容分析法",
+    "content": "對文本或影像內容（如：新聞報導、歌詞、廣告、社群貼文）進行系統性的分類與統計分析。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-content-analysis"
+  },
+  {
+    "id": "methods-creative-practice",
+    "title": "研究方法工具箱 - 創作實踐法",
+    "content": "以「創造一個作品」為核心，研究的過程與最終的成品同等重要。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-creative-practice"
+  },
+  {
+    "id": "page-26",
+    "title": "計畫範本庫",
+    "content": "計畫範本庫",
+    "tags": [],
+    "url": "autonomous-learning/plan-templates.html"
+  },
+  {
+    "id": "page-27",
+    "title": "學習資源地圖",
+    "content": "學習資源地圖",
+    "tags": [],
+    "url": "autonomous-learning/resource-map.html"
+  },
+  {
+    "id": "page-28",
+    "title": "主題靈感產生器",
+    "content": "主題靈感產生器",
+    "tags": [],
+    "url": "autonomous-learning/topic-ideas.html"
+  },
+  {
+    "id": "sdg-1",
+    "title": "主題靈感產生器 - 消除貧窮",
+    "content": "{\"id\":1,\"title\":\"消除貧窮\",\"color\":\"bg-red-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-1"
+  },
+  {
+    "id": "sdg-3",
+    "title": "主題靈感產生器 - 健康與福祉",
+    "content": "{\"id\":3,\"title\":\"健康與福祉\",\"color\":\"bg-green-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-3"
+  },
+  {
+    "id": "sdg-4",
+    "title": "主題靈感產生器 - 優質教育",
+    "content": "{\"id\":4,\"title\":\"優質教育\",\"color\":\"bg-red-700\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-4"
+  },
+  {
+    "id": "sdg-5",
+    "title": "主題靈感產生器 - 性別平等",
+    "content": "{\"id\":5,\"title\":\"性別平等\",\"color\":\"bg-orange-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-5"
+  },
+  {
+    "id": "sdg-6",
+    "title": "主題靈感產生器 - 淨水與衛生",
+    "content": "{\"id\":6,\"title\":\"淨水與衛生\",\"color\":\"bg-sky-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-6"
+  },
+  {
+    "id": "sdg-11",
+    "title": "主題靈感產生器 - 永續城市",
+    "content": "{\"id\":11,\"title\":\"永續城市\",\"color\":\"bg-orange-400\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-11"
+  },
+  {
+    "id": "sdg-13",
+    "title": "主題靈感產生器 - 氣候行動",
+    "content": "{\"id\":13,\"title\":\"氣候行動\",\"color\":\"bg-green-700\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-13"
+  },
+  {
+    "id": "sdg-14",
+    "title": "主題靈感產生器 - 海洋生態",
+    "content": "{\"id\":14,\"title\":\"海洋生態\",\"color\":\"bg-blue-600\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-14"
+  },
+  {
+    "id": "page-29",
+    "title": "核心素養互動對照表 (Puter.js 整合版)",
+    "content": "核心素養互動探索",
+    "tags": [],
+    "url": "career-exploration/competency-map.html"
+  },
+  {
+    "id": "page-30",
+    "title": "未來生涯GPS 2.0",
+    "content": "未來生涯GPS 2.0",
+    "tags": [],
+    "url": "career-exploration/index.html"
+  },
+  {
+    "id": "major-engineering",
+    "title": "未來生涯GPS 2.0 - 工程學群",
+    "content": "應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-engineering"
+  },
+  {
+    "id": "major-info",
+    "title": "未來生涯GPS 2.0 - 資訊學群",
+    "content": "專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-info"
+  },
+  {
+    "id": "major-management",
+    "title": "未來生涯GPS 2.0 - 管理學群",
+    "content": "學習組織、領導、規劃與控制等管理職能，以達成組織目標。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-management"
+  },
+  {
+    "id": "major-finance",
+    "title": "未來生涯GPS 2.0 - 財經學群",
+    "content": "研究金融市場、投資、公司理財與經濟現象，是資本社會的運作基礎。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-finance"
+  },
+  {
+    "id": "major-social_psychology",
+    "title": "未來生涯GPS 2.0 - 社會與心理學群",
+    "content": "關心人類的心理歷程、社會行為與結構，旨在理解並改善個人與社會的福祉。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-social_psychology"
+  },
+  {
+    "id": "major-mass_comm",
+    "title": "未來生涯GPS 2.0 - 大眾傳播學群",
+    "content": "學習訊息的產製、傳遞與效果，包含新聞、廣告、廣播、影視等領域。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-mass_comm"
+  },
+  {
+    "id": "major-design",
+    "title": "未來生涯GPS 2.0 - 設計學群",
+    "content": "結合美感與實用性，解決生活中的問題，從平面設計到建築設計皆屬此範疇。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-design"
+  },
+  {
+    "id": "major-life_sci",
+    "title": "未來生涯GPS 2.0 - 生命科學學群",
+    "content": "探討生命的奧秘，從分子、細胞到生態系，是生物科技與醫學研究的基礎。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-life_sci"
+  },
+  {
+    "id": "major-medicine",
+    "title": "未來生涯GPS 2.0 - 醫藥衛生學群",
+    "content": "致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-medicine"
+  },
+  {
+    "id": "page-31",
+    "title": "學長姐真心話",
+    "content": "學長姐真心話",
+    "tags": [],
+    "url": "career-exploration/senior-interviews.html"
+  },
+  {
+    "id": "interview-info-01",
+    "title": "學長姐真心話 - 陳同學",
+    "content": "資訊工程學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-info-01"
+  },
+  {
+    "id": "interview-comm-01",
+    "title": "學長姐真心話 - 林同學",
+    "content": "傳播學院",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-comm-01"
+  },
+  {
+    "id": "interview-law-01",
+    "title": "學長姐真心話 - 張同學",
+    "content": "法律學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-law-01"
+  },
+  {
+    "id": "interview-bio-01",
+    "title": "學長姐真心話 - 王同學",
+    "content": "生物科技學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-bio-01"
+  },
+  {
+    "id": "page-33",
+    "title": "台灣教育處方籤",
+    "content": "一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。",
+    "tags": [
+      "108課綱",
+      "自主學習",
+      "學習歷程",
+      "多元表現",
+      "生涯探索",
+      "高中生",
+      "開源",
+      "g0v",
+      "台灣教育處方籤"
+    ],
+    "url": "index.html"
+  },
+  {
+    "id": "page-34",
+    "title": "多元表現資料庫",
+    "content": "多元表現資料庫",
+    "tags": [],
+    "url": "learning-portfolio/activity-database.html"
+  },
+  {
+    "id": "page-35",
+    "title": "學習歷程煉金室",
+    "content": "學習歷程煉金室",
+    "tags": [],
+    "url": "learning-portfolio/index.html"
+  },
+  {
+    "id": "page-36",
+    "title": "優質範例藝廊",
+    "content": "優質範例藝廊",
+    "tags": [],
+    "url": "learning-portfolio/portfolio-gallery.html"
+  },
+  {
+    "id": "portfolio-science-01",
+    "title": "優質範例藝廊 - 探究與實作：校園植物葉面含菌量分析",
+    "content": "{\"id\":\"science-01\",\"title\":\"探究與實作：校園植物葉面含菌量分析\",\"category\":\"自然科學\",\"type\":\"課程學習成果\",\"tags\":[\"實驗設計\",\"數據分析\"],\"thumbnail_url\":\"https://images.pexels.com/photos/3735747/pexels-photo-3735747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/e0e7ff/3730a3?text=探究與實作報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。\\n                        研究過程：善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。\\n                        成果展現：不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。\\n                        深度反思：心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "實驗設計",
+      "數據分析"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-science-01"
+  },
+  {
+    "id": "portfolio-social-02",
+    "title": "優質範例藝廊 - 社會實踐報告：「剩食」議題的社區田野調查",
+    "content": "{\"id\":\"social-02\",\"title\":\"社會實踐報告：「剩食」議題的社區田野調查\",\"category\":\"社會科學\",\"type\":\"多元表現\",\"tags\":[\"田野調查\",\"訪談\"],\"thumbnail_url\":\"https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/dcfce7/166534?text=社會實踐報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：從全球性的剩食議題，聚焦到「社區」這個可操作的範圍，展現了將大問題轉化為具體行動的能力。\\n                        研究過程：綜合運用了多種研究方法。除了文獻探討，更實際走訪了5家便當店、2間超市，並深度訪談了里長，資料來源多元且具說服力。可參考本站研究方法工具箱。\\n                        成果展現：最終不只提出問題，更設計了一份「社區剩食共享地圖」的提案，並附上初步的宣傳文案，展現了強烈的解決問題導向。\\n                        深度反思：反思中不僅提到執行的困難（如：店家不願受訪），更探討了背後的社會結構性問題，展現了超越表象的洞察力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "田野調查",
+      "訪談"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-social-02"
+  },
+  {
+    "id": "portfolio-art-01",
+    "title": "優質範例藝廊 - 作品集：我的城市速寫計畫",
+    "content": "{\"id\":\"art-01\",\"title\":\"作品集：我的城市速寫計畫\",\"category\":\"藝術設計\",\"type\":\"多元表現\",\"tags\":[\"創作實踐\",\"觀察力\"],\"thumbnail_url\":\"https://images.pexels.com/photos/164543/pexels-photo-164543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/fce7f3/86198f?text=作品集範例\",\"analysis_html\":\"\\n                    \\n                        問題意識：創作理念清晰，闡述了為何選擇「城市速寫」作為主題，以及想透過畫筆記錄城市變遷的動機。\\n                        研究過程：作品集呈現了從草稿、不同媒材的嘗試到最終作品的完整脈絡，讓觀者能理解其創作的演進過程。\\n                        成果展現：作品風格統一，排版具有設計感，本身就是一件完整的設計作品。每張畫都附有簡短的文字，說明地點與創作當下的心情。\\n                        深度反思：在總結中，作者反思了「速寫」如何改變他觀看城市的方式，並連結到對都市更新議題的關懷，提升了作品的層次。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "創作實踐",
+      "觀察力"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-art-01"
+  },
+  {
+    "id": "portfolio-cross-domain-01",
+    "title": "優質範例藝廊 - 跨領域專題：用Python分析唐詩中的色彩意象",
+    "content": "{\"id\":\"cross-domain-01\",\"title\":\"跨領域專題：用Python分析唐詩中的色彩意象\",\"category\":\"跨領域\",\"type\":\"課程學習成果\",\"tags\":[\"文學分析\",\"數據分析\",\"數位創作\"],\"thumbnail_url\":\"https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/eef2ff/4338ca?text=跨領域專題報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：完美結合了「語文」與「資訊」兩個領域，題目「用Python分析唐詩」本身就極具創意與亮點。\\n                        研究過程：作者清楚說明了如何蒐集唐詩資料庫、如何撰寫Python程式來進行斷詞與顏色詞彙的頻率統計，方法論清晰。\\n                        成果展現：將統計結果製作成精美的圓餅圖與詞頻分析表，將量化數據視覺化，讓文學分析不再只是主觀感受，更有了數據支撐。\\n                        深度反思：作者在反思中探討了「數位人文」這個新興領域的可能性與限制，並提出未來可進一步分析不同詩人（如李白、杜甫）用色習慣的差異，展現了優異的研究潛力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "文學分析",
+      "數據分析",
+      "數位創作"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-cross-domain-01"
+  },
+  {
+    "id": "page-37",
+    "title": "反思引導提問集",
+    "content": "反思引導提問集",
+    "tags": [],
+    "url": "learning-portfolio/reflection-guide.html"
+  },
+  {
+    "id": "page-38",
+    "title": "線上製作工具箱",
+    "content": "線上製作工具箱",
+    "tags": [],
+    "url": "learning-portfolio/tools.html"
+  },
+  {
+    "id": "page-39",
+    "title": "Attributes test",
+    "content": "頁面內容包含：class=\"value0\" title=\"value1\" class=value2 disabled class=\"value4\"title=\"value5\"...",
+    "tags": [],
+    "url": "node_modules/htmlparser2/src/__fixtures__/Documents/Attributes.html"
+  },
+  {
+    "id": "page-40",
+    "title": "The Title",
+    "content": "頁面內容包含：Hello world...",
+    "tags": [],
+    "url": "node_modules/htmlparser2/src/__fixtures__/Documents/Basic.html"
+  },
+  {
+    "id": "page-41",
+    "title": "SVG testTestx",
+    "content": "頁面內容包含：Test x...",
+    "tags": [],
+    "url": "node_modules/htmlparser2/src/__fixtures__/Documents/Svg.html"
+  },
+  {
+    "id": "page-43",
+    "title": "自主學習啟航站",
+    "content": "自主學習啟航站",
+    "tags": [],
+    "url": "autonomous-learning/index.html"
+  },
+  {
+    "id": "page-44",
+    "title": "研究方法工具箱",
+    "content": "研究方法工具箱",
+    "tags": [],
+    "url": "autonomous-learning/methodology.html"
+  },
+  {
+    "id": "methods-literature-review",
+    "title": "研究方法工具箱 - 文獻探討法",
+    "content": "透過系統性地查找、閱讀、分析與你的主題相關的既有資料，來建立研究基礎。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-literature-review"
+  },
+  {
+    "id": "methods-survey-method",
+    "title": "研究方法工具箱 - 問卷調查法",
+    "content": "設計標準化問題，向特定群體進行調查，以蒐集大量的量化數據來進行統計分析。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-survey-method"
+  },
+  {
+    "id": "methods-interview-method",
+    "title": "研究方法工具箱 - 訪談法",
+    "content": "透過與受訪者進行深入的對話，來獲取質性的、有故事性的、深層的資訊。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-interview-method"
+  },
+  {
+    "id": "methods-case-study",
+    "title": "研究方法工具箱 - 個案研究法",
+    "content": "針對一個特定的「個案」（如：一個事件、一間公司、一個人物）進行全面而深入的探討。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-case-study"
+  },
+  {
+    "id": "methods-content-analysis",
+    "title": "研究方法工具箱 - 內容分析法",
+    "content": "對文本或影像內容（如：新聞報導、歌詞、廣告、社群貼文）進行系統性的分類與統計分析。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-content-analysis"
+  },
+  {
+    "id": "methods-creative-practice",
+    "title": "研究方法工具箱 - 創作實踐法",
+    "content": "以「創造一個作品」為核心，研究的過程與最終的成品同等重要。",
+    "tags": [
+      "methods",
+      "研究方法工具箱"
+    ],
+    "url": "autonomous-learning/methodology.html#methods-creative-practice"
+  },
+  {
+    "id": "page-45",
+    "title": "計畫範本庫",
+    "content": "計畫範本庫",
+    "tags": [],
+    "url": "autonomous-learning/plan-templates.html"
+  },
+  {
+    "id": "page-46",
+    "title": "學習資源地圖",
+    "content": "學習資源地圖",
+    "tags": [],
+    "url": "autonomous-learning/resource-map.html"
+  },
+  {
+    "id": "page-47",
+    "title": "主題靈感產生器",
+    "content": "主題靈感產生器",
+    "tags": [],
+    "url": "autonomous-learning/topic-ideas.html"
+  },
+  {
+    "id": "sdg-1",
+    "title": "主題靈感產生器 - 消除貧窮",
+    "content": "{\"id\":1,\"title\":\"消除貧窮\",\"color\":\"bg-red-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-1"
+  },
+  {
+    "id": "sdg-3",
+    "title": "主題靈感產生器 - 健康與福祉",
+    "content": "{\"id\":3,\"title\":\"健康與福祉\",\"color\":\"bg-green-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-3"
+  },
+  {
+    "id": "sdg-4",
+    "title": "主題靈感產生器 - 優質教育",
+    "content": "{\"id\":4,\"title\":\"優質教育\",\"color\":\"bg-red-700\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-4"
+  },
+  {
+    "id": "sdg-5",
+    "title": "主題靈感產生器 - 性別平等",
+    "content": "{\"id\":5,\"title\":\"性別平等\",\"color\":\"bg-orange-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-5"
+  },
+  {
+    "id": "sdg-6",
+    "title": "主題靈感產生器 - 淨水與衛生",
+    "content": "{\"id\":6,\"title\":\"淨水與衛生\",\"color\":\"bg-sky-500\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-6"
+  },
+  {
+    "id": "sdg-11",
+    "title": "主題靈感產生器 - 永續城市",
+    "content": "{\"id\":11,\"title\":\"永續城市\",\"color\":\"bg-orange-400\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-11"
+  },
+  {
+    "id": "sdg-13",
+    "title": "主題靈感產生器 - 氣候行動",
+    "content": "{\"id\":13,\"title\":\"氣候行動\",\"color\":\"bg-green-700\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-13"
+  },
+  {
+    "id": "sdg-14",
+    "title": "主題靈感產生器 - 海洋生態",
+    "content": "{\"id\":14,\"title\":\"海洋生態\",\"color\":\"bg-blue-600\"}",
+    "tags": [
+      "sdg",
+      "主題靈感產生器"
+    ],
+    "url": "autonomous-learning/topic-ideas.html#sdg-14"
+  },
+  {
+    "id": "page-48",
+    "title": "多元表現資料庫",
+    "content": "多元表現資料庫",
+    "tags": [],
+    "url": "learning-portfolio/activity-database.html"
+  },
+  {
+    "id": "page-49",
+    "title": "學習歷程煉金室",
+    "content": "學習歷程煉金室",
+    "tags": [],
+    "url": "learning-portfolio/index.html"
+  },
+  {
+    "id": "page-50",
+    "title": "優質範例藝廊",
+    "content": "優質範例藝廊",
+    "tags": [],
+    "url": "learning-portfolio/portfolio-gallery.html"
+  },
+  {
+    "id": "portfolio-science-01",
+    "title": "優質範例藝廊 - 探究與實作：校園植物葉面含菌量分析",
+    "content": "{\"id\":\"science-01\",\"title\":\"探究與實作：校園植物葉面含菌量分析\",\"category\":\"自然科學\",\"type\":\"課程學習成果\",\"tags\":[\"實驗設計\",\"數據分析\"],\"thumbnail_url\":\"https://images.pexels.com/photos/3735747/pexels-photo-3735747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/e0e7ff/3730a3?text=探究與實作報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。\\n                        研究過程：善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。\\n                        成果展現：不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。\\n                        深度反思：心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "實驗設計",
+      "數據分析"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-science-01"
+  },
+  {
+    "id": "portfolio-social-02",
+    "title": "優質範例藝廊 - 社會實踐報告：「剩食」議題的社區田野調查",
+    "content": "{\"id\":\"social-02\",\"title\":\"社會實踐報告：「剩食」議題的社區田野調查\",\"category\":\"社會科學\",\"type\":\"多元表現\",\"tags\":[\"田野調查\",\"訪談\"],\"thumbnail_url\":\"https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/dcfce7/166534?text=社會實踐報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：從全球性的剩食議題，聚焦到「社區」這個可操作的範圍，展現了將大問題轉化為具體行動的能力。\\n                        研究過程：綜合運用了多種研究方法。除了文獻探討，更實際走訪了5家便當店、2間超市，並深度訪談了里長，資料來源多元且具說服力。可參考本站研究方法工具箱。\\n                        成果展現：最終不只提出問題，更設計了一份「社區剩食共享地圖」的提案，並附上初步的宣傳文案，展現了強烈的解決問題導向。\\n                        深度反思：反思中不僅提到執行的困難（如：店家不願受訪），更探討了背後的社會結構性問題，展現了超越表象的洞察力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "田野調查",
+      "訪談"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-social-02"
+  },
+  {
+    "id": "portfolio-art-01",
+    "title": "優質範例藝廊 - 作品集：我的城市速寫計畫",
+    "content": "{\"id\":\"art-01\",\"title\":\"作品集：我的城市速寫計畫\",\"category\":\"藝術設計\",\"type\":\"多元表現\",\"tags\":[\"創作實踐\",\"觀察力\"],\"thumbnail_url\":\"https://images.pexels.com/photos/164543/pexels-photo-164543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/fce7f3/86198f?text=作品集範例\",\"analysis_html\":\"\\n                    \\n                        問題意識：創作理念清晰，闡述了為何選擇「城市速寫」作為主題，以及想透過畫筆記錄城市變遷的動機。\\n                        研究過程：作品集呈現了從草稿、不同媒材的嘗試到最終作品的完整脈絡，讓觀者能理解其創作的演進過程。\\n                        成果展現：作品風格統一，排版具有設計感，本身就是一件完整的設計作品。每張畫都附有簡短的文字，說明地點與創作當下的心情。\\n                        深度反思：在總結中，作者反思了「速寫」如何改變他觀看城市的方式，並連結到對都市更新議題的關懷，提升了作品的層次。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "創作實踐",
+      "觀察力"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-art-01"
+  },
+  {
+    "id": "portfolio-cross-domain-01",
+    "title": "優質範例藝廊 - 跨領域專題：用Python分析唐詩中的色彩意象",
+    "content": "{\"id\":\"cross-domain-01\",\"title\":\"跨領域專題：用Python分析唐詩中的色彩意象\",\"category\":\"跨領域\",\"type\":\"課程學習成果\",\"tags\":[\"文學分析\",\"數據分析\",\"數位創作\"],\"thumbnail_url\":\"https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1\",\"preview_image_url\":\"https://placehold.co/800x1131/eef2ff/4338ca?text=跨領域專題報告\",\"analysis_html\":\"\\n                    \\n                        問題意識：完美結合了「語文」與「資訊」兩個領域，題目「用Python分析唐詩」本身就極具創意與亮點。\\n                        研究過程：作者清楚說明了如何蒐集唐詩資料庫、如何撰寫Python程式來進行斷詞與顏色詞彙的頻率統計，方法論清晰。\\n                        成果展現：將統計結果製作成精美的圓餅圖與詞頻分析表，將量化數據視覺化，讓文學分析不再只是主觀感受，更有了數據支撐。\\n                        深度反思：作者在反思中探討了「數位人文」這個新興領域的可能性與限制，並提出未來可進一步分析不同詩人（如李白、杜甫）用色習慣的差異，展現了優異的研究潛力。\\n                    \"}",
+    "tags": [
+      "portfolio",
+      "優質範例藝廊",
+      "文學分析",
+      "數據分析",
+      "數位創作"
+    ],
+    "url": "learning-portfolio/portfolio-gallery.html#portfolio-cross-domain-01"
+  },
+  {
+    "id": "page-51",
+    "title": "反思引導提問集",
+    "content": "反思引導提問集",
+    "tags": [],
+    "url": "learning-portfolio/reflection-guide.html"
+  },
+  {
+    "id": "page-52",
+    "title": "線上製作工具箱",
+    "content": "線上製作工具箱",
+    "tags": [],
+    "url": "learning-portfolio/tools.html"
+  },
+  {
+    "id": "page-53",
+    "title": "核心素養互動對照表 (Puter.js 整合版)",
+    "content": "核心素養互動探索",
+    "tags": [],
+    "url": "career-exploration/competency-map.html"
+  },
+  {
+    "id": "page-54",
+    "title": "未來生涯GPS 2.0",
+    "content": "未來生涯GPS 2.0",
+    "tags": [],
+    "url": "career-exploration/index.html"
+  },
+  {
+    "id": "major-engineering",
+    "title": "未來生涯GPS 2.0 - 工程學群",
+    "content": "應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-engineering"
+  },
+  {
+    "id": "major-info",
+    "title": "未來生涯GPS 2.0 - 資訊學群",
+    "content": "專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-info"
+  },
+  {
+    "id": "major-management",
+    "title": "未來生涯GPS 2.0 - 管理學群",
+    "content": "學習組織、領導、規劃與控制等管理職能，以達成組織目標。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-management"
+  },
+  {
+    "id": "major-finance",
+    "title": "未來生涯GPS 2.0 - 財經學群",
+    "content": "研究金融市場、投資、公司理財與經濟現象，是資本社會的運作基礎。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-finance"
+  },
+  {
+    "id": "major-social_psychology",
+    "title": "未來生涯GPS 2.0 - 社會與心理學群",
+    "content": "關心人類的心理歷程、社會行為與結構，旨在理解並改善個人與社會的福祉。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-social_psychology"
+  },
+  {
+    "id": "major-mass_comm",
+    "title": "未來生涯GPS 2.0 - 大眾傳播學群",
+    "content": "學習訊息的產製、傳遞與效果，包含新聞、廣告、廣播、影視等領域。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-mass_comm"
+  },
+  {
+    "id": "major-design",
+    "title": "未來生涯GPS 2.0 - 設計學群",
+    "content": "結合美感與實用性，解決生活中的問題，從平面設計到建築設計皆屬此範疇。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-design"
+  },
+  {
+    "id": "major-life_sci",
+    "title": "未來生涯GPS 2.0 - 生命科學學群",
+    "content": "探討生命的奧秘，從分子、細胞到生態系，是生物科技與醫學研究的基礎。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-life_sci"
+  },
+  {
+    "id": "major-medicine",
+    "title": "未來生涯GPS 2.0 - 醫藥衛生學群",
+    "content": "致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。",
+    "tags": [
+      "major",
+      "未來生涯GPS 2.0"
+    ],
+    "url": "career-exploration/index.html#major-medicine"
+  },
+  {
+    "id": "page-55",
+    "title": "學長姐真心話",
+    "content": "學長姐真心話",
+    "tags": [],
+    "url": "career-exploration/senior-interviews.html"
+  },
+  {
+    "id": "interview-info-01",
+    "title": "學長姐真心話 - 陳同學",
+    "content": "資訊工程學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-info-01"
+  },
+  {
+    "id": "interview-comm-01",
+    "title": "學長姐真心話 - 林同學",
+    "content": "傳播學院",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-comm-01"
+  },
+  {
+    "id": "interview-law-01",
+    "title": "學長姐真心話 - 張同學",
+    "content": "法律學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-law-01"
+  },
+  {
+    "id": "interview-bio-01",
+    "title": "學長姐真心話 - 王同學",
+    "content": "生物科技學系",
+    "tags": [
+      "interview",
+      "學長姐真心話"
+    ],
+    "url": "career-exploration/senior-interviews.html#interview-bio-01"
+  },
+  {
+    "id": "page-56",
+    "title": "國內外競賽資訊",
+    "content": "國內外競賽資訊",
+    "tags": [],
+    "url": "advanced-resources/competitions.html"
+  },
+  {
+    "id": "competitions-57",
+    "title": "國內外競賽資訊 - 全國中小學科學展覽會",
+    "content": "台灣歷史最悠久、規模最盛大的中學生科學研究競賽，是展現探究與實作能力的最佳舞台。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-58",
+    "title": "國內外競賽資訊 - 旺宏科學獎",
+    "content": "有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-59",
+    "title": "國內外競賽資訊 - TRML 台灣地區數學聯賽",
+    "content": "結合個人賽、團體賽與思考賽，考驗數學解題能力與團隊合作默契，是數學愛好者的年度盛事。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-60",
+    "title": "國內外競賽資訊 - 全國高中生資訊應用競賽",
+    "content": "分為多個組別，如軟體設計、數位內容等，旨在提升高中生的資訊應用與創新能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-61",
+    "title": "國內外競賽資訊 - 外交小尖兵",
+    "content": "以英語為工具，探討國際議題，培養青年學子的國際視野與英語演說能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-62",
+    "title": "國內外競賽資訊 - 全國高中生商業個案大賽",
+    "content": "模擬真實的商業情境，要求參賽隊伍分析個案並提出解決方案，是商管潛力人才的競技場。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-63",
+    "title": "國內外競賽資訊 - 台灣國際學生創意設計大賽",
+    "content": "全球規模最大的學生設計競賽之一，分為產品設計、視覺設計、數位動畫三大類，是與世界好手交流的絕佳機會。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-64",
+    "title": "國內外競賽資訊 - 國際數學奧林匹亞 (IMO)",
+    "content": "世界最高等級的中學生數學競賽，需經過國內層層選拔，代表國家爭取榮譽。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-65",
+    "title": "國內外競賽資訊 - 國際資訊奧林匹亞 (IOI)",
+    "content": "全球中學生程式設計與演算法的頂級競賽，考驗參賽者的邏輯思維與解題能力。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "competitions-66",
+    "title": "國內外競賽資訊 - 全國學生美術比賽",
+    "content": "台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等多種類別。",
+    "tags": [
+      "competitions",
+      "國內外競賽資訊"
+    ],
+    "url": "advanced-resources/competitions.html#competitions-"
+  },
+  {
+    "id": "page-67",
+    "title": "進階資源探索區",
+    "content": "進階資源探索區",
+    "tags": [],
+    "url": "advanced-resources/index.html"
+  },
+  {
+    "id": "page-68",
+    "title": "線上課程精選",
+    "content": "線上課程精選",
+    "tags": [],
+    "url": "advanced-resources/online-courses.html"
+  },
+  {
+    "id": "courses-69",
+    "title": "線上課程精選 - Machine Learning for Everyone",
+    "content": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "AI",
+      "機器學習",
+      "吳恩達"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-70",
+    "title": "線上課程精選 - Python for Everybody",
+    "content": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "Python",
+      "程式設計",
+      "資料處理"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-71",
+    "title": "線上課程精選 - CS50's Introduction to Computer Science",
+    "content": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "計算機科學",
+      "C語言",
+      "演算法"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-72",
+    "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
+    "content": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "行銷",
+      "市場分析",
+      "品牌"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-73",
+    "title": "線上課程精選 - The Science of Well-Being",
+    "content": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "心理學",
+      "幸福感",
+      "正向心理學"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-74",
+    "title": "線上課程精選 - 基礎微積分",
+    "content": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "微積分",
+      "數學",
+      "台大"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-75",
+    "title": "線上課程精選 - Google 數據分析專業證書",
+    "content": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "數據分析",
+      "SQL",
+      "Tableau",
+      "R語言"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-76",
+    "title": "線上課程精選 - 經濟學原理",
+    "content": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "經濟學",
+      "個體經濟",
+      "總體經濟"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "page-77",
+    "title": "主題書單推薦",
+    "content": "主題書單推薦",
+    "tags": [],
+    "url": "advanced-resources/reading-list.html"
+  }
+]
