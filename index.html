@@ -164,6 +164,34 @@
             </div>
         </section>
 
+        <!-- ================================================================== -->
+        <!-- START: 全站搜尋功能區塊                                          -->
+        <!-- ================================================================== -->
+        <section id="search-section" class="py-16 bg-blue-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold">需要找點什麼嗎？</h2>
+                    <p class="text-gray-600 mt-2">一個搜尋，連結所有資源。</p>
+                </div>
+                <div class="max-w-3xl mx-auto">
+                    <div class="relative">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="search-input" placeholder="試試輸入「Python」、「社會實踐」或「台大」..." class="w-full pl-14 pr-14 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-shadow shadow-sm hover:shadow-md">
+                        <button id="search-clear-btn" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer hidden" aria-label="Clear search input">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+                    </div>
+                    <!-- 搜尋結果將會動態插入此處 -->
+                    <div id="search-results-container" class="mt-4"></div>
+                </div>
+            </div>
+        </section>
+        <!-- ================================================================== -->
+        <!-- END: 全站搜尋功能區塊                                            -->
+        <!-- ================================================================== -->
+
         <!-- Exploration Paths Section -->
         <section id="paths" class="py-20">
             <div class="container mx-auto px-6">
@@ -257,5 +285,268 @@
         </div>
     </footer>
 
+    <!-- ================================================================== -->
+    <!-- START: 搜尋功能所需的全域 JavaScript (最終修正版)                  -->
+    <!-- ================================================================== -->
+    <!-- 1. 引入 Fuse.js 函式庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+    
+    <!-- 2. 搜尋功能的主要邏輯 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // **步驟 1: 直接在此處定義搜尋資料**
+            // 這樣可以完全避免外部檔案載入的延遲問題。
+            const searchData = [
+              {
+                "id": "interview-wu-yi-hua",
+                "category": "學長姐真心話",
+                "title": "吳宜樺 (臺灣大學 生物產業傳播暨發展學系)",
+                "content": "從傳播、行銷、設計到教育，生傳系是個跨領域的學系。學習歷程的重點在於呈現你的特質，以及你與這個科系的連結。",
+                "tags": ["學長姐真心話", "吳宜樺", "台大", "臺灣大學", "生物產業傳播暨發展學系", "生傳系", "農學院", "文組", "跨領域", "行銷", "設計", "教育", "學習歷程"],
+                "url": "career-exploration/senior-interviews.html#info-01"
+              },
+              {
+                "id": "interview-wu-en-en",
+                "category": "學長姐真心話",
+                "title": "吳恩恩 (臺灣大學 資訊工程學系)",
+                "content": "學習歷程的重點不是「做了什麼」，而是從中「學到什麼」。資工系看重的是你的學習能力、對資訊領域的熱情與潛力。",
+                "tags": ["學長姐真心話", "吳恩恩", "台大", "臺灣大學", "資訊工程學系", "資工系", "CS", "程式設計", "Python", "Discord Bot", "學習歷程", "二類", "電資學群"],
+                "url": "career-exploration/senior-interviews.html#info-02"
+              },
+              {
+                "id": "interview-yu-hui-yu",
+                "category": "學長姐真心話",
+                "title": "游惠瑜 (清華大學 竹師教育學院學士班)",
+                "content": "特殊選才著重的是「獨特性」與「專一性」。你需要找到自己真正熱愛且專精的領域，並透過學習歷程完整地展現出來。",
+                "tags": ["學長姐真心話", "游惠瑜", "清大", "清華大學", "竹師教育學院", "教育", "特殊選才", "師資培育", "學習歷程", "教育學群"],
+                "url": "career-exploration/senior-interviews.html#info-03"
+              },
+              {
+                "id": "interview-tsai-hsiu-chi",
+                "category": "學長姐真心話",
+                "title": "蔡秀吉 (屏東大學 科學傳播學系)",
+                "content": "從農家子弟到科學傳播，關鍵在於找到自己的興趣並勇敢嘗試。學習歷程是展現你探索過程的最好機會。",
+                "tags": ["學長姐真心話", "蔡秀吉", "屏東大學", "屏大", "科學傳播學系", "科學傳播", "科普", "設計", "在地連結", "學習歷程"],
+                "url": "career-exploration/senior-interviews.html#info-04"
+              },
+              {
+                "id": "plan-template-discord-bot",
+                "category": "計畫範本",
+                "title": "用 Python 打造一個 Discord 訂便當機器人",
+                "content": "學習目標是掌握 Python 基礎語法與 API 串接，並透過實作一個實用的 Discord Bot 來驗證學習成果。",
+                "tags": ["自主學習", "計畫範本", "資訊科技", "專案導向", "Python", "API", "Discord", "程式設計", "機器人"],
+                "url": "autonomous-learning/plan-templates.html"
+              },
+              {
+                "id": "plan-template-social-survey",
+                "category": "計畫範本",
+                "title": "探討Z世代的迷因識讀能力—以屏東地區高中生為例",
+                "content": "本研究旨在探討屏東地區高中生的迷因使用習慣與識讀能力，採用問卷調查法與訪談法進行研究。",
+                "tags": ["自主學習", "計畫範本", "社會科學", "議題探究", "研究報告", "問卷調查", "訪談法", "迷因", "媒體識讀", "Z世代"],
+                "url": "autonomous-learning/plan-templates.html"
+              },
+              {
+                "id": "topic-idea-cat-stray",
+                "category": "主題點子",
+                "title": "校園流浪貓是不是一個問題？",
+                "content": "從生態、管理、生命教育等多個角度，探討校園流浪貓議題，並提出具體的解決方案。",
+                "tags": ["自主學習", "主題點子", "社會議題", "生命教育", "生態", "流浪動物", "校園觀察"],
+                "url": "autonomous-learning/topic-ideas.html"
+              },
+              {
+                "id": "topic-idea-hand-shaken-drinks",
+                "category": "主題點子",
+                "title": "為什麼台灣人這麼愛喝手搖飲？",
+                "content": "從文化、經濟、健康等面向，分析台灣獨特的手搖飲文化，並可以結合地理資訊系統(GIS)進行店家分佈研究。",
+                "tags": ["自主學習", "主題點子", "文化觀察", "經濟", "GIS", "手搖飲", "台灣文化"],
+                "url": "autonomous-learning/topic-ideas.html"
+              },
+              {
+                "id": "page-methodology",
+                "category": "方法論",
+                "title": "自主學習研究方法工具箱",
+                "content": "介紹各種自主學習常用的研究方法，包含質性研究、量化研究、文獻分析法、訪談法、問卷調查法等。",
+                "tags": ["自主學習", "方法論", "研究方法", "質性研究", "量化研究", "文獻分析", "訪談", "問卷"],
+                "url": "autonomous-learning/methodology.html"
+              },
+              {
+                "id": "gallery-example-01",
+                "category": "範例藝廊",
+                "title": "從在地到國際：一份社會實踐的學習歷程",
+                "content": "這份範例從「動機與目的」出發，詳細記錄了社會實踐的過程，並在最後進行了深刻的「省思與反思」。",
+                "tags": ["學習歷程", "範例藝廊", "多元表現", "社會實踐", "在地關懷", "反思"],
+                "url": "learning-portfolio/portfolio-gallery.html"
+              },
+              {
+                "id": "tool-canva",
+                "category": "工具箱",
+                "title": "Canva：線上設計平台",
+                "content": "Canva 是一款強大的線上設計工具，內建大量範本，非常適合用來製作學習歷程檔案、簡報、海報等視覺化內容。",
+                "tags": ["學習歷程", "工具箱", "設計", "簡報製作", "排版", "Canva", "視覺化"],
+                "url": "learning-portfolio/tools.html"
+              },
+              {
+                "id": "tool-google-forms",
+                "category": "工具箱",
+                "title": "Google 表單：線上問卷調查",
+                "content": "Google 表單是進行量化研究、收集意見回饋的絕佳工具，操作簡單且功能完整。",
+                "tags": ["學習歷程", "工具箱", "問卷調查", "研究方法", "Google Forms", "數據收集"],
+                "url": "learning-portfolio/tools.html"
+              },
+              {
+                "id": "page-reflection-guide",
+                "category": "反思",
+                "title": "學習歷程反思寫作指南",
+                "content": "提供撰寫學習歷程「省思與反思」的具體指引，包含 STAR 原則、反思的層次等實用技巧。",
+                "tags": ["學習歷程", "反思", "寫作", "STAR原則", "多元表現", "心得"],
+                "url": "learning-portfolio/reflection-guide.html"
+              },
+              {
+                "id": "course-cs50x",
+                "category": "線上課程",
+                "title": "CS50x: Introduction to Computer Science",
+                "content": "哈佛大學最受歡迎的計算機科學入門通識課，內容涵蓋 C 語言、Python、SQL、網頁開發等，挑戰性高但收穫滿滿。",
+                "tags": ["進階資源", "線上課程", "資訊", "程式設計", "CS", "哈佛大學", "Harvard", "edX", "免費"],
+                "url": "advanced-resources/online-courses.html"
+              },
+              {
+                "id": "course-google-da",
+                "category": "線上課程",
+                "title": "Google Data Analytics Professional Certificate",
+                "content": "由 Google 開設的資料分析專業證照課程，教你使用 SQL、R 語言、Tableau 等工具，適合想入門資料科學領域的同學。",
+                "tags": ["進階資源", "線上課程", "資訊", "資料科學", "Data", "Google", "Coursera", "SQL", "R", "Tableau"],
+                "url": "advanced-resources/online-courses.html"
+              },
+              {
+                "id": "competition-ysf",
+                "category": "國內外競賽",
+                "title": "臺灣國際科學展覽會 (TISF)",
+                "content": "台灣規模最大、最具代表性的高中科學研究競賽，優勝者有機會代表台灣參加國外的科學競賽。",
+                "tags": ["進階資源", "競賽", "數理", "自然科學", "科展", "TISF", "研究"],
+                "url": "advanced-resources/competitions.html"
+              },
+              {
+                "id": "competition-info-app",
+                "category": "國內外競賽",
+                "title": "全國高中職資訊應用競賽",
+                "content": "專為高中職學生舉辦的資訊競賽，比賽項目包含 App 開發、網頁設計、遊戲製作等，是展現程式實作能力的好機會。",
+                "tags": ["進階資源", "競賽", "資訊", "程式設計", "App", "網頁", "遊戲"],
+                "url": "advanced-resources/competitions.html"
+              },
+              {
+                "id": "reading-sapiens",
+                "category": "主題書單",
+                "title": "《人類大歷史：從野獸到扮演上帝》",
+                "content": "以色列歷史學家哈拉瑞的巨作，用宏觀的視角講述人類的發展史，能帶給你許多跨學科的啟發。",
+                "tags": ["進階資源", "書單", "歷史", "社會科學", "人類學", "哈拉瑞", "Sapiens"],
+                "url": "advanced-resources/reading-list.html"
+              },
+              {
+                "id": "reading-atomic-habits",
+                "category": "主題書單",
+                "title": "《原子習慣》",
+                "content": "探討如何建立良好習慣、戒除壞習慣的實用書籍，對於自主學習與個人成長非常有幫助。",
+                "tags": ["進階資源", "書單", "自我成長", "心理學", "習慣", "原子習慣", "Atomic Habits"],
+                "url": "advanced-resources/reading-list.html"
+              }
+            ];
+
+            // **步驟 2: 初始化搜尋功能**
+            const searchInput = document.getElementById('search-input');
+            const resultsContainer = document.getElementById('search-results-container');
+            const clearBtn = document.getElementById('search-clear-btn');
+
+            // 檢查 Fuse.js 是否已載入
+            if (typeof Fuse === 'undefined') {
+                console.error('錯誤：Fuse.js 未能載入。請檢查您的網路連線。');
+                if(resultsContainer) {
+                    resultsContainer.innerHTML = `<div class="p-4 my-2 text-center text-red-600 bg-red-100 rounded-lg shadow-sm">搜尋引擎函式庫載入失敗，請檢查網路連線。</div>`;
+                }
+                return;
+            }
+
+            // Fuse.js 的設定選項
+            const fuseOptions = {
+                includeScore: true,
+                shouldSort: true,
+                threshold: 0.4,
+                keys: [
+                    { name: 'title', weight: 0.7 },
+                    { name: 'tags', weight: 0.5 },
+                    { name: 'content', weight: 0.2 }
+                ]
+            };
+
+            const fuse = new Fuse(searchData, fuseOptions);
+
+            searchInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                    const results = fuse.search(query);
+                    displayResults(results, query);
+                } else {
+                    clearBtn.classList.add('hidden');
+                    resultsContainer.innerHTML = '';
+                }
+            });
+
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                resultsContainer.innerHTML = '';
+                this.classList.add('hidden');
+                searchInput.focus();
+            });
+
+            function displayResults(results, query) {
+                resultsContainer.innerHTML = '';
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = `<div class="p-4 my-2 text-center text-gray-500 bg-white rounded-lg shadow-sm">找不到與「${escapeHTML(query)}」相關的結果，試試別的關鍵字？</div>`;
+                    return;
+                }
+
+                const topResults = results.slice(0, 10);
+                topResults.forEach(({ item }) => {
+                    const resultElement = document.createElement('a');
+                    resultElement.href = item.url;
+                    resultElement.target = '_blank';
+                    resultElement.rel = 'noopener noreferrer';
+                    resultElement.className = 'block p-4 mb-2 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-blue-50/50 transition-all duration-200 ease-in-out';
+                    
+                    const highlightedTitle = highlight(item.title, query);
+                    const highlightedContent = highlight(item.content, query);
+
+                    resultElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-lg text-blue-700">${highlightedTitle}</h4>
+                            <span class="flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHTML(item.category)}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">${highlightedContent}</p>
+                    `;
+                    resultsContainer.appendChild(resultElement);
+                });
+            }
+            
+            function highlight(text, query) {
+                if (!query || !text) return escapeHTML(text || '');
+                const terms = query.split(/\s+/).filter(term => term.length > 0);
+                if (terms.length === 0) return escapeHTML(text);
+                const regex = new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'gi');
+                return escapeHTML(text).replace(regex, '<mark class="bg-yellow-200/70 px-1 rounded-sm">$1</mark>');
+            }
+
+            function escapeHTML(str) {
+              if (!str) return '';
+              return str.replace(/[&<>"']/g, match => ({'&': '&amp;','<': '&lt;','>': '&gt;','"': '&quot;',"'": '&#39;'})[match]);
+            }
+            
+            function escapeRegExp(string) {
+              return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+        });
+    </script>
+    <!-- ================================================================== -->
+    <!-- END: 搜尋功能所需的全域 JavaScript                               -->
+    <!-- ================================================================== -->
 </body>
 </html>
