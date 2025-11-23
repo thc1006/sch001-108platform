@@ -196,7 +196,11 @@
         aiGenerateBtn.addEventListener('click', async () => {
             const userInput = aiInput.value.trim();
             if (!userInput) {
-                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">請先輸入你的活動經驗描述！</p>`;
+                aiResultContainer.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center font-semibold';
+                errorP.textContent = '請先輸入你的活動經驗描述！';
+                aiResultContainer.appendChild(errorP);
                 return;
             }
             
@@ -216,27 +220,93 @@
                 if (!text) {
                     throw new Error("AI 未能提供有效的分析結果。");
                 }
-                
-                // 原有的格式化邏輯保持不變，非常棒！
-                let htmlResult = text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\s?\*\s/g, '<li class="flex items-start gap-2"><i data-feather="check" class="w-5 h-5 text-green-500 mt-1 shrink-0"></i><span>')
-                    .replace(/(\n\s?\*\s.*)/g, '$1</span></li>')
-                    .replace(/\n/g, '<br>');
 
-                // 修正：確保即使第一個項目沒有前導換行符也能被捕捉
-                if (htmlResult.startsWith('<li')) {
-                    htmlResult = `<ul>${htmlResult}</ul>`;
-                } else {
-                    htmlResult = `<ul class="space-y-3">${htmlResult}</ul>`;
-                }
+                // 安全地解析 Markdown 並構建 DOM
+                aiResultContainer.textContent = ''; // 清空容器
 
-                aiResultContainer.innerHTML = `<div class="prose max-w-none p-4 bg-indigo-50 rounded-lg">${htmlResult}</div>`;
+                const container = document.createElement('div');
+                container.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
+
+                // 分割文本為段落和列表項
+                const lines = text.split('\n');
+                let currentList = null;
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+
+                    // 檢查是否為列表項
+                    if (line.match(/^\*\s/)) {
+                        // 如果還沒有列表,創建一個
+                        if (!currentList) {
+                            currentList = document.createElement('ul');
+                            currentList.className = 'space-y-3';
+                            container.appendChild(currentList);
+                        }
+
+                        // 創建列表項
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start gap-2';
+
+                        // 創建圖標
+                        const icon = document.createElement('i');
+                        icon.setAttribute('data-feather', 'check');
+                        icon.className = 'w-5 h-5 text-green-500 mt-1 shrink-0';
+
+                        // 處理文本內容 (移除前導的 * 和空格)
+                        const textContent = line.replace(/^\*\s/, '');
+                        const span = document.createElement('span');
+
+                        // 處理粗體標記 **text**
+                        const parts = textContent.split(/\*\*(.*?)\*\*/g);
+                        parts.forEach((part, index) => {
+                            if (index % 2 === 0) {
+                                // 普通文本
+                                if (part) span.appendChild(document.createTextNode(part));
+                            } else {
+                                // 粗體文本
+                                const strong = document.createElement('strong');
+                                strong.textContent = part;
+                                span.appendChild(strong);
+                            }
+                        });
+
+                        li.appendChild(icon);
+                        li.appendChild(span);
+                        currentList.appendChild(li);
+                    } else {
+                        // 非列表項,關閉當前列表
+                        currentList = null;
+
+                        // 創建段落
+                        const p = document.createElement('p');
+
+                        // 處理粗體標記
+                        const parts = line.split(/\*\*(.*?)\*\*/g);
+                        parts.forEach((part, index) => {
+                            if (index % 2 === 0) {
+                                if (part) p.appendChild(document.createTextNode(part));
+                            } else {
+                                const strong = document.createElement('strong');
+                                strong.textContent = part;
+                                p.appendChild(strong);
+                            }
+                        });
+
+                        container.appendChild(p);
+                    }
+                });
+
+                aiResultContainer.appendChild(container);
                 feather.replace(); // Re-render icons after adding new ones
 
             } catch (error) {
                 console.error("Puter.js AI call failed:", error);
-                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">抱歉，分析時發生錯誤。請稍後再試。</p>`;
+                aiResultContainer.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center font-semibold';
+                errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
+                aiResultContainer.appendChild(errorP);
             }
         });
         
