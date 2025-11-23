@@ -158,16 +158,20 @@
         generateCoachBtn.addEventListener('click', async () => {
             const topic = coachInput.value.trim();
             if (!topic) {
-                coachResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的初步想法！</p>';
+                coachResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先輸入你的初步想法！';
+                coachResult.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = generateCoachBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '<svg class="w-5 h-5 inline-block animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="ml-2">思考中...</span>';
+            button.innerHTML = '載入中... ⏳';
 
             showLoader(coachResult);
 
@@ -181,11 +185,11 @@
 }
 
 請確保回應是有效的 JSON 格式。`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: "gemini-3-pro-preview",
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -226,17 +230,14 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-
-                // 清空結果容器
                 coachResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，規劃時發生錯誤。請稍後再試。';
                 }
 
                 coachResult.appendChild(errorP);
@@ -249,20 +250,72 @@
         });
 
         function displayAIStarterPack(data) {
-            const questionsHtml = data.research_questions.map(q => `<li>${q}</li>`).join('');
-            const resourcesHtml = data.resource_types.map(r => `<span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full">${r}</span>`).join('');
+            // 清空容器
+            coachResult.textContent = '';
 
-            coachResult.innerHTML = `
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none">
-                    <h4>建議主題方向</h4>
-                    <p>${data.suggested_topic}</p>
-                    <h4>你可以從這幾個問題開始探索：</h4>
-                    <ul class="list-disc list-inside">${questionsHtml}</ul>
-                    <h4>建議尋找的資源類型：</h4>
-                    <div class="flex flex-wrap">${resourcesHtml}</div>
-                    <p class="mt-4 text-sm">現在，你可以帶著這些想法，前往下方的<a href="topic-ideas.html" class="font-semibold text-blue-600 hover:underline">「靈感探索」</a>或<a href="resource-map.html" class="font-semibold text-blue-600 hover:underline">「資源蒐集」</a>區塊，開始你的旅程！</p>
-                </div>
-            `;
+            const container = document.createElement('div');
+            container.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none';
+
+            // 建議主題方向
+            const topicTitle = document.createElement('h4');
+            topicTitle.textContent = '建議主題方向';
+            const topicText = document.createElement('p');
+            topicText.textContent = data.suggested_topic;
+
+            // 探索問題標題
+            const questionsTitle = document.createElement('h4');
+            questionsTitle.textContent = '你可以從這幾個問題開始探索：';
+
+            // 問題列表
+            const questionsList = document.createElement('ul');
+            questionsList.className = 'list-disc list-inside';
+            data.research_questions.forEach(q => {
+                const li = document.createElement('li');
+                li.textContent = q;
+                questionsList.appendChild(li);
+            });
+
+            // 資源類型標題
+            const resourcesTitle = document.createElement('h4');
+            resourcesTitle.textContent = '建議尋找的資源類型：';
+
+            // 資源標籤容器
+            const resourcesContainer = document.createElement('div');
+            resourcesContainer.className = 'flex flex-wrap';
+            data.resource_types.forEach(r => {
+                const span = document.createElement('span');
+                span.className = 'inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full';
+                span.textContent = r;
+                resourcesContainer.appendChild(span);
+            });
+
+            // 下一步提示
+            const nextStep = document.createElement('p');
+            nextStep.className = 'mt-4 text-sm';
+            nextStep.textContent = '現在，你可以帶著這些想法，前往下方的';
+            const link1 = document.createElement('a');
+            link1.href = 'topic-ideas.html';
+            link1.className = 'font-semibold text-blue-600 hover:underline';
+            link1.textContent = '「靈感探索」';
+            nextStep.appendChild(link1);
+            nextStep.appendChild(document.createTextNode('或'));
+            const link2 = document.createElement('a');
+            link2.href = 'resource-map.html';
+            link2.className = 'font-semibold text-blue-600 hover:underline';
+            link2.textContent = '「資源蒐集」';
+            nextStep.appendChild(link2);
+            nextStep.appendChild(document.createTextNode('區塊，開始你的旅程！'));
+
+            // 組裝所有元素
+            container.appendChild(topicTitle);
+            container.appendChild(topicText);
+            container.appendChild(questionsTitle);
+            container.appendChild(questionsList);
+            container.appendChild(resourcesTitle);
+            container.appendChild(resourcesContainer);
+            container.appendChild(nextStep);
+
+            coachResult.appendChild(container);
         }
     </script>
 </body>

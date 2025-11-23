@@ -206,16 +206,20 @@
         analyzeBtn.addEventListener('click', async () => {
             const inputText = reflectionInput.value.trim();
             if (!inputText) {
-                analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
+                analysisResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先貼上你的心得反思文字！';
+                analysisResult.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = analyzeBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '分析中... <span class="inline-block animate-spin">⏳</span>';
+            button.innerHTML = '載入中... ⏳';
 
             showLoader(analysisResult);
 
@@ -228,11 +232,11 @@
 
 學生的文字如下：
 「${inputText}」`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: "gemini-3-pro-preview",
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -274,17 +278,14 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-
-                // 清空結果容器
                 analysisResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
                 }
 
                 analysisResult.appendChild(errorP);
@@ -297,36 +298,90 @@
         });
 
         function displayAIAnalysis(data) {
-            const analysisHtml = data.analysis.map(item => {
-                const colors = {
-                    S: { bg: 'bg-blue-100', text: 'text-blue-800' },
-                    T: { bg: 'bg-green-100', text: 'text-green-800' },
-                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-                    R: { bg: 'bg-red-100', text: 'text-red-800' },
-                };
+            // 清空容器
+            analysisResult.textContent = '';
+
+            const container = document.createElement('div');
+            container.className = 'prose max-w-none bg-gray-50 p-4 rounded-lg mt-4 text-sm';
+
+            // 總評標題
+            const overallTitle = document.createElement('h3');
+            overallTitle.className = 'text-base';
+            overallTitle.textContent = '健檢總評';
+
+            // 總評內容
+            const overallComment = document.createElement('p');
+            overallComment.textContent = data.overall_comment;
+
+            // STAR 分析標題
+            const starTitle = document.createElement('h3');
+            starTitle.className = 'text-base';
+            starTitle.textContent = 'STAR 分析與建議';
+
+            // STAR 分析容器
+            const analysisContainer = document.createElement('div');
+            analysisContainer.className = 'space-y-3';
+
+            const colors = {
+                S: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                T: { bg: 'bg-green-100', text: 'text-green-800' },
+                A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                R: { bg: 'bg-red-100', text: 'text-red-800' },
+            };
+            const elementNames = {'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果與反思'};
+
+            data.analysis.forEach(item => {
                 const color = colors[item.element] || { bg: 'bg-gray-100', text: 'text-gray-800' };
 
-                return `
-                    <div class="p-3 rounded-lg ${color.bg}">
-                        <h4 class="font-bold text-sm ${color.text}">${item.element} (${{'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果與反思'}[item.element]})</h4>
-                        <p class="text-xs text-gray-700 mt-1"><strong>評語：</strong>${item.comment}</p>
-                        <p class="text-xs text-gray-700 mt-1"><strong>建議：</strong>${item.suggestion}</p>
-                    </div>
-                `;
-            }).join('');
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `p-3 rounded-lg ${color.bg}`;
 
-            analysisResult.innerHTML = `
-                <div class="prose max-w-none bg-gray-50 p-4 rounded-lg mt-4 text-sm">
-                    <h3 class="text-base">健檢總評</h3>
-                    <p>${data.overall_comment}</p>
-                    <h3 class="text-base">STAR 分析與建議</h3>
-                    <div class="space-y-3">${analysisHtml}</div>
-                    <h3 class="text-base">修改範例</h3>
-                    <blockquote class="border-l-4 border-cyan-500 bg-cyan-50 p-3 text-sm">
-                        <p>${data.revised_example}</p>
-                    </blockquote>
-                </div>
-            `;
+                const itemTitle = document.createElement('h4');
+                itemTitle.className = `font-bold text-sm ${color.text}`;
+                itemTitle.textContent = `${item.element} (${elementNames[item.element]})`;
+
+                const commentP = document.createElement('p');
+                commentP.className = 'text-xs text-gray-700 mt-1';
+                const commentLabel = document.createElement('strong');
+                commentLabel.textContent = '評語：';
+                commentP.appendChild(commentLabel);
+                commentP.appendChild(document.createTextNode(item.comment));
+
+                const suggestionP = document.createElement('p');
+                suggestionP.className = 'text-xs text-gray-700 mt-1';
+                const suggestionLabel = document.createElement('strong');
+                suggestionLabel.textContent = '建議：';
+                suggestionP.appendChild(suggestionLabel);
+                suggestionP.appendChild(document.createTextNode(item.suggestion));
+
+                itemDiv.appendChild(itemTitle);
+                itemDiv.appendChild(commentP);
+                itemDiv.appendChild(suggestionP);
+
+                analysisContainer.appendChild(itemDiv);
+            });
+
+            // 修改範例標題
+            const exampleTitle = document.createElement('h3');
+            exampleTitle.className = 'text-base';
+            exampleTitle.textContent = '修改範例';
+
+            // 修改範例引用框
+            const exampleBox = document.createElement('blockquote');
+            exampleBox.className = 'border-l-4 border-cyan-500 bg-cyan-50 p-3 text-sm';
+            const exampleText = document.createElement('p');
+            exampleText.textContent = data.revised_example;
+            exampleBox.appendChild(exampleText);
+
+            // 組裝所有元素
+            container.appendChild(overallTitle);
+            container.appendChild(overallComment);
+            container.appendChild(starTitle);
+            container.appendChild(analysisContainer);
+            container.appendChild(exampleTitle);
+            container.appendChild(exampleBox);
+
+            analysisResult.appendChild(container);
         }
 
         // Initial Render

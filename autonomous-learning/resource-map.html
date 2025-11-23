@@ -229,16 +229,20 @@
         generatePathBtn.addEventListener('click', async () => {
             const topic = pathInput.value.trim();
             if (!topic) {
-                pathResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你想學習的主題！</p>';
+                pathResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先輸入你想學習的主題！';
+                pathResult.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = generatePathBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '規劃中... <span class="inline-block animate-spin">⏳</span>';
+            button.innerHTML = '載入中... ⏳';
 
             showLoader(pathResult);
 
@@ -259,11 +263,11 @@
 }
 
 請確保回應是有效的 JSON 格式。`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: "gemini-3-pro-preview",
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -327,17 +331,14 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-
-                // 清空結果容器
                 pathResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，規劃路徑時發生錯誤。請稍後再試。';
                 }
 
                 pathResult.appendChild(errorP);
@@ -406,6 +407,3 @@
                 pathResult.appendChild(stepElement);
             });
         }
-    </script>
-</body>
-</html>

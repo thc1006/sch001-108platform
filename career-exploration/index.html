@@ -63,6 +63,9 @@
             background-color: #eef2ff;
             border-radius: 20px 20px 20px 5px;
         }
+        .chat-bubble-ai p {
+            white-space: pre-wrap; /* 保留換行符並自動換行 */
+        }
         .chat-bubble-user {
             background-color: #dcfce7;
             border-radius: 20px 20px 5px 20px;
@@ -444,7 +447,7 @@
                 回答請簡潔，總長度不要超過200字。
             `;
             
-            // ✨ 步驟 3: 使用 Puter.js 進行流式 API 呼叫
+            // ✨ 步驟 3: 使用 Puter.js 進行流式 API 呼叫 (安全版本)
             try {
                 // 預先建立一個空的 AI 訊息框，並取得其文字容器
                 const aiTextElement = addMessageToChat('', 'ai');
@@ -457,10 +460,15 @@
                     signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
                 });
 
-                // 逐字將 AI 回應填入文字容器
+                // 逐字將 AI 回應安全地填入文字容器
+                // 累積文本,然後一次性設置 textContent 以避免 XSS
+                let accumulatedText = '';
                 for await (const part of responseStream) {
                     if (part?.text) {
-                        aiTextElement.innerHTML += part.text.replace(/\n/g, '<br>');
+                        accumulatedText += part.text;
+                        // 安全地更新文本內容
+                        // 保留換行符,使用 CSS white-space: pre-wrap 來顯示
+                        aiTextElement.textContent = accumulatedText;
                         chatWindow.scrollTop = chatWindow.scrollHeight; // 持續滾動到底部
                     }
                 }

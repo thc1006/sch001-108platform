@@ -145,16 +145,20 @@
         analyzeBtn.addEventListener('click', async () => {
             const inputText = reflectionInput.value.trim();
             if (!inputText) {
-                analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
+                analysisResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先貼上你的心得反思文字！';
+                analysisResult.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = analyzeBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '<svg class="w-5 h-5 inline-block animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg><span class="ml-2">分析中...</span>';
+            button.innerHTML = '載入中... ⏳';
 
             showLoader(analysisResult);
 
@@ -173,13 +177,13 @@
       "suggestion": "具體的修改建議"
     },
     {
-      "element": "T", 
+      "element": "T",
       "comment": "針對任務說明的評論",
       "suggestion": "具體的修改建議"
     },
     {
       "element": "A",
-      "comment": "針對行動描述的評論", 
+      "comment": "針對行動描述的評論",
       "suggestion": "具體的修改建議"
     },
     {
@@ -196,7 +200,7 @@
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: 'gemini-3-pro-preview',
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -254,17 +258,14 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-
-                // 清空結果容器
                 analysisResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
                 }
 
                 analysisResult.appendChild(errorP);
@@ -277,39 +278,92 @@
         });
 
         function displayAIAnalysis(data) {
-            const analysisHtml = data.analysis.map(item => {
-                const colors = {
-                    S: { bg: 'bg-blue-100', text: 'text-blue-800', ring: 'ring-blue-300' },
-                    T: { bg: 'bg-green-100', text: 'text-green-800', ring: 'ring-green-300' },
-                    A: { bg: 'bg-yellow-100', text: 'text-yellow-800', ring: 'ring-yellow-300' },
-                    R: { bg: 'bg-red-100', text: 'text-red-800', ring: 'ring-red-300' },
-                };
+            // 清空容器
+            analysisResult.textContent = '';
+
+            const container = document.createElement('div');
+            container.className = 'bg-gray-50 p-6 rounded-lg';
+
+            // 總評標題
+            const overallTitle = document.createElement('h3');
+            overallTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
+            overallTitle.textContent = '📋 健檢總評';
+
+            // 總評內容
+            const overallComment = document.createElement('p');
+            overallComment.className = 'mb-6 text-gray-700 leading-relaxed';
+            overallComment.textContent = data.overall_comment;
+
+            // STAR 分析標題
+            const starTitle = document.createElement('h3');
+            starTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
+            starTitle.textContent = '⭐ STAR 分析與建議';
+
+            // STAR 分析容器
+            const analysisContainer = document.createElement('div');
+            analysisContainer.className = 'space-y-4 mb-6';
+
+            const colors = {
+                S: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                T: { bg: 'bg-green-100', text: 'text-green-800' },
+                A: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                R: { bg: 'bg-red-100', text: 'text-red-800' },
+            };
+            const elementNames = {'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'};
+
+            data.analysis.forEach(item => {
                 const color = colors[item.element] || { bg: 'bg-gray-100', text: 'text-gray-800' };
-                const elementNames = {'S':'情境', 'T':'任務', 'A':'行動', 'R':'結果'};
 
-                return `
-                    <div class="p-4 rounded-lg ${color.bg} border border-gray-200">
-                        <h4 class="font-bold ${color.text} mb-2">${item.element} (${elementNames[item.element]})</h4>
-                        <p class="text-sm text-gray-700 mb-2"><strong>評語：</strong>${item.comment}</p>
-                        <p class="text-sm text-gray-700"><strong>建議：</strong>${item.suggestion}</p>
-                    </div>
-                `;
-            }).join('');
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `p-4 rounded-lg ${color.bg} border border-gray-200`;
 
-            analysisResult.innerHTML = `
-                <div class="bg-gray-50 p-6 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">📋 健檢總評</h3>
-                    <p class="mb-6 text-gray-700 leading-relaxed">${data.overall_comment}</p>
-                    
-                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">⭐ STAR 分析與建議</h3>
-                    <div class="space-y-4 mb-6">${analysisHtml}</div>
-                    
-                    <h3 class="text-lg font-semibold mb-4 text-cyan-900">✨ 修改範例</h3>
-                    <div class="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
-                        <p class="text-sm text-cyan-800 leading-relaxed">${data.revised_example}</p>
-                    </div>
-                </div>
-            `;
+                const itemTitle = document.createElement('h4');
+                itemTitle.className = `font-bold ${color.text} mb-2`;
+                itemTitle.textContent = `${item.element} (${elementNames[item.element]})`;
+
+                const commentP = document.createElement('p');
+                commentP.className = 'text-sm text-gray-700 mb-2';
+                const commentLabel = document.createElement('strong');
+                commentLabel.textContent = '評語：';
+                commentP.appendChild(commentLabel);
+                commentP.appendChild(document.createTextNode(item.comment));
+
+                const suggestionP = document.createElement('p');
+                suggestionP.className = 'text-sm text-gray-700';
+                const suggestionLabel = document.createElement('strong');
+                suggestionLabel.textContent = '建議：';
+                suggestionP.appendChild(suggestionLabel);
+                suggestionP.appendChild(document.createTextNode(item.suggestion));
+
+                itemDiv.appendChild(itemTitle);
+                itemDiv.appendChild(commentP);
+                itemDiv.appendChild(suggestionP);
+
+                analysisContainer.appendChild(itemDiv);
+            });
+
+            // 修改範例標題
+            const exampleTitle = document.createElement('h3');
+            exampleTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
+            exampleTitle.textContent = '✨ 修改範例';
+
+            // 修改範例內容
+            const exampleBox = document.createElement('div');
+            exampleBox.className = 'bg-cyan-50 border border-cyan-200 rounded-lg p-4';
+            const exampleText = document.createElement('p');
+            exampleText.className = 'text-sm text-cyan-800 leading-relaxed';
+            exampleText.textContent = data.revised_example;
+            exampleBox.appendChild(exampleText);
+
+            // 組裝所有元素
+            container.appendChild(overallTitle);
+            container.appendChild(overallComment);
+            container.appendChild(starTitle);
+            container.appendChild(analysisContainer);
+            container.appendChild(exampleTitle);
+            container.appendChild(exampleBox);
+
+            analysisResult.appendChild(container);
         }
     </script>
 </body>

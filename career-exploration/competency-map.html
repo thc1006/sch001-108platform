@@ -196,19 +196,23 @@
         aiGenerateBtn.addEventListener('click', async () => {
             const userInput = aiInput.value.trim();
             if (!userInput) {
-                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">請先輸入你的活動經驗描述！</p>`;
+                aiResultContainer.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center font-semibold';
+                errorP.textContent = '請先輸入你的活動經驗描述！';
+                aiResultContainer.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = aiGenerateBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '<i data-feather="zap"></i><span class="ml-2">分析中...</span>';
+            button.innerHTML = '載入中... ⏳';
 
             aiResultContainer.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
-            
+
             // ✅ 步驟 2: 強化 Prompt
             const prompt = `你是一位專業的108課綱學習歷程顧問。請根據以下學生描述的活動經驗，分析其中最能體現的2-3項核心素養（從A1-C3中選擇），並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。\n\n學生描述：「${userInput}」`;
 
@@ -217,44 +221,103 @@
                 const response = await puter.ai.chat(prompt, {
                     model: 'gemini-3-pro-preview',
                     temperature: 0.5,
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
 
                 const text = response?.message?.content;
                 if (!text) {
                     throw new Error("AI 未能提供有效的分析結果。");
                 }
-                
-                // 原有的格式化邏輯保持不變，非常棒！
-                let htmlResult = text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\s?\*\s/g, '<li class="flex items-start gap-2"><i data-feather="check" class="w-5 h-5 text-green-500 mt-1 shrink-0"></i><span>')
-                    .replace(/(\n\s?\*\s.*)/g, '$1</span></li>')
-                    .replace(/\n/g, '<br>');
 
-                // 修正：確保即使第一個項目沒有前導換行符也能被捕捉
-                if (htmlResult.startsWith('<li')) {
-                    htmlResult = `<ul>${htmlResult}</ul>`;
-                } else {
-                    htmlResult = `<ul class="space-y-3">${htmlResult}</ul>`;
-                }
+                // 安全地解析 Markdown 並構建 DOM
+                aiResultContainer.textContent = ''; // 清空容器
 
-                aiResultContainer.innerHTML = `<div class="prose max-w-none p-4 bg-indigo-50 rounded-lg">${htmlResult}</div>`;
+                const container = document.createElement('div');
+                container.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
+
+                // 分割文本為段落和列表項
+                const lines = text.split('\n');
+                let currentList = null;
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+
+                    // 檢查是否為列表項
+                    if (line.match(/^\*\s/)) {
+                        // 如果還沒有列表,創建一個
+                        if (!currentList) {
+                            currentList = document.createElement('ul');
+                            currentList.className = 'space-y-3';
+                            container.appendChild(currentList);
+                        }
+
+                        // 創建列表項
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start gap-2';
+
+                        // 創建圖標
+                        const icon = document.createElement('i');
+                        icon.setAttribute('data-feather', 'check');
+                        icon.className = 'w-5 h-5 text-green-500 mt-1 shrink-0';
+
+                        // 處理文本內容 (移除前導的 * 和空格)
+                        const textContent = line.replace(/^\*\s/, '');
+                        const span = document.createElement('span');
+
+                        // 處理粗體標記 **text**
+                        const parts = textContent.split(/\*\*(.*?)\*\*/g);
+                        parts.forEach((part, index) => {
+                            if (index % 2 === 0) {
+                                // 普通文本
+                                if (part) span.appendChild(document.createTextNode(part));
+                            } else {
+                                // 粗體文本
+                                const strong = document.createElement('strong');
+                                strong.textContent = part;
+                                span.appendChild(strong);
+                            }
+                        });
+
+                        li.appendChild(icon);
+                        li.appendChild(span);
+                        currentList.appendChild(li);
+                    } else {
+                        // 非列表項,關閉當前列表
+                        currentList = null;
+
+                        // 創建段落
+                        const p = document.createElement('p');
+
+                        // 處理粗體標記
+                        const parts = line.split(/\*\*(.*?)\*\*/g);
+                        parts.forEach((part, index) => {
+                            if (index % 2 === 0) {
+                                if (part) p.appendChild(document.createTextNode(part));
+                            } else {
+                                const strong = document.createElement('strong');
+                                strong.textContent = part;
+                                p.appendChild(strong);
+                            }
+                        });
+
+                        container.appendChild(p);
+                    }
+                });
+
+                aiResultContainer.appendChild(container);
                 feather.replace(); // Re-render icons after adding new ones
 
             } catch (error) {
                 console.error("Puter.js AI call failed:", error);
-
-                // 清空結果容器
                 aiResultContainer.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center font-semibold';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
                 }
 
                 aiResultContainer.appendChild(errorP);
@@ -263,7 +326,6 @@
                 button.disabled = false;
                 button.classList.remove('opacity-50', 'cursor-not-allowed');
                 button.innerHTML = originalText;
-                feather.replace(); // 重新渲染 feather 圖標
             }
         });
         

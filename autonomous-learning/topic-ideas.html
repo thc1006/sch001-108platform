@@ -143,16 +143,20 @@
         generateIdeaBtn.addEventListener('click', async () => {
             const interests = ideaInput.value.trim();
             if (!interests) {
-                ideaResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的興趣關鍵字！</p>';
+                ideaResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先輸入你的興趣關鍵字！';
+                ideaResult.appendChild(errorP);
                 return;
             }
 
-            // 雙擊防護：禁用按鈕並顯示載入狀態
+            // 雙擊防護
             const button = generateIdeaBtn;
             const originalText = button.innerHTML;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '生成中... <span class="inline-block animate-spin">⏳</span>';
+            button.innerHTML = '載入中... ⏳';
 
             showLoader(ideaResult);
 
@@ -173,11 +177,11 @@
 }
 
 請確保回應是有效的 JSON 格式。`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: "gemini-3-pro-preview",
-                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -234,17 +238,14 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-
-                // 清空結果容器
                 ideaResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
 
-                // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
                 } else {
-                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                    errorP.textContent = '抱歉，產生靈感時發生錯誤。請稍後再試。';
                 }
 
                 ideaResult.appendChild(errorP);
@@ -262,29 +263,79 @@
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg';
                 
-                const methodsHtml = idea.methods.map(m => `<span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${m}</span>`).join('');
-                const challengesHtml = idea.challenges.map(c => `<li class="text-sm text-gray-700">${c}</li>`).join('');
-                const keywordsHtml = idea.keywords.map(k => `<span class="inline-block bg-gray-200 text-gray-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${k}</span>`).join('');
+                // 使用 textContent 安全插入標題和描述
+                const titleEl = document.createElement('h4');
+                titleEl.className = 'font-bold text-lg text-blue-800';
+                titleEl.textContent = idea.title;
 
-                ideaElement.innerHTML = `
-                    <h4 class="font-bold text-lg text-blue-800">${idea.title}</h4>
-                    <p class="text-gray-700 mt-1 mb-4">${idea.description}</p>
-                    <div class="mb-4">
-                        <h5 class="font-semibold text-sm mb-2 text-gray-800">建議研究方法：</h5>
-                        <div>${methodsHtml}</div>
-                    </div>
-                    <div class="mb-4">
-                        <h5 class="font-semibold text-sm mb-2 text-gray-800">潛在挑戰：</h5>
-                        <ul class="list-disc list-inside pl-2">${challengesHtml}</ul>
-                    </div>
-                    <div class="mb-4">
-                         <h5 class="font-semibold text-sm mb-2 text-gray-800">相關關鍵字：</h5>
-                        <div>${keywordsHtml}</div>
-                    </div>
-                    <a href="https://www.google.com/search?q=${encodeURIComponent(idea.title)}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-100 transition duration-300">
-                        用 Google 深入研究 &rarr;
-                    </a>
-                `;
+                const descEl = document.createElement('p');
+                descEl.className = 'text-gray-700 mt-1 mb-4';
+                descEl.textContent = idea.description;
+
+                // 方法標籤容器
+                const methodsContainer = document.createElement('div');
+                methodsContainer.className = 'mb-4';
+                const methodsTitle = document.createElement('h5');
+                methodsTitle.className = 'font-semibold text-sm mb-2 text-gray-800';
+                methodsTitle.textContent = '建議研究方法：';
+                const methodsDiv = document.createElement('div');
+                idea.methods.forEach(m => {
+                    const span = document.createElement('span');
+                    span.className = 'inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full';
+                    span.textContent = m;
+                    methodsDiv.appendChild(span);
+                });
+                methodsContainer.appendChild(methodsTitle);
+                methodsContainer.appendChild(methodsDiv);
+
+                // 挑戰列表容器
+                const challengesContainer = document.createElement('div');
+                challengesContainer.className = 'mb-4';
+                const challengesTitle = document.createElement('h5');
+                challengesTitle.className = 'font-semibold text-sm mb-2 text-gray-800';
+                challengesTitle.textContent = '潛在挑戰：';
+                const challengesList = document.createElement('ul');
+                challengesList.className = 'list-disc list-inside pl-2';
+                idea.challenges.forEach(c => {
+                    const li = document.createElement('li');
+                    li.className = 'text-sm text-gray-700';
+                    li.textContent = c;
+                    challengesList.appendChild(li);
+                });
+                challengesContainer.appendChild(challengesTitle);
+                challengesContainer.appendChild(challengesList);
+
+                // 關鍵字標籤容器
+                const keywordsContainer = document.createElement('div');
+                keywordsContainer.className = 'mb-4';
+                const keywordsTitle = document.createElement('h5');
+                keywordsTitle.className = 'font-semibold text-sm mb-2 text-gray-800';
+                keywordsTitle.textContent = '相關關鍵字：';
+                const keywordsDiv = document.createElement('div');
+                idea.keywords.forEach(k => {
+                    const span = document.createElement('span');
+                    span.className = 'inline-block bg-gray-200 text-gray-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full';
+                    span.textContent = k;
+                    keywordsDiv.appendChild(span);
+                });
+                keywordsContainer.appendChild(keywordsTitle);
+                keywordsContainer.appendChild(keywordsDiv);
+
+                // Google 搜尋連結
+                const googleLink = document.createElement('a');
+                googleLink.href = `https://www.google.com/search?q=${encodeURIComponent(idea.title)}`;
+                googleLink.target = '_blank';
+                googleLink.rel = 'noopener noreferrer';
+                googleLink.className = 'inline-block mt-2 bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-100 transition duration-300';
+                googleLink.textContent = '用 Google 深入研究 →';
+
+                // 組裝所有元素
+                ideaElement.appendChild(titleEl);
+                ideaElement.appendChild(descEl);
+                ideaElement.appendChild(methodsContainer);
+                ideaElement.appendChild(challengesContainer);
+                ideaElement.appendChild(keywordsContainer);
+                ideaElement.appendChild(googleLink);
                 ideaResult.appendChild(ideaElement);
             });
         }
