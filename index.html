@@ -178,13 +178,13 @@
                         <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </span>
-                        <input type="text" id="search-input" placeholder="正在載入搜尋引擎..." disabled class="w-full pl-14 pr-14 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-shadow shadow-sm hover:shadow-md bg-gray-200">
+                        <input type="text" id="search-input" role="combobox" aria-autocomplete="list" aria-controls="search-results-container" aria-expanded="false" aria-label="全站搜尋輸入框" placeholder="正在載入搜尋引擎..." disabled class="w-full pl-14 pr-14 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-shadow shadow-sm hover:shadow-md bg-gray-200">
                         <button id="search-clear-btn" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer hidden" aria-label="Clear search input">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </button>
                     </div>
                     <!-- 搜尋結果將會動態插入此處 -->
-                    <div id="search-results-container" class="mt-4"></div>
+                    <div id="search-results-container" role="listbox" aria-label="搜尋結果列表" class="mt-4"></div>
                 </div>
             </div>
         </section>
@@ -299,7 +299,15 @@
             const clearBtn = document.getElementById('search-clear-btn');
             let fuse;
             let searchData = [];
-    
+            let debounceTimer; // Task 2: 防抖計時器
+            let selectedIndex = -1; // Task 3: 鍵盤導航選中索引
+            let resultElements = []; // Task 3: 結果元素列表
+
+            // Task 5: localStorage 快取常數
+            const CACHE_KEY = 'search-index-cache';
+            const CACHE_VERSION = '1.0';
+            const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 小時
+
             // FIX: Dynamically determine the correct path to the search index
             // based on whether the site is running on GitHub Pages or a local server.
             let searchPath;
@@ -312,91 +320,262 @@
                 searchPath = 'search-index.json';
             }
 
-            // 異步獲取 search-index.json
-            fetch(searchPath)
-                .then(response => {
-                    if (!response.ok) {
-                        // 提供更詳細的錯誤訊息
-                        throw new Error(`網路回應錯誤 (${response.status})，無法載入 ${searchPath}`);
+            // Task 5: 嘗試從快取載入
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    const { version, data, timestamp } = JSON.parse(cached);
+                    const isExpired = Date.now() - timestamp > CACHE_DURATION;
+
+                    // 加強資料完整性驗證
+                    if (version === CACHE_VERSION && !isExpired && Array.isArray(data) && data.length > 0) {
+                        // 驗證第一筆資料結構
+                        const firstItem = data[0];
+                        if (firstItem?.title && firstItem?.url && firstItem?.content && Array.isArray(firstItem?.tags)) {
+                            console.log('🔍 搜尋引擎已從快取載入！共 ' + data.length + ' 筆資料');
+                            initializeFuse(data);
+                            searchInput.disabled = false;
+                            searchInput.placeholder = "輸入關鍵字搜尋全站資源...";
+                            searchInput.classList.remove('bg-gray-200');
+                        } else {
+                            console.warn('⚠️ 快取資料格式錯誤，重新載入...');
+                            localStorage.removeItem(CACHE_KEY);
+                            loadSearchIndex();
+                        }
+                    } else {
+                        console.log('🔍 快取已過期或版本不符，重新載入...');
+                        loadSearchIndex();
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    searchData = data;
-                    const fuseOptions = {
-                        includeScore: true,
-                        shouldSort: true,
-                        threshold: 0.4,
-                        keys: [
-                            { name: 'title', weight: 0.7 },
-                            { name: 'tags', weight: 0.5 },
-                            { name: 'content', weight: 0.2 }
-                        ]
-                    };
-                    fuse = new Fuse(searchData, fuseOptions);
-                    console.log('🔍 搜尋引擎已準備就緒！');
-                    searchInput.disabled = false;
-                    searchInput.placeholder = "輸入關鍵字搜尋全站資源...";
-                    searchInput.classList.remove('bg-gray-200');
-                })
-                .catch(error => {
-                    console.error('載入搜尋索引時發生錯誤:', error);
-                    resultsContainer.innerHTML = `<div class="p-4 my-2 text-center text-red-600 bg-red-100 rounded-lg shadow-sm">搜尋功能載入失敗，請檢查檔案路徑或網路連線。</div>`;
-                });
-    
-            // 監聽輸入事件
+                } catch (e) {
+                    console.warn('快取載入失敗:', e);
+                    loadSearchIndex();
+                }
+            } else {
+                loadSearchIndex();
+            }
+
+            // Task 5: 從網路載入搜尋索引
+            function loadSearchIndex() {
+                fetch(searchPath)
+                    .then(response => {
+                        if (!response.ok) {
+                            // 提供更詳細的錯誤訊息
+                            throw new Error(`網路回應錯誤 (${response.status})，無法載入 ${searchPath}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Task 5: 儲存到 localStorage
+                        try {
+                            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                                version: CACHE_VERSION,
+                                data,
+                                timestamp: Date.now()
+                            }));
+                            console.log('🔍 搜尋索引已快取到 localStorage');
+                        } catch (e) {
+                            if (e.name === 'QuotaExceededError') {
+                                console.warn('⚠️ localStorage 配額已滿，嘗試清理舊快取...');
+                                try {
+                                    // 清除所有 search-index-cache 開頭的項目
+                                    Object.keys(localStorage).forEach(key => {
+                                        if (key.startsWith('search-index-cache')) {
+                                            localStorage.removeItem(key);
+                                        }
+                                    });
+                                    // 重試一次
+                                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                                        version: CACHE_VERSION,
+                                        data,
+                                        timestamp: Date.now()
+                                    }));
+                                    console.log('✅ 清理後成功快取');
+                                } catch (retryError) {
+                                    console.error('❌ 快取失敗，但不影響搜尋功能:', retryError);
+                                }
+                            } else {
+                                console.warn('無法儲存快取:', e);
+                            }
+                        }
+
+                        initializeFuse(data);
+                        searchInput.disabled = false;
+                        searchInput.placeholder = "輸入關鍵字搜尋全站資源...";
+                        searchInput.classList.remove('bg-gray-200');
+                    })
+                    .catch(error => {
+                        console.error('載入搜尋索引時發生錯誤:', error);
+                        // Task 1: 修復 XSS - 使用 DOM API 而非 innerHTML
+                        resultsContainer.textContent = '';
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'p-4 my-2 text-center text-red-600 bg-red-100 rounded-lg shadow-sm';
+                        errorDiv.textContent = '搜尋功能載入失敗，請檢查檔案路徑或網路連線。';
+                        resultsContainer.appendChild(errorDiv);
+                    });
+            }
+
+            // Task 5: 初始化 Fuse.js 搜尋引擎
+            function initializeFuse(data) {
+                searchData = data;
+                const fuseOptions = {
+                    includeScore: true,
+                    shouldSort: true,
+                    threshold: 0.4,
+                    keys: [
+                        { name: 'title', weight: 0.7 },
+                        { name: 'tags', weight: 0.5 },
+                        { name: 'content', weight: 0.2 }
+                    ]
+                };
+                fuse = new Fuse(searchData, fuseOptions);
+                console.log('🔍 搜尋引擎已準備就緒！共 ' + data.length + ' 筆資料');
+            }
+
+            // Task 2: 防抖機制 - 監聽輸入事件
             searchInput.addEventListener('input', function () {
                 if (!fuse) return;
-                const query = this.value.trim();
-                clearBtn.classList.toggle('hidden', query.length === 0);
-                resultsContainer.innerHTML = '';
-                if (query.length > 0) {
-                    const results = fuse.search(query);
-                    displayResults(results.slice(0, 10), query); // 最多顯示 10 筆
+
+                clearTimeout(debounceTimer); // 清除上一次的計時器
+                debounceTimer = setTimeout(() => {
+                    const query = this.value.trim();
+                    clearBtn.classList.toggle('hidden', query.length === 0);
+                    resultsContainer.textContent = ''; // Task 1: 使用 textContent 清空
+
+                    if (query.length > 0) {
+                        const results = fuse.search(query);
+                        displayResults(results.slice(0, 20), query); // 增加到 20 筆
+                    } else {
+                        // 清空時重置 ARIA 狀態
+                        searchInput.setAttribute('aria-expanded', 'false');
+                        selectedIndex = -1;
+                    }
+                }, 200); // 優化為 200ms 防抖，平衡效能與 UX 體驗
+            });
+
+            // Task 3: 鍵盤導航
+            searchInput.addEventListener('keydown', (e) => {
+                // resultElements 已在 displayResults() 中更新，無需每次 keydown 都查詢
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, resultElements.length - 1);
+                    updateSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection();
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    resultElements[selectedIndex].click();
+                } else if (e.key === 'Escape') {
+                    // 清除搜尋
+                    searchInput.value = '';
+                    resultsContainer.textContent = '';
+                    clearBtn.classList.add('hidden');
+                    searchInput.setAttribute('aria-expanded', 'false');
+                    selectedIndex = -1;
                 }
             });
-    
+
+            // Task 3: 更新選中狀態
+            function updateSelection() {
+                resultElements.forEach((el, idx) => {
+                    if (idx === selectedIndex) {
+                        el.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
+                        el.setAttribute('aria-selected', 'true');
+                        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    } else {
+                        el.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
+                        el.setAttribute('aria-selected', 'false');
+                    }
+                });
+            }
+
             // 清除按鈕
             clearBtn.addEventListener('click', () => {
                 searchInput.value = '';
                 searchInput.focus();
-                resultsContainer.innerHTML = '';
+                resultsContainer.textContent = ''; // Task 1: 使用 textContent
                 clearBtn.classList.add('hidden');
+                searchInput.setAttribute('aria-expanded', 'false');
+                selectedIndex = -1;
             });
-    
+
+            // Task 1: 完全重寫 displayResults 函數，使用安全的 DOM API
             function displayResults(results, query) {
+                resultsContainer.textContent = ''; // 清空容器
+
+                // Task 4: 更新 ARIA 狀態
+                searchInput.setAttribute('aria-expanded', results.length > 0 ? 'true' : 'false');
+
                 if (results.length === 0) {
-                    resultsContainer.innerHTML = `<div class="p-4 my-2 text-center text-gray-500 bg-white rounded-lg shadow-sm">找不到與「${escapeHTML(query)}」相關的結果</div>`;
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'p-4 my-2 text-center text-gray-500 bg-white rounded-lg shadow-sm';
+                    emptyDiv.textContent = `找不到與「${query}」相關的結果`;
+                    resultsContainer.appendChild(emptyDiv);
                     return;
                 }
-                const html = results.map(result => {
+
+                results.forEach(result => {
                     const item = result.item;
-                    const title = highlight(item.title, query);
-                    const content = highlight(escapeHTML(item.content.substring(0, 100)), query); // 截斷並高亮內容
-                    return `
-                        <a href="${item.url}" class="block p-4 my-2 transition duration-300 ease-in-out bg-white rounded-lg shadow-sm hover:shadow-lg hover:bg-blue-50">
-                            <h3 class="text-lg font-semibold text-blue-700">${title}</h3>
-                            <p class="text-sm text-gray-600">${content}...</p>
-                            <div class="mt-2">
-                                ${item.tags.map(tag => `<span class="inline-block px-2 py-1 mr-2 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">${highlight(tag, query)}</span>`).join('')}
-                            </div>
-                        </a>
-                    `;
-                }).join('');
-                resultsContainer.innerHTML = html;
+
+                    // 建立連結元素
+                    const linkEl = document.createElement('a');
+                    linkEl.href = item.url;
+                    linkEl.className = 'block p-4 my-2 transition duration-300 ease-in-out bg-white rounded-lg shadow-sm hover:shadow-lg hover:bg-blue-50';
+                    // Task 4: ARIA 屬性
+                    linkEl.setAttribute('role', 'option');
+                    linkEl.setAttribute('aria-selected', 'false');
+
+                    // 標題 (使用 innerHTML 因為 highlight 已處理 escaping)
+                    const titleEl = document.createElement('h3');
+                    titleEl.className = 'text-lg font-semibold text-blue-700';
+                    titleEl.innerHTML = highlight(item.title, query);
+
+                    // 內容預覽
+                    const contentEl = document.createElement('p');
+                    contentEl.className = 'text-sm text-gray-600';
+                    const escapedContent = escapeHTML(item.content.substring(0, 100));
+                    contentEl.innerHTML = highlight(escapedContent, query) + '...';
+
+                    // 標籤容器
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'mt-2';
+
+                    item.tags.forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'inline-block px-2 py-1 mr-2 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full';
+                        tagSpan.innerHTML = highlight(tag, query);
+                        tagsDiv.appendChild(tagSpan);
+                    });
+
+                    // 組裝元素
+                    linkEl.appendChild(titleEl);
+                    linkEl.appendChild(contentEl);
+                    if (item.tags.length > 0) {
+                        linkEl.appendChild(tagsDiv);
+                    }
+
+                    resultsContainer.appendChild(linkEl);
+                });
+
+                // Task 3: 當結果改變時重置選擇並更新 resultElements 快取
+                selectedIndex = -1;
+                resultElements = Array.from(resultsContainer.querySelectorAll('a'));
             }
-    
+
             function highlight(text, query) {
-                if (!query) return text;
+                if (!query) return escapeHTML(text); // 修復 XSS：先轉義整個 text
+                const escapedText = escapeHTML(text);
                 const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-                return text.replace(regex, '<mark class="bg-yellow-200 rounded">$1</mark>');
+                return escapedText.replace(regex, '<mark class="bg-yellow-200 rounded">$1</mark>');
             }
-    
+
             function escapeHTML(str) {
                 if (!str) return '';
                 return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
             }
-    
+
             function escapeRegExp(string) {
                 if (!string) return '';
                 return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -408,11 +587,3 @@
     <!-- ================================================================== -->
 </body>
 </html>
-<script>
-    // 確保搜尋輸入框在頁面載入後可用
-    document.addEventListener('DOMContentLoaded', () => {
-        const searchInput = document.getElementById('search-input');
-        searchInput.disabled = false; // 啟用輸入框
-        searchInput.placeholder = "輸入關鍵字搜尋全站資源...";
-        searchInput.classList.remove('bg-gray-200'); // 移除禁用狀態的背景色
-    });
