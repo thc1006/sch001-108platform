@@ -203,9 +203,16 @@
                 aiResultContainer.appendChild(errorP);
                 return;
             }
-            
+
+            // 雙擊防護
+            const button = aiGenerateBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '載入中... ⏳';
+
             aiResultContainer.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
-            
+
             // ✅ 步驟 2: 強化 Prompt
             const prompt = `你是一位專業的108課綱學習歷程顧問。請根據以下學生描述的活動經驗，分析其中最能體現的2-3項核心素養（從A1-C3中選擇），並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。\n\n學生描述：「${userInput}」`;
 
@@ -213,7 +220,8 @@
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: 'gemini-3-pro-preview',
-                    temperature: 0.5
+                    temperature: 0.5,
+                    signal: AbortSignal.timeout(30000)
                 });
 
                 const text = response?.message?.content;
@@ -305,8 +313,19 @@
                 aiResultContainer.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center font-semibold';
-                errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
+
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
+                }
+
                 aiResultContainer.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
         

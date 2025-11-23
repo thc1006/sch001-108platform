@@ -416,8 +416,16 @@
 
             addMessageToChat(userInput, 'user');
             chatInput.value = '';
+
+            // 雙擊防護：禁用發送按鈕和輸入框
+            const sendBtn = chatSubmit;
+            const originalBtnText = sendBtn.innerHTML;
+            sendBtn.disabled = true;
+            chatInput.disabled = true;
+            sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            sendBtn.innerHTML = '思考中...';
+
             loadingIndicator.classList.remove('hidden');
-            chatSubmit.disabled = true;
 
             const context = majorData.map(c => 
                 `學群: ${c.name}\n簡介: ${c.description}\n適合特質: ${c.competencies.join(', ')}\n未來出路: ${c.careers.join(', ')}`
@@ -445,10 +453,11 @@
                 const aiTextElement = addMessageToChat('', 'ai');
                 if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
 
-                // 使用流式輸出來獲取回應
+                // 使用流式輸出來獲取回應（串流輸出建議較長逾時）
                 const responseStream = await puter.ai.chat(prompt, {
                     model: 'gemini-3-pro-preview',
-                    stream: true
+                    stream: true,
+                    signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
                 });
 
                 // 逐字將 AI 回應安全地填入文字容器
@@ -466,10 +475,20 @@
 
             } catch (error) {
                 console.error("Error calling Puter.js AI:", error);
-                addMessageToChat("哎呀，連線好像有點問題，請稍後再試一次。", 'ai');
+
+                // 區分逾時錯誤和其他錯誤
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    addMessageToChat("請求超時，請檢查網路連線後重試。", 'ai');
+                } else {
+                    addMessageToChat("哎呀，連線好像有點問題，請稍後再試一次。", 'ai');
+                }
             } finally {
+                // 恢復發送按鈕和輸入框狀態
                 loadingIndicator.classList.add('hidden');
-                chatSubmit.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.disabled = false;
+                sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                sendBtn.innerHTML = originalBtnText;
                 chatInput.focus(); // 讓使用者可以馬上問下一個問題
             }
         }

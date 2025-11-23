@@ -150,6 +150,14 @@
                 ideaResult.appendChild(errorP);
                 return;
             }
+
+            // 雙擊防護
+            const button = generateIdeaBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '載入中... ⏳';
+
             showLoader(ideaResult);
 
             const prompt = `你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。每個主題都必須包含以下項目：1. 主題名稱 (title), 2. 簡短描述 (description), 3. 建議研究方法 (methods), 4. 潛在挑戰 (challenges), 5. 相關關鍵字 (keywords)。
@@ -169,10 +177,11 @@
 }
 
 請確保回應是有效的 JSON 格式。`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview"
+                    model: "gemini-3-pro-preview",
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -232,8 +241,19 @@
                 ideaResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
-                errorP.textContent = '抱歉，產生靈感時發生錯誤。請稍後再試。';
+
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，產生靈感時發生錯誤。請稍後再試。';
+                }
+
                 ideaResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
 

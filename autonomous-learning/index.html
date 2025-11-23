@@ -165,6 +165,14 @@
                 coachResult.appendChild(errorP);
                 return;
             }
+
+            // 雙擊防護
+            const button = generateCoachBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '載入中... ⏳';
+
             showLoader(coachResult);
 
             const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
@@ -177,10 +185,11 @@
 }
 
 請確保回應是有效的 JSON 格式。`;
-            
+
             try {
                 const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview"
+                    model: "gemini-3-pro-preview",
+                    signal: AbortSignal.timeout(30000)
                 });
                 
                 // Extract content from response
@@ -224,8 +233,19 @@
                 coachResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
-                errorP.textContent = '抱歉，規劃時發生錯誤。請稍後再試。';
+
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，規劃時發生錯誤。請稍後再試。';
+                }
+
                 coachResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
 
