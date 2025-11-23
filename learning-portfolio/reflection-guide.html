@@ -209,6 +209,14 @@
                 analysisResult.innerHTML = '<p class="text-red-500 text-center">請先貼上你的心得反思文字！</p>';
                 return;
             }
+
+            // 雙擊防護：禁用按鈕並顯示載入狀態
+            const button = analyzeBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '分析中... <span class="inline-block animate-spin">⏳</span>';
+
             showLoader(analysisResult);
 
             const prompt = `你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation, Task, Action, Result），分析以下這位高中生寫的心得反思文字。你的分析需要包含：
@@ -223,7 +231,8 @@
             
             try {
                 const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview"
+                    model: "gemini-3-pro-preview",
+                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
                 });
                 
                 // Extract content from response
@@ -265,7 +274,25 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-                analysisResult.innerHTML = `<p class="text-red-500 text-center">抱歉，分析時發生錯誤。請稍後再試。</p>`;
+
+                // 清空結果容器
+                analysisResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+
+                // 區分逾時錯誤和其他錯誤
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                }
+
+                analysisResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
 

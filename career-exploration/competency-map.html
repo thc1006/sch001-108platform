@@ -199,7 +199,14 @@
                 aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">請先輸入你的活動經驗描述！</p>`;
                 return;
             }
-            
+
+            // 雙擊防護：禁用按鈕並顯示載入狀態
+            const button = aiGenerateBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '<i data-feather="zap"></i><span class="ml-2">分析中...</span>';
+
             aiResultContainer.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
             
             // ✅ 步驟 2: 強化 Prompt
@@ -209,7 +216,8 @@
             try {
                 const response = await puter.ai.chat(prompt, {
                     model: 'gemini-3-pro-preview',
-                    temperature: 0.5
+                    temperature: 0.5,
+                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
                 });
 
                 const text = response?.message?.content;
@@ -236,7 +244,26 @@
 
             } catch (error) {
                 console.error("Puter.js AI call failed:", error);
-                aiResultContainer.innerHTML = `<p class="text-red-500 text-center font-semibold">抱歉，分析時發生錯誤。請稍後再試。</p>`;
+
+                // 清空結果容器
+                aiResultContainer.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center font-semibold';
+
+                // 區分逾時錯誤和其他錯誤
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                }
+
+                aiResultContainer.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
+                feather.replace(); // 重新渲染 feather 圖標
             }
         });
         

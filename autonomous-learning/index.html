@@ -161,6 +161,14 @@
                 coachResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的初步想法！</p>';
                 return;
             }
+
+            // 雙擊防護：禁用按鈕並顯示載入狀態
+            const button = generateCoachBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '<svg class="w-5 h-5 inline-block animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="ml-2">思考中...</span>';
+
             showLoader(coachResult);
 
             const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
@@ -176,7 +184,8 @@
             
             try {
                 const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview"
+                    model: "gemini-3-pro-preview",
+                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
                 });
                 
                 // Extract content from response
@@ -217,7 +226,25 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-                coachResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃時發生錯誤。請稍後再試。</p>`;
+
+                // 清空結果容器
+                coachResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+
+                // 區分逾時錯誤和其他錯誤
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                }
+
+                coachResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
 

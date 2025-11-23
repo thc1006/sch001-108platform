@@ -232,6 +232,14 @@
                 pathResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你想學習的主題！</p>';
                 return;
             }
+
+            // 雙擊防護：禁用按鈕並顯示載入狀態
+            const button = generatePathBtn;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.innerHTML = '規劃中... <span class="inline-block animate-spin">⏳</span>';
+
             showLoader(pathResult);
 
             const prompt = `你是一位專業的學習顧問，請為一位想自主學習「${topic}」的台灣高中生，規劃一份 4 個步驟的學習路徑。每個步驟都必須包含：1. 步驟標題 (title), 2. 步驟描述 (description), 3. 建議的資源類型 (resource_type), 4. 一個具體的行動建議與相關搜尋關鍵字 (actionable_suggestion)。
@@ -254,7 +262,8 @@
             
             try {
                 const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview"
+                    model: "gemini-3-pro-preview",
+                    signal: AbortSignal.timeout(30000)  // 30 秒逾時
                 });
                 
                 // Extract content from response
@@ -318,8 +327,85 @@
                 
             } catch (error) {
                 console.error("Error calling Puter.js:", error);
-                pathResult.innerHTML = `<p class="text-red-500 text-center">抱歉，規劃路徑時發生錯誤。請稍後再試。</p>`;
+
+                // 清空結果容器
+                pathResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+
+                // 區分逾時錯誤和其他錯誤
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，發生錯誤。請稍後再試。';
+                }
+
+                pathResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = originalText;
             }
         });
 
-        function displayAIPath
+        function displayAIPath(learningPath) {
+            pathResult.textContent = ''; // 清空容器
+
+            learningPath.forEach(step => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg mb-4';
+
+                // 步驟編號
+                const stepNum = document.createElement('div');
+                stepNum.className = 'flex items-center mb-2';
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold mr-2';
+                badge.textContent = step.step;
+                const title = document.createElement('h4');
+                title.className = 'font-bold text-lg text-indigo-800';
+                title.textContent = step.title;
+                stepNum.appendChild(badge);
+                stepNum.appendChild(title);
+
+                // 描述
+                const desc = document.createElement('p');
+                desc.className = 'text-gray-700 mt-2 mb-3';
+                desc.textContent = step.description;
+
+                // 資源類型標籤
+                const resourceContainer = document.createElement('div');
+                resourceContainer.className = 'mb-3';
+                const resourceLabel = document.createElement('span');
+                resourceLabel.className = 'text-sm font-semibold text-gray-700';
+                resourceLabel.textContent = '建議資源：';
+                const resourceBadge = document.createElement('span');
+                resourceBadge.className = 'inline-block bg-indigo-100 text-indigo-800 text-sm font-medium ml-2 px-2.5 py-0.5 rounded-full';
+                resourceBadge.textContent = step.resource_type;
+                resourceContainer.appendChild(resourceLabel);
+                resourceContainer.appendChild(resourceBadge);
+
+                // 行動建議
+                const actionContainer = document.createElement('div');
+                actionContainer.className = 'bg-white p-3 rounded-lg';
+                const actionLabel = document.createElement('p');
+                actionLabel.className = 'text-sm font-semibold text-gray-700 mb-1';
+                actionLabel.textContent = '💡 下一步行動：';
+                const actionText = document.createElement('p');
+                actionText.className = 'text-sm text-gray-800';
+                actionText.textContent = step.actionable_suggestion;
+                actionContainer.appendChild(actionLabel);
+                actionContainer.appendChild(actionText);
+
+                // 組裝元素
+                stepElement.appendChild(stepNum);
+                stepElement.appendChild(desc);
+                stepElement.appendChild(resourceContainer);
+                stepElement.appendChild(actionContainer);
+
+                pathResult.appendChild(stepElement);
+            });
+        }
+    </script>
+</body>
+</html>
