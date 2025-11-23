@@ -4,12 +4,19 @@
   "description": "> 高中生 108 課綱教育資源整合平台(Curriculum Guidelines of K-12 Basic Education Resource Integration Platform)",
   "main": "search-index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:flexsearch": "playwright test tests/e2e/flexsearch-poc.spec.js",
+    "test:flexsearch:ui": "playwright test tests/e2e/flexsearch-poc.spec.js --ui",
+    "test:flexsearch:headed": "playwright test tests/e2e/flexsearch-poc.spec.js --headed",
+    "serve": "python -m http.server 8000"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cheerio": "^1.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
   }
 }

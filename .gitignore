@@ -9,3 +9,10 @@ CLAUDE.md
 
 # Ignore agent files
 .claude/agents/*
+
+# Node.js dependencies
+node_modules/
+
+# Playwright test results and reports
+test-results/
+playwright-report/
