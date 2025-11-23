@@ -1,6 +1,11 @@
-IMPLEMENTATION_SUMMARY.md
-gemini-api.md
-GEMINI_API_FIX_PLAN.md
+# Only ignore these files in root directory (not in docs/)
+/IMPLEMENTATION_SUMMARY.md
+/gemini-api.md
+/GEMINI_API_FIX_PLAN.md
+/TESTING_GUIDE.md
+
+# CLAUDE.md should always stay in root
 CLAUDE.md
+
+# Ignore agent files
 .claude/agents/*
-TESTING_GUIDE.md
