@@ -37,8 +37,9 @@ docs/
 
 | 文件 | 說明 | 最後更新 |
 |------|------|---------|
+| [POC_COMPLETION_SUMMARY.md](search/poc/POC_COMPLETION_SUMMARY.md) | ✅ POC 完成報告（推薦先看） | 2025-11-23 |
 | [POC_README.md](search/poc/POC_README.md) | POC 概覽與快速開始 | 2025-11-23 |
-| [POC_TEST_GUIDE.md](search/poc/POC_TEST_GUIDE.md) | POC 測試指南 | 2025-11-23 |
+| [POC_TEST_GUIDE.md](search/poc/POC_TEST_GUIDE.md) | POC 測試指南（精簡版） | 2025-11-23 |
 | [POC_TESTING_STEPS.md](search/poc/POC_TESTING_STEPS.md) | POC 詳細測試步驟（10分鐘） | 2025-11-23 |
 | [POC_TEST_RESULTS.md](search/poc/POC_TEST_RESULTS.md) | POC 測試結果記錄表 | 2025-11-23 |
 
@@ -61,6 +62,7 @@ docs/
 
 ### 我想要...
 
+- **📊 查看 POC 完成狀態** → 查看 [POC_COMPLETION_SUMMARY.md](search/poc/POC_COMPLETION_SUMMARY.md) ⭐
 - **修復 Gemini API 問題** → 查看 [gemini-api.md](gemini/gemini-api.md)
 - **改進搜尋功能** → 查看 [FLEXSEARCH_MIGRATION_PLAN.md](search/FLEXSEARCH_MIGRATION_PLAN.md)
 - **執行 FlexSearch POC 測試** → 查看 [POC_TESTING_STEPS.md](search/poc/POC_TESTING_STEPS.md)
