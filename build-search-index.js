@@ -32,6 +32,12 @@ const directoriesToScan = [
 
 console.log('🚀 開始建立搜尋索引...');
 
+// 檢查是否應該排除的目錄
+function shouldExcludeDirectory(dirName) {
+    const excludePatterns = ['node_modules', 'tests', 'test-results', 'playwright-report', '.git', '.github', '.claude'];
+    return excludePatterns.some(pattern => dirName.includes(pattern));
+}
+
 // 遞迴掃描函式
 function scanDirectory(directory) {
     const dirPath = path.join(projectRoot, directory);
@@ -44,6 +50,11 @@ function scanDirectory(directory) {
         const fileUrl = path.join(directory, file).replace(/\\/g, '/');
 
         if (fs.statSync(filePath).isDirectory()) {
+            // 檢查是否應該排除此目錄
+            if (shouldExcludeDirectory(file)) {
+                console.log(`⏭️  跳過目錄: ${fileUrl}`);
+                return;
+            }
             // 如果是資料夾，就繼續往下掃
             scanDirectory(fileUrl);
         } else if (path.extname(file) === '.html') {
