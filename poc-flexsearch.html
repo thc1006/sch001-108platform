@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlexSearch POC - 中文分詞測試</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FlexSearch -->
+    <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.js"></script>
+    <!-- Fuse.js for comparison -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+    <!-- Segment (中文分詞) -->
+    <script src="https://cdn.jsdelivr.net/npm/segmentit@2.0.3/dist/umd/segmentit.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🔬 FlexSearch POC 測試</h1>
+            <p class="text-gray-600">FlexSearch + segmentit 中文分詞效能測試 vs Fuse.js</p>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="text-sm text-blue-600 font-semibold mb-1">索引狀態</div>
+                <div id="index-status" class="text-lg font-bold text-blue-800">準備中...</div>
+                <div id="data-count" class="text-sm text-blue-600 mt-1"></div>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="text-sm text-green-600 font-semibold mb-1">FlexSearch 索引時間</div>
+                <div id="flex-index-time" class="text-lg font-bold text-green-800">-</div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div class="text-sm text-purple-600 font-semibold mb-1">Fuse.js 索引時間</div>
+                <div id="fuse-index-time" class="text-lg font-bold text-purple-800">-</div>
+            </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">搜尋測試</label>
+            <input
+                type="text"
+                id="search-input"
+                placeholder="輸入關鍵字測試（例如：科學展覽、AI、數學）"
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+            >
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button onclick="testQuery('科學展覽')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">科學展覽</button>
+                <button onclick="testQuery('科學')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">科學</button>
+                <button onclick="testQuery('AI')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">AI</button>
+                <button onclick="testQuery('數學競賽')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">數學競賽</button>
+                <button onclick="testQuery('人工智慧')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">人工智慧</button>
+                <button onclick="runBenchmark()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">🔥 完整 Benchmark</button>
+            </div>
+        </div>
+
+        <!-- Results Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- FlexSearch Results -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-green-700">⚡ FlexSearch 結果</h2>
+                    <span id="flex-time" class="text-sm text-gray-500">-</span>
+                </div>
+                <div id="flex-results" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+
+            <!-- Fuse.js Results -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-purple-700">🔍 Fuse.js 結果</h2>
+                    <span id="fuse-time" class="text-sm text-gray-500">-</span>
+                </div>
+                <div id="fuse-results" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- Benchmark Results -->
+        <div id="benchmark-panel" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Benchmark 結果</h2>
+            <div id="benchmark-results"></div>
+        </div>
+
+        <!-- Segmentation Test -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🇨🇳 中文分詞測試</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">測試文字</label>
+                    <input
+                        type="text"
+                        id="segment-input"
+                        value="科學展覽會是最佳的學習舞台"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <button onclick="testSegmentation()" class="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 w-full">分詞測試</button>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">分詞結果</label>
+                    <div id="segment-output" class="p-4 bg-gray-50 border border-gray-300 rounded-lg min-h-[80px] font-mono text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let flexIndex;
+        let fuseIndex;
+        let searchData = [];
+        let segment;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 初始化 FlexSearch POC...');
+
+            // Initialize segment
+            segment = new Segment();
+            segment.useDefault();
+            console.log('✅ Segment 初始化完成');
+
+            // Load search data
+            try {
+                // Determine search path (GitHub Pages vs local)
+                let searchPath;
+                if (window.location.hostname.endsWith('github.io')) {
+                    searchPath = '/sch001-108platform/search-index.json';
+                } else {
+                    searchPath = 'search-index.json';
+                }
+
+                const response = await fetch(searchPath);
+                if (!response.ok) {
+                    throw new Error(`載入失敗: ${response.status}`);
+                }
+                searchData = await response.json();
+
+                document.getElementById('data-count').textContent = `共 ${searchData.length} 筆資料`;
+                console.log(`✅ 載入 ${searchData.length} 筆資料`);
+
+                // Initialize FlexSearch
+                initFlexSearch();
+
+                // Initialize Fuse.js
+                initFuse();
+
+                document.getElementById('index-status').textContent = '✅ 已就緒';
+                document.getElementById('index-status').classList.remove('text-blue-800');
+                document.getElementById('index-status').classList.add('text-green-800');
+
+            } catch (error) {
+                console.error('❌ 載入資料失敗:', error);
+                document.getElementById('index-status').textContent = '❌ 載入失敗';
+                document.getElementById('index-status').classList.remove('text-blue-800');
+                document.getElementById('index-status').classList.add('text-red-800');
+            }
+
+            // Search input event
+            document.getElementById('search-input').addEventListener('input', function() {
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    testQuery(query);
+                } else {
+                    clearResults();
+                }
+            });
+        });
+
+        // Initialize FlexSearch with Chinese segmentation
+        function initFlexSearch() {
+            console.time('⚡ FlexSearch 索引建立');
+
+            flexIndex = new FlexSearch.Document({
+                document: {
+                    id: "id",
+                    index: ["title", "content", "tags"],
+                    store: ["id", "title", "url", "content", "tags"]
+                },
+                encode: false,  // Disable default encoder
+                tokenize: function(str) {
+                    // Use segmentit for Chinese word segmentation
+                    const segments = segment.doSegment(str, { simple: true });
+                    return segments.map(seg => seg.toLowerCase());
+                },
+                cache: true
+            });
+
+            // Add all documents
+            searchData.forEach(item => {
+                flexIndex.add(item);
+            });
+
+            const indexTime = console.timeEnd('⚡ FlexSearch 索引建立');
+            document.getElementById('flex-index-time').textContent = performance.now().toFixed(2) + ' ms';
+            console.log('✅ FlexSearch 索引建立完成');
+        }
+
+        // Initialize Fuse.js
+        function initFuse() {
+            console.time('🔍 Fuse.js 索引建立');
+
+            const fuseOptions = {
+                includeScore: true,
+                shouldSort: true,
+                threshold: 0.4,
+                keys: [
+                    { name: 'title', weight: 0.7 },
+                    { name: 'tags', weight: 0.5 },
+                    { name: 'content', weight: 0.2 }
+                ]
+            };
+            fuseIndex = new Fuse(searchData, fuseOptions);
+
+            const indexTime = console.timeEnd('🔍 Fuse.js 索引建立');
+            document.getElementById('fuse-index-time').textContent = performance.now().toFixed(2) + ' ms';
+            console.log('✅ Fuse.js 索引建立完成');
+        }
+
+        // Test search query
+        function testQuery(query) {
+            document.getElementById('search-input').value = query;
+            console.log(`\n🔎 測試查詢: "${query}"`);
+
+            // FlexSearch
+            console.time('⚡ FlexSearch 搜尋時間');
+            const flexStart = performance.now();
+            const flexResults = flexIndex.search(query, { limit: 10 });
+            const flexEnd = performance.now();
+            const flexTime = flexEnd - flexStart;
+            console.timeEnd('⚡ FlexSearch 搜尋時間');
+
+            // Fuse.js
+            console.time('🔍 Fuse.js 搜尋時間');
+            const fuseStart = performance.now();
+            const fuseResults = fuseIndex.search(query);
+            const fuseEnd = performance.now();
+            const fuseTime = fuseEnd - fuseStart;
+            console.timeEnd('🔍 Fuse.js 搜尋時間');
+
+            // Display results
+            displayFlexResults(flexResults, flexTime);
+            displayFuseResults(fuseResults.slice(0, 10), fuseTime);
+
+            // Log comparison
+            console.log(`📊 FlexSearch: ${flexTime.toFixed(2)}ms, ${getTotalFlexResults(flexResults)} 筆結果`);
+            console.log(`📊 Fuse.js: ${fuseTime.toFixed(2)}ms, ${fuseResults.length} 筆結果`);
+            console.log(`⚡ 速度提升: ${(fuseTime / flexTime).toFixed(2)}x`);
+        }
+
+        // Get total FlexSearch results count
+        function getTotalFlexResults(results) {
+            if (!results || results.length === 0) return 0;
+            const uniqueIds = new Set();
+            results.forEach(fieldResult => {
+                if (fieldResult.result) {
+                    fieldResult.result.forEach(id => uniqueIds.add(id));
+                }
+            });
+            return uniqueIds.size;
+        }
+
+        // Display FlexSearch results
+        function displayFlexResults(results, time) {
+            const container = document.getElementById('flex-results');
+            const timeEl = document.getElementById('flex-time');
+
+            timeEl.textContent = `${time.toFixed(2)} ms`;
+
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">無結果</div>';
+                return;
+            }
+
+            // Flatten results from all fields
+            const uniqueIds = new Set();
+            const items = [];
+
+            results.forEach(fieldResult => {
+                if (fieldResult.result) {
+                    fieldResult.result.forEach(id => {
+                        if (!uniqueIds.has(id)) {
+                            uniqueIds.add(id);
+                            const item = searchData.find(d => d.id === id);
+                            if (item) {
+                                items.push(item);
+                            }
+                        }
+                    });
+                }
+            });
+
+            container.innerHTML = items.map(item => `
+                <div class="p-3 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition">
+                    <div class="font-semibold text-green-800">${escapeHTML(item.title)}</div>
+                    <div class="text-sm text-gray-600 mt-1">${escapeHTML(item.content.substring(0, 80))}...</div>
+                    ${item.tags.length > 0 ? `<div class="mt-2 flex flex-wrap gap-1">
+                        ${item.tags.map(tag => `<span class="px-2 py-0.5 text-xs bg-green-200 text-green-800 rounded">${escapeHTML(tag)}</span>`).join('')}
+                    </div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Display Fuse.js results
+        function displayFuseResults(results, time) {
+            const container = document.getElementById('fuse-results');
+            const timeEl = document.getElementById('fuse-time');
+
+            timeEl.textContent = `${time.toFixed(2)} ms`;
+
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">無結果</div>';
+                return;
+            }
+
+            container.innerHTML = results.map(result => {
+                const item = result.item;
+                return `
+                    <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition">
+                        <div class="font-semibold text-purple-800">${escapeHTML(item.title)}</div>
+                        <div class="text-sm text-gray-600 mt-1">${escapeHTML(item.content.substring(0, 80))}...</div>
+                        ${item.tags.length > 0 ? `<div class="mt-2 flex flex-wrap gap-1">
+                            ${item.tags.map(tag => `<span class="px-2 py-0.5 text-xs bg-purple-200 text-purple-800 rounded">${escapeHTML(tag)}</span>`).join('')}
+                        </div>` : ''}
+                        <div class="text-xs text-gray-500 mt-1">匹配度: ${(1 - result.score).toFixed(3)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Clear results
+        function clearResults() {
+            document.getElementById('flex-results').innerHTML = '';
+            document.getElementById('fuse-results').innerHTML = '';
+            document.getElementById('flex-time').textContent = '-';
+            document.getElementById('fuse-time').textContent = '-';
+        }
+
+        // Run comprehensive benchmark
+        function runBenchmark() {
+            console.log('\n🔥 開始完整 Benchmark...\n');
+
+            const queries = [
+                '科學', '展覽', '科學展覽', '數學', '競賽', '數學競賽',
+                'AI', '人工', '人工智慧', '程式', '設計', '英文',
+                'STEM', '108', '課綱'
+            ];
+
+            const results = [];
+            let totalFlexTime = 0;
+            let totalFuseTime = 0;
+
+            queries.forEach(query => {
+                // FlexSearch
+                const flexStart = performance.now();
+                const flexRes = flexIndex.search(query, { limit: 10 });
+                const flexTime = performance.now() - flexStart;
+                const flexCount = getTotalFlexResults(flexRes);
+
+                // Fuse.js
+                const fuseStart = performance.now();
+                const fuseRes = fuseIndex.search(query);
+                const fuseTime = performance.now() - fuseStart;
+                const fuseCount = fuseRes.length;
+
+                totalFlexTime += flexTime;
+                totalFuseTime += fuseTime;
+
+                results.push({
+                    query,
+                    flexTime,
+                    flexCount,
+                    fuseTime,
+                    fuseCount,
+                    speedup: (fuseTime / flexTime).toFixed(2)
+                });
+
+                console.log(`${query}: FlexSearch ${flexTime.toFixed(2)}ms (${flexCount}筆) vs Fuse.js ${fuseTime.toFixed(2)}ms (${fuseCount}筆) = ${(fuseTime / flexTime).toFixed(2)}x`);
+            });
+
+            // Display benchmark results
+            const avgSpeedup = (totalFuseTime / totalFlexTime).toFixed(2);
+
+            const html = `
+                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-800">總平均速度提升: ${avgSpeedup}x ⚡</div>
+                    <div class="text-sm text-blue-600 mt-2">
+                        FlexSearch 平均: ${(totalFlexTime / queries.length).toFixed(2)} ms |
+                        Fuse.js 平均: ${(totalFuseTime / queries.length).toFixed(2)} ms
+                    </div>
+                </div>
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2 text-left">查詢</th>
+                            <th class="p-2 text-center">FlexSearch</th>
+                            <th class="p-2 text-center">Fuse.js</th>
+                            <th class="p-2 text-center">速度提升</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${results.map(r => `
+                            <tr class="border-t">
+                                <td class="p-2 font-semibold">${escapeHTML(r.query)}</td>
+                                <td class="p-2 text-center text-green-700">${r.flexTime.toFixed(2)}ms (${r.flexCount})</td>
+                                <td class="p-2 text-center text-purple-700">${r.fuseTime.toFixed(2)}ms (${r.fuseCount})</td>
+                                <td class="p-2 text-center font-bold ${r.speedup > 1 ? 'text-green-700' : 'text-red-700'}">${r.speedup}x</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('benchmark-results').innerHTML = html;
+            document.getElementById('benchmark-panel').classList.remove('hidden');
+
+            console.log(`\n✅ Benchmark 完成！平均速度提升: ${avgSpeedup}x\n`);
+        }
+
+        // Test segmentation
+        function testSegmentation() {
+            const input = document.getElementById('segment-input').value;
+            const segments = segment.doSegment(input, { simple: true });
+
+            const output = document.getElementById('segment-output');
+            output.innerHTML = `
+                <div class="mb-2"><strong>原文：</strong>${escapeHTML(input)}</div>
+                <div><strong>分詞結果：</strong></div>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    ${segments.map(seg => `<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded border border-blue-300">${escapeHTML(seg)}</span>`).join('')}
+                </div>
+                <div class="mt-2 text-xs text-gray-600">共 ${segments.length} 個詞</div>
+            `;
+
+            console.log('分詞結果:', segments);
+        }
+
+        // Utility: Escape HTML
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        }
+    </script>
+</body>
+</html>
