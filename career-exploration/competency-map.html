@@ -206,12 +206,18 @@
 
             // 雙擊防護
             const button = aiGenerateBtn;
-            const originalText = button.innerHTML;
+            const originalText = button.textContent;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '載入中... ⏳';
+            button.textContent = '載入中...';
 
-            aiResultContainer.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+            aiResultContainer.textContent = '';
+            const loaderWrapper = document.createElement('div');
+            loaderWrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            loaderWrapper.appendChild(loader);
+            aiResultContainer.appendChild(loaderWrapper);
 
             // ✅ 步驟 2: 強化 Prompt
             const prompt = `你是一位專業的108課綱學習歷程顧問。請根據以下學生描述的活動經驗，分析其中最能體現的2-3項核心素養（從A1-C3中選擇），並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。\n\n學生描述：「${userInput}」`;
@@ -325,7 +331,7 @@
                 // 恢復按鈕狀態
                 button.disabled = false;
                 button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.innerHTML = originalText;
+                button.textContent = originalText;
             }
         });
         

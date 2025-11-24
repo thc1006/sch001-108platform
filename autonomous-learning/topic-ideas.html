@@ -137,7 +137,13 @@
         const ideaResult = document.getElementById('ideaResult');
 
         function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+            element.textContent = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            wrapper.appendChild(loader);
+            element.appendChild(wrapper);
         }
 
         generateIdeaBtn.addEventListener('click', async () => {
@@ -153,10 +159,10 @@
 
             // 雙擊防護
             const button = generateIdeaBtn;
-            const originalText = button.innerHTML;
+            const originalText = button.textContent;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '載入中... ⏳';
+            button.textContent = '載入中...';
 
             showLoader(ideaResult);
 
@@ -253,12 +259,12 @@
                 // 恢復按鈕狀態
                 button.disabled = false;
                 button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.innerHTML = originalText;
+                button.textContent = originalText;
             }
         });
 
         function displayAIdeas(ideas) {
-            ideaResult.innerHTML = '';
+            ideaResult.textContent = '';
             ideas.forEach(idea => {
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg';
@@ -404,7 +410,11 @@
             if (selectedCategory && selectedMethod) {
                 const key = `${selectedCategory}-${selectedMethod}`;
                 const resultText = matrixData.results[key] || `「${selectedCategory}」與「${selectedMethod}」的組合很有趣！試著想想可以做些什麼？`;
-                matrixResultContainer.innerHTML = `<p class="text-xl font-semibold text-center text-blue-800">${resultText}</p>`;
+                matrixResultContainer.textContent = '';
+                const p = document.createElement('p');
+                p.className = 'text-xl font-semibold text-center text-blue-800';
+                p.textContent = resultText;
+                matrixResultContainer.appendChild(p);
             }
         }
 
@@ -431,10 +441,17 @@
                 card.target = '_blank';
                 card.rel = 'noopener noreferrer';
                 card.className = `sdg-card ${sdg.color} text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center text-center h-32`;
-                card.innerHTML = `
-                    <span class="text-3xl font-bold">${sdg.id}</span>
-                    <span class="font-semibold mt-1">${sdg.title}</span>
-                `;
+
+                const idSpan = document.createElement('span');
+                idSpan.className = 'text-3xl font-bold';
+                idSpan.textContent = sdg.id;
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'font-semibold mt-1';
+                titleSpan.textContent = sdg.title;
+
+                card.appendChild(idSpan);
+                card.appendChild(titleSpan);
                 sdgGrid.appendChild(card);
             });
         }

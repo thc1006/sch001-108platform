@@ -139,7 +139,13 @@
         const analysisResult = document.getElementById('analysisResult');
 
         function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+            element.textContent = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            wrapper.appendChild(loader);
+            element.appendChild(wrapper);
         }
 
         analyzeBtn.addEventListener('click', async () => {
@@ -155,10 +161,10 @@
 
             // 雙擊防護
             const button = analyzeBtn;
-            const originalText = button.innerHTML;
+            const originalText = button.textContent;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '載入中... ⏳';
+            button.textContent = '載入中...';
 
             showLoader(analysisResult);
 
@@ -273,7 +279,7 @@
                 // 恢復按鈕狀態
                 button.disabled = false;
                 button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.innerHTML = originalText;
+                button.textContent = originalText;
             }
         });
 

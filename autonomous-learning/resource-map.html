@@ -179,8 +179,8 @@
                 const matchesCategory = selectedCategory === 'all' || resource.category === selectedCategory || resource.category === 'all';
                 return matchesSearch && matchesType && matchesCategory;
             });
-            
-            resourceGrid.innerHTML = '';
+
+            resourceGrid.textContent = '';
 
             if (filteredResources.length > 0) {
                 noResultsDiv.classList.add('hidden');
@@ -190,22 +190,42 @@
                     card.target = '_blank';
                     card.rel = 'noopener noreferrer';
                     card.className = 'resource-card bg-white p-6 rounded-xl shadow-lg flex flex-col';
-                    
-                    let tagsHtml = `
-                        <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${resource.type}</span>
-                        <span class="inline-block bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${resource.language}</span>
-                        <span class="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${resource.best_for}</span>
-                    `;
 
-                    card.innerHTML = `
-                        <div class="flex-grow">
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">${resource.title}</h3>
-                            <p class="text-gray-600 mb-4 text-sm">${resource.description}</p>
-                        </div>
-                        <div class="mt-auto flex flex-wrap gap-2">
-                            ${tagsHtml}
-                        </div>
-                    `;
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-grow';
+
+                    const title = document.createElement('h3');
+                    title.className = 'text-xl font-bold text-gray-900 mb-2';
+                    title.textContent = resource.title;
+
+                    const desc = document.createElement('p');
+                    desc.className = 'text-gray-600 mb-4 text-sm';
+                    desc.textContent = resource.description;
+
+                    contentDiv.appendChild(title);
+                    contentDiv.appendChild(desc);
+
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'mt-auto flex flex-wrap gap-2';
+
+                    const typeTag = document.createElement('span');
+                    typeTag.className = 'inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    typeTag.textContent = resource.type;
+
+                    const langTag = document.createElement('span');
+                    langTag.className = 'inline-block bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    langTag.textContent = resource.language;
+
+                    const bestForTag = document.createElement('span');
+                    bestForTag.className = 'inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    bestForTag.textContent = resource.best_for;
+
+                    tagsDiv.appendChild(typeTag);
+                    tagsDiv.appendChild(langTag);
+                    tagsDiv.appendChild(bestForTag);
+
+                    card.appendChild(contentDiv);
+                    card.appendChild(tagsDiv);
                     resourceGrid.appendChild(card);
                 });
             } else {
@@ -223,7 +243,13 @@
         const pathResult = document.getElementById('pathResult');
 
         function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+            element.textContent = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            wrapper.appendChild(loader);
+            element.appendChild(wrapper);
         }
 
         generatePathBtn.addEventListener('click', async () => {
@@ -239,10 +265,10 @@
 
             // 雙擊防護
             const button = generatePathBtn;
-            const originalText = button.innerHTML;
+            const originalText = button.textContent;
             button.disabled = true;
             button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerHTML = '載入中... ⏳';
+            button.textContent = '載入中...';
 
             showLoader(pathResult);
 
@@ -346,12 +372,12 @@
                 // 恢復按鈕狀態
                 button.disabled = false;
                 button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.innerHTML = originalText;
+                button.textContent = originalText;
             }
         });
 
         function displayAIPath(learningPath) {
-            pathResult.textContent = ''; // 清空容器
+            pathResult.textContent = '';
 
             learningPath.forEach(step => {
                 const stepElement = document.createElement('div');
