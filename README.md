@@ -19,7 +19,15 @@
 * **g0v 提案連結**：[零時小學校 2021 年度獲獎團隊](https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
 * **專案介紹影片**：[YouTube 連結](https://youtu.be/BxKFVSTmiYI)
 * **開源程式碼**：[GitHub Repository](https://github.com/thc1006/sch001-108platform)
-* **📚 技術文件**：[docs/](docs/) - 包含所有技術文件、API 文件、測試指南等
+
+### 技術文件
+
+* **文件總覽**：[docs/](docs/) - 包含所有技術文件、API 文件、測試指南等
+* **測試文件**：[docs/testing/](docs/testing/) - 測試計畫、測試結果報告、測試指南
+  * [快速開始測試](docs/testing/TESTING_QUICKSTART.md)
+  * [手動測試指南](docs/testing/MANUAL_TEST_GUIDE.md)
+  * [測試結果報告](docs/testing/TEST_RESULTS_SUMMARY.md)
+* **搜尋 POC**：[docs/search/poc/](docs/search/poc/) - FlexSearch POC 相關文件
 
 
 ## ✨ 我們的故事：一個來自屏東的看見
