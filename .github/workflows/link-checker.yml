@@ -34,6 +34,7 @@ jobs:
           title: "chore(bot): 自動更新搜尋索引"
           body: "由 CI 自動產生：搜尋索引檔案已更新。"
           branch: chore/update-search-index
+          delete-branch: true
           add-paths: search-index.json
 
   link-check:
