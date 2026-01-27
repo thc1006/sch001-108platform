@@ -81,6 +81,7 @@
                             <option value="商業管理">商業管理</option>
                             <option value="人文社會">人文社會</option>
                             <option value="自然科學">自然科學</option>
+                            <option value="公民科技與開源">公民科技與開源</option>
                         </select>
                     </div>
                     <div>
@@ -91,6 +92,7 @@
                             <option value="edX">edX</option>
                             <option value="Khan Academy">Khan Academy</option>
                             <option value="Hahow">Hahow</option>
+                            <option value="g0v / 開源社群">g0v / 開源社群</option>
                         </select>
                     </div>
                     <div>
@@ -129,6 +131,45 @@
 
     <script>
         const coursesData = [
+            {
+                title: '李宏毅 — 生成式 AI 與機器學習',
+                provider: '台灣大學 李宏毅教授',
+                platform: 'g0v / 開源社群',
+                category: 'AI與數據科學',
+                difficulty: '中階',
+                language: '中文',
+                certificate: false,
+                tags: ['AI', '機器學習', 'Deep Learning', 'LLM'],
+                description: '台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。',
+                url: 'https://speech.ee.ntu.edu.tw/~hylee/index.php',
+                thumbnail_url: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: 'freeCodeCamp — 互動式網頁開發學習',
+                provider: 'freeCodeCamp',
+                platform: 'g0v / 開源社群',
+                category: '公民科技與開源',
+                difficulty: '入門',
+                language: '英文',
+                certificate: true,
+                tags: ['網頁開發', 'HTML', 'CSS', 'JavaScript', '開源'],
+                description: '全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。',
+                url: 'https://www.freecodecamp.org/',
+                thumbnail_url: 'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
+            {
+                title: '零時小學校 — 專案實作課程',
+                provider: 'g0v 零時小學校',
+                platform: 'g0v / 開源社群',
+                category: '公民科技與開源',
+                difficulty: '入門',
+                language: '中文',
+                certificate: false,
+                tags: ['專案管理', '開源協作', 'GitHub', '公民科技'],
+                description: '包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。',
+                url: 'https://g0v.hackmd.io/@jothon/Sch001courses',
+                thumbnail_url: 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+            },
             {
                 title: 'Machine Learning for Everyone',
                 provider: 'DeepLearning.AI',
@@ -310,5 +351,9 @@
         // Initial Render
         renderCourses();
     </script>
+
+    <!-- GoatCounter -->
+    <script data-goatcounter="https://sch001.goatcounter.com/count"
+            async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
