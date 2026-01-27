@@ -129,6 +129,49 @@
   },
   {
     "id": "courses-15",
+    "title": "線上課程精選 - 李宏毅 — 生成式 AI 與機器學習",
+    "content": "台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "AI",
+      "機器學習",
+      "Deep Learning",
+      "LLM"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-16",
+    "title": "線上課程精選 - freeCodeCamp — 互動式網頁開發學習",
+    "content": "全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "網頁開發",
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "開源"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-17",
+    "title": "線上課程精選 - 零時小學校 — 專案實作課程",
+    "content": "包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "專案管理",
+      "開源協作",
+      "GitHub",
+      "公民科技"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-18",
     "title": "線上課程精選 - Machine Learning for Everyone",
     "content": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
     "tags": [
@@ -141,7 +184,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-16",
+    "id": "courses-19",
     "title": "線上課程精選 - Python for Everybody",
     "content": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
     "tags": [
@@ -154,7 +197,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-17",
+    "id": "courses-20",
     "title": "線上課程精選 - CS50's Introduction to Computer Science",
     "content": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
     "tags": [
@@ -167,7 +210,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-18",
+    "id": "courses-21",
     "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
     "content": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
     "tags": [
@@ -180,7 +223,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-19",
+    "id": "courses-22",
     "title": "線上課程精選 - The Science of Well-Being",
     "content": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
     "tags": [
@@ -193,7 +236,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-20",
+    "id": "courses-23",
     "title": "線上課程精選 - 基礎微積分",
     "content": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
     "tags": [
@@ -206,7 +249,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-21",
+    "id": "courses-24",
     "title": "線上課程精選 - Google 數據分析專業證書",
     "content": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
     "tags": [
@@ -220,7 +263,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-22",
+    "id": "courses-25",
     "title": "線上課程精選 - 經濟學原理",
     "content": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
     "tags": [
@@ -233,21 +276,21 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "page-23",
+    "id": "page-26",
     "title": "主題書單推薦",
     "content": "主題書單推薦",
     "tags": [],
     "url": "advanced-resources/reading-list.html"
   },
   {
-    "id": "page-24",
+    "id": "page-27",
     "title": "自主學習啟航站",
     "content": "自主學習啟航站",
     "tags": [],
     "url": "autonomous-learning/index.html"
   },
   {
-    "id": "page-25",
+    "id": "page-28",
     "title": "研究方法工具箱",
     "content": "研究方法工具箱",
     "tags": [],
@@ -314,21 +357,21 @@
     "url": "autonomous-learning/methodology.html#methods-creative-practice"
   },
   {
-    "id": "page-26",
+    "id": "page-29",
     "title": "計畫範本庫",
     "content": "計畫範本庫",
     "tags": [],
     "url": "autonomous-learning/plan-templates.html"
   },
   {
-    "id": "page-27",
+    "id": "page-30",
     "title": "學習資源地圖",
     "content": "學習資源地圖",
     "tags": [],
     "url": "autonomous-learning/resource-map.html"
   },
   {
-    "id": "page-28",
+    "id": "page-31",
     "title": "主題靈感產生器",
     "content": "主題靈感產生器",
     "tags": [],
@@ -415,14 +458,14 @@
     "url": "autonomous-learning/topic-ideas.html#sdg-14"
   },
   {
-    "id": "page-29",
+    "id": "page-32",
     "title": "核心素養互動對照表 (Puter.js 整合版)",
     "content": "核心素養互動探索",
     "tags": [],
     "url": "career-exploration/competency-map.html"
   },
   {
-    "id": "page-30",
+    "id": "page-33",
     "title": "未來生涯GPS 2.0",
     "content": "未來生涯GPS 2.0",
     "tags": [],
@@ -519,14 +562,14 @@
     "url": "career-exploration/index.html#major-medicine"
   },
   {
-    "id": "page-31",
+    "id": "page-34",
     "title": "大學科系羅盤",
     "content": "大學科系羅盤",
     "tags": [],
     "url": "career-exploration/major-explorer.html"
   },
   {
-    "id": "page-32",
+    "id": "page-35",
     "title": "學長姐真心話",
     "content": "學長姐真心話",
     "tags": [],
@@ -573,7 +616,14 @@
     "url": "career-exploration/senior-interviews.html#interview-bio-01"
   },
   {
-    "id": "page-34",
+    "id": "page-36",
+    "title": "公民科技專案地圖",
+    "content": "SITCON 2025 零時小學校共創工作坊成果。彙整 g0v 公民科技專案與 108 課綱核心素養及 SDGs 的對照應用，為高中生自主學習與探究實作提供靈感。",
+    "tags": [],
+    "url": "civic-tech-map/index.html"
+  },
+  {
+    "id": "page-38",
     "title": "台灣教育處方籤",
     "content": "一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。",
     "tags": [
@@ -590,21 +640,21 @@
     "url": "index.html"
   },
   {
-    "id": "page-35",
+    "id": "page-39",
     "title": "多元表現資料庫",
     "content": "多元表現資料庫",
     "tags": [],
     "url": "learning-portfolio/activity-database.html"
   },
   {
-    "id": "page-36",
+    "id": "page-40",
     "title": "學習歷程煉金室",
     "content": "學習歷程煉金室",
     "tags": [],
     "url": "learning-portfolio/index.html"
   },
   {
-    "id": "page-37",
+    "id": "page-41",
     "title": "優質範例藝廊",
     "content": "優質範例藝廊",
     "tags": [],
@@ -660,35 +710,35 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-cross-domain-01"
   },
   {
-    "id": "page-38",
+    "id": "page-42",
     "title": "反思引導提問集",
     "content": "反思引導提問集",
     "tags": [],
     "url": "learning-portfolio/reflection-guide.html"
   },
   {
-    "id": "page-39",
+    "id": "page-43",
     "title": "線上製作工具箱",
     "content": "線上製作工具箱",
     "tags": [],
     "url": "learning-portfolio/tools.html"
   },
   {
-    "id": "page-40",
+    "id": "page-44",
     "title": "FlexSearch POC",
     "content": "🔬 FlexSearch POC 測試",
     "tags": [],
     "url": "poc-flexsearch.html"
   },
   {
-    "id": "page-42",
+    "id": "page-46",
     "title": "自主學習啟航站",
     "content": "自主學習啟航站",
     "tags": [],
     "url": "autonomous-learning/index.html"
   },
   {
-    "id": "page-43",
+    "id": "page-47",
     "title": "研究方法工具箱",
     "content": "研究方法工具箱",
     "tags": [],
@@ -755,21 +805,21 @@
     "url": "autonomous-learning/methodology.html#methods-creative-practice"
   },
   {
-    "id": "page-44",
+    "id": "page-48",
     "title": "計畫範本庫",
     "content": "計畫範本庫",
     "tags": [],
     "url": "autonomous-learning/plan-templates.html"
   },
   {
-    "id": "page-45",
+    "id": "page-49",
     "title": "學習資源地圖",
     "content": "學習資源地圖",
     "tags": [],
     "url": "autonomous-learning/resource-map.html"
   },
   {
-    "id": "page-46",
+    "id": "page-50",
     "title": "主題靈感產生器",
     "content": "主題靈感產生器",
     "tags": [],
@@ -856,21 +906,21 @@
     "url": "autonomous-learning/topic-ideas.html#sdg-14"
   },
   {
-    "id": "page-47",
+    "id": "page-51",
     "title": "多元表現資料庫",
     "content": "多元表現資料庫",
     "tags": [],
     "url": "learning-portfolio/activity-database.html"
   },
   {
-    "id": "page-48",
+    "id": "page-52",
     "title": "學習歷程煉金室",
     "content": "學習歷程煉金室",
     "tags": [],
     "url": "learning-portfolio/index.html"
   },
   {
-    "id": "page-49",
+    "id": "page-53",
     "title": "優質範例藝廊",
     "content": "優質範例藝廊",
     "tags": [],
@@ -926,28 +976,28 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-cross-domain-01"
   },
   {
-    "id": "page-50",
+    "id": "page-54",
     "title": "反思引導提問集",
     "content": "反思引導提問集",
     "tags": [],
     "url": "learning-portfolio/reflection-guide.html"
   },
   {
-    "id": "page-51",
+    "id": "page-55",
     "title": "線上製作工具箱",
     "content": "線上製作工具箱",
     "tags": [],
     "url": "learning-portfolio/tools.html"
   },
   {
-    "id": "page-52",
+    "id": "page-56",
     "title": "核心素養互動對照表 (Puter.js 整合版)",
     "content": "核心素養互動探索",
     "tags": [],
     "url": "career-exploration/competency-map.html"
   },
   {
-    "id": "page-53",
+    "id": "page-57",
     "title": "未來生涯GPS 2.0",
     "content": "未來生涯GPS 2.0",
     "tags": [],
@@ -1044,14 +1094,14 @@
     "url": "career-exploration/index.html#major-medicine"
   },
   {
-    "id": "page-54",
+    "id": "page-58",
     "title": "大學科系羅盤",
     "content": "大學科系羅盤",
     "tags": [],
     "url": "career-exploration/major-explorer.html"
   },
   {
-    "id": "page-55",
+    "id": "page-59",
     "title": "學長姐真心話",
     "content": "學長姐真心話",
     "tags": [],
@@ -1098,14 +1148,14 @@
     "url": "career-exploration/senior-interviews.html#interview-bio-01"
   },
   {
-    "id": "page-56",
+    "id": "page-60",
     "title": "國內外競賽資訊",
     "content": "國內外競賽資訊",
     "tags": [],
     "url": "advanced-resources/competitions.html"
   },
   {
-    "id": "competitions-57",
+    "id": "competitions-61",
     "title": "國內外競賽資訊 - 全國中小學科學展覽會",
     "content": "台灣歷史最悠久、規模最盛大的中學生科學研究競賽，是展現探究與實作能力的最佳舞台。",
     "tags": [
@@ -1115,7 +1165,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-58",
+    "id": "competitions-62",
     "title": "國內外競賽資訊 - 旺宏科學獎",
     "content": "有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。",
     "tags": [
@@ -1125,7 +1175,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-59",
+    "id": "competitions-63",
     "title": "國內外競賽資訊 - TRML 台灣地區數學聯賽",
     "content": "結合個人賽、團體賽與思考賽，考驗數學解題能力與團隊合作默契，是數學愛好者的年度盛事。",
     "tags": [
@@ -1135,7 +1185,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-60",
+    "id": "competitions-64",
     "title": "國內外競賽資訊 - 全國高中生資訊應用競賽",
     "content": "分為多個組別，如軟體設計、數位內容等，旨在提升高中生的資訊應用與創新能力。",
     "tags": [
@@ -1145,7 +1195,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-61",
+    "id": "competitions-65",
     "title": "國內外競賽資訊 - 外交小尖兵",
     "content": "以英語為工具，探討國際議題，培養青年學子的國際視野與英語演說能力。",
     "tags": [
@@ -1155,7 +1205,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-62",
+    "id": "competitions-66",
     "title": "國內外競賽資訊 - 全國高中生商業個案大賽",
     "content": "模擬真實的商業情境，要求參賽隊伍分析個案並提出解決方案，是商管潛力人才的競技場。",
     "tags": [
@@ -1165,7 +1215,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-63",
+    "id": "competitions-67",
     "title": "國內外競賽資訊 - 台灣國際學生創意設計大賽",
     "content": "全球規模最大的學生設計競賽之一，分為產品設計、視覺設計、數位動畫三大類，是與世界好手交流的絕佳機會。",
     "tags": [
@@ -1175,7 +1225,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-64",
+    "id": "competitions-68",
     "title": "國內外競賽資訊 - 國際數學奧林匹亞 (IMO)",
     "content": "世界最高等級的中學生數學競賽，需經過國內層層選拔，代表國家爭取榮譽。",
     "tags": [
@@ -1185,7 +1235,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-65",
+    "id": "competitions-69",
     "title": "國內外競賽資訊 - 國際資訊奧林匹亞 (IOI)",
     "content": "全球中學生程式設計與演算法的頂級競賽，考驗參賽者的邏輯思維與解題能力。",
     "tags": [
@@ -1195,7 +1245,7 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "competitions-66",
+    "id": "competitions-70",
     "title": "國內外競賽資訊 - 全國學生美術比賽",
     "content": "台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等多種類別。",
     "tags": [
@@ -1205,21 +1255,64 @@
     "url": "advanced-resources/competitions.html#competitions-"
   },
   {
-    "id": "page-67",
+    "id": "page-71",
     "title": "進階資源探索區",
     "content": "進階資源探索區",
     "tags": [],
     "url": "advanced-resources/index.html"
   },
   {
-    "id": "page-68",
+    "id": "page-72",
     "title": "線上課程精選",
     "content": "線上課程精選",
     "tags": [],
     "url": "advanced-resources/online-courses.html"
   },
   {
-    "id": "courses-69",
+    "id": "courses-73",
+    "title": "線上課程精選 - 李宏毅 — 生成式 AI 與機器學習",
+    "content": "台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "AI",
+      "機器學習",
+      "Deep Learning",
+      "LLM"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-74",
+    "title": "線上課程精選 - freeCodeCamp — 互動式網頁開發學習",
+    "content": "全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "網頁開發",
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "開源"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-75",
+    "title": "線上課程精選 - 零時小學校 — 專案實作課程",
+    "content": "包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。",
+    "tags": [
+      "courses",
+      "線上課程精選",
+      "專案管理",
+      "開源協作",
+      "GitHub",
+      "公民科技"
+    ],
+    "url": "advanced-resources/online-courses.html#courses-"
+  },
+  {
+    "id": "courses-76",
     "title": "線上課程精選 - Machine Learning for Everyone",
     "content": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
     "tags": [
@@ -1232,7 +1325,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-70",
+    "id": "courses-77",
     "title": "線上課程精選 - Python for Everybody",
     "content": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
     "tags": [
@@ -1245,7 +1338,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-71",
+    "id": "courses-78",
     "title": "線上課程精選 - CS50's Introduction to Computer Science",
     "content": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
     "tags": [
@@ -1258,7 +1351,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-72",
+    "id": "courses-79",
     "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
     "content": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
     "tags": [
@@ -1271,7 +1364,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-73",
+    "id": "courses-80",
     "title": "線上課程精選 - The Science of Well-Being",
     "content": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
     "tags": [
@@ -1284,7 +1377,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-74",
+    "id": "courses-81",
     "title": "線上課程精選 - 基礎微積分",
     "content": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
     "tags": [
@@ -1297,7 +1390,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-75",
+    "id": "courses-82",
     "title": "線上課程精選 - Google 數據分析專業證書",
     "content": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
     "tags": [
@@ -1311,7 +1404,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "courses-76",
+    "id": "courses-83",
     "title": "線上課程精選 - 經濟學原理",
     "content": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
     "tags": [
@@ -1324,7 +1417,7 @@
     "url": "advanced-resources/online-courses.html#courses-"
   },
   {
-    "id": "page-77",
+    "id": "page-84",
     "title": "主題書單推薦",
     "content": "主題書單推薦",
     "tags": [],
