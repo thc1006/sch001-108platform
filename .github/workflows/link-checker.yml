@@ -26,12 +26,16 @@ jobs:
       - name: Build search index
         run: node build-search-index.js
 
-      - name: Commit and push changes
-        if: github.ref == 'refs/heads/main' # 只在 push 到 main 分支時才自動 commit
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Create Pull Request for search index
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/create-pull-request@v7
         with:
-          commit_message: "chore(bot): ✨ 自動更新搜尋索引"
-          file_pattern: 'search-index.json'
+          commit-message: "chore(bot): 自動更新搜尋索引"
+          title: "chore(bot): 自動更新搜尋索引"
+          body: "由 CI 自動產生：搜尋索引檔案已更新。"
+          branch: chore/update-search-index
+          delete-branch: true
+          add-paths: search-index.json
 
   link-check:
     name: Check Links
