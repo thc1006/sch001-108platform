@@ -36,19 +36,19 @@
             background-clip: text;
             text-fill-color: transparent;
         }
-        /* 修正手風琴預設隱藏問題 */
-        .accordion-content {
-            max-height: 0 !important;
-            overflow: hidden !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+        /* 修正手風琴預設隱藏問題 - 使用高特異性選擇器取代 !important */
+        #competency-grid .competency-card .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            padding-top: 0;
+            padding-bottom: 0;
             opacity: 0;
             transition: max-height 0.4s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
-        .competency-card.is-open .accordion-content {
-            max-height: 2000px !important;
-            padding-top: 0 !important;
-            padding-bottom: 1rem !important;
+        #competency-grid .competency-card.is-open .accordion-content {
+            max-height: 2000px;
+            padding-top: 0;
+            padding-bottom: 1rem;
             opacity: 1;
         }
         .competency-card.highlight {
