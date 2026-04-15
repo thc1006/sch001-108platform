@@ -259,7 +259,11 @@
                 toggleBtn.textContent = '+';
             }
         });
+        // dragCtrl 會在下方 addDrag 建立；closeBtn 關閉時透過 abort() 移除所有
+        // document-level drag listeners，避免 close 後 listener 洩漏 / 重新 mount 疊加。
+        var dragCtrl;
         var closeBtn = makeBtn('×', function () {
+            if (dragCtrl) dragCtrl.abort();
             if (panelEl && panelEl.parentNode) {
                 panelEl.parentNode.removeChild(panelEl);
             }
@@ -280,8 +284,15 @@
         document.body.appendChild(panelEl);
 
         // 簡單可拖曳
+        // 用 AbortController 管理 3 個 listener 的生命週期：
+        //   - close panel 時 dragCtrl.abort() 一次性移除，避免：
+        //     (a) document 上 listener 洩漏（閒置仍被觸發）
+        //     (b) close + 重新 mount 後 listener 疊加多組
+        //     (c) 未來 refactor 若 dragging=true 時 panelEl 被清空會 crash
         (function addDrag() {
             var startX, startY, origRight, origBottom, dragging = false;
+            dragCtrl = new AbortController();
+            var opts = { signal: dragCtrl.signal };
             header.addEventListener('mousedown', function (e) {
                 // 忽略 button 元素上的 mousedown：
                 // - 避免 e.preventDefault() 抑制按鈕 click
@@ -295,15 +306,18 @@
                 origRight = window.innerWidth - rect.right;
                 origBottom = window.innerHeight - rect.bottom;
                 e.preventDefault();
-            });
+            }, opts);
             document.addEventListener('mousemove', function (e) {
-                if (!dragging) return;
+                // 雙重保險：dragging 旗標 + panelEl 存在性檢查
+                // 即使 AbortController 尚未完成移除（abort 為同步、但事件 dispatch
+                // 時序保守起見），仍避免觸碰已釋放的 panelEl。
+                if (!dragging || !panelEl) return;
                 var dx = e.clientX - startX;
                 var dy = e.clientY - startY;
                 panelEl.style.right = Math.max(0, origRight - dx) + 'px';
                 panelEl.style.bottom = Math.max(0, origBottom - dy) + 'px';
-            });
-            document.addEventListener('mouseup', function () { dragging = false; });
+            }, opts);
+            document.addEventListener('mouseup', function () { dragging = false; }, opts);
         })();
 
         // 補上已經累積的 log

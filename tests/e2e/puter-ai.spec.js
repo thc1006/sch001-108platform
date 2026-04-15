@@ -378,6 +378,49 @@ test.describe('PuterAI 共用 module', () => {
             expect(Math.abs(afterPos.bottom - initialPos.bottom)).toBeLessThan(5);
         });
 
+        test('close + remount 後拖曳仍正常且無 listener 洩漏（回歸：Copilot review 指出）', async ({ page }) => {
+            await gotoFixture(page, '?debug=1');
+            const panel = page.locator('#puter-ai-debug-panel');
+            await expect(panel).toBeVisible();
+
+            // 關閉 panel，應觸發 dragCtrl.abort() 移除 document-level listeners
+            await panel.getByRole('button', { name: '×' }).click();
+            await expect(panel).toHaveCount(0);
+
+            // 模擬使用者在頁面上移動滑鼠（舊 listener 若沒被 abort，會觸發並可能拋錯）
+            const errors = [];
+            page.on('pageerror', e => errors.push(e.message));
+            await page.mouse.move(100, 100);
+            await page.mouse.down();
+            await page.mouse.move(200, 200);
+            await page.mouse.up();
+            expect(errors).toHaveLength(0);
+
+            // 重新 mount 新 panel，拖曳應在新 panel 上生效（不是被舊 listener 干擾）
+            await page.evaluate(() => PuterAI.mountDebugPanel());
+            await expect(panel).toBeVisible();
+
+            const before = await panel.evaluate(el => {
+                const r = el.getBoundingClientRect();
+                return { right: Math.round(window.innerWidth - r.right), bottom: Math.round(window.innerHeight - r.bottom) };
+            });
+
+            // 抓 title 文字（位於 header 非按鈕區）作為拖曳起點
+            const titleBox = await panel.locator('strong').first().boundingBox();
+            await page.mouse.move(titleBox.x + titleBox.width / 2, titleBox.y + titleBox.height / 2);
+            await page.mouse.down();
+            await page.mouse.move(titleBox.x - 80, titleBox.y + 40);
+            await page.mouse.up();
+
+            const after = await panel.evaluate(el => {
+                const r = el.getBoundingClientRect();
+                return { right: Math.round(window.innerWidth - r.right), bottom: Math.round(window.innerHeight - r.bottom) };
+            });
+
+            // 新 panel 位置應該因拖曳而改變（right 增加 ~80、bottom 減少 ~40）
+            expect(Math.abs(after.right - before.right)).toBeGreaterThan(20);
+        });
+
         test('panel 內 Clear 按鈕會清空 log 顯示', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
             await page.evaluate(() => {
