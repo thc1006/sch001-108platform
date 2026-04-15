@@ -712,8 +712,10 @@
                     var detail = PuterAI.formatPuterError(err);
                     console.error("Puter.js AI call failed:", detail, err);
                     loadingEl.classList.add('hidden');
-                    // 優先顯示具體錯誤（[code] message），退而求其次用 err.message，最後才是泛用文案
-                    errorText.textContent = (err && err.message) || detail || '發生未知錯誤，請稍後再試。';
+                    // 優先顯示具體錯誤（formatPuterError 產生的 [code] message / name: message），
+                    // 退而求其次用 err.message（適用於 Error instance 但 formatPuterError 也已覆蓋此路徑），
+                    // 最後才是泛用文案。
+                    errorText.textContent = detail || (err && err.message) || '發生未知錯誤，請稍後再試。';
                     errorEl.classList.remove('hidden');
                 } finally {
                     isRequesting = false;

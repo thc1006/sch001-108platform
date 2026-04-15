@@ -104,9 +104,11 @@
         if (logs.length > MAX_LOGS) logs.shift();
 
         // 同步寫 console
+        // 用 != null 同時排除 undefined 與 null，避免 log('info', 'ok', null)
+        // 時 console 多印一個 "null" 載荷
         var consoleFn = console[level] || console.log;
         try {
-            if (meta !== undefined) consoleFn.call(console, '[PuterAI]', message, meta);
+            if (meta != null) consoleFn.call(console, '[PuterAI]', message, meta);
             else consoleFn.call(console, '[PuterAI]', message);
         } catch (_) {}
 
@@ -154,7 +156,7 @@
         line.style.wordBreak = 'break-word';
         var prefix = '[' + entry.time + '] ' + entry.level.toUpperCase() + ' ';
         var metaStr = '';
-        if (entry.meta !== undefined) {
+        if (entry.meta != null) {  // 同時排除 undefined 與 null
             metaStr = '\n  ' + safeStringify(entry.meta);
         }
         line.textContent = prefix + entry.message + metaStr;
@@ -216,27 +218,34 @@
         var copyBtn = makeBtn('Copy', function () {
             var text = logs.map(function (l) {
                 return '[' + l.time + '] ' + l.level.toUpperCase() + ' ' + l.message +
-                    (l.meta !== undefined ? '\n  ' + safeStringify(l.meta) : '');
+                    (l.meta != null ? '\n  ' + safeStringify(l.meta) : '');
             }).join('\n');
+
+            function showResult(ok) {
+                copyBtn.textContent = ok ? '✓' : '×';
+                setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+            }
+
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text);
-                    copyBtn.textContent = '✓';
-                    setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+                    // writeText 回傳 Promise；用 .then/.catch 確保 UI 真實反映結果
+                    // 且避免 unhandled rejection（insecure context / 權限不足時會 reject）
+                    navigator.clipboard.writeText(text).then(
+                        function () { showResult(true); },
+                        function () { showResult(false); }
+                    );
                 } else {
-                    // Fallback for older browsers
+                    // Fallback：execCommand 為同步回傳 boolean
                     var ta = document.createElement('textarea');
                     ta.value = text;
                     document.body.appendChild(ta);
                     ta.select();
-                    document.execCommand('copy');
+                    var ok = document.execCommand('copy');
                     document.body.removeChild(ta);
-                    copyBtn.textContent = '✓';
-                    setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+                    showResult(ok);
                 }
             } catch (e) {
-                copyBtn.textContent = '×';
-                setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1200);
+                showResult(false);
             }
         });
 
@@ -274,6 +283,12 @@
         (function addDrag() {
             var startX, startY, origRight, origBottom, dragging = false;
             header.addEventListener('mousedown', function (e) {
+                // 忽略 button 元素上的 mousedown：
+                // - 避免 e.preventDefault() 抑制按鈕 click
+                // - 避免使用者試圖點 Copy/Clear/× 時意外觸發拖曳
+                if (e.target && (e.target.tagName === 'BUTTON' || (e.target.closest && e.target.closest('button')))) {
+                    return;
+                }
                 dragging = true;
                 startX = e.clientX; startY = e.clientY;
                 var rect = panelEl.getBoundingClientRect();
@@ -317,14 +332,14 @@
             try {
                 var callOpts = Object.assign({}, options, { model: model });
                 var result = await puter.ai.chat(prompt, callOpts);
-                log('info', '模型 ' + model + ' 成功', null);
+                log('info', '模型 ' + model + ' 成功');
                 return result;
             } catch (err) {
                 lastErr = err;
                 var detail = formatPuterError(err);
                 log('warn', '模型 ' + model + ' 失敗：' + detail, { name: err && err.name });
                 if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
-                    log('error', '使用者取消或逾時，不再 fallback', null);
+                    log('error', '使用者取消或逾時，不再 fallback');
                     throw err;
                 }
             }

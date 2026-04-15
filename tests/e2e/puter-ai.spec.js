@@ -276,6 +276,30 @@ test.describe('PuterAI 共用 module', () => {
             expect(count).toBe(0);
         });
 
+        test('log(msg, null) 不會在 panel 渲染多餘的 "null"（回歸：Copilot review 指出）', async ({ page }) => {
+            await gotoFixture(page, '?debug=1');
+            // 只保留我們要驗的兩筆，方便斷言
+            const { noMetaLine, withMetaLine } = await page.evaluate(() => {
+                PuterAI.clearLogs();
+                PuterAI.log('info', 'NO_META_MARKER', null);
+                PuterAI.log('info', 'WITH_META_MARKER', { foo: 'bar' });
+                // 取出 panel 內每一行的 textContent（panel > body > 每行是一個 div）
+                const body = document.querySelector('#puter-ai-debug-panel > div:nth-of-type(2)');
+                const lines = Array.from(body.querySelectorAll(':scope > div'))
+                    .map(div => div.textContent);
+                return {
+                    noMetaLine: lines.find(t => t.includes('NO_META_MARKER')) || '',
+                    withMetaLine: lines.find(t => t.includes('WITH_META_MARKER')) || '',
+                };
+            });
+            // 沒 meta 的那一行不能出現獨立的 "null" 字串（Copilot 指出的 bug）
+            expect(noMetaLine).toContain('NO_META_MARKER');
+            expect(noMetaLine).not.toMatch(/\bnull\b/);
+            // 有 meta 的那一行應有 JSON 附加
+            expect(withMetaLine).toContain('WITH_META_MARKER');
+            expect(withMetaLine).toContain('"foo"');
+        });
+
         test('callGeminiWithFallback 會寫入 log', async ({ page }) => {
             const logs = await page.evaluate(async () => {
                 PuterAI.clearLogs();
@@ -328,6 +352,30 @@ test.describe('PuterAI 共用 module', () => {
             await gotoFixture(page);
             const count = await page.locator('#puter-ai-debug-panel').count();
             expect(count).toBe(0);
+        });
+
+        test('header mousedown 落在按鈕上不觸發拖曳（回歸：Copilot review 指出）', async ({ page }) => {
+            await gotoFixture(page, '?debug=1');
+            const panel = page.locator('#puter-ai-debug-panel');
+            await expect(panel).toBeVisible();
+            const initialPos = await panel.evaluate(el => {
+                const r = el.getBoundingClientRect();
+                return { right: window.innerWidth - r.right, bottom: window.innerHeight - r.bottom };
+            });
+            // 模擬在 Copy button 上按下→拖曳→鬆開
+            const copyBtn = panel.getByRole('button', { name: 'Copy' });
+            const box = await copyBtn.boundingBox();
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            await page.mouse.move(box.x + 100, box.y + 100);  // 拖 100px
+            await page.mouse.up();
+            // panel 位置應不變（button 上拖曳被忽略）
+            const afterPos = await panel.evaluate(el => {
+                const r = el.getBoundingClientRect();
+                return { right: window.innerWidth - r.right, bottom: window.innerHeight - r.bottom };
+            });
+            expect(Math.abs(afterPos.right - initialPos.right)).toBeLessThan(5);
+            expect(Math.abs(afterPos.bottom - initialPos.bottom)).toBeLessThan(5);
         });
 
         test('panel 內 Clear 按鈕會清空 log 顯示', async ({ page }) => {
