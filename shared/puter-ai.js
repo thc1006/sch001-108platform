@@ -23,7 +23,7 @@
         return; // 已載入，避免重複定義
     }
 
-    var MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+    var MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-3-flash-preview'];
     var MAX_LOGS = 200;
     var logs = [];
     var panelEl = null;

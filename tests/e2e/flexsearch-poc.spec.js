@@ -50,11 +50,11 @@ test.describe('FlexSearch POC 測試', () => {
         await page.waitForTimeout(500);
 
         // 獲取 FlexSearch 結果
-        const flexResults = await page.locator('#flex-results .result-item').count();
+        const flexResults = await page.locator('#flex-results > div').count();
         const flexResultsText = await page.locator('#flex-results').textContent();
 
         // 獲取 Fuse.js 結果
-        const fuseResults = await page.locator('#fuse-results .result-item').count();
+        const fuseResults = await page.locator('#fuse-results > div').count();
         const fuseResultsText = await page.locator('#fuse-results').textContent();
 
         console.log(`FlexSearch 結果數: ${flexResults}`);
@@ -114,10 +114,11 @@ test.describe('FlexSearch POC 測試', () => {
         // 點擊「完整 Benchmark」按鈕
         await page.click('text=🔥 完整 Benchmark');
 
-        // 等待 Benchmark 完成（最多 30 秒）
+        // 等待 Benchmark 完成：POC 的 runBenchmark() 結束後會 remove #benchmark-panel 的 hidden
+        // 並在 #benchmark-results 內注入 <table>，用「tbody tr 存在且 = 15」做完成判斷
         await page.waitForFunction(() => {
-            const button = document.querySelector('button:has-text("🔥 完整 Benchmark")');
-            return !button?.disabled;
+            const rows = document.querySelectorAll('#benchmark-results tbody tr');
+            return rows.length === 15;
         }, { timeout: 30000 });
 
         // 獲取 Benchmark 結果表格
@@ -160,17 +161,18 @@ test.describe('FlexSearch POC 測試', () => {
     });
 
     test('測試 5: 中文分詞視覺化工具', async ({ page }) => {
-        // 輸入中文測試文字
-        await page.fill('textarea[placeholder*="輸入中文"]', '科學展覽競賽活動');
+        // 輸入中文測試文字（POC 使用 <input id="segment-input">，非 textarea）
+        await page.fill('#segment-input', '科學展覽競賽活動');
 
-        // 點擊「分析分詞」按鈕
-        await page.click('text=分析分詞');
+        // 點擊「分詞測試」按鈕
+        // 注意：頁面有 h2「🇨🇳 中文分詞測試」也包含此文字，必須限定 button 否則 Playwright 會抓到 h2
+        await page.click('button:text("分詞測試")');
 
         // 等待結果
         await page.waitForTimeout(500);
 
-        // 獲取分詞結果
-        const segmentResult = await page.locator('#segmentResult').textContent();
+        // 獲取分詞結果（POC 輸出容器為 #segment-output）
+        const segmentResult = await page.locator('#segment-output').textContent();
 
         console.log('分詞結果:', segmentResult);
 
@@ -184,7 +186,8 @@ test.describe('FlexSearch POC 測試', () => {
         const testCases = [
             { query: '科學展覽', shouldFind: ['科學', '展覽', '科學展覽'] },
             { query: '數學競賽', shouldFind: ['數學', '競賽'] },
-            { query: 'STEM', shouldFind: ['STEM'] },
+            // 原本的 'STEM' 已不在目前的 search-index.json（資料更新過），換成確認在索引中的 'Python'
+            { query: 'Python', shouldFind: ['Python'] },
         ];
 
         const accuracyResults = [];
@@ -235,17 +238,17 @@ test.describe('FlexSearch POC 決策評估', () => {
         await page.goto('http://localhost:8000/poc-flexsearch.html');
         await page.waitForLoadState('networkidle');
 
-        // 等待索引建立
+        // 等待索引建立（selector 與 beforeEach 一致為 #index-status）
         await page.waitForFunction(() => {
-            const statusText = document.querySelector('.status-text')?.textContent;
+            const statusText = document.querySelector('#index-status')?.textContent;
             return statusText?.includes('✅ 已就緒');
         }, { timeout: 10000 });
 
-        // 執行完整 Benchmark
+        // 執行完整 Benchmark（等到 tbody 出現 15 列即為完成）
         await page.click('text=🔥 完整 Benchmark');
         await page.waitForFunction(() => {
-            const button = document.querySelector('button:has-text("🔥 完整 Benchmark")');
-            return !button?.disabled;
+            const rows = document.querySelectorAll('#benchmark-results tbody tr');
+            return rows.length === 15;
         }, { timeout: 30000 });
 
         // 收集所有測試數據
@@ -275,7 +278,7 @@ test.describe('FlexSearch POC 決策評估', () => {
         // 測試中文部分詞
         await page.fill('#search-input', '科學');
         await page.waitForTimeout(300);
-        const flexResults = await page.locator('#flex-results .result-item').count();
+        const flexResults = await page.locator('#flex-results > div').count();
         const flexResultsText = await page.locator('#flex-results').textContent();
         const hasChineseSegmentation = flexResultsText.includes('科學展覽') ||
                                        flexResultsText.includes('科學研究');

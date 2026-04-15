@@ -43,7 +43,7 @@ test.describe('PuterAI 共用 module', () => {
             expect(info.models).toEqual([
                 'gemini-3.1-pro-preview',
                 'gemini-2.5-pro',
-                'gemini-2.5-flash',
+                'gemini-3-flash-preview',
             ]);
         });
     });
@@ -156,7 +156,7 @@ test.describe('PuterAI 共用 module', () => {
                 }
             });
             expect(result.thrown).toBe(true);
-            expect(result.code).toBe('fail_gemini-2.5-flash');
+            expect(result.code).toBe('fail_gemini-3-flash-preview');
         });
 
         test('AbortError 只試 1 個模型後立即 throw', async ({ page }) => {
