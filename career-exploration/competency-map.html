@@ -153,6 +153,7 @@
         </div>
     </footer>
 
+    <script src="../shared/puter-ai.js"></script>
     <script>
         const competencyData = { "自主行動": { icon: 'user-check', color: 'indigo', items: [ { name: 'A1 身心素質與自我精進', description: '具備良好身心狀態與正向價值觀，持續學習、追求更好的自己。', examples: ['規律運動，維持健康生活', '參與正念或冥想活動，提升專注力', '閱讀課外讀物，主動拓展視野', '設定短期學習目標（如學會一個新技能）並努力達成'], clusters: ['醫藥衛生', '遊憩運動', '教育'] }, { name: 'A2 系統思考與解決問題', description: '能理解問題的複雜性，分析背後成因，並提出有效的解決方案。', examples: ['製作心智圖分析課文或社會議題的架構', '參與科展，從零開始設計實驗流程', '學習程式設計，解決生活中的不便', '分析一個歷史事件的多方因果關係'], clusters: ['工程', '資訊', '財經', '生命科學', '法政'] }, { name: 'A3 規劃執行與創新應變', description: '能夠制定計畫、有效執行，並在面對變化時，發揮創意、彈性調整。', examples: ['完成一份完整的自主學習計畫與成果', '擔任社團幹部，從籌辦到執行一場活動', '規劃家庭旅遊或班級出遊的完整行程', '在小組報告中，主動提出新的呈現方式（如拍影片、做網站）'], clusters: ['管理', '設計', '大眾傳播', '建築'] } ] }, "溝通互動": { icon: 'message-circle', color: 'blue', items: [ { name: 'B1 符號運用與溝通表達', description: '善用語言、文字、圖表等多元符號，清晰表達想法並理解他人。', examples: ['上台進行一場有結構、有吸引力的口頭報告', '撰寫一篇結構完整、論點清晰的小論文', '將複雜數據製作成易懂的資訊圖表 (Infographic)', '學習一種新的外語或程式語言並實際應用'], clusters: ['外語', '文史哲', '大眾傳播', '財經', '藝術'] }, { name: 'B2 科技資訊與媒體素養', description: '能有效運用科技與資訊，並具備判讀、思辨媒體訊息的能力。', examples: ['學習使用試算表或統計軟體分析數據', '針對一個網路熱議事件，進行事實查核與來源分析', '經營一個有主題的社群帳號或部落格', '學習影片剪輯或修圖軟體，製作個人作品'], clusters: ['資訊', '工程', '生命科學', '大眾傳播', '管理'] }, { name: 'B3 藝術涵養與美感素養', description: '能感知、欣賞與創作美的事物，並將美感融入生活之中。', examples: ['參觀美術館或表演藝術活動，並寫下心得評論', '學習一項樂器或繪畫技巧，並完成一項作品', '為班級或社團活動設計海報或文宣品', '留意生活周遭的建築、產品或服裝設計細節'], clusters: ['藝術', '設計', '建築', '文史哲'] } ] }, "社會參與": { icon: 'users', color: 'purple', items: [ { name: 'C1 道德實踐與公民意識', description: '具備道德判斷力，關心公共議題，並以負責任的態度參與社會。', examples: ['長期參與一項志工服務，並反思其意義', '針對一項公共政策（如交通、環保）提出自己的看法與建議', '了解選舉制度與民主運作，並與家人朋友討論', '在團隊中展現誠信與責任感，完成被託付的任務'], clusters: ['法政', '社會與心理', '教育', '農林漁牧'] }, { name: 'C2 人際關係與團隊合作', description: '能與他人建立正向的互動關係，並在團隊中有效溝通、分工合作。', examples: ['在小組報告中，扮演促進討論或協調衝突的角色', '參加球隊等團體性社團，學習團隊默契與策略', '學習傾聽並尊重與自己不同的意見', '組織讀書會，與同學共學、解決課業問題'], clusters: ['管理', '社會與心理', '教育', '遊憩運動', '醫藥衛生'] }, { name: 'C3 多元文化與國際理解', description: '尊重並欣賞不同文化，並具備全球視野，關心國際事務。', examples: ['學習一種新住民語言或原住民文化', '深入研究一個國家的歷史、文化或社會現況', '關注一項國際新聞或全球議題（如 SDGs），並提出觀點', '透過網路或實體活動，與外國朋友進行文化交流'], clusters: ['外語', '文史哲', '法政', '地球環境'] } ] } };
 
@@ -250,8 +251,7 @@
 
             // ✅ 步驟 3: 使用 Puter.js 呼叫 AI
             try {
-                const response = await puter.ai.chat(prompt, {
-                    model: 'gemini-3-pro-preview',
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
                     temperature: 0.5,
                     signal: AbortSignal.timeout(30000)
                 });
@@ -341,7 +341,7 @@
                 feather.replace(); // Re-render icons after adding new ones
 
             } catch (error) {
-                console.error("Puter.js AI call failed:", error);
+                console.error("Puter.js AI call failed:", PuterAI.formatPuterError(error), error);
                 aiResultContainer.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center font-semibold';

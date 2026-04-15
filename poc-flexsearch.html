@@ -6,7 +6,7 @@
     <title>FlexSearch POC - 中文分詞測試</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FlexSearch -->
-    <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
     <!-- Fuse.js for comparison -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
     <!-- Segment (中文分詞) -->
@@ -116,9 +116,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 初始化 FlexSearch POC...');
 
-            // Initialize segment
-            segment = new Segment();
-            segment.useDefault();
+            // Initialize segment (segmentit 2.0.3 的正確用法：用 Segmentit namespace + useDefault 工廠)
+            segment = Segmentit.useDefault(new Segmentit.Segment());
             console.log('✅ Segment 初始化完成');
 
             // Load search data
@@ -178,11 +177,18 @@
                     index: ["title", "content", "tags"],
                     store: ["id", "title", "url", "content", "tags"]
                 },
-                encode: false,  // Disable default encoder
-                tokenize: function(str) {
-                    // Use segmentit for Chinese word segmentation
-                    const segments = segment.doSegment(str, { simple: true });
-                    return segments.map(seg => seg.toLowerCase());
+                // 中文用 CJK unigram（每字一個 token），避免 segmentit 分錯時（如把
+                // 「全國中小學科學展覽會」切成整塊「學科學展覽會」）導致「科學」查不到。
+                // 英數照字界切。FlexSearch 0.7 中 encode 回傳 array 即為 tokens。
+                encode: function(str) {
+                    if (!str) return [];
+                    const tokens = [];
+                    for (const ch of String(str)) {
+                        if (/[\u4e00-\u9fff]/.test(ch)) tokens.push(ch);
+                    }
+                    const latin = String(str).toLowerCase().match(/[a-z0-9]+/g) || [];
+                    tokens.push(...latin);
+                    return tokens;
                 },
                 cache: true
             });

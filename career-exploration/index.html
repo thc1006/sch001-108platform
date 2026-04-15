@@ -236,6 +236,7 @@
         </div>
     </footer>
 
+    <script src="../shared/puter-ai.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -477,8 +478,7 @@
                 if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
 
                 // 使用流式輸出來獲取回應（串流輸出建議較長逾時）
-                const responseStream = await puter.ai.chat(prompt, {
-                    model: 'gemini-3-pro-preview',
+                const responseStream = await PuterAI.callGeminiWithFallback(prompt, {
                     stream: true,
                     signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
                 });
@@ -497,7 +497,7 @@
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js AI:", error);
+                console.error("Error calling Puter.js AI:", PuterAI.formatPuterError(error), error);
 
                 // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {

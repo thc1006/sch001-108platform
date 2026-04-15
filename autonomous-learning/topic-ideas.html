@@ -198,6 +198,7 @@
         </div>
     </footer>
 
+    <script src="../shared/puter-ai.js"></script>
     <script>
         // --- AI Generator Logic ---
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
@@ -253,8 +254,7 @@
 請確保回應是有效的 JSON 格式。`;
 
             try {
-                const response = await puter.ai.chat(prompt, {
-                    model: "gemini-3-pro-preview",
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
                 
@@ -311,7 +311,7 @@
                 displayAIdeas(parsedJson.ideas);
                 
             } catch (error) {
-                console.error("Error calling Puter.js:", error);
+                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
                 ideaResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
