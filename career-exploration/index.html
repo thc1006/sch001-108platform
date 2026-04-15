@@ -237,6 +237,35 @@
     </footer>
 
     <script>
+    // --- Puter.js AI Helper (含 fallback 與錯誤診斷) ---
+    function formatPuterError(err) {
+        if (!err) return 'unknown';
+        if (err instanceof Error) return `${err.name}: ${err.message}`;
+        if (err.error) {
+            const code = err.error.code || err.error.status || '?';
+            const msg = err.error.message || JSON.stringify(err.error);
+            return `[${code}] ${msg}`;
+        }
+        try { return JSON.stringify(err); } catch (e) { return String(err); }
+    }
+    async function callGeminiWithFallback(prompt, options = {}) {
+        const MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+        if (typeof puter === 'undefined' || !puter?.ai?.chat) {
+            throw new Error('Puter.js 尚未載入完成，請重新整理頁面。');
+        }
+        let lastErr;
+        for (const model of MODELS) {
+            try {
+                return await puter.ai.chat(prompt, { ...options, model });
+            } catch (err) {
+                lastErr = err;
+                console.warn(`[AI] 模型 ${model} 失敗：${formatPuterError(err)}`);
+                if (err?.name === 'TimeoutError' || err?.name === 'AbortError') throw err;
+            }
+        }
+        throw lastErr;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- 資料庫 (Data) ---
@@ -477,8 +506,7 @@
                 if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
 
                 // 使用流式輸出來獲取回應（串流輸出建議較長逾時）
-                const responseStream = await puter.ai.chat(prompt, {
-                    model: 'gemini-3-pro-preview',
+                const responseStream = await callGeminiWithFallback(prompt, {
                     stream: true,
                     signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
                 });
@@ -497,7 +525,7 @@
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js AI:", error);
+                console.error("Error calling Puter.js AI:", formatPuterError(error), error);
 
                 // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {

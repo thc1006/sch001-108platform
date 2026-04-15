@@ -155,6 +155,35 @@
     </footer>
 
     <script>
+        // --- Puter.js AI Helper (含 fallback 與錯誤診斷) ---
+        function formatPuterError(err) {
+            if (!err) return 'unknown';
+            if (err instanceof Error) return `${err.name}: ${err.message}`;
+            if (err.error) {
+                const code = err.error.code || err.error.status || '?';
+                const msg = err.error.message || JSON.stringify(err.error);
+                return `[${code}] ${msg}`;
+            }
+            try { return JSON.stringify(err); } catch (e) { return String(err); }
+        }
+        async function callGeminiWithFallback(prompt, options = {}) {
+            const MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+            if (typeof puter === 'undefined' || !puter?.ai?.chat) {
+                throw new Error('Puter.js 尚未載入完成，請重新整理頁面。');
+            }
+            let lastErr;
+            for (const model of MODELS) {
+                try {
+                    return await puter.ai.chat(prompt, { ...options, model });
+                } catch (err) {
+                    lastErr = err;
+                    console.warn(`[AI] 模型 ${model} 失敗：${formatPuterError(err)}`);
+                    if (err?.name === 'TimeoutError' || err?.name === 'AbortError') throw err;
+                }
+            }
+            throw lastErr;
+        }
+
         // --- AI Health Check Logic ---
         const analyzeBtn = document.getElementById('analyzeBtn');
         const reflectionInput = document.getElementById('reflectionInput');
@@ -226,8 +255,7 @@
 請確保回應是有效的 JSON 格式。`;
 
             try {
-                const response = await puter.ai.chat(prompt, {
-                    model: 'gemini-3-pro-preview',
+                const response = await callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
                 
@@ -285,7 +313,7 @@
                 displayAIAnalysis(parsedJson);
                 
             } catch (error) {
-                console.error("Error calling Puter.js:", error);
+                console.error("Error calling Puter.js:", formatPuterError(error), error);
                 analysisResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';

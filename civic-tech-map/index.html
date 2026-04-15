@@ -523,6 +523,37 @@
 
     <script>
         // ============================================================
+        // Puter.js AI Helper (含 fallback 與錯誤診斷)
+        // ============================================================
+        function formatPuterError(err) {
+            if (!err) return 'unknown';
+            if (err instanceof Error) return `${err.name}: ${err.message}`;
+            if (err.error) {
+                const code = err.error.code || err.error.status || '?';
+                const msg = err.error.message || JSON.stringify(err.error);
+                return `[${code}] ${msg}`;
+            }
+            try { return JSON.stringify(err); } catch (e) { return String(err); }
+        }
+        async function callGeminiWithFallback(prompt, options = {}) {
+            const MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+            if (typeof puter === 'undefined' || !puter?.ai?.chat) {
+                throw new Error('Puter.js 尚未載入完成，請重新整理頁面。');
+            }
+            let lastErr;
+            for (const model of MODELS) {
+                try {
+                    return await puter.ai.chat(prompt, { ...options, model });
+                } catch (err) {
+                    lastErr = err;
+                    console.warn(`[AI] 模型 ${model} 失敗：${formatPuterError(err)}`);
+                    if (err?.name === 'TimeoutError' || err?.name === 'AbortError') throw err;
+                }
+            }
+            throw lastErr;
+        }
+
+        // ============================================================
         // Toggle Details (individual expand/collapse)
         // ============================================================
         function toggleDetails(button) {
@@ -690,11 +721,7 @@
                     '用繁體中文回答，語氣友善、鼓勵探索。如果使用者的興趣與所有專案都不太相關，也請誠實說明，並嘗試找出最接近的連結點。回答請簡潔有力，不要超過 400 字。';
 
                 try {
-                    if (typeof puter === 'undefined' || !puter || !puter.ai) {
-                        throw new Error('AI 服務尚未載入完成，請重新整理頁面後再試。');
-                    }
-
-                    var response = await puter.ai.chat(prompt, { model: 'gemini-2.0-flash' });
+                    var response = await callGeminiWithFallback(prompt);
                     var text = '';
                     if (typeof response === 'string') {
                         text = response;
@@ -712,6 +739,7 @@
                     resultText.textContent = text;
                     resultContent.classList.remove('hidden');
                 } catch (err) {
+                    console.error("Puter.js AI call failed:", formatPuterError(err), err);
                     loadingEl.classList.add('hidden');
                     errorText.textContent = err.message || '發生未知錯誤，請稍後再試。';
                     errorEl.classList.remove('hidden');
