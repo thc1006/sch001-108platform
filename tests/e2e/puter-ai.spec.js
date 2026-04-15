@@ -12,7 +12,9 @@
 
 const { test, expect } = require('@playwright/test');
 
-const FIXTURE_URL = 'http://localhost:8000/tests/fixtures/puter-ai.html';
+// 允許透過 BASE_URL 環境變數覆寫測試伺服器位置，方便 port 8000 被占用時切換
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
+const FIXTURE_URL = BASE_URL + '/tests/fixtures/puter-ai.html';
 
 async function gotoFixture(page, queryString = '') {
     await page.goto(FIXTURE_URL + queryString);
@@ -384,7 +386,8 @@ test.describe('PuterAI 共用 module', () => {
             await expect(panel).toBeVisible();
 
             // 關閉 panel，應觸發 dragCtrl.abort() 移除 document-level listeners
-            await panel.getByRole('button', { name: '×' }).click();
+            // 按鈕現在用 aria-label 作為可訪問名稱（Copilot A11Y 修正後）
+            await panel.getByRole('button', { name: /close/i }).click();
             await expect(panel).toHaveCount(0);
 
             // 模擬使用者在頁面上移動滑鼠（舊 listener 若沒被 abort，會觸發並可能拋錯）
@@ -419,6 +422,45 @@ test.describe('PuterAI 共用 module', () => {
 
             // 新 panel 位置應該因拖曳而改變（right 增加 ~80、bottom 減少 ~40）
             expect(Math.abs(after.right - before.right)).toBeGreaterThan(20);
+        });
+
+        test('log 超過 MAX_LOGS 時 panel DOM 同步限長（回歸：Copilot review 指出）', async ({ page }) => {
+            await gotoFixture(page, '?debug=1');
+            const { logCount, domCount } = await page.evaluate(() => {
+                PuterAI.clearLogs();
+                // 推 210 筆超過預設 MAX_LOGS=200
+                for (let i = 0; i < 210; i++) PuterAI.log('info', 'msg-' + i);
+                const body = document.querySelector('#puter-ai-debug-panel > div:nth-of-type(2)');
+                return {
+                    logCount: PuterAI.getLogs().length,
+                    domCount: body.children.length,
+                };
+            });
+            // 陣列有 200 上限
+            expect(logCount).toBeLessThanOrEqual(200);
+            // 更重要：DOM 也被同步截斷（Copilot 原本指出的洩漏）
+            expect(domCount).toBeLessThanOrEqual(200);
+            // 1:1 對應（panel 內行數 = logs 陣列長度）
+            expect(domCount).toBe(logCount);
+        });
+
+        test('toggle / close 按鈕具有可訪問的 aria-label（回歸：Copilot A11Y）', async ({ page }) => {
+            await gotoFixture(page, '?debug=1');
+            const panel = page.locator('#puter-ai-debug-panel');
+            await expect(panel).toBeVisible();
+
+            const closeBtn = panel.locator('button', { hasText: /^×$/ });
+            const toggleBtn = panel.locator('button', { hasText: /^–$/ });
+
+            await expect(closeBtn).toHaveAttribute('aria-label', /close/i);
+            await expect(toggleBtn).toHaveAttribute('aria-label', /collapse/i);
+            await expect(toggleBtn).toHaveAttribute('aria-expanded', 'true');
+
+            // 點 toggle 收合後 aria-label 應切換為 Expand
+            await toggleBtn.click();
+            const expandBtn = panel.locator('button', { hasText: /^\+$/ });
+            await expect(expandBtn).toHaveAttribute('aria-label', /expand/i);
+            await expect(expandBtn).toHaveAttribute('aria-expanded', 'false');
         });
 
         test('panel 內 Clear 按鈕會清空 log 顯示', async ({ page }) => {

@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
+// 允許透過 BASE_URL 環境變數覆寫測試伺服器位置
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
+
 test('Debug POC 頁面載入', async ({ page }) => {
     // 監聽控制台訊息
     page.on('console', msg => {
@@ -28,7 +31,7 @@ test('Debug POC 頁面載入', async ({ page }) => {
     console.log('\n開始載入頁面...\n');
 
     // 開啟頁面
-    await page.goto('http://localhost:8000/poc-flexsearch.html');
+    await page.goto(BASE_URL + '/poc-flexsearch.html');
 
     // 等待網路閒置
     await page.waitForLoadState('networkidle');

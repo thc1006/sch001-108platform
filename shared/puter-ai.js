@@ -101,7 +101,14 @@
             meta: meta
         };
         logs.push(entry);
-        if (logs.length > MAX_LOGS) logs.shift();
+        if (logs.length > MAX_LOGS) {
+            logs.shift();
+            // 同步移除 panel 對應最舊的 DOM 行，避免長時間使用時 bodyEl
+            // 累積上千個 <div> 造成記憶體 / 效能衰退
+            if (bodyEl && bodyEl.firstChild) {
+                bodyEl.removeChild(bodyEl.firstChild);
+            }
+        }
 
         // 同步寫 console
         // 用 != null 同時排除 undefined 與 null，避免 log('info', 'ok', null)
@@ -250,15 +257,24 @@
         });
 
         var clearBtn = makeBtn('Clear', function () { clearLogs(); });
+        // toggle / close 純符號（–、+、×）對螢幕閱讀器不可理解，需補 aria-label。
+        // 用 aria-expanded 傳達展開狀態給輔助技術。
         var toggleBtn = makeBtn('–', function () {
             if (bodyEl.style.display === 'none') {
                 bodyEl.style.display = 'block';
                 toggleBtn.textContent = '–';
+                toggleBtn.setAttribute('aria-label', 'Collapse Puter AI log');
+                toggleBtn.setAttribute('aria-expanded', 'true');
             } else {
                 bodyEl.style.display = 'none';
                 toggleBtn.textContent = '+';
+                toggleBtn.setAttribute('aria-label', 'Expand Puter AI log');
+                toggleBtn.setAttribute('aria-expanded', 'false');
             }
         });
+        toggleBtn.setAttribute('aria-label', 'Collapse Puter AI log');
+        toggleBtn.setAttribute('aria-expanded', 'true');
+
         // dragCtrl 會在下方 addDrag 建立；closeBtn 關閉時透過 abort() 移除所有
         // document-level drag listeners，避免 close 後 listener 洩漏 / 重新 mount 疊加。
         var dragCtrl;
@@ -270,6 +286,7 @@
             panelEl = null;
             bodyEl = null;
         });
+        closeBtn.setAttribute('aria-label', 'Close Puter AI log panel');
 
         header.appendChild(copyBtn);
         header.appendChild(clearBtn);

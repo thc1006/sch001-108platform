@@ -9,11 +9,14 @@
 
 const { test, expect } = require('@playwright/test');
 
+// 允許透過 BASE_URL 環境變數覆寫測試伺服器位置
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
+
 test.describe('FlexSearch POC 測試', () => {
 
     test.beforeEach(async ({ page }) => {
         // 開啟本地伺服器的 POC 頁面
-        await page.goto('http://localhost:8000/poc-flexsearch.html');
+        await page.goto(BASE_URL + '/poc-flexsearch.html');
 
         // 等待頁面載入完成
         await page.waitForLoadState('networkidle');
@@ -235,7 +238,7 @@ test.describe('FlexSearch POC 測試', () => {
 test.describe('FlexSearch POC 決策評估', () => {
 
     test('生成測試報告並評估是否進行 Phase 2', async ({ page }) => {
-        await page.goto('http://localhost:8000/poc-flexsearch.html');
+        await page.goto(BASE_URL + '/poc-flexsearch.html');
         await page.waitForLoadState('networkidle');
 
         // 等待索引建立（selector 與 beforeEach 一致為 #index-status）
