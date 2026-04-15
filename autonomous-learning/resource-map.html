@@ -15,6 +15,7 @@
     <title>學習資源地圖 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.puter.com/v2/"></script>
+    <script src="../shared/puter-ai.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -259,35 +260,6 @@
         typeFilter.addEventListener('change', renderResources);
         categoryFilter.addEventListener('change', renderResources);
 
-        // --- Puter.js AI Helper (含 fallback 與錯誤診斷) ---
-        function formatPuterError(err) {
-            if (!err) return 'unknown';
-            if (err instanceof Error) return `${err.name}: ${err.message}`;
-            if (err.error) {
-                const code = err.error.code || err.error.status || '?';
-                const msg = err.error.message || JSON.stringify(err.error);
-                return `[${code}] ${msg}`;
-            }
-            try { return JSON.stringify(err); } catch (e) { return String(err); }
-        }
-        async function callGeminiWithFallback(prompt, options = {}) {
-            const MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'];
-            if (typeof puter === 'undefined' || !puter?.ai?.chat) {
-                throw new Error('Puter.js 尚未載入完成，請重新整理頁面。');
-            }
-            let lastErr;
-            for (const model of MODELS) {
-                try {
-                    return await puter.ai.chat(prompt, { ...options, model });
-                } catch (err) {
-                    lastErr = err;
-                    console.warn(`[AI] 模型 ${model} 失敗：${formatPuterError(err)}`);
-                    if (err?.name === 'TimeoutError' || err?.name === 'AbortError') throw err;
-                }
-            }
-            throw lastErr;
-        }
-
         // --- AI Learning Path Planner Logic ---
         const generatePathBtn = document.getElementById('generatePathBtn');
         const pathInput = document.getElementById('pathInput');
@@ -342,7 +314,7 @@
 請確保回應是有效的 JSON 格式。`;
 
             try {
-                const response = await callGeminiWithFallback(prompt, {
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
                 
@@ -406,7 +378,7 @@
                 displayAIPath(parsedJson.learning_path);
                 
             } catch (error) {
-                console.error("Error calling Puter.js:", formatPuterError(error), error);
+                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
                 pathResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
