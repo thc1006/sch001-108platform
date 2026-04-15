@@ -30,12 +30,24 @@
     var bodyEl = null;
 
     // ------------------------------------------------------------
-    // Safe stringify（處理循環引用、BigInt、不可序列化值）
+    // Safe stringify（處理循環引用、BigInt、不可序列化值、primitive）
     // ------------------------------------------------------------
     function safeStringify(value) {
+        // Primitive 分支：避免 JSON.stringify 產生帶引號的 string（"oops"），
+        // 或對 function / symbol / undefined 回傳 undefined 導致契約破損
+        if (value === null) return 'null';
+        var t = typeof value;
+        if (t === 'string') return value;                       // 不加引號
+        if (t === 'number' || t === 'boolean') return String(value);
+        if (t === 'bigint') return String(value);
+        if (t === 'undefined' || t === 'function' || t === 'symbol') {
+            try { return String(value); } catch (_) { return '[Unserializable]'; }
+        }
+
+        // Object：用 replacer 處理循環引用與 BigInt
         try {
             var seen = new WeakSet();
-            return JSON.stringify(value, function (key, val) {
+            var result = JSON.stringify(value, function (key, val) {
                 if (typeof val === 'bigint') return String(val);
                 if (val && typeof val === 'object') {
                     if (seen.has(val)) return '[Circular]';
@@ -43,6 +55,9 @@
                 }
                 return val;
             });
+            // 防禦：若 object 被 toJSON 或其他機制替換成 undefined，
+            // 仍提供字串化回傳
+            return result === undefined ? String(value) : result;
         } catch (e) {
             try { return String(value); } catch (_) { return '[Unserializable]'; }
         }

@@ -115,6 +115,29 @@ test.describe('PuterAI 共用 module', () => {
             }));
             expect(r).toBe('[forbidden] APIError: server refused');
         });
+
+        test('string 型 error 不加多餘引號（回歸：Copilot review 指出）', async ({ page }) => {
+            // formatPuterError("oops") 應回傳 "oops" 而非 '"oops"'
+            const r = await page.evaluate(() => PuterAI.formatPuterError('oops'));
+            expect(r).toBe('oops');
+        });
+
+        test('function / symbol 型 error 不會讓回傳變 undefined（回歸：Copilot review 指出）', async ({ page }) => {
+            const results = await page.evaluate(() => ({
+                fn: PuterAI.formatPuterError(function badInput() {}),
+                sym: PuterAI.formatPuterError(Symbol('x')),
+                num: PuterAI.formatPuterError(42),
+                bool: PuterAI.formatPuterError(true),
+            }));
+            // 全部應為非空字串，契約「回傳 string」不破損
+            expect(typeof results.fn).toBe('string');
+            expect(results.fn.length).toBeGreaterThan(0);
+            expect(results.fn).not.toBe('undefined');
+            expect(typeof results.sym).toBe('string');
+            expect(results.sym).toContain('Symbol');
+            expect(results.num).toBe('42');
+            expect(results.bool).toBe('true');
+        });
     });
 
     test.describe('callGeminiWithFallback', () => {
