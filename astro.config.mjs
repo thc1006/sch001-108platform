@@ -19,5 +19,9 @@ export default defineConfig({
   build: {
     format: 'preserve',
   },
+  // TODO(PR 3 / 切換部署):@astrojs/sitemap 在 build.format:'preserve' 下會
+  // 產生無副檔名 URL(/about),與本站實際的 .html 網址不符。切換部署時需:
+  // 以 serialize 補 .html(區段首頁維持目錄式)、移除舊 sitemap.xml、並把
+  // robots.txt 的 Sitemap: 指向 sitemap-index.xml。
   integrations: [sitemap()],
 });

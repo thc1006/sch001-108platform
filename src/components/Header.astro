@@ -80,4 +80,12 @@ const navItems = [
     const isHidden = menu?.classList.toggle('hidden');
     toggle.setAttribute('aria-expanded', String(isHidden === false));
   });
+  // 視窗放大跨過 md 斷點時收合選單並重置狀態,避免桌機版殘留展開狀態、
+  // 以及 aria-expanded 與實際可見性脫節。
+  window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
+    if (e.matches) {
+      menu?.classList.add('hidden');
+      toggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
 </script>
