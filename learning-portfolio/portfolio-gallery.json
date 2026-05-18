@@ -1,0 +1,59 @@
+{
+  "_readme": "學習歷程作品集範例資料來源檔。portfolio-gallery.html 會在載入時 fetch() 此檔並渲染。新增或修改範例請直接編輯下方 portfolio 陣列，不需要動 HTML。",
+  "lastUpdated": "2026-05-19",
+  "portfolio": [
+    {
+      "id": "science-01",
+      "title": "探究與實作：校園植物葉面含菌量分析",
+      "category": "自然科學",
+      "type": "課程學習成果",
+      "tags": [
+        "實驗設計",
+        "數據分析"
+      ],
+      "thumbnail_url": "https://images.pexels.com/photos/3735747/pexels-photo-3735747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "preview_image_url": "https://placehold.co/800x1131/e0e7ff/3730a3?text=探究與實作報告",
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。</div>\n                        <div><strong class=\"text-green-700\">深度反思：</strong>心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。</div>\n                    </div>"
+    },
+    {
+      "id": "social-02",
+      "title": "社會實踐報告：「剩食」議題的社區田野調查",
+      "category": "社會科學",
+      "type": "多元表現",
+      "tags": [
+        "田野調查",
+        "訪談"
+      ],
+      "thumbnail_url": "https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "preview_image_url": "https://placehold.co/800x1131/dcfce7/166534?text=社會實踐報告",
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>從全球性的剩食議題，聚焦到「社區」這個可操作的範圍，展現了將大問題轉化為具體行動的能力。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>綜合運用了多種研究方法。除了文獻探討，更實際走訪了5家便當店、2間超市，並深度訪談了里長，資料來源多元且具說服力。可參考本站<a href='methodology.html' class='text-blue-600 hover:underline'>研究方法工具箱</a>。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>最終不只提出問題，更設計了一份「社區剩食共享地圖」的提案，並附上初步的宣傳文案，展現了強烈的解決問題導向。</div>\n                        <div><strong class=\"text-green-700\">深度反思：</strong>反思中不僅提到執行的困難（如：店家不願受訪），更探討了背後的社會結構性問題，展現了超越表象的洞察力。</div>\n                    </div>"
+    },
+    {
+      "id": "art-01",
+      "title": "作品集：我的城市速寫計畫",
+      "category": "藝術設計",
+      "type": "多元表現",
+      "tags": [
+        "創作實踐",
+        "觀察力"
+      ],
+      "thumbnail_url": "https://images.pexels.com/photos/164543/pexels-photo-164543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "preview_image_url": "https://placehold.co/800x1131/fce7f3/86198f?text=作品集範例",
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>創作理念清晰，闡述了為何選擇「城市速寫」作為主題，以及想透過畫筆記錄城市變遷的動機。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>作品集呈現了從草稿、不同媒材的嘗試到最終作品的完整脈絡，讓觀者能理解其創作的演進過程。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>作品風格統一，排版具有設計感，本身就是一件完整的設計作品。每張畫都附有簡短的文字，說明地點與創作當下的心情。</div>\n                        <div><strong class=\"text-green-700\">深度反思：</strong>在總結中，作者反思了「速寫」如何改變他觀看城市的方式，並連結到對都市更新議題的關懷，提升了作品的層次。</div>\n                    </div>"
+    },
+    {
+      "id": "cross-domain-01",
+      "title": "跨領域專題：用Python分析唐詩中的色彩意象",
+      "category": "跨領域",
+      "type": "課程學習成果",
+      "tags": [
+        "文學分析",
+        "數據分析",
+        "數位創作"
+      ],
+      "thumbnail_url": "https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "preview_image_url": "https://placehold.co/800x1131/eef2ff/4338ca?text=跨領域專題報告",
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>完美結合了「語文」與「資訊」兩個領域，題目「用Python分析唐詩」本身就極具創意與亮點。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>作者清楚說明了如何蒐集唐詩資料庫、如何撰寫Python程式來進行斷詞與顏色詞彙的頻率統計，方法論清晰。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>將統計結果製作成精美的圓餅圖與詞頻分析表，將量化數據視覺化，讓文學分析不再只是主觀感受，更有了數據支撐。</div>\n                        <div><strong class=\"text-green-700\">深度反思：</strong>作者在反思中探討了「數位人文」這個新興領域的可能性與限制，並提出未來可進一步分析不同詩人（如李白、杜甫）用色習慣的差異，展現了優異的研究潛力。</div>\n                    </div>"
+    }
+  ]
+}

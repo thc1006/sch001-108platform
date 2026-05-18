@@ -1,0 +1,71 @@
+{
+  "_readme": "研究方法論資料來源檔。methodology.html 會在載入時 fetch() 此檔並渲染。新增或修改方法請直接編輯下方 methods 陣列，不需要動 HTML。",
+  "lastUpdated": "2026-05-19",
+  "methods": [
+    {
+      "id": "literature-review",
+      "title": "文獻探討法",
+      "category": "基礎研究",
+      "type": [
+        "qualitative",
+        "quantitative",
+        "creative",
+        "other3"
+      ],
+      "description": "透過系統性地查找、閱讀、分析與你的主題相關的既有資料，來建立研究基礎。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>幾乎是所有研究的起點。可用來確立研究方向、學習專業知識、或尋找支持論點的證據。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>確立關鍵字：</strong> 根據你的主題，想出幾個核心關鍵字。</li>\n                            <li><strong>選擇資料庫：</strong> 從合適的資料庫開始搜尋 (如 Google Scholar、華藝線上圖書館)。</li>\n                            <li><strong>篩選與閱讀：</strong> 快速瀏覽標題與摘要，找出最相關的文章進行細讀。</li>\n                            <li><strong>整理與摘要：</strong> 用自己的話寫下每篇文章的重點，並記錄來源，避免抄襲。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>最大的陷阱是變成「複製貼上」的讀書報告。重點在於「探討」，也就是比較不同文獻的觀點，並提出自己的看法。</p>\n                        <h4>推薦工具</h4>\n                        <p>可參考本站<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>中的 Notion 或 XMind 來整理你的筆記與思緒。</p>\n                    </div>"
+    },
+    {
+      "id": "survey-method",
+      "title": "問卷調查法",
+      "category": "量化研究",
+      "type": [
+        "quantitative"
+      ],
+      "description": "設計標準化問題，向特定群體進行調查，以蒐集大量的量化數據來進行統計分析。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>想了解某個群體（如：全校學生）對特定議題的普遍看法、或想驗證某個假設時。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>定義研究目標：</strong> 清楚知道你想透過問卷了解什麼。</li>\n                            <li><strong>設計問卷題目：</strong> 題目要清晰、無引導性。多使用選擇題以利統計，也可搭配少量開放題。</li>\n                            <li><strong>前測與修改：</strong> 先找少量的人試填，確保題目沒有問題，再進行修改。</li>\n                            <li><strong>發放與回收：</strong> 決定發放管道（線上/紙本）與對象，並努力提高回收率。</li>\n                            <li><strong>數據分析：</strong> 使用統計軟體或試算表分析數據，並製作圖表。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>樣本數不足或取樣不具代表性，會讓你的研究結論缺乏說服力。例如，只問了10個好朋友，不能代表全校學生的想法。</p>\n                        <h4>推薦工具</h4>\n                        <p>可使用<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>中的 Google Forms 或 SurveyCake 製作問卷，並用 Google Sheets 進行數據分析。</p>\n                    </div>"
+    },
+    {
+      "id": "interview-method",
+      "title": "訪談法",
+      "category": "質化研究",
+      "type": [
+        "qualitative"
+      ],
+      "description": "透過與受訪者進行深入的對話，來獲取質性的、有故事性的、深層的資訊。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>想了解某個特定人物的生命故事、專業經驗，或探討一個複雜議題背後的深層原因與脈絡時。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>確定訪談對象：</strong> 找到最能回答你研究問題的人。</li>\n                            <li><strong>擬定訪綱：</strong> 設計幾個核心問題作為訪談主軸，並準備一些可追問的備用問題。</li>\n                            <li><strong>邀約與準備：</strong> 正式邀約對方，說明研究目的，並準備好錄音設備。</li>\n                            <li><strong>進行訪談：</strong> 營造輕鬆的氛圍，專心傾聽，適時追問。</li>\n                            <li><strong>整理與分析：</strong> 將錄音轉成逐字稿，並從中找出關鍵的主題與洞見。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>訪談變成「身家調查」，只顧著問完自己的問題，而沒有真正「傾聽」對方。有時最精彩的內容，都來自於不經意的追問。</p>\n                        <h4>推薦工具</h4>\n                        <p>可使用 Otter.ai (AI語音轉文字) 協助整理逐字稿，並用<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>中的 Notion 進行訪談資料的標籤化管理。</p>\n                    </div>"
+    },
+    {
+      "id": "case-study",
+      "title": "個案研究法",
+      "category": "質化研究",
+      "type": [
+        "qualitative",
+        "other3"
+      ],
+      "description": "針對一個特定的「個案」（如：一個事件、一間公司、一個人物）進行全面而深入的探討。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>當你想深入了解一個「特例」為何成功或失敗，或是想探討一個理論在真實世界中的應用時。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>選定個案：</strong> 選擇一個具代表性、或極端特殊的個案。</li>\n                            <li><strong>蒐集資料：</strong> 綜合使用多種方法（文獻探討、訪談、觀察）來蒐集關於此個案的資料。</li>\n                            <li><strong>分析資料：</strong> 從不同面向剖析個案，找出其獨特的模式、成因與影響。</li>\n                            <li><strong>撰寫報告：</strong> 清晰地描述個案背景，並提出你的分析與結論。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>將個案研究的結論過度推論到所有情況。個案研究的價值在於「深度」而非「廣度」。</p>\n                        <h4>推薦資源</h4>\n                        <p>哈佛商業評論 (HBR) 上有大量的商業個案可供參考。也可從<a href=\"../advanced-resources/reading-list.html\" class=\"text-blue-600 hover:underline font-semibold\">「主題書單推薦」</a>中尋找相關主題的深度報導。</p>\n                    </div>"
+    },
+    {
+      "id": "content-analysis",
+      "title": "內容分析法",
+      "category": "量化/質化混合",
+      "type": [
+        "quantitative",
+        "qualitative"
+      ],
+      "description": "對文本或影像內容（如：新聞報導、歌詞、廣告、社群貼文）進行系統性的分類與統計分析。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>想分析媒體如何呈現特定議題、或想了解社群網路上對某件事的輿論風向時。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>確定分析單位：</strong> 決定你要分析的是文字、圖片還是影片？</li>\n                            <li><strong>建立編碼表：</strong> 設計你的分類標準。例如，分析新聞標題時，分類可以是「正面」、「負面」、「中立」。</li>\n                            <li><strong>進行編碼：</strong> 根據編碼表，逐一對你蒐集的資料進行分類與計數。</li>\n                            <li><strong>統計與詮釋：</strong> 分析各類別出現的頻率，並詮釋這些數字背後的意義。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>分類標準（編碼表）主觀或不一致，會導致研究結果不可信。建議可以找同學一起進行編碼，並比較結果是否一致（信度分析）。</p>\n                        <h4>推薦工具</h4>\n                        <p>可使用<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>中的 Google Sheets 來建立編碼表與進行統計。</p>\n                    </div>"
+    },
+    {
+      "id": "creative-practice",
+      "title": "創作實踐法",
+      "category": "創作導向",
+      "type": [
+        "creative"
+      ],
+      "description": "以「創造一個作品」為核心，研究的過程與最終的成品同等重要。",
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>適用於藝術、設計、資訊、文學等領域，當你的目標是產出一個網站、一支影片、一首曲子、或一本小說時。</p>\n                        <h4>如何進行 (SOP)</h4>\n                        <ol>\n                            <li><strong>確立創作理念：</strong> 你想透過這個作品傳達什麼？解決什麼問題？</li>\n                            <li><strong>研究與規劃：</strong> 參考相關作品，學習所需技能，並規劃創作時程。</li>\n                            <li><strong>動手創作：</strong> 進入主要的創作階段。</li>\n                            <li><strong>紀錄與反思：</strong> 詳細記錄你的創作過程、遇到的困難與解決方法。</li>\n                            <li><strong>成果展示與詮釋：</strong> 除了展示作品，更要寫下你的創作自述，說明作品的內涵。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>只重視最終成品，而忽略了過程的紀錄與反思。在學習歷程中，教授更想看到的是你的「創作思維」，而不只是一個漂亮的結果。</p>\n                        <h4>推薦資源</h4>\n                        <p>可從<a href=\"../advanced-resources/index.html\" class=\"text-blue-600 hover:underline font-semibold\">「進階資源探索區」</a>尋找創作所需的技能課程與工具。</p>\n                    </div>"
+    }
+  ]
+}

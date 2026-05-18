@@ -184,68 +184,9 @@
     </footer>
 
     <script>
-        const interviewData = [
-            {
-                id: 'info-01',
-                name: '陳同學',
-                major: '資訊工程學系',
-                university: '台灣大學',
-                category: '資訊學群',
-                quote: '學習歷程的重點不是「做了什麼」，而是從中「學到什麼」，以及「為什麼這件事對你有意義」。',
-                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=chen&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
-                content_html: `<div class="prose max-w-none"><h4>Q1: 高中時，你是如何探索跟準備資工領域的？</h4><p>其實我一開始也不是很確定。高一時我參加了學校的程式設計社，那是我第一次真正接觸寫程式。我發現我對「解決問題」這件事很有熱情，而程式碼就是我的工具。我的自主學習就鎖定做一個 Discord Bot，雖然很簡單，但從無到有的過程讓我學到非常多，也成為我學習歷程中最重要的專案。</p><h4>Q2: 大學的資工系生活，跟想像中一樣嗎？</h4><p>可以說既一樣也不一樣。一樣的是，每天真的都在跟程式碼和數學奮鬥。不一樣的是，大學的學習更要求「自學能力」。教授只會教你核心概念，但大量的實作和新技術，都需要自己花時間去網路上找資源、看文件。高中時自主學習的經驗，這時候就派上用場了。</p><h4>Q3: 對想讀資工系的學弟妹，有什麼建議？</h4><p>第一，數學很重要，尤其是離散數學和線性代數，一定要打好基礎。第二，不要只為了刷題而學程式，試著去找一個你想解決的問題，然後用程式去實現它，這個過程會讓你學得更快、更快樂。最後，多去看看別人的程式碼(GitHub)，學習好的寫作風格，這對團隊合作非常重要。</p></div>`,
-                tips: [
-                    { title: "逛逛 GitHub", desc: "試著尋找一個你有興趣的開源專案，閱讀它的程式碼，了解大家如何協作。" },
-                    { title: "解題練手感", desc: "到 LeetCode 或 CodeSignal 網站，挑戰一些基礎的演算法題目，訓練邏輯思維。" },
-                    { title: "動手做個小專案", desc: "跟著網路上的教學，做一個天氣查詢 App 或是一個簡單的個人網頁，體驗開發的樂趣。" }
-                ]
-            },
-            {
-                id: 'comm-01',
-                name: '林同學',
-                major: '傳播學院',
-                university: '政治大學',
-                category: '大眾傳播學群',
-                quote: '不要害怕放入看似「不務正業」的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。',
-                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lin&hair=long&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
-                content_html: `<div class="prose max-w-none"><h4>Q1: 你在高中時如何發現自己對傳播的興趣？</h4><p>我高中時很喜歡追星(笑)，為了幫我的偶像宣傳，我開始自己學著剪影片、做圖、經營一個小小的粉絲專頁。過程中我發現，我對「如何把一個訊息包裝得有趣，讓更多人看見」這件事非常有興趣。這比課本上的知識更能吸引我，也讓我意識到自己可能適合讀傳播。</p><h4>Q2: 傳播學院都在學些什麼？會不會很「虛」？</h4><p>很多人都有這個誤解。傳播學院的課其實非常「實」。我們有新聞採寫、攝影、廣告企劃、公關策略等很多實作課。當然也有理論課，像是傳播理論、符號學，這些課幫助我們建立思考的框架，去分析媒體現象背後的原因。所以它既需要創意，也需要很強的_logic_al思辨能力。</p><h4>Q3: 給學弟妹的建議？</h4><p>多觀察、多思考、多創作。每天滑手機的時候，不要只是被動接收訊息，可以去想「為什麼這個廣告會紅？」、「這個YouTuber的影片好在哪裡？」。然後試著自己去產出內容，無論是寫一篇文案、拍一支短片，或是辦一個小活動，這些「作品」遠比考試成績更能證明你的熱情與潛力。</p></div>`,
-                tips: [
-                    { title: "開始你的內容創作", desc: "在 Instagram 或 Dcard 上建立一個主題帳號，分享你感興趣的事物，練習文案寫作與社群互動。" },
-                    { title: "試用線上設計工具", desc: "使用 Canva 或 Figma，為你的社群帳號設計貼文，或為學校報告製作精美的封面。" },
-                    { title: "分析你喜歡的媒體", desc: "找一個你喜歡的 YouTuber 或 Podcast，分析它的內容結構、視覺風格與目標受眾，並寫下你的觀察。" }
-                ]
-            },
-            {
-                id: 'law-01',
-                name: '張同學',
-                major: '法律學系',
-                university: '台北大學',
-                category: '法政學群',
-                quote: '法律不只是背法條，更重要的是理解法條背後的「為什麼」，以及它如何應用在活生生的人身上。',
-                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhang&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
-                content_html: `<div class="prose max-w-none"><h4>Q1: 很多人覺得法律系很無聊，當初為何選擇？</h4><p>我高二時參加了學校的模擬法庭社，那是我第一次接觸到一個真實的案件。我們需要分析證據、建構論點、進行辯論。我發現法律不只是死板的文字，它是一個充滿邏輯思辨和價值判斷的領域，這讓我非常著迷。</p><h4>Q2: 法律系的課業壓力是不是很大？</h4><p>是真的不輕鬆。閱讀量非常大，每週可能都要讀上百頁的判決和文章。考試也不是單純背誦，而是「申論題」，需要你把學到的法律概念，應用在一個虛構的案例中，去分析誰對誰錯。所以，除了記憶力，邏輯和寫作能力同等重要。</p><h4>Q3: 給想讀法律系的學弟妹的建議？</h4><p>第一，關心社會時事。法律是為了解決社會問題而存在的，多看新聞、多了解社會上發生的事，會讓你學習時更有感。第二，訓練自己的閱讀和寫作能力，試著去寫一些有條理、有邏輯的長文。第三，保持一顆開放的心，法律中有很多價值衝突，學會從不同角度思考，比找到「唯一正解」更重要。</p></div>`,
-                tips: [
-                    { title: "閱讀法院判決", desc: "到司法院的判決查詢系統，找一個你感興趣的案件（如：通姦除罪化），試著讀懂判決書的理由。" },
-                    { title: "關注法律白話文運動", desc: "追蹤「法律白話文運動」的網站或社群，他們用簡單的方式解釋複雜的法律議題。" },
-                    { title: "參與一場辯論", desc: "無論是參加學校的辯論社，或只是和同學針對一個議題進行深入的討論，都能訓練你的邏輯與口語表達。" }
-                ]
-            },
-            {
-                id: 'bio-01',
-                name: '王同學',
-                major: '生物科技學系',
-                university: '陽明交通大學',
-                category: '生命科學學群',
-                quote: '高中時的科展經驗，不只是為了得獎。從中學到的實驗設計和解決問題的能力，才是在大學真正派上用場的關鍵。',
-                photo_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wang&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear',
-                content_html: `<div class="prose max-w-none"><h4>Q1: 你是如何確定自己對生命科學的興趣的？</h4><p>我從小就對生物很有興趣，但真正讓我下定決心的是高二的科展。我們的主題是研究一種益生菌的抑菌效果。從一開始的文獻探討、設計實驗、一次次失敗的嘗試，到最後看到培養皿上出現我們預期的結果，那種成就感是無可取代的。這個過程讓我確定，我想待在實驗室裡，解決跟生命相關的問題。</p><h4>Q2: 生科系都在做實驗嗎？</h4><p>實驗課確實佔了很大一部分，像是普生實驗、生化實驗、分生實驗等等，幾乎每門主科都有搭配的實驗課。但理論課也非常重，因為你需要有扎實的知識基礎，才能看懂文獻、設計實驗。所以絕對不是只有動手做而已。</p><h4>Q3: 給對生科領域有興趣的學弟妹的建議？</h4><p>英文能力非常、非常重要。因為最新的研究、頂尖的論文幾乎都是英文的。高中時可以多看一些科普的英文文章或影片。另外，要培養耐心和細心，做實驗常常會失敗，找出失敗的原因並改進，是生科人的日常。如果你享受這個過程，那這裡會很適合你。</p></div>`,
-                tips: [
-                    { title: "閱讀科普雜誌", desc: "試著閱讀《科學人》雜誌或關注 PanSci 泛科學網站，了解最新的科學進展。" },
-                    { title: "觀看學術演講", desc: "到 YouTube 搜尋 TED-Ed 或 CrashCourse 的生物相關影片，用有趣的方式學習新知。" },
-                    { title: "練習閱讀英文文獻", desc: "挑戰自己，找一篇簡單的英文科普報導，試著理解其中的專有名詞與核心概念。" }
-                ]
-            }
-        ];
+        // 資料改由同目錄的 senior-interviews.json 載入（見下方 loadData）。
+        // 要新增或修改資料，請編輯 senior-interviews.json，不需要動這支 HTML。
+        let interviewData = [];
 
         const interviewGrid = document.getElementById('interview-grid');
         const modal = document.getElementById('interviewModal');
@@ -417,8 +358,25 @@
             mobileMenu.classList.toggle('hidden');
         });
 
-        // Initial Render
-        renderInterviews();
+        // 從 senior-interviews.json 載入資料後再渲染
+        async function loadData() {
+            try {
+                const response = await fetch('senior-interviews.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                interviewData = Array.isArray(data.interviews) ? data.interviews : [];
+                renderInterviews();
+            } catch (error) {
+                console.error('資料載入失敗：', error);
+                const grid = document.getElementById('interview-grid');
+                if (grid) {
+                    grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-16">資料載入失敗，請稍後重新整理頁面。</p>';
+                }
+            }
+        }
+        loadData();
         feather.replace();
         checkUrlForModal();
     </script>
