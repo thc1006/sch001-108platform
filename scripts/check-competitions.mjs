@@ -22,9 +22,12 @@ const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
 // 除 deadline 外都必須是「非空字串」；deadline 必須是字串（允許空字串＝依官網公告）
-const TEXT_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'description', 'url'];
-const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計'];
+const TEXT_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'region', 'eligibility', 'mode', 'description', 'url'];
+const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計', '社會永續', '跨領域'];
 const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
+const ALLOWED_REGIONS = ['台灣', '美國', '英國', '歐盟', '東亞', '全球線上', '其他'];
+const ALLOWED_ELIGIBILITY = ['公開報名', '國家隊選拔', '邀請制'];
+const ALLOWED_MODES = ['線上', '實體', '混合'];
 
 // 致命錯誤：寫出錯誤報告、通知 workflow 開 issue，再以非零碼結束。
 // 即使在「檔案讀不到 / JSON 無法解析」這種狀況，competitions-check.yml 仍能
@@ -97,6 +100,15 @@ list.forEach((comp, index) => {
     }
     if (typeof comp.level === 'string' && !ALLOWED_LEVELS.includes(comp.level)) {
         schemaErrors.push(`「${label}」的 level「${comp.level}」不在允許清單內`);
+    }
+    if (typeof comp.region === 'string' && !ALLOWED_REGIONS.includes(comp.region)) {
+        schemaErrors.push(`「${label}」的 region「${comp.region}」不在允許清單內`);
+    }
+    if (typeof comp.eligibility === 'string' && !ALLOWED_ELIGIBILITY.includes(comp.eligibility)) {
+        schemaErrors.push(`「${label}」的 eligibility「${comp.eligibility}」不在允許清單內`);
+    }
+    if (typeof comp.mode === 'string' && !ALLOWED_MODES.includes(comp.mode)) {
+        schemaErrors.push(`「${label}」的 mode「${comp.mode}」不在允許清單內`);
     }
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」
