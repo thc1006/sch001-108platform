@@ -141,108 +141,9 @@
     </footer>
 
     <script>
-        const competitionsData = [
-            {
-                title: '全國中小學科學展覽會',
-                organizer: '國立臺灣科學教育館',
-                category: '科學',
-                level: '全國',
-                form: '團體',
-                description: '台灣歷史最悠久、規模最盛大的中學生科學研究競賽，是展現探究與實作能力的最佳舞台。',
-                deadline: '2026-03-15',
-                url: 'https://twsf.ntsec.gov.tw/'
-            },
-            {
-                title: '旺宏科學獎',
-                organizer: '旺宏電子股份有限公司',
-                category: '科學',
-                level: '全國',
-                form: '個人/團體',
-                description: '有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。',
-                deadline: '2025-07-10',
-                url: 'https://www.mxeduc.org.tw/ScienceAward'
-            },
-            {
-                title: 'TRML 台灣地區數學聯賽',
-                organizer: '中華民國數學會',
-                category: '數理',
-                level: '全國',
-                form: '團體',
-                description: '結合個人賽、團體賽與思考賽，考驗數學解題能力與團隊合作默契，是數學愛好者的年度盛事。',
-                deadline: '2025-08-20',
-                url: 'https://trml.math.ntu.edu.tw/'
-            },
-            {
-                title: '全國高中生資訊應用競賽',
-                organizer: '多所大學輪流主辦',
-                category: '資訊',
-                level: '全國',
-                form: '團體',
-                description: '分為多個組別，如軟體設計、數位內容等，旨在提升高中生的資訊應用與創新能力。',
-                deadline: '2025-11-10',
-                url: 'https://sa.ncyu.edu.tw/'
-            },
-            {
-                title: '外交小尖兵',
-                organizer: '外交部',
-                category: '語文人文',
-                level: '全國',
-                form: '團體',
-                description: '以英語為工具，探討國際議題，培養青年學子的國際視野與英語演說能力。',
-                deadline: '2025-09-15',
-                url: 'https://youthambassadors.mofa.gov.tw/'
-            },
-            {
-                title: '全國高中生商業個案大賽',
-                organizer: '台灣大學管理學院',
-                category: '商業管理',
-                level: '全國',
-                form: '團體',
-                description: '模擬真實的商業情境，要求參賽隊伍分析個案並提出解決方案，是商管潛力人才的競技場。',
-                deadline: '2026-02-28',
-                url: 'https://www.ntu-tbas.com/'
-            },
-            {
-                title: '台灣國際學生創意設計大賽',
-                organizer: '教育部',
-                category: '藝術設計',
-                level: '國際',
-                form: '個人/團體',
-                description: '全球規模最大的學生設計競賽之一，分為產品設計、視覺設計、數位動畫三大類，是與世界好手交流的絕佳機會。',
-                deadline: '2025-07-15',
-                url: 'https://www.tisdc.org/'
-            },
-            {
-                title: '國際數學奧林匹亞 (IMO)',
-                organizer: '各國數學學會',
-                category: '數理',
-                level: '國際',
-                form: '個人',
-                description: '世界最高等級的中學生數學競賽，需經過國內層層選拔，代表國家爭取榮譽。',
-                deadline: '2026-01-15',
-                url: 'https://www.imo-official.org/'
-            },
-            {
-                title: '國際資訊奧林匹亞 (IOI)',
-                organizer: '各國資訊學會',
-                category: '資訊',
-                level: '國際',
-                form: '個人',
-                description: '全球中學生程式設計與演算法的頂級競賽，考驗參賽者的邏輯思維與解題能力。',
-                deadline: '2025-12-20',
-                url: 'https://ioinformatics.org/'
-            },
-            {
-                title: '全國學生美術比賽',
-                organizer: '國立臺灣藝術教育館',
-                category: '藝術設計',
-                level: '全國',
-                form: '個人',
-                description: '台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等多種類別。',
-                deadline: '2025-10-20',
-                url: 'https://web.arte.gov.tw/nsac/index_news.aspx'
-            }
-        ];
+        // 競賽資料改由同目錄的 competitions.json 載入（見頁尾的 loadCompetitions）。
+        // 要新增或修改競賽，請編輯 competitions.json，不需要動這支 HTML。
+        let competitionsData = [];
 
         const competitionGrid = document.getElementById('competition-grid');
         const noResultsDiv = document.getElementById('no-results');
@@ -331,8 +232,26 @@
         levelFilter.addEventListener('change', renderCompetitions);
         formFilter.addEventListener('change', renderCompetitions);
 
-        // Initial Render
-        renderCompetitions();
+        // 從 competitions.json 載入競賽資料後再渲染
+        async function loadCompetitions() {
+            try {
+                const response = await fetch('competitions.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                competitionsData = Array.isArray(data.competitions) ? data.competitions : [];
+                renderCompetitions();
+            } catch (error) {
+                console.error('競賽資料載入失敗：', error);
+                competitionGrid.innerHTML = '';
+                noResultsDiv.classList.remove('hidden');
+                noResultsDiv.querySelector('h3').textContent = '競賽資料載入失敗';
+                noResultsDiv.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+            }
+        }
+
+        loadCompetitions();
     </script>
 
     <!-- GoatCounter -->

@@ -21,14 +21,9 @@ const projectRoot = __dirname;
 const searchData = [];
 let idCounter = 1;
 
-// 要掃描的資料夾列表
-const directoriesToScan = [
-    '', // 根目錄
-    'autonomous-learning',
-    'learning-portfolio',
-    'career-exploration',
-    'advanced-resources'
-];
+// 要掃描的資料夾列表。只需根目錄：scanDirectory 會遞迴進入所有未排除的子目錄。
+// （先前同時列出 '' 與各子目錄，導致子目錄被掃描兩次、索引項目整批重複。）
+const directoriesToScan = [''];
 
 console.log('🚀 開始建立搜尋索引...');
 
@@ -119,6 +114,38 @@ function processHtmlFile(filePath, fileUrl) {
             }
         }
     });
+
+    // --- 競賽資料已外移至 competitions.json，改由該檔索引各競賽項目 ---
+    if (fileUrl === 'advanced-resources/competitions.html') {
+        indexCompetitionsFromJson(pageTitle, fileUrl);
+    }
+}
+
+// 從 competitions.json 索引各競賽項目（資料已不再內嵌於 competitions.html，
+// 故上方的 const ...Data 陣列擷取規則抓不到，需在此單獨處理）。
+function indexCompetitionsFromJson(pageTitle, fileUrl) {
+    const jsonPath = path.join(projectRoot, 'advanced-resources', 'competitions.json');
+    if (!fs.existsSync(jsonPath)) {
+        console.warn('⚠️ 找不到 competitions.json，略過競賽項目索引');
+        return;
+    }
+    try {
+        const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        const competitions = Array.isArray(parsed.competitions) ? parsed.competitions : [];
+        competitions.forEach(item => {
+            if (!item || typeof item !== 'object' || !item.title) return;
+            searchData.push({
+                id: `competitions-${idCounter++}`,
+                title: `${pageTitle} - ${item.title}`,
+                content: `${item.organizer || ''} ${item.description || ''}`.trim(),
+                tags: ['competitions', pageTitle, item.category, item.level].filter(Boolean),
+                url: `${fileUrl}#competition-grid`
+            });
+            console.log(`  ➡️ 已索引競賽: ${item.title}`);
+        });
+    } catch (e) {
+        console.warn(`⚠️ 解析 competitions.json 時發生錯誤: ${e.message}`);
+    }
 }
 
 // 從根目錄開始掃描

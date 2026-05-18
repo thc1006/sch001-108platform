@@ -15,9 +15,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '18' # 使用 LTS 版本
+          node-version-file: '.node-version'
           cache: 'npm'
 
       - name: Install dependencies
@@ -45,6 +45,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: lycheeverse/lychee-action@v1
         with:
-          args: --verbose --no-progress './**/*.html' './**/*.md'
+          args: --verbose --no-progress './**/*.html' './**/*.md' './advanced-resources/competitions.json'
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
