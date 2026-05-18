@@ -138,17 +138,9 @@
     </footer>
 
     <script>
-        const tools = [
-            { name: 'Canva', category: '簡報排版', description: '強大且極易上手的線上設計平台，內建海量模板，讓你不用是設計師也能做出專業級的學習歷程、簡報與海報。', best_for: '快速製作精美報告', pricing: '免費增值', url: 'https://www.canva.com/', logo: 'https://images.pexels.com/photos/4050315/pexels-photo-4050315.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'Figma', category: '簡報排版', description: '專業級的雲端UI/UX設計工具，功能強大且協作功能完善。學習曲線稍高，但非常適合用來製作高度客製化的報告排版。', best_for: '專業排版與協作', pricing: '免費增值', url: 'https://www.figma.com/', logo: 'https://images.pexels.com/photos/39284/macbook-apple-imac-computer-39284.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'XMind', category: '心智圖', description: '介面美觀、功能專注的心智圖軟體。非常適合用來進行腦力激盪、整理報告架構、或梳理複雜的知識體系。', best_for: '腦力激盪與大綱整理', pricing: '免費增值', url: 'https://xmind.app/', logo: 'https://images.pexels.com/photos/3768894/pexels-photo-3768894.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'Google Sheets', category: '數據視覺化', description: '強大的線上試算表工具，不僅能處理數據，更能輕鬆製作出長條圖、折線圖、圓餅圖等各種基本圖表，並嵌入報告中。', best_for: '問卷分析與基本圖表', pricing: '免費', url: 'https://www.google.com/sheets/about/', logo: 'https://images.pexels.com/photos/669615/pexels-photo-669615.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'Notion', category: '筆記寫作', description: '一個全功能的數位工作區，結合了筆記、資料庫、看板、日曆等多種功能。適合用來建立個人知識庫與管理自主學習專案。', best_for: '建立個人知識庫', pricing: '免費增值', url: 'https://www.notion.so/', logo: 'https://images.pexels.com/photos/4145190/pexels-photo-4145190.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'HackMD', category: '筆記寫作', description: '一個支援 Markdown 語法的即時協作筆記平台，非常適合程式學習者、或是需要快速撰寫並分享帶有程式碼或數學公式的筆記。', best_for: '撰寫程式與學術筆記', pricing: '免費增值', url: 'https://hackmd.io/', logo: 'https://images.pexels.com/photos/5474028/pexels-photo-5474028.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'DaVinci Resolve', category: '影音剪輯', description: '好萊塢等級的專業剪輯軟體，令人驚訝的是，它的基礎版本完全免費！功能包含剪輯、調色、特效與聲音後製。', best_for: '專業級影片剪輯', pricing: '免費', url: 'https://www.blackmagicdesign.com/products/davinciresolve', logo: 'https://images.pexels.com/photos/4050320/pexels-photo-4050320.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'OBS Studio', category: '影音剪輯', description: '開源、免費且強大的螢幕錄製與直播軟體。如果你需要錄製操作過程、線上簡報或遊戲畫面，這是你的不二之選。', best_for: '螢幕錄製與直播', pricing: '免費', url: 'https://obsproject.com/', logo: 'https://images.pexels.com/photos/7989737/pexels-photo-7989737.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' },
-            { name: 'Trello', category: '團隊協作', description: '簡單直觀的看板式專案管理工具。透過卡片、列表與看板，讓小組成員能輕鬆追蹤每個人的工作進度。', best_for: '管理小組專案進度', pricing: '免費增值', url: 'https://trello.com/', logo: 'https://images.pexels.com/photos/110473/pexels-photo-110473.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }
-        ];
+        // 工具資料改由同目錄的 tools.json 載入（見下方 loadData）。
+        // 要新增或修改工具，請編輯 tools.json，不需要動這支 HTML。
+        let tools = [];
 
         const toolGrid = document.getElementById('tool-grid');
         const filters = document.getElementById('category-filters');
@@ -170,7 +162,7 @@
                 if(tool.pricing === '免費增值') pricingColor = 'bg-yellow-100 text-yellow-800';
                 
                 card.innerHTML = `
-                    <img src="${tool.logo}" alt="${tool.name}" class="w-full h-48 object-cover rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                    <img src="${tool.logo}" alt="${tool.name}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-6 rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="flex justify-between items-start">
                             <h3 class="text-xl font-bold text-gray-900">${tool.name}</h3>
@@ -197,8 +189,22 @@
             }
         });
 
-        // Initial Render
-        renderTools();
+        // 從 tools.json 載入工具資料後再渲染
+        async function loadData() {
+            try {
+                const response = await fetch('tools.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                tools = Array.isArray(data.tools) ? data.tools : [];
+                renderTools();
+            } catch (error) {
+                console.error('工具資料載入失敗：', error);
+                toolGrid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-16">資料載入失敗，請稍後重新整理頁面。</p>';
+            }
+        }
+        loadData();
     </script>
 
     <!-- GoatCounter -->
