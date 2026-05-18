@@ -31,7 +31,9 @@ jobs:
         run: node scripts/check-competitions.mjs
 
       - name: Open or update issue when attention is needed
-        if: steps.check.outputs.needs_attention == 'true'
+        # always() 確保即使 check 步驟以致命錯誤結束（exit 1），只要看門狗已
+        # 寫出 needs_attention=true，仍會開 issue 通知維護者。
+        if: always() && steps.check.outputs.needs_attention == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

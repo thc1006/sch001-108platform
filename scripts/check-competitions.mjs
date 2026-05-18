@@ -21,12 +21,28 @@ const DATA_PATH = new URL('../advanced-resources/competitions.json', import.meta
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
-const REQUIRED_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'description', 'deadline', 'url'];
+// 除 deadline 外都必須是「非空字串」；deadline 必須是字串（允許空字串＝依官網公告）
+const TEXT_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'description', 'url'];
 const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計'];
 const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
 
-function fail(message) {
+// 致命錯誤：寫出錯誤報告、通知 workflow 開 issue，再以非零碼結束。
+// 即使在「檔案讀不到 / JSON 無法解析」這種狀況，competitions-check.yml 仍能
+// 憑此報告與 needs_attention 輸出開 issue 提醒維護者（workflow 仍會顯示紅燈）。
+async function fail(message) {
     console.error(`❌ ${message}`);
+    const report = [
+        '## 競賽資料檢查報告',
+        '',
+        '### ❌ 致命錯誤：competitions.json 無法檢查',
+        '',
+        `- ${message}`,
+        '',
+    ].join('\n');
+    await writeFile(REPORT_PATH, report, 'utf8').catch(() => {});
+    if (process.env.GITHUB_OUTPUT) {
+        await appendFile(process.env.GITHUB_OUTPUT, 'needs_attention=true\n').catch(() => {});
+    }
     process.exit(1);
 }
 
@@ -36,11 +52,11 @@ let data;
 try {
     data = JSON.parse(raw);
 } catch (err) {
-    fail(`competitions.json 不是合法的 JSON：${err.message}`);
+    await fail(`competitions.json 不是合法的 JSON：${err.message}`);
 }
 
 if (data === null || typeof data !== 'object' || !Array.isArray(data.competitions)) {
-    fail('competitions.json 的最外層必須是物件，且需包含 competitions 陣列');
+    await fail('competitions.json 的最外層必須是物件，且需包含 competitions 陣列');
 }
 
 const list = data.competitions;
@@ -66,19 +82,33 @@ list.forEach((comp, index) => {
         schemaErrors.push(`第 ${index + 1} 筆競賽不是有效的物件`);
         return;
     }
-    const label = comp.title || `第 ${index + 1} 筆`;
+    const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : `第 ${index + 1} 筆`;
 
-    for (const field of REQUIRED_FIELDS) {
-        if (!(field in comp)) schemaErrors.push(`「${label}」缺少欄位：${field}`);
+    // 必填文字欄位：必須存在且為非空字串（頁面會直接當字串用，例如 comp.form.includes()）
+    for (const field of TEXT_FIELDS) {
+        if (!(field in comp)) {
+            schemaErrors.push(`「${label}」缺少欄位：${field}`);
+        } else if (typeof comp[field] !== 'string' || comp[field].trim() === '') {
+            schemaErrors.push(`「${label}」的欄位 ${field} 必須是非空字串`);
+        }
     }
-    if (comp.category && !ALLOWED_CATEGORIES.includes(comp.category)) {
+    if (typeof comp.category === 'string' && !ALLOWED_CATEGORIES.includes(comp.category)) {
         schemaErrors.push(`「${label}」的 category「${comp.category}」不在允許清單內`);
     }
-    if (comp.level && !ALLOWED_LEVELS.includes(comp.level)) {
+    if (typeof comp.level === 'string' && !ALLOWED_LEVELS.includes(comp.level)) {
         schemaErrors.push(`「${label}」的 level「${comp.level}」不在允許清單內`);
     }
 
-    if (!comp.deadline) return; // 空字串代表「依官網公告」，屬正常狀況
+    // deadline：必須存在且為字串；空字串代表「依官網公告」
+    if (!('deadline' in comp)) {
+        schemaErrors.push(`「${label}」缺少欄位：deadline`);
+        return;
+    }
+    if (typeof comp.deadline !== 'string') {
+        schemaErrors.push(`「${label}」的 deadline 必須是字串（YYYY-MM-DD 格式或空字串）`);
+        return;
+    }
+    if (comp.deadline === '') return; // 空字串代表「依官網公告」，屬正常狀況
 
     // 嚴格驗證：先比對 YYYY-MM-DD 格式，再做日期往返檢查
     const matched = DATE_RE.exec(comp.deadline);
