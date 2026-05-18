@@ -1,5 +1,5 @@
 {
-  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」；mode=辦理形式，限「線上」「實體」「混合」；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切 2026 日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與 2026 風險提示。注意：看門狗 scripts/check-competitions.mjs 目前的 ALLOWED_CATEGORIES 尚未納入「社會永續」「跨領域」，CI 週檢可能對這兩類報欄位錯誤，需同步更新該腳本。",
+  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
   "lastUpdated": "2026-05-19",
   "competitions": [
     {
