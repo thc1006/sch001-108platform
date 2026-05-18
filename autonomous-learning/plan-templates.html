@@ -322,3 +322,147 @@
             if (!template) return;
 
             modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-bold text-teal-600">${template.category} / ${template.type}</p>
+                        <h3 class="text-2xl font-bold">${template.title}</h3>
+                    </div>
+                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                </div>
+                <div class="border-b border-gray-200">
+                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
+                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTab(this, 'plan_html')">計畫內容</button>
+                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTab(this, 'commentary_html')">專家點評</button>
+                    </nav>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow prose max-w-none">
+                    <div class="tab-content-plan_html">${template.plan_html}</div>
+                    <div class="tab-content-commentary_html hidden">${template.commentary_html}</div>
+                </div>
+                 <div class="p-4 bg-gray-50 text-right rounded-b-lg border-t">
+                    <a href="#" class="bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 transition duration-300">下載此範本 (docx)</a>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modalContent.scrollTop = 0;
+        }
+
+        window.showTab = (btn, tabName) => {
+            modalContent.querySelectorAll('.modal-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            modalContent.querySelectorAll('.prose > div').forEach(div => div.classList.add('hidden'));
+            modalContent.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
+        }
+
+        window.hideModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // --- Filter Logic ---
+        filters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filters.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                const category = e.target.dataset.filter;
+                renderTemplates(category);
+            }
+        });
+
+        // --- AI Plan Generator Logic (Powered by Puter.js) ---
+        const generatePlanBtn = document.getElementById('generatePlanBtn');
+        const planInput = document.getElementById('planInput');
+        const planResult = document.getElementById('planResult');
+
+        function showLoader(element) {
+            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        }
+
+        generatePlanBtn.addEventListener('click', async () => {
+            const topic = planInput.value.trim();
+            if (!topic) {
+                planResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的自主學習主題！</p>';
+                return;
+            }
+            showLoader(planResult);
+            generatePlanBtn.disabled = true;
+
+            const prompt = `
+            你是一位專業的台灣高中教育顧問。請為一個自主學習主題：「${topic}」，設計一份計畫大綱。
+
+            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
+
+            JSON 結構範例:
+            {
+              "learning_objectives": ["目標一", "目標二", "目標三"],
+              "execution_methods": ["方法一", "方法二"],
+              "weekly_plan": [
+                {"week": "Week 1-2", "tasks": "任務說明一"},
+                {"week": "Week 3-4", "tasks": "任務說明二"},
+                {"week": "Week 5-6", "tasks": "任務說明三"},
+                {"week": "Week 7-8", "tasks": "任務說明四"}
+              ],
+              "expected_outcome": ["預期產出一", "預期產出二"]
+            }
+            `;
+
+            try {
+                // 使用 Puter.js 呼叫 AI
+                const response = await puter.ai.chat(prompt, {
+                    model: 'google/gemini-2.0-flash-lite-001'
+                });
+
+                // 嘗試解析 AI 回傳的純文字內容為 JSON
+                const responseText = (response && response.message && response.message.content) || '';
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error("AI 回應中找不到 JSON。");
+                }
+                const parsedJson = JSON.parse(jsonMatch[0]);
+
+                if (parsedJson && parsedJson.weekly_plan) {
+                    displayAIPlan(parsedJson);
+                } else {
+                    throw new Error("AI 回應的 JSON 結構不符合預期。");
+                }
+
+            } catch (error) {
+                console.error("Error calling Puter.js or parsing JSON:", error);
+                planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
+            } finally {
+                generatePlanBtn.disabled = false;
+            }
+        });
+
+        function displayAIPlan(data) {
+            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${obj}</li>`).join('');
+            const methodsHtml = (data.execution_methods || []).map(met => `<li>${met}</li>`).join('');
+            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${week.week}:</b> ${week.tasks}</li>`).join('');
+            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${out}</li>`).join('');
+
+            planResult.innerHTML = `
+                <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">
+                    <h4 class="text-teal-800 font-bold">學習目標</h4>
+                    <ul class="list-disc">${objectivesHtml}</ul>
+                    <h4 class="text-teal-800 font-bold">執行方法</h4>
+                    <ul class="list-disc">${methodsHtml}</ul>
+                    <h4 class="text-teal-800 font-bold">週次進度</h4>
+                    <ol class="list-decimal">${weeklyPlanHtml}</ol>
+                    <h4 class="text-teal-800 font-bold">預期產出</h4>
+                    <ul class="list-disc">${outcomeHtml}</ul>
+                </div>
+            `;
+        }
+
+        // --- Initial Render ---
+        renderTemplates();
+    </script>
+
+    <!-- GoatCounter -->
+    <script data-goatcounter="https://sch001.goatcounter.com/count"
+            async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
