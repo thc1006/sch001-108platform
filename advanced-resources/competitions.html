@@ -69,7 +69,7 @@
         <!-- Filters -->
         <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
             <div class="bg-white p-4 rounded-xl shadow-md">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                         <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
                         <input type="text" id="search-input" placeholder="競賽名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
@@ -84,6 +84,21 @@
                             <option value="語文人文">語文人文</option>
                             <option value="商業管理">商業管理</option>
                             <option value="藝術設計">藝術設計</option>
+                            <option value="社會永續">社會永續</option>
+                            <option value="跨領域">跨領域</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="region-filter" class="font-bold text-gray-700 text-sm">競賽地區</label>
+                        <select id="region-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有地區</option>
+                            <option value="台灣">台灣</option>
+                            <option value="美國">美國</option>
+                            <option value="英國">英國</option>
+                            <option value="歐盟">歐盟</option>
+                            <option value="東亞">東亞</option>
+                            <option value="全球線上">全球線上</option>
+                            <option value="其他">其他</option>
                         </select>
                     </div>
                     <div>
@@ -151,6 +166,7 @@
         const categoryFilter = document.getElementById('category-filter');
         const levelFilter = document.getElementById('level-filter');
         const formFilter = document.getElementById('form-filter');
+        const regionFilter = document.getElementById('region-filter');
 
         function getStatus(deadline) {
             if (!deadline) {
@@ -172,6 +188,7 @@
         function renderCompetitions() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedCategory = categoryFilter.value;
+            const selectedRegion = regionFilter.value;
             const selectedLevel = levelFilter.value;
             const selectedForm = formFilter.value;
 
@@ -179,9 +196,10 @@
                 const searchCorpus = `${comp.title} ${comp.organizer}`.toLowerCase();
                 const matchesSearch = searchCorpus.includes(searchTerm);
                 const matchesCategory = selectedCategory === 'all' || comp.category === selectedCategory;
+                const matchesRegion = selectedRegion === 'all' || comp.region === selectedRegion;
                 const matchesLevel = selectedLevel === 'all' || comp.level === selectedLevel;
                 const matchesForm = selectedForm === 'all' || comp.form.includes(selectedForm);
-                return matchesSearch && matchesCategory && matchesLevel && matchesForm;
+                return matchesSearch && matchesCategory && matchesRegion && matchesLevel && matchesForm;
             });
 
             competitionGrid.innerHTML = '';
@@ -200,14 +218,17 @@
                                 <div class="flex items-center flex-wrap gap-2">
                                     <span class="text-sm font-bold text-pink-600">${comp.category}</span>
                                     <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.region}</span>
+                                    <span class="text-gray-300">|</span>
                                     <span class="text-sm font-semibold text-gray-500">${comp.level}</span>
-                                     <span class="text-gray-300">|</span>
+                                    <span class="text-gray-300">|</span>
                                     <span class="text-sm font-semibold text-gray-500">${comp.form}</span>
                                 </div>
                                 <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color} flex-shrink-0">${status.text}</span>
                             </div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2">${comp.title}</h3>
-                            <p class="text-sm text-gray-500 mb-4">主辦單位：${comp.organizer}</p>
+                            <p class="text-sm text-gray-500 mb-1">主辦單位：${comp.organizer}</p>
+                            <p class="text-xs font-medium text-gray-500 mb-3">參賽資格：${comp.eligibility}　·　${comp.mode}</p>
                             <p class="text-gray-700">${comp.description}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
@@ -229,6 +250,7 @@
 
         searchInput.addEventListener('input', renderCompetitions);
         categoryFilter.addEventListener('change', renderCompetitions);
+        regionFilter.addEventListener('change', renderCompetitions);
         levelFilter.addEventListener('change', renderCompetitions);
         formFilter.addEventListener('change', renderCompetitions);
 
