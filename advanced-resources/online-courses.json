@@ -67,10 +67,10 @@
       "certificate": true,
       "tags": [
         "AI",
-        "機器學習",
+        "AI素養",
         "吳恩達"
       ],
-      "description": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
+      "description": "由AI大師吳恩達親授的非技術 AI 通識課，用最直觀的方式說明 AI 能做什麼、不能做什麼，以及如何在組織與生活中應用，是建立 AI 素養的最佳第一門課。",
       "url": "https://www.coursera.org/learn/ai-for-everyone",
       "thumbnail_url": "img/courses/ai-for-everyone.jpeg"
     },
