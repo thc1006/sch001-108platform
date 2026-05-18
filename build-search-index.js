@@ -156,6 +156,11 @@ const JSON_DATA_PAGES = {
         arrayKey: 'methods', idPrefix: 'method', tag: '研究方法',
         anchor: 'methodology-grid',
     },
+    'learning-portfolio/tools.html': {
+        json: 'learning-portfolio/tools.json',
+        arrayKey: 'tools', idPrefix: 'tool', tag: '線上工具',
+        anchor: 'tool-grid',
+    },
 };
 
 // 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name），故以下採欄位聯集。

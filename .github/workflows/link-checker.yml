@@ -45,6 +45,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: lycheeverse/lychee-action@v1
         with:
-          args: --verbose --no-progress './**/*.html' './**/*.md' './advanced-resources/competitions.json' './advanced-resources/online-courses.json' './career-exploration/senior-interviews.json' './learning-portfolio/portfolio-gallery.json' './autonomous-learning/methodology.json'
+          args: --verbose --no-progress './**/*.html' './**/*.md' './advanced-resources/competitions.json' './advanced-resources/online-courses.json' './career-exploration/senior-interviews.json' './learning-portfolio/portfolio-gallery.json' './autonomous-learning/methodology.json' './learning-portfolio/tools.json'
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
