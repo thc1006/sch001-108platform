@@ -368,6 +368,8 @@
                 const data = await response.json();
                 interviewData = Array.isArray(data.interviews) ? data.interviews : [];
                 renderInterviews();
+                // 深連結（?view=<id>）需在資料載入後才能比對，故移到此處呼叫
+                checkUrlForModal();
             } catch (error) {
                 console.error('資料載入失敗：', error);
                 const grid = document.getElementById('interview-grid');
@@ -378,7 +380,6 @@
         }
         loadData();
         feather.replace();
-        checkUrlForModal();
     </script>
 
     <!-- GoatCounter -->
