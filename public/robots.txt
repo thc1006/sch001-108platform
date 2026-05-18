@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Provide sitemap location
-Sitemap: https://thc1006.github.io/sch001-108platform/sitemap.xml
+Sitemap: https://thc1006.github.io/sch001-108platform/sitemap-index.xml

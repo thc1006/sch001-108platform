@@ -19,9 +19,29 @@ export default defineConfig({
   build: {
     format: 'preserve',
   },
-  // TODO(PR 3 / 切換部署):@astrojs/sitemap 在 build.format:'preserve' 下會
-  // 產生無副檔名 URL(/about),與本站實際的 .html 網址不符。切換部署時需:
-  // 以 serialize 補 .html(區段首頁維持目錄式)、移除舊 sitemap.xml、並把
-  // robots.txt 的 Sitemap: 指向 sitemap-index.xml。
-  integrations: [sitemap()],
+  // @astrojs/sitemap 在 build.format:'preserve' 下預設產生無副檔名 URL,
+  // 與本站實際的 .html 網址不符;以 serialize 修正 —— 區段首頁(foo/index.html)
+  // 維持目錄式網址,其餘頁面補回 .html。
+  integrations: [
+    sitemap({
+      serialize(item) {
+        const base = '/sch001-108platform/';
+        const sectionIndexes = new Set([
+          'advanced-resources',
+          'autonomous-learning',
+          'career-exploration',
+          'civic-tech-map',
+          'learning-portfolio',
+        ]);
+        const rel = new URL(item.url).pathname.replace(base, '').replace(/\/$/, '');
+        if (rel === '') return item; // 站台首頁,維持目錄式
+        if (sectionIndexes.has(rel)) {
+          item.url = `https://thc1006.github.io${base}${rel}/`;
+        } else if (!item.url.endsWith('.html')) {
+          item.url = `https://thc1006.github.io${base}${rel}.html`;
+        }
+        return item;
+      },
+    }),
+  ],
 });

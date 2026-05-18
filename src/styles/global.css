@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* competency-map 頁以 JS 字串插值動態組出圖示色彩類別
+   (text-{indigo,blue,purple}-{500,600});Tailwind v4 的靜態掃描看不到
+   插值字串,以 @source inline 明確產生這些 utility,避免 text-purple-500
+   等未生成、圖示色彩錯誤。 */
+@source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
+
 /* ──────────────────────────────────────────────────────────────
    全站共用樣式
    取代先前散落在各頁 <head> 內、彼此重複又不一致的 inline <style>。
