@@ -43,6 +43,11 @@ jobs:
       - name: Build with Astro
         run: npx astro build
 
+      # 掃描 dist/ 重建搜尋索引,輸出 dist/search-index.json,隨產物一起部署。
+      # （務必在 astro build 之後、上傳之前執行。）
+      - name: Build search index
+        run: node build-search-index.js
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
