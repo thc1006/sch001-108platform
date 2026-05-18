@@ -15,6 +15,7 @@
     <title>計畫範本庫 - 台灣教育處方籤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.puter.com/v2/"></script>
+    <script src="../shared/puter-ai.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -410,13 +411,20 @@
             `;
 
             try {
-                // 使用 Puter.js 呼叫 AI
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
+                // 使用 Puter.js 呼叫 AI（含模型 fallback 與逾時保護）
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                    signal: AbortSignal.timeout(30000)
                 });
 
                 // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const responseText = (response && response.message && response.message.content) || '';
+                let responseText = '';
+                if (response && response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
                     throw new Error("AI 回應中找不到 JSON。");
@@ -430,8 +438,12 @@
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
+                console.error("Error calling Puter.js or parsing JSON:", PuterAI.formatPuterError(error), error);
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    planResult.innerHTML = `<p class="text-red-500 text-center">請求超時，請檢查網路連線後重試。</p>`;
+                } else {
+                    planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
+                }
             } finally {
                 generatePlanBtn.disabled = false;
             }
