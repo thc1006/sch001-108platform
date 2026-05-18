@@ -2185,7 +2185,106 @@
     "url": "learning-portfolio/tools.html"
   },
   {
-    "id": "page-176",
+    "id": "tool-176",
+    "title": "線上製作工具箱 - Canva",
+    "content": "強大且極易上手的線上設計平台，內建海量模板，讓你不用是設計師也能做出專業級的學習歷程、簡報與海報。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "簡報排版"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-177",
+    "title": "線上製作工具箱 - Figma",
+    "content": "專業級的雲端UI/UX設計工具，功能強大且協作功能完善。學習曲線稍高，但非常適合用來製作高度客製化的報告排版。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "簡報排版"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-178",
+    "title": "線上製作工具箱 - XMind",
+    "content": "介面美觀、功能專注的心智圖軟體。非常適合用來進行腦力激盪、整理報告架構、或梳理複雜的知識體系。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "心智圖"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-179",
+    "title": "線上製作工具箱 - Google Sheets",
+    "content": "強大的線上試算表工具，不僅能處理數據，更能輕鬆製作出長條圖、折線圖、圓餅圖等各種基本圖表，並嵌入報告中。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "數據視覺化"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-180",
+    "title": "線上製作工具箱 - Notion",
+    "content": "一個全功能的數位工作區，結合了筆記、資料庫、看板、日曆等多種功能。適合用來建立個人知識庫與管理自主學習專案。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "筆記寫作"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-181",
+    "title": "線上製作工具箱 - HackMD",
+    "content": "一個支援 Markdown 語法的即時協作筆記平台，非常適合程式學習者、或是需要快速撰寫並分享帶有程式碼或數學公式的筆記。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "筆記寫作"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-182",
+    "title": "線上製作工具箱 - DaVinci Resolve",
+    "content": "好萊塢等級的專業剪輯軟體，令人驚訝的是，它的基礎版本完全免費！功能包含剪輯、調色、特效與聲音後製。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "影音剪輯"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-183",
+    "title": "線上製作工具箱 - OBS Studio",
+    "content": "開源、免費且強大的螢幕錄製與直播軟體。如果你需要錄製操作過程、線上簡報或遊戲畫面，這是你的不二之選。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "影音剪輯"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "tool-184",
+    "title": "線上製作工具箱 - Trello",
+    "content": "簡單直觀的看板式專案管理工具。透過卡片、列表與看板，讓小組成員能輕鬆追蹤每個人的工作進度。",
+    "tags": [
+      "線上工具",
+      "線上製作工具箱",
+      "團隊協作"
+    ],
+    "url": "learning-portfolio/tools.html#tool-grid"
+  },
+  {
+    "id": "page-185",
     "title": "FlexSearch POC",
     "content": "🔬 FlexSearch POC 測試",
     "tags": [],
