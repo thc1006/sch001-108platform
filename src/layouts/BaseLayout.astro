@@ -13,6 +13,8 @@ interface Props {
   ogDescription?: string;
   ogImage?: string;
   currentSection?: string | null;
+  /** 區段首頁(foo/index.astro):canonical 維持目錄式網址,不轉成 .html */
+  isSectionIndex?: boolean;
   bodyClass?: string;
 }
 const {
@@ -23,10 +25,20 @@ const {
   ogDescription = description,
   ogImage = 'https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/thumbnail.png',
   currentSection = null,
+  isSectionIndex = false,
   bodyClass = 'bg-gray-50 text-gray-800',
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+// canonical / og:url:build.format:'preserve' 下 Astro.url.pathname 是「路由路徑」
+// (如 /…/competitions/),需轉回實際輸出的 .html 檔路徑,否則會指向 GitHub Pages
+// 上不存在(404)的網址。站台首頁與區段首頁(/foo/)維持目錄式 —— 其 index.html
+// 可由目錄網址正確服務。
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+let canonicalPath = Astro.url.pathname;
+if (canonicalPath !== base + '/' && !isSectionIndex && !canonicalPath.endsWith('.html')) {
+  canonicalPath = canonicalPath.replace(/\/$/, '') + '.html';
+}
+const canonical = new URL(canonicalPath, Astro.site).href;
 ---
 
 <!doctype html>
