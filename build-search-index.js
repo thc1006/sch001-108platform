@@ -115,36 +115,54 @@ function processHtmlFile(filePath, fileUrl) {
         }
     });
 
-    // --- 競賽資料已外移至 competitions.json，改由該檔索引各競賽項目 ---
-    if (fileUrl === 'advanced-resources/competitions.html') {
-        indexCompetitionsFromJson(pageTitle, fileUrl);
+    // --- 已外移到 JSON 的資料驅動頁面：資料不再內嵌於 HTML，上方的
+    //     const ...Data 陣列擷取規則抓不到，改由此處讀對應 JSON 索引 ---
+    const jsonPageCfg = JSON_DATA_PAGES[fileUrl];
+    if (jsonPageCfg) {
+        indexJsonDataPage(pageTitle, fileUrl, jsonPageCfg);
     }
 }
 
-// 從 competitions.json 索引各競賽項目（資料已不再內嵌於 competitions.html，
-// 故上方的 const ...Data 陣列擷取規則抓不到，需在此單獨處理）。
-function indexCompetitionsFromJson(pageTitle, fileUrl) {
-    const jsonPath = path.join(projectRoot, 'advanced-resources', 'competitions.json');
+// 已將資料外移到 JSON 的頁面設定：HTML 路徑 → { JSON 檔、陣列鍵、頁內錨點 }。
+// 之後若有更多頁面改為資料驅動，只要在此新增一筆即可。
+const JSON_DATA_PAGES = {
+    'advanced-resources/competitions.html': {
+        json: 'advanced-resources/competitions.json',
+        arrayKey: 'competitions',
+        anchor: 'competition-grid',
+    },
+    'advanced-resources/online-courses.html': {
+        json: 'advanced-resources/online-courses.json',
+        arrayKey: 'courses',
+        anchor: 'course-grid',
+    },
+};
+
+// 通用：讀一個資料 JSON，為其中每筆項目建立搜尋索引項目。
+function indexJsonDataPage(pageTitle, fileUrl, cfg) {
+    const jsonPath = path.join(projectRoot, cfg.json);
     if (!fs.existsSync(jsonPath)) {
-        console.warn('⚠️ 找不到 competitions.json，略過競賽項目索引');
+        console.warn(`⚠️ 找不到 ${cfg.json}，略過 ${fileUrl} 的項目索引`);
         return;
     }
     try {
         const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        const competitions = Array.isArray(parsed.competitions) ? parsed.competitions : [];
-        competitions.forEach(item => {
+        const items = Array.isArray(parsed[cfg.arrayKey]) ? parsed[cfg.arrayKey] : [];
+        items.forEach(item => {
             if (!item || typeof item !== 'object' || !item.title) return;
+            const contentParts = [item.organizer, item.provider, item.platform, item.description];
+            const itemTags = Array.isArray(item.tags) ? item.tags : [];
             searchData.push({
-                id: `competitions-${idCounter++}`,
+                id: `${cfg.arrayKey}-${idCounter++}`,
                 title: `${pageTitle} - ${item.title}`,
-                content: `${item.organizer || ''} ${item.description || ''}`.trim(),
-                tags: ['competitions', pageTitle, item.category, item.level].filter(Boolean),
-                url: `${fileUrl}#competition-grid`
+                content: contentParts.filter(Boolean).join(' '),
+                tags: [cfg.arrayKey, pageTitle, item.category, item.level, ...itemTags].filter(Boolean),
+                url: `${fileUrl}#${cfg.anchor}`
             });
-            console.log(`  ➡️ 已索引競賽: ${item.title}`);
+            console.log(`  ➡️ 已索引項目: ${item.title}`);
         });
     } catch (e) {
-        console.warn(`⚠️ 解析 competitions.json 時發生錯誤: ${e.message}`);
+        console.warn(`⚠️ 解析 ${cfg.json} 時發生錯誤: ${e.message}`);
     }
 }
 
