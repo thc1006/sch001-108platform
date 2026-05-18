@@ -1,0 +1,218 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="研究方法工具箱 - 台灣教育處方籤"
+  description="研究方法工具箱"
+  currentSection="autonomous-learning"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                研究方法<span class="gradient-text">工具箱</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                為你的研究增添學術深度。這裡有最常見的研究方法SOP，讓你像科學家一樣思考與執行。
+            </p>
+        </section>
+
+        <!-- Interactive Method Selector -->
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+            <h2 class="text-2xl font-bold mb-2">🤔 我該用哪種方法？</h2>
+            <p class="text-gray-600 mb-6">回答幾個問題，讓我們為你推薦最適合的研究方法。</p>
+            <div class="space-y-6">
+                <div>
+                    <label class="font-semibold">1. 你的研究主要是想了解「人們的想法或經驗」嗎？</label>
+                    <div class="flex gap-4 mt-2">
+                        <button onclick="recommendMethod('qualitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('other1')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
+                    </div>
+                </div>
+                 <div class="hidden" id="q2">
+                    <label class="font-semibold">2. 你的研究主要是想驗證「數字或數據」的關係嗎？</label>
+                    <div class="flex gap-4 mt-2">
+                        <button onclick="recommendMethod('quantitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('other2')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
+                    </div>
+                </div>
+                 <div class="hidden" id="q3">
+                    <label class="font-semibold">3. 你的研究主要是想「創造出一個作品」嗎？</label>
+                    <div class="flex gap-4 mt-2">
+                        <button onclick="recommendMethod('creative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('other3')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">不完全是</button>
+                    </div>
+                </div>
+            </div>
+            <div id="recommendation-result" class="mt-6"></div>
+        </section>
+
+        <!-- Methodology Grid -->
+        <section>
+            <h2 class="text-2xl font-bold text-center mb-8">或，從下方直接探索所有方法</h2>
+            <div id="methodology-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Method cards will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Method Detail Modal -->
+    <div id="methodModal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
+        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+    <script is:inline>
+        // 資料改由同目錄的 methodology.json 載入（見下方 loadData）。
+        // 要新增或修改資料，請編輯 methodology.json，不需要動這支 HTML。
+        let methodsData = [];
+
+        // --- Recommendation Logic ---
+        const q2 = document.getElementById('q2');
+        const q3 = document.getElementById('q3');
+        const recommendationResult = document.getElementById('recommendation-result');
+
+        function recommendMethod(answer) {
+            let recommendedTypes = [];
+            let resultText = '';
+
+            switch(answer) {
+                case 'qualitative':
+                    recommendedTypes = ['qualitative'];
+                    resultText = '聽起來你的研究偏向「質化」，建議你從以下方法著手：';
+                    break;
+                case 'quantitative':
+                    recommendedTypes = ['quantitative'];
+                    resultText = '聽起來你的研究偏向「量化」，建議你從以下方法著手：';
+                    break;
+                case 'creative':
+                    recommendedTypes = ['creative'];
+                    resultText = '聽起來你的研究偏向「創作實踐」，建議你從以下方法著手：';
+                    break;
+                case 'other1':
+                    q2.classList.remove('hidden');
+                    return;
+                case 'other2':
+                    q3.classList.remove('hidden');
+                    return;
+                case 'other3':
+                    recommendedTypes = ['other3'];
+                    resultText = '你的研究似乎很特別！也許可以試試這些方法：';
+                    break;
+            }
+
+            const recommendedMethods = methodsData.filter(m => m.type.some(t => recommendedTypes.includes(t)));
+            let methodsHtml = recommendedMethods.map(m => `<button onclick="showModal('${m.id}')" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${m.title}</button>`).join('');
+
+            recommendationResult.innerHTML = `
+                <div class="bg-orange-50 p-4 rounded-lg">
+                    <p class="font-semibold">${resultText}</p>
+                    <div class="flex flex-wrap gap-3 mt-3">${methodsHtml}</div>
+                </div>
+            `;
+        }
+
+        // --- Grid & Modal Logic ---
+        const grid = document.getElementById('methodology-grid');
+        const modal = document.getElementById('methodModal');
+        const modalContent = document.getElementById('modal-content');
+
+        function renderMethods() {
+            grid.innerHTML = '';
+            methodsData.forEach(method => {
+                const card = document.createElement('div');
+                card.className = 'method-card bg-white p-6 rounded-xl shadow-lg cursor-pointer flex flex-col';
+                card.onclick = () => showModal(method.id);
+                card.innerHTML = `
+                    <div class="flex-grow">
+                        <span class="text-sm font-bold text-orange-600">${method.category}</span>
+                        <h3 class="text-2xl font-bold mt-2 mb-3">${method.title}</h3>
+                        <p class="text-gray-600">${method.description}</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-right">
+                        <span class="text-blue-600 font-semibold">查看詳情 &rarr;</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showModal(id) {
+            const method = methodsData.find(m => m.id === id);
+            if (!method) return;
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-bold text-orange-600">${method.category}</p>
+                        <h3 class="text-2xl font-bold">${method.title}</h3>
+                    </div>
+                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow">
+                    ${method.content_html}
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modalContent.scrollTop = 0;
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 從 methodology.json 載入資料後再渲染
+        async function loadData() {
+            try {
+                const response = await fetch('methodology.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                methodsData = Array.isArray(data.methods) ? data.methods : [];
+                renderMethods();
+            } catch (error) {
+                console.error('資料載入失敗：', error);
+                const grid = document.getElementById('methodology-grid');
+                if (grid) {
+                    grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-16">資料載入失敗，請稍後重新整理頁面。</p>';
+                }
+            }
+        }
+        loadData();
+    </script>
+
+  <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #ef4444, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .method-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .method-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        .modal-content {
+            max-height: 90vh;
+        }
+        .prose ul > li::before {
+            background-color: #f97316;
+        }
+  </style>
+</BaseLayout>
