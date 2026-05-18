@@ -1,0 +1,56 @@
+name: Competitions Data Check
+
+# 競賽資料看門狗：每週檢查 advanced-resources/competitions.json，
+# 若有競賽報名截止日過期或欄位錯誤，自動開 / 更新一個 issue 提醒維護者。
+# 本 workflow 只讀取資料、不修改檔案，不會產生 commit 或 PR。
+
+on:
+  schedule:
+    - cron: '0 1 * * 1'   # 每週一 01:00 UTC（台灣時間 09:00）
+  workflow_dispatch:       # 也可在 Actions 頁手動觸發
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    name: 檢查競賽資料
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run competition data watchdog
+        id: check
+        run: node scripts/check-competitions.mjs
+
+      - name: Open or update issue when attention is needed
+        if: steps.check.outputs.needs_attention == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 確保 label 存在（已存在會報錯，直接忽略）
+          gh label create competition-data \
+            --color FBCA04 \
+            --description "競賽資料看門狗自動回報" 2>/dev/null || true
+
+          # 若已有開啟中的同類 issue，補上最新報告而不是再開一個
+          existing=$(gh issue list \
+            --label competition-data --state open \
+            --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            echo "已有開啟中的 issue #$existing，補上最新報告。"
+            gh issue comment "$existing" --body-file competition-report.md
+          else
+            gh issue create \
+              --title "競賽資料需要更新（自動偵測）" \
+              --label competition-data \
+              --body-file competition-report.md
+          fi
