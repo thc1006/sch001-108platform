@@ -62,6 +62,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
 
     <script is:inline src="https://js.puter.com/v2/"></script>
+    <script is:inline src="../shared/puter-ai.js"></script>
     <script is:inline>
         // --- Static Data ---
         const staticTemplates = [
@@ -326,13 +327,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             `;
 
             try {
-                // 使用 Puter.js 呼叫 AI
-                const response = await puter.ai.chat(prompt, {
-                    model: 'google/gemini-2.0-flash-lite-001'
+                // 使用 Puter.js 呼叫 AI（含模型 fallback 與逾時保護）
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                    signal: AbortSignal.timeout(30000)
                 });
 
                 // 嘗試解析 AI 回傳的純文字內容為 JSON
-                const responseText = (response && response.message && response.message.content) || '';
+                let responseText = '';
+                if (response && response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
                     throw new Error("AI 回應中找不到 JSON。");
@@ -346,8 +354,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", error);
-                planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
+                console.error("Error calling Puter.js or parsing JSON:", PuterAI.formatPuterError(error), error);
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    planResult.innerHTML = `<p class="text-red-500 text-center">請求超時，請檢查網路連線後重試。</p>`;
+                } else {
+                    planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
+                }
             } finally {
                 generatePlanBtn.disabled = false;
             }
