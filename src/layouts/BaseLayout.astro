@@ -30,7 +30,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" class="scroll-smooth">
   <head>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WZGCGHZ5FK"></script>
@@ -97,6 +97,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <slot name="head" />
   </head>
   <body class={bodyClass}>
+    <!-- 無障礙:跳至主要內容(鍵盤聚焦時才顯示) -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-white"
+      >跳至主要內容</a
+    >
     <Header currentSection={currentSection} />
     <slot />
     <Footer />
