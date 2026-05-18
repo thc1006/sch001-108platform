@@ -39,8 +39,8 @@ try {
     fail(`competitions.json 不是合法的 JSON：${err.message}`);
 }
 
-if (!Array.isArray(data.competitions)) {
-    fail('competitions.json 缺少 competitions 陣列');
+if (data === null || typeof data !== 'object' || !Array.isArray(data.competitions)) {
+    fail('competitions.json 的最外層必須是物件，且需包含 competitions 陣列');
 }
 
 const list = data.competitions;
@@ -62,6 +62,10 @@ const expired = [];
 const expiringSoon = [];
 
 list.forEach((comp, index) => {
+    if (comp === null || typeof comp !== 'object' || Array.isArray(comp)) {
+        schemaErrors.push(`第 ${index + 1} 筆競賽不是有效的物件`);
+        return;
+    }
     const label = comp.title || `第 ${index + 1} 筆`;
 
     for (const field of REQUIRED_FIELDS) {
