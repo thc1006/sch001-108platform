@@ -198,150 +198,161 @@
   {
     "id": "courses-19",
     "title": "線上課程精選 - 李宏毅 — 生成式 AI 與機器學習",
-    "content": "台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
+    "content": "台灣大學 李宏毅教授 g0v / 開源社群 台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
     "tags": [
       "courses",
       "線上課程精選",
+      "AI與數據科學",
       "AI",
       "機器學習",
       "Deep Learning",
       "LLM"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-20",
     "title": "線上課程精選 - freeCodeCamp — 互動式網頁開發學習",
-    "content": "全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
+    "content": "freeCodeCamp g0v / 開源社群 全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
     "tags": [
       "courses",
       "線上課程精選",
+      "公民科技與開源",
       "網頁開發",
       "HTML",
       "CSS",
       "JavaScript",
       "開源"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-21",
     "title": "線上課程精選 - 零時小學校 — 專案實作課程",
-    "content": "包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。",
+    "content": "g0v 零時小學校 g0v / 開源社群 包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。",
     "tags": [
       "courses",
       "線上課程精選",
+      "公民科技與開源",
       "專案管理",
       "開源協作",
       "GitHub",
       "公民科技"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-22",
     "title": "線上課程精選 - Machine Learning for Everyone",
-    "content": "由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
+    "content": "DeepLearning.AI Coursera 由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
     "tags": [
       "courses",
       "線上課程精選",
+      "AI與數據科學",
       "AI",
       "機器學習",
       "吳恩達"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-23",
     "title": "線上課程精選 - Python for Everybody",
-    "content": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
+    "content": "密西根大學 Coursera 全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
     "tags": [
       "courses",
       "線上課程精選",
+      "程式基礎",
       "Python",
       "程式設計",
       "資料處理"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-24",
     "title": "線上課程精選 - CS50's Introduction to Computer Science",
-    "content": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
+    "content": "哈佛大學 edX 哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
     "tags": [
       "courses",
       "線上課程精選",
+      "程式基礎",
       "計算機科學",
       "C語言",
       "演算法"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-25",
     "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
-    "content": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
+    "content": "Frank Chiu Hahow 台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
     "tags": [
       "courses",
       "線上課程精選",
+      "商業管理",
       "行銷",
       "市場分析",
       "品牌"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-26",
     "title": "線上課程精選 - The Science of Well-Being",
-    "content": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
+    "content": "耶魯大學 Coursera 耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
     "tags": [
       "courses",
       "線上課程精選",
+      "人文社會",
       "心理學",
       "幸福感",
       "正向心理學"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-27",
     "title": "線上課程精選 - 基礎微積分",
-    "content": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
+    "content": "國立台灣大學 Khan Academy 由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
     "tags": [
       "courses",
       "線上課程精選",
+      "自然科學",
       "微積分",
       "數學",
       "台大"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-28",
     "title": "線上課程精選 - Google 數據分析專業證書",
-    "content": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
+    "content": "Google Coursera Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
     "tags": [
       "courses",
       "線上課程精選",
+      "AI與數據科學",
       "數據分析",
       "SQL",
       "Tableau",
       "R語言"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "courses-29",
     "title": "線上課程精選 - 經濟學原理",
-    "content": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
+    "content": "國立清華大學 Khan Academy 清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
     "tags": [
       "courses",
       "線上課程精選",
+      "商業管理",
       "經濟學",
       "個體經濟",
       "總體經濟"
     ],
-    "url": "advanced-resources/online-courses.html#courses-"
+    "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
     "id": "page-30",
