@@ -1,0 +1,406 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="台灣教育處方籤 - 108課綱學習路徑導航手冊"
+  description="一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。"
+  keywords="108課綱, 自主學習, 學習歷程, 多元表現, 生涯探索, 高中生, 開源, g0v, 台灣教育處方籤"
+  ogDescription="我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感。"
+>
+  <main>
+    <!-- Hero Section -->
+    <section class="bg-white">
+      <div class="container mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div class="text-center md:text-left">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-gray-800 leading-tight mb-6">
+              在 108 課綱的迷霧中，<br />為你點亮一盞<span class="gradient-text">燈</span>。
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-xl mx-auto md:mx-0 mb-8">
+              我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感，陪你走好高中這段探索之旅。
+            </p>
+            <a href="#paths" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition duration-300 ease-in-out inline-block">
+              開始你的探索之旅 &rarr;
+            </a>
+          </div>
+          <div class="flex items-center justify-center p-4">
+            <!-- Inline SVG Illustration -->
+            <svg viewBox="0 0 200 200" class="w-full max-w-md">
+              <defs>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur"></feGaussianBlur>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"></feMergeNode>
+                    <feMergeNode in="SourceGraphic"></feMergeNode>
+                  </feMerge>
+                </filter>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="#eef2ff" stroke-width="2"></circle>
+              <circle cx="100" cy="100" r="75" fill="none" stroke="#e0e7ff" stroke-width="1.5"></circle>
+              <g opacity="0.8">
+                <path d="M100 20 L110 95 L100 85 L90 95 Z" fill="#a5b4fc"></path>
+                <path d="M100 180 L110 105 L100 115 L90 105 Z" fill="#c7d2fe"></path>
+                <path d="M20 100 L95 110 L85 100 L95 90 Z" fill="#c7d2fe"></path>
+                <path d="M180 100 L105 110 L115 100 L105 90 Z" fill="#a5b4fc"></path>
+              </g>
+              <circle cx="100" cy="100" r="25" fill="#4f46e5" class="svg-pulse" filter="url(#glow)"></circle>
+              <circle cx="100" cy="100" r="12" fill="white"></circle>
+              <path d="M100 90 L110 100 L100 110 L90 100 Z" fill="#4f46e5"></path>
+              <path d="M40 160 Q 80 130, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash"></path>
+              <path d="M160 40 Q 120 70, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -0.5s;"></path>
+              <path d="M45 45 Q 70 75, 100 100" fill="none" stroke="#14b8a6" stroke-width="2.5" class="svg-dash" style="animation-delay: -1s;"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 全站搜尋功能區塊 -->
+    <section id="search-section" class="py-16 bg-blue-50">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold">需要找點什麼嗎？</h2>
+          <p class="text-gray-600 mt-2">一個搜尋，連結所有資源。</p>
+        </div>
+        <div class="max-w-3xl mx-auto">
+          <div class="relative">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </span>
+            <input type="text" id="search-input" role="combobox" aria-autocomplete="list" aria-controls="search-results-container" aria-expanded="false" aria-label="全站搜尋輸入框" placeholder="正在載入搜尋引擎..." disabled class="w-full pl-14 pr-14 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-shadow shadow-sm hover:shadow-md bg-gray-200" />
+            <button id="search-clear-btn" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer hidden" aria-label="Clear search input">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+          </div>
+          <!-- 搜尋結果將會動態插入此處 -->
+          <div id="search-results-container" role="listbox" aria-label="搜尋結果列表" class="mt-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Exploration Paths Section -->
+    <section id="paths" class="py-20">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold">選擇你的探索路徑</h2>
+          <p class="text-gray-600 mt-2">無論你處在哪個階段，這裡都有你需要的起點。</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <a href="autonomous-learning/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+            <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6 mx-auto">
+              <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">1. 探索方向</h3>
+            <p class="text-gray-600">感到迷惘，不知道自主學習要做什麼？從這裡開始，尋找你的主題與熱情所在。</p>
+          </a>
+          <a href="learning-portfolio/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+            <div class="flex items-center justify-center h-20 w-20 rounded-full bg-teal-100 mb-6 mx-auto">
+              <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">2. 打造歷程</h3>
+            <p class="text-gray-600">將你的學習經驗與反思，淬鍊成一份能展現個人特質的精彩學習歷程檔案。</p>
+          </a>
+          <a href="advanced-resources/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
+            <div class="flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6 mx-auto">
+              <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">3. 深化專業</h3>
+            <p class="text-gray-600">已有明確目標？從這裡尋找頂尖的線上課程、競賽與書單，讓你的能力更上一層樓。</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Latest Resources Section -->
+    <section id="showcase" class="py-20 bg-gray-200/50">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold">最新資源快遞</h2>
+          <p class="text-gray-600 mt-2">我們持續為你更新最實用的學習資源。</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <a href="career-exploration/senior-interviews.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+            <p class="text-sm font-semibold text-purple-600 mb-2">學長姐真心話</p>
+            <h4 class="font-bold text-lg mb-2">政大傳播學院 林同學</h4>
+            <p class="text-sm text-gray-600">「不要害怕放入看似『不務正業』的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。」</p>
+          </a>
+          <a href="advanced-resources/competitions.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+            <p class="text-sm font-semibold text-red-600 mb-2">競賽資訊</p>
+            <h4 class="font-bold text-lg mb-2">旺宏科學獎</h4>
+            <p class="text-sm text-gray-600">有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。</p>
+          </a>
+          <a href="learning-portfolio/tools.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+            <p class="text-sm font-semibold text-orange-600 mb-2">工具箱推薦</p>
+            <h4 class="font-bold text-lg mb-2">Notion - 你的第二大腦</h4>
+            <p class="text-sm text-gray-600">一個全功能的數位工作區，非常適合用來建立個人知識庫與管理自主學習專案。</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Us Teaser -->
+    <section class="py-20">
+      <div class="container mx-auto px-6 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold">我們是誰？</h2>
+        <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">一個由學生為學生發起的開源專案，源自 g0v 黑客松，致力於用科技與設計，弭平教育資訊的落差。</p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+          <a href="about.html" class="inline-block text-blue-600 font-bold hover:underline">
+            了解我們的故事 &rarr;
+          </a>
+          <a href="about.html#platform-optimization" class="inline-block text-blue-600 font-bold hover:underline">
+            查看平台優化方向 &rarr;
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 1. 引入 Fuse.js 函式庫 -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+
+  <!-- 2. 全站搜尋功能邏輯 -->
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('search-input');
+      const resultsContainer = document.getElementById('search-results-container');
+      const clearBtn = document.getElementById('search-clear-btn');
+      let fuse;
+      let searchData = [];
+      let debounceTimer;
+      let selectedIndex = -1;
+      let resultElements = [];
+
+      const CACHE_KEY = 'search-index-cache';
+      const CACHE_VERSION = '1.0';
+      const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
+      // 依目前部署環境決定搜尋索引路徑(GitHub Pages 專案頁需含 repo 名稱)
+      let searchPath;
+      if (window.location.hostname.endsWith('github.io')) {
+        searchPath = '/sch001-108platform/search-index.json';
+      } else {
+        searchPath = '/search-index.json';
+      }
+
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const { version, data, timestamp } = JSON.parse(cached);
+          const isExpired = Date.now() - timestamp > CACHE_DURATION;
+          if (version === CACHE_VERSION && !isExpired && Array.isArray(data) && data.length > 0) {
+            const firstItem = data[0];
+            if (firstItem?.title && firstItem?.url && firstItem?.content && Array.isArray(firstItem?.tags)) {
+              console.log('🔍 搜尋引擎已從快取載入！共 ' + data.length + ' 筆資料');
+              initializeFuse(data);
+              searchInput.disabled = false;
+              searchInput.placeholder = '輸入關鍵字搜尋全站資源...';
+              searchInput.classList.remove('bg-gray-200');
+            } else {
+              console.warn('⚠️ 快取資料格式錯誤，重新載入...');
+              localStorage.removeItem(CACHE_KEY);
+              loadSearchIndex();
+            }
+          } else {
+            console.log('🔍 快取已過期或版本不符，重新載入...');
+            loadSearchIndex();
+          }
+        } catch (e) {
+          console.warn('快取載入失敗:', e);
+          loadSearchIndex();
+        }
+      } else {
+        loadSearchIndex();
+      }
+
+      function loadSearchIndex() {
+        fetch(searchPath)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`網路回應錯誤 (${response.status})，無法載入 ${searchPath}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ version: CACHE_VERSION, data, timestamp: Date.now() }));
+              console.log('🔍 搜尋索引已快取到 localStorage');
+            } catch (e) {
+              if (e.name === 'QuotaExceededError') {
+                console.warn('⚠️ localStorage 配額已滿，嘗試清理舊快取...');
+                try {
+                  Object.keys(localStorage).forEach((key) => {
+                    if (key.startsWith('search-index-cache')) {
+                      localStorage.removeItem(key);
+                    }
+                  });
+                  localStorage.setItem(CACHE_KEY, JSON.stringify({ version: CACHE_VERSION, data, timestamp: Date.now() }));
+                  console.log('✅ 清理後成功快取');
+                } catch (retryError) {
+                  console.error('❌ 快取失敗，但不影響搜尋功能:', retryError);
+                }
+              } else {
+                console.warn('無法儲存快取:', e);
+              }
+            }
+
+            initializeFuse(data);
+            searchInput.disabled = false;
+            searchInput.placeholder = '輸入關鍵字搜尋全站資源...';
+            searchInput.classList.remove('bg-gray-200');
+          })
+          .catch((error) => {
+            console.error('載入搜尋索引時發生錯誤:', error);
+            resultsContainer.textContent = '';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 my-2 text-center text-red-600 bg-red-100 rounded-lg shadow-sm';
+            errorDiv.textContent = '搜尋功能載入失敗，請檢查檔案路徑或網路連線。';
+            resultsContainer.appendChild(errorDiv);
+          });
+      }
+
+      function initializeFuse(data) {
+        searchData = data;
+        const fuseOptions = {
+          includeScore: true,
+          shouldSort: true,
+          threshold: 0.4,
+          keys: [
+            { name: 'title', weight: 0.7 },
+            { name: 'tags', weight: 0.5 },
+            { name: 'content', weight: 0.2 },
+          ],
+        };
+        fuse = new Fuse(searchData, fuseOptions);
+        console.log('🔍 搜尋引擎已準備就緒！共 ' + data.length + ' 筆資料');
+      }
+
+      searchInput.addEventListener('input', function () {
+        if (!fuse) return;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const query = this.value.trim();
+          clearBtn.classList.toggle('hidden', query.length === 0);
+          resultsContainer.textContent = '';
+          if (query.length > 0) {
+            const results = fuse.search(query);
+            displayResults(results.slice(0, 20), query);
+          } else {
+            searchInput.setAttribute('aria-expanded', 'false');
+            selectedIndex = -1;
+          }
+        }, 200);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectedIndex = Math.min(selectedIndex + 1, resultElements.length - 1);
+          updateSelection();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedIndex = Math.max(selectedIndex - 1, -1);
+          updateSelection();
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+          e.preventDefault();
+          resultElements[selectedIndex].click();
+        } else if (e.key === 'Escape') {
+          searchInput.value = '';
+          resultsContainer.textContent = '';
+          clearBtn.classList.add('hidden');
+          searchInput.setAttribute('aria-expanded', 'false');
+          selectedIndex = -1;
+        }
+      });
+
+      function updateSelection() {
+        resultElements.forEach((el, idx) => {
+          if (idx === selectedIndex) {
+            el.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
+            el.setAttribute('aria-selected', 'true');
+            el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          } else {
+            el.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
+            el.setAttribute('aria-selected', 'false');
+          }
+        });
+      }
+
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchInput.focus();
+        resultsContainer.textContent = '';
+        clearBtn.classList.add('hidden');
+        searchInput.setAttribute('aria-expanded', 'false');
+        selectedIndex = -1;
+      });
+
+      function displayResults(results, query) {
+        resultsContainer.textContent = '';
+        searchInput.setAttribute('aria-expanded', results.length > 0 ? 'true' : 'false');
+
+        if (results.length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'p-4 my-2 text-center text-gray-500 bg-white rounded-lg shadow-sm';
+          emptyDiv.textContent = `找不到與「${query}」相關的結果`;
+          resultsContainer.appendChild(emptyDiv);
+          return;
+        }
+
+        results.forEach((result) => {
+          const item = result.item;
+          const linkEl = document.createElement('a');
+          linkEl.href = item.url;
+          linkEl.className = 'block p-4 my-2 transition duration-300 ease-in-out bg-white rounded-lg shadow-sm hover:shadow-lg hover:bg-blue-50';
+          linkEl.setAttribute('role', 'option');
+          linkEl.setAttribute('aria-selected', 'false');
+
+          const titleEl = document.createElement('h3');
+          titleEl.className = 'text-lg font-semibold text-blue-700';
+          titleEl.innerHTML = highlight(item.title, query);
+
+          const contentEl = document.createElement('p');
+          contentEl.className = 'text-sm text-gray-600';
+          const escapedContent = escapeHTML(item.content.substring(0, 100));
+          contentEl.innerHTML = highlight(escapedContent, query) + '...';
+
+          const tagsDiv = document.createElement('div');
+          tagsDiv.className = 'mt-2';
+          item.tags.forEach((tag) => {
+            const tagSpan = document.createElement('span');
+            tagSpan.className = 'inline-block px-2 py-1 mr-2 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full';
+            tagSpan.innerHTML = highlight(tag, query);
+            tagsDiv.appendChild(tagSpan);
+          });
+
+          linkEl.appendChild(titleEl);
+          linkEl.appendChild(contentEl);
+          if (item.tags.length > 0) {
+            linkEl.appendChild(tagsDiv);
+          }
+          resultsContainer.appendChild(linkEl);
+        });
+
+        selectedIndex = -1;
+        resultElements = Array.from(resultsContainer.querySelectorAll('a'));
+      }
+
+      function highlight(text, query) {
+        if (!query) return escapeHTML(text);
+        const escapedText = escapeHTML(text);
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        return escapedText.replace(regex, '<mark class="bg-yellow-200 rounded">$1</mark>');
+      }
+
+      function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+      }
+
+      function escapeRegExp(string) {
+        if (!string) return '';
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+    });
+  </script>
+</BaseLayout>

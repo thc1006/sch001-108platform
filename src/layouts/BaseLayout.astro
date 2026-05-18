@@ -1,0 +1,111 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+// 全站統一版型。每頁只需提供 metadata,<head> 樣板、導覽列、頁尾、
+// 分析碼一律由此集中宣告 —— 取代先前每頁各自重複又不一致的 <head>/nav/footer。
+interface Props {
+  title: string;
+  description: string;
+  keywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  currentSection?: string | null;
+  bodyClass?: string;
+}
+const {
+  title,
+  description,
+  keywords,
+  ogTitle = title,
+  ogDescription = description,
+  ogImage = 'https://raw.githubusercontent.com/thc1006/sch001-108platform/main/picture/thumbnail.png',
+  currentSection = null,
+  bodyClass = 'bg-gray-50 text-gray-800',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WZGCGHZ5FK"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-WZGCGHZ5FK');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+
+    <!-- 基礎 SEO -->
+    <meta name="description" content={description} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    <meta name="author" content="台灣教育處方籤團隊" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- 社群分享 (Open Graph) -->
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- 結構化資料 (JSON-LD) -->
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: '台灣教育處方籤',
+        url: 'https://thc1006.github.io/sch001-108platform/',
+        description:
+          '一個專為108課綱高中生設計的學習路徑導航手冊，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。',
+        publisher: {
+          '@type': 'Organization',
+          name: '台灣教育處方籤',
+          url: 'https://thc1006.github.io/sch001-108platform/',
+        },
+      })}
+    />
+
+    <!-- 頁面可注入額外的 <head> 內容(如頁面專屬 JSON-LD) -->
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <Header currentSection={currentSection} />
+    <slot />
+    <Footer />
+
+    <!-- GoatCounter 流量統計 -->
+    <script
+      is:inline
+      data-goatcounter="https://sch001.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"></script>
+  </body>
+</html>
