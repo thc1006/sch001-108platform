@@ -123,20 +123,45 @@ function processHtmlFile(filePath, fileUrl) {
     }
 }
 
-// 已將資料外移到 JSON 的頁面設定：HTML 路徑 → { JSON 檔、陣列鍵、頁內錨點 }。
+// 已將資料外移到 JSON 的頁面設定：HTML 路徑 → 該頁索引設定。
 // 之後若有更多頁面改為資料驅動，只要在此新增一筆即可。
+//   json     ：資料 JSON 路徑（相對 repo 根目錄）
+//   arrayKey ：JSON 中存放項目陣列的鍵名
+//   idPrefix ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
+//   tag      ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
+//   anchor   ：頁內錨點 id
 const JSON_DATA_PAGES = {
     'advanced-resources/competitions.html': {
         json: 'advanced-resources/competitions.json',
-        arrayKey: 'competitions',
+        arrayKey: 'competitions', idPrefix: 'competition', tag: '競賽',
         anchor: 'competition-grid',
     },
     'advanced-resources/online-courses.html': {
         json: 'advanced-resources/online-courses.json',
-        arrayKey: 'courses',
+        arrayKey: 'courses', idPrefix: 'course', tag: '線上課程',
         anchor: 'course-grid',
     },
+    'career-exploration/senior-interviews.html': {
+        json: 'career-exploration/senior-interviews.json',
+        arrayKey: 'interviews', idPrefix: 'interview', tag: '學長姐訪談',
+        anchor: 'interview-grid',
+    },
+    'learning-portfolio/portfolio-gallery.html': {
+        json: 'learning-portfolio/portfolio-gallery.json',
+        arrayKey: 'portfolio', idPrefix: 'portfolio', tag: '作品集',
+        anchor: 'portfolio-grid',
+    },
+    'autonomous-learning/methodology.html': {
+        json: 'autonomous-learning/methodology.json',
+        arrayKey: 'methods', idPrefix: 'method', tag: '研究方法',
+        anchor: 'methodology-grid',
+    },
 };
+
+// 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name），故以下採欄位聯集。
+const ITEM_TITLE_FIELDS = ['title', 'name', 'question'];
+const ITEM_TEXT_FIELDS = ['organizer', 'provider', 'platform', 'major', 'university', 'quote', 'description'];
+const ITEM_HTML_FIELDS = ['content_html', 'analysis_html'];
 
 // 通用：讀一個資料 JSON，為其中每筆項目建立搜尋索引項目。
 function indexJsonDataPage(pageTitle, fileUrl, cfg) {
@@ -149,17 +174,24 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg) {
         const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
         const items = Array.isArray(parsed[cfg.arrayKey]) ? parsed[cfg.arrayKey] : [];
         items.forEach(item => {
-            if (!item || typeof item !== 'object' || !item.title) return;
-            const contentParts = [item.organizer, item.provider, item.platform, item.description];
+            if (!item || typeof item !== 'object') return;
+            const itemTitle = ITEM_TITLE_FIELDS.map(f => item[f]).find(v => typeof v === 'string' && v);
+            if (!itemTitle) return;
+            // 內文：純文字欄位 + 去除標籤後的 HTML 欄位
+            const textParts = ITEM_TEXT_FIELDS
+                .map(f => item[f]).filter(v => typeof v === 'string' && v);
+            const htmlParts = ITEM_HTML_FIELDS
+                .map(f => item[f]).filter(v => typeof v === 'string' && v)
+                .map(h => cheerio.load(h).text());
             const itemTags = Array.isArray(item.tags) ? item.tags : [];
             searchData.push({
-                id: `${cfg.arrayKey}-${idCounter++}`,
-                title: `${pageTitle} - ${item.title}`,
-                content: contentParts.filter(Boolean).join(' '),
-                tags: [cfg.arrayKey, pageTitle, item.category, item.level, ...itemTags].filter(Boolean),
+                id: `${cfg.idPrefix}-${idCounter++}`,
+                title: `${pageTitle} - ${itemTitle}`,
+                content: [...textParts, ...htmlParts].join(' ').replace(/\s+/g, ' ').trim(),
+                tags: [cfg.tag, pageTitle, item.category, item.level, ...itemTags].filter(Boolean),
                 url: `${fileUrl}#${cfg.anchor}`
             });
-            console.log(`  ➡️ 已索引項目: ${item.title}`);
+            console.log(`  ➡️ 已索引項目: ${itemTitle}`);
         });
     } catch (e) {
         console.warn(`⚠️ 解析 ${cfg.json} 時發生錯誤: ${e.message}`);
