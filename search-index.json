@@ -27,6 +27,18 @@
   },
   {
     "id": "competition-4",
+    "title": "國內外競賽資訊 - 台灣國際科學展覽會 (TISF)",
+    "content": "國立臺灣科學教育館 台灣最高層級的高中職科學研究競賽，亦為 Regeneron ISEF 等國際科展的選拔賽。每年 10–11 月校內報名，1–2 月於科教館舉行決賽。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-5",
     "title": "國內外競賽資訊 - 旺宏科學獎",
     "content": "旺宏電子股份有限公司 有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。第 25 屆初賽報名截止 2026-05-20。",
     "tags": [
@@ -38,7 +50,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-5",
+    "id": "competition-6",
     "title": "國內外競賽資訊 - TRML 台灣地區數學聯賽",
     "content": "九九文教基金會 結合個人賽、團體賽與接力賽，考驗數學解題能力與團隊默契。第 28 屆報名 2026-05-20 至 05-27，競賽於 8 月舉行。",
     "tags": [
@@ -50,7 +62,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-6",
+    "id": "competition-7",
     "title": "國內外競賽資訊 - 外交小尖兵—英語種籽隊",
     "content": "外交部 以英語為工具探討國際議題，培養青年的國際視野與英語演說能力。2026 年報名預計於 9 月開放，確切時程請見官網。",
     "tags": [
@@ -62,7 +74,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-7",
+    "id": "competition-8",
     "title": "國內外競賽資訊 - 台灣國際學生創意設計大賽 (TISDC)",
     "content": "教育部 全球規模最大的學生設計競賽之一，分產品、視覺、數位等類別。2026 年主題「韌性」，收件至 2026-07-06。",
     "tags": [
@@ -74,7 +86,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-8",
+    "id": "competition-9",
     "title": "國內外競賽資訊 - 全國學生美術比賽",
     "content": "國立臺灣藝術教育館 台灣最具代表性的學生美術競賽，涵蓋水墨、書法、版畫、西畫等類別。115 學年度實施要點預計 6 月公告、10 月收件。",
     "tags": [
@@ -86,8 +98,8 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-9",
-    "title": "國內外競賽資訊 - AIS3 新型態資安暑期課程",
+    "id": "competition-10",
+    "title": "國內外競賽資訊 - AIS3 新型態資安暑期課程 / EOF CTF",
     "content": "教育部資安人才培育計畫 台灣資安人才培育旗艦計畫，含預修檢測、暑期密集課程與 EOF CTF 實戰競賽。2026 年甄選報名截止 05-31。",
     "tags": [
       "競賽",
@@ -98,7 +110,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-10",
+    "id": "competition-11",
     "title": "國內外競賽資訊 - APCS 大學程式設計先修檢測",
     "content": "國立臺灣師範大學資訊工程學系 大學資訊相關科系特殊選才與申請入學的重要程式能力檢定，一年舉辦 6 次，各場次報名時程依官網公告。",
     "tags": [
@@ -110,9 +122,9 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-11",
+    "id": "competition-12",
     "title": "國內外競賽資訊 - Regeneron ISEF 國際科技展覽會",
-    "content": "Society for Science（美國） 全球規模最大的高中生科學競賽。台灣代表隊經「台灣國際科學展覽會」選拔產生，並非公開報名。",
+    "content": "Society for Science（美國） 全球規模最大的高中生科學競賽。台灣代表隊經「台灣國際科學展覽會」選拔產生，並非公開報名；2026 年於美國舉行。",
     "tags": [
       "競賽",
       "國內外競賽資訊",
@@ -122,9 +134,9 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-12",
+    "id": "competition-13",
     "title": "國內外競賽資訊 - 國際數學奧林匹亞 (IMO)",
-    "content": "各國數學學會 世界最高等級的中學生數學競賽。台灣採國手選拔制（每年秋季初選）。第 67 屆 2026 年 7 月於中國上海舉行。",
+    "content": "各國數學學會 世界最高等級的中學生數學競賽。台灣採國手選拔制（每年秋季初選）。第 67 屆 2026 年 7 月於中國上海舉行，赴中參賽請留意兩岸往來規定。",
     "tags": [
       "競賽",
       "國內外競賽資訊",
@@ -134,7 +146,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-13",
+    "id": "competition-14",
     "title": "國內外競賽資訊 - 國際資訊奧林匹亞 (IOI)",
     "content": "各國資訊學會 全球中學生程式設計與演算法的頂級競賽。台灣採國手選拔制。第 38 屆 2026 年 8 月於烏茲別克塔什干舉行。",
     "tags": [
@@ -146,7 +158,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-14",
+    "id": "competition-15",
     "title": "國內外競賽資訊 - 國際物理奧林匹亞 (IPhO)",
     "content": "各國物理學會 中學生物理最高等級競賽。台灣採國手選拔制。2026 年於哥倫比亞舉行。",
     "tags": [
@@ -158,7 +170,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-15",
+    "id": "competition-16",
     "title": "國內外競賽資訊 - 國際化學奧林匹亞 (IChO)",
     "content": "臺灣化學奧林匹亞委員會 中學生化學最高等級競賽。台灣採國手選拔制。2026 年於烏茲別克塔什干舉行。",
     "tags": [
@@ -170,7 +182,7 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "competition-16",
+    "id": "competition-17",
     "title": "國內外競賽資訊 - 國際生物奧林匹亞 (IBO)",
     "content": "各國生物學會 中學生生物最高等級競賽。台灣採國手選拔制。第 37 屆 2026 年於立陶宛維爾紐斯舉行。",
     "tags": [
@@ -182,21 +194,1377 @@
     "url": "advanced-resources/competitions.html#competition-grid"
   },
   {
-    "id": "page-17",
+    "id": "competition-18",
+    "title": "國內外競賽資訊 - 國際天文與天文物理奧林匹亞 (IOAA)",
+    "content": "各國天文學會 中學生天文與天文物理最高等級競賽。台灣採國手選拔制。2026 年於越南舉行（預計 9–10 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-19",
+    "title": "國內外競賽資訊 - 國際初級天文奧林匹亞 (IOAA-jr)",
+    "content": "International Olympiad on Astronomy and Astrophysics 面向國中與高一學生的天文奧林匹亞，台灣採選拔制。2026 年於泰國舉行（預計 11 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-20",
+    "title": "國內外競賽資訊 - 國際地球科學奧林匹亞 (IESO)",
+    "content": "International Earth Science Olympiad 中學生地球科學最高等級競賽，含實地考察與國際合作測驗。台灣採國手選拔制。2026 年於義大利舉行（預計 8 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-21",
+    "title": "國內外競賽資訊 - 國際語言學奧林匹亞 (IOL)",
+    "content": "International Linguistics Olympiad 以邏輯推理破解陌生語言的中學生競賽，台灣經選拔賽組隊。2026 年於羅馬尼亞舉行（預計 7–8 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-22",
+    "title": "國內外競賽資訊 - 國際哲學奧林匹亞 (IPO)",
+    "content": "International Philosophy Olympiad 中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽。台灣採選拔制，2026 年於波蘭舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-23",
+    "title": "國內外競賽資訊 - 國際地理奧林匹亞 (iGeo)",
+    "content": "International Geography Olympiad 中學生地理綜合能力競賽，含寫作測驗、多媒體測驗與野外實察。台灣採選拔制，2026 年於土耳其舉行（預計 8 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-24",
+    "title": "國內外競賽資訊 - 國際國中科學奧林匹亞 (IJSO)",
+    "content": "International Junior Science Olympiad 面向 15 歲以下學生的跨領域科學競賽（物理、化學、生物）。台灣採選拔制，2026 年於德國舉行（預計 11–12 月）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-25",
+    "title": "國內外競賽資訊 - 亞太數學奧林匹亞 (APMO)",
+    "content": "Asian Pacific Mathematics Olympiad 亞太地區函授制數學競賽，由各國於本國同步舉辦並寄回評分。台灣由國手培訓隊參加，每年 3 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-26",
+    "title": "國內外競賽資訊 - 亞洲物理奧林匹亞 (APhO)",
+    "content": "Asian Physics Olympiad 亞洲區中學生物理競賽，為 IPhO 的重要前哨戰。台灣採國手選拔制，2026 年於韓國舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-27",
+    "title": "國內外競賽資訊 - 亞太資訊奧林匹亞 (APIO)",
+    "content": "Asia-Pacific Informatics Olympiad 亞太地區線上同步舉辦的中學生程式競賽，各國於本地考場應試。台灣由資奧培訓隊參加，每年 5 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-28",
+    "title": "國內外競賽資訊 - 歐洲女子數學奧林匹亞 (EGMO)",
+    "content": "European Girls' Mathematical Olympiad 鼓勵女性中學生投入數學的國際競賽。台灣女子數學代表隊採選拔制，2026 年於法國舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-29",
+    "title": "國內外競賽資訊 - 歐洲女子資訊奧林匹亞 (EGOI)",
+    "content": "European Girls' Olympiad in Informatics 鼓勵女性中學生投入程式設計的國際競賽。台灣女子資訊代表隊採選拔制，2026 年於義大利舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-30",
+    "title": "國內外競賽資訊 - 丘成桐中學科學獎",
+    "content": "丘成桐中學科學獎委員會 由數學家丘成桐發起，分數學、物理、化學、生物、計算機、經濟金融建模六大領域。台灣學生可報名，決賽在中國舉行，赴中請留意兩岸往來規定。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-31",
+    "title": "國內外競賽資訊 - 歐盟青年科學家競賽 (EUCYS)",
+    "content": "European Union Contest for Young Scientists 歐盟主辦的頂級青年科研競賽，主要對歐盟會員國開放。台灣高中生通常以受邀觀摩或合作國身分參與，2026 年於德國舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-32",
+    "title": "國內外競賽資訊 - 倫敦國際青年科學論壇 (LIYSF)",
+    "content": "London International Youth Science Forum 為期兩週的科學交流營隊，含名校參訪與諾貝爾講者。採申請與推薦制，台灣多由科教館或學校推薦遴選，2026 年於倫敦舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-33",
+    "title": "國內外競賽資訊 - GENIUS Olympiad 環境主題競賽",
+    "content": "Terra Science and Education / 美國 RIT 聚焦環境議題的國際高中生競賽，含科學、商業、創作、寫作、機器人等類別。台灣學生可直接報名，於美國羅徹斯特理工學院舉行；2026 年報名約 3 月初截止。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-34",
+    "title": "國內外競賽資訊 - 國際數學建模挑戰賽 (IMMC)",
+    "content": "International Mathematical Modeling Challenge 為期數日的團隊數學建模競賽，作品線上提交。台灣經區域選拔產生代表隊，每年約 3 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-35",
+    "title": "國內外競賽資訊 - 國際青年物理學家辯論賽 (IYPT)",
+    "content": "International Young Physicists' Tournament 以「物理擂台」形式辯論開放式研究題目的團隊競賽。台灣採選拔制組隊，2026 年於瑞士舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-36",
+    "title": "國內外競賽資訊 - Regeneron 科學人才獎 (Regeneron STS)",
+    "content": "Society for Science（美國） 美國歷史最悠久的高中科研競賽，僅限美國高中畢業班學生申請。台灣高中生不符報名資格，僅列作參考指標。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-37",
+    "title": "國內外競賽資訊 - 國際天文奧林匹亞 (IAO)",
+    "content": "International Astronomy Olympiad 由歐亞天文學會主辦的中學生天文競賽，與 IOAA 為不同系統。台灣較少組隊，舉辦地點多在中亞／東歐，赴賽請評估當地情勢。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-38",
+    "title": "國內外競賽資訊 - 歐洲環境永續奧林匹亞 (EOES)",
+    "content": "European Olympiad of Environmental Sciences 歐洲區環境科學團隊競賽，主要對歐洲國家開放。台灣高中生通常不符正式參賽資格，僅列作環境類競賽參考。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-39",
+    "title": "國內外競賽資訊 - 國際大都會奧林匹亞 (IOM)",
+    "content": "International Olympiad of Metropolises 以城市代表隊形式舉行的跨科目競賽，由莫斯科市政府主辦。台灣城市非受邀對象，且地點位於俄羅斯，赴賽風險高，僅列作參考。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-40",
+    "title": "國內外競賽資訊 - Codeforces 程式競賽",
+    "content": "Codeforces 全球最活躍的線上競技程式平台，常態舉辦 Div.1–4 即時賽。免費註冊即可參加，是練習演算法與資奧選拔的主力平台。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-41",
+    "title": "國內外競賽資訊 - AtCoder 程式競賽",
+    "content": "AtCoder Inc.（日本） 日本主辦的線上程式競賽平台，每週舉辦 ABC／ARC／AGC 等難度分級賽事。提供英日雙語題目，台灣學生可免費參加。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-42",
+    "title": "國內外競賽資訊 - CodeChef 程式競賽",
+    "content": "CodeChef 印度起家的國際線上程式競賽平台，定期舉辦 Starters 與長期挑戰賽。免費註冊即可參加，適合累積解題經驗。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-43",
+    "title": "國內外競賽資訊 - LeetCode Weekly Contest",
+    "content": "LeetCode 每週舉辦的線上程式競賽，題型偏向面試與資料結構演算法。免費參加，適合培養限時解題手感。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-44",
+    "title": "國內外競賽資訊 - Meta Hacker Cup",
+    "content": "Meta Meta 主辦的年度全球程式競賽，採線上多輪淘汰制。免費註冊即可參加，每年約 8–10 月舉行資格賽。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-45",
+    "title": "國內外競賽資訊 - USACO 美國資訊奧林匹亞競賽",
+    "content": "USA Computing Olympiad 分 Bronze 至 Platinum 四級的線上程式競賽，每年 12–3 月舉辦數場。台灣學生可以 observer（非美籍）身分免費參賽，是練習演算法的優質資源。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-46",
+    "title": "國內外競賽資訊 - 加拿大計算機競賽 (CCC)",
+    "content": "Centre for Education in Mathematics and Computing, University of Waterloo 滑鐵盧大學主辦的程式競賽，分初級與高級組。台灣學生須透過認證考場（如合作學校或補習機構）監考應試，每年 2 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-47",
+    "title": "國內外競賽資訊 - Project Euler",
+    "content": "Project Euler 結合數學與程式設計的長青解題網站，題目可隨時挑戰、無截止日。免費註冊，適合自學數理程式的入門與進階練習。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-48",
+    "title": "國內外競賽資訊 - Advent of Code",
+    "content": "Eric Wastl 每年 12 月 1–25 日每日一題的程式解謎活動，題目趣味且循序漸進。免費參加，可用任何程式語言，適合輕鬆累積實作經驗。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-49",
+    "title": "國內外競賽資訊 - picoCTF",
+    "content": "Carnegie Mellon University 卡內基美隆大學主辦的入門級資安奪旗賽，題目與學習資源全年開放。免費註冊，是高中生踏入資安領域的最佳起點。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-50",
+    "title": "國內外競賽資訊 - My First CTF",
+    "content": "台灣資安社群 專為資安初學者設計的台灣中文 CTF 競賽，題目友善並附解說。免費報名，是台灣高中生接觸資安實戰的入門賽事。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-51",
+    "title": "國內外競賽資訊 - HITCON CTF",
+    "content": "台灣駭客年會 HITCON 台灣最具國際知名度的資安奪旗賽，難度高、競爭激烈。免費報名線上資格賽，適合具基礎的高中生組隊挑戰。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-52",
+    "title": "國內外競賽資訊 - Kaggle Competitions",
+    "content": "Kaggle（Google） 全球最大的資料科學與機器學習競賽平台，常態開放多項排行榜競賽。免費註冊即可參加，部分競賽有年齡或地區限制請先詳閱規則。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-53",
+    "title": "國內外競賽資訊 - DrivenData 社會公益資料競賽",
+    "content": "DrivenData 聚焦社會公益與永續議題的資料科學競賽平台，題目涵蓋公衛、環境、教育等。免費參加，適合想用資料解決真實問題的學生。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-54",
+    "title": "國內外競賽資訊 - Zindi 資料科學競賽",
+    "content": "Zindi 聚焦非洲與新興市場議題的資料科學競賽平台。免費註冊即可參加，是接觸跨國 AI 應用題材的管道。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-55",
+    "title": "國內外競賽資訊 - AIcrowd 機器學習挑戰賽",
+    "content": "AIcrowd 舉辦強化學習、電腦視覺等機器學習挑戰的開放平台。免費參加，適合想深入 AI 研究與實作的高中生。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-56",
+    "title": "國內外競賽資訊 - Purple Comet! Math Meet",
+    "content": "Purple Comet 免費的線上團隊數學競賽，每年 4 月舉行，題目富趣味性。由學校或機構登記團隊參加，適合中學數學社團。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-57",
+    "title": "國內外競賽資訊 - 袋鼠數學競賽 (Math Kangaroo)",
+    "content": "Association Kangourou sans Frontières 全球參與人數最多的趣味數學競賽，重視思考而非艱深技巧。台灣有合作單位辦理，每年約 3 月應試，報名時程依在地承辦單位公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-58",
+    "title": "國內外競賽資訊 - 高中數學建模競賽 (HiMCM)",
+    "content": "COMAP（美國） 美國 COMAP 主辦的高中數學建模競賽，作品線上提交。須有指導老師（advisor）帶隊報名，台灣學生可參加，每年約 11 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-59",
+    "title": "國內外競賽資訊 - USACO 模擬訓練：USAII AI 黑客松",
+    "content": "United States Artificial Intelligence Institute 聚焦人工智慧主題的線上黑客松，鼓勵學生開發 AI 應用原型。報名與時程依官網場次公告，適合對 AI 實作有興趣的學生。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-60",
+    "title": "國內外競賽資訊 - Major League Hacking (MLH) 黑客松賽季",
+    "content": "Major League Hacking 全球最大的學生黑客松聯盟，全年舉辦數百場線上與實體活動。多數活動免費，台灣學生可參加線上場次，依各活動頁面報名。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-61",
+    "title": "國內外競賽資訊 - 哈佛克里姆森商業個案分析賽 (HCC)",
+    "content": "The Harvard Crimson 由哈佛校報主辦的全球高中生商業個案競賽，採線上多輪賽制。台灣學生可組隊報名，報名與時程依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-62",
+    "title": "國內外競賽資訊 - Diamond Challenge 創業競賽",
+    "content": "Horn Entrepreneurship, University of Delaware 德拉瓦大學主辦的全球高中創業競賽，分商業概念與社會創新兩組，須有成年顧問。台灣學生可報名；2025–26 屆已於 1 月截止，下屆預計 9 月開放。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-63",
+    "title": "國內外競賽資訊 - Conrad Challenge",
+    "content": "Conrad Foundation 結合科學、創新與創業的全球高中團隊競賽，鼓勵以科技解決真實問題。台灣學生可報名；2025–26 屆創新階段已於 1 月截止，下屆預計 8 月啟動。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-64",
+    "title": "國內外競賽資訊 - Blue Ocean 學生創業競賽",
+    "content": "Blue Ocean Competition 全程線上、以 5 分鐘提案影片參賽的高中創業競賽。台灣學生可免費報名；2026 屆已於 2 月截止，下屆時程請見官網。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-65",
+    "title": "國內外競賽資訊 - 全球青年創業挑戰賽 (GYEC)",
+    "content": "Global Youth Entrepreneurship Challenge（日本） 源自日本、面向亞洲與全球高中生的創業競賽，鼓勵提出可行的商業計畫。台灣學生可組隊報名，報名時程依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-66",
+    "title": "國內外競賽資訊 - 國際經濟學奧林匹亞 (IEO)",
+    "content": "International Economics Olympiad 中學生經濟學、金融素養與商業個案綜合競賽。台灣經選拔賽組隊參加，舉辦地點每年不同，赴賽請評估當地情勢。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-67",
+    "title": "國內外競賽資訊 - 華頓全球高中投資競賽 (KWHS Investment Competition)",
+    "content": "Wharton Global Youth Program, University of Pennsylvania 賓州大學華頓商學院主辦的全球高中模擬投資競賽，須有指導老師帶隊。台灣學生可組隊報名，報名通常於 9–10 月開放。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-68",
+    "title": "國內外競賽資訊 - John Locke 論文競賽",
+    "content": "John Locke Institute 英國 John Locke Institute 主辦的頂尖學術論文競賽，涵蓋哲學、政治、經濟、歷史等七大領域。台灣學生可免費投稿，2026 年投稿截止 05-31（須先於 03-31 前完成註冊）。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-69",
+    "title": "國內外競賽資訊 - 劍橋 Re:Think 論文競賽",
+    "content": "Cambridge Centre for International Research (CCIR) 由劍橋學者群指導的國際高中生論文競賽，題目橫跨多學科。台灣學生可免費投稿；2026 屆已於 5 月 10 日截止，下屆預計年初開放。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-70",
+    "title": "國內外競賽資訊 - 紐約時報學生寫作競賽 (NYT Student Contests)",
+    "content": "The New York Times Learning Network 紐約時報全年舉辦多項學生寫作、評論、播客與多媒體競賽。台灣 13–19 歲學生可免費投稿，各競賽截止日不同，請見學習網頁公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-71",
+    "title": "國內外競賽資訊 - 世界歷史學家論文獎 (World Historian Student Essay)",
+    "content": "World History Association 世界歷史學會主辦的中學生歷史論文獎，鼓勵以全球視野探討歷史與自身連結。台灣學生可投稿，截止日通常為每年 5 月。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-72",
+    "title": "國內外競賽資訊 - Foyle 年度青年詩人獎",
+    "content": "The Poetry Society（英國） 英國詩社主辦的國際青年詩歌獎，開放 11–17 歲學生。台灣學生可免費投稿（國際組限投一首），2026 年截止 07-31，嚴禁使用生成式 AI 創作。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-73",
+    "title": "國內外競賽資訊 - ESU 國際公眾演說競賽",
+    "content": "English-Speaking Union 英語聯盟主辦的國際公眾演說競賽，匯聚各國中學生代表。台灣須先經國內選拔賽產生代表，決賽於倫敦舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-74",
+    "title": "國內外競賽資訊 - 世界中學生辯論錦標賽 (WSDC)",
+    "content": "World Schools Debating Championships 世界最高層級的中學生英語辯論賽。台灣須經國內選拔產生代表隊，2026 年於肯亞舉行，赴賽請留意當地簽證與安全資訊。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-75",
+    "title": "國內外競賽資訊 - 哈佛模擬聯合國 (HMUN)",
+    "content": "Harvard International Relations Council 哈佛大學主辦、規模最大的高中模擬聯合國會議之一。台灣學生多以學校代表團報名，於波士頓舉行，報名時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-76",
+    "title": "國內外競賽資訊 - Sony 世界攝影獎—青年組",
+    "content": "World Photography Organisation 全球最具影響力的攝影獎之一，青年組開放 12–19 歲學生免費投稿單張作品。台灣學生可參加，截止日通常為年初。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-77",
+    "title": "國內外競賽資訊 - 全美高中生影展 (AAHSFF)",
+    "content": "All American High School Film Festival 全球最大的高中生影展，於紐約舉行頒獎，亦接受國際作品。台灣學生可線上投件參賽，截止與時程依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-78",
+    "title": "國內外競賽資訊 - Embracing Our Differences 國際藝術競賽",
+    "content": "Embracing Our Differences 以多元、共融為主題的國際藝術與短文競賽，得獎作品製成戶外大型展覽。台灣學生可免費投稿，截止日通常為每年初。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-79",
+    "title": "國內外競賽資訊 - The Earth Prize 永續創新競賽",
+    "content": "The Earth Foundation（瑞士） 面向 13–19 歲學生的全球環境永續競賽，獎金高達 10 萬美元。台灣學生可免費組隊報名；2026 屆已於 2 月截止，下屆預計 9 月開放註冊。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-80",
+    "title": "國內外競賽資訊 - 永續生活信託論文與辯論競賽",
+    "content": "Trust for Sustainable Living 英國永續生活信託主辦的國際學生永續議題論文與辯論競賽。台灣學生可投稿，截止與辯論時程依官網年度主題公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-81",
+    "title": "國內外競賽資訊 - Bow Seat 海洋意識競賽",
+    "content": "Bow Seat Ocean Awareness Programs 以海洋保育為題、結合藝術、寫作、影片、音樂的國際青年創作競賽。台灣 11–18 歲學生可免費投稿，2026 年主題「Your Story, Our Ocean」，截止 06-08。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-82",
+    "title": "國內外競賽資訊 - Breakthrough Junior Challenge 科普影片競賽",
+    "content": "Breakthrough Prize Foundation 全球高中生科普影片競賽，以 2 分鐘影片詮釋物理、數學或生命科學的重大概念，最高獎學金 25 萬美元。台灣 13–18 歲學生可免費投稿，2026 年截止 09-15。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-83",
+    "title": "國內外競賽資訊 - JA 社會創新挑戰賽",
+    "content": "JA Worldwide JA Worldwide 推動的全球青年社會創新與創業競賽，鼓勵以商業思維解決社會問題。台灣有 JA 在地組織協助報名，時程依年度活動公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-84",
+    "title": "國內外競賽資訊 - World Scholar's Cup 世界學者盃",
+    "content": "World Scholar's Cup 結合辯論、寫作、團隊搶答與綜合知識測驗的跨學科團隊競賽，分區域賽與全球賽。台灣學生可組隊報名，各賽事時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-85",
+    "title": "國內外競賽資訊 - 國際歷史競賽—亞洲盃 (IHBB Asia)",
+    "content": "International History Bee and Bowl 以英語進行的搶答式國際歷史競賽，設有個人賽與團體賽。台灣學生可報名亞洲區賽事，時程與地點依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-86",
+    "title": "國內外競賽資訊 - 新加坡與亞洲數學奧林匹亞 (SASMO)",
+    "content": "Singapore International Math Olympiad Challenge 新加坡主辦、亞洲廣泛參與的中小學數學競賽，題目兼顧基礎與思考。台灣可透過在地承辦單位報名，每年約 3–4 月應試。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-87",
+    "title": "國內外競賽資訊 - 東南亞數學奧林匹亞 (SEAMO)",
+    "content": "SEAMO（東南亞數學奧林匹亞） 東南亞地區商業營運的中小學數學競賽，採公開報名、收取報名費。台灣可透過在地代辦報名，含 IJMO 國際晉級賽，時程依承辦單位公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-88",
+    "title": "國內外競賽資訊 - 國際青少年數學奧林匹亞 (IJMO)",
+    "content": "SEAMO（東南亞數學奧林匹亞） SEAMO 體系下的國際晉級賽，由各區優異者受邀參加。屬商業性質公開競賽，台灣學生可經在地代辦報名，舉辦地點每年不同。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-89",
+    "title": "國內外競賽資訊 - 全國語文競賽",
+    "content": "教育部 台灣規模最大的語文競賽，含演說、朗讀、作文、字音字形與本土語言等項目。經校內及縣市初賽選拔進入全國賽，報名時程依各縣市公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-90",
+    "title": "國內外競賽資訊 - 全國高級中等學校小論文寫作比賽",
+    "content": "國立公共資訊圖書館 全國高中職學生的小論文線上投稿比賽，主題橫跨各學群，是學習歷程檔案的重要素材。每年舉辦兩梯次，截止日依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-91",
+    "title": "國內外競賽資訊 - 全國高中職閱讀心得寫作比賽",
+    "content": "國立公共資訊圖書館 鼓勵高中職學生閱讀並撰寫心得的全國性線上競賽，與小論文同屬學習歷程常用素材。每年兩梯次，截止日依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-92",
+    "title": "國內外競賽資訊 - 全國中小學科學探究競賽—這樣教我就懂",
+    "content": "國立臺灣科學教育館 以科學影片創作為主的全國競賽，鼓勵學生用淺顯方式講解科學概念。線上投件，報名與截止時程依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-93",
+    "title": "國內外競賽資訊 - 國際物理奧林匹亞線上模擬賽 (Online Physics Olympiad)",
+    "content": "Online Physics Olympiad 由學生社群發起的全程線上物理競賽，分初賽與決賽。台灣學生可免費組隊報名，是 IPhO 之外的線上練兵管道，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-94",
+    "title": "國內外競賽資訊 - 美國數學競賽 (AMC 10/12)",
+    "content": "Mathematical Association of America 美國數學協會主辦的中學生數學競賽，為 AIME 與美國數學奧林匹亞的前哨。台灣可透過認證考場報名應試，每年約 11 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-95",
+    "title": "國內外競賽資訊 - 滑鐵盧數學競賽 (Waterloo Math Contests)",
+    "content": "CEMC, University of Waterloo 滑鐵盧大學 CEMC 主辦的系列數學競賽（如 Euclid、CSMC）。台灣學生須透過認證考場監考應試，時程依各競賽公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-96",
+    "title": "國內外競賽資訊 - 美國電腦科學聯盟程式競賽 (ACSL)",
+    "content": "American Computer Science League 結合電腦科學筆試與程式實作的線上系列賽，分多種難度組別。台灣學生可透過學校或機構登記參加，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-97",
+    "title": "國內外競賽資訊 - Technovation Girls 少女科技創新挑戰",
+    "content": "Technovation 鼓勵 8–18 歲女性以 App 或 AI 解決社區問題的全球競賽。台灣女學生可免費組隊、由導師帶領參加，賽季與截止日依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-98",
+    "title": "國內外競賽資訊 - FIRST 機器人競賽 (FRC)",
+    "content": "FIRST 全球規模最大的高中機器人競賽，結合工程、程式與團隊運作。台灣有多支隊伍參與，每年 1 月公布賽題、3–4 月舉行區域賽。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-99",
+    "title": "國內外競賽資訊 - VEX 機器人世界錦標賽",
+    "content": "Robotics Education & Competition Foundation 全球普及度極高的機器人競賽，分區域賽晉級世界錦標賽。台灣設有區域賽，學生可組隊報名，時程依在地承辦單位公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-100",
+    "title": "國內外競賽資訊 - WRO 世界機器人奧林匹亞",
+    "content": "World Robot Olympiad Association 結合機器人組裝、程式與任務挑戰的國際競賽，每年設不同主題。台灣有全國賽選拔晉級國際賽，報名時程依在地承辦單位公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-101",
+    "title": "國內外競賽資訊 - 國際科學奧林匹亞線上化學賽 (IChO 模擬：IrChO/線上化學競賽)",
+    "content": "International Online Chemistry Competitions 由學生與教師社群舉辦的線上化學競賽，題型貼近化學奧林匹亞。台灣學生可免費報名，作為 IChO 之外的練習管道，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-102",
+    "title": "國內外競賽資訊 - 美國國家經濟學挑戰賽 (National Economics Challenge)",
+    "content": "Council for Economic Education 美國最大的高中經濟學知識競賽，亦設國際組。台灣學生可組隊報名國際賽道，賽程含線上初賽與決賽，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-103",
+    "title": "國內外競賽資訊 - DECA 國際職涯發展商業競賽",
+    "content": "DECA Inc. 聚焦行銷、財金、創業與管理的高中商業競賽，採角色扮演個案與簡報賽制。台灣學生可透過國際分會參與，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-104",
+    "title": "國內外競賽資訊 - 華頓全球高中議題寫作競賽 (Wharton Global Youth Comment & Win)",
+    "content": "Wharton Global Youth Program, University of Pennsylvania 華頓商學院青年計畫舉辦的商業時事評論與寫作活動，鼓勵高中生分析商業新聞。台灣學生可免費線上參與，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-105",
+    "title": "國內外競賽資訊 - 國際青少年永續發展論壇",
+    "content": "聯合國永續發展相關青年組織 圍繞聯合國永續發展目標（SDGs）的青年提案與論壇活動，鼓勵學生提出在地行動方案。台灣學生可透過合作組織報名，時程依各場次公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-106",
+    "title": "國內外競賽資訊 - iGEM 國際基因工程機器競賽",
+    "content": "iGEM Foundation 全球最大的合成生物學競賽，設有高中組。台灣有高中隊伍參與，須組隊並繳交隊伍費用，每年 11 月於決賽展示，賽季時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-107",
+    "title": "國內外競賽資訊 - 國際永續專題研究獎 (Genes in Space / 太空生物實驗競賽)",
+    "content": "Genes in Space 鼓勵學生設計可在國際太空站執行的 DNA 實驗的競賽，主要面向美國學生。台灣學生參賽資格有限，列作太空生物研究的參考指標。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-108",
+    "title": "國內外競賽資訊 - Earth Science Week 國際短片與海報競賽",
+    "content": "American Geosciences Institute 配合地球科學週舉辦的攝影、視覺藝術與短文競賽，主題聚焦地球與環境。台灣學生可線上投稿，截止日通常為每年 10 月。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-109",
+    "title": "國內外競賽資訊 - ASDAN 全球商業實戰挑戰賽 (BPA / 商賽)",
+    "content": "ASDAN China / 國際 ASDAN 以模擬企業營運為核心的高中商業競賽，於亞太多地設賽區。台灣學生可組隊報名，部分賽區與決賽在中國舉行，赴中請留意兩岸往來規定。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-110",
+    "title": "國內外競賽資訊 - 國際青年模擬聯合國—亞洲區會議",
+    "content": "亞洲區模擬聯合國組織 在亞洲多個城市舉辦的高中模擬聯合國會議，鍛鍊國際議題分析與英語議事能力。台灣學生可以代表團報名，各場次時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-111",
+    "title": "國內外競賽資訊 - 美國高中生數學邀請賽 (AIME)",
+    "content": "Mathematical Association of America 美國數學競賽體系中的進階邀請賽，僅 AMC 成績達標者可受邀參加。台灣學生若於認證考場 AMC 達標即可應試，每年約 2 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-112",
+    "title": "國內外競賽資訊 - 國際青年物理競賽—台灣選拔賽 (TYPT)",
+    "content": "台灣物理學會 IYPT 的台灣國內選拔賽，以開放式研究題目進行物理擂台辯論。高中隊伍可公開報名，優勝者代表台灣參加國際賽，時程依學會公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-113",
+    "title": "國內外競賽資訊 - 全國高中職資訊科技競賽 (生活科技競賽)",
+    "content": "教育部國民及學前教育署 全國高中職學生的資訊與生活科技實作競賽，含程式、自動控制與創意設計類別。經校內及區域初賽選拔，報名時程依各區公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-114",
+    "title": "國內外競賽資訊 - 全國科學探究競賽—科學園遊會 (探究與實作)",
+    "content": "國立臺灣師範大學科學教育中心 結合 108 課綱「探究與實作」精神的全國科學競賽，鼓勵團隊以動手實作呈現研究成果。報名與時程依承辦單位年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "科學",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-115",
+    "title": "國內外競賽資訊 - 總統教育獎",
+    "content": "教育部 表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生。經學校推薦與各層級評選，報名時程依各縣市公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-116",
+    "title": "國內外競賽資訊 - 全國學生鄉土歌謠比賽",
+    "content": "教育部 推廣本土語言與多元文化的全國性合唱競賽，分閩南語、客語、原住民語等組別。經初賽選拔進入全國賽，報名時程依各區公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-117",
+    "title": "國內外競賽資訊 - 全國學生音樂比賽",
+    "content": "國立臺灣藝術教育館 台灣規模最大的學生音樂競賽，涵蓋器樂、聲樂、合唱與管弦樂團等項目。經各縣市初賽進入全國決賽，報名時程依各區公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-118",
+    "title": "國內外競賽資訊 - 全國中小學藝術才能比賽—舞蹈類",
+    "content": "國立臺灣藝術教育館 台灣最具規模的學生舞蹈競賽，分古典舞、現代舞、民俗舞等項目。經各縣市初賽選拔進入全國賽，報名時程依各區公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-119",
+    "title": "國內外競賽資訊 - 美國學術寫作與藝術獎 (Scholastic Art & Writing Awards)",
+    "content": "Alliance for Young Artists & Writers 美國歷史最悠久的學生藝術與寫作獎，但僅限美國、加拿大及部分美屬地區在學學生投稿。台灣學生不符報名資格，僅列作參考。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-120",
+    "title": "國內外競賽資訊 - 哈佛模擬聯合國—中國會議 (HMUN China)",
+    "content": "Harvard International Relations Council 哈佛主辦、於中國舉行的高中模擬聯合國會議。台灣學生可報名，惟會議地點在中國，赴中參與請留意兩岸往來規定與簽證安排。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-121",
+    "title": "國內外競賽資訊 - 國際永續設計競賽 (iF Design Student Award)",
+    "content": "iF International Forum Design 德國 iF 設計獎旗下的學生競賽，重視永續與創新設計理念。台灣學生可線上投件，每年設多次截止梯次，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "藝術設計",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-122",
+    "title": "國內外競賽資訊 - Spaghetti 結構橋梁設計競賽 (台灣區)",
+    "content": "各大學土木工程相關科系 以義大利麵或木條搭建橋梁並測試承重的工程實作競賽，由各大學不定期舉辦。高中組可公開報名，時程依主辦校系公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "跨領域",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-123",
+    "title": "國內外競賽資訊 - 全國高中職創新創業競賽 (青年圓夢計畫)",
+    "content": "教育部青年發展署 鼓勵青年學生提出創業構想並實踐的全國性競賽與培力計畫。高中職學生可組隊報名，報名與培訓時程依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "商業管理",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-124",
+    "title": "國內外競賽資訊 - 國際數學奧林匹亞—台灣選拔賽 (TST)",
+    "content": "中華民國數學奧林匹亞委員會 台灣數學奧林匹亞國手的選拔賽事，含初選、複選與培訓營。高中生可公開報名初選，優勝者組成 IMO 代表隊，時程依委員會公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-125",
+    "title": "國內外競賽資訊 - 全國資訊奧林匹亞—台灣選拔賽 (TOI)",
+    "content": "中華民國資訊學會 台灣資訊奧林匹亞（IOI）國手的選拔賽事，含入營考、初選與培訓。高中生可公開報名，優勝者組成 IOI 代表隊，時程依學會公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-126",
+    "title": "國內外競賽資訊 - 國際永續行動獎 (Global Action Award / 全球行動挑戰)",
+    "content": "T4 Education / 國際教育組織 鼓勵學生團隊針對永續發展目標提出並執行在地行動的國際獎項。台灣學生可線上報名提案，賽季與截止日依官網年度公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "社會永續",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-127",
+    "title": "國內外競賽資訊 - 國際語文能力檢定競賽—多益／托福校園賽 (English Olympics)",
+    "content": "各國語言測驗機構 結合英語測驗的校園競賽活動，鼓勵學生提升英語綜合能力。台灣學生可透過學校或測驗中心參加，各場次時程依承辦單位公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "語文人文",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-128",
+    "title": "國內外競賽資訊 - 國際青年人工智慧競賽 (International AI Olympiad / IOAI)",
+    "content": "International Olympiad in Artificial Intelligence 新興的中學生人工智慧國際奧林匹亞，含機器學習與科學競賽兩部分。台灣採選拔制組隊，舉辦地點每年不同，時程依官網公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "資訊",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-129",
+    "title": "國內外競賽資訊 - 國際數學競賽—澳洲數學競賽 (AMC, Australia)",
+    "content": "Australian Mathematics Trust 澳洲數學信託基金主辦、全球廣泛參與的中學生數學競賽。台灣可透過合作學校或機構報名應試，每年約 8 月舉行。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "國際"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "competition-130",
+    "title": "國內外競賽資訊 - 全國高中數理及資訊學科能力競賽",
+    "content": "教育部國民及學前教育署 台灣高中生數學、物理、化學、生物、地球科學與資訊等學科的能力競賽，亦為部分國際奧林匹亞的選才管道之一。經校內及區域初賽選拔，時程依各區公告。",
+    "tags": [
+      "競賽",
+      "國內外競賽資訊",
+      "數理",
+      "全國"
+    ],
+    "url": "advanced-resources/competitions.html#competition-grid"
+  },
+  {
+    "id": "page-131",
     "title": "進階資源探索區",
     "content": "進階資源探索區",
     "tags": [],
     "url": "advanced-resources/index.html"
   },
   {
-    "id": "page-18",
+    "id": "page-132",
     "title": "線上課程精選",
     "content": "線上課程精選",
     "tags": [],
     "url": "advanced-resources/online-courses.html"
   },
   {
-    "id": "course-19",
+    "id": "course-133",
     "title": "線上課程精選 - 李宏毅 — 生成式 AI 與機器學習",
     "content": "台灣大學 李宏毅教授 g0v / 開源社群 台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
     "tags": [
@@ -211,7 +1579,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-20",
+    "id": "course-134",
     "title": "線上課程精選 - freeCodeCamp — 互動式網頁開發學習",
     "content": "freeCodeCamp g0v / 開源社群 全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
     "tags": [
@@ -227,7 +1595,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-21",
+    "id": "course-135",
     "title": "線上課程精選 - 零時小學校 — 專案實作課程",
     "content": "g0v 零時小學校 g0v / 開源社群 包含 g0v 資深貢獻者分享的「如何做一個專案」、「GitHub 協作教學」等內容，適合想發起自主學習專案的同學。",
     "tags": [
@@ -242,21 +1610,21 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-22",
-    "title": "線上課程精選 - Machine Learning for Everyone",
-    "content": "DeepLearning.AI Coursera 由AI大師吳恩達親授，用最直觀的方式解釋複雜的機器學習概念，是踏入AI領域公認的最佳第一門課。",
+    "id": "course-136",
+    "title": "線上課程精選 - AI for Everyone（寫給所有人的 AI 通識）",
+    "content": "DeepLearning.AI Coursera 由AI大師吳恩達親授的非技術 AI 通識課，用最直觀的方式說明 AI 能做什麼、不能做什麼，以及如何在組織與生活中應用，是建立 AI 素養的最佳第一門課。",
     "tags": [
       "線上課程",
       "線上課程精選",
       "AI與數據科學",
       "AI",
-      "機器學習",
+      "AI素養",
       "吳恩達"
     ],
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-23",
+    "id": "course-137",
     "title": "線上課程精選 - Python for Everybody",
     "content": "密西根大學 Coursera 全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
     "tags": [
@@ -270,7 +1638,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-24",
+    "id": "course-138",
     "title": "線上課程精選 - CS50's Introduction to Computer Science",
     "content": "哈佛大學 edX 哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
     "tags": [
@@ -284,7 +1652,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-25",
+    "id": "course-139",
     "title": "線上課程精選 - 行銷入門：帶你快速成為實戰派的行銷人",
     "content": "Frank Chiu Hahow 台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
     "tags": [
@@ -298,7 +1666,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-26",
+    "id": "course-140",
     "title": "線上課程精選 - The Science of Well-Being",
     "content": "耶魯大學 Coursera 耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
     "tags": [
@@ -312,7 +1680,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-27",
+    "id": "course-141",
     "title": "線上課程精選 - 基礎微積分",
     "content": "國立台灣大學 Khan Academy 由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
     "tags": [
@@ -326,7 +1694,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-28",
+    "id": "course-142",
     "title": "線上課程精選 - Google 數據分析專業證書",
     "content": "Google Coursera Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
     "tags": [
@@ -341,7 +1709,7 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "course-29",
+    "id": "course-143",
     "title": "線上課程精選 - 經濟學原理",
     "content": "國立清華大學 Khan Academy 清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
     "tags": [
@@ -355,28 +1723,28 @@
     "url": "advanced-resources/online-courses.html#course-grid"
   },
   {
-    "id": "page-30",
+    "id": "page-144",
     "title": "主題書單推薦",
     "content": "主題書單推薦",
     "tags": [],
     "url": "advanced-resources/reading-list.html"
   },
   {
-    "id": "page-31",
+    "id": "page-145",
     "title": "自主學習啟航站",
     "content": "自主學習啟航站",
     "tags": [],
     "url": "autonomous-learning/index.html"
   },
   {
-    "id": "page-32",
+    "id": "page-146",
     "title": "研究方法工具箱",
     "content": "研究方法工具箱",
     "tags": [],
     "url": "autonomous-learning/methodology.html"
   },
   {
-    "id": "method-33",
+    "id": "method-147",
     "title": "研究方法工具箱 - 文獻探討法",
     "content": "透過系統性地查找、閱讀、分析與你的主題相關的既有資料，來建立研究基礎。 適用情境 幾乎是所有研究的起點。可用來確立研究方向、學習專業知識、或尋找支持論點的證據。 如何進行 (SOP) 確立關鍵字： 根據你的主題，想出幾個核心關鍵字。 選擇資料庫： 從合適的資料庫開始搜尋 (如 Google Scholar、華藝線上圖書館)。 篩選與閱讀： 快速瀏覽標題與摘要，找出最相關的文章進行細讀。 整理與摘要： 用自己的話寫下每篇文章的重點，並記錄來源，避免抄襲。 常見陷阱 最大的陷阱是變成「複製貼上」的讀書報告。重點在於「探討」，也就是比較不同文獻的觀點，並提出自己的看法。 推薦工具 可參考本站「線上製作工具箱」中的 Notion 或 XMind 來整理你的筆記與思緒。",
     "tags": [
@@ -387,7 +1755,7 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "method-34",
+    "id": "method-148",
     "title": "研究方法工具箱 - 問卷調查法",
     "content": "設計標準化問題，向特定群體進行調查，以蒐集大量的量化數據來進行統計分析。 適用情境 想了解某個群體（如：全校學生）對特定議題的普遍看法、或想驗證某個假設時。 如何進行 (SOP) 定義研究目標： 清楚知道你想透過問卷了解什麼。 設計問卷題目： 題目要清晰、無引導性。多使用選擇題以利統計，也可搭配少量開放題。 前測與修改： 先找少量的人試填，確保題目沒有問題，再進行修改。 發放與回收： 決定發放管道（線上/紙本）與對象，並努力提高回收率。 數據分析： 使用統計軟體或試算表分析數據，並製作圖表。 常見陷阱 樣本數不足或取樣不具代表性，會讓你的研究結論缺乏說服力。例如，只問了10個好朋友，不能代表全校學生的想法。 推薦工具 可使用「線上製作工具箱」中的 Google Forms 或 SurveyCake 製作問卷，並用 Google Sheets 進行數據分析。",
     "tags": [
@@ -398,7 +1766,7 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "method-35",
+    "id": "method-149",
     "title": "研究方法工具箱 - 訪談法",
     "content": "透過與受訪者進行深入的對話，來獲取質性的、有故事性的、深層的資訊。 適用情境 想了解某個特定人物的生命故事、專業經驗，或探討一個複雜議題背後的深層原因與脈絡時。 如何進行 (SOP) 確定訪談對象： 找到最能回答你研究問題的人。 擬定訪綱： 設計幾個核心問題作為訪談主軸，並準備一些可追問的備用問題。 邀約與準備： 正式邀約對方，說明研究目的，並準備好錄音設備。 進行訪談： 營造輕鬆的氛圍，專心傾聽，適時追問。 整理與分析： 將錄音轉成逐字稿，並從中找出關鍵的主題與洞見。 常見陷阱 訪談變成「身家調查」，只顧著問完自己的問題，而沒有真正「傾聽」對方。有時最精彩的內容，都來自於不經意的追問。 推薦工具 可使用 Otter.ai (AI語音轉文字) 協助整理逐字稿，並用「線上製作工具箱」中的 Notion 進行訪談資料的標籤化管理。",
     "tags": [
@@ -409,7 +1777,7 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "method-36",
+    "id": "method-150",
     "title": "研究方法工具箱 - 個案研究法",
     "content": "針對一個特定的「個案」（如：一個事件、一間公司、一個人物）進行全面而深入的探討。 適用情境 當你想深入了解一個「特例」為何成功或失敗，或是想探討一個理論在真實世界中的應用時。 如何進行 (SOP) 選定個案： 選擇一個具代表性、或極端特殊的個案。 蒐集資料： 綜合使用多種方法（文獻探討、訪談、觀察）來蒐集關於此個案的資料。 分析資料： 從不同面向剖析個案，找出其獨特的模式、成因與影響。 撰寫報告： 清晰地描述個案背景，並提出你的分析與結論。 常見陷阱 將個案研究的結論過度推論到所有情況。個案研究的價值在於「深度」而非「廣度」。 推薦資源 哈佛商業評論 (HBR) 上有大量的商業個案可供參考。也可從「主題書單推薦」中尋找相關主題的深度報導。",
     "tags": [
@@ -420,7 +1788,7 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "method-37",
+    "id": "method-151",
     "title": "研究方法工具箱 - 內容分析法",
     "content": "對文本或影像內容（如：新聞報導、歌詞、廣告、社群貼文）進行系統性的分類與統計分析。 適用情境 想分析媒體如何呈現特定議題、或想了解社群網路上對某件事的輿論風向時。 如何進行 (SOP) 確定分析單位： 決定你要分析的是文字、圖片還是影片？ 建立編碼表： 設計你的分類標準。例如，分析新聞標題時，分類可以是「正面」、「負面」、「中立」。 進行編碼： 根據編碼表，逐一對你蒐集的資料進行分類與計數。 統計與詮釋： 分析各類別出現的頻率，並詮釋這些數字背後的意義。 常見陷阱 分類標準（編碼表）主觀或不一致，會導致研究結果不可信。建議可以找同學一起進行編碼，並比較結果是否一致（信度分析）。 推薦工具 可使用「線上製作工具箱」中的 Google Sheets 來建立編碼表與進行統計。",
     "tags": [
@@ -431,7 +1799,7 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "method-38",
+    "id": "method-152",
     "title": "研究方法工具箱 - 創作實踐法",
     "content": "以「創造一個作品」為核心，研究的過程與最終的成品同等重要。 適用情境 適用於藝術、設計、資訊、文學等領域，當你的目標是產出一個網站、一支影片、一首曲子、或一本小說時。 如何進行 (SOP) 確立創作理念： 你想透過這個作品傳達什麼？解決什麼問題？ 研究與規劃： 參考相關作品，學習所需技能，並規劃創作時程。 動手創作： 進入主要的創作階段。 紀錄與反思： 詳細記錄你的創作過程、遇到的困難與解決方法。 成果展示與詮釋： 除了展示作品，更要寫下你的創作自述，說明作品的內涵。 常見陷阱 只重視最終成品，而忽略了過程的紀錄與反思。在學習歷程中，教授更想看到的是你的「創作思維」，而不只是一個漂亮的結果。 推薦資源 可從「進階資源探索區」尋找創作所需的技能課程與工具。",
     "tags": [
@@ -442,21 +1810,21 @@
     "url": "autonomous-learning/methodology.html#methodology-grid"
   },
   {
-    "id": "page-39",
+    "id": "page-153",
     "title": "計畫範本庫",
     "content": "計畫範本庫",
     "tags": [],
     "url": "autonomous-learning/plan-templates.html"
   },
   {
-    "id": "page-40",
+    "id": "page-154",
     "title": "學習資源地圖",
     "content": "學習資源地圖",
     "tags": [],
     "url": "autonomous-learning/resource-map.html"
   },
   {
-    "id": "page-41",
+    "id": "page-155",
     "title": "主題靈感產生器",
     "content": "主題靈感產生器",
     "tags": [],
@@ -543,14 +1911,14 @@
     "url": "autonomous-learning/topic-ideas.html#sdg-14"
   },
   {
-    "id": "page-42",
+    "id": "page-156",
     "title": "核心素養互動對照表 (Puter.js 整合版)",
     "content": "核心素養互動探索",
     "tags": [],
     "url": "career-exploration/competency-map.html"
   },
   {
-    "id": "page-43",
+    "id": "page-157",
     "title": "未來生涯GPS 2.0",
     "content": "未來生涯GPS 2.0",
     "tags": [],
@@ -647,21 +2015,21 @@
     "url": "career-exploration/index.html#major-medicine"
   },
   {
-    "id": "page-44",
+    "id": "page-158",
     "title": "大學科系羅盤",
     "content": "大學科系羅盤",
     "tags": [],
     "url": "career-exploration/major-explorer.html"
   },
   {
-    "id": "page-45",
+    "id": "page-159",
     "title": "學長姐真心話",
     "content": "學長姐真心話",
     "tags": [],
     "url": "career-exploration/senior-interviews.html"
   },
   {
-    "id": "interview-46",
+    "id": "interview-160",
     "title": "學長姐真心話 - 陳同學",
     "content": "資訊工程學系 台灣大學 學習歷程的重點不是「做了什麼」，而是從中「學到什麼」，以及「為什麼這件事對你有意義」。 Q1: 高中時，你是如何探索跟準備資工領域的？其實我一開始也不是很確定。高一時我參加了學校的程式設計社，那是我第一次真正接觸寫程式。我發現我對「解決問題」這件事很有熱情，而程式碼就是我的工具。我的自主學習就鎖定做一個 Discord Bot，雖然很簡單，但從無到有的過程讓我學到非常多，也成為我學習歷程中最重要的專案。Q2: 大學的資工系生活，跟想像中一樣嗎？可以說既一樣也不一樣。一樣的是，每天真的都在跟程式碼和數學奮鬥。不一樣的是，大學的學習更要求「自學能力」。教授只會教你核心概念，但大量的實作和新技術，都需要自己花時間去網路上找資源、看文件。高中時自主學習的經驗，這時候就派上用場了。Q3: 對想讀資工系的學弟妹，有什麼建議？第一，數學很重要，尤其是離散數學和線性代數，一定要打好基礎。第二，不要只為了刷題而學程式，試著去找一個你想解決的問題，然後用程式去實現它，這個過程會讓你學得更快、更快樂。最後，多去看看別人的程式碼(GitHub)，學習好的寫作風格，這對團隊合作非常重要。",
     "tags": [
@@ -672,9 +2040,9 @@
     "url": "career-exploration/senior-interviews.html#interview-grid"
   },
   {
-    "id": "interview-47",
+    "id": "interview-161",
     "title": "學長姐真心話 - 林同學",
-    "content": "傳播學院 政治大學 不要害怕放入看似「不務正業」的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。 Q1: 你在高中時如何發現自己對傳播的興趣？我高中時很喜歡追星(笑)，為了幫我的偶像宣傳，我開始自己學著剪影片、做圖、經營一個小小的粉絲專頁。過程中我發現，我對「如何把一個訊息包裝得有趣，讓更多人看見」這件事非常有興趣。這比課本上的知識更能吸引我，也讓我意識到自己可能適合讀傳播。Q2: 傳播學院都在學些什麼？會不會很「虛」？很多人都有這個誤解。傳播學院的課其實非常「實」。我們有新聞採寫、攝影、廣告企劃、公關策略等很多實作課。當然也有理論課，像是傳播理論、符號學，這些課幫助我們建立思考的框架，去分析媒體現象背後的原因。所以它既需要創意，也需要很強的_logic_al思辨能力。Q3: 給學弟妹的建議？多觀察、多思考、多創作。每天滑手機的時候，不要只是被動接收訊息，可以去想「為什麼這個廣告會紅？」、「這個YouTuber的影片好在哪裡？」。然後試著自己去產出內容，無論是寫一篇文案、拍一支短片，或是辦一個小活動，這些「作品」遠比考試成績更能證明你的熱情與潛力。",
+    "content": "傳播學院 政治大學 不要害怕放入看似「不務正業」的經驗。我經營社群帳號的過程，反而成為面試時教授最感興趣的亮點。 Q1: 你在高中時如何發現自己對傳播的興趣？我高中時很喜歡追星(笑)，為了幫我的偶像宣傳，我開始自己學著剪影片、做圖、經營一個小小的粉絲專頁。過程中我發現，我對「如何把一個訊息包裝得有趣，讓更多人看見」這件事非常有興趣。這比課本上的知識更能吸引我，也讓我意識到自己可能適合讀傳播。Q2: 傳播學院都在學些什麼？會不會很「虛」？很多人都有這個誤解。傳播學院的課其實非常「實」。我們有新聞採寫、攝影、廣告企劃、公關策略等很多實作課。當然也有理論課，像是傳播理論、符號學，這些課幫助我們建立思考的框架，去分析媒體現象背後的原因。所以它既需要創意，也需要很強的邏輯思辨能力。Q3: 給學弟妹的建議？多觀察、多思考、多創作。每天滑手機的時候，不要只是被動接收訊息，可以去想「為什麼這個廣告會紅？」、「這個YouTuber的影片好在哪裡？」。然後試著自己去產出內容，無論是寫一篇文案、拍一支短片，或是辦一個小活動，這些「作品」遠比考試成績更能證明你的熱情與潛力。",
     "tags": [
       "學長姐訪談",
       "學長姐真心話",
@@ -683,7 +2051,7 @@
     "url": "career-exploration/senior-interviews.html#interview-grid"
   },
   {
-    "id": "interview-48",
+    "id": "interview-162",
     "title": "學長姐真心話 - 張同學",
     "content": "法律學系 台北大學 法律不只是背法條，更重要的是理解法條背後的「為什麼」，以及它如何應用在活生生的人身上。 Q1: 很多人覺得法律系很無聊，當初為何選擇？我高二時參加了學校的模擬法庭社，那是我第一次接觸到一個真實的案件。我們需要分析證據、建構論點、進行辯論。我發現法律不只是死板的文字，它是一個充滿邏輯思辨和價值判斷的領域，這讓我非常著迷。Q2: 法律系的課業壓力是不是很大？是真的不輕鬆。閱讀量非常大，每週可能都要讀上百頁的判決和文章。考試也不是單純背誦，而是「申論題」，需要你把學到的法律概念，應用在一個虛構的案例中，去分析誰對誰錯。所以，除了記憶力，邏輯和寫作能力同等重要。Q3: 給想讀法律系的學弟妹的建議？第一，關心社會時事。法律是為了解決社會問題而存在的，多看新聞、多了解社會上發生的事，會讓你學習時更有感。第二，訓練自己的閱讀和寫作能力，試著去寫一些有條理、有邏輯的長文。第三，保持一顆開放的心，法律中有很多價值衝突，學會從不同角度思考，比找到「唯一正解」更重要。",
     "tags": [
@@ -694,7 +2062,7 @@
     "url": "career-exploration/senior-interviews.html#interview-grid"
   },
   {
-    "id": "interview-49",
+    "id": "interview-163",
     "title": "學長姐真心話 - 王同學",
     "content": "生物科技學系 陽明交通大學 高中時的科展經驗，不只是為了得獎。從中學到的實驗設計和解決問題的能力，才是在大學真正派上用場的關鍵。 Q1: 你是如何確定自己對生命科學的興趣的？我從小就對生物很有興趣，但真正讓我下定決心的是高二的科展。我們的主題是研究一種益生菌的抑菌效果。從一開始的文獻探討、設計實驗、一次次失敗的嘗試，到最後看到培養皿上出現我們預期的結果，那種成就感是無可取代的。這個過程讓我確定，我想待在實驗室裡，解決跟生命相關的問題。Q2: 生科系都在做實驗嗎？實驗課確實佔了很大一部分，像是普生實驗、生化實驗、分生實驗等等，幾乎每門主科都有搭配的實驗課。但理論課也非常重，因為你需要有扎實的知識基礎，才能看懂文獻、設計實驗。所以絕對不是只有動手做而已。Q3: 給對生科領域有興趣的學弟妹的建議？英文能力非常、非常重要。因為最新的研究、頂尖的論文幾乎都是英文的。高中時可以多看一些科普的英文文章或影片。另外，要培養耐心和細心，做實驗常常會失敗，找出失敗的原因並改進，是生科人的日常。如果你享受這個過程，那這裡會很適合你。",
     "tags": [
@@ -705,14 +2073,14 @@
     "url": "career-exploration/senior-interviews.html#interview-grid"
   },
   {
-    "id": "page-50",
+    "id": "page-164",
     "title": "公民科技專案地圖",
     "content": "SITCON 2025 零時小學校共創工作坊成果。彙整 g0v 公民科技專案與 108 課綱核心素養及 SDGs 的對照應用，為高中生自主學習與探究實作提供靈感。",
     "tags": [],
     "url": "civic-tech-map/index.html"
   },
   {
-    "id": "page-52",
+    "id": "page-166",
     "title": "台灣教育處方籤",
     "content": "一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。",
     "tags": [
@@ -729,28 +2097,28 @@
     "url": "index.html"
   },
   {
-    "id": "page-53",
+    "id": "page-167",
     "title": "多元表現資料庫",
     "content": "多元表現資料庫",
     "tags": [],
     "url": "learning-portfolio/activity-database.html"
   },
   {
-    "id": "page-54",
+    "id": "page-168",
     "title": "學習歷程煉金室",
     "content": "學習歷程煉金室",
     "tags": [],
     "url": "learning-portfolio/index.html"
   },
   {
-    "id": "page-55",
+    "id": "page-169",
     "title": "優質範例藝廊",
     "content": "優質範例藝廊",
     "tags": [],
     "url": "learning-portfolio/portfolio-gallery.html"
   },
   {
-    "id": "portfolio-56",
+    "id": "portfolio-170",
     "title": "優質範例藝廊 - 探究與實作：校園植物葉面含菌量分析",
     "content": "問題意識：報告開頭就明確點出「為何想研究校園植物的含菌量？」，將動機與生活經驗（疫情、校園環境）連結，能快速抓住讀者目光。 研究過程：善用圖表與照片。將枯燥的實驗步驟流程圖化，並附上清晰的實驗操作照片與培養皿結果對比圖，讓讀者能一目了然地理解整個研究過程。 成果展現：不只是羅列數據，而是將數據製作成清晰的長條圖，並在圖表下方用文字說明數據所代表的意義（例如：哪個區域的含菌量最高，可能的原因是什麼）。 深度反思：心得反思不空泛。除了寫「學到團隊合作」，更具體描述了「組員間如何針對實驗變因進行討論與分工」，並提出「未來可進一步研究不同季節對含菌量的影響」，展現了持續探索的潛力。",
     "tags": [
@@ -763,7 +2131,7 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-grid"
   },
   {
-    "id": "portfolio-57",
+    "id": "portfolio-171",
     "title": "優質範例藝廊 - 社會實踐報告：「剩食」議題的社區田野調查",
     "content": "問題意識：從全球性的剩食議題，聚焦到「社區」這個可操作的範圍，展現了將大問題轉化為具體行動的能力。 研究過程：綜合運用了多種研究方法。除了文獻探討，更實際走訪了5家便當店、2間超市，並深度訪談了里長，資料來源多元且具說服力。可參考本站研究方法工具箱。 成果展現：最終不只提出問題，更設計了一份「社區剩食共享地圖」的提案，並附上初步的宣傳文案，展現了強烈的解決問題導向。 深度反思：反思中不僅提到執行的困難（如：店家不願受訪），更探討了背後的社會結構性問題，展現了超越表象的洞察力。",
     "tags": [
@@ -776,7 +2144,7 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-grid"
   },
   {
-    "id": "portfolio-58",
+    "id": "portfolio-172",
     "title": "優質範例藝廊 - 作品集：我的城市速寫計畫",
     "content": "問題意識：創作理念清晰，闡述了為何選擇「城市速寫」作為主題，以及想透過畫筆記錄城市變遷的動機。 研究過程：作品集呈現了從草稿、不同媒材的嘗試到最終作品的完整脈絡，讓觀者能理解其創作的演進過程。 成果展現：作品風格統一，排版具有設計感，本身就是一件完整的設計作品。每張畫都附有簡短的文字，說明地點與創作當下的心情。 深度反思：在總結中，作者反思了「速寫」如何改變他觀看城市的方式，並連結到對都市更新議題的關懷，提升了作品的層次。",
     "tags": [
@@ -789,7 +2157,7 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-grid"
   },
   {
-    "id": "portfolio-59",
+    "id": "portfolio-173",
     "title": "優質範例藝廊 - 跨領域專題：用Python分析唐詩中的色彩意象",
     "content": "問題意識：完美結合了「語文」與「資訊」兩個領域，題目「用Python分析唐詩」本身就極具創意與亮點。 研究過程：作者清楚說明了如何蒐集唐詩資料庫、如何撰寫Python程式來進行斷詞與顏色詞彙的頻率統計，方法論清晰。 成果展現：將統計結果製作成精美的圓餅圖與詞頻分析表，將量化數據視覺化，讓文學分析不再只是主觀感受，更有了數據支撐。 深度反思：作者在反思中探討了「數位人文」這個新興領域的可能性與限制，並提出未來可進一步分析不同詩人（如李白、杜甫）用色習慣的差異，展現了優異的研究潛力。",
     "tags": [
@@ -803,21 +2171,21 @@
     "url": "learning-portfolio/portfolio-gallery.html#portfolio-grid"
   },
   {
-    "id": "page-60",
+    "id": "page-174",
     "title": "反思引導提問集",
     "content": "反思引導提問集",
     "tags": [],
     "url": "learning-portfolio/reflection-guide.html"
   },
   {
-    "id": "page-61",
+    "id": "page-175",
     "title": "線上製作工具箱",
     "content": "線上製作工具箱",
     "tags": [],
     "url": "learning-portfolio/tools.html"
   },
   {
-    "id": "page-62",
+    "id": "page-176",
     "title": "FlexSearch POC",
     "content": "🔬 FlexSearch POC 測試",
     "tags": [],
