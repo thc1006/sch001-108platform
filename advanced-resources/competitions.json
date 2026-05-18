@@ -1,5 +1,5 @@
 {
-  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。欄位說明：category 限 科學/數理/資訊/語文人文/商業管理/藝術設計；level 限 校際-地區/全國/國際；deadline 用 YYYY-MM-DD，若為國手選拔制或尚未公告請留空字串（頁面會顯示「依官網」）。",
+  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。欄位說明：category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」；level 限「校際/地區」「全國」「國際」；deadline 用 YYYY-MM-DD 格式，若為國手選拔制或尚未公告請留空字串（頁面會顯示「依官網」）。",
   "lastUpdated": "2026-05-19",
   "competitions": [
     {

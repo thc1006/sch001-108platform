@@ -44,8 +44,18 @@ if (!Array.isArray(data.competitions)) {
 }
 
 const list = data.competitions;
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+
+// 以台灣時間 (UTC+8) 的當天日期為基準。today 與 deadline 都化為「日曆日」
+// 的 UTC 零點數值再相減，得到精確天數差，不受執行環境（CI 為 UTC）時區影響。
+const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const taipeiToday = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+}).format(new Date());
+const [todayYear, todayMonth, todayDay] = taipeiToday.split('-').map(Number);
+const todayUTC = Date.UTC(todayYear, todayMonth - 1, todayDay);
 
 const schemaErrors = [];
 const expired = [];
@@ -66,13 +76,24 @@ list.forEach((comp, index) => {
 
     if (!comp.deadline) return; // 空字串代表「依官網公告」，屬正常狀況
 
-    const deadline = new Date(comp.deadline);
-    if (Number.isNaN(deadline.getTime())) {
-        schemaErrors.push(`「${label}」的 deadline「${comp.deadline}」不是合法日期（請用 YYYY-MM-DD）`);
+    // 嚴格驗證：先比對 YYYY-MM-DD 格式，再做日期往返檢查
+    const matched = DATE_RE.exec(comp.deadline);
+    if (!matched) {
+        schemaErrors.push(`「${label}」的 deadline「${comp.deadline}」格式不符 YYYY-MM-DD`);
+        return;
+    }
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    const deadlineUTC = Date.UTC(year, month - 1, day);
+    const parsed = new Date(deadlineUTC);
+    // 例如 2026-02-30 會被 Date 正規化成 3 月，往返比對可抓出這種不存在的日期
+    if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) {
+        schemaErrors.push(`「${label}」的 deadline「${comp.deadline}」不是實際存在的日期`);
         return;
     }
 
-    const diffDays = Math.ceil((deadline - today) / 86_400_000);
+    const diffDays = Math.ceil((deadlineUTC - todayUTC) / 86_400_000);
     if (diffDays < 0) {
         expired.push({ label, deadline: comp.deadline });
     } else if (diffDays <= SOON_DAYS) {
@@ -91,7 +112,7 @@ console.log(`  即將截止：${expiringSoon.length}`);
 
 // ---- Markdown 報告（供 workflow 開 issue 用）----
 const lines = ['## 競賽資料檢查報告', ''];
-lines.push(`- 檢查日期：${today.toISOString().slice(0, 10)}`);
+lines.push(`- 檢查日期：${taipeiToday}（台灣時間）`);
 lines.push(`- 資料最後更新：${data.lastUpdated || '未標記'}`);
 lines.push(`- 競賽總數：${list.length}`);
 lines.push('');
