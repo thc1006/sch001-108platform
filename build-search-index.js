@@ -160,6 +160,11 @@ const JSON_DATA_PAGES = {
         arrayKey: 'courses', idPrefix: 'course', tag: '線上課程',
         anchor: 'course-grid',
     },
+    'advanced-resources/open-education.html': {
+        json: 'advanced-resources/open-education.json',
+        arrayKey: 'resources', idPrefix: 'resource', tag: '開放教育資源',
+        anchor: 'resource-grid',
+    },
     'career-exploration/senior-interviews.html': {
         json: 'career-exploration/senior-interviews.json',
         arrayKey: 'interviews', idPrefix: 'interview', tag: '學長姐訪談',

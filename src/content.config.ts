@@ -1,7 +1,7 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-// 9 學群升學指南內容集合。
+// 10 學群升學指南內容集合。
 // 每筆 entry 是一個「學群 × 主題」的內容檔,
 // 路徑為 src/content/clusters/<學群slug>/<主題slug>.md,
 // entry id 即 "<學群slug>/<主題slug>"(供動態路由拆解)。

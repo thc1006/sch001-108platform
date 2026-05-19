@@ -74,6 +74,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const toolGrid = document.getElementById('tool-grid');
         const filters = document.getElementById('category-filters');
 
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         function renderTools(category = 'all') {
             toolGrid.innerHTML = '';
             const filteredTools = category === 'all'
@@ -82,7 +88,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             filteredTools.forEach(tool => {
                 const card = document.createElement('a');
-                card.href = tool.url;
+                card.href = encodeURI(tool.url);
                 card.target = '_blank';
                 card.rel = 'noopener noreferrer';
                 card.className = 'tool-card bg-white rounded-lg shadow-md flex flex-col';
@@ -91,17 +97,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 if(tool.pricing === '免費增值') pricingColor = 'bg-yellow-100 text-yellow-800';
 
                 card.innerHTML = `
-                    <img src="${tool.logo}" alt="${tool.name}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-6 rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                    <img src="${encodeURI(tool.logo)}" alt="${escapeHtml(tool.name)}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-6 rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="flex justify-between items-start">
-                            <h3 class="text-xl font-bold text-gray-900">${tool.name}</h3>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${pricingColor} flex-shrink-0">${tool.pricing}</span>
+                            <h3 class="text-xl font-bold text-gray-900">${escapeHtml(tool.name)}</h3>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${pricingColor} flex-shrink-0">${escapeHtml(tool.pricing)}</span>
                         </div>
-                        <p class="text-sm font-bold text-orange-600 mt-1">${tool.category}</p>
-                        <p class="text-gray-700 my-3 text-sm flex-grow">${tool.description}</p>
+                        <p class="text-sm font-bold text-orange-600 mt-1">${escapeHtml(tool.category)}</p>
+                        <p class="text-gray-700 my-3 text-sm flex-grow">${escapeHtml(tool.description)}</p>
                         <div class="mt-auto pt-4 border-t border-gray-100">
                              <p class="text-xs text-gray-500 mb-2 font-semibold">最適用於：</p>
-                             <span class="inline-block bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">${tool.best_for}</span>
+                             <span class="inline-block bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">${escapeHtml(tool.best_for)}</span>
                         </div>
                     </div>
                 `;
