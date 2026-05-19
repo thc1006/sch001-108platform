@@ -18,7 +18,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                     我們的<span class="gradient-text">使命</span>
                 </h1>
                 <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                    我們致力於為偏鄉高中生，建立一個學習歷程與升學資訊共享的開源平台，讓優質教育不再有城鄉差距，讓每個孩子都能適性揚才。
+                    我們致力於為偏鄉高中生，建立一個學習歷程與升學資訊共享的開源平台，讓優質教育不再有城鄉差距，讓每個孩子都能適性揚才。如今平台已成長為涵蓋十大學群升學指南、二十位學長姐人物誌、自主學習與學習歷程指引，以及開放教育資源專頁的完整 108 課綱學習夥伴。
                 </p>
             </div>
         </section>
@@ -50,9 +50,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <p class="text-gray-700">為了讓平台的影響力更廣、更深，我們決定進行數位轉型，將過往累積的經驗與資料，打造成一個更強大、更具互動性的線上資源網站，並導入 AI 技術，為學生提供個人化的學習引導。這，就是你眼前的「台灣教育處方籤」。</p>
                     </div>
                     <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">擴充：從升學指南到開放知識</h3>
+                        <p class="text-sm text-gray-500 mb-2">2026</p>
+                        <p class="text-gray-700">迎接 115 學年度，平台大幅擴充內容廣度：上線「十大學群升學指南探索系統」，每個學群都整理出科系定位、教授選才、多元表現、自主學習與備審面試等主題；累積二十位學長姐人物誌，讓學弟妹聽見真實的升學經驗；並新增「開放教育資源」專頁，把世界級的開放課程與開放科學資源帶到每個孩子面前。</p>
+                    </div>
+                    <div class="timeline-item">
                          <div class="timeline-dot"></div>
                         <h3 class="text-xl font-bold mb-1">未來：咱無輸！</h3>
-                        <p class="text-gray-700">我們將持續與在地組織（如：創夢客）合作，並深入校園宣講。希望透過這個專案，讓更多學弟妹能像創辦人一樣，有自信地大喊「咱無輸！」</p>
+                        <p class="text-gray-700">我們將持續與在地組織（如：創夢客）合作，並深入校園宣講，也會邀請更多學長姐分享經驗、持續擴充各學群與資源內容。希望透過這個專案，讓更多學弟妹能像創辦人一樣，有自信地大喊「咱無輸！」</p>
                     </div>
                 </div>
             </div>
@@ -127,14 +133,48 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                     </div>
                     <div class="text-center">
                         <img src="picture/游惠瑜.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
-                        <h4 class="font-bold">游蕙伃</h4>
+                        <h4 class="font-bold">游惠瑜</h4>
                         <p class="text-sm text-gray-500">團隊成員</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 5. Project Links -->
+        <!-- 5. Platform Highlights -->
+        <section class="py-20 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2">平台提供什麼</h2>
+                <p class="text-gray-600 mb-12">從探索方向到動手累積學習歷程，陪你走完 108 課綱的每一步。</p>
+                <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <a href="career-exploration/clusters/index.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">十大學群升學指南</h4>
+                        <p class="text-sm text-gray-600 mt-1">每個學群一份完整指南，從科系定位、教授選才到多元表現與備審面試，陪你找到方向。</p>
+                    </a>
+                    <a href="career-exploration/senior-interviews.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">學長姐人物誌</h4>
+                        <p class="text-sm text-gray-600 mt-1">二十位學長姐的真實升學故事，聽見不同科系與背景的選擇與心路歷程。</p>
+                    </a>
+                    <a href="advanced-resources/open-education.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">開放教育資源</h4>
+                        <p class="text-sm text-gray-600 mt-1">精選全世界開放、免費的學習與研究資源，讓世界級知識為每個孩子敞開。</p>
+                    </a>
+                    <a href="autonomous-learning/index.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">自主學習指引</h4>
+                        <p class="text-sm text-gray-600 mt-1">方法論、主題發想、資源地圖與計畫範本，協助你規劃一份扎實的自主學習。</p>
+                    </a>
+                    <a href="learning-portfolio/index.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">學習歷程檔案</h4>
+                        <p class="text-sm text-gray-600 mt-1">活動資料庫、作品集範例、反思撰寫指南與實用工具，協助你經營學習歷程。</p>
+                    </a>
+                    <a href="advanced-resources/index.html" class="block p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-xl transition-shadow text-left">
+                        <h4 class="font-bold text-lg text-blue-600">進階學習資源</h4>
+                        <p class="text-sm text-gray-600 mt-1">線上課程、競賽資訊與延伸書單，把學習的觸角延伸到課堂之外。</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Project Links -->
         <section class="py-20">
              <div class="container mx-auto px-6 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold mb-8">深入了解我們的專案</h2>
