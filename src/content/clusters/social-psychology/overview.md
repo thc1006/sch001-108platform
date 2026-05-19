@@ -6,8 +6,6 @@ title: 社會與心理學群科系風向標：定位、分流與 2026 升學趨�
 description: 社會與心理學群升學總覽，涵蓋社會學與心理學的分流差異、社會學/社工/心理三大系所地圖、115 學年度（2026）個人申請趨勢與重要時程，協助高中生與家長精準定位科系。
 ---
 
-# 社會與心理學群科系風向標
-
 社會與心理學群（簡稱社心學群）研究的核心始終是「人」與「社會」。這份風向標協助你在出發前看清整個學群的地形：它是什麼、內部如何分流、有哪些校系、以及 2026 年的申請風向往哪裡吹。
 
 > 本頁以 **2026 年、即 115 學年度** 大學個人申請現況為準。
@@ -72,10 +70,10 @@ description: 社會與心理學群升學總覽，涵蓋社會學與心理學的�
 
 ## 參考來源
 
-- 大學招生委員會聯合會 115 學年度招生資訊與時程：<https://www.cac.edu.tw/>
-- ColleGo! 選才育才輔助系統—社會心理學群：<https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10>
-- 國立臺灣大學社會學系（選才理念與審查重點）：<https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022>
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 國立政治大學心理學系 115 學年度招生資訊：<https://psy.nccu.edu.tw/PageDoc?fid=2929>
-- 巷仔口社會學（台灣社會學會支持的科普平台）：<https://twstreetcorner.org/>
-- 何明修：從「太陽花」到「青鳥行動」臺灣公民運動的演進：<https://twstreetcorner.org/2024/07/11/ming-sho-ho-2/>
+- [大學招生委員會聯合會 115 學年度招生資訊與時程](https://www.cac.edu.tw/)
+- [ColleGo！選才育才輔助系統—社會心理學群](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10)
+- [國立臺灣大學社會學系（選才理念與審查重點）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022)
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [國立政治大學心理學系 115 學年度招生資訊](https://psy.nccu.edu.tw/PageDoc?fid=2929)
+- [巷仔口社會學（台灣社會學會支持的科普平台）](https://twstreetcorner.org/)
+- [何明修：從「太陽花」到「青鳥行動」臺灣公民運動的演進](https://twstreetcorner.org/2024/07/11/ming-sho-ho-2/)

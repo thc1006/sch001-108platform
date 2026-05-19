@@ -6,8 +6,6 @@ title: 管理學群自主學習與探究專題方向:題目選擇與反思深化
 description: 管理學群自主學習與探究專題怎麼做?本頁提供商管+AI、數據分析、ESG、行銷等專題方向,並用三層次提問法與個案分析框架,教高中生把專題做出反思深度與科系連結。
 ---
 
-# 管理學群自主學習與探究專題方向
-
 招聯會「三重二不」明確指出大學端「重視校內學習活動勝過校外活動」——校內的**自主學習計畫、探究與實作、課程學習成果**,正是 115 學年度審查的重心。一份好的專題,證明的不只是知識,更是規劃、執行、研究與反思的潛力。
 
 ## 一、為什麼自主學習專題這麼重要?
@@ -67,9 +65,9 @@ description: 管理學群自主學習與探究專題怎麼做?本頁提供商管
 
 ## 參考來源
 
-- 招聯會「三重二不」審查原則(重視校內學習活動):https://www.jbcrc.edu.tw/
-- 寫出讓教授眼睛發亮的學習歷程(典陸教育):https://www.danlu-education.com/exam-information-detail/study-map-interview/
-- 2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣):https://esg.businesstoday.com.tw/article/category/190807/post/202512150023
-- 2026 金融科技趨勢(TechOrange):https://techorange.com/2025/12/11/fintech-predictions-for-2026/
-- 心得:九間企研/國企所推甄錄取經驗分享(TUN 大學網):https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=237581
-- 學習歷程撰寫 9 大地雷掃雷清單(104 職場力):https://blog.104.com.tw/learning-process-dont/
+- [招聯會「三重二不」審查原則(重視校內學習活動)](https://www.jbcrc.edu.tw/)
+- [寫出讓教授眼睛發亮的學習歷程(典陸教育)](https://www.danlu-education.com/exam-information-detail/study-map-interview/)
+- [2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣)](https://esg.businesstoday.com.tw/article/category/190807/post/202512150023)
+- [2026 金融科技趨勢(TechOrange)](https://techorange.com/2025/12/11/fintech-predictions-for-2026/)
+- [九間企研/國企所推甄錄取經驗分享(TUN 大學網)](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=237581)
+- [學習歷程撰寫 9 大地雷掃雷清單(104 職場力)](https://blog.104.com.tw/learning-process-dont/)

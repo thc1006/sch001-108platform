@@ -6,8 +6,6 @@ title: 社會與心理學群自主學習與探究專題方向：主題發想與�
 description: 社會與心理學群自主學習專題指南，提供社會學與心理學熱門探究主題、文獻分析到田野觀察的研究方法比較，並用社會學想像力把個人經驗轉化為有深度的探究專題。
 ---
 
-# 社會與心理學群：自主學習與探究專題方向
-
 「自主學習計畫與成果」是 108 課綱下最具鑑別度的環節，也是直接證明你內在學習動機的項目。大學招生委員會尋找的不是已然成熟的學者，而是一位 **「準學者」**——展現好奇心、能提出有意義的探問、選擇合適的研究途徑，並對過程與結果深刻反思的年輕心靈。
 
 ## 一、洞察力的養成：從個人煩惱到公共議題
@@ -71,10 +69,10 @@ description: 社會與心理學群自主學習專題指南，提供社會學與�
 
 ## 參考來源
 
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 國立臺灣大學社會學系審查重點：<https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022>
-- 對心理系、心輔系有興趣？4 本適合高中生自主學習的書籍：<https://blog.luckertw.com/books-for-self-study/>
-- 自主學習計畫該怎麼寫？教授解密—天下雜誌：<https://www.cw.com.tw/article/5120375>
-- 何明修：從「太陽花」到「青鳥行動」臺灣公民運動的演進：<https://twstreetcorner.org/2024/07/11/ming-sho-ho-2/>
-- 3 次免費諮商，然後呢？推動「求助常態化」—報導者：<https://www.twreporter.org/a/free-counceling-for-young-people-program>
-- 自主學習歷程與成果摘要範例（《傀儡花》專題）：<https://www.hhsh.chc.edu.tw/resource/openfid.php?id=2873>
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [國立臺灣大學社會學系審查重點](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022)
+- [對心理系、心輔系有興趣？4 本適合高中生自主學習的書籍](https://blog.luckertw.com/books-for-self-study/)
+- [自主學習計畫該怎麼寫？教授解密—天下雜誌](https://www.cw.com.tw/article/5120375)
+- [何明修：從「太陽花」到「青鳥行動」臺灣公民運動的演進](https://twstreetcorner.org/2024/07/11/ming-sho-ho-2/)
+- [3 次免費諮商，然後呢？推動「求助常態化」—報導者](https://www.twreporter.org/a/free-counceling-for-young-people-program)
+- [自主學習歷程與成果摘要範例（《傀儡花》專題）](https://www.hhsh.chc.edu.tw/resource/openfid.php?id=2873)

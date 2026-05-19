@@ -6,9 +6,7 @@ title: 設計學群常見迷思破解：畫技、術科、AI 與選系的真相
 description: 「設計就是畫畫」「不會畫就不能讀設計系」是設計學群最致命的迷思。本頁逐一破解設計與美術的差別、術科與畫技、從小學畫是否加分、AI 工具能否使用、競賽名次等常見誤解，給高中生與家長最忠實的真相。
 ---
 
-# 設計學群常見迷思破解
-
-> 對應 2026 年 / 115 學年度大學申請入學｜給高中生與家長的升學指南
+> 對應 2026 年／115 學年度大學申請入學｜給高中生與家長的升學指南
 
 設計學群是 18 學群中最容易被誤解的一群。許多高中生與家長因為錯誤的想像，要嘛不敢報、要嘛準備錯方向。本頁逐一拆解最普遍的迷思。
 
@@ -75,10 +73,10 @@ description: 「設計就是畫畫」「不會畫就不能讀設計系」是設�
 
 ## 參考來源
 
-1. [設計、美術怎麼選？一次看清設計與美術系的差異 — 恆素養](https://hengsuyang.dasoedu.com.tw/article/inside/5bccade7-0ed6-11ec-8b7b-000c2904464e)
-2. [設計作品集怎麼準備？實踐工設學長：比起畫技，展現原創性更重要 — IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-備審-面試-大學作品集-術科考試)
-3. [比起個人美感，「設計思考」更需要被納入學校教育——專訪師大設計系長友大輔教授 — 換日線 Crossing](https://crossing.cw.com.tw/article/15182)
-4. [【設計力研究系列2】AI 世代的設計突圍 — 台灣設計研究院 TDRI](https://www.tdri.org.tw/zh-TW/news/538)
-5. [【設計師履歷範本】最忌作品集塞好塞滿！面試官考量大公開 — 104 職場力](https://blog.104.com.tw/designer-resume-sample/)
-6. [我想念設計、我喜歡畫畫——升大學考生必須知道的五件事 — 藝心美術教育機構](https://yixinart.org/)
-7. [ColleGo! 選才育才輔助系統 — 建築設計學群](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)
+- [設計、美術怎麼選？一次看清設計與美術系的差異 — 恆素養](https://hengsuyang.dasoedu.com.tw/article/inside/5bccade7-0ed6-11ec-8b7b-000c2904464e)
+- [設計作品集怎麼準備？實踐工設學長：比起畫技，展現原創性更重要 — IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-備審-面試-大學作品集-術科考試)
+- [比起個人美感，「設計思考」更需要被納入學校教育——專訪師大設計系長友大輔教授 — 換日線 Crossing](https://crossing.cw.com.tw/article/15182)
+- [【設計力研究系列2】AI 世代的設計突圍 — 台灣設計研究院 TDRI](https://www.tdri.org.tw/zh-TW/news/538)
+- [【設計師履歷範本】最忌作品集塞好塞滿！面試官考量大公開 — 104 職場力](https://blog.104.com.tw/designer-resume-sample/)
+- [我想念設計、我喜歡畫畫——升大學考生必須知道的五件事 — 藝心美術教育機構](https://yixinart.org/)
+- [ColleGo! 選才育才輔助系統 — 建築設計學群](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)

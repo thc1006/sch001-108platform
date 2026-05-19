@@ -6,8 +6,6 @@ title: 社會與心理學群申請備審與面試要點：自述撰寫、面試�
 description: 社會與心理學群申請實戰指南，涵蓋學習歷程自述四大段落撰寫、面試常見題型與應對策略、115 學年度個人申請重要時程，協助高中生與家長完整備戰二階審查。
 ---
 
-# 社會與心理學群：申請備審與面試要點
-
 備審資料與面試的核心目標一致：向審查教授證明你不只是一個有潛力的學生，更是一個準備好為這個學術社群帶來獨特貢獻的未來學者。本頁帶你把前面累積的特質與作品，編織成有說服力的申請敘事。
 
 > 本頁以 **2026 年、即 115 學年度** 個人申請現況為準。
@@ -76,10 +74,10 @@ description: 社會與心理學群申請實戰指南，涵蓋學習歷程自述�
 
 ## 參考來源
 
-- 大學招生委員會聯合會 115 學年度招生資訊與時程：<https://www.cac.edu.tw/>
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 國立臺灣大學社會學系 115 學年度書面資料準備指引：<https://www.aca.ntu.edu.tw/w/aca/LocalAdmissionClass_21072013260628724>
-- 心理系面試準備方針分享—PTT：<https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html>
-- 心理系面試技巧—亞洲大學心理學系：<https://psy.asia.edu.tw/zh_tw/high_school/highschool/interview>
-- 暨南大學社會工作系面試經驗與心得：<https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=350706>
-- 115 學年度大學申請入學審查資料準備指引查詢系統：<https://www.cac.edu.tw/cacportal/jbcrc/LearningPortfolios_MultiQuery_ppa/index.php>
+- [大學招生委員會聯合會 115 學年度招生資訊與時程](https://www.cac.edu.tw/)
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [國立臺灣大學社會學系 115 學年度書面資料準備指引](https://www.aca.ntu.edu.tw/w/aca/LocalAdmissionClass_21072013260628724)
+- [心理系面試準備方針分享—PTT](https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html)
+- [心理系面試技巧—亞洲大學心理學系](https://psy.asia.edu.tw/zh_tw/high_school/highschool/interview)
+- [暨南大學社會工作系面試經驗與心得](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=350706)
+- [115 學年度大學申請入學審查資料準備指引查詢系統](https://www.cac.edu.tw/cacportal/jbcrc/LearningPortfolios_MultiQuery_ppa/index.php)

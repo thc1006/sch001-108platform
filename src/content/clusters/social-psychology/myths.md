@@ -6,8 +6,6 @@ title: 社會與心理學群常見迷思破解：時數、平凡經歷與心理�
 description: 破解社會與心理學群升學申請最常見的迷思——志工時數迷思、生活太平凡、要展現專業理論、心理系等於讀心術、專題失敗不能放，協助高中生與家長建立正確準備觀念。
 ---
 
-# 社會與心理學群：常見迷思破解
-
 申請社心學群時，許多迷思會讓你把力氣用錯地方。打破它們，你才能更自信、更策略性地準備備審資料。
 
 ## 迷思一：「我的志工服務時數一定要夠長、夠多。」
@@ -56,9 +54,9 @@ description: 破解社會與心理學群升學申請最常見的迷思——志�
 
 ## 參考來源
 
-- 大學招生委員會聯合會 115 學年度招生資訊：<https://www.cac.edu.tw/>
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 課程學習成果作品呈現建議—獨特性與真實性（含範例）：<https://www.108epo.com/results-detail.php?Key=30>
-- 心理系面試準備方針分享—PTT：<https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html>
-- 對心理系、心輔系有興趣？4 本適合高中生自主學習的書籍：<https://blog.luckertw.com/books-for-self-study/>
-- 個人申請—自傳、活動經歷怎麼寫（備審 97 分學姊分享）：<https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=344054>
+- [大學招生委員會聯合會 115 學年度招生資訊](https://www.cac.edu.tw/)
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [課程學習成果作品呈現建議—獨特性與真實性（含範例）](https://www.108epo.com/results-detail.php?Key=30)
+- [心理系面試準備方針分享—PTT](https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html)
+- [對心理系、心輔系有興趣？4 本適合高中生自主學習的書籍](https://blog.luckertw.com/books-for-self-study/)
+- [個人申請—自傳、活動經歷怎麼寫（備審 97 分學姊分享）](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=344054)

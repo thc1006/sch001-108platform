@@ -6,8 +6,6 @@ title: 管理學群常見迷思破解:申請路上的 6 大隱藏陷阱
 description: 申請管理學群最容易掉入哪些陷阱?本頁破解「履歷越厚越好」「掛頭銜就有領導力」「沒參加商業競賽就沒競爭力」「企管系樣樣鬆」等 6 大迷思,提供高中生正確策略。
 ---
 
-# 管理學群常見迷思破解
-
 申請管理學群的路上,充斥著各種看似有理、實則會把你引向錯誤方向的迷思。這一頁直接面對這些誤解,並提供清晰的破解之道與正確策略。
 
 ## 迷思一:多元表現越多越好,履歷越厚越加分
@@ -48,9 +46,9 @@ description: 申請管理學群最容易掉入哪些陷阱?本頁破解「履歷
 
 ## 參考來源
 
-- 大學面試,就考這六題!(方格子):https://vocus.cc/article/649a6c6bfd89780001fb4a5e
-- 學習歷程「多元表現」10 大地雷(風傳媒):https://www.storm.mg/lifestyle/4616053
-- 政大企管系備審資料準備指引(可放入失敗經驗反思):https://ba.nccu.edu.tw/
-- 企管系課程與多元職場出路(世新大學):https://www.shu.edu.tw/Spotlight.aspx?from=06&sID=28523
-- 政治大學企業管理學系周奕瑞經驗分享(IOH):https://ioh.tw/talks/政大企管系-周奕瑞-tw-study-nccu-bde
-- 招聯會「三重二不」審查原則:https://www.jbcrc.edu.tw/
+- [大學面試,就考這六題!(方格子)](https://vocus.cc/article/649a6c6bfd89780001fb4a5e)
+- [學習歷程「多元表現」10 大地雷(風傳媒)](https://www.storm.mg/lifestyle/4616053)
+- [政大企管系備審資料準備指引(可放入失敗經驗反思)](https://ba.nccu.edu.tw/)
+- [企管系課程與多元職場出路(世新大學)](https://www.shu.edu.tw/Spotlight.aspx?from=06&sID=28523)
+- [政治大學企業管理學系周奕瑞經驗分享(IOH)](https://ioh.tw/talks/政大企管系-周奕瑞-tw-study-nccu-bde)
+- [招聯會「三重二不」審查原則](https://www.jbcrc.edu.tw/)

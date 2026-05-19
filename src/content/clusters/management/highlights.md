@@ -6,8 +6,6 @@ title: 管理學群多元表現亮點策略:競賽、社團、作品與避雷指
 description: 管理學群多元表現怎麼準備才有亮點?本頁解析社團、競賽、活動、網路經營等經驗如何用 STAR 原則轉化為管理潛力證據,並列出備審 10 大地雷,教高中生避開申請陷阱。
 ---
 
-# 管理學群多元表現亮點策略
-
 高中生準備多元表現最常犯的錯,是「流水帳式羅列經歷」。成功的關鍵在於「**詮釋**」——把每一項經歷策略性地建構成「證明管理潛力」的有力證據。這一頁告訴你:哪些經驗有價值、怎麼呈現、以及絕對要避開的地雷。
 
 ## 一、核心心法:重質不重量,頭銜不等於實力
@@ -82,9 +80,9 @@ ESG 是全球企業界衡量永續發展的關鍵指標,可用來策略性地梳
 
 ## 參考來源
 
-- 學習歷程「多元表現」10 大地雷(風傳媒):https://www.storm.mg/lifestyle/4616053
-- 學習歷程撰寫 9 大地雷掃雷清單(104 職場力):https://blog.104.com.tw/learning-process-dont/
-- 備審資料技巧:讓教授記住你(IOH):https://ioh.tw/articles/大學備審資料
-- 台大管理顧問社面試筆試問題大公開(Medium):https://blackwinged-kite.medium.com/台大管理顧問社面試-筆試問題及回答-大公開-1def9c4d841e
-- HSBC/HKU 商業案例競賽心得(台大管理學院院訊):https://newsletter.management.ntu.edu.tw/hsbc-hku商業案例競賽心得/
-- 招聯會「三重二不」審查原則:https://www.jbcrc.edu.tw/
+- [學習歷程「多元表現」10 大地雷(風傳媒)](https://www.storm.mg/lifestyle/4616053)
+- [學習歷程撰寫 9 大地雷掃雷清單(104 職場力)](https://blog.104.com.tw/learning-process-dont/)
+- [備審資料技巧:讓教授記住你(IOH)](https://ioh.tw/articles/大學備審資料)
+- [台大管理顧問社面試筆試問題大公開(Medium)](https://blackwinged-kite.medium.com/台大管理顧問社面試-筆試問題及回答-大公開-1def9c4d841e)
+- [HSBC/HKU 商業案例競賽心得(台大管理學院院訊)](https://newsletter.management.ntu.edu.tw/hsbc-hku商業案例競賽心得/)
+- [招聯會「三重二不」審查原則](https://www.jbcrc.edu.tw/)

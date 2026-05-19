@@ -6,8 +6,6 @@ title: 管理學群科系風向標：學群定位、各學類與 2026 升學趨�
 description: 管理學群涵蓋企管、財金、國企、會計、資管等學類。本頁解析學群定位、各科系特色、頂大校系地圖,以及 115 學年度跨域整合、商管+AI、ESG 與學測數學A採計等最新升學趨勢。
 ---
 
-# 管理學群科系風向標
-
 管理學群是大學招生規模最大、競爭最熱門的學群之一。它培育的不是「會背理論的人」,而是能整合資源、帶領團隊、在不確定中做出決策的未來經理人。這一頁先帶你看懂:管理學群到底在學什麼、各科系怎麼分、頂大校系怎麼選,以及 2026 年(115 學年度)最該掌握的升學風向。
 
 ## 一、學群定位:管理學群在學什麼?
@@ -76,10 +74,10 @@ description: 管理學群涵蓋企管、財金、國企、會計、資管等學�
 
 ## 參考來源
 
-- 大學甄選入學委員會 115 學年度申請入學專頁(時程、名額):https://www.cac.edu.tw/apply115/schedule.php
-- 大學招生委員會聯合會(招聯會)「三重二不」審查原則:https://www.jbcrc.edu.tw/
-- 115 學測頂大採計科目變革(遠見雜誌):https://www.gvm.com.tw/article/126783
-- 2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣):https://esg.businesstoday.com.tw/article/category/190807/post/202512150023
-- 中原大學商學院「ESG+AI」發展策略(聯合新聞網):https://udn.com/news/story/6928/9368738
-- 商業與管理群課綱介紹(大學問):https://www.unews.com.tw/News/Info/3051
-- 國際企業學類介紹(大學問):https://www.unews.com.tw/Group/Index/168
+- [大學甄選入學委員會 115 學年度申請入學專頁(時程、名額)](https://www.cac.edu.tw/apply115/schedule.php)
+- [大學招生委員會聯合會(招聯會)「三重二不」審查原則](https://www.jbcrc.edu.tw/)
+- [115 學測頂大採計科目變革(遠見雜誌)](https://www.gvm.com.tw/article/126783)
+- [2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣)](https://esg.businesstoday.com.tw/article/category/190807/post/202512150023)
+- [中原大學商學院「ESG+AI」發展策略(聯合新聞網)](https://udn.com/news/story/6928/9368738)
+- [商業與管理群課綱介紹(大學問)](https://www.unews.com.tw/News/Info/3051)
+- [國際企業學類介紹(大學問)](https://www.unews.com.tw/Group/Index/168)

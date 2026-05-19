@@ -6,8 +6,6 @@ title: 管理學群教授看重的特質與能力:核心素養與審查室真心
 description: 管理學群教授在審查與面試時尋找什麼?本頁解析三大核心人格特質、硬實力與軟實力清單,以及把教授當「投資人」看待的選才邏輯,幫高中生打造管理學群 DNA。
 ---
 
-# 管理學群教授看重的特質與能力
-
 成績優異,在頂尖商管學院已從「決定性優勢」變成「進場門檻」。當大量申請者都有亮眼成績時,招生委員會的目光必然轉向那些無法被量化的特質。這一頁帶你看懂:教授到底在尋找什麼樣的人。
 
 ## 一、教授的選才邏輯:把你當成一筆「投資」
@@ -93,9 +91,9 @@ description: 管理學群教授在審查與面試時尋找什麼?本頁解析三
 
 ## 參考來源
 
-- 招聯會「三重二不」審查原則:https://www.jbcrc.edu.tw/
-- 大學面試,就考這六題!(方格子):https://vocus.cc/article/649a6c6bfd89780001fb4a5e
-- 寫出讓教授眼睛發亮的學習歷程(典陸教育):https://www.danlu-education.com/exam-information-detail/study-map-interview/
-- 港校面試攻略:問題背後教授重視的特質:https://www.i-meihua.com/Article/Detail/3697
-- 生成式 AI 備審資料使用規範(聯合新聞網):https://udn.com/news/story/6925/9428729
-- 台大工商管理學系審查資料準備指引:https://www.aca.ntu.edu.tw/WebUPD/aca/A02/7010_工商管理學系科管_final.pdf
+- [招聯會「三重二不」審查原則](https://www.jbcrc.edu.tw/)
+- [大學面試,就考這六題!(方格子)](https://vocus.cc/article/649a6c6bfd89780001fb4a5e)
+- [寫出讓教授眼睛發亮的學習歷程(典陸教育)](https://www.danlu-education.com/exam-information-detail/study-map-interview/)
+- [港校面試攻略:問題背後教授重視的特質(美華語言)](https://www.i-meihua.com/Article/Detail/3697)
+- [生成式 AI 備審資料使用規範(聯合新聞網)](https://udn.com/news/story/6925/9428729)
+- [台大工商管理學系審查資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/7010_工商管理學系科管_final.pdf)

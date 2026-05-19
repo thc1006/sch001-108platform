@@ -6,8 +6,6 @@ title: 社會與心理學群多元表現亮點策略：志工、議題、競賽�
 description: 社會與心理學群多元表現完整攻略，涵蓋志工服務的反思深度、社會議題探究、競賽與出版作品、模擬聯合國，並整理 STAR-R 框架與常見地雷，協助高中生打造亮點作品集。
 ---
 
-# 社會與心理學群：多元表現亮點策略
-
 一份真正的「亮點」作品，價值不在於活動本身的宏大與否，而在於它能否成為有力的證據，揭示你獨特的個人特質、深刻的求知慾與觀察世界的視角。一位科系主任暨前審查委員用一個詞總結了脫穎而出的關鍵：**「特別」**——獨特的個人經歷、獨特的個人見解、獨特的自我呈現方式。
 
 ## 一、核心心法：用「What-Why-How」呈現每一項經歷
@@ -89,10 +87,10 @@ description: 社會與心理學群多元表現完整攻略，涵蓋志工服務�
 
 ## 參考來源
 
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 國立臺灣大學社會學系審查重點：<https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022>
-- 課程學習成果作品呈現建議—獨特性與真實性（含範例）：<https://www.108epo.com/results-detail.php?Key=30>
-- 個人申請—自傳、活動經歷怎麼寫（備審 97 分學姊分享）：<https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=344054>
-- 高中自主學習做什麼？0 成本 Podcast 製作方法：<https://blog.luckertw.com/podcast_self-learning/>
-- 「模擬聯合國」在做什麼？108 課綱下的社團—換日線：<https://crossing.cw.com.tw/article/18702>
-- 衛福部「15-45 歲青壯世代心理健康支持方案」：<https://dep.mohw.gov.tw/DOMHAOH/cp-509-79500-107.html>
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [國立臺灣大學社會學系審查重點](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022)
+- [課程學習成果作品呈現建議—獨特性與真實性（含範例）](https://www.108epo.com/results-detail.php?Key=30)
+- [個人申請—自傳、活動經歷怎麼寫（備審 97 分學姊分享）](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=344054)
+- [高中自主學習做什麼？0 成本 Podcast 製作方法](https://blog.luckertw.com/podcast_self-learning/)
+- [「模擬聯合國」在做什麼？108 課綱下的社團—換日線](https://crossing.cw.com.tw/article/18702)
+- [衛福部「15-45 歲青壯世代心理健康支持方案」](https://dep.mohw.gov.tw/DOMHAOH/cp-509-79500-107.html)

@@ -6,8 +6,6 @@ title: 社會與心理學群教授看重的特質與能力：核心能力與審�
 description: 解析社會與心理學群教授真正看重的核心特質——洞察力、批判思考、反思自覺、社會關懷與科學嚴謹，並還原審查教授的內心 OS，協助高中生盤點自身能力資產。
 ---
 
-# 社會與心理學群：教授看重的特質與能力
-
 在這個學群，最能打動教授的並非空泛的標籤（「熱心」「有同理心」），而是一種 **被證實的能力**（demonstrated capacity）——透過具體經歷證明、並用連貫敘事串起來的能力。本頁帶你盤點這份「能力資產表」。
 
 ## 一、共通核心能力：所有社心科系的基石
@@ -75,10 +73,10 @@ description: 解析社會與心理學群教授真正看重的核心特質——�
 
 ## 參考來源
 
-- 國立臺灣大學社會學系（選才理念與審查重點）：<https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022>
-- 國立政治大學社會學系 115 學年度審查資料準備指引：<https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893>
-- 國立政治大學心理學系 115 學年度審查資料準備指引：<https://psy.nccu.edu.tw/PageDoc?fid=2929>
-- 富有愛心與同理的觀察家—社會與心理學群自傳範本：<https://hengsuyang.dasoedu.com.tw/article/inside/d12d4418-f36d-11eb-8b7b-000c2904464e>
-- 巷仔口社會學科普平台：<https://twstreetcorner.org/>
-- 人物專訪—臺大心理學系季刊（黃榮村教授）：<http://www.psy.ntu.edu.tw/circulations/201405/interview.html>
-- 自主學習計畫該怎麼寫？教授解密想要哪些特質的學生—天下雜誌：<https://www.cw.com.tw/article/5120375>
+- [國立臺灣大學社會學系（選才理念與審查重點）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022)
+- [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
+- [國立政治大學心理學系 115 學年度審查資料準備指引](https://psy.nccu.edu.tw/PageDoc?fid=2929)
+- [富有愛心與同理的觀察家—社會與心理學群自傳範本](https://hengsuyang.dasoedu.com.tw/article/inside/d12d4418-f36d-11eb-8b7b-000c2904464e)
+- [巷仔口社會學科普平台](https://twstreetcorner.org/)
+- [人物專訪—臺大心理學系季刊（黃榮村教授）](http://www.psy.ntu.edu.tw/circulations/201405/interview.html)
+- [自主學習計畫該怎麼寫？教授解密想要哪些特質的學生—天下雜誌](https://www.cw.com.tw/article/5120375)

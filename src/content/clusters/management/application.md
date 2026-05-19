@@ -6,8 +6,6 @@ title: 管理學群申請備審與面試要點:備審結構、自述與面試攻
 description: 管理學群備審資料與面試怎麼準備?本頁解析備審秒篩法則、學習歷程自述結構、個人與團體面試攻略、面試題型矩陣,以及 115 學年度申請時程,助高中生決勝二階。
 ---
 
-# 管理學群申請備審與面試要點
-
 對管理學群考生而言,熱門商管校系的競爭聚焦在**二階備審與面試的鑑別度**。這一頁整合備審資料的結構與秒篩法則、面試的應對策略,以及 115 學年度的關鍵時程。
 
 ## 一、備審資料的「秒篩」法則
@@ -95,10 +93,10 @@ description: 管理學群備審資料與面試怎麼準備?本頁解析備審秒
 
 ## 參考來源
 
-- 大學甄選入學委員會 115 學年度申請入學時程:https://www.cac.edu.tw/apply115/schedule.php
-- 大學面試,就考這六題!(方格子):https://vocus.cc/article/649a6c6bfd89780001fb4a5e
-- 64 校 115 二階審查資料準備指引(今周刊):https://www.businesstoday.com.tw/article/category/183035/post/202603310020/
-- 團體面試 6 大情境完全解密(47 雲端輔導室):https://www.ajesus1412.com/團體面試6大情境完全解密/
-- 面試臺大企管,教授竟然問我這個?!(TUN 大學網):https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=349296
-- 招聯會「三重二不」審查原則:https://www.jbcrc.edu.tw/
-- 生成式 AI 備審資料使用規範(聯合新聞網):https://udn.com/news/story/6925/9428729
+- [大學甄選入學委員會 115 學年度申請入學時程](https://www.cac.edu.tw/apply115/schedule.php)
+- [大學面試,就考這六題!(方格子)](https://vocus.cc/article/649a6c6bfd89780001fb4a5e)
+- [64 校 115 二階審查資料準備指引(今周刊)](https://www.businesstoday.com.tw/article/category/183035/post/202603310020/)
+- [團體面試 6 大情境完全解密(47 雲端輔導室)](https://www.ajesus1412.com/團體面試6大情境完全解密/)
+- [面試臺大企管,教授竟然問我這個?!(TUN 大學網)](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=349296)
+- [招聯會「三重二不」審查原則](https://www.jbcrc.edu.tw/)
+- [生成式 AI 備審資料使用規範(聯合新聞網)](https://udn.com/news/story/6925/9428729)
