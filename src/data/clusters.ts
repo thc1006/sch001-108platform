@@ -1,4 +1,4 @@
-// 九大學群的中繼資料 —— 學群探索頁、學群中心頁、主題子頁共用。
+// 十大學群的中繼資料 —— 學群探索頁、學群中心頁、主題子頁共用。
 // slug 對應 src/content/clusters/<slug>/ 內容目錄與 /career-exploration/clusters/<slug>/ 路由。
 
 export interface ClusterMeta {
@@ -18,6 +18,7 @@ export const CLUSTERS: ClusterMeta[] = [
   { slug: 'design', name: '設計學群', shortName: '設計', description: '結合美感與實用性,從平面、工業到建築設計,解決生活中的問題。' },
   { slug: 'life-science', name: '生命科學學群', shortName: '生命科學', description: '從分子、細胞到生態系探討生命,是生物科技與醫學研究的基礎。' },
   { slug: 'medicine', name: '醫藥衛生學群', shortName: '醫藥衛生', description: '人體健康的維護與疾病治療,涵蓋醫師、藥師、護理與治療等專業。' },
+  { slug: 'law', name: '法政學群', shortName: '法政', description: '法律、政治、公共行政與外交,探討規範、權力分配與公共事務的運作。' },
 ];
 
 export interface TopicMeta {
