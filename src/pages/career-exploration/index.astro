@@ -304,7 +304,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <ion-icon name="sparkles" class="text-indigo-600"></ion-icon>
                     </div>
                     <div class="chat-bubble-ai p-3 max-w-lg">
-                        <p class="text-sm sm:text-base">${message}</p>
+                        <p class="text-sm sm:text-base">${escapeHtml(message)}</p>
                     </div>
                 `;
                 textElement = messageWrapper.querySelector('p');
