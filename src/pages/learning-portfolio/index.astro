@@ -182,34 +182,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         throw new Error("No JSON found in response");
                     }
                 } catch (parseError) {
-                    // If JSON parsing fails, create a fallback structure
-                    console.log("JSON parsing failed, creating fallback structure");
-                    parsedJson = {
-                        overall_comment: "AI 分析完成。以下是針對你的心得反思的 STAR 分析結果。",
-                        analysis: [
-                            {
-                                element: "S",
-                                comment: "情境描述需要更加具體",
-                                suggestion: "請詳細描述當時的背景環境、時間點以及相關的人事物"
-                            },
-                            {
-                                element: "T",
-                                comment: "任務說明可以更清晰",
-                                suggestion: "明確說明你在這個情境中需要完成什麼任務或目標"
-                            },
-                            {
-                                element: "A",
-                                comment: "行動描述有待加強",
-                                suggestion: "具體描述你採取了哪些具體行動或策略來完成任務"
-                            },
-                            {
-                                element: "R",
-                                comment: "結果呈現需要更完整",
-                                suggestion: "說明行動的具體結果，包括量化指標和個人成長收穫"
-                            }
-                        ],
-                        revised_example: "建議重新組織文字結構，依照 STAR 原則分段描述，讓讀者更容易理解你的學習歷程。"
-                    };
+                    // 解析失敗時不偽造分析結果，改為拋出錯誤走誠實的錯誤顯示路徑
+                    console.error("JSON parsing failed:", parseError);
+                    const formatError = new Error("AI 回應的格式無法解析");
+                    formatError.name = "AIFormatError";
+                    throw formatError;
                 }
 
                 displayAIAnalysis(parsedJson);
@@ -222,6 +199,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else if (error.name === 'AIFormatError') {
+                    errorP.textContent = 'AI 回應的格式不如預期，請再試一次。';
                 } else {
                     errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
                 }

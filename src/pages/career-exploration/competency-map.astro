@@ -23,11 +23,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <label for="cluster-filter" class="font-bold text-gray-700 shrink-0"><i data-feather="filter" class="inline-block -mt-1"></i> 依學群篩選：</label>
                 <select id="cluster-filter" class="w-full bg-gray-100 border-2 border-gray-200 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-indigo-500">
                     <option value="all">顯示所有</option>
+                    <!-- 學群選項由 renderCompetencies() 動態填充 -->
                     </select>
             </div>
         </section>
 
         <section id="competency-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <!-- 素養卡片由 renderCompetencies() 動態填充 -->
             </section>
 
         <section id="ai-analyst" class="mt-20">
