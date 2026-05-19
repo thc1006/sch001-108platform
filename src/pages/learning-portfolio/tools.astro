@@ -22,7 +22,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Featured Tool -->
         <section class="mb-16">
-            <h2 class="text-3xl font-bold mb-6 text-center">本月推薦工具</h2>
+            <h2 class="text-3xl font-bold mb-6 text-center">編輯精選工具</h2>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
                  <div class="p-8 md:w-2/3 flex flex-col justify-center">
                     <p class="text-sm font-bold text-orange-600 mb-1">筆記寫作 & 專案管理</p>
@@ -39,8 +39,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         探索 Notion &rarr;
                     </a>
                 </div>
-                <div class="md:w-1/3">
-                    <img src="https://images.pexels.com/photos/4145190/pexels-photo-4145190.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Notion" class="h-full w-full object-cover">
+                <div class="md:w-1/3 bg-gray-50 flex items-center justify-center">
+                    <img src={`${import.meta.env.BASE_URL.replace(/\/+$/, '')}/learning-portfolio/img/tools/notion.png`} alt="Notion 數位工作區介面" class="w-full h-48 md:h-full object-contain p-6">
                 </div>
             </div>
         </section>

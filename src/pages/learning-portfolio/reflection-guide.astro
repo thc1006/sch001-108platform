@@ -216,18 +216,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         throw new Error("No JSON found in response");
                     }
                 } catch (parseError) {
-                    // If JSON parsing fails, create a fallback structure
-                    console.log("JSON parsing failed, creating fallback structure");
-                    parsedJson = {
-                        overall_comment: "您的反思內容有潛力，但需要更結構化的 STAR 框架來強化。",
-                        analysis: [
-                            { element: "S", comment: "情境描述不足", suggestion: "添加更多背景細節" },
-                            { element: "T", comment: "任務明確", suggestion: "無需修改" },
-                            { element: "A", comment: "行動部分詳細", suggestion: "強調個人貢獻" },
-                            { element: "R", comment: "結果未量化", suggestion: "添加可衡量的成果" }
-                        ],
-                        revised_example: "修改後範例文字..."
-                    };
+                    // 解析失敗時不偽造分析結果，改為拋出錯誤走誠實的錯誤顯示路徑
+                    console.error("JSON parsing failed:", parseError);
+                    const formatError = new Error("AI 回應的格式無法解析");
+                    formatError.name = "AIFormatError";
+                    throw formatError;
                 }
 
                 displayAIAnalysis(parsedJson);
@@ -240,6 +233,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else if (error.name === 'AIFormatError') {
+                    errorP.textContent = 'AI 回應的格式不如預期，請再試一次。';
                 } else {
                     errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
                 }
