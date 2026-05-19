@@ -584,7 +584,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     }
 
                     loadingEl.classList.add('hidden');
-                    resultText.textContent = text;
+                    // AI 回應可能含 markdown（如 **粗體**）。
+                    // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，
+                    // 故 innerHTML 注入安全，AI 無法插入可執行 HTML。
+                    resultText.innerHTML = PuterAI.renderMarkdown(text);
                     resultContent.classList.remove('hidden');
                 } catch (err) {
                     var detail = PuterAI.formatPuterError(err);

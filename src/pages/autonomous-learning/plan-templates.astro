@@ -201,6 +201,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         ];
 
+        // --- Escaping Helper ---
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         // --- Template Grid & Modal Logic ---
         const templateGrid = document.getElementById('template-grid');
         const modal = document.getElementById('templateModal');
@@ -221,13 +228,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.innerHTML = `
                     <div class="flex-grow">
                         <div class="flex justify-between items-start">
-                             <span class="text-sm font-bold text-teal-600">${template.category}</span>
-                             <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${template.type}</span>
+                             <span class="text-sm font-bold text-teal-600">${escapeHtml(template.category)}</span>
+                             <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHtml(template.type)}</span>
                         </div>
-                        <h3 class="text-xl font-bold mt-2 mb-3">${template.title}</h3>
+                        <h3 class="text-xl font-bold mt-2 mb-3">${escapeHtml(template.title)}</h3>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm text-gray-500">相關技能：${template.tags.join('、')}</p>
+                        <p class="text-sm text-gray-500">相關技能：${escapeHtml(template.tags.join('、'))}</p>
                     </div>
                 `;
                 templateGrid.appendChild(card);
@@ -241,8 +248,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modalContent.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-teal-600">${template.category} / ${template.type}</p>
-                        <h3 class="text-2xl font-bold">${template.title}</h3>
+                        <p class="text-sm font-bold text-teal-600">${escapeHtml(template.category)} / ${escapeHtml(template.type)}</p>
+                        <h3 class="text-2xl font-bold">${escapeHtml(template.title)}</h3>
                     </div>
                     <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
@@ -363,10 +370,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         });
 
         function displayAIPlan(data) {
-            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${obj}</li>`).join('');
-            const methodsHtml = (data.execution_methods || []).map(met => `<li>${met}</li>`).join('');
-            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${week.week}:</b> ${week.tasks}</li>`).join('');
-            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${out}</li>`).join('');
+            // 以下欄位皆為 AI 回應內容，可能含 markdown（如 **粗體**）。
+            // 改用 PuterAI.renderMarkdown()：它內部「先 HTML escape、後套 markdown」，
+            // 故不可再額外呼叫 escapeHtml，否則會雙重跳脫（看到字面的 &amp; 等）。
+            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${PuterAI.renderMarkdown(obj)}</li>`).join('');
+            const methodsHtml = (data.execution_methods || []).map(met => `<li>${PuterAI.renderMarkdown(met)}</li>`).join('');
+            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${PuterAI.renderMarkdown(week.week)}:</b> ${PuterAI.renderMarkdown(week.tasks)}</li>`).join('');
+            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${PuterAI.renderMarkdown(out)}</li>`).join('');
 
             planResult.innerHTML = `
                 <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">

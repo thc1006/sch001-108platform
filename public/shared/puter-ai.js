@@ -395,6 +395,95 @@
     }
 
     // ------------------------------------------------------------
+    // renderMarkdown：把 AI 回應的 markdown 子集安全地轉成 HTML
+    // ------------------------------------------------------------
+    //
+    // 安全模型（務必理解，順序不可顛倒）：
+    //
+    //   AI 的輸出是「不可信來源」——模型可能（被誘導）回傳含
+    //   `<script>`、`<img onerror=...>`、`onclick=...` 等可執行 HTML
+    //   的字串。若直接 innerHTML 注入會造成 XSS。
+    //
+    //   因此本函式採「先跳脫、後渲染」：
+    //     1. 先對整段文字做 HTML escape（& < > " '），
+    //        此時任何 AI 想注入的 `<script>` 都已變成無害的字面文字
+    //        `&lt;script&gt;`，瀏覽器不會把它當標籤執行。
+    //     2. 之後才用「我們自己產生」的、白名單內的標籤
+    //        (<strong>/<em>/<code>/<br>/<li>...) 取代 markdown 標記。
+    //
+    //   這個順序是關鍵：如果先渲染 markdown、後 escape，會把我們
+    //   自己插入的 <strong> 也一起 escape 掉（功能壞掉）；如果只渲染
+    //   不 escape，AI 注入的 HTML 就會原樣執行（安全壞掉）。
+    //
+    //   另外刻意「不」支援連結 [](...)、圖片 ![]()、原始 HTML
+    //   ——它們都是注入面（javascript: URL、onerror 事件等），
+    //   排除後本函式產生的 HTML 標籤集合是固定且封閉的。
+    //
+    function escapeHtml(text) {
+        // 先把字串化，再依序替換 5 個危險字元。
+        // 必須最先處理 & ，否則後續替換產生的 &lt; 會被二次替換。
+        return String(text == null ? '' : text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderMarkdown(text) {
+        // 步驟 1：HTML escape——在套用任何 markdown 之前先做。
+        // 經過這一步後，字串裡不可能再有可被瀏覽器解析的標籤 / 屬性。
+        var safe = escapeHtml(text);
+
+        // 步驟 2：在「已跳脫」的安全文字上套 markdown 子集。
+        // 以下所有 <...> 都是本函式自己寫死的白名單標籤，
+        // 內容部分早已 escape，故不會引入注入面。
+
+        // 逐行處理：標題與清單是行層級語法
+        var lines = safe.split('\n');
+        var out = [];
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+
+            // 行首標題 `#`～`######`：去除井號，轉為 <strong>
+            // （escape 後 `#` 仍是 `#`，不受影響）
+            var heading = line.match(/^\s*(#{1,6})\s+(.*)$/);
+            if (heading) {
+                out.push('<strong>' + heading[2] + '</strong>');
+                continue;
+            }
+
+            // 行首清單 `- ` 或 `* `：轉為 • 項目
+            var listItem = line.match(/^\s*[-*]\s+(.*)$/);
+            if (listItem) {
+                out.push('<li style="list-style:none">• ' + listItem[1] + '</li>');
+                continue;
+            }
+
+            out.push(line);
+        }
+        var result = out.join('\n');
+
+        // 行內語法（在整段文字上套用）：
+        // 粗體 **text** → <strong>，斜體 *text* → <em>，行內碼 `code` → <code>
+        // 注意先處理 ** 再處理 *，否則 ** 會被 * 規則先吃掉。
+
+        // 行內碼：`...`（escape 後反引號仍是反引號）
+        result = result.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+        // 粗體：**...**（非貪婪，不跨行）
+        result = result.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+
+        // 斜體：*...*（非貪婪，不跨行；此時剩下的 * 都是單顆）
+        result = result.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+
+        // 換行：\n → <br>
+        result = result.replace(/\n/g, '<br>');
+
+        return result;
+    }
+
+    // ------------------------------------------------------------
     // 匯出
     // ------------------------------------------------------------
     global.PuterAI = {
@@ -402,6 +491,7 @@
         MODELS: MODELS,
         formatPuterError: formatPuterError,
         callGeminiWithFallback: callGeminiWithFallback,
+        renderMarkdown: renderMarkdown,
         log: log,
         getLogs: getLogs,
         clearLogs: clearLogs,
