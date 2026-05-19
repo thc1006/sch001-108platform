@@ -53,6 +53,9 @@ yarn-error.log*
 # 競賽資料看門狗產生的報告（CI 與本機執行 check-competitions.mjs 時產生）
 /competition-report.md
 
+# 公民科技專案地圖看門狗產生的報告（CI 與本機執行 check-civic-tech.mjs 時產生）
+/civic-tech-report.md
+
 # Astro 建置產物與快取
 dist/
 .astro/
