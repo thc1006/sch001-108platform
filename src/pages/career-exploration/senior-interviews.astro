@@ -21,6 +21,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
                 讓走過這條路的人，告訴你最真實的風景。這裡沒有標準答案，只有最真誠的經驗分享。
             </p>
+            <p class="text-sm text-gray-400 max-w-3xl mx-auto mt-4">
+                為保護隱私，以下學長姐均為化名；經驗內容綜合真實升學制度、公開數據與經驗分享整理而成，呈現具代表性的升學樣貌與觀點。文中提及的制度與數據以受訪當下為準，實際請以最新年度招生簡章為主。
+            </p>
         </section>
 
         <!-- Filters and Search -->
@@ -36,11 +39,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <!-- Category Filters -->
                 <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
                     <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="工程學群">工程</button>
                     <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊學群">資訊</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群">法政</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群">傳播</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群">生科</button>
                     <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="管理學群">管理</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="財經學群">財經</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="社會與心理學群">社會與心理</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群">傳播</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="設計學群">設計</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群">生命科學</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="醫藥衛生學群">醫藥衛生</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群">法政</button>
                 </div>
             </div>
         </section>
@@ -74,6 +82,26 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // 要新增或修改資料，請編輯 senior-interviews.json，不需要動這支 HTML。
         let interviewData = [];
 
+        // 大學常見簡稱 —— 讓使用者搜「台大」「政大」也能命中正式全名。
+        const UNIVERSITY_ALIASES = {
+            '國立臺灣大學': '台大 臺大 ntu',
+            '國立政治大學': '政大 nccu',
+            '國立成功大學': '成大 ncku',
+            '國立清華大學': '清大 nthu',
+            '國立陽明交通大學': '陽明交大 交大 nycu',
+            '國立中正大學': '中正 ccu',
+            '國立臺北科技大學': '北科 北科大 台北科大 ntut',
+            '國立臺北商業大學': '北商 北商大 ntub',
+            '國立勤益科技大學': '勤益 勤益科大 ncut',
+            '國立屏東科技大學': '屏科 屏科大 npust',
+            '國立臺灣藝術大學': '台藝大 臺藝大 台藝 ntua',
+            '中山醫學大學': '中山醫 csmu',
+            '高雄醫學大學': '高醫 高雄醫大 kmu',
+            '中原大學': '中原 cycu',
+            '輔仁大學': '輔大 fju',
+            '嶺東科技大學': '嶺東 ltu',
+        };
+
         const interviewGrid = document.getElementById('interview-grid');
         const modal = document.getElementById('interviewModal');
         const modalContent = document.getElementById('modal-content');
@@ -87,10 +115,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             const filteredData = interviewData.filter(p => {
                 const inCategory = category === 'all' || p.category === category;
+                const aliasText = UNIVERSITY_ALIASES[p.university] || '';
                 const inSearch = !searchTerm ||
                                  p.name.toLowerCase().includes(lowerCaseSearchTerm) ||
                                  p.major.toLowerCase().includes(lowerCaseSearchTerm) ||
                                  p.university.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 aliasText.includes(lowerCaseSearchTerm) ||
                                  p.quote.toLowerCase().includes(lowerCaseSearchTerm) ||
                                  p.category.toLowerCase().includes(lowerCaseSearchTerm);
                 return inCategory && inSearch;
