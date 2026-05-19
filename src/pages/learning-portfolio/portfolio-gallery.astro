@@ -74,7 +74,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900">找不到符合條件的範例</h3>
-                <p class="mt-1 text-sm text-gray-500">找不到符合條件的範例，試試其他篩選條件。</p>
+                <p class="mt-1 text-sm text-gray-500">試著調整或清除上方的篩選條件。</p>
             </div>
         </section>
     </main>
@@ -91,6 +91,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // 資料改由同目錄的 portfolio-gallery.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 portfolio-gallery.json，不需要動這支 HTML。
         let portfolioData = [];
+
+        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
 
         const portfolioGrid = document.getElementById('portfolio-grid');
         const noResultsDiv = document.getElementById('no-results');
@@ -126,16 +133,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.onclick = () => showModal(item.id);
 
                 card.innerHTML = `
-                    <img src="${item.thumbnail_url}" alt="${item.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                    <img src="${encodeURI(item.thumbnail_url)}" alt="${escapeHtml(item.title)}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                     <div class="p-6 flex-grow">
                         <div class="flex justify-between items-center">
-                            <p class="text-sm font-bold text-green-600">${item.category}</p>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${item.type}</span>
+                            <p class="text-sm font-bold text-green-600">${escapeHtml(item.category)}</p>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHtml(item.type)}</span>
                         </div>
-                        <h3 class="text-lg font-bold mt-2 h-14">${item.title}</h3>
+                        <h3 class="text-lg font-bold mt-2 h-14">${escapeHtml(item.title)}</h3>
                     </div>
                     <div class="px-6 pb-6 border-t border-gray-100 mt-auto pt-4">
-                        <p class="text-xs text-gray-500 font-semibold">相關能力：${item.tags.join(', ')}</p>
+                        <p class="text-xs text-gray-500 font-semibold">相關能力：${item.tags.map(escapeHtml).join(', ')}</p>
                     </div>
                 `;
                 portfolioGrid.appendChild(card);
@@ -149,8 +156,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modalContent.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-green-600">${item.category} / ${item.type}</p>
-                        <h3 class="text-2xl font-bold">${item.title}</h3>
+                        <p class="text-sm font-bold text-green-600">${escapeHtml(item.category)} / ${escapeHtml(item.type)}</p>
+                        <h3 class="text-2xl font-bold">${escapeHtml(item.title)}</h3>
                     </div>
                     <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
