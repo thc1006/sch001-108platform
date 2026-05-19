@@ -21,28 +21,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
 
         <!-- Featured Activity -->
-        <section class="mb-16">
-            <h2 class="text-3xl font-bold mb-6 text-center">本月焦點活動</h2>
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
-                <div class="md:w-1/2">
-                    <img src="https://images.pexels.com/photos/2608517/pexels-photo-2608517.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="青年論壇" class="h-full w-full object-cover">
-                </div>
-                <div class="p-8 md:w-1/2 flex flex-col justify-center">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-sm font-bold text-sky-600">青年論壇</p>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800">報名中</span>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3">教育部青年發展署 - Let's Talk 青年好政</h3>
-                    <p class="text-gray-600 mb-4">一個讓青年能與政府官員直接對話的平台。透過審議式民主的方式，探討公共政策，並將你的想法直接傳達給決策者，是展現公民意識的最佳實踐。</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">全國</span>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">團體</span>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">社會參與</span>
-                    </div>
-                    <a href="https://youthhub.yda.gov.tw/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
-                        查看活動詳情 &rarr;
-                    </a>
-                </div>
+        <section id="featured-section" class="mb-16 hidden">
+            <h2 class="text-3xl font-bold mb-6 text-center">精選焦點活動</h2>
+            <div id="featured-card" class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
+                <!-- Featured activity will be injected here -->
             </div>
         </section>
 
@@ -52,25 +34,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="lg:col-span-2">
                         <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
-                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位⋯" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label for="category-filter" class="font-bold text-gray-700 text-sm">活動類型</label>
                         <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
                             <option value="all">全部類型</option>
-                            <option value="競賽">競賽</option>
-                            <option value="營隊">營隊</option>
-                            <option value="社會服務">社會服務</option>
-                            <option value="青年論壇">青年論壇</option>
-                            <option value="工作坊">工作坊</option>
                         </select>
                     </div>
                     <div>
                         <label for="form-filter" class="font-bold text-gray-700 text-sm">參與形式</label>
                         <select id="form-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
                             <option value="all">所有形式</option>
-                            <option value="個人">個人</option>
-                            <option value="團體">團體</option>
                         </select>
                     </div>
                 </div>
@@ -93,23 +68,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <script is:inline>
-        const activities = [
-            { title: 'TRML 台灣地區數學聯賽', organizer: '中華民國數學會', category: '競賽', form: '團體', description: '全台最具規模的高中數學競賽之一，考驗團隊合作與解題能力。', deadline: '2025-08-15', url: 'https://www.99cef.org.tw/trml.php' },
-            { title: '台大杜鵑花節學系博覽會', organizer: '台灣大學', category: '營隊', form: '個人', description: '認識台大各科系的絕佳機會，包含學長姐分享與校園導覽。', deadline: '2026-03-01', url: 'https://event.ntu.edu.tw/azalea/2025/' },
-            { title: '伊甸基金會身障體驗志工', organizer: '伊甸社會福利基金會', category: '社會服務', form: '個人', description: '透過實際體驗與服務，深入了解身心障礙朋友的需求與處境。', deadline: '2025-12-31', url: 'https://www.eden.org.tw/pages.php?level1_id=JCUyIyE=&level2_id=JCU1MyMh&level3_id=JCU0MSMh' },
-            { title: 'SITCON 學生計算機年會', organizer: 'SITCON 團隊', category: '工作坊', form: '個人', description: '由學生自發舉辦的資訊社群研討會，可以學習最新技術並與同好交流。', deadline: '2026-02-20', url: 'https://sitcon.org/' },
-            { title: '台灣國際學生創意設計大賽', organizer: '教育部', category: '競賽', form: '個人/團體', description: '全球規模的學生設計競賽，是展現創意與設計實力的國際舞台。', deadline: '2025-07-15', url: 'https://www.tisdc.org/' },
-            { title: '全國高中生人文經典會考', organizer: '台積電文教基金會', category: '競賽', form: '個人', description: '透過閱讀與測驗，引導高中生親近中外人文社會科學領域的經典著作。', deadline: '2025-10-01', url: 'https://www.cla.ntnu.edu.tw/index.php/classic70-2/' },
-            { title: '物理奧林匹亞競賽國手選拔', organizer: '國立臺灣師範大學物理系', category: '競賽', form: '個人', description: '挑戰物理知識的極限，爭取代表台灣參加國際賽事的榮譽。', deadline: '2025-09-20', url: 'https://tpmso.org/ipho/' },
-            { title: '流浪動物之家服務志工', organizer: '臺北市動物保護處', category: '社會服務', form: '個人', description: '參與收容所的日常照護工作，為流離失所的動物提供溫暖。', deadline: null, url: 'https://www.tcapo.gov.taipei/cp.aspx?n=141D6BD837F00436' },
-            { title: '教育部青年發展署 - Let\'s Talk 青年好政', organizer: '教育部青年發展署', category: '青年論壇', form: '團體', description: '與政府官員直接對話，探討公共政策，展現公民意識的最佳實踐。', deadline: '2025-08-31', url: 'https://youthhub.yda.gov.tw/' },
-        ];
+        // 資料改由同目錄的 activity-database.json 載入（見下方 loadData）。
+        // 要新增或修改活動，請編輯 activity-database.json，不需要動這支頁面。
+        let activities = [];
 
         const activityGrid = document.getElementById('activity-grid');
         const noResultsDiv = document.getElementById('no-results');
         const searchInput = document.getElementById('search-input');
         const categoryFilter = document.getElementById('category-filter');
         const formFilter = document.getElementById('form-filter');
+        const featuredSection = document.getElementById('featured-section');
+        const featuredCard = document.getElementById('featured-card');
+
+        // 純文字資料欄位注入 innerHTML 前一律轉義，content_html 類原始 HTML 才維持原樣。
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
 
         function getActivityStatus(deadline) {
             if (!deadline) {
@@ -128,6 +104,61 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         }
 
+        // 由實際資料動態產生篩選器選項，避免選項與資料不符。
+        function populateFilters() {
+            const categories = [...new Set(activities.map(a => a.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            // 參與形式：「個人／團體」拆為「個人」與「團體」兩個可篩選值。
+            const forms = new Set();
+            activities.forEach(a => {
+                String(a.form || '').split(/[／/]/).forEach(part => {
+                    const trimmed = part.trim();
+                    if (trimmed) forms.add(trimmed);
+                });
+            });
+            [...forms].sort((a, b) => a.localeCompare(b, 'zh-Hant')).forEach(form => {
+                const option = document.createElement('option');
+                option.value = form;
+                option.textContent = form;
+                formFilter.appendChild(option);
+            });
+        }
+
+        function renderFeatured() {
+            const featured = activities.find(a => a.featured);
+            if (!featured) {
+                featuredSection.classList.add('hidden');
+                return;
+            }
+            const status = getActivityStatus(featured.deadline);
+            featuredCard.innerHTML = `
+                <div class="p-8 md:w-full flex flex-col justify-center">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-sm font-bold text-sky-600">${escapeHtml(featured.category)}</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">${escapeHtml(featured.title)}</h3>
+                    <p class="text-sm text-gray-500 mb-2">主辦單位：${escapeHtml(featured.organizer)}</p>
+                    <p class="text-gray-600 mb-4">${escapeHtml(featured.description)}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.category)}</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.form)}</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${featured.deadline ? escapeHtml(featured.deadline) : '依官網公告'}</span>
+                    </div>
+                    <a href="${escapeHtml(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
+                        查看活動詳情 &rarr;
+                    </a>
+                </div>
+            `;
+            featuredSection.classList.remove('hidden');
+        }
+
         function renderActivities() {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedCategory = categoryFilter.value;
@@ -137,7 +168,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const searchCorpus = `${activity.title} ${activity.organizer}`.toLowerCase();
                 const matchesSearch = searchCorpus.includes(searchTerm);
                 const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
-                const matchesForm = selectedForm === 'all' || activity.form.includes(selectedForm);
+                const matchesForm = selectedForm === 'all' || String(activity.form || '').includes(selectedForm);
                 return matchesSearch && matchesCategory && matchesForm;
             });
 
@@ -154,19 +185,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     card.innerHTML = `
                         <div class="p-6 flex-grow">
                             <div class="flex justify-between items-start mb-2">
-                                <span class="text-sm font-bold text-sky-600">${activity.category}</span>
+                                <span class="text-sm font-bold text-sky-600">${escapeHtml(activity.category)}</span>
                                 <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">${activity.title}</h3>
-                            <p class="text-sm text-gray-500 mb-4">主辦單位：${activity.organizer}</p>
-                            <p class="text-gray-700">${activity.description}</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${escapeHtml(activity.title)}</h3>
+                            <p class="text-sm text-gray-500 mb-4">主辦單位：${escapeHtml(activity.organizer)}</p>
+                            <p class="text-gray-700">${escapeHtml(activity.description)}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
                             <div>
                                 <p class="text-xs text-gray-500">報名截止</p>
-                                <p class="font-semibold text-gray-700">${activity.deadline ? activity.deadline : '依官網公告'}</p>
+                                <p class="font-semibold text-gray-700">${activity.deadline ? escapeHtml(activity.deadline) : '依官網公告'}</p>
                             </div>
-                            <a href="${activity.url}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
+                            <a href="${escapeHtml(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
                                 查看詳情
                             </a>
                         </div>
@@ -182,8 +213,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         categoryFilter.addEventListener('change', renderActivities);
         formFilter.addEventListener('change', renderActivities);
 
-        // Initial Render
-        renderActivities();
+        // 從 activity-database.json 載入資料後再渲染
+        async function loadData() {
+            try {
+                const response = await fetch('activity-database.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                activities = Array.isArray(data.activities) ? data.activities : [];
+                populateFilters();
+                renderFeatured();
+                renderActivities();
+            } catch (error) {
+                console.error('資料載入失敗：', error);
+                activityGrid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-16">資料載入失敗，請稍後重新整理頁面。</p>';
+            }
+        }
+        loadData();
     </script>
 
     <style is:global>
