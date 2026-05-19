@@ -26,12 +26,20 @@ export default defineConfig({
     sitemap({
       serialize(item) {
         const base = '/sch001-108platform/';
+        // 學群 slug —— 與 src/data/clusters.ts 的 CLUSTERS 一致。
+        const clusterSlugs = [
+          'engineering', 'info', 'management', 'finance', 'social-psychology',
+          'mass-comm', 'design', 'life-science', 'medicine',
+        ];
         const sectionIndexes = new Set([
           'advanced-resources',
           'autonomous-learning',
           'career-exploration',
           'civic-tech-map',
           'learning-portfolio',
+          // 學群探索系統:探索首頁 + 9 個學群中心頁(皆為 foo/index.astro)。
+          'career-exploration/clusters',
+          ...clusterSlugs.map((s) => `career-exploration/clusters/${s}`),
         ]);
         const rel = new URL(item.url).pathname.replace(base, '').replace(/\/$/, '');
         if (rel === '') return item; // 站台首頁,維持目錄式

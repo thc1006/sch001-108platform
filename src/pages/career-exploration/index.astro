@@ -58,6 +58,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div class="text-center mb-10">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900">大學科系羅盤</h2>
                 <p class="text-gray-600 mt-2">點選左方學群，或使用搜尋來快速探索。</p>
+                <a href="clusters/index.html" class="inline-flex items-center gap-2 mt-4 text-indigo-600 font-semibold hover:underline">
+                    想深入了解？瀏覽九大學群完整升學指南
+                    <ion-icon name="arrow-forward-outline"></ion-icon>
+                </a>
             </div>
             <div class="flex flex-col md:flex-row gap-8">
 
@@ -115,15 +119,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // --- 資料庫 (Data) ---
         // 這是網站的核心資料，我們在這裡加入了更多有用的欄位
         const majorData = [
-            { id: 'engineering', name: '工程學群', icon: 'settings-outline', description: '應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['電機工程', '機械工程', '土木工程', '化學工程'], subjects: ['物理', '數學', '化學'], careers: ['半導體工程師', '結構技師', '廠務工程師'], portfolio_tips: '強調數理科目的學習成果，並附上參加過的科學競賽、程式設計或模型製作等實作經驗。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=1' },
-            { id: 'info', name: '資訊學群', icon: 'code-slash-outline', description: '專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。', competencies: ['系統思考與解決問題', '規劃執行與創新應變'], majors: ['資訊工程', '資訊管理', '數據科學', '人工智慧'], subjects: ['數學', '資訊科技', '物理'], careers: ['軟體工程師', '資料分析師', 'AI工程師', '資安專家'], portfolio_tips: '展示你的程式作品集(例如 GitHub)，或參與過的資訊競賽(如APCS)。自主學習新程式語言或技術的經驗會非常加分。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=2' },
-            { id: 'management', name: '管理學群', icon: 'business-outline', description: '學習組織、領導、規劃與控制等管理職能，以達成組織目標。', competencies: ['人際關係與團隊合作', '規劃執行與創新應變'], majors: ['企業管理', '財務管理', '行銷管理', '國際企業'], subjects: ['公民與社會', '數學', '英文'], careers: ['專案經理', '行銷企劃', '人力資源', '管理顧問'], portfolio_tips: '呈現擔任社團幹部、班級幹部的領導經驗，或舉辦活動的企劃與執行過程。商業競賽的參與也是很好的材料。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=4' },
-            { id: 'finance', name: '財經學群', icon: 'cash-outline', description: '研究金融市場、投資、公司理財與經濟現象，是資本社會的運作基礎。', competencies: ['系統思考與解決問題', '符號運用與溝通表達'], majors: ['財務金融', '經濟學', '會計學', '風險管理'], subjects: ['數學', '公民與社會', '英文'], careers: ['銀行行員', '證券分析師', '會計師', '理財專員'], portfolio_tips: '可以整理自己關注的財經新聞、閱讀相關書籍的心得，或參加模擬投資競賽的經驗。對數字的敏感度與分析能力是重點。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=5' },
-            { id: 'social_psychology', name: '社會與心理學群', icon: 'people-outline', description: '關心人類的心理歷程、社會行為與結構，旨在理解並改善個人與社會的福祉。', competencies: ['人際關係與團隊合作', '道德實踐與公民意識'], majors: ['社會學', '心理學', '社會工作', '輔導與諮商'], subjects: ['公民與社會', '歷史', '國文'], careers: ['臨床心理師', '社工師', '人力資源', '市調人員'], portfolio_tips: '展現對社會議題的關懷，例如撰寫小論文、參與志工服務的經驗與反思。同理心與溝通能力的展現很重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=7' },
-            { id: 'mass_comm', name: '大眾傳播學群', icon: 'film-outline', description: '學習訊息的產製、傳遞與效果，包含新聞、廣告、廣播、影視等領域。', competencies: ['符號運用與溝通表達', '科技資訊與媒體素養'], majors: ['新聞學', '廣告學', '廣播電視電影', '公共關係'], subjects: ['國文', '英文', '公民與社會'], careers: ['記者', '導演', '廣告文案', '社群小編'], portfolio_tips: '經營個人品牌(部落格、IG、YouTube頻道)是最好的作品集。也可以附上自己拍攝的影片、寫作的文案或採訪報導。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=8' },
-            { id: 'design', name: '設計學群', icon: 'color-palette-outline', description: '結合美感與實用性，解決生活中的問題，從平面設計到建築設計皆屬此範疇。', competencies: ['藝術涵養與美感素養', '系統思考與解決問題'], majors: ['視覺傳達設計', '工業設計', '建築設計', '服裝設計'], subjects: ['美術', '生活科技', '數學'], careers: ['平面設計師', 'UI/UX設計師', '建築師', '產品設計師'], portfolio_tips: '作品集是唯一的重點！整理你的繪畫、攝影、模型、數位創作等作品，並說明創作理念。展現你的美感與創意。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=13' },
-            { id: 'life_sci', name: '生命科學學群', icon: 'leaf-outline', description: '探討生命的奧秘，從分子、細胞到生態系，是生物科技與醫學研究的基礎。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['生命科學', '生物科技', '分子生物', '生態學'], subjects: ['生物', '化學', '物理'], careers: ['生物研究員', '藥廠研發', '農業技術專家'], portfolio_tips: '生物奧林匹亞、科展經驗是絕佳材料。也可以呈現對特定生物議題(如基因編輯)的深入探討報告。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=15' },
-            { id: 'medicine', name: '醫藥衛生學群', icon: 'medkit-outline', description: '致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。', competencies: ['道德實踐與公民意識', '身心素質與自我精進'], majors: ['醫學', '牙醫學', '藥學', '護理'], subjects: ['生物', '化學', '英文'], careers: ['醫師', '藥師', '護理師', '物理治療師'], portfolio_tips: '除了在校成績，更要展現強烈的服務熱忱與抗壓性。參加醫療相關營隊、志工服務的經驗與反思非常重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=16' },
+            { id: 'engineering', name: '工程學群', icon: 'settings-outline', description: '應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['電機工程', '機械工程', '土木工程', '化學工程'], subjects: ['物理', '數學', '化學'], careers: ['半導體工程師', '結構技師', '廠務工程師'], portfolio_tips: '強調數理科目的學習成果，並附上參加過的科學競賽、程式設計或模型製作等實作經驗。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=1', guide: 'engineering' },
+            { id: 'info', name: '資訊學群', icon: 'code-slash-outline', description: '專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。', competencies: ['系統思考與解決問題', '規劃執行與創新應變'], majors: ['資訊工程', '資訊管理', '數據科學', '人工智慧'], subjects: ['數學', '資訊科技', '物理'], careers: ['軟體工程師', '資料分析師', 'AI工程師', '資安專家'], portfolio_tips: '展示你的程式作品集(例如 GitHub)，或參與過的資訊競賽(如APCS)。自主學習新程式語言或技術的經驗會非常加分。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=2', guide: 'info' },
+            { id: 'management', name: '管理學群', icon: 'business-outline', description: '學習組織、領導、規劃與控制等管理職能，以達成組織目標。', competencies: ['人際關係與團隊合作', '規劃執行與創新應變'], majors: ['企業管理', '財務管理', '行銷管理', '國際企業'], subjects: ['公民與社會', '數學', '英文'], careers: ['專案經理', '行銷企劃', '人力資源', '管理顧問'], portfolio_tips: '呈現擔任社團幹部、班級幹部的領導經驗，或舉辦活動的企劃與執行過程。商業競賽的參與也是很好的材料。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=4', guide: 'management' },
+            { id: 'finance', name: '財經學群', icon: 'cash-outline', description: '研究金融市場、投資、公司理財與經濟現象，是資本社會的運作基礎。', competencies: ['系統思考與解決問題', '符號運用與溝通表達'], majors: ['財務金融', '經濟學', '會計學', '風險管理'], subjects: ['數學', '公民與社會', '英文'], careers: ['銀行行員', '證券分析師', '會計師', '理財專員'], portfolio_tips: '可以整理自己關注的財經新聞、閱讀相關書籍的心得，或參加模擬投資競賽的經驗。對數字的敏感度與分析能力是重點。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=5', guide: 'finance' },
+            { id: 'social_psychology', name: '社會與心理學群', icon: 'people-outline', description: '關心人類的心理歷程、社會行為與結構，旨在理解並改善個人與社會的福祉。', competencies: ['人際關係與團隊合作', '道德實踐與公民意識'], majors: ['社會學', '心理學', '社會工作', '輔導與諮商'], subjects: ['公民與社會', '歷史', '國文'], careers: ['臨床心理師', '社工師', '人力資源', '市調人員'], portfolio_tips: '展現對社會議題的關懷，例如撰寫小論文、參與志工服務的經驗與反思。同理心與溝通能力的展現很重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=7', guide: 'social-psychology' },
+            { id: 'mass_comm', name: '大眾傳播學群', icon: 'film-outline', description: '學習訊息的產製、傳遞與效果，包含新聞、廣告、廣播、影視等領域。', competencies: ['符號運用與溝通表達', '科技資訊與媒體素養'], majors: ['新聞學', '廣告學', '廣播電視電影', '公共關係'], subjects: ['國文', '英文', '公民與社會'], careers: ['記者', '導演', '廣告文案', '社群小編'], portfolio_tips: '經營個人品牌(部落格、IG、YouTube頻道)是最好的作品集。也可以附上自己拍攝的影片、寫作的文案或採訪報導。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=8', guide: 'mass-comm' },
+            { id: 'design', name: '設計學群', icon: 'color-palette-outline', description: '結合美感與實用性，解決生活中的問題，從平面設計到建築設計皆屬此範疇。', competencies: ['藝術涵養與美感素養', '系統思考與解決問題'], majors: ['視覺傳達設計', '工業設計', '建築設計', '服裝設計'], subjects: ['美術', '生活科技', '數學'], careers: ['平面設計師', 'UI/UX設計師', '建築師', '產品設計師'], portfolio_tips: '作品集是唯一的重點！整理你的繪畫、攝影、模型、數位創作等作品，並說明創作理念。展現你的美感與創意。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=13', guide: 'design' },
+            { id: 'life_sci', name: '生命科學學群', icon: 'leaf-outline', description: '探討生命的奧秘，從分子、細胞到生態系，是生物科技與醫學研究的基礎。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['生命科學', '生物科技', '分子生物', '生態學'], subjects: ['生物', '化學', '物理'], careers: ['生物研究員', '藥廠研發', '農業技術專家'], portfolio_tips: '生物奧林匹亞、科展經驗是絕佳材料。也可以呈現對特定生物議題(如基因編輯)的深入探討報告。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=15', guide: 'life-science' },
+            { id: 'medicine', name: '醫藥衛生學群', icon: 'medkit-outline', description: '致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。', competencies: ['道德實踐與公民意識', '身心素質與自我精進'], majors: ['醫學', '牙醫學', '藥學', '護理'], subjects: ['生物', '化學', '英文'], careers: ['醫師', '藥師', '護理師', '物理治療師'], portfolio_tips: '除了在校成績，更要展現強烈的服務熱忱與抗壓性。參加醫療相關營隊、志工服務的經驗與反思非常重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=16', guide: 'medicine' },
         ];
 
         // --- DOM 元素選擇 ---
@@ -186,9 +190,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <a href="${cluster.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
-                        前往 ColleGo! 深入了解 <ion-icon name="arrow-forward-outline"></ion-icon>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="clusters/${cluster.guide}/index.html" class="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
+                        查看完整升學指南 <ion-icon name="arrow-forward-outline"></ion-icon>
+                    </a>
+                    <a href="${cluster.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-white border border-indigo-300 text-indigo-600 font-bold py-2 px-4 rounded-lg hover:bg-indigo-50 transition duration-300">
+                        前往 ColleGo! <ion-icon name="open-outline"></ion-icon>
                     </a>
                 </div>
             `;
