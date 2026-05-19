@@ -26,18 +26,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <!-- Filters -->
     <section class="mb-10">
       <div class="flex flex-col items-center gap-4">
+        <label for="search-input" class="sr-only">搜尋開放教育資源</label>
         <input
           type="text"
           id="search-input"
+          aria-label="搜尋開放教育資源、組織或關鍵字"
           placeholder="搜尋資源、組織或關鍵字..."
           class="w-full max-w-md px-4 py-2 border-2 border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
         />
-        <div id="category-filters" class="flex flex-wrap justify-center gap-2">
-          <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-category="all">全部</button>
-          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="ai-labs">AI 實驗室</button>
-          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-science">開放科學</button>
-          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-courses">開放課程</button>
-          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="science-community">國際科學社群</button>
+        <div id="category-filters" class="flex flex-wrap justify-center gap-2" role="group" aria-label="依分類篩選">
+          <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-category="all" aria-pressed="true">全部</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="ai-labs" aria-pressed="false">AI 實驗室</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-science" aria-pressed="false">開放科學</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-courses" aria-pressed="false">開放課程</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="science-community" aria-pressed="false">國際科學社群</button>
         </div>
       </div>
     </section>
@@ -138,8 +140,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const btn = e.target.closest('.filter-btn');
       if (!btn) return;
       const current = categoryFilters.querySelector('.active');
-      if (current) current.classList.remove('active');
+      if (current) {
+        current.classList.remove('active');
+        current.setAttribute('aria-pressed', 'false');
+      }
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       activeCategory = btn.dataset.category;
       render();
     });

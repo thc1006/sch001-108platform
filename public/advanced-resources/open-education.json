@@ -173,7 +173,7 @@
       "name": "arXiv 預印本資料庫",
       "org": "康乃爾大學 (Cornell University)",
       "url": "https://arxiv.org/",
-      "description": "收錄物理、數學、資訊科學等領域近 240 萬篇學術論文的免費開放取用平台。高中生做科展或專題時,可直接讀到尚未正式發表的最新研究成果。",
+      "description": "收錄物理、數學、資訊科學等領域逾 260 萬篇學術論文的免費開放取用平台。高中生做科展或專題時,可直接讀到尚未正式發表的最新研究成果。",
       "tags": [
         "預印本",
         "開放取用",
@@ -289,21 +289,6 @@
       "level": "入門"
     },
     {
-      "id": "zooniverse",
-      "category": "open-science",
-      "name": "Zooniverse 公民科學平台",
-      "org": "Zooniverse (跨機構合作)",
-      "url": "https://www.zooniverse.org/",
-      "description": "全球最大的群眾協作研究平台,有天文、生態、歷史等數十個計畫,只要分類影像或轉錄文件就能參與真實科研。高中生不需專業背景即可貢獻科學。",
-      "tags": [
-        "公民科學",
-        "線上參與",
-        "跨領域"
-      ],
-      "lang": "英文",
-      "level": "入門"
-    },
-    {
       "id": "inaturalist",
       "category": "open-science",
       "name": "iNaturalist 自然觀察平台",
@@ -347,6 +332,21 @@
       ],
       "lang": "英文",
       "level": "進階"
+    },
+    {
+      "id": "our-world-in-data",
+      "category": "open-science",
+      "name": "Our World in Data",
+      "org": "Our World in Data(Global Change Data Lab)",
+      "url": "https://ourworldindata.org/",
+      "description": "以開放資料與互動圖表呈現全球在健康、能源、氣候、教育、貧窮等議題的長期趨勢,資料與圖表皆採開放授權,是探究專題很可靠的資料來源。",
+      "tags": [
+        "開放資料",
+        "數據視覺化",
+        "全球議題"
+      ],
+      "lang": "英文",
+      "level": "皆可"
     },
     {
       "id": "mit-ocw",
@@ -451,7 +451,7 @@
         "大學先修"
       ],
       "lang": "英文",
-      "level": "進階"
+      "level": "皆可"
     },
     {
       "id": "ted-ed",
@@ -533,7 +533,7 @@
       "category": "science-community",
       "name": "A Window into the Future 國際青年科學俱樂部",
       "org": "以色列魏茲曼科學研究院 Davidson 科學教育研究所",
-      "url": "https://davidson.weizmann.ac.il/en",
+      "url": "https://davidson.weizmann.ac.il/en/programs/online-courses-0",
       "description": "魏茲曼科學研究院為全球青少年開設的免費線上國際科學俱樂部,成員可探索研究院的前沿研究、與各國同好交流、辯論科學倫理議題並與學者直接對談。高中生可循 Davidson 研究所線上課程頁面報名參與每年招募的梯次。",
       "tags": [
         "國際社群",
@@ -548,7 +548,7 @@
       "category": "science-community",
       "name": "CERN 公開講座與線上直播",
       "org": "歐洲核子研究組織 CERN",
-      "url": "https://webcast.cern.ch/",
+      "url": "https://live.cern/",
       "description": "全球最大粒子物理實驗室 CERN 透過 webcast 平台與 YouTube 免費直播 openlab 暑期學生講座、學術訓練與公開演講,涵蓋量子運算、機器學習、開放資料等主題。高中生不需報名即可線上觀看,接觸第一線科學家的研究。",
       "tags": [
         "粒子物理",
@@ -561,10 +561,10 @@
     {
       "id": "nasa-stem-virtual-events",
       "category": "science-community",
-      "name": "NASA STEM 線上活動與虛擬講座",
+      "name": "NASA STEM 學生挑戰與專案機會",
       "org": "美國國家航空暨太空總署 NASA",
       "url": "https://www.nasa.gov/learning-resources/nasa-stem-opportunities-activities/",
-      "description": "NASA 為學生提供完全免費的線上 STEM 活動,包括虛擬職涯講座、每週工作坊與向太空科學家提問的直播場次。高中生可透過官網報名參與,直接與 NASA 研究人員互動並使用公開的任務資料。",
+      "description": "NASA 官方彙整給學生的 STEM 挑戰賽、競賽與專案機會,涵蓋工程、機器人到太空任務設計,多為免費開放參與,能實際投入任務式的科學專案。",
       "tags": [
         "太空科學",
         "線上活動",
