@@ -1,0 +1,677 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="公民科技專案地圖 - 台灣教育處方籤"
+  description="SITCON 2025 零時小學校共創工作坊成果。彙整 g0v 公民科技專案與 108 課綱核心素養及 SDGs 的對照應用，為高中生自主學習與探究實作提供靈感。"
+  currentSection="civic-tech-map"
+  bodyClass="bg-gray-100 text-gray-800"
+  isSectionIndex
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                公民科技專案<span class="gradient-text">地圖</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                源自 SITCON 2025「零時小學校」共創工作坊。將台灣 g0v 社群的公民科技專案，對應 108 課綱核心素養與 SDGs，為你的自主學習與探究實作提供靈感。
+            </p>
+        </section>
+
+        <!-- AI Exploration Suggester -->
+        <section class="bg-white rounded-xl shadow-lg p-8 mb-16" aria-label="AI 探索建議器">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold mb-2 text-center">找到你的公民科技切入點</h2>
+                <p class="text-gray-600 text-center mb-6">
+                    輸入你的興趣或關心的議題，AI 將為你推薦最適合的公民科技專案與探索方向。
+                </p>
+                <div class="space-y-4">
+                    <label for="ai-interest-input" class="block text-sm font-medium text-gray-700">你的興趣或關心的議題</label>
+                    <textarea
+                        id="ai-interest-input"
+                        rows="3"
+                        maxlength="300"
+                        class="w-full border-2 border-gray-200 rounded-lg p-4 text-gray-800 placeholder-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition resize-none"
+                        placeholder="例如：我對環境保護很有興趣，想了解如何用科技改善環境問題..."
+                    ></textarea>
+                    <div class="flex items-center justify-between">
+                        <span id="ai-char-count" class="text-xs text-gray-400">0 / 300</span>
+                        <button
+                            id="ai-submit-btn"
+                            type="button"
+                            class="inline-flex items-center gap-2 bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-emerald-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            探索推薦
+                        </button>
+                    </div>
+                </div>
+                <!-- AI Results Area -->
+                <div id="ai-results" class="mt-6 hidden" aria-live="polite">
+                    <!-- Loading state -->
+                    <div id="ai-loading" class="hidden text-center py-8">
+                        <div class="inline-flex items-center gap-3 text-emerald-700">
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span class="font-medium">AI 正在分析你的興趣...</span>
+                        </div>
+                    </div>
+                    <!-- Result content -->
+                    <div id="ai-result-content" class="hidden">
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+                            <h3 class="font-bold text-emerald-800 mb-3">AI 推薦結果</h3>
+                            <div id="ai-result-text" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"></div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-3 text-center">
+                            AI 建議僅供參考，實際專案內容請以各專案官網為準。
+                        </p>
+                    </div>
+                    <!-- Error state -->
+                    <div id="ai-error" class="hidden">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <p id="ai-error-text" class="text-sm text-red-700"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Section -->
+        <section class="bg-white rounded-xl shadow-lg p-8 mb-16" aria-label="為什麼要看這份對照表">
+            <h2 class="text-2xl font-bold mb-2">為什麼要看這份對照表？</h2>
+            <p class="text-gray-600 mb-6">在「探究與實作」或「自主學習」課程中，你可能苦惱於找不到與真實世界連結的題目。公民科技專案處理的是真實存在的社會問題，參與它們不僅能解決問題，更能直接鍛鍊課綱強調的素養能力。</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="why-card bg-amber-50 border border-amber-200 rounded-lg p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="flex items-center justify-center h-10 w-10 rounded-full bg-amber-100" aria-hidden="true">
+                            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        </span>
+                        <h3 class="font-bold text-amber-800">尋找題目靈感</h3>
+                    </div>
+                    <p class="text-sm text-amber-700">從環保、假訊息、語言保存等真實社會議題出發，發展你的研究計畫。</p>
+                </div>
+                <div class="why-card bg-sky-50 border border-sky-200 rounded-lg p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="flex items-center justify-center h-10 w-10 rounded-full bg-sky-100" aria-hidden="true">
+                            <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                        </span>
+                        <h3 class="font-bold text-sky-800">素養具象化</h3>
+                    </div>
+                    <p class="text-sm text-sky-700">了解「系統思考」或「公民意識」在實際專案中長什麼樣子，不再只是抽象名詞。</p>
+                </div>
+                <div class="why-card bg-emerald-50 border border-emerald-200 rounded-lg p-5">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-100" aria-hidden="true">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </span>
+                        <h3 class="font-bold text-emerald-800">接軌國際</h3>
+                    </div>
+                    <p class="text-sm text-emerald-700">許多專案與聯合國 SDGs 直接相關，豐富你的學習歷程檔案，展現國際視野。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tag Legend -->
+        <section class="mb-4" aria-label="標籤說明">
+            <div class="flex flex-wrap items-center gap-3 justify-center">
+                <span class="text-sm font-semibold text-gray-500">標籤說明：</span>
+                <span class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-3.488 1.495L10 12.568l6.61-2.831a1 1 0 000-1.84l-7-3z"></path><path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zm5.99 7.176A9.026 9.026 0 007 15.68a1 1 0 01-.19-1.34l.99-1.49A8.962 8.962 0 009.3 16.573z"></path></svg>
+                    學科領域
+                </span>
+                <span class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    核心素養
+                </span>
+                <span class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clip-rule="evenodd"></path></svg>
+                    SDGs
+                </span>
+            </div>
+        </section>
+
+        <!-- Quick Navigation (sticky) + Expand/Collapse Controls -->
+        <nav class="sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-3 mb-8" aria-label="專案快速導航">
+            <div class="flex items-center gap-3">
+                <!-- Project links (scrollable) -->
+                <div class="flex-1 overflow-x-auto scrollbar-hide">
+                    <div class="flex gap-2 min-w-max px-1">
+                        <a href="#disfactory" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
+                        <a href="#cofacts" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
+                        <a href="#amis-moedict" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-violet-100 hover:text-violet-800 transition shadow-sm whitespace-nowrap">阿美語萌典</a>
+                        <a href="#thaubing" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-lime-100 hover:text-lime-800 transition shadow-sm whitespace-nowrap">透明足跡</a>
+                        <a href="#national-treasure" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-rose-100 hover:text-rose-800 transition shadow-sm whitespace-nowrap">國家寶藏</a>
+                    </div>
+                </div>
+                <!-- Expand/Collapse controls -->
+                <div class="flex-shrink-0 flex gap-1">
+                    <button id="expand-all-btn" type="button" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="展開全部詳情">
+                        展開全部
+                    </button>
+                    <button id="collapse-all-btn" type="button" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="收合全部詳情">
+                        收合全部
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Project Cards -->
+        <section id="project-list" class="space-y-8" aria-label="公民科技專案列表">
+
+            <!-- Project 1: Disfactory -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="disfactory">
+                <div class="border-l-4 border-emerald-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">Disfactory 農地違章工廠回報系統</h3>
+                            <p class="text-sm text-gray-500 mt-1">地球公民基金會 × g0v 社群共同開發</p>
+                        </div>
+                        <a href="https://disfactory.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-emerald-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-emerald-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">地理 (GIS)</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">公民與社會</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A2 系統思考與解決問題</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C1 道德實踐與公民意識</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 11 永續城鄉</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 15 陸域生態</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">利用衛星圖資與群眾外包（Crowdsourcing）的方式，標記出台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。至今已回報超過 800 筆違章工廠資料，其中超過 500 筆為政府首次掌握。專案開源授權 MIT License，資料採 CC BY 4.0。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-emerald-700 font-semibold text-sm hover:text-emerald-800 transition" aria-expanded="false" aria-controls="details-disfactory" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-disfactory" role="region" aria-labelledby="disfactory" class="details-content mt-3">
+                            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-emerald-800">探究方向：</strong>利用政府開放資料（Open Data）分析你居住縣市的農地流失狀況，探討土地使用分區管制與實際現況的落差。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-emerald-800">實作產出：</strong>參與配套遊戲「大家來找廠」辨識衛星圖中的建物並標記資料，撰寫關於國土規劃政策的研究報告。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-emerald-800">延伸資源：</strong>
+                                    <a href="https://spot.disfactory.tw/" target="_blank" rel="noopener noreferrer" class="text-emerald-600 hover:text-emerald-700 underline">大家來找廠（spot.disfactory.tw）</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 2: Cofacts -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="cofacts">
+                <div class="border-l-4 border-sky-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">Cofacts 真的假的</h3>
+                            <p class="text-sm text-gray-500 mt-1">g0v 社群協作專案</p>
+                        </div>
+                        <a href="https://cofacts.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-sky-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-sky-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">資訊科技</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">公民與社會 (媒體識讀)</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">B2 科技資訊與媒體素養</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A1 身心素質與自我精進</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 4 優質教育</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 16 和平正義與有力的制度</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">一個 LINE 聊天機器人與查核資料庫。當你在 LINE 收到可疑訊息時，轉傳給機器人，它會查詢資料庫中是否有查核報告。這是一個協作型的闢謠系統，旨在減少假訊息的傳播。資料庫以 CC BY-SA 4.0 開放授權，已整合至 Hugging Face 開放資料集，2025 年起更開始探索 AI 輔助查核功能。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-sky-700 font-semibold text-sm hover:text-sky-800 transition" aria-expanded="false" aria-controls="details-cofacts" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-cofacts" role="region" aria-labelledby="cofacts" class="details-content mt-3">
+                            <div class="bg-sky-50 border border-sky-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-sky-800">探究方向：</strong>從「媒體識讀」角度出發，分析長輩群組中常見的假訊息類型（如養生、詐騙），探討其傳播心理機制與修辭特徵。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-sky-800">實作產出：</strong>成為 Cofacts 查核志工，實際回覆 10 則未查核訊息，並整理查核過程與技巧，製作闢謠懶人包。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-sky-800">延伸資源：</strong>
+                                    <a href="https://cofacts.tw/articles" target="_blank" rel="noopener noreferrer" class="text-sky-600 hover:text-sky-700 underline">Cofacts 查核資料庫</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 3: Amis MoeDict -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="amis-moedict">
+                <div class="border-l-4 border-violet-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">Amis MoeDict 阿美語萌典</h3>
+                            <p class="text-sm text-gray-500 mt-1">萌典延伸專案 × g0v 社群</p>
+                        </div>
+                        <a href="https://amis.moedict.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-violet-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-violet-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">國語文 / 原住民族語</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">資訊科技</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C3 多元文化與國際理解</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">B1 符號運用與溝通表達</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 4 優質教育</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 10 減少不平等</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">台灣第一部數位化原住民語線上辭典，基於「萌典」架構的延伸專案，致力於阿美語的數位化保存。整合方敏英神父、潘世光神父等多部經典辭典，不僅包含釋義，更有發音、例句及詩歌傳唱功能。支援離線使用，並提供 iOS 與 Android App。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-violet-700 font-semibold text-sm hover:text-violet-800 transition" aria-expanded="false" aria-controls="details-amis" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-amis" role="region" aria-labelledby="amis-moedict" class="details-content mt-3">
+                            <div class="bg-violet-50 border border-violet-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-violet-800">探究方向：</strong>探討科技如何協助瀕危語言（Endangered Languages）的保存，研究數位典藏（Digital Preservation）在語言學中的應用。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-violet-800">實作產出：</strong>選擇一個你感興趣的本土語言詞彙，製作數位圖卡或錄製發音教學影片，或參與詞條的錄製與校對工作。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-violet-800">延伸資源：</strong>
+                                    <a href="https://amis.moedict.tw/" target="_blank" rel="noopener noreferrer" class="text-violet-600 hover:text-violet-700 underline">阿美語萌典線上辭典</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 4: 透明足跡 / 掃了再買 -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="thaubing">
+                <div class="border-l-4 border-lime-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">透明足跡 / 掃了再買</h3>
+                            <p class="text-sm text-gray-500 mt-1">綠色公民行動聯盟 × g0v 社群</p>
+                        </div>
+                        <a href="https://thaubing.gcaa.org.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-lime-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-lime-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">公民與社會 (經濟)</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">化學 / 環境科學</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C1 道德實踐與公民意識</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 12 負責任的消費與生產</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">透明足跡為環境資訊公開平台，提供企業環境違規地圖與即時污染監測，目前監測全台超過 100 家工廠的 215 根煙囪（空氣）及約 550 家設施（水質）。其配套 App「掃了再買」可掃描商品條碼查詢企業環境違規紀錄，讓消費者用消費的力量推動企業改善。曾獲 Google Play 最具潛力 App、La Vie 台灣創意力 100 等獎項。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-lime-700 font-semibold text-sm hover:text-lime-800 transition" aria-expanded="false" aria-controls="details-thaubing" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-thaubing" role="region" aria-labelledby="thaubing" class="details-content mt-3">
+                            <div class="bg-lime-50 border border-lime-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-lime-800">探究方向：</strong>調查校園福利社販售商品的製造商環境紀錄，統計「綠色消費」的可行性，探討消費行為對企業行為的影響力。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-lime-800">實作產出：</strong>設計一份「校園綠色採購指南」或舉辦一場關於責任消費的班級短講，推動校園內的透明化資訊行動。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-lime-800">延伸資源：</strong>
+                                    <a href="https://thaubing.gcaa.org.tw/" target="_blank" rel="noopener noreferrer" class="text-lime-600 hover:text-lime-700 underline">透明足跡平台</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 5: National Treasure -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="national-treasure">
+                <div class="border-l-4 border-rose-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">國家寶藏 (National Treasure)</h3>
+                            <p class="text-sm text-gray-500 mt-1">g0v 社群專案（2017 年發起）</p>
+                        </div>
+                        <a href="https://www.nationaltreasure.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-rose-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-rose-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">歷史</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">英文</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C3 多元文化與國際理解</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A3 規劃執行與創新應變</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">由三位在紐約的台灣人（蕭新晟、林育正、莊士傑）於 2017 年發起，致力於挖掘散落在海外（主要是美國國家檔案局）與台灣有關的歷史檔案。透過開發 App 讓志工翻拍檔案並建立資料庫，已翻拍超過 20 萬份文件，涵蓋 1880 年代至 1970 年代。曾獲 g0v 公民科技創新獎助金 50 萬元。</p>
+                    <div class="mt-3 bg-rose-50 border border-rose-200 rounded-lg p-3">
+                        <p class="text-xs text-rose-700">
+                            <strong>注意：</strong>此專案近期活動較少，建議透過
+                            <a href="https://www.nationaltreasure.tw/" target="_blank" rel="noopener noreferrer" class="underline hover:text-rose-800">官網</a>
+                            了解最新狀態。已翻拍的檔案資料庫仍可供研究使用。
+                        </p>
+                    </div>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-rose-700 font-semibold text-sm hover:text-rose-800 transition" aria-expanded="false" aria-controls="details-national-treasure" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-national-treasure" role="region" aria-labelledby="national-treasure" class="details-content mt-3">
+                            <div class="bg-rose-50 border border-rose-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-rose-800">探究方向：</strong>閱讀第一手史料（Primary Sources），從外國人的視角（如美軍報告）重新詮釋某個台灣歷史事件。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-rose-800">實作產出：</strong>翻譯一份未經翻譯的歷史檔案，加上歷史背景註解，撰寫一篇歷史小論文或數位策展。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-rose-800">延伸資源：</strong>
+                                    <a href="https://www.nationaltreasure.tw/" target="_blank" rel="noopener noreferrer" class="text-rose-600 hover:text-rose-700 underline">國家寶藏檔案資料庫</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Attribution -->
+        <section class="mt-16 text-center">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <p class="text-gray-600 text-sm">
+                    本頁面內容參考自 SITCON 2025「零時小學校」共創工作坊成果。
+                </p>
+                <p class="text-gray-400 text-xs mt-1">資料授權：CC BY 4.0</p>
+                <div class="flex justify-center gap-4 mt-4">
+                    <a href="https://sch001.g0v.tw/" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold transition">零時小學校官網</a>
+                    <span class="text-gray-300" aria-hidden="true">|</span>
+                    <a href="https://github.com/thc1006/sch001-108platform" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold transition">GitHub 專案</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" type="button" class="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white p-3 rounded-full shadow-lg hover:bg-emerald-700 transition duration-300" aria-label="回到頁面頂部">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+    </button>
+
+    <!-- Puter.js for AI features -->
+    <script is:inline src="https://js.puter.com/v2/"></script>
+
+    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline>
+        // ============================================================
+        // Toggle Details (individual expand/collapse)
+        // ============================================================
+        function toggleDetails(button) {
+            const content = button.nextElementSibling;
+            const isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            button.setAttribute('aria-expanded', !isOpen);
+        }
+
+        // ============================================================
+        // Expand All / Collapse All
+        // ============================================================
+        document.getElementById('expand-all-btn').addEventListener('click', function() {
+            document.querySelectorAll('.details-content').forEach(function(el) {
+                el.classList.add('open');
+            });
+            document.querySelectorAll('.details-toggle').forEach(function(btn) {
+                btn.setAttribute('aria-expanded', 'true');
+            });
+        });
+
+        document.getElementById('collapse-all-btn').addEventListener('click', function() {
+            document.querySelectorAll('.details-content').forEach(function(el) {
+                el.classList.remove('open');
+            });
+            document.querySelectorAll('.details-toggle').forEach(function(btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // ============================================================
+        // Back to Top
+        // ============================================================
+        (function() {
+            var backToTop = document.getElementById('back-to-top');
+            var threshold = window.innerHeight;
+
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > threshold) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            }, { passive: true });
+
+            backToTop.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
+
+        // ============================================================
+        // Mobile Tag Overflow (+N more)
+        // ============================================================
+        (function() {
+            var MAX_VISIBLE_MOBILE = 3;
+
+            function handleTagOverflow() {
+                var isMobile = window.innerWidth < 768;
+                document.querySelectorAll('.tag-container').forEach(function(container) {
+                    var tags = Array.from(container.querySelectorAll('.project-tag'));
+                    var moreBtn = container.querySelector('.tag-more-btn');
+                    var expanded = container.dataset.expanded === 'true';
+
+                    if (isMobile && !expanded && tags.length > MAX_VISIBLE_MOBILE) {
+                        tags.forEach(function(tag, i) {
+                            tag.classList.toggle('hidden', i >= MAX_VISIBLE_MOBILE);
+                        });
+                        moreBtn.classList.remove('hidden');
+                        moreBtn.textContent = '+' + (tags.length - MAX_VISIBLE_MOBILE);
+                    } else {
+                        tags.forEach(function(tag) {
+                            tag.classList.remove('hidden');
+                        });
+                        moreBtn.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Expand tags on click
+            document.querySelectorAll('.tag-more-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var container = btn.closest('.tag-container');
+                    container.dataset.expanded = 'true';
+                    handleTagOverflow();
+                });
+            });
+
+            // Reset on resize to desktop
+            var resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    // Reset expanded state when switching to desktop
+                    if (window.innerWidth >= 768) {
+                        document.querySelectorAll('.tag-container').forEach(function(c) {
+                            c.dataset.expanded = '';
+                        });
+                    }
+                    handleTagOverflow();
+                }, 150);
+            }, { passive: true });
+
+            handleTagOverflow();
+        })();
+
+        // ============================================================
+        // AI Exploration Suggester (Puter.js + Gemini 2.0 Flash)
+        // ============================================================
+        (function() {
+            var input = document.getElementById('ai-interest-input');
+            var charCount = document.getElementById('ai-char-count');
+            var submitBtn = document.getElementById('ai-submit-btn');
+            var resultsArea = document.getElementById('ai-results');
+            var loadingEl = document.getElementById('ai-loading');
+            var resultContent = document.getElementById('ai-result-content');
+            var resultText = document.getElementById('ai-result-text');
+            var errorEl = document.getElementById('ai-error');
+            var errorText = document.getElementById('ai-error-text');
+            var isRequesting = false;
+
+            // Character count
+            input.addEventListener('input', function() {
+                charCount.textContent = input.value.length + ' / 300';
+            });
+
+            submitBtn.addEventListener('click', async function() {
+                var userInput = input.value.trim();
+                if (!userInput) {
+                    input.focus();
+                    return;
+                }
+                if (isRequesting) return;
+
+                // Double-click protection
+                isRequesting = true;
+                submitBtn.disabled = true;
+
+                // Show loading
+                resultsArea.classList.remove('hidden');
+                loadingEl.classList.remove('hidden');
+                resultContent.classList.add('hidden');
+                errorEl.classList.add('hidden');
+
+                var prompt = '你是「台灣教育處方籤」平台的 AI 探索助手，正在協助一位台灣高中生找到適合的公民科技專案作為自主學習主題。\n\n' +
+                    '以下是 5 個 g0v 社群的公民科技專案：\n\n' +
+                    '1. Disfactory（農地違章工廠回報系統）\n' +
+                    '透過衛星圖資與群眾外包標記台灣農地上的違章工廠。\n' +
+                    '相關領域：地理、GIS 地理資訊系統、公民與社會、環境科學\n\n' +
+                    '2. Cofacts 真的假的\n' +
+                    'LINE 聊天機器人加協作查核資料庫，打擊假訊息傳播。\n' +
+                    '相關領域：資訊科技、媒體識讀、公民與社會、數據分析\n\n' +
+                    '3. Amis MoeDict 阿美語萌典\n' +
+                    '台灣第一部數位化原住民語線上辭典，保存瀕危語言。\n' +
+                    '相關領域：語言學、文化保存、資訊科技、多元文化\n\n' +
+                    '4. 透明足跡 / 掃了再買\n' +
+                    '環境資訊公開平台，可查詢企業環境違規紀錄並掃描商品條碼。\n' +
+                    '相關領域：化學、環境科學、經濟學、消費者權益\n\n' +
+                    '5. 國家寶藏 National Treasure\n' +
+                    '從海外（主要為美國國家檔案局）翻拍與台灣歷史相關的文件。\n' +
+                    '相關領域：歷史、英文、數位典藏、國際關係\n\n' +
+                    '---\n\n' +
+                    '使用者表示自己的興趣是：「' + userInput + '」\n\n' +
+                    '請推薦 1 至 3 個最適合該使用者的專案，並說明原因。每個推薦請包含：\n' +
+                    '專案名稱、推薦原因（2-3 句）、探索建議（1-2 句具體的自主學習方向）。\n\n' +
+                    '用繁體中文回答，語氣友善、鼓勵探索。如果使用者的興趣與所有專案都不太相關，也請誠實說明，並嘗試找出最接近的連結點。回答請簡潔有力，不要超過 400 字。';
+
+                try {
+                    var response = await PuterAI.callGeminiWithFallback(prompt);
+                    var text = '';
+                    if (typeof response === 'string') {
+                        text = response;
+                    } else if (response && response.message && response.message.content) {
+                        text = response.message.content;
+                    } else if (response && typeof response.toString === 'function') {
+                        text = response.toString();
+                    }
+
+                    if (!text || text === '[object Object]') {
+                        throw new Error('AI 回覆格式異常，請稍後再試。');
+                    }
+
+                    loadingEl.classList.add('hidden');
+                    resultText.textContent = text;
+                    resultContent.classList.remove('hidden');
+                } catch (err) {
+                    var detail = PuterAI.formatPuterError(err);
+                    console.error("Puter.js AI call failed:", detail, err);
+                    loadingEl.classList.add('hidden');
+                    // 優先顯示具體錯誤（formatPuterError 產生的 [code] message / name: message），
+                    // 退而求其次用 err.message（適用於 Error instance 但 formatPuterError 也已覆蓋此路徑），
+                    // 最後才是泛用文案。
+                    errorText.textContent = detail || (err && err.message) || '發生未知錯誤，請稍後再試。';
+                    errorEl.classList.remove('hidden');
+                } finally {
+                    isRequesting = false;
+                    submitBtn.disabled = false;
+                }
+            });
+        })();
+    </script>
+
+    <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #059669, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .project-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.06);
+        }
+        .details-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        .details-toggle .chevron {
+            transition: transform 0.3s ease;
+        }
+        .details-toggle[aria-expanded="true"] .chevron {
+            transform: rotate(180deg);
+        }
+        .details-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out;
+        }
+        .details-content.open {
+            max-height: 800px;
+        }
+        .why-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .why-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #back-to-top {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #back-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        :focus-visible {
+            outline: 2px solid #059669;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</BaseLayout>

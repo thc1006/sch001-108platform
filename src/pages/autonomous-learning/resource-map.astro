@@ -1,0 +1,416 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="學習資源地圖 - 台灣教育處方籤"
+  description="學習資源地圖"
+  currentSection="autonomous-learning"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                學習資源<span class="gradient-text">地圖</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                不必在資訊海中迷航。我們為你精選了全球最優質的學習資源，或讓 AI 為你規劃專屬的學習路徑。
+            </p>
+        </section>
+
+        <!-- AI Learning Path Planner -->
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+            <h2 class="text-2xl font-bold mb-2">✨ AI 學習路徑規劃師</h2>
+            <p class="text-gray-600 mb-6">輸入你想學習的主題，AI 將為你生成一份從入門到進階的學習步驟，並推薦合適的資源類型。</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="pathInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：我想學 Python 爬蟲">
+                <button id="generatePathBtn" class="w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>規劃路徑</span>
+                </button>
+            </div>
+            <div id="pathResult" class="mt-6">
+                <!-- AI generated path will be injected here -->
+            </div>
+        </section>
+
+        <!-- Curated Resources Section -->
+        <section>
+             <h2 class="text-2xl font-bold text-center mb-8">或，從我們的精選資源庫手動探索</h2>
+            <!-- Filters -->
+            <div class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="lg:col-span-2">
+                            <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                            <input type="text" id="search-input" placeholder="試試輸入「Python」或「歷史」..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="type-filter" class="font-bold text-gray-700 text-sm">資源類型</label>
+                            <select id="type-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="all">全部類型</option>
+                                <option value="線上課程">線上課程</option>
+                                <option value="知識型影片">知識型影片</option>
+                                <option value="知識型 Podcast">知識型 Podcast</option>
+                                <option value="閱讀材料">閱讀材料</option>
+                                <option value="互動模擬實驗">互動模擬實驗</option>
+                                <option value="數位博物館與典藏">數位博物館與典藏</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label for="category-filter" class="font-bold text-gray-700 text-sm">學科領域</label>
+                            <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="all">全部領域</option>
+                                <option value="文史哲">文史哲</option>
+                                <option value="社會科學">社會科學</option>
+                                <option value="自然科學">自然科學</option>
+                                <option value="資訊科技">資訊科技</option>
+                                <option value="藝術設計">藝術設計</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Grid -->
+            <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Resource cards will be injected here by JavaScript -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到資源</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或換個關鍵字看看。</p>
+            </div>
+        </section>
+    </main>
+
+    <script is:inline src="https://js.puter.com/v2/"></script>
+    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline>
+        // --- Static Data ---
+        const resources = [
+            { title: 'Coursera', description: '與全球頂尖大學合作的線上課程平台，提供從程式設計到心理學的各類課程，部分有證書。', url: 'https://www.coursera.org/', type: '線上課程', category: 'all', language: '英文', best_for: '系統學習' },
+            { title: 'Khan Academy (可汗學院)', description: '完全免費的非營利教育組織，提供數學、科學、歷史等高品質教學影片與練習題，適合打好基礎。', url: 'https://www.khanacademy.org/', type: '線上課程', category: 'all', language: '中文/英文', best_for: '建立基礎' },
+            { title: 'CrashCourse', description: '在YouTube上用生動有趣的動畫，快速講解歷史、文學、化學等各學科的核心概念。', url: 'https://www.youtube.com/user/crashcourse', type: '知識型影片', category: 'all', language: '英文', best_for: '快速入門' },
+            { title: 'Kurzgesagt – In a Nutshell', description: '以高品質動畫聞名，主題涵蓋宇宙、物理、生物與未來科技，能引發強烈的好奇心。', url: 'https://www.youtube.com/c/inanutshell', type: '知識型影片', category: '自然科學', language: '英文', best_for: '觸發靈感' },
+            { title: '報導者', description: '非營利的深度報導媒體，專注於台灣的社會、環境、人權等重要議題，適合培養思辨能力。', url: 'https://www.twreporter.org/', type: '閱讀材料', category: '社會科學', language: '中文', best_for: '議題探討' },
+            { title: '泛科學 PanSci', description: '台灣最大的科學知識社群與媒體，將艱澀的科學知識轉化為有趣、易懂的文章與活動。', url: 'https://pansci.asia/', type: '閱讀材料', category: '自然科學', language: '中文', best_for: '科普新知' },
+            { title: 'PhET 互動模擬教材', description: '由諾貝爾獎得主創立，提供物理、化學、數學等領域的免費互動模擬教材，讓抽象概念變具體。', url: 'https://phet.colorado.edu/zh_TW/', type: '互動模擬實驗', category: '自然科學', language: '中文/英文', best_for: '動手實驗' },
+            { title: 'Google Arts & Culture', description: '與全球超過2000間博物館合作，讓你線上參觀展覽、欣賞高解析度藝術品，是藝術史研究的寶庫。', url: 'https://artsandculture.google.com/', type: '數位博物館與典藏', category: '藝術設計', language: '中文/英文', best_for: '觸發靈感' },
+            { title: '百靈果 News', description: '台灣最受歡迎的新聞類 Podcast 之一，用輕鬆詼諧的方式討論國際大事，是培養國際觀的入門磚。', url: 'https://www.youtube.com/c/TheKKshow', type: '知識型 Podcast', category: '社會科學', language: '中文', best_for: '國際視野' },
+            { title: 'TED Talks', description: '全球知名的演講平台，每場演講都在18分鐘內分享一個值得傳播的好點子，是訓練英聽與擴展視野的絕佳資源。', url: 'https://www.ted.com/', type: '知識型影片', category: 'all', language: '英文', best_for: '觸發靈感' },
+            { title: '中央研究院數位文化中心', description: '典藏大量台灣相關的珍貴史料，如古地圖、老照片、拓本等，是進行在地文史研究的寶庫。', url: 'https://digitalarchives.tw/', type: '數位博物館與典藏', category: '文史哲', language: '中文', best_for: '專題研究' },
+            { title: 'Hahow 好學校', description: '台灣最大的線上課程平台之一，課程內容多元，涵蓋設計、程式、語言、手作等，貼近實務應用。', url: 'https://hahow.in/', type: '線上課程', category: 'all', language: '中文', best_for: '技能學習' }
+        ];
+
+        // --- Static Resource Grid Logic ---
+        const resourceGrid = document.getElementById('resource-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const typeFilter = document.getElementById('type-filter');
+        const categoryFilter = document.getElementById('category-filter');
+
+        function renderResources() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedType = typeFilter.value;
+            const selectedCategory = categoryFilter.value;
+
+            const filteredResources = resources.filter(resource => {
+                const searchCorpus = `${resource.title} ${resource.description} ${resource.best_for}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesType = selectedType === 'all' || resource.type === selectedType;
+                const matchesCategory = selectedCategory === 'all' || resource.category === selectedCategory || resource.category === 'all';
+                return matchesSearch && matchesType && matchesCategory;
+            });
+
+            resourceGrid.textContent = '';
+
+            if (filteredResources.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredResources.forEach(resource => {
+                    const card = document.createElement('a');
+                    card.href = resource.url;
+                    card.target = '_blank';
+                    card.rel = 'noopener noreferrer';
+                    card.className = 'resource-card bg-white p-6 rounded-xl shadow-lg flex flex-col';
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex-grow';
+
+                    const title = document.createElement('h3');
+                    title.className = 'text-xl font-bold text-gray-900 mb-2';
+                    title.textContent = resource.title;
+
+                    const desc = document.createElement('p');
+                    desc.className = 'text-gray-600 mb-4 text-sm';
+                    desc.textContent = resource.description;
+
+                    contentDiv.appendChild(title);
+                    contentDiv.appendChild(desc);
+
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'mt-auto flex flex-wrap gap-2';
+
+                    const typeTag = document.createElement('span');
+                    typeTag.className = 'inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    typeTag.textContent = resource.type;
+
+                    const langTag = document.createElement('span');
+                    langTag.className = 'inline-block bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    langTag.textContent = resource.language;
+
+                    const bestForTag = document.createElement('span');
+                    bestForTag.className = 'inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded-full';
+                    bestForTag.textContent = resource.best_for;
+
+                    tagsDiv.appendChild(typeTag);
+                    tagsDiv.appendChild(langTag);
+                    tagsDiv.appendChild(bestForTag);
+
+                    card.appendChild(contentDiv);
+                    card.appendChild(tagsDiv);
+                    resourceGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderResources);
+        typeFilter.addEventListener('change', renderResources);
+        categoryFilter.addEventListener('change', renderResources);
+
+        // --- AI Learning Path Planner Logic ---
+        const generatePathBtn = document.getElementById('generatePathBtn');
+        const pathInput = document.getElementById('pathInput');
+        const pathResult = document.getElementById('pathResult');
+
+        function showLoader(element) {
+            element.textContent = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            wrapper.appendChild(loader);
+            element.appendChild(wrapper);
+        }
+
+        generatePathBtn.addEventListener('click', async () => {
+            const topic = pathInput.value.trim();
+            if (!topic) {
+                pathResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先輸入你想學習的主題！';
+                pathResult.appendChild(errorP);
+                return;
+            }
+
+            // 雙擊防護
+            const button = generatePathBtn;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.textContent = '載入中...';
+
+            showLoader(pathResult);
+
+            const prompt = `你是一位專業的學習顧問，請為一位想自主學習「${topic}」的台灣高中生，規劃一份 4 個步驟的學習路徑。每個步驟都必須包含：1. 步驟標題 (title), 2. 步驟描述 (description), 3. 建議的資源類型 (resource_type), 4. 一個具體的行動建議與相關搜尋關鍵字 (actionable_suggestion)。
+
+請以 JSON 格式回應，包含以下欄位：
+{
+  "learning_path": [
+    {
+      "step": 1,
+      "title": "步驟標題",
+      "description": "步驟描述",
+      "resource_type": "資源類型",
+      "actionable_suggestion": "行動建議"
+    },
+    // ... 其他步驟
+  ]
+}
+
+請確保回應是有效的 JSON 格式。`;
+
+            try {
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                    signal: AbortSignal.timeout(30000)
+                });
+
+                // Extract content from response
+                let responseText = '';
+                if (response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
+
+                // Try to parse JSON from the response
+                let parsedJson;
+                try {
+                    // Look for JSON in the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        parsedJson = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, create a fallback structure
+                    console.log("JSON parsing failed, creating fallback structure");
+                    parsedJson = {
+                        learning_path: [
+                            {
+                                step: 1,
+                                title: "入門基礎",
+                                description: "學習基本概念",
+                                resource_type: "線上課程",
+                                actionable_suggestion: "搜尋 'Python 入門教程'"
+                            },
+                            {
+                                step: 2,
+                                title: "實務練習",
+                                description: "應用知識",
+                                resource_type: "互動模擬",
+                                actionable_suggestion: "練習簡單程式碼"
+                            },
+                            {
+                                step: 3,
+                                title: "進階主題",
+                                description: "深入特定領域",
+                                resource_type: "閱讀材料",
+                                actionable_suggestion: "閱讀進階書籍"
+                            },
+                            {
+                                step: 4,
+                                title: "專案應用",
+                                description: "實際專案",
+                                resource_type: "知識型影片",
+                                actionable_suggestion: "建置小專案"
+                            }
+                        ]
+                    };
+                }
+
+                displayAIPath(parsedJson.learning_path);
+
+            } catch (error) {
+                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
+                pathResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，規劃路徑時發生錯誤。請稍後再試。';
+                }
+
+                pathResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.textContent = originalText;
+            }
+        });
+
+        function displayAIPath(learningPath) {
+            pathResult.textContent = '';
+
+            learningPath.forEach(step => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg mb-4';
+
+                // 步驟編號
+                const stepNum = document.createElement('div');
+                stepNum.className = 'flex items-center mb-2';
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold mr-2';
+                badge.textContent = step.step;
+                const title = document.createElement('h4');
+                title.className = 'font-bold text-lg text-indigo-800';
+                title.textContent = step.title;
+                stepNum.appendChild(badge);
+                stepNum.appendChild(title);
+
+                // 描述
+                const desc = document.createElement('p');
+                desc.className = 'text-gray-700 mt-2 mb-3';
+                desc.textContent = step.description;
+
+                // 資源類型標籤
+                const resourceContainer = document.createElement('div');
+                resourceContainer.className = 'mb-3';
+                const resourceLabel = document.createElement('span');
+                resourceLabel.className = 'text-sm font-semibold text-gray-700';
+                resourceLabel.textContent = '建議資源：';
+                const resourceBadge = document.createElement('span');
+                resourceBadge.className = 'inline-block bg-indigo-100 text-indigo-800 text-sm font-medium ml-2 px-2.5 py-0.5 rounded-full';
+                resourceBadge.textContent = step.resource_type;
+                resourceContainer.appendChild(resourceLabel);
+                resourceContainer.appendChild(resourceBadge);
+
+                // 行動建議
+                const actionContainer = document.createElement('div');
+                actionContainer.className = 'bg-white p-3 rounded-lg';
+                const actionLabel = document.createElement('p');
+                actionLabel.className = 'text-sm font-semibold text-gray-700 mb-1';
+                actionLabel.textContent = '💡 下一步行動：';
+                const actionText = document.createElement('p');
+                actionText.className = 'text-sm text-gray-800';
+                actionText.textContent = step.actionable_suggestion;
+                actionContainer.appendChild(actionLabel);
+                actionContainer.appendChild(actionText);
+
+                // 組裝元素
+                stepElement.appendChild(stepNum);
+                stepElement.appendChild(desc);
+                stepElement.appendChild(resourceContainer);
+                stepElement.appendChild(actionContainer);
+
+                pathResult.appendChild(stepElement);
+            });
+        }
+
+        // --- Initial Render ---
+        renderResources();
+    </script>
+
+  <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .resource-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+  </style>
+</BaseLayout>

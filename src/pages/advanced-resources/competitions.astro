@@ -1,0 +1,232 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="國內外競賽資訊 - 台灣教育處方籤"
+  description="國內外競賽資訊"
+  currentSection="advanced-resources"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                國內外競賽<span class="gradient-text">資訊</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                將你的知識付諸實踐，挑戰自我。這裡匯集了各類指標性競賽，讓你的才華被看見。
+            </p>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                        <input type="text" id="search-input" placeholder="競賽名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    </div>
+                    <div>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">競賽領域</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">全部領域</option>
+                            <option value="科學">科學</option>
+                            <option value="數理">數理</option>
+                            <option value="資訊">資訊</option>
+                            <option value="語文人文">語文人文</option>
+                            <option value="商業管理">商業管理</option>
+                            <option value="藝術設計">藝術設計</option>
+                            <option value="社會永續">社會永續</option>
+                            <option value="跨領域">跨領域</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="region-filter" class="font-bold text-gray-700 text-sm">競賽地區</label>
+                        <select id="region-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有地區</option>
+                            <option value="台灣">台灣</option>
+                            <option value="美國">美國</option>
+                            <option value="英國">英國</option>
+                            <option value="歐盟">歐盟</option>
+                            <option value="東亞">東亞</option>
+                            <option value="全球線上">全球線上</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="level-filter" class="font-bold text-gray-700 text-sm">競賽級別</label>
+                        <select id="level-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有級別</option>
+                            <option value="校際/地區">校際/地區</option>
+                            <option value="全國">全國</option>
+                            <option value="國際">國際</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="form-filter" class="font-bold text-gray-700 text-sm">參賽形式</label>
+                        <select id="form-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
+                            <option value="all">所有形式</option>
+                            <option value="個人">個人</option>
+                            <option value="團體">團體</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Competition Grid -->
+        <section>
+            <div id="competition-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Competition cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到競賽</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或探索其他類別的競賽。</p>
+            </div>
+        </section>
+    </main>
+
+    <script is:inline>
+        // 競賽資料改由同目錄的 competitions.json 載入（見頁尾的 loadCompetitions）。
+        // 要新增或修改競賽，請編輯 competitions.json，不需要動這支 HTML。
+        let competitionsData = [];
+
+        const competitionGrid = document.getElementById('competition-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const levelFilter = document.getElementById('level-filter');
+        const formFilter = document.getElementById('form-filter');
+        const regionFilter = document.getElementById('region-filter');
+
+        function getStatus(deadline) {
+            if (!deadline) {
+                return { text: '依官網', color: 'bg-gray-200 text-gray-700' };
+            }
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { text: '已截止', color: 'bg-gray-200 text-gray-700' };
+            } else if (diffDays <= 30) {
+                return { text: '即將截止', color: 'bg-red-100 text-red-800' };
+            } else {
+                return { text: '報名中', color: 'bg-green-100 text-green-800' };
+            }
+        }
+
+        function renderCompetitions() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedRegion = regionFilter.value;
+            const selectedLevel = levelFilter.value;
+            const selectedForm = formFilter.value;
+
+            const filteredCompetitions = competitionsData.filter(comp => {
+                const searchCorpus = `${comp.title} ${comp.organizer}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || comp.category === selectedCategory;
+                const matchesRegion = selectedRegion === 'all' || comp.region === selectedRegion;
+                const matchesLevel = selectedLevel === 'all' || comp.level === selectedLevel;
+                const matchesForm = selectedForm === 'all' || comp.form.includes(selectedForm);
+                return matchesSearch && matchesCategory && matchesRegion && matchesLevel && matchesForm;
+            });
+
+            competitionGrid.innerHTML = '';
+
+            if (filteredCompetitions.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredCompetitions.forEach(comp => {
+                    const card = document.createElement('div');
+                    card.className = 'competition-card bg-white rounded-lg shadow-md flex flex-col';
+
+                    const status = getStatus(comp.deadline);
+
+                    card.innerHTML = `
+                        <div class="p-6 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="text-sm font-bold text-pink-600">${comp.category}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.region}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.level}</span>
+                                    <span class="text-gray-300">|</span>
+                                    <span class="text-sm font-semibold text-gray-500">${comp.form}</span>
+                                </div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color} flex-shrink-0">${status.text}</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${comp.title}</h3>
+                            <p class="text-sm text-gray-500 mb-1">主辦單位：${comp.organizer}</p>
+                            <p class="text-xs font-medium text-gray-500 mb-3">參賽資格：${comp.eligibility}　·　${comp.mode}</p>
+                            <p class="text-gray-700">${comp.description}</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-500">報名截止</p>
+                                <p class="font-semibold text-gray-700">${comp.deadline ? comp.deadline : '依官網公告'}</p>
+                            </div>
+                            <a href="${comp.url}" target="_blank" rel="noopener noreferrer" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300">
+                                前往官網
+                            </a>
+                        </div>
+                    `;
+                    competitionGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderCompetitions);
+        categoryFilter.addEventListener('change', renderCompetitions);
+        regionFilter.addEventListener('change', renderCompetitions);
+        levelFilter.addEventListener('change', renderCompetitions);
+        formFilter.addEventListener('change', renderCompetitions);
+
+        // 從 competitions.json 載入競賽資料後再渲染
+        async function loadCompetitions() {
+            try {
+                const response = await fetch('competitions.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                competitionsData = Array.isArray(data.competitions) ? data.competitions : [];
+                renderCompetitions();
+            } catch (error) {
+                console.error('競賽資料載入失敗：', error);
+                competitionGrid.innerHTML = '';
+                noResultsDiv.classList.remove('hidden');
+                noResultsDiv.querySelector('h3').textContent = '競賽資料載入失敗';
+                noResultsDiv.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+            }
+        }
+
+        loadCompetitions();
+    </script>
+
+    <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #ec4899, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .competition-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .competition-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</BaseLayout>

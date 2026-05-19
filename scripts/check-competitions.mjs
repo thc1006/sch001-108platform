@@ -2,7 +2,7 @@
 /**
  * 競賽資料看門狗
  * --------------------------------------------------------------
- * 檢查 advanced-resources/competitions.json：
+ * 檢查 public/advanced-resources/competitions.json：
  *   1. JSON 格式與必填欄位是否正確
  *   2. category / level 欄位值是否在允許清單內
  *   3. deadline 是否為合法日期
@@ -17,7 +17,9 @@
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 
-const DATA_PATH = new URL('../advanced-resources/competitions.json', import.meta.url);
+// 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
+// 供頁面 client fetch);看門狗改讀此處。
+const DATA_PATH = new URL('../public/advanced-resources/competitions.json', import.meta.url);
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
