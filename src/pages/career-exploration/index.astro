@@ -141,6 +141,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         // --- 大學科系羅盤 (Major Explorer) 相關函式 ---
 
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         function renderClusterDetails(clusterId) {
             const cluster = majorData.find(c => c.id === clusterId);
             if (!cluster) {
@@ -151,11 +157,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             clusterDetailsContainer.innerHTML = `
                 <div class="flex items-start gap-4 mb-4">
                     <div class="bg-indigo-100 p-3 rounded-xl">
-                        <ion-icon name="${cluster.icon}" class="text-3xl text-indigo-600"></ion-icon>
+                        <ion-icon name="${escapeHtml(cluster.icon)}" class="text-3xl text-indigo-600"></ion-icon>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-900">${cluster.name}</h3>
-                        <p class="text-gray-600">${cluster.description}</p>
+                        <h3 class="text-2xl font-bold text-gray-900">${escapeHtml(cluster.name)}</h3>
+                        <p class="text-gray-600">${escapeHtml(cluster.description)}</p>
                     </div>
                 </div>
 
@@ -171,30 +177,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <div id="tab-competencies" class="tab-panel">
                         <h4 class="font-bold text-lg mb-3">對應核心素養</h4>
                         <div class="flex flex-wrap gap-2">
-                            ${cluster.competencies.map(c => `<span class="inline-block bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${c}</span>`).join('')}
+                            ${cluster.competencies.map(c => `<span class="inline-block bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">${escapeHtml(c)}</span>`).join('')}
                         </div>
                         <h4 class="font-bold text-lg mt-4 mb-3">建議修習科目</h4>
                         <div class="flex flex-wrap gap-2">
-                            ${cluster.subjects.map(s => `<span class="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">${s}</span>`).join('')}
+                            ${cluster.subjects.map(s => `<span class="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">${escapeHtml(s)}</span>`).join('')}
                         </div>
                     </div>
                     <div id="tab-careers" class="tab-panel hidden">
                         <h4 class="font-bold text-lg mb-3">可能的職業發展</h4>
                         <ul class="list-disc list-inside space-y-1">
-                            ${cluster.careers.map(c => `<li>${c}</li>`).join('')}
+                            ${cluster.careers.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
                         </ul>
                     </div>
                     <div id="tab-portfolio" class="tab-panel hidden">
                         <h4 class="font-bold text-lg mb-3">學習歷程準備方向</h4>
-                        <p>${cluster.portfolio_tips}</p>
+                        <p>${escapeHtml(cluster.portfolio_tips)}</p>
                     </div>
                 </div>
 
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <a href="clusters/${cluster.guide}/index.html" class="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    <a href="clusters/${encodeURI(cluster.guide)}/index.html" class="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
                         查看完整升學指南 <ion-icon name="arrow-forward-outline"></ion-icon>
                     </a>
-                    <a href="${cluster.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-white border border-indigo-300 text-indigo-600 font-bold py-2 px-4 rounded-lg hover:bg-indigo-50 transition duration-300">
+                    <a href="${encodeURI(cluster.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-white border border-indigo-300 text-indigo-600 font-bold py-2 px-4 rounded-lg hover:bg-indigo-50 transition duration-300">
                         前往 ColleGo! <ion-icon name="open-outline"></ion-icon>
                     </a>
                 </div>
@@ -231,7 +237,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const button = document.createElement('button');
                 button.className = 'cluster-btn w-full text-left px-4 py-3 rounded-lg font-semibold flex items-center gap-3';
                 button.dataset.id = cluster.id;
-                button.innerHTML = `<ion-icon name="${cluster.icon}" class="text-xl"></ion-icon> <span>${cluster.name}</span>`;
+                button.innerHTML = `<ion-icon name="${escapeHtml(cluster.icon)}" class="text-xl"></ion-icon> <span>${escapeHtml(cluster.name)}</span>`;
                 if(cluster.id === currentActiveId) button.classList.add('active');
                 clusterListContainer.appendChild(button);
             });
@@ -285,7 +291,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 messageWrapper.className = 'flex gap-2 items-end justify-end';
                 messageWrapper.innerHTML = `
                     <div class="chat-bubble-user p-3 max-w-lg">
-                        <p class="text-sm sm:text-base text-gray-800">${message}</p>
+                        <p class="text-sm sm:text-base text-gray-800">${escapeHtml(message)}</p>
                     </div>
                     <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center flex-shrink-0">
                         <ion-icon name="person" class="text-green-700"></ion-icon>
@@ -361,14 +367,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 });
 
                 // 逐字將 AI 回應安全地填入文字容器
-                // 累積文本,然後一次性設置 textContent 以避免 XSS
+                // 累積文本後,每次以 PuterAI.renderMarkdown() 重新渲染整段。
+                // renderMarkdown 內部「先 HTML escape、後套 markdown」,
+                // 故 innerHTML 注入是安全的,AI 無法插入可執行 HTML。
+                // 串流期間若 ** 尚未閉合,該段暫時維持字面,閉合後即正確。
                 let accumulatedText = '';
                 for await (const part of responseStream) {
                     if (part?.text) {
                         accumulatedText += part.text;
-                        // 安全地更新文本內容
-                        // 保留換行符,使用 CSS white-space: pre-wrap 來顯示
-                        aiTextElement.textContent = accumulatedText;
+                        aiTextElement.innerHTML = PuterAI.renderMarkdown(accumulatedText);
                         chatWindow.scrollTop = chatWindow.scrollHeight; // 持續滾動到底部
                     }
                 }

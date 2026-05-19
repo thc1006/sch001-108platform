@@ -109,7 +109,9 @@ function processHtmlFile(filePath, fileUrl) {
                 dataArray.forEach(item => {
                     // 根據常見的欄位名稱來建立索引
                     const itemTitle = item.name || item.title || item.question;
-                    const itemContent = item.major || item.description || item.content_html || JSON.stringify(item);
+                    // 只取人類可讀的文字欄位;絕不用 JSON.stringify(item) 當內文,
+                    // 否則像 {id,title,color} 這類 UI 查找表會把整包原始 JSON 塞進搜尋索引。
+                    const itemContent = item.major || item.description || item.content_html || item.title || item.name || '';
 
                     if (itemTitle) {
                         searchData.push({

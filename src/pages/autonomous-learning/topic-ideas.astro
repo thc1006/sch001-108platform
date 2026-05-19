@@ -248,14 +248,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg';
 
-                // 使用 textContent 安全插入標題和描述
+                // 標題與描述為 AI 回應內容，可能含 markdown（如 **粗體**）。
+                // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
                 const titleEl = document.createElement('h4');
                 titleEl.className = 'font-bold text-lg text-blue-800';
-                titleEl.textContent = idea.title;
+                titleEl.innerHTML = PuterAI.renderMarkdown(idea.title);
 
                 const descEl = document.createElement('p');
                 descEl.className = 'text-gray-700 mt-1 mb-4';
-                descEl.textContent = idea.description;
+                descEl.innerHTML = PuterAI.renderMarkdown(idea.description);
 
                 // 方法標籤容器
                 const methodsContainer = document.createElement('div');
@@ -281,10 +282,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 challengesTitle.textContent = '潛在挑戰：';
                 const challengesList = document.createElement('ul');
                 challengesList.className = 'list-disc list-inside pl-2';
+                // 挑戰項目為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 idea.challenges.forEach(c => {
                     const li = document.createElement('li');
                     li.className = 'text-sm text-gray-700';
-                    li.textContent = c;
+                    li.innerHTML = PuterAI.renderMarkdown(c);
                     challengesList.appendChild(li);
                 });
                 challengesContainer.appendChild(challengesTitle);

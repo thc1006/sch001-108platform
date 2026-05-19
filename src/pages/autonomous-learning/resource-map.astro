@@ -335,16 +335,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const badge = document.createElement('span');
                 badge.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold mr-2';
                 badge.textContent = step.step;
+                // 標題與描述為 AI 回應內容，可能含 markdown（如 **粗體**）。
+                // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
                 const title = document.createElement('h4');
                 title.className = 'font-bold text-lg text-indigo-800';
-                title.textContent = step.title;
+                title.innerHTML = PuterAI.renderMarkdown(step.title);
                 stepNum.appendChild(badge);
                 stepNum.appendChild(title);
 
-                // 描述
+                // 描述（AI 純文字，可能含 markdown）
                 const desc = document.createElement('p');
                 desc.className = 'text-gray-700 mt-2 mb-3';
-                desc.textContent = step.description;
+                desc.innerHTML = PuterAI.renderMarkdown(step.description);
 
                 // 資源類型標籤
                 const resourceContainer = document.createElement('div');
@@ -364,9 +366,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const actionLabel = document.createElement('p');
                 actionLabel.className = 'text-sm font-semibold text-gray-700 mb-1';
                 actionLabel.textContent = '💡 下一步行動：';
+                // 行動建議為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 const actionText = document.createElement('p');
                 actionText.className = 'text-sm text-gray-800';
-                actionText.textContent = step.actionable_suggestion;
+                actionText.innerHTML = PuterAI.renderMarkdown(step.actionable_suggestion);
                 actionContainer.appendChild(actionLabel);
                 actionContainer.appendChild(actionText);
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- 台灣教育處方籤 favicon —— 取首頁 Hero 羅盤,移除動畫、光暈與路徑曲線,留下清晰的羅盤核心,適合小尺寸顯示 -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#eef2ff" stroke-width="2"/>
+  <circle cx="100" cy="100" r="75" fill="none" stroke="#e0e7ff" stroke-width="1.5"/>
+  <g opacity="0.8">
+    <path d="M100 20 L110 95 L100 85 L90 95 Z" fill="#a5b4fc"/>
+    <path d="M100 180 L110 105 L100 115 L90 105 Z" fill="#c7d2fe"/>
+    <path d="M20 100 L95 110 L85 100 L95 90 Z" fill="#c7d2fe"/>
+    <path d="M180 100 L105 110 L115 100 L105 90 Z" fill="#a5b4fc"/>
+  </g>
+  <circle cx="100" cy="100" r="25" fill="#4f46e5"/>
+  <circle cx="100" cy="100" r="12" fill="white"/>
+  <path d="M100 90 L110 100 L100 110 L90 100 Z" fill="#4f46e5"/>
+</svg>

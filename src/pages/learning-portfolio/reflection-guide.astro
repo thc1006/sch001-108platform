@@ -260,9 +260,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             overallTitle.className = 'text-base';
             overallTitle.textContent = '健檢總評';
 
-            // 總評內容
+            // 總評內容（AI 純文字，可能含 markdown）
+            // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
             const overallComment = document.createElement('p');
-            overallComment.textContent = data.overall_comment;
+            overallComment.innerHTML = PuterAI.renderMarkdown(data.overall_comment);
 
             // STAR 分析標題
             const starTitle = document.createElement('h3');
@@ -291,19 +292,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 itemTitle.className = `font-bold text-sm ${color.text}`;
                 itemTitle.textContent = `${item.element} (${elementNames[item.element]})`;
 
+                // 評語 / 建議為 AI 純文字，可能含 markdown。
+                // 用 renderMarkdown（先 escape 後渲染）安全地填入 <span>。
                 const commentP = document.createElement('p');
                 commentP.className = 'text-xs text-gray-700 mt-1';
                 const commentLabel = document.createElement('strong');
                 commentLabel.textContent = '評語：';
+                const commentSpan = document.createElement('span');
+                commentSpan.innerHTML = PuterAI.renderMarkdown(item.comment);
                 commentP.appendChild(commentLabel);
-                commentP.appendChild(document.createTextNode(item.comment));
+                commentP.appendChild(commentSpan);
 
                 const suggestionP = document.createElement('p');
                 suggestionP.className = 'text-xs text-gray-700 mt-1';
                 const suggestionLabel = document.createElement('strong');
                 suggestionLabel.textContent = '建議：';
+                const suggestionSpan = document.createElement('span');
+                suggestionSpan.innerHTML = PuterAI.renderMarkdown(item.suggestion);
                 suggestionP.appendChild(suggestionLabel);
-                suggestionP.appendChild(document.createTextNode(item.suggestion));
+                suggestionP.appendChild(suggestionSpan);
 
                 itemDiv.appendChild(itemTitle);
                 itemDiv.appendChild(commentP);
@@ -320,8 +327,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 修改範例引用框
             const exampleBox = document.createElement('blockquote');
             exampleBox.className = 'border-l-4 border-cyan-500 bg-cyan-50 p-3 text-sm';
+            // 修改範例為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
             const exampleText = document.createElement('p');
-            exampleText.textContent = data.revised_example;
+            exampleText.innerHTML = PuterAI.renderMarkdown(data.revised_example);
             exampleBox.appendChild(exampleText);
 
             // 組裝所有元素

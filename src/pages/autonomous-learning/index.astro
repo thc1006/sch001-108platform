@@ -210,11 +210,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const container = document.createElement('div');
             container.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none';
 
-            // 建議主題方向
+            // 建議主題方向（AI 純文字，可能含 markdown）
+            // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
             const topicTitle = document.createElement('h4');
             topicTitle.textContent = '建議主題方向';
             const topicText = document.createElement('p');
-            topicText.textContent = data.suggested_topic;
+            topicText.innerHTML = PuterAI.renderMarkdown(data.suggested_topic);
 
             // 探索問題標題
             const questionsTitle = document.createElement('h4');
@@ -223,9 +224,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 問題列表
             const questionsList = document.createElement('ul');
             questionsList.className = 'list-disc list-inside';
+            // 探索問題為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
             data.research_questions.forEach(q => {
                 const li = document.createElement('li');
-                li.textContent = q;
+                li.innerHTML = PuterAI.renderMarkdown(q);
                 questionsList.appendChild(li);
             });
 
