@@ -1,0 +1,96 @@
+{
+  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式；常態招募或依官網公告者請填 null；featured=true 代表此活動會顯示於頁面上方的精選區塊（建議僅 1 筆設為 true）；url=官方網站連結。所有純文字欄位於頁面以 escapeHtml 處理，請放心填寫。",
+  "lastUpdated": "2026-05-19",
+  "activities": [
+    {
+      "title": "TRML 台灣地區高中數學競賽",
+      "organizer": "中華民國數學會",
+      "category": "競賽",
+      "form": "團體",
+      "description": "全台最具規模的高中數學團體賽之一，以團隊接力與搶答形式進行，考驗團隊合作與解題默契。",
+      "deadline": "2026-09-18",
+      "featured": false,
+      "url": "https://www.99cef.org.tw/trml.php"
+    },
+    {
+      "title": "臺大杜鵑花節學系博覽會",
+      "organizer": "國立臺灣大學",
+      "category": "營隊",
+      "form": "個人",
+      "description": "認識臺大各學系的絕佳機會，包含學長姐分享、學系攤位與校園導覽，適合作為科系探索的多元表現素材。",
+      "deadline": null,
+      "featured": false,
+      "url": "https://azalea.ntu.edu.tw/"
+    },
+    {
+      "title": "伊甸基金會身心障礙服務志工",
+      "organizer": "伊甸社會福利基金會",
+      "category": "社會服務",
+      "form": "個人",
+      "description": "透過實際陪伴與服務，深入了解身心障礙朋友的需求與處境，培養同理心與社會關懷。",
+      "deadline": null,
+      "featured": false,
+      "url": "https://www.eden.org.tw/"
+    },
+    {
+      "title": "SITCON 學生計算機年會",
+      "organizer": "SITCON 籌備團隊",
+      "category": "工作坊",
+      "form": "個人",
+      "description": "由學生自發舉辦的資訊社群研討會，可學習最新技術、參與議程並與資訊同好交流。",
+      "deadline": "2026-07-31",
+      "featured": false,
+      "url": "https://sitcon.org/"
+    },
+    {
+      "title": "臺灣國際學生創意設計大賽",
+      "organizer": "教育部",
+      "category": "競賽",
+      "form": "個人／團體",
+      "description": "全球規模的學生設計競賽，是展現創意與設計實力的國際舞台，作品涵蓋產品、視覺與數位內容。",
+      "deadline": "2026-07-15",
+      "featured": false,
+      "url": "https://www.tisdc.org/"
+    },
+    {
+      "title": "全國高中生人文經典會考",
+      "organizer": "臺積電文教基金會",
+      "category": "競賽",
+      "form": "個人",
+      "description": "透過閱讀與測驗，引導高中生親近中外人文社會科學領域的經典著作，深化人文素養。",
+      "deadline": "2026-10-01",
+      "featured": false,
+      "url": "https://www.tsmc-foundation.org/"
+    },
+    {
+      "title": "臺灣物理奧林匹亞競賽",
+      "organizer": "國立臺灣師範大學物理學系",
+      "category": "競賽",
+      "form": "個人",
+      "description": "挑戰物理知識的極限，表現優異者可爭取進入國際物理奧林匹亞國手選拔的資格。",
+      "deadline": "2026-11-30",
+      "featured": false,
+      "url": "https://tpmso.org/"
+    },
+    {
+      "title": "流浪動物收容所照護志工",
+      "organizer": "臺北市動物保護處",
+      "category": "社會服務",
+      "form": "個人",
+      "description": "參與收容所的日常照護工作，為等待認養的動物提供陪伴與溫暖，全年常態招募。",
+      "deadline": null,
+      "featured": false,
+      "url": "https://www.tcapo.gov.taipei/"
+    },
+    {
+      "title": "Let's Talk 青年好政系列活動",
+      "organizer": "教育部青年發展署",
+      "category": "青年論壇",
+      "form": "團體",
+      "description": "以審議式民主的方式與政府官員直接對話，探討公共政策，是展現公民意識與社會參與的最佳實踐。",
+      "deadline": "2026-08-31",
+      "featured": true,
+      "url": "https://youthhub.yda.gov.tw/"
+    }
+  ]
+}

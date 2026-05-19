@@ -176,6 +176,11 @@ const JSON_DATA_PAGES = {
         arrayKey: 'tools', idPrefix: 'tool', tag: '線上工具',
         anchor: 'tool-grid',
     },
+    'learning-portfolio/activity-database.html': {
+        json: 'learning-portfolio/activity-database.json',
+        arrayKey: 'activities', idPrefix: 'activity', tag: '多元表現活動',
+        anchor: 'activity-grid',
+    },
 };
 
 // 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name），故以下採欄位聯集。
