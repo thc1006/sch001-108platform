@@ -1,5 +1,5 @@
 {
-  "_readme": "公民科技專案地圖資料檔。彙整 g0v 公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔目前作為看門狗 check-civic-tech.mjs 的結構化資料來源，與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3）；sdgs=對應 SDG 編號陣列（1-17 整數）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，dormant 代表專案近期活動較少、需提醒讀者查證最新狀態。",
+  "_readme": "公民科技專案地圖資料檔。彙整台灣公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔目前作為看門狗 check-civic-tech.mjs 的結構化資料來源，與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3）；sdgs=對應 SDG 編號陣列（1-17 整數）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，maintenance 代表專案以維護方式運作（既有服務持續、但新進度放緩），dormant 代表近期幾無活動、需提醒讀者查證最新狀態。",
   "lastUpdated": "2026-05-19",
   "projects": [
     {
@@ -10,7 +10,7 @@
       "subjects": ["地理 (GIS)", "公民與社會"],
       "competencies": ["A2", "C1"],
       "sdgs": [11, 15],
-      "description": "利用衛星圖資與群眾外包標記台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。",
+      "description": "利用衛星圖資與群眾外包標記台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。已轉由地球公民基金會接手長期營運，並發展出衛星影像辨識遊戲與工廠登記、拆除狀態追蹤平台。",
       "status": "active"
     },
     {
@@ -21,7 +21,7 @@
       "subjects": ["資訊科技", "公民與社會 (媒體識讀)"],
       "competencies": ["B2", "A1"],
       "sdgs": [4, 16],
-      "description": "LINE 聊天機器人與協作查核資料庫，旨在減少假訊息傳播。",
+      "description": "LINE 聊天機器人與協作查核資料庫，旨在減少假訊息傳播。累積 LINE 好友約 33 萬人、查核資料庫超過 4.5 萬筆，並固定每兩個月舉辦實體查核協作培訓。",
       "status": "active"
     },
     {
@@ -32,7 +32,7 @@
       "subjects": ["國語文 / 原住民族語", "資訊科技"],
       "competencies": ["C3", "B1"],
       "sdgs": [4, 10],
-      "description": "台灣第一部數位化原住民語線上辭典，致力於阿美語的數位化保存。",
+      "description": "台灣第一部數位化原住民語線上辭典，致力於阿美語的數位化保存。除原網站外已推出新版站台 new-amis.moedict.tw，並支援離線使用與行動 App。",
       "status": "active"
     },
     {
@@ -43,7 +43,7 @@
       "subjects": ["公民與社會 (經濟)", "化學 / 環境科學"],
       "competencies": ["C1"],
       "sdgs": [12],
-      "description": "環境資訊公開平台，提供企業環境違規地圖與即時污染監測，配套 App 可掃描商品條碼查詢企業環境違規紀錄。",
+      "description": "環境資訊公開平台，提供企業環境違規地圖與即時污染監測，配套 App 可掃描商品條碼查詢企業環境違規紀錄，並陸續擴充 ESG 檢測等功能模組。",
       "status": "active"
     },
     {
@@ -54,8 +54,41 @@
       "subjects": ["歷史", "英文"],
       "competencies": ["C3", "A3"],
       "sdgs": [],
-      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。",
-      "status": "dormant"
+      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。新檔案數位化因人力與經費受限而放緩，但既有檔案資料庫仍持續開放供研究使用。",
+      "status": "maintenance"
+    },
+    {
+      "id": "lawtrace",
+      "name": "LawTrace 立法足跡",
+      "org": "歐噴有限公司（OpenFun）",
+      "url": "https://lawtrace.tw/",
+      "subjects": ["公民與社會", "資訊科技 (開放資料)"],
+      "competencies": ["A2", "B1"],
+      "sdgs": [16],
+      "description": "整合立法院各網站的法案資料，呈現一條法律從新增條文到歷次修正的完整立法歷程。網站每日以立法院原始開放資料更新，協助公民追蹤並監督國會立法動態。",
+      "status": "active"
+    },
+    {
+      "id": "vtaiwan",
+      "name": "vTaiwan 數位民主審議平台",
+      "org": "g0v 社群數位民主專案",
+      "url": "https://vtaiwan.tw/",
+      "subjects": ["公民與社會", "資訊科技"],
+      "competencies": ["A2", "C1", "C2"],
+      "sdgs": [16, 9],
+      "description": "太陽花運動後由 g0v 社群發起的數位民主實驗平台，結合線上意見分群與實體審議讓公民參與爭議性政策討論。2023 年以社群專案形式重啟，近年聚焦以公眾參與改善 AI 治理。",
+      "status": "active"
+    },
+    {
+      "id": "civil-iot",
+      "name": "民生公共物聯網 Civil IoT Taiwan",
+      "org": "行政院跨部會開放資料專案",
+      "url": "https://ci.taiwan.gov.tw/",
+      "subjects": ["自然科學 (地球科學)", "資訊科技"],
+      "competencies": ["A2", "B2"],
+      "sdgs": [11, 13],
+      "description": "整合空氣品質、地震、防救災、水資源四大主題的開放感測資料與即時監測平台，提供大量公開 API 與資料視覺化。雖由政府跨部會主導而非 g0v 社群專案，但其完全開放的資料是高中生實作資料科學的理想素材。",
+      "status": "active"
     }
   ]
 }
