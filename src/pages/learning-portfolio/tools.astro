@@ -39,8 +39,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         探索 Notion &rarr;
                     </a>
                 </div>
-                <div class="md:w-1/3">
-                    <img src="img/tools/notion.png" alt="Notion 數位工作區介面" class="h-full w-full object-cover">
+                <div class="md:w-1/3 bg-gray-50 flex items-center justify-center">
+                    <img src={`${import.meta.env.BASE_URL.replace(/\/+$/, '')}/learning-portfolio/img/tools/notion.png`} alt="Notion 數位工作區介面" class="w-full h-48 md:h-full object-contain p-6">
                 </div>
             </div>
         </section>
