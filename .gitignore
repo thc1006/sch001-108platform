@@ -12,7 +12,6 @@ CLAUDE.md
 
 # Node.js dependencies
 node_modules/
-package-lock.json
 .npm/
 .node_repl_history
 
@@ -53,3 +52,10 @@ yarn-error.log*
 
 # 競賽資料看門狗產生的報告（CI 與本機執行 check-competitions.mjs 時產生）
 /competition-report.md
+
+# Astro 建置產物與快取
+dist/
+.astro/
+
+# 不採納的大型素材（使用者明示排除 32MB YouTube mp3）
+school/**/*.mp3

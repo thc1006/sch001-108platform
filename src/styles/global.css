@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────
+   全站共用樣式
+   取代先前散落在各頁 <head> 內、彼此重複又不一致的 inline <style>。
+   ────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
+}
+
+/* 漸層標題字 —— cool:首頁等;warm:競賽等頁面 */
+.gradient-text {
+  background: -webkit-linear-gradient(45deg, #4f46e5, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-warm {
+  background: -webkit-linear-gradient(45deg, #ec4899, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 卡片 hover 上浮效果 */
+.feature-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+.competition-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.competition-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* 首頁 Hero SVG 動畫 */
+.svg-pulse {
+  animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.svg-dash {
+  stroke-dasharray: 5 5;
+  animation: dash 1.5s linear infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes dash {
+  to { stroke-dashoffset: -20; }
+}

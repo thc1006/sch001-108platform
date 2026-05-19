@@ -1,0 +1,25 @@
+---
+// 全站統一頁尾。
+// BASE_URL 可能帶或不帶尾斜線,統一去尾後自補 '/'。
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-gray-800 text-white">
+  <div class="container mx-auto px-6 py-10">
+    <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+      <div class="mb-6 md:mb-0">
+        <h3 class="text-2xl font-bold">台灣教育處方籤</h3>
+        <p class="text-gray-400 mt-1">一個由關心台灣教育的學生與開發者發起的專案。</p>
+      </div>
+      <div class="flex space-x-6">
+        <a href={`${base}/about.html`} class="text-gray-400 hover:text-white transition duration-300">關於我們</a>
+        <a href={`${base}/sitemap.html`} class="text-gray-400 hover:text-white transition duration-300">網站地圖</a>
+        <a href="mailto:hctsai@linux.com" class="text-gray-400 hover:text-white transition duration-300">聯絡我們</a>
+      </div>
+    </div>
+    <div class="mt-8 border-t border-gray-700 pt-6 text-center text-gray-500 text-sm">
+      &copy; {year} 台灣教育處方籤. All Rights Reserved.
+    </div>
+  </div>
+</footer>
