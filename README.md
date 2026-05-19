@@ -1,6 +1,6 @@
 # 台灣教育處方籤
 
-> 高中 108 課綱教育資源整合平台 — Taiwan K-12 Education Resource Integration Platform
+> 高中生 108 課綱教育資源整合平台 — Taiwan K-12 Education Resource Integration Platform
 
 [![專案狀態: 持續開發中](https://img.shields.io/badge/status-in%20progress-brightgreen.svg)](https://thc1006.github.io/sch001-108platform/)
 [![授權: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
