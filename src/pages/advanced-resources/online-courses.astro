@@ -1,0 +1,202 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="線上課程精選 - 台灣教育處方籤"
+  description="線上課程精選"
+  currentSection="advanced-resources"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                線上課程<span class="gradient-text">精選</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                提前與世界一流的知識接軌。我們為你精選了最適合高中生進修的線上課程。
+            </p>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                        <input type="text" id="search-input" placeholder="課程、學校、老師..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">學科領域</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">全部領域</option>
+                            <option value="程式基礎">程式基礎</option>
+                            <option value="AI與數據科學">AI與數據科學</option>
+                            <option value="商業管理">商業管理</option>
+                            <option value="人文社會">人文社會</option>
+                            <option value="自然科學">自然科學</option>
+                            <option value="公民科技與開源">公民科技與開源</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="platform-filter" class="font-bold text-gray-700 text-sm">課程平台</label>
+                        <select id="platform-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">所有平台</option>
+                            <option value="Coursera">Coursera</option>
+                            <option value="edX">edX</option>
+                            <option value="Khan Academy">Khan Academy</option>
+                            <option value="Hahow">Hahow</option>
+                            <option value="g0v / 開源社群">g0v / 開源社群</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="language-filter" class="font-bold text-gray-700 text-sm">授課語言</label>
+                        <select id="language-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="all">所有語言</option>
+                            <option value="中文">中文</option>
+                            <option value="英文">英文</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course Grid -->
+        <section>
+            <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Course cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到課程</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或探索其他類別的課程。</p>
+            </div>
+        </section>
+
+        <!-- 著作權聲明(原頁 footer 內;遷移後 footer 統一,故移至此處保留) -->
+        <p class="mt-12 text-center text-xs text-gray-400">
+            課程縮圖與標誌之著作權／商標屬各課程提供者所有；本站為獨立非營利教育目錄，與各提供者無從屬或合作關係。
+        </p>
+    </main>
+
+    <script is:inline>
+        // 課程資料改由同目錄的 online-courses.json 載入（見頁尾的 loadCourses）。
+        // 要新增或修改課程，請編輯 online-courses.json，不需要動這支 HTML。
+        let coursesData = [];
+
+        const courseGrid = document.getElementById('course-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const platformFilter = document.getElementById('platform-filter');
+        const languageFilter = document.getElementById('language-filter');
+
+        function renderCourses() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedPlatform = platformFilter.value;
+            const selectedLanguage = languageFilter.value;
+
+            const filteredCourses = coursesData.filter(course => {
+                const searchCorpus = `${course.title} ${course.provider} ${course.tags.join(' ')}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
+                const matchesPlatform = selectedPlatform === 'all' || course.platform === selectedPlatform;
+                const matchesLanguage = selectedLanguage === 'all' || course.language === selectedLanguage;
+                return matchesSearch && matchesCategory && matchesPlatform && matchesLanguage;
+            });
+
+            courseGrid.innerHTML = '';
+
+            if (filteredCourses.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredCourses.forEach(course => {
+                    const card = document.createElement('div');
+                    card.className = 'course-card bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
+
+                    let tagsHtml = '';
+                    course.tags.forEach(tag => {
+                        tagsHtml += `<span class="inline-block bg-purple-100 text-purple-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${tag}</span>`;
+                    });
+
+                    card.innerHTML = `
+                        <img src="${course.thumbnail_url}" alt="${course.title}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                        <div class="p-6 flex-grow flex flex-col">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-sm font-bold text-purple-600">${course.platform} - ${course.provider}</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.language === '中文' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}">${course.language}</span>
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.difficulty === '入門' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${course.difficulty}</span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-2 h-14">${course.title}</h3>
+                                <p class="text-sm text-gray-700 mb-4">${course.description}</p>
+                            </div>
+                            <div class="mt-4">
+                                ${tagsHtml}
+                            </div>
+                        </div>
+                        <div class="p-4 bg-gray-50 flex justify-between items-center">
+                             <span class="text-xs font-semibold ${course.certificate ? 'text-green-600' : 'text-gray-500'}">${course.certificate ? '✓ 提供證書' : '✗ 無證書'}</span>
+                            <a href="${course.url}" target="_blank" rel="noopener noreferrer" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
+                                前往課程
+                            </a>
+                        </div>
+                    `;
+                    courseGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderCourses);
+        categoryFilter.addEventListener('change', renderCourses);
+        platformFilter.addEventListener('change', renderCourses);
+        languageFilter.addEventListener('change', renderCourses);
+
+        // 從 online-courses.json 載入課程資料後再渲染
+        async function loadCourses() {
+            try {
+                const response = await fetch('online-courses.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                coursesData = Array.isArray(data.courses) ? data.courses : [];
+                renderCourses();
+            } catch (error) {
+                console.error('課程資料載入失敗：', error);
+                courseGrid.innerHTML = '';
+                noResultsDiv.classList.remove('hidden');
+                noResultsDiv.querySelector('h3').textContent = '課程資料載入失敗';
+                noResultsDiv.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+            }
+        }
+
+        loadCourses();
+    </script>
+
+    <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .course-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</BaseLayout>

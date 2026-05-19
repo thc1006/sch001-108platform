@@ -1,0 +1,91 @@
+---
+// 全站統一導覽列。
+// currentSection 標記目前所在區段,用來套用 active 樣式(全站一致)。
+interface Props {
+  currentSection?: string | null;
+}
+const { currentSection = null } = Astro.props;
+// BASE_URL 可能帶或不帶尾斜線(視 Astro 版本/設定而定),統一去尾後自補 '/'。
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+const navItems = [
+  { key: 'autonomous-learning', label: '自主學習', href: `${base}/autonomous-learning/index.html` },
+  { key: 'learning-portfolio', label: '學習歷程', href: `${base}/learning-portfolio/index.html` },
+  { key: 'career-exploration', label: '生涯探索', href: `${base}/career-exploration/index.html` },
+  { key: 'advanced-resources', label: '進階資源', href: `${base}/advanced-resources/index.html` },
+  { key: 'civic-tech-map', label: '公民科技', href: `${base}/civic-tech-map/index.html` },
+  { key: 'about', label: '關於我們', href: `${base}/about.html` },
+];
+---
+
+<header class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+  <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+    <div class="text-2xl font-bold text-blue-600">
+      <a href={`${base}/index.html`}>台灣教育處方籤</a>
+    </div>
+
+    <!-- 桌機選單 -->
+    <div class="hidden md:flex space-x-8 items-center font-semibold">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          aria-current={item.key === currentSection ? 'page' : undefined}
+          class:list={[
+            'transition duration-300',
+            item.key === currentSection
+              ? 'text-blue-600 font-bold'
+              : 'text-gray-600 hover:text-blue-500',
+          ]}
+        >{item.label}</a>
+      ))}
+    </div>
+
+    <!-- 手機漢堡鈕 -->
+    <button
+      id="nav-toggle"
+      type="button"
+      class="md:hidden text-gray-600 hover:text-blue-500"
+      aria-label="開啟導覽選單"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </nav>
+
+  <!-- 手機選單(預設收合) -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white">
+    {navItems.map((item) => (
+      <a
+        href={item.href}
+        aria-current={item.key === currentSection ? 'page' : undefined}
+        class:list={[
+          'block px-6 py-3 font-semibold border-b border-gray-50',
+          item.key === currentSection
+            ? 'text-blue-600 bg-blue-50'
+            : 'text-gray-600 hover:text-blue-500 hover:bg-gray-50',
+        ]}
+      >{item.label}</a>
+    ))}
+  </div>
+</header>
+
+<script>
+  // 手機選單開合
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-menu');
+  toggle?.addEventListener('click', () => {
+    const isHidden = menu?.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(isHidden === false));
+  });
+  // 視窗放大跨過 md 斷點時收合選單並重置狀態,避免桌機版殘留展開狀態、
+  // 以及 aria-expanded 與實際可見性脫節。
+  window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
+    if (e.matches) {
+      menu?.classList.add('hidden');
+      toggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>

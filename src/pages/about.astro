@@ -1,0 +1,202 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="關於我們 - 台灣教育處方籤"
+  description="我們的使命"
+  currentSection="about"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- 1. Our Mission -->
+        <section class="bg-white">
+            <div class="container mx-auto px-6 py-20 md:py-28 text-center">
+                 <p class="font-semibold text-blue-600 mb-2">Taiwan K-12 Education Resource Integration Platform</p>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    我們的<span class="gradient-text">使命</span>
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                    我們致力於為偏鄉高中生，建立一個學習歷程與升學資訊共享的開源平台，讓優質教育不再有城鄉差距，讓每個孩子都能適性揚才。
+                </p>
+            </div>
+        </section>
+
+        <!-- 2. Our Journey (Timeline) -->
+        <section class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">我們的故事</h2>
+                    <p class="text-gray-600 mt-2">「沒有歹小孩，只有歹命小孩。」</p>
+                </div>
+                <div class="max-w-3xl mx-auto">
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">緣起：一個來自屏東的看見</h3>
+                        <p class="text-sm text-gray-500 mb-2">創辦人 蔡秀吉</p>
+                        <p class="text-gray-700">「為什麼高中讀了三年，我什麼資源都不知道？」這是創辦人蔡秀吉離開屏東偏鄉，進入陽明交通大學後的第一個念頭。他看見了都市與鄉村學生之間巨大的資訊落差，並萌生了為家鄉後進傳承經驗的想法。</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">啟動：g0v 零時小學校</h3>
+                        <p class="text-sm text-gray-500 mb-2">2021</p>
+                        <p class="text-gray-700">帶著「把高速公路上的資源，引導到鄉間小路」的信念，蔡秀吉向 g0v 零時小學校提案，希望建立一個開源平台。這個想法獲得了肯定，並榮獲 <b>2021 年度獲獎團隊</b>，也因此認識了更多志同道合的夥伴。</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot active"></div>
+                        <h3 class="text-xl font-bold mb-1">轉化：數位轉型與 AI 導入</h3>
+                        <p class="text-sm text-gray-500 mb-2">2025</p>
+                        <p class="text-gray-700">為了讓平台的影響力更廣、更深，我們決定進行數位轉型，將過往累積的經驗與資料，打造成一個更強大、更具互動性的線上資源網站，並導入 AI 技術，為學生提供個人化的學習引導。這，就是你眼前的「台灣教育處方籤」。</p>
+                    </div>
+                    <div class="timeline-item">
+                         <div class="timeline-dot"></div>
+                        <h3 class="text-xl font-bold mb-1">未來：咱無輸！</h3>
+                        <p class="text-gray-700">我們將持續與在地組織（如：創夢客）合作，並深入校園宣講。希望透過這個專案，讓更多學弟妹能像創辦人一樣，有自信地大喊「咱無輸！」</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 平台優化與精進 -->
+        <section id="platform-optimization" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">平台優化與精進方向</h2>
+                    <p class="text-gray-600 mt-2">針對 GitHub Pages 靜態部署，聚焦內容、效能與社群成長。</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-bold text-blue-600 mb-3">內容更新節奏</h3>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                            <li>設定每季資源盤點與更新節點</li>
+                            <li>整合學生回饋表單與案例徵集</li>
+                            <li>用 Issues 追蹤內容優化清單</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-bold text-blue-600 mb-3">效能與載入體驗</h3>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                            <li>圖片壓縮與 lazy loading 降低首屏負載</li>
+                            <li>GitHub Actions 自動更新搜尋索引</li>
+                            <li>整理重複資源與延遲載入腳本</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-bold text-blue-600 mb-3">無障礙與行動體驗</h3>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                            <li>提升色彩對比與字級可讀性</li>
+                            <li>強化鍵盤導航與可聚焦元件</li>
+                            <li>優化行動版 CTA 轉換路徑</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-bold text-blue-600 mb-3">社群互動與成效</h3>
+                        <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                            <li>建立固定的回饋與需求收集入口</li>
+                            <li>用簡單指標追蹤熱門資源</li>
+                            <li>鼓勵學生共筆與投稿資源</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Core Team -->
+        <section class="py-20 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">核心團隊</h2>
+                    <p class="text-gray-600 mt-2">一群來自不同背景，想為教育做點事的夥伴。</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <img src="https://avatars.githubusercontent.com/u/84045975" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">蔡秀吉</h4>
+                        <p class="text-sm text-blue-600">創辦人 / 總召</p>
+                    </div>
+                    <div class="text-center">
+                        <img src="picture/吳恩恩.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">吳恩恩</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
+                    </div>
+                    <div class="text-center">
+                        <img src="picture/吳宜樺.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">吳宜樺</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
+                    </div>
+                    <div class="text-center">
+                        <img src="picture/游惠瑜.jpg" onerror="this.onerror=null;this.src='https://placehold.co/150x150/e5e7eb/4b5563?text=Image+Error';" class="w-24 h-24 rounded-full mx-auto mb-2 shadow-md object-cover">
+                        <h4 class="font-bold">游蕙伃</h4>
+                        <p class="text-sm text-gray-500">團隊成員</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Project Links -->
+        <section class="py-20">
+             <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-8">深入了解我們的專案</h2>
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <a href="https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">專案提案</h4>
+                        <p class="text-sm text-gray-600 mt-1">查看我們在 g0v 零時小學校的完整提案內容。</p>
+                    </a>
+                    <a href="https://github.com/thc1006/sch001-108platform" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">開源資料</h4>
+                        <p class="text-sm text-gray-600 mt-1">本站所有程式碼與資料皆開源，歡迎上 GitHub 貢獻。</p>
+                    </a>
+                    <a href="https://youtu.be/BxKFVSTmiYI" target="_blank" rel="noopener noreferrer" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                        <h4 class="font-bold text-lg text-blue-600">介紹影片</h4>
+                        <p class="text-sm text-gray-600 mt-1">觀看我們的專案介紹影片，快速了解核心理念。</p>
+                    </a>
+                </div>
+             </div>
+        </section>
+    </main>
+
+  <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #2563eb, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Timeline styling */
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2.5rem;
+            padding-left: 2.5rem;
+        }
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            bottom: -0.5rem;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        .timeline-item:last-child:before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 9999px;
+            border-width: 2px;
+            border-color: #e5e7eb;
+            background-color: white;
+        }
+        .timeline-dot.active {
+            background-color: #3b82f6;
+            border-color: #60a5fa;
+        }
+  </style>
+</BaseLayout>

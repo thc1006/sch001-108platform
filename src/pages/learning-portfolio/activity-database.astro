@@ -1,0 +1,206 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="多元表現資料庫 - 台灣教育處方籤"
+  description="多元表現資料庫"
+  currentSection="learning-portfolio"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                多元表現<span class="gradient-text">資料庫</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                探索課堂外的無限可能。我們為你匯集全台的營隊、競賽與志工服務，不再錯過任何機會。
+            </p>
+        </section>
+
+        <!-- Featured Activity -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-center">本月焦點活動</h2>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
+                <div class="md:w-1/2">
+                    <img src="https://images.pexels.com/photos/2608517/pexels-photo-2608517.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="青年論壇" class="h-full w-full object-cover">
+                </div>
+                <div class="p-8 md:w-1/2 flex flex-col justify-center">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-sm font-bold text-sky-600">青年論壇</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800">報名中</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">教育部青年發展署 - Let's Talk 青年好政</h3>
+                    <p class="text-gray-600 mb-4">一個讓青年能與政府官員直接對話的平台。透過審議式民主的方式，探討公共政策，並將你的想法直接傳達給決策者，是展現公民意識的最佳實踐。</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">全國</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">團體</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">社會參與</span>
+                    </div>
+                    <a href="https://youthhub.yda.gov.tw/" target="_blank" rel="noopener noreferrer" class="mt-4 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
+                        查看活動詳情 &rarr;
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters and Search -->
+        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="lg:col-span-2">
+                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
+                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">活動類型</label>
+                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+                            <option value="all">全部類型</option>
+                            <option value="競賽">競賽</option>
+                            <option value="營隊">營隊</option>
+                            <option value="社會服務">社會服務</option>
+                            <option value="青年論壇">青年論壇</option>
+                            <option value="工作坊">工作坊</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="form-filter" class="font-bold text-gray-700 text-sm">參與形式</label>
+                        <select id="form-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+                            <option value="all">所有形式</option>
+                            <option value="個人">個人</option>
+                            <option value="團體">團體</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Grid -->
+        <section>
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Activity cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到活動</h3>
+                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或換個關鍵字看看。</p>
+            </div>
+        </section>
+    </main>
+
+    <script is:inline>
+        const activities = [
+            { title: 'TRML 台灣地區數學聯賽', organizer: '中華民國數學會', category: '競賽', form: '團體', description: '全台最具規模的高中數學競賽之一，考驗團隊合作與解題能力。', deadline: '2025-08-15', url: 'https://www.99cef.org.tw/trml.php' },
+            { title: '台大杜鵑花節學系博覽會', organizer: '台灣大學', category: '營隊', form: '個人', description: '認識台大各科系的絕佳機會，包含學長姐分享與校園導覽。', deadline: '2026-03-01', url: 'https://event.ntu.edu.tw/azalea/2025/' },
+            { title: '伊甸基金會身障體驗志工', organizer: '伊甸社會福利基金會', category: '社會服務', form: '個人', description: '透過實際體驗與服務，深入了解身心障礙朋友的需求與處境。', deadline: '2025-12-31', url: 'https://www.eden.org.tw/pages.php?level1_id=JCUyIyE=&level2_id=JCU1MyMh&level3_id=JCU0MSMh' },
+            { title: 'SITCON 學生計算機年會', organizer: 'SITCON 團隊', category: '工作坊', form: '個人', description: '由學生自發舉辦的資訊社群研討會，可以學習最新技術並與同好交流。', deadline: '2026-02-20', url: 'https://sitcon.org/' },
+            { title: '台灣國際學生創意設計大賽', organizer: '教育部', category: '競賽', form: '個人/團體', description: '全球規模的學生設計競賽，是展現創意與設計實力的國際舞台。', deadline: '2025-07-15', url: 'https://www.tisdc.org/' },
+            { title: '全國高中生人文經典會考', organizer: '台積電文教基金會', category: '競賽', form: '個人', description: '透過閱讀與測驗，引導高中生親近中外人文社會科學領域的經典著作。', deadline: '2025-10-01', url: 'https://www.cla.ntnu.edu.tw/index.php/classic70-2/' },
+            { title: '物理奧林匹亞競賽國手選拔', organizer: '國立臺灣師範大學物理系', category: '競賽', form: '個人', description: '挑戰物理知識的極限，爭取代表台灣參加國際賽事的榮譽。', deadline: '2025-09-20', url: 'https://tpmso.org/ipho/' },
+            { title: '流浪動物之家服務志工', organizer: '臺北市動物保護處', category: '社會服務', form: '個人', description: '參與收容所的日常照護工作，為流離失所的動物提供溫暖。', deadline: null, url: 'https://www.tcapo.gov.taipei/cp.aspx?n=141D6BD837F00436' },
+            { title: '教育部青年發展署 - Let\'s Talk 青年好政', organizer: '教育部青年發展署', category: '青年論壇', form: '團體', description: '與政府官員直接對話，探討公共政策，展現公民意識的最佳實踐。', deadline: '2025-08-31', url: 'https://youthhub.yda.gov.tw/' },
+        ];
+
+        const activityGrid = document.getElementById('activity-grid');
+        const noResultsDiv = document.getElementById('no-results');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const formFilter = document.getElementById('form-filter');
+
+        function getActivityStatus(deadline) {
+            if (!deadline) {
+                return { text: '全年招募', color: 'bg-blue-100 text-blue-800' };
+            }
+            const now = new Date();
+            const deadlineDate = new Date(deadline);
+            const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { text: '已截止', color: 'bg-gray-200 text-gray-700' };
+            } else if (diffDays <= 14) {
+                return { text: '即將截止', color: 'bg-red-100 text-red-800' };
+            } else {
+                return { text: '報名中', color: 'bg-green-100 text-green-800' };
+            }
+        }
+
+        function renderActivities() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const selectedForm = formFilter.value;
+
+            const filteredActivities = activities.filter(activity => {
+                const searchCorpus = `${activity.title} ${activity.organizer}`.toLowerCase();
+                const matchesSearch = searchCorpus.includes(searchTerm);
+                const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
+                const matchesForm = selectedForm === 'all' || activity.form.includes(selectedForm);
+                return matchesSearch && matchesCategory && matchesForm;
+            });
+
+            activityGrid.innerHTML = '';
+
+            if (filteredActivities.length > 0) {
+                noResultsDiv.classList.add('hidden');
+                filteredActivities.forEach(activity => {
+                    const card = document.createElement('div');
+                    card.className = 'activity-card bg-white rounded-lg shadow-md flex flex-col';
+
+                    const status = getActivityStatus(activity.deadline);
+
+                    card.innerHTML = `
+                        <div class="p-6 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-sm font-bold text-sky-600">${activity.category}</span>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${activity.title}</h3>
+                            <p class="text-sm text-gray-500 mb-4">主辦單位：${activity.organizer}</p>
+                            <p class="text-gray-700">${activity.description}</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-500">報名截止</p>
+                                <p class="font-semibold text-gray-700">${activity.deadline ? activity.deadline : '依官網公告'}</p>
+                            </div>
+                            <a href="${activity.url}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
+                                查看詳情
+                            </a>
+                        </div>
+                    `;
+                    activityGrid.appendChild(card);
+                });
+            } else {
+                noResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', renderActivities);
+        categoryFilter.addEventListener('change', renderActivities);
+        formFilter.addEventListener('change', renderActivities);
+
+        // Initial Render
+        renderActivities();
+    </script>
+
+    <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #38bdf8, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .activity-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .activity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</BaseLayout>

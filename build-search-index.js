@@ -3,13 +3,18 @@
  * 自動化搜尋索引建立腳本
  * ==================================================================
  * 功能：
- * 1. 掃描指定資料夾內的所有 .html 檔案。
+ * 1. 掃描 dist/ 內的所有 .html 檔案。
  * 2. 使用 cheerio 解析 HTML，智慧擷取頁面標題、描述、關鍵字與內文。
  * 3. 為動態內容頁面（如學長姐訪談、競賽資訊）額外抓取其 JavaScript 陣列中的資料。
  * 4. 將所有擷取到的資料整合成一個 JSON 檔案 (search-index.json)。
  *
  * 如何使用：
- * 在終端機中執行 `node build-search-index.js`
+ * 本腳本掃描的是 `astro build` 的產物 dist/，因此「務必」先執行 astro build，
+ * 再執行本腳本：
+ *   npx astro build && node build-search-index.js
+ * （遷移到 Astro 後，實際頁面與資產 JSON 都會被 Astro 複製到 dist/，
+ *   不再放在 repo 根目錄。）輸出的 search-index.json 也寫在 dist/ 根，
+ *   這樣會跟著 dist/ 一起被部署到 GitHub Pages。
  * ==================================================================
  */
 
@@ -17,7 +22,9 @@ const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
 
-const projectRoot = __dirname;
+// 掃描起點改為 astro build 的輸出目錄 dist/（遷移前是 repo 根目錄 __dirname）。
+// 頁面與資產 JSON 都在 dist/ 下，JSON_DATA_PAGES 的相對路徑於 dist/ 內維持不變。
+const projectRoot = path.join(__dirname, 'dist');
 const searchData = [];
 let idCounter = 1;
 
@@ -26,6 +33,12 @@ let idCounter = 1;
 const directoriesToScan = [''];
 
 console.log('🚀 開始建立搜尋索引...');
+
+// 防呆：dist/ 不存在代表尚未執行 astro build，直接中止並提示。
+if (!fs.existsSync(projectRoot)) {
+    console.error('❌ 找不到 dist/ 目錄。請先執行 `npx astro build` 再執行本腳本。');
+    process.exit(1);
+}
 
 // 檢查是否應該排除的目錄
 function shouldExcludeDirectory(dirName) {
@@ -125,7 +138,9 @@ function processHtmlFile(filePath, fileUrl) {
 
 // 已將資料外移到 JSON 的頁面設定：HTML 路徑 → 該頁索引設定。
 // 之後若有更多頁面改為資料驅動，只要在此新增一筆即可。
-//   json     ：資料 JSON 路徑（相對 repo 根目錄）
+// 註：鍵（HTML 頁面相對路徑）與 json 路徑皆相對於掃描起點 projectRoot，
+//     遷移後即 dist/；資產 JSON 由 astro build 複製進 dist/ 後路徑不變。
+//   json     ：資料 JSON 路徑（相對 dist/）
 //   arrayKey ：JSON 中存放項目陣列的鍵名
 //   idPrefix ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
 //   tag      ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
@@ -213,7 +228,8 @@ const finalSearchData = searchData.filter(item =>
 );
 
 
-// 將結果寫入 JSON 檔案
+// 將結果寫入 JSON 檔案。
+// projectRoot 已是 dist/，故輸出落在 dist/search-index.json，會隨 dist/ 一起部署。
 const outputPath = path.join(projectRoot, 'search-index.json');
 fs.writeFileSync(outputPath, JSON.stringify(finalSearchData, null, 2));
 

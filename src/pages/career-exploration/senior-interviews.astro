@@ -1,0 +1,322 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="學長姐真心話 - 台灣教育處方籤"
+  description="學長姐真心話"
+  currentSection="career-exploration"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+             <div class="w-full h-72 rounded-2xl overflow-hidden mb-8 shadow-lg">
+                <img src="https://images.pexels.com/photos/1595385/pexels-photo-1595385.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" class="w-full h-full object-cover" alt="一群學生在討論">
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+                學長姐<span class="gradient-text">真心話</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                讓走過這條路的人，告訴你最真實的風景。這裡沒有標準答案，只有最真誠的經驗分享。
+            </p>
+        </section>
+
+        <!-- Filters and Search -->
+        <section id="interviews" class="mb-12 sticky top-[76px] z-30 bg-gray-100/80 backdrop-blur-md py-4 rounded-xl">
+            <div class="flex flex-col md:flex-row justify-center items-center gap-6">
+                <!-- Search Box -->
+                <div class="relative w-full md:w-auto">
+                    <input type="text" id="search-box" placeholder="搜尋科系、學校或關鍵字..." class="pl-10 pr-4 py-2 w-full md:w-64 border-2 border-gray-200 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
+                    </div>
+                </div>
+                <!-- Category Filters -->
+                <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊學群">資訊</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群">法政</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群">傳播</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群">生科</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="管理學群">管理</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interview Grid -->
+        <section>
+            <div id="interview-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Interview cards will be injected here -->
+            </div>
+            <p id="no-results" class="text-center text-gray-500 py-16 hidden">找不到符合條件的訪談，試試看別的關鍵字吧！</p>
+        </section>
+    </main>
+
+    <!-- Interview Detail Modal -->
+    <div id="interviewModal" class="modal fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
+        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+    <!-- Copy Notification -->
+    <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+        連結已複製！
+    </div>
+
+    <script is:inline src="https://unpkg.com/feather-icons"></script>
+
+    <script is:inline>
+        // 資料改由同目錄的 senior-interviews.json 載入（見下方 loadData）。
+        // 要新增或修改資料，請編輯 senior-interviews.json，不需要動這支 HTML。
+        let interviewData = [];
+
+        const interviewGrid = document.getElementById('interview-grid');
+        const modal = document.getElementById('interviewModal');
+        const modalContent = document.getElementById('modal-content');
+        const filters = document.getElementById('category-filters');
+        const searchBox = document.getElementById('search-box');
+        const noResults = document.getElementById('no-results');
+
+        function renderInterviews(category = 'all', searchTerm = '') {
+            interviewGrid.innerHTML = '';
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+            const filteredData = interviewData.filter(p => {
+                const inCategory = category === 'all' || p.category === category;
+                const inSearch = !searchTerm ||
+                                 p.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.major.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.university.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.quote.toLowerCase().includes(lowerCaseSearchTerm) ||
+                                 p.category.toLowerCase().includes(lowerCaseSearchTerm);
+                return inCategory && inSearch;
+            });
+
+            if (filteredData.length === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            filteredData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'interview-card bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer flex flex-col fade-in';
+                card.style.animationDelay = `${index * 50}ms`;
+                card.onclick = () => showModal(item.id);
+
+                card.innerHTML = `
+                    <div class="p-6 flex-grow flex flex-col">
+                        <p class="text-sm font-bold text-purple-600 mb-2">${item.category}</p>
+                        <blockquote class="text-lg font-semibold text-gray-800 flex-grow">“${item.quote}”</blockquote>
+                    </div>
+                    <div class="p-6 bg-gray-50 flex items-center border-t">
+                        <img src="${item.photo_url}" alt="${item.name}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <div>
+                            <p class="font-bold text-gray-900">${item.name}</p>
+                            <p class="text-sm text-gray-600">${item.university} ${item.major}</p>
+                        </div>
+                    </div>
+                `;
+                interviewGrid.appendChild(card);
+            });
+        }
+
+        function showModal(id) {
+            const item = interviewData.find(p => p.id === id);
+            if (!item) return;
+
+            const tipsHtml = item.tips.map(tip => `
+                <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                    <i data-feather="check-circle" class="w-5 h-5 text-purple-600 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <h5 class="font-bold text-gray-800">${tip.title}</h5>
+                        <p class="text-sm text-gray-600">${tip.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            modalContent.innerHTML = `
+                <div class="p-6 border-b flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <img src="${item.photo_url}" alt="${item.name}" class="w-20 h-20 rounded-full object-cover shadow-md bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <div>
+                            <h3 class="text-2xl font-bold">${item.name}</h3>
+                            <p class="text-purple-600 font-semibold">${item.university} ${item.major}</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-7 h-7"></i></button>
+                </div>
+                <div class="border-b border-gray-200">
+                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
+                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'interview')">訪談內容</button>
+                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'tips')">探索TIPS</button>
+                    </nav>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow">
+                    <div class="tab-content-interview">${item.content_html}</div>
+                    <div class="tab-content-tips hidden space-y-4">${tipsHtml}</div>
+                </div>
+                <div class="p-4 bg-gray-50 border-t flex justify-end">
+                    <button onclick="copyLinkToClipboard('${id}')" class="flex items-center gap-2 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i data-feather="copy" class="w-4 h-4"></i>
+                        複製此訪談連結
+                    </button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            feather.replace();
+            modalContent.scrollTop = 0;
+            showTabContent(modalContent.querySelector('.tab-btn.active'), 'interview');
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        function showTabContent(btn, tabName) {
+            const modalTabs = btn.closest('.modal-tabs');
+            modalTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const contentArea = modalContent.querySelector('.overflow-y-auto');
+            contentArea.querySelectorAll('[class^="tab-content-"]').forEach(c => c.classList.add('hidden'));
+            contentArea.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
+        }
+
+        function copyLinkToClipboard(id) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', id);
+
+            const textarea = document.createElement('textarea');
+            textarea.value = url.href;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const notification = document.getElementById('copy-notification');
+            notification.style.opacity = 1;
+            setTimeout(() => { notification.style.opacity = 0; }, 2000);
+        }
+
+        function handleFilterAndSearch() {
+            const activeCategory = filters.querySelector('.active').dataset.category;
+            const searchTerm = searchBox.value;
+            renderInterviews(activeCategory, searchTerm);
+        }
+
+        filters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filters.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                handleFilterAndSearch();
+            }
+        });
+
+        searchBox.addEventListener('input', handleFilterAndSearch);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                hideModal();
+            }
+        });
+
+        function checkUrlForModal() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view');
+            if (viewId && interviewData.some(p => p.id === viewId)) {
+                showModal(viewId);
+            }
+        }
+
+        // 從 senior-interviews.json 載入資料後再渲染
+        async function loadData() {
+            try {
+                const response = await fetch('senior-interviews.json', { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                interviewData = Array.isArray(data.interviews) ? data.interviews : [];
+                renderInterviews();
+                // 深連結（?view=<id>）需在資料載入後才能比對，故移到此處呼叫
+                checkUrlForModal();
+            } catch (error) {
+                console.error('資料載入失敗：', error);
+                const grid = document.getElementById('interview-grid');
+                if (grid) {
+                    grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-16">資料載入失敗，請稍後重新整理頁面。</p>';
+                }
+            }
+        }
+        loadData();
+        feather.replace();
+    </script>
+
+    <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f9f9fb;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        .filter-btn.active {
+            background-color: #9333ea;
+            color: white;
+            box-shadow: 0 4px 14px 0 rgb(147 51 234 / 38%);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            max-height: 90vh;
+            transition: all 0.3s ease-out;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        .modal.flex .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .interview-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .interview-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .tab-btn.active {
+            border-bottom-color: #a855f7;
+            color: #a855f7;
+            font-weight: 700;
+        }
+        .prose {
+             --tw-prose-body: #374151;
+             --tw-prose-headings: #111827;
+             --tw-prose-links: #9333ea;
+             --tw-prose-bold: #111827;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</BaseLayout>

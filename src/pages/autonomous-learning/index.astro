@@ -1,0 +1,305 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="自主學習啟航站 - 台灣教育處方籤"
+  description="自主學習啟航站"
+  currentSection="autonomous-learning"
+  bodyClass="bg-gray-100 text-gray-800"
+  isSectionIndex
+>
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-6 py-12">
+        <!-- Page Hero Section -->
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                自主學習<span class="gradient-text">啟航站</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                從一個模糊的想法，到一份精彩的成果。讓我們陪你走完這趟探索之旅。
+            </p>
+        </section>
+
+        <!-- AI Learning Coach -->
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+             <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
+             <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓他為你生成一份個人化的「學習啟動包」！</p>
+             <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
+                <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>請求指導</span>
+                </button>
+            </div>
+            <div id="coachResult" class="mt-6">
+                <!-- AI generated starter pack will be injected here -->
+            </div>
+        </section>
+
+        <!-- Step-by-step Guide -->
+        <section>
+            <h2 class="text-2xl font-bold text-center mb-8">自主學習四步驟</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <a href="topic-ideas.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">1</span>
+                        <h3 class="text-xl font-bold">靈感探索</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm">透過 AI 發想、靈感矩陣與趨勢議題，找到值得你深入研究的主題。</p>
+                </a>
+                <!-- Step 2 -->
+                <a href="plan-templates.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">2</span>
+                        <h3 class="text-xl font-bold">計畫擬定</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm">參考優質範本與 AI 草擬工具，將你的靈感化為具體、可執行的計畫。</p>
+                </a>
+                <!-- Step 3 -->
+                <a href="resource-map.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">3</span>
+                        <h3 class="text-xl font-bold">資源蒐集</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm">從我們為你精選的資源地圖中，找到最適合你的高品質學習材料。</p>
+                </a>
+                <!-- Step 4 -->
+                <a href="methodology.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">4</span>
+                        <h3 class="text-xl font-bold">方法學習</h3>
+                    </div>
+                    <p class="text-gray-600 text-sm">為你的研究增添學術深度，學習問卷、訪談、實驗等研究方法。</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- Embedded Video Resource -->
+        <section class="mt-16">
+             <h2 class="text-2xl font-bold text-center mb-8">聽聽專家怎麼說</h2>
+             <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-lg">
+                 <div class="aspect-w-16 aspect-h-9">
+                     <iframe src="https://www.youtube.com/embed/4w6ytmFCi7g?si=fD1vuNWBpxv37Vbx" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-lg"></iframe>
+                 </div>
+                 <div class="p-4">
+                     <h3 class="font-bold text-lg">【自主學習】系列影片</h3>
+                     <p class="text-sm text-gray-600 mt-1">由國立臺灣大學教學發展中心製作，從心態建立到成果呈現，提供最完整、最權威的自主學習指引。</p>
+                 </div>
+             </div>
+        </section>
+    </main>
+
+    <script is:inline src="https://js.puter.com/v2/"></script>
+    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline>
+        // --- AI Coach Logic ---
+        const generateCoachBtn = document.getElementById('generateCoachBtn');
+        const coachInput = document.getElementById('coachInput');
+        const coachResult = document.getElementById('coachResult');
+
+        function showLoader(element) {
+            // 清空並創建 loader（XSS 安全）
+            element.textContent = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-center items-center py-4';
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            wrapper.appendChild(loader);
+            element.appendChild(wrapper);
+        }
+
+        generateCoachBtn.addEventListener('click', async () => {
+            const topic = coachInput.value.trim();
+            if (!topic) {
+                coachResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+                errorP.textContent = '請先輸入你的初步想法！';
+                coachResult.appendChild(errorP);
+                return;
+            }
+
+            // 雙擊防護
+            const button = generateCoachBtn;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            button.textContent = '載入中...';
+
+            showLoader(coachResult);
+
+            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
+
+請以 JSON 格式回應，包含以下欄位：
+{
+  "suggested_topic": "將學生的模糊想法，聚焦為一個更具體的研究主題",
+  "research_questions": ["提供3個可以引導初步探索的開放式問題"],
+  "resource_types": ["建議3種適合這個主題的學習資源類型，例如：知識型影片、線上課程、學術論文、訪談專家等"]
+}
+
+請確保回應是有效的 JSON 格式。`;
+
+            try {
+                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                    signal: AbortSignal.timeout(30000)
+                });
+
+                // Extract content from response
+                let responseText = '';
+                if (response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (typeof response === 'string') {
+                    responseText = response;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
+
+                // Try to parse JSON from the response
+                let parsedJson;
+                try {
+                    // Look for JSON in the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        parsedJson = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, create a fallback structure
+                    console.log("JSON parsing failed, creating fallback structure");
+                    parsedJson = {
+                        suggested_topic: `關於「${topic}」的深入研究`,
+                        research_questions: [
+                            `${topic}的基本概念和重要性是什麼？`,
+                            `${topic}在台灣的現況與發展如何？`,
+                            `${topic}對社會或個人有什麼影響？`
+                        ],
+                        resource_types: ["線上課程", "學術論文", "專家訪談"]
+                    };
+                }
+
+                displayAIStarterPack(parsedJson);
+
+            } catch (error) {
+                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
+                coachResult.textContent = '';
+                const errorP = document.createElement('p');
+                errorP.className = 'text-red-500 text-center';
+
+                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
+                } else {
+                    errorP.textContent = '抱歉，規劃時發生錯誤。請稍後再試。';
+                }
+
+                coachResult.appendChild(errorP);
+            } finally {
+                // 恢復按鈕狀態
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.textContent = originalText;
+            }
+        });
+
+        function displayAIStarterPack(data) {
+            // 清空容器
+            coachResult.textContent = '';
+
+            const container = document.createElement('div');
+            container.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none';
+
+            // 建議主題方向
+            const topicTitle = document.createElement('h4');
+            topicTitle.textContent = '建議主題方向';
+            const topicText = document.createElement('p');
+            topicText.textContent = data.suggested_topic;
+
+            // 探索問題標題
+            const questionsTitle = document.createElement('h4');
+            questionsTitle.textContent = '你可以從這幾個問題開始探索：';
+
+            // 問題列表
+            const questionsList = document.createElement('ul');
+            questionsList.className = 'list-disc list-inside';
+            data.research_questions.forEach(q => {
+                const li = document.createElement('li');
+                li.textContent = q;
+                questionsList.appendChild(li);
+            });
+
+            // 資源類型標題
+            const resourcesTitle = document.createElement('h4');
+            resourcesTitle.textContent = '建議尋找的資源類型：';
+
+            // 資源標籤容器
+            const resourcesContainer = document.createElement('div');
+            resourcesContainer.className = 'flex flex-wrap';
+            data.resource_types.forEach(r => {
+                const span = document.createElement('span');
+                span.className = 'inline-block bg-blue-100 text-blue-800 text-sm font-medium mr-2 mb-2 px-2.5 py-1 rounded-full';
+                span.textContent = r;
+                resourcesContainer.appendChild(span);
+            });
+
+            // 下一步提示
+            const nextStep = document.createElement('p');
+            nextStep.className = 'mt-4 text-sm';
+            nextStep.textContent = '現在，你可以帶著這些想法，前往下方的';
+            const link1 = document.createElement('a');
+            link1.href = 'topic-ideas.html';
+            link1.className = 'font-semibold text-blue-600 hover:underline';
+            link1.textContent = '「靈感探索」';
+            nextStep.appendChild(link1);
+            nextStep.appendChild(document.createTextNode('或'));
+            const link2 = document.createElement('a');
+            link2.href = 'resource-map.html';
+            link2.className = 'font-semibold text-blue-600 hover:underline';
+            link2.textContent = '「資源蒐集」';
+            nextStep.appendChild(link2);
+            nextStep.appendChild(document.createTextNode('區塊，開始你的旅程！'));
+
+            // 組裝所有元素
+            container.appendChild(topicTitle);
+            container.appendChild(topicText);
+            container.appendChild(questionsTitle);
+            container.appendChild(questionsList);
+            container.appendChild(resourcesTitle);
+            container.appendChild(resourcesContainer);
+            container.appendChild(nextStep);
+
+            coachResult.appendChild(container);
+        }
+    </script>
+
+  <style is:global>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #14b8a6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+  </style>
+</BaseLayout>
