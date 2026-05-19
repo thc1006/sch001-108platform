@@ -72,6 +72,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // 要新增或修改資料，請編輯 methodology.json，不需要動這支 HTML。
         let methodsData = [];
 
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         // --- Recommendation Logic ---
         const q2 = document.getElementById('q2');
         const q3 = document.getElementById('q3');
@@ -107,11 +113,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
 
             const recommendedMethods = methodsData.filter(m => m.type.some(t => recommendedTypes.includes(t)));
-            let methodsHtml = recommendedMethods.map(m => `<button onclick="showModal('${m.id}')" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${m.title}</button>`).join('');
+            let methodsHtml = recommendedMethods.map(m => `<button onclick="showModal('${escapeHtml(m.id)}')" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${escapeHtml(m.title)}</button>`).join('');
 
             recommendationResult.innerHTML = `
                 <div class="bg-orange-50 p-4 rounded-lg">
-                    <p class="font-semibold">${resultText}</p>
+                    <p class="font-semibold">${escapeHtml(resultText)}</p>
                     <div class="flex flex-wrap gap-3 mt-3">${methodsHtml}</div>
                 </div>
             `;
@@ -130,9 +136,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.onclick = () => showModal(method.id);
                 card.innerHTML = `
                     <div class="flex-grow">
-                        <span class="text-sm font-bold text-orange-600">${method.category}</span>
-                        <h3 class="text-2xl font-bold mt-2 mb-3">${method.title}</h3>
-                        <p class="text-gray-600">${method.description}</p>
+                        <span class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</span>
+                        <h3 class="text-2xl font-bold mt-2 mb-3">${escapeHtml(method.title)}</h3>
+                        <p class="text-gray-600">${escapeHtml(method.description)}</p>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-right">
                         <span class="text-blue-600 font-semibold">查看詳情 &rarr;</span>
@@ -149,8 +155,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modalContent.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-orange-600">${method.category}</p>
-                        <h3 class="text-2xl font-bold">${method.title}</h3>
+                        <p class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</p>
+                        <h3 class="text-2xl font-bold">${escapeHtml(method.title)}</h3>
                     </div>
                     <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>

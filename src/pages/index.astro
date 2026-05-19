@@ -157,7 +157,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </main>
 
   <!-- 1. 引入 Fuse.js 函式庫 -->
-  <script is:inline src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+  <script is:inline src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 
   <!-- 2. 全站搜尋功能邏輯 -->
   <script is:inline>
@@ -361,8 +361,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
           const contentEl = document.createElement('p');
           contentEl.className = 'text-sm text-gray-600';
-          const escapedContent = escapeHTML(item.content.substring(0, 100));
-          contentEl.innerHTML = highlight(escapedContent, query) + '...';
+          contentEl.innerHTML = highlight(item.content.substring(0, 100), query) + '...';
 
           const tagsDiv = document.createElement('div');
           tagsDiv.className = 'mt-2';

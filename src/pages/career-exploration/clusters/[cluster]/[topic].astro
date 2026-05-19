@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { getCluster, TOPICS } from '../../../../data/clusters';
 
-// 54 個學群主題子頁 —— 9 學群 × 6 主題,內容來自 clusters 集合。
+// 60 個學群主題子頁 —— 10 學群 × 6 主題,內容來自 clusters 集合。
 export async function getStaticPaths() {
   const entries = await getCollection('clusters');
   return entries.map((entry) => {
