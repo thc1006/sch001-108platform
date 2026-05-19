@@ -102,6 +102,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             '嶺東科技大學': '嶺東 ltu',
         };
 
+        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
+        // 註:content_html 為刻意保留的原始 HTML,不經此函式。
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         const interviewGrid = document.getElementById('interview-grid');
         const modal = document.getElementById('interviewModal');
         const modalContent = document.getElementById('modal-content');
@@ -140,14 +148,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                 card.innerHTML = `
                     <div class="p-6 flex-grow flex flex-col">
-                        <p class="text-sm font-bold text-purple-600 mb-2">${item.category}</p>
-                        <blockquote class="text-lg font-semibold text-gray-800 flex-grow">“${item.quote}”</blockquote>
+                        <p class="text-sm font-bold text-purple-600 mb-2">${escapeHtml(item.category)}</p>
+                        <blockquote class="text-lg font-semibold text-gray-800 flex-grow">“${escapeHtml(item.quote)}”</blockquote>
                     </div>
                     <div class="p-6 bg-gray-50 flex items-center border-t">
-                        <img src="${item.photo_url}" alt="${item.name}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <img src="${encodeURI(item.photo_url)}" alt="${escapeHtml(item.name)}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
                         <div>
-                            <p class="font-bold text-gray-900">${item.name}</p>
-                            <p class="text-sm text-gray-600">${item.university} ${item.major}</p>
+                            <p class="font-bold text-gray-900">${escapeHtml(item.name)}</p>
+                            <p class="text-sm text-gray-600">${escapeHtml(item.university)} ${escapeHtml(item.major)}</p>
                         </div>
                     </div>
                 `;
@@ -163,8 +171,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
                     <i data-feather="check-circle" class="w-5 h-5 text-purple-600 mt-1 flex-shrink-0"></i>
                     <div>
-                        <h5 class="font-bold text-gray-800">${tip.title}</h5>
-                        <p class="text-sm text-gray-600">${tip.desc}</p>
+                        <h5 class="font-bold text-gray-800">${escapeHtml(tip.title)}</h5>
+                        <p class="text-sm text-gray-600">${escapeHtml(tip.desc)}</p>
                     </div>
                 </div>
             `).join('');
@@ -172,10 +180,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modalContent.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div class="flex items-center gap-4">
-                        <img src="${item.photo_url}" alt="${item.name}" class="w-20 h-20 rounded-full object-cover shadow-md bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${item.name}';">
+                        <img src="${encodeURI(item.photo_url)}" alt="${escapeHtml(item.name)}" class="w-20 h-20 rounded-full object-cover shadow-md bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
                         <div>
-                            <h3 class="text-2xl font-bold">${item.name}</h3>
-                            <p class="text-purple-600 font-semibold">${item.university} ${item.major}</p>
+                            <h3 class="text-2xl font-bold">${escapeHtml(item.name)}</h3>
+                            <p class="text-purple-600 font-semibold">${escapeHtml(item.university)} ${escapeHtml(item.major)}</p>
                         </div>
                     </div>
                     <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-7 h-7"></i></button>

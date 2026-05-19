@@ -88,6 +88,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // 要新增或修改課程，請編輯 online-courses.json，不需要動這支 HTML。
         let coursesData = [];
 
+        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         const courseGrid = document.getElementById('course-grid');
         const noResultsDiv = document.getElementById('no-results');
         const searchInput = document.getElementById('search-input');
@@ -120,22 +127,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                     let tagsHtml = '';
                     course.tags.forEach(tag => {
-                        tagsHtml += `<span class="inline-block bg-purple-100 text-purple-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${tag}</span>`;
+                        tagsHtml += `<span class="inline-block bg-purple-100 text-purple-800 text-xs font-medium mr-2 mb-2 px-2.5 py-0.5 rounded-full">${escapeHtml(tag)}</span>`;
                     });
 
                     card.innerHTML = `
-                        <img src="${course.thumbnail_url}" alt="${course.title}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                        <img src="${encodeURI(course.thumbnail_url)}" alt="${escapeHtml(course.title)}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                         <div class="p-6 flex-grow flex flex-col">
                             <div class="flex-grow">
                                 <div class="flex justify-between items-center mb-2">
-                                    <p class="text-sm font-bold text-purple-600">${course.platform} - ${course.provider}</p>
+                                    <p class="text-sm font-bold text-purple-600">${escapeHtml(course.platform)} - ${escapeHtml(course.provider)}</p>
                                     <div class="flex gap-2">
-                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.language === '中文' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}">${course.language}</span>
-                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.difficulty === '入門' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${course.difficulty}</span>
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.language === '中文' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}">${escapeHtml(course.language)}</span>
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.difficulty === '入門' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(course.difficulty)}</span>
                                     </div>
                                 </div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-2 h-14">${course.title}</h3>
-                                <p class="text-sm text-gray-700 mb-4">${course.description}</p>
+                                <h3 class="text-lg font-bold text-gray-900 mb-2 h-14">${escapeHtml(course.title)}</h3>
+                                <p class="text-sm text-gray-700 mb-4">${escapeHtml(course.description)}</p>
                             </div>
                             <div class="mt-4">
                                 ${tagsHtml}
@@ -143,7 +150,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         </div>
                         <div class="p-4 bg-gray-50 flex justify-between items-center">
                              <span class="text-xs font-semibold ${course.certificate ? 'text-green-600' : 'text-gray-500'}">${course.certificate ? '✓ 提供證書' : '✗ 無證書'}</span>
-                            <a href="${course.url}" target="_blank" rel="noopener noreferrer" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
+                            <a href="${encodeURI(course.url)}" target="_blank" rel="noopener noreferrer" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
                                 前往課程
                             </a>
                         </div>

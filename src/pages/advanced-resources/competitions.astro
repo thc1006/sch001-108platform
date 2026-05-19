@@ -96,6 +96,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // 要新增或修改競賽，請編輯 competitions.json，不需要動這支 HTML。
         let competitionsData = [];
 
+        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         const competitionGrid = document.getElementById('competition-grid');
         const noResultsDiv = document.getElementById('no-results');
         const searchInput = document.getElementById('search-input');
@@ -152,27 +159,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <div class="p-6 flex-grow">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center flex-wrap gap-2">
-                                    <span class="text-sm font-bold text-pink-600">${comp.category}</span>
+                                    <span class="text-sm font-bold text-pink-600">${escapeHtml(comp.category)}</span>
                                     <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${comp.region}</span>
+                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.region)}</span>
                                     <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${comp.level}</span>
+                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.level)}</span>
                                     <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${comp.form}</span>
+                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.form)}</span>
                                 </div>
                                 <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color} flex-shrink-0">${status.text}</span>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">${comp.title}</h3>
-                            <p class="text-sm text-gray-500 mb-1">主辦單位：${comp.organizer}</p>
-                            <p class="text-xs font-medium text-gray-500 mb-3">參賽資格：${comp.eligibility}　·　${comp.mode}</p>
-                            <p class="text-gray-700">${comp.description}</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">${escapeHtml(comp.title)}</h3>
+                            <p class="text-sm text-gray-500 mb-1">主辦單位：${escapeHtml(comp.organizer)}</p>
+                            <p class="text-xs font-medium text-gray-500 mb-3">參賽資格：${escapeHtml(comp.eligibility)}　·　${escapeHtml(comp.mode)}</p>
+                            <p class="text-gray-700">${escapeHtml(comp.description)}</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
                             <div>
                                 <p class="text-xs text-gray-500">報名截止</p>
-                                <p class="font-semibold text-gray-700">${comp.deadline ? comp.deadline : '依官網公告'}</p>
+                                <p class="font-semibold text-gray-700">${comp.deadline ? escapeHtml(comp.deadline) : '依官網公告'}</p>
                             </div>
-                            <a href="${comp.url}" target="_blank" rel="noopener noreferrer" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300">
+                            <a href="${encodeURI(comp.url)}" target="_blank" rel="noopener noreferrer" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300">
                                 前往官網
                             </a>
                         </div>
