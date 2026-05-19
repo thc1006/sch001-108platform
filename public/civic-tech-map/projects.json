@@ -1,0 +1,61 @@
+{
+  "_readme": "公民科技專案地圖資料檔。彙整 g0v 公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔目前作為看門狗 check-civic-tech.mjs 的結構化資料來源，與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3）；sdgs=對應 SDG 編號陣列（1-17 整數）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，dormant 代表專案近期活動較少、需提醒讀者查證最新狀態。",
+  "lastUpdated": "2026-05-19",
+  "projects": [
+    {
+      "id": "disfactory",
+      "name": "Disfactory 農地違章工廠回報系統",
+      "org": "地球公民基金會 × g0v 社群",
+      "url": "https://disfactory.tw/",
+      "subjects": ["地理 (GIS)", "公民與社會"],
+      "competencies": ["A2", "C1"],
+      "sdgs": [11, 15],
+      "description": "利用衛星圖資與群眾外包標記台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。",
+      "status": "active"
+    },
+    {
+      "id": "cofacts",
+      "name": "Cofacts 真的假的",
+      "org": "g0v 社群協作專案",
+      "url": "https://cofacts.tw/",
+      "subjects": ["資訊科技", "公民與社會 (媒體識讀)"],
+      "competencies": ["B2", "A1"],
+      "sdgs": [4, 16],
+      "description": "LINE 聊天機器人與協作查核資料庫，旨在減少假訊息傳播。",
+      "status": "active"
+    },
+    {
+      "id": "amis-moedict",
+      "name": "Amis MoeDict 阿美語萌典",
+      "org": "萌典延伸專案 × g0v 社群",
+      "url": "https://amis.moedict.tw/",
+      "subjects": ["國語文 / 原住民族語", "資訊科技"],
+      "competencies": ["C3", "B1"],
+      "sdgs": [4, 10],
+      "description": "台灣第一部數位化原住民語線上辭典，致力於阿美語的數位化保存。",
+      "status": "active"
+    },
+    {
+      "id": "thaubing",
+      "name": "透明足跡 / 掃了再買",
+      "org": "綠色公民行動聯盟 × g0v 社群",
+      "url": "https://thaubing.gcaa.org.tw/",
+      "subjects": ["公民與社會 (經濟)", "化學 / 環境科學"],
+      "competencies": ["C1"],
+      "sdgs": [12],
+      "description": "環境資訊公開平台，提供企業環境違規地圖與即時污染監測，配套 App 可掃描商品條碼查詢企業環境違規紀錄。",
+      "status": "active"
+    },
+    {
+      "id": "national-treasure",
+      "name": "國家寶藏 (National Treasure)",
+      "org": "g0v 社群專案（2017 年發起）",
+      "url": "https://www.nationaltreasure.tw/",
+      "subjects": ["歷史", "英文"],
+      "competencies": ["C3", "A3"],
+      "sdgs": [],
+      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。",
+      "status": "dormant"
+    }
+  ]
+}
