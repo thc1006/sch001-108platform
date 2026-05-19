@@ -4,7 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="公民科技專案地圖 - 台灣教育處方籤"
-  description="SITCON 2025 零時小學校共創工作坊成果。彙整 g0v 公民科技專案與 108 課綱核心素養及 SDGs 的對照應用，為高中生自主學習與探究實作提供靈感。"
+  description="彙整 8 個台灣公民科技專案與 108 課綱核心素養及 SDGs 的對照應用，並整理 g0v Summit、零時小學校、SITCON 等社群活動參與管道，為高中生自主學習與探究實作提供靈感。"
   currentSection="civic-tech-map"
   bodyClass="bg-gray-100 text-gray-800"
   isSectionIndex
@@ -18,7 +18,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 公民科技專案<span class="gradient-text">地圖</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                源自 SITCON 2025「零時小學校」共創工作坊。將台灣 g0v 社群的公民科技專案，對應 108 課綱核心素養與 SDGs，為你的自主學習與探究實作提供靈感。
+                源自 SITCON 2025「零時小學校」共創工作坊。彙整 8 個台灣公民科技專案（多數源自 g0v 零時政府社群），對應 108 課綱核心素養與 SDGs；並整理 g0v Summit、零時小學校、SITCON 等社群活動，為你的自主學習與探究實作提供靈感與實際參與管道。
             </p>
         </section>
 
@@ -146,7 +146,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <a href="#cofacts" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
                         <a href="#amis-moedict" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-violet-100 hover:text-violet-800 transition shadow-sm whitespace-nowrap">阿美語萌典</a>
                         <a href="#thaubing" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-lime-100 hover:text-lime-800 transition shadow-sm whitespace-nowrap">透明足跡</a>
+                        <a href="#lawtrace" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-indigo-100 hover:text-indigo-800 transition shadow-sm whitespace-nowrap">立法足跡</a>
+                        <a href="#vtaiwan" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-cyan-100 hover:text-cyan-800 transition shadow-sm whitespace-nowrap">vTaiwan</a>
+                        <a href="#civil-iot" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-orange-100 hover:text-orange-800 transition shadow-sm whitespace-nowrap">民生公共物聯網</a>
                         <a href="#national-treasure" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-rose-100 hover:text-rose-800 transition shadow-sm whitespace-nowrap">國家寶藏</a>
+                        <a href="#join-community" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">參與社群</a>
                     </div>
                 </div>
                 <!-- Expand/Collapse controls -->
@@ -186,7 +190,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 15 陸域生態</span>
                         <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">利用衛星圖資與群眾外包（Crowdsourcing）的方式，標記出台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。至今已回報超過 800 筆違章工廠資料，其中超過 500 筆為政府首次掌握。專案開源授權 MIT License，資料採 CC BY 4.0。</p>
+                    <p class="text-gray-700 leading-relaxed">利用衛星圖資與群眾外包（Crowdsourcing），標記台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。專案已從志工專案轉由地球公民基金會接手長期營運，並陸續發展出衛星影像辨識遊戲「大家來找廠」，以及追蹤工廠登記與拆除狀態的 license.disfactory.tw。專案開源授權 MIT License，資料採 CC BY 4.0，至今 GitHub 倉庫仍持續維護。</p>
                     <div class="mt-5">
                         <button type="button" class="details-toggle flex items-center gap-2 text-emerald-700 font-semibold text-sm hover:text-emerald-800 transition" aria-expanded="false" aria-controls="details-disfactory" onclick="toggleDetails(this)">
                             <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -227,7 +231,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 16 和平正義與有力的制度</span>
                         <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">一個 LINE 聊天機器人與查核資料庫。當你在 LINE 收到可疑訊息時，轉傳給機器人，它會查詢資料庫中是否有查核報告。這是一個協作型的闢謠系統，旨在減少假訊息的傳播。資料庫以 CC BY-SA 4.0 開放授權，已整合至 Hugging Face 開放資料集，2025 年起更開始探索 AI 輔助查核功能。</p>
+                    <p class="text-gray-700 leading-relaxed">一個 LINE 聊天機器人與協作查核資料庫：當你收到可疑訊息時轉傳給機器人，它會查詢資料庫中是否有查核報告，是協作型的闢謠系統，旨在減少假訊息傳播。目前累積 LINE 好友約 33 萬人、查核資料庫已有超過 4.5 萬筆查核回應，機器人每年自動回應約 20 萬次。資料以 CC BY-SA 4.0 開放授權並整合至 Hugging Face 開放資料集，固定每兩個月舉辦一次實體查核協作培訓，是本頁專案中開發動能最強的一個。</p>
                     <div class="mt-5">
                         <button type="button" class="details-toggle flex items-center gap-2 text-sky-700 font-semibold text-sm hover:text-sky-800 transition" aria-expanded="false" aria-controls="details-cofacts" onclick="toggleDetails(this)">
                             <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -268,7 +272,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 10 減少不平等</span>
                         <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">台灣第一部數位化原住民語線上辭典，基於「萌典」架構的延伸專案，致力於阿美語的數位化保存。整合方敏英神父、潘世光神父等多部經典辭典，不僅包含釋義，更有發音、例句及詩歌傳唱功能。支援離線使用，並提供 iOS 與 Android App。</p>
+                    <p class="text-gray-700 leading-relaxed">台灣第一部數位化原住民語線上辭典，基於「萌典」架構的延伸專案，致力於阿美語的數位化保存。整合方敏英神父、潘世光神父等多部經典辭典，不僅包含釋義，更有發音、例句及詩歌傳唱功能。除原網站外已推出新版站台 new-amis.moedict.tw，並支援離線使用與 iOS、Android App。</p>
                     <div class="mt-5">
                         <button type="button" class="details-toggle flex items-center gap-2 text-violet-700 font-semibold text-sm hover:text-violet-800 transition" aria-expanded="false" aria-controls="details-amis" onclick="toggleDetails(this)">
                             <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -307,7 +311,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 12 負責任的消費與生產</span>
                         <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
                     </div>
-                    <p class="text-gray-700 leading-relaxed">透明足跡為環境資訊公開平台，提供企業環境違規地圖與即時污染監測，目前監測全台超過 100 家工廠的 215 根煙囪（空氣）及約 550 家設施（水質）。其配套 App「掃了再買」可掃描商品條碼查詢企業環境違規紀錄，讓消費者用消費的力量推動企業改善。曾獲 Google Play 最具潛力 App、La Vie 台灣創意力 100 等獎項。</p>
+                    <p class="text-gray-700 leading-relaxed">透明足跡為環境資訊公開平台，提供企業環境違規地圖與即時污染監測，目前監測全台超過 100 家工廠的 215 根煙囪（空氣）及約 550 家設施（水質）。其配套 App「掃了再買」可掃描商品條碼查詢企業環境違規紀錄，讓消費者用消費的力量推動企業改善；平台並陸續擴充「環境小知識」「通報污染」與「ESG 檢測儀」等功能模組。曾獲 Google Play 最具潛力 App、La Vie 台灣創意力 100 等獎項。</p>
                     <div class="mt-5">
                         <button type="button" class="details-toggle flex items-center gap-2 text-lime-700 font-semibold text-sm hover:text-lime-800 transition" aria-expanded="false" aria-controls="details-thaubing" onclick="toggleDetails(this)">
                             <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -347,11 +351,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
                     </div>
                     <p class="text-gray-700 leading-relaxed">由三位在紐約的台灣人（蕭新晟、林育正、莊士傑）於 2017 年發起，致力於挖掘散落在海外（主要是美國國家檔案局）與台灣有關的歷史檔案。透過開發 App 讓志工翻拍檔案並建立資料庫，已翻拍超過 20 萬份文件，涵蓋 1880 年代至 1970 年代。曾獲 g0v 公民科技創新獎助金 50 萬元。</p>
-                    <div class="mt-3 bg-rose-50 border border-rose-200 rounded-lg p-3">
-                        <p class="text-xs text-rose-700">
-                            <strong>注意：</strong>此專案近期活動較少，建議透過
-                            <a href="https://www.nationaltreasure.tw/" target="_blank" rel="noopener noreferrer" class="underline hover:text-rose-800">官網</a>
-                            了解最新狀態。已翻拍的檔案資料庫仍可供研究使用。
+                    <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <p class="text-xs text-amber-800">
+                            <strong>專案狀態：維護中。</strong>新檔案的數位化因人力與經費受限而放緩，但既有檔案資料庫仍持續開放、可供研究使用，並仍由開放文化基金會提供捐款與行政支援管道。最新狀態請見
+                            <a href="https://www.nationaltreasure.tw/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-900">官網</a>。
                         </p>
                     </div>
                     <div class="mt-5">
@@ -372,16 +375,201 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
+            <!-- Project 6: LawTrace -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="lawtrace">
+                <div class="border-l-4 border-indigo-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">LawTrace 立法足跡</h3>
+                            <p class="text-sm text-gray-500 mt-1">歐噴有限公司（OpenFun）開發</p>
+                        </div>
+                        <a href="https://lawtrace.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-indigo-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">公民與社會</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">資訊科技</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A2 系統思考與解決問題</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">B1 符號運用與溝通表達</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 16 和平正義與有力的制度</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">把分散在立法院各網站的法案資料整合於單一平台，呈現一條法律從新增條文到歷次修正的完整演變歷程（涵蓋一讀、二讀、三讀、審查會與公聽會）。網站每日以立法院原始開放資料更新，並刻意不使用 AI 詮釋以確保資訊正確，讓倡議團體、記者與一般公民都能輕鬆追蹤並監督國會的立法動態。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-indigo-700 font-semibold text-sm hover:text-indigo-800 transition" aria-expanded="false" aria-controls="details-lawtrace" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-lawtrace" role="region" aria-labelledby="lawtrace" class="details-content mt-3">
+                            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-indigo-800">探究方向：</strong>選一個你關心的法案（如環境、教育、數位人權），用 LawTrace 梳理它的修法歷程，分析不同版本條文的差異與背後的角力。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-indigo-800">實作產出：</strong>製作一份法案「懶人包」或時間軸圖表，向同學說明這條法律如何形成；或比較同一議題在不同屆期的立法進度。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-indigo-800">延伸資源：</strong>
+                                    <a href="https://lawtrace.tw/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 underline">LawTrace 立法足跡</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 7: vTaiwan -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="vtaiwan">
+                <div class="border-l-4 border-cyan-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">vTaiwan 數位民主審議平台</h3>
+                            <p class="text-sm text-gray-500 mt-1">g0v 社群數位民主專案</p>
+                        </div>
+                        <a href="https://vtaiwan.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-cyan-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-cyan-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">公民與社會</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">資訊科技</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A2 系統思考與解決問題</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C1 道德實踐與公民意識</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">C2 人際關係與團隊合作</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 16 和平正義與有力的制度</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 9 產業創新與基礎設施</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">太陽花運動後由 g0v 社群發起的數位民主實驗平台，透過線上意見蒐集與分群、搭配實體審議會議，讓公民參與爭議性公共政策的討論。2023 年以社群專案形式重啟，近年聚焦「如何以公眾參與改善 AI 治理」，並導入生成式 AI 協助逐字稿整理、意見分群與摘要視覺化。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-cyan-700 font-semibold text-sm hover:text-cyan-800 transition" aria-expanded="false" aria-controls="details-vtaiwan" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-vtaiwan" role="region" aria-labelledby="vtaiwan" class="details-content mt-3">
+                            <div class="bg-cyan-50 border border-cyan-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-cyan-800">探究方向：</strong>研究「審議式民主」如何運作，分析 vTaiwan 過去處理過的議題（如 Uber、線上酒精銷售），探討網路如何凝聚公共討論的共識。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-cyan-800">實作產出：</strong>在班上或社團舉辦一場小型審議工作坊，針對一個校園或社區議題蒐集意見、分群並嘗試找出共識，記錄過程與反思。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-cyan-800">延伸資源：</strong>
+                                    <a href="https://vtaiwan.tw/" target="_blank" rel="noopener noreferrer" class="text-cyan-600 hover:text-cyan-700 underline">vTaiwan 數位民主平台</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Project 8: Civil IoT Taiwan -->
+            <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="civil-iot">
+                <div class="border-l-4 border-orange-500 p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">民生公共物聯網 Civil IoT Taiwan</h3>
+                            <p class="text-sm text-gray-500 mt-1">行政院跨部會開放資料專案</p>
+                        </div>
+                        <a href="https://ci.taiwan.gov.tw/" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 inline-flex items-center gap-2 bg-orange-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-700 transition duration-300 text-sm self-start">
+                            前往專案
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                    <div class="tag-container flex flex-wrap gap-2 mb-4">
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">自然科學（地球科學）</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">資訊科技</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">A2 系統思考與解決問題</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">B2 科技資訊與媒體素養</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 11 永續城鄉</span>
+                        <span class="project-tag text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">SDG 13 氣候行動</span>
+                        <button type="button" class="tag-more-btn hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition" aria-label="顯示更多標籤"></button>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">整合空氣品質、地震、防救災、水資源四大主題的開放感測資料與即時監測平台，提供大量公開 API 與資料視覺化，是台灣規模最大的環境與災防開放資料來源之一。雖由政府跨部會主導（並非 g0v 社群專案），但其完全開放的資料是高中生「動手做」資料科學最理想的素材。</p>
+                    <div class="mt-5">
+                        <button type="button" class="details-toggle flex items-center gap-2 text-orange-700 font-semibold text-sm hover:text-orange-800 transition" aria-expanded="false" aria-controls="details-civil-iot" onclick="toggleDetails(this)">
+                            <svg class="w-5 h-5 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            自主學習執行靈感
+                        </button>
+                        <div id="details-civil-iot" role="region" aria-labelledby="civil-iot" class="details-content mt-3">
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-5 space-y-3">
+                                <p class="text-sm text-gray-700"><strong class="text-orange-800">探究方向：</strong>下載你所在縣市的空品或地震開放資料，分析季節、時段或地理位置與數值的關聯，探討環境監測資料背後的科學意義。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-orange-800">實作產出：</strong>用程式抓取 Civil IoT 的 API，做一個資料視覺化圖表或互動地圖，例如「我家附近的 PM2.5 變化」或「校園防災地圖」。</p>
+                                <p class="text-sm text-gray-700"><strong class="text-orange-800">延伸資源：</strong>
+                                    <a href="https://ci.taiwan.gov.tw/" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:text-orange-700 underline">民生公共物聯網資料服務平台</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Join the Community -->
+        <section id="join-community" class="mt-16 scroll-mt-36" aria-label="參與 g0v 社群與年會">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold mb-2">想更進一步？參與 g0v 社群與年會</h2>
+                <p class="text-gray-600 mb-6">看完上面的專案，如果你想真正動手參與，最直接的方式就是走進 g0v 與學生資訊社群的活動現場。以下整理高中生在 2026 年可以參與的幾個重要管道。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">g0v Summit 2026</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">2026/5/23–24 · 即將舉行</span>
+                        </div>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-3">g0v 雙年度的國際公民科技高峰會，2026 年 5 月 23 至 24 日於中央研究院舉行，主題為「反客為主」。兩天議程涵蓋公民科技專案分享、開放治理與開源協作，是認識台灣與國際公民科技社群最完整的場合。</p>
+                        <a href="https://summit.g0v.tw/2026/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800 transition">
+                            g0v Summit 2026 官網
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">g0v 雙月大松（黑客松）</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">每兩個月一次 · 隨時可參加</span>
+                        </div>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-3">g0v 社群每兩個月舉辦一次「大松」黑客松，任何人都能帶著想解決的問題到現場提案，或加入既有專案；零時小學校通常會在大松設置教育主題桌。下一場為 5 月 31 日的第七十三次黑客松（Hackath73n），是高中生可立即參與的實體管道。</p>
+                        <a href="https://g0v-jothon.kktix.cc/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 hover:text-sky-800 transition">
+                            g0v 揪松團活動列表
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">零時小學校（g0v Sch001）</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-800">免費線上課程 · 全年自學</span>
+                        </div>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-3">g0v 揪松團聚焦教育的長期專案。2025 年推出「數位源力增能季」，提供 66 堂 CC BY-SA 4.0 授權的免費數位公民開放課程，涵蓋 AI 素養、開放資料、媒體識讀等主題，可自學並取得時數證書。2026 年暑期增能營預計依往例於年中公布，可關注官網與 KKTIX。</p>
+                        <a href="https://sch001.g0v.tw/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-semibold text-violet-700 hover:text-violet-800 transition">
+                            零時小學校官網
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">SITCON 學生計算機年會</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">2026 場次已舉辦 · 關注下屆與夏令營</span>
+                        </div>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-3">由學生自發籌辦、東亞最大的學生資訊社群年會。2026 年主題「Jam the Chaos」已於 3 月 28 日在中央研究院舉行，多場議程觸及公民科技題材。對高中生最實際的入口，是每年 7 月的 SITCON Camp 五天四夜資訊營隊，以及下一屆年會的議程徵稿——徵稿特別期待由學生主導的投稿。</p>
+                        <a href="https://sitcon.org/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-800 transition">
+                            SITCON 官網
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                </div>
+                <p class="text-xs text-gray-400 mt-6">活動日期與報名資訊可能變動，請以各活動官網最新公告為準。資料查證時間：2026 年 5 月。</p>
+            </div>
         </section>
 
         <!-- Attribution -->
         <section class="mt-16 text-center">
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <p class="text-gray-600 text-sm">
-                    本頁面內容參考自 SITCON 2025「零時小學校」共創工作坊成果。
+                    本頁面源自 SITCON 2025「零時小學校」共創工作坊成果，並於 2026 年 5 月查證更新各專案現況與社群活動資訊。
                 </p>
                 <p class="text-gray-400 text-xs mt-1">資料授權：CC BY 4.0</p>
-                <div class="flex justify-center gap-4 mt-4">
+                <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+                    <a href="https://g0v.tw/" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold transition">g0v 零時政府</a>
+                    <span class="text-gray-300" aria-hidden="true">|</span>
                     <a href="https://sch001.g0v.tw/" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold transition">零時小學校官網</a>
                     <span class="text-gray-300" aria-hidden="true">|</span>
                     <a href="https://github.com/thc1006/sch001-108platform" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold transition">GitHub 專案</a>
@@ -546,7 +734,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 errorEl.classList.add('hidden');
 
                 var prompt = '你是「台灣教育處方籤」平台的 AI 探索助手，正在協助一位台灣高中生找到適合的公民科技專案作為自主學習主題。\n\n' +
-                    '以下是 5 個 g0v 社群的公民科技專案：\n\n' +
+                    '以下是 8 個台灣的公民科技專案：\n\n' +
                     '1. Disfactory（農地違章工廠回報系統）\n' +
                     '透過衛星圖資與群眾外包標記台灣農地上的違章工廠。\n' +
                     '相關領域：地理、GIS 地理資訊系統、公民與社會、環境科學\n\n' +
@@ -562,6 +750,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     '5. 國家寶藏 National Treasure\n' +
                     '從海外（主要為美國國家檔案局）翻拍與台灣歷史相關的文件。\n' +
                     '相關領域：歷史、英文、數位典藏、國際關係\n\n' +
+                    '6. LawTrace 立法足跡\n' +
+                    '整合立法院法案資料，呈現法律從提案到歷次修正的完整立法歷程。\n' +
+                    '相關領域：公民與社會、法律、資訊科技、開放資料\n\n' +
+                    '7. vTaiwan 數位民主審議平台\n' +
+                    '結合線上意見分群與實體審議的數位民主平台，近年聚焦 AI 治理。\n' +
+                    '相關領域：公民與社會、審議民主、資訊科技、AI 治理\n\n' +
+                    '8. 民生公共物聯網 Civil IoT Taiwan\n' +
+                    '整合空品、地震、防災、水資源的開放感測資料與即時監測平台。\n' +
+                    '相關領域：自然科學、地球科學、資訊科技、資料分析\n\n' +
                     '---\n\n' +
                     '使用者表示自己的興趣是：「' + userInput + '」\n\n' +
                     '請推薦 1 至 3 個最適合該使用者的專案，並說明原因。每個推薦請包含：\n' +
