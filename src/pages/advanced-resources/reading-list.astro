@@ -66,9 +66,26 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         }
 
         // 以書名文字產生的封面佔位圖（書封缺漏時的 onerror fallback）。
+        // 採自包含的 inline SVG（data URI），不依賴任何外部服務，離線與封鎖外網時皆可正常顯示。
         function placeholderCover(title) {
-            const text = encodeURIComponent(String(title).slice(0, 24));
-            return `https://placehold.co/300x440/ede9fe/6d28d9?text=${text}`;
+            // 將書名折成多行，避免長書名超出佔位圖寬度。
+            const raw = String(title).slice(0, 36);
+            const perLine = 8;
+            const lines = [];
+            for (let i = 0; i < raw.length; i += perLine) {
+                lines.push(raw.slice(i, i + perLine));
+            }
+            const startY = 220 - (lines.length - 1) * 16;
+            const tspans = lines.map((line, idx) =>
+                `<tspan x="150" y="${startY + idx * 32}">${escapeHtml(line)}</tspan>`
+            ).join('');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="440" viewBox="0 0 300 440">`
+                + `<rect width="300" height="440" fill="#ede9fe"/>`
+                + `<rect x="12" y="12" width="276" height="416" fill="none" stroke="#c4b5fd" stroke-width="2"/>`
+                + `<text x="150" y="64" font-family="'Noto Sans TC',sans-serif" font-size="13" fill="#a78bfa" text-anchor="middle">書封準備中</text>`
+                + `<text font-family="'Noto Sans TC',sans-serif" font-size="22" font-weight="bold" fill="#6d28d9" text-anchor="middle">${tspans}</text>`
+                + `</svg>`;
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
 
         const container = document.getElementById('reading-lists-container');

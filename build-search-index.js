@@ -140,11 +140,15 @@ function processHtmlFile(filePath, fileUrl) {
 // 之後若有更多頁面改為資料驅動，只要在此新增一筆即可。
 // 註：鍵（HTML 頁面相對路徑）與 json 路徑皆相對於掃描起點 projectRoot，
 //     遷移後即 dist/；資產 JSON 由 astro build 複製進 dist/ 後路徑不變。
-//   json     ：資料 JSON 路徑（相對 dist/）
-//   arrayKey ：JSON 中存放項目陣列的鍵名
-//   idPrefix ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
-//   tag      ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
-//   anchor   ：頁內錨點 id
+//   json      ：資料 JSON 路徑（相對 dist/）
+//   arrayKey  ：JSON 中存放項目陣列的鍵名
+//   nestedKey ：（可選）若 JSON 為巢狀結構——arrayKey 取出的是「分組陣列」，
+//               每個分組底下才有真正的項目陣列——則填入該項目陣列的鍵名，
+//               索引時會以 groups.flatMap(g => g[nestedKey]) 攤平成單層清單。
+//               扁平結構（arrayKey 直接就是項目陣列）不需填此欄位。
+//   idPrefix  ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
+//   tag       ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
+//   anchor    ：頁內錨點 id
 const JSON_DATA_PAGES = {
     'advanced-resources/competitions.html': {
         json: 'advanced-resources/competitions.json',
@@ -181,11 +185,19 @@ const JSON_DATA_PAGES = {
         arrayKey: 'activities', idPrefix: 'activity', tag: '多元表現活動',
         anchor: 'activity-grid',
     },
+    // 巢狀結構：reading-list.json 的 themes 是「主題陣列」，每個主題底下才有 books[]。
+    // 同一本書可能跨多個主題出現，indexJsonDataPage 會在攤平後依 ISBN 去重，避免重複索引。
+    'advanced-resources/reading-list.html': {
+        json: 'advanced-resources/reading-list.json',
+        arrayKey: 'themes', nestedKey: 'books', idPrefix: 'book', tag: '主題書單',
+        anchor: 'reading-lists-container',
+    },
 };
 
-// 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name），故以下採欄位聯集。
+// 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name、書單用 recommendation），
+// 故以下採欄位聯集。
 const ITEM_TITLE_FIELDS = ['title', 'name', 'question'];
-const ITEM_TEXT_FIELDS = ['organizer', 'provider', 'platform', 'major', 'university', 'quote', 'description'];
+const ITEM_TEXT_FIELDS = ['organizer', 'provider', 'platform', 'major', 'university', 'quote', 'description', 'author', 'original_title', 'recommendation'];
 const ITEM_HTML_FIELDS = ['content_html', 'analysis_html'];
 
 // 通用：讀一個資料 JSON，為其中每筆項目建立搜尋索引項目。
@@ -197,9 +209,21 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg) {
     }
     try {
         const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        const items = Array.isArray(parsed[cfg.arrayKey]) ? parsed[cfg.arrayKey] : [];
+        const topLevel = Array.isArray(parsed[cfg.arrayKey]) ? parsed[cfg.arrayKey] : [];
+        // 巢狀結構（有 nestedKey）：arrayKey 取到的是分組陣列，需再攤平出真正的項目清單。
+        // 扁平結構：arrayKey 取到的就是項目清單。
+        const items = cfg.nestedKey
+            ? topLevel.flatMap(group =>
+                (group && Array.isArray(group[cfg.nestedKey])) ? group[cfg.nestedKey] : [])
+            : topLevel;
+        // 同一筆資料可能跨分組重複出現（如同一本書跨多個主題），以 isbn 去重，只索引一次。
+        const seenIsbn = new Set();
         items.forEach(item => {
             if (!item || typeof item !== 'object') return;
+            if (item.isbn) {
+                if (seenIsbn.has(item.isbn)) return;
+                seenIsbn.add(item.isbn);
+            }
             const itemTitle = ITEM_TITLE_FIELDS.map(f => item[f]).find(v => typeof v === 'string' && v);
             if (!itemTitle) return;
             // 內文：純文字欄位 + 去除標籤後的 HTML 欄位
