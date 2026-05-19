@@ -22,7 +22,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Featured Exhibit -->
         <section class="mb-16">
-            <h2 class="text-3xl font-bold mb-6 text-center">本月特展</h2>
+            <h2 class="text-3xl font-bold mb-6 text-center">焦點範例</h2>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
                 <div class="md:w-1/2">
                     <img src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="社會實踐報告" class="h-full w-full object-cover">
@@ -46,30 +46,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <label class="font-bold text-gray-700 text-sm">學科領域</label>
                         <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">全部領域</option>
-                            <option value="自然科學">自然科學</option>
-                            <option value="社會科學">社會科學</option>
-                            <option value="語文人文">語文人文</option>
-                            <option value="藝術設計">藝術設計</option>
-                            <option value="跨領域">跨領域</option>
                         </select>
                     </div>
                     <div>
                         <label class="font-bold text-gray-700 text-sm">成果類型</label>
                         <select id="type-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">所有類型</option>
-                            <option value="課程學習成果">課程學習成果</option>
-                            <option value="多元表現">多元表現</option>
                         </select>
                     </div>
                     <div>
                         <label class="font-bold text-gray-700 text-sm">能力標籤</label>
                          <select id="tag-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">所有能力</option>
-                            <option value="實驗設計">實驗設計</option>
-                            <option value="數據分析">數據分析</option>
-                            <option value="田野調查">田野調查</option>
-                            <option value="文學分析">文學分析</option>
-                            <option value="數位創作">數位創作</option>
                         </select>
                     </div>
                 </div>
@@ -80,6 +68,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <section>
             <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Portfolio cards will be injected here -->
+            </div>
+            <div id="no-results" class="hidden text-center py-16">
+                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到符合條件的範例</h3>
+                <p class="mt-1 text-sm text-gray-500">找不到符合條件的範例，試試其他篩選條件。</p>
             </div>
         </section>
     </main>
@@ -98,6 +93,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         let portfolioData = [];
 
         const portfolioGrid = document.getElementById('portfolio-grid');
+        const noResultsDiv = document.getElementById('no-results');
         const modal = document.getElementById('portfolioModal');
         const modalContent = document.getElementById('modal-content');
         const categoryFilter = document.getElementById('category-filter');
@@ -117,6 +113,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             portfolioGrid.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                noResultsDiv.classList.remove('hidden');
+            } else {
+                noResultsDiv.classList.add('hidden');
+            }
+
             filteredData.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'portfolio-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer flex flex-col';
@@ -151,18 +154,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     </div>
                     <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
-                <div class="border-b border-gray-200">
-                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
-                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'preview')">範本預覽</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'analysis')">亮點分析</button>
-                    </nav>
-                </div>
                 <div class="p-6 overflow-y-auto flex-grow">
-                    <div class="tab-content-preview">
-                        <p class="text-sm text-gray-500 mb-4">這是一份關於「${item.title}」的學習成果報告。注意其排版、圖表使用與結論的呈現方式。（此為示意圖）</p>
-                        <img src="${item.preview_image_url}" alt="${item.title}" class="w-full h-auto rounded-md shadow-md border">
-                    </div>
-                    <div class="tab-content-analysis hidden prose max-w-none">
+                    <div class="prose max-w-none">
                         ${item.analysis_html}
                     </div>
                 </div>
@@ -178,21 +171,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modal.classList.remove('flex');
         }
 
-        function showTabContent(btn, tabName) {
-            const modalTabs = btn.closest('.modal-tabs');
-            modalTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // 依資料中實際出現的值動態填入篩選器選項
+        function populateFilters() {
+            const categories = [...new Set(portfolioData.map(p => p.category))];
+            const types = [...new Set(portfolioData.map(p => p.type))];
+            const tags = [...new Set(portfolioData.flatMap(p => p.tags))];
 
-            const preview = modalContent.querySelector('.tab-content-preview');
-            const analysis = modalContent.querySelector('.tab-content-analysis');
+            const appendOptions = (select, values) => {
+                values.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+            };
 
-            if (tabName === 'preview') {
-                preview.classList.remove('hidden');
-                analysis.classList.add('hidden');
-            } else {
-                preview.classList.add('hidden');
-                analysis.classList.remove('hidden');
-            }
+            appendOptions(categoryFilter, categories);
+            appendOptions(typeFilter, types);
+            appendOptions(tagFilter, tags);
         }
 
         // --- Filter Logic ---
@@ -209,6 +205,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 }
                 const data = await response.json();
                 portfolioData = Array.isArray(data.portfolio) ? data.portfolio : [];
+                populateFilters();
                 renderPortfolioGrid();
             } catch (error) {
                 console.error('資料載入失敗：', error);
@@ -230,20 +227,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .filter-btn.active {
-            background-color: #059669;
-            color: white;
-        }
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.6);
         }
         .modal-content {
             max-height: 90vh;
-        }
-        .tab-btn.active {
-            border-bottom-color: #10b981;
-            color: #10b981;
-            font-weight: 600;
         }
         .portfolio-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
