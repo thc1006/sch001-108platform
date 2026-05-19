@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import { CLUSTERS } from '../../../../data/clusters';
+import { CLUSTERS, TOPICS } from '../../../../data/clusters';
 
-// 9 個學群中心頁 —— 每頁列出該學群的 6 個主題。
+// 學群中心頁 —— 每頁列出該學群的 6 個主題。
 export async function getStaticPaths() {
   return CLUSTERS.map((c) => ({ params: { cluster: c.slug }, props: { cluster: c } }));
 }
@@ -14,6 +14,13 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const entries = (
   await getCollection('clusters', (e) => e.id.startsWith(`${cluster.slug}/`))
 ).sort((a, b) => a.data.order - b.data.order);
+
+// 建置期一致性檢查:每個註冊的學群都必須備齊 6 個主題內容檔。
+if (entries.length !== TOPICS.length) {
+  throw new Error(
+    `[cluster]/index.astro:學群「${cluster.name}」應有 ${TOPICS.length} 個主題,實際載入 ${entries.length} 個 —— 請檢查 src/content/clusters/${cluster.slug}/`,
+  );
+}
 ---
 
 <BaseLayout
@@ -26,7 +33,7 @@ const entries = (
   <main id="main-content" class="container mx-auto px-6 py-12">
     <!-- 麵包屑 -->
     <nav class="text-sm text-gray-500 mb-6" aria-label="麵包屑">
-      <a href={`${base}/career-exploration/clusters/index.html`} class="hover:text-blue-600">九大學群探索</a>
+      <a href={`${base}/career-exploration/clusters/index.html`} class="hover:text-blue-600">十大學群探索</a>
       <span class="mx-2">/</span>
       <span class="text-gray-700">{cluster.name}</span>
     </nav>
@@ -67,7 +74,7 @@ const entries = (
         href={`${base}/career-exploration/clusters/index.html`}
         class="text-blue-600 font-semibold hover:underline"
       >
-        &larr; 返回九大學群探索
+        &larr; 返回十大學群探索
       </a>
     </div>
   </main>
