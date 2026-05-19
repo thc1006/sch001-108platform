@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { CLUSTERS, TOPICS } from '../../../data/clusters';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<BaseLayout
+  title="九大學群探索 - 台灣教育處方籤"
+  description="九大學群完整升學指南:科系風向標、教授看重的特質、多元表現策略、自主學習方向、常見迷思與備審面試要點,陪你找到方向。"
+  keywords="學群, 九大學群, 升學, 選系, 大學科系, 108課綱, 學習歷程"
+  currentSection="career-exploration"
+  isSectionIndex
+>
+  <main id="main-content" class="container mx-auto px-6 py-12">
+    <!-- Hero -->
+    <section class="text-center mb-14">
+      <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+        九大學群<span class="gradient-text">探索</span>
+      </h1>
+      <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+        每個學群一份完整升學指南 —— 從科系定位、教授選才,到多元表現、自主學習與備審面試,
+        都整理成可逐步閱讀的主題。選一個學群開始吧。
+      </p>
+    </section>
+
+    <!-- 每個學群涵蓋的 6 主題 -->
+    <section class="mb-12 bg-blue-50 rounded-xl p-6">
+      <p class="text-center text-sm font-semibold text-gray-500 mb-3">每個學群都涵蓋這 6 個主題</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        {TOPICS.map((t) => (
+          <span class="inline-block bg-white text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+            {t.name}
+          </span>
+        ))}
+      </div>
+    </section>
+
+    <!-- 9 學群卡片 -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {CLUSTERS.map((c) => (
+        <a
+          href={`${base}/career-exploration/clusters/${c.slug}/index.html`}
+          class="feature-card block bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:border-blue-300"
+        >
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">{c.name}</h2>
+          <p class="text-gray-600 leading-relaxed">{c.description}</p>
+          <p class="mt-4 text-blue-600 font-semibold text-sm">查看升學指南 &rarr;</p>
+        </a>
+      ))}
+    </section>
+  </main>
+</BaseLayout>

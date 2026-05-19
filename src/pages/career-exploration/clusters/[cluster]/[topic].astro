@@ -1,0 +1,114 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { getCluster, TOPICS } from '../../../../data/clusters';
+
+// 54 個學群主題子頁 —— 9 學群 × 6 主題,內容來自 clusters 集合。
+export async function getStaticPaths() {
+  const entries = await getCollection('clusters');
+  return entries.map((entry) => {
+    const [cluster, topic] = entry.id.split('/');
+    return { params: { cluster, topic }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { cluster: clusterSlug, topic: topicSlug } = Astro.params;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const cluster = getCluster(clusterSlug);
+if (!cluster) {
+  // 內容目錄存在但未在 src/data/clusters.ts 的 CLUSTERS 註冊 ——
+  // 建置期即顯式失敗,避免靜默產出麵包屑空白、死連結的壞頁。
+  throw new Error(`[topic].astro:未知學群 "${clusterSlug}",請在 src/data/clusters.ts 的 CLUSTERS 註冊`);
+}
+const { Content } = await render(entry);
+
+const order = entry.data.order;
+const prevTopic = TOPICS.find((t) => t.order === order - 1);
+const nextTopic = TOPICS.find((t) => t.order === order + 1);
+const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
+---
+
+<BaseLayout
+  title={`${entry.data.title} - ${cluster.name} - 台灣教育處方籤`}
+  description={entry.data.description}
+  keywords={`${cluster.name}, ${entry.data.topic}, 升學, 備審, 學習歷程`}
+  currentSection="career-exploration"
+>
+  <main id="main-content" class="container mx-auto px-6 py-12">
+    <!-- 麵包屑 -->
+    <nav class="text-sm text-gray-500 mb-6" aria-label="麵包屑">
+      <a href={`${base}/career-exploration/clusters/index.html`} class="hover:text-blue-600">九大學群探索</a>
+      <span class="mx-2">/</span>
+      <a href={hubHref} class="hover:text-blue-600">{cluster.name}</a>
+      <span class="mx-2">/</span>
+      <span class="text-gray-700">{entry.data.topic}</span>
+    </nav>
+
+    <article class="max-w-3xl mx-auto">
+      <header class="mb-8 border-b border-gray-200 pb-6">
+        <p class="text-sm font-semibold text-blue-600 mb-2">{cluster.name} · 主題 {order}/6</p>
+        <h1 class="text-3xl md:text-4xl font-black text-gray-800">{entry.data.title}</h1>
+      </header>
+
+      <div class="prose prose-lg max-w-none">
+        <Content />
+      </div>
+
+      <!-- 同學群主題快速跳轉 -->
+      <nav class="mt-12 pt-6 border-t border-gray-200" aria-label="同學群主題">
+        <p class="text-sm font-semibold text-gray-500 mb-3">{cluster.name}的其他主題</p>
+        <div class="flex flex-wrap gap-2">
+          {
+            TOPICS.map((t) => (
+              <a
+                href={`${base}/career-exploration/clusters/${clusterSlug}/${t.slug}.html`}
+                class:list={[
+                  'inline-block text-sm font-medium px-3 py-1 rounded-full',
+                  t.slug === topicSlug
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100',
+                ]}
+                aria-current={t.slug === topicSlug ? 'page' : undefined}
+              >
+                {t.name}
+              </a>
+            ))
+          }
+        </div>
+      </nav>
+
+      <!-- 上一篇 / 下一篇 -->
+      <div class="mt-8 flex justify-between gap-4 text-sm">
+        {
+          prevTopic ? (
+            <a
+              href={`${base}/career-exploration/clusters/${clusterSlug}/${prevTopic.slug}.html`}
+              class="text-blue-600 font-semibold hover:underline"
+            >
+              &larr; {prevTopic.name}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          nextTopic ? (
+            <a
+              href={`${base}/career-exploration/clusters/${clusterSlug}/${nextTopic.slug}.html`}
+              class="text-blue-600 font-semibold hover:underline text-right"
+            >
+              {nextTopic.name} &rarr;
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </div>
+
+      <div class="mt-8 text-center">
+        <a href={hubHref} class="text-gray-500 hover:text-blue-600">返回{cluster.name}指南目錄</a>
+      </div>
+    </article>
+  </main>
+</BaseLayout>

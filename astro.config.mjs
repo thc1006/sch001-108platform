@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { CLUSTERS } from './src/data/clusters.ts';
 
 // 台灣教育處方籤 — 部署於 GitHub Pages 專案頁(網址含 /sch001-108platform 前綴)。
 //
@@ -26,12 +27,17 @@ export default defineConfig({
     sitemap({
       serialize(item) {
         const base = '/sch001-108platform/';
+        // 學群 slug —— 直接取自 src/data/clusters.ts 的 CLUSTERS,避免清單重複。
+        const clusterSlugs = CLUSTERS.map((c) => c.slug);
         const sectionIndexes = new Set([
           'advanced-resources',
           'autonomous-learning',
           'career-exploration',
           'civic-tech-map',
           'learning-portfolio',
+          // 學群探索系統:探索首頁 + 9 個學群中心頁(皆為 foo/index.astro)。
+          'career-exploration/clusters',
+          ...clusterSlugs.map((s) => `career-exploration/clusters/${s}`),
         ]);
         const rel = new URL(item.url).pathname.replace(base, '').replace(/\/$/, '');
         if (rel === '') return item; // 站台首頁,維持目錄式
