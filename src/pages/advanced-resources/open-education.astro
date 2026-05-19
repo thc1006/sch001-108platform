@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="開放教育資源 - 台灣教育處方籤"
+  description="精選全世界開放、開源、免費的學習與研究資源:AI 實驗室官方資源、開放科學計畫、開放課程平台、國際科學社群。不論你在哪裡,世界級知識都為你敞開。"
+  keywords="開放教育, 開放教育資源, 開放科學, 開放課程, OER, AI, 開源, 自主學習, 公民科學"
+  currentSection="advanced-resources"
+  bodyClass="bg-gray-100 text-gray-800"
+>
+  <main id="main-content" class="container mx-auto px-6 py-12">
+    <!-- Hero -->
+    <section class="text-center mb-10">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+        開放<span class="gradient-text">教育資源</span>
+      </h1>
+      <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+        AI 前沿 · 開放科學 · 開放課程 · 國際科學社群 —— 全世界開放、開源、免費的知識,都為你敞開。
+      </p>
+      <p class="text-sm text-gray-400 max-w-3xl mx-auto mt-4">
+        以下資源皆為開放取用或開源、免費可用。不論你的學校有沒有相關資源,這些世界級的學習與研究管道,任何人都能直接使用。
+      </p>
+    </section>
+
+    <!-- Filters -->
+    <section class="mb-10">
+      <div class="flex flex-col items-center gap-4">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="搜尋資源、組織或關鍵字..."
+          class="w-full max-w-md px-4 py-2 border-2 border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+        />
+        <div id="category-filters" class="flex flex-wrap justify-center gap-2">
+          <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-category="all">全部</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="ai-labs">AI 實驗室</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-science">開放科學</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="open-courses">開放課程</button>
+          <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="science-community">國際科學社群</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resource Grid -->
+    <section>
+      <p id="result-count" class="text-sm text-gray-500 mb-4 text-center"></p>
+      <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      <div id="no-results" class="hidden text-center py-16">
+        <h3 class="text-lg font-medium text-gray-900">找不到符合的資源</h3>
+        <p class="mt-1 text-sm text-gray-500">試著換個關鍵字,或選擇其他分類。</p>
+      </div>
+    </section>
+
+    <p class="mt-12 text-center text-xs text-gray-400">
+      各資源之名稱、商標與內容著作權屬其提供組織所有;本站為獨立非營利教育目錄,與各提供者無從屬或合作關係。連結與內容以 2026 年整理時為準,實際請以官方網站為主。
+    </p>
+  </main>
+
+  <script is:inline>
+    // 資源資料由同目錄的 open-education.json 載入(見頁尾 loadResources)。
+    // 要新增或修改資源,請編輯 open-education.json,不需要動這支頁面。
+    let resourcesData = [];
+
+    // 分類中繼資料 —— badge 類別為完整字面字串,確保 Tailwind 靜態掃描得到。
+    const CATEGORY_META = {
+      'ai-labs': { label: 'AI 實驗室', badge: 'bg-indigo-100 text-indigo-800' },
+      'open-science': { label: '開放科學', badge: 'bg-emerald-100 text-emerald-800' },
+      'open-courses': { label: '開放課程', badge: 'bg-sky-100 text-sky-800' },
+      'science-community': { label: '國際科學社群', badge: 'bg-amber-100 text-amber-800' },
+    };
+    const LEVEL_BADGE = {
+      '入門': 'bg-green-100 text-green-800',
+      '進階': 'bg-rose-100 text-rose-800',
+      '皆可': 'bg-gray-100 text-gray-700',
+    };
+
+    const grid = document.getElementById('resource-grid');
+    const noResults = document.getElementById('no-results');
+    const resultCount = document.getElementById('result-count');
+    const searchInput = document.getElementById('search-input');
+    const categoryFilters = document.getElementById('category-filters');
+    let activeCategory = 'all';
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+    function render() {
+      const term = searchInput.value.trim().toLowerCase();
+      const filtered = resourcesData.filter((r) => {
+        const inCategory = activeCategory === 'all' || r.category === activeCategory;
+        const haystack = `${r.name} ${r.org} ${r.description} ${(r.tags || []).join(' ')}`.toLowerCase();
+        return inCategory && (!term || haystack.includes(term));
+      });
+
+      grid.innerHTML = '';
+      resultCount.textContent = `共 ${filtered.length} 筆資源`;
+
+      if (filtered.length === 0) {
+        noResults.classList.remove('hidden');
+        return;
+      }
+      noResults.classList.add('hidden');
+
+      for (const r of filtered) {
+        const cat = CATEGORY_META[r.category] || { label: r.category, badge: 'bg-gray-100 text-gray-700' };
+        const levelBadge = LEVEL_BADGE[r.level] || 'bg-gray-100 text-gray-700';
+        const tagsHtml = (r.tags || []).map((t) =>
+          `<span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">${escapeHtml(t)}</span>`
+        ).join(' ');
+
+        const card = document.createElement('div');
+        card.className = 'resource-card bg-white rounded-xl shadow-md p-6 flex flex-col';
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${cat.badge}">${escapeHtml(cat.label)}</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${levelBadge}">${escapeHtml(r.level)}</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">${escapeHtml(r.lang)}</span>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">${escapeHtml(r.name)}</h3>
+          <p class="text-sm text-gray-500 mb-2">${escapeHtml(r.org)}</p>
+          <p class="text-sm text-gray-700 flex-grow">${escapeHtml(r.description)}</p>
+          <div class="flex flex-wrap gap-1.5 mt-3">${tagsHtml}</div>
+          <a href="${encodeURI(r.url)}" target="_blank" rel="noopener noreferrer"
+             class="mt-4 inline-flex items-center justify-center bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition">
+            前往資源 &rarr;
+          </a>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    searchInput.addEventListener('input', render);
+    categoryFilters.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      const current = categoryFilters.querySelector('.active');
+      if (current) current.classList.remove('active');
+      btn.classList.add('active');
+      activeCategory = btn.dataset.category;
+      render();
+    });
+
+    async function loadResources() {
+      try {
+        const response = await fetch('open-education.json', { cache: 'no-cache' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        resourcesData = Array.isArray(data.resources) ? data.resources : [];
+        render();
+      } catch (error) {
+        console.error('開放教育資源載入失敗:', error);
+        grid.innerHTML = '';
+        resultCount.textContent = '';
+        noResults.classList.remove('hidden');
+        noResults.querySelector('h3').textContent = '資源載入失敗';
+        noResults.querySelector('p').textContent = '請稍後重新整理頁面,或回報網站管理員。';
+      }
+    }
+
+    loadResources();
+  </script>
+
+  <style is:global>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    }
+    .gradient-text {
+      background: -webkit-linear-gradient(45deg, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .filter-btn {
+      background-color: #fff;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+    }
+    .filter-btn:hover:not(.active) {
+      background-color: #f3f4f6;
+    }
+    .filter-btn.active {
+      background-color: #9333ea;
+      color: #fff;
+      border-color: #9333ea;
+      box-shadow: 0 4px 14px 0 rgb(147 51 234 / 38%);
+    }
+    .resource-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</BaseLayout>

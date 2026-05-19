@@ -1,0 +1,712 @@
+{
+  "_readme": "開放教育資源資料檔。open-education.astro 載入時 fetch 此檔並渲染。新增或修改資源請編輯下方 resources 陣列,不需要動頁面。",
+  "lastUpdated": "2026-05-19",
+  "resources": [
+    {
+      "id": "anthropic-prompt-eng-tutorial",
+      "category": "ai-labs",
+      "name": "Anthropic 互動式提示工程教學",
+      "org": "Anthropic",
+      "url": "https://github.com/anthropics/prompt-eng-interactive-tutorial",
+      "description": "Anthropic 官方在 GitHub 公開的互動式教材,從零教你如何寫出好的 AI 提示詞。高中生可循序漸進學會與 Claude 等 AI 有效對話,是寫報告、做專題的實用技能。",
+      "tags": [
+        "提示工程",
+        "官方教材",
+        "開源"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "anthropic-docs",
+      "category": "ai-labs",
+      "name": "Claude 開發者文件與 Cookbook",
+      "org": "Anthropic",
+      "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
+      "description": "Anthropic 公開的 Claude 官方技術文件與程式範例庫(Cookbook),涵蓋提示技巧、工具使用與 AI 應用實作。對想了解大型語言模型如何運作、嘗試開發 AI 專題的高中生很有幫助。",
+      "tags": [
+        "官方文件",
+        "AI 開發",
+        "範例程式"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "openai-academy",
+      "category": "ai-labs",
+      "name": "OpenAI Academy 免費課程",
+      "org": "OpenAI",
+      "url": "https://academy.openai.com/",
+      "description": "OpenAI 官方免費線上學習平台,提供 ChatGPT 應用、提示工程、AI 基礎等課程,並有專為學生設計的「校園 ChatGPT」單元。高中生可免費註冊,系統性入門生成式 AI。",
+      "tags": [
+        "免費課程",
+        "ChatGPT",
+        "AI 素養"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "huggingface-learn",
+      "category": "ai-labs",
+      "name": "Hugging Face Learn 課程",
+      "org": "Hugging Face",
+      "url": "https://huggingface.co/learn",
+      "description": "Hugging Face 官方免費課程平台,包含 LLM 大型語言模型、AI Agent 智慧代理、深度強化學習等系列,附互動測驗與結業證書。是高中生實作入門 AI 與機器學習的優質起點。",
+      "tags": [
+        "免費課程",
+        "機器學習",
+        "AI Agent"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "huggingface-models-datasets",
+      "category": "ai-labs",
+      "name": "Hugging Face 開源模型與資料集",
+      "org": "Hugging Face",
+      "url": "https://huggingface.co/models",
+      "description": "全球最大的開放 AI 平台,公開超過數百萬個開源模型與資料集,可在瀏覽器直接試用。高中生能免費取用真實 AI 模型做專題,認識業界實際使用的工具與資料。",
+      "tags": [
+        "開源模型",
+        "資料集",
+        "AI 社群"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "cohere-labs-open-science",
+      "category": "ai-labs",
+      "name": "Cohere Labs 開放科學計畫",
+      "org": "Cohere Labs",
+      "url": "https://cohere.com/research/open-science",
+      "description": "Cohere Labs 主導的全球開放科學社群,連結逾百國研究者共同推動多語言 AI 研究,公開所有研究成果。讓對 AI 研究有興趣的高中生一窺真實的開放科學如何協作運作。",
+      "tags": [
+        "開放科學",
+        "AI 研究",
+        "國際社群"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "cohere-aya",
+      "category": "ai-labs",
+      "name": "Aya 多語言開放模型計畫",
+      "org": "Cohere Labs",
+      "url": "https://cohere.com/research/aya",
+      "description": "由 3000 多名研究者協作打造、支援上百種語言的開放權重 AI 模型計畫,目標是讓 AI 跨越語言與文化隔閡。可作為高中生認識多語言 AI 與全球協作研究的範例。",
+      "tags": [
+        "多語言 AI",
+        "開放權重",
+        "開放科學"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "google-gemma",
+      "category": "ai-labs",
+      "name": "Gemma 開源模型與開發文件",
+      "org": "Google DeepMind",
+      "url": "https://ai.google.dev/gemma",
+      "description": "Google 以 Gemini 同源技術打造的輕量開源模型家族,採 Apache 2.0 授權,可在一般電腦本地執行,並有完整官方文件。適合高中生免費下載、實際動手玩前沿 AI 模型。",
+      "tags": [
+        "開源模型",
+        "官方文件",
+        "本地執行"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "meta-llama",
+      "category": "ai-labs",
+      "name": "Meta Llama 開源模型",
+      "org": "Meta AI",
+      "url": "https://www.llama.com/",
+      "description": "Meta 推出的開放權重大型語言模型,可免費下載自行運用,並附開發者文件與工具。讓高中生有機會接觸全球廣泛使用的開源 AI 模型,理解大型語言模型的能力與限制。",
+      "tags": [
+        "開源模型",
+        "開放權重",
+        "大型語言模型"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "ai2-olmo",
+      "category": "ai-labs",
+      "name": "OLMo 完全開放語言模型",
+      "org": "Allen Institute for AI (Ai2)",
+      "url": "https://allenai.org/olmo",
+      "description": "Ai2 推出的「完全開放」語言模型,不只開放權重,連訓練資料、程式碼、訓練流程與檢查點全部公開。對想深入了解 AI 模型如何被打造出來的高中生極具學習價值。",
+      "tags": [
+        "完全開放",
+        "開源模型",
+        "AI 研究"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "mistral-docs",
+      "category": "ai-labs",
+      "name": "Mistral AI 開放權重模型與文件",
+      "org": "Mistral AI",
+      "url": "https://docs.mistral.ai/models",
+      "description": "歐洲 AI 公司 Mistral 公開的官方模型文件,多數模型以 Apache 2.0 授權開放權重、可免費取用。高中生可藉此認識歐洲 AI 生態與不同團隊的開源模型設計取向。",
+      "tags": [
+        "開放權重",
+        "官方文件",
+        "開源模型"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "arxiv",
+      "category": "open-science",
+      "name": "arXiv 預印本資料庫",
+      "org": "康乃爾大學 (Cornell University)",
+      "url": "https://arxiv.org/",
+      "description": "收錄物理、數學、資訊科學等領域近 240 萬篇學術論文的免費開放取用平台。高中生做科展或專題時,可直接讀到尚未正式發表的最新研究成果。",
+      "tags": [
+        "預印本",
+        "開放取用",
+        "物理數學",
+        "論文檢索"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "biorxiv",
+      "category": "open-science",
+      "name": "bioRxiv 生物學預印本平台",
+      "org": "openRxiv (非營利組織)",
+      "url": "https://www.biorxiv.org/",
+      "description": "生命科學領域最大的免費預印本伺服器,涵蓋分子生物、遺傳學、神經科學與生態學。對想探索生物醫學主題的高中生是接觸第一手研究的入口。",
+      "tags": [
+        "預印本",
+        "生物學",
+        "開放取用"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "doaj",
+      "category": "open-science",
+      "name": "DOAJ 開放取用期刊目錄",
+      "org": "Infrastructure Services for Open Access (IS4OA)",
+      "url": "https://doaj.org/",
+      "description": "社群維護的開放取用期刊索引,收錄逾 22,000 種跨領域同儕審查期刊,且全文免費閱讀。高中生可用它一站找到各學科可信、可免費下載的研究論文。",
+      "tags": [
+        "開放取用",
+        "期刊目錄",
+        "論文檢索"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "pmc",
+      "category": "open-science",
+      "name": "PubMed Central (PMC)",
+      "org": "美國國家衛生研究院 (NIH) 國家醫學圖書館",
+      "url": "https://pmc.ncbi.nlm.nih.gov/",
+      "description": "生物醫學與生命科學領域的免費全文文獻典藏庫,收錄數百萬篇期刊論文。高中生研究健康、醫學或生物主題時,可在此免費讀到完整研究內容。",
+      "tags": [
+        "生物醫學",
+        "開放取用",
+        "論文全文"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "plos",
+      "category": "open-science",
+      "name": "PLOS 公共科學圖書館",
+      "org": "Public Library of Science (PLOS)",
+      "url": "https://plos.org/",
+      "description": "非營利開放取用出版社,旗下 PLOS ONE、PLOS Biology 等期刊所有論文皆經同儕審查並免費開放閱讀。是高中生免費取得嚴謹科學研究的可靠來源。",
+      "tags": [
+        "開放取用",
+        "同儕審查",
+        "科學期刊"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "cern-open-data",
+      "category": "open-science",
+      "name": "CERN 開放資料入口",
+      "org": "歐洲核子研究組織 (CERN)",
+      "url": "https://opendata.cern.ch/",
+      "description": "提供大型強子對撞機 ALICE、ATLAS、CMS、LHCb 四大實驗的真實粒子物理資料,並附有專為高中師生設計的分析指南。能讓學生親手分析世界級實驗數據。",
+      "tags": [
+        "開放資料",
+        "粒子物理",
+        "科展實作"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "nasa-open-data",
+      "category": "open-science",
+      "name": "NASA 開放資料入口",
+      "org": "美國國家航空暨太空總署 (NASA)",
+      "url": "https://data.nasa.gov/",
+      "description": "NASA 對外公開的資料彙整平台,收錄數萬筆太空、地球科學與天文資料集。高中生做地球科學或天文專題時,可免費取用權威的第一手觀測數據。",
+      "tags": [
+        "開放資料",
+        "太空天文",
+        "地球科學"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "data-gov-tw",
+      "category": "open-science",
+      "name": "政府資料開放平臺",
+      "org": "國家發展委員會",
+      "url": "https://data.gov.tw/",
+      "description": "台灣官方的開放資料入口,免費提供環境、交通、衛生、教育等各部會資料集。高中生做在地議題專題或數據分析時,最方便取得本土真實資料的來源。",
+      "tags": [
+        "開放資料",
+        "台灣本土",
+        "數據分析"
+      ],
+      "lang": "中文",
+      "level": "入門"
+    },
+    {
+      "id": "zooniverse",
+      "category": "open-science",
+      "name": "Zooniverse 公民科學平台",
+      "org": "Zooniverse (跨機構合作)",
+      "url": "https://www.zooniverse.org/",
+      "description": "全球最大的群眾協作研究平台,有天文、生態、歷史等數十個計畫,只要分類影像或轉錄文件就能參與真實科研。高中生不需專業背景即可貢獻科學。",
+      "tags": [
+        "公民科學",
+        "線上參與",
+        "跨領域"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "inaturalist",
+      "category": "open-science",
+      "name": "iNaturalist 自然觀察平台",
+      "org": "iNaturalist (加州科學院與國家地理學會)",
+      "url": "https://www.inaturalist.org/",
+      "description": "用手機拍下動植物即可記錄並由社群與 AI 協助辨識,觀察資料會匯入全球生物多樣性資訊機構供研究使用。高中生做生態調查或自然觀察的最佳工具。",
+      "tags": [
+        "公民科學",
+        "生物多樣性",
+        "行動觀察"
+      ],
+      "lang": "中英",
+      "level": "入門"
+    },
+    {
+      "id": "ebird",
+      "category": "open-science",
+      "name": "eBird 賞鳥紀錄平台",
+      "org": "康乃爾鳥類學實驗室 (Cornell Lab of Ornithology)",
+      "url": "https://ebird.org/",
+      "description": "全球最大的鳥類觀察資料庫,每年收集逾一億筆賞鳥紀錄供科學家研究。高中生只要花幾分鐘上傳觀察就能參與全球鳥類監測,適合做生態專題。",
+      "tags": [
+        "公民科學",
+        "鳥類生態",
+        "資料貢獻"
+      ],
+      "lang": "中英",
+      "level": "入門"
+    },
+    {
+      "id": "osf",
+      "category": "open-science",
+      "name": "OSF 開放科學框架",
+      "org": "Center for Open Science",
+      "url": "https://osf.io/",
+      "description": "免費開源的研究專案管理工具,可儲存、整理並公開分享研究資料與文件。高中生做小組專題時,可用它協作管理進度並學習開放科學的研究流程。",
+      "tags": [
+        "開放科學",
+        "專案管理",
+        "資料分享"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "mit-ocw",
+      "category": "open-courses",
+      "name": "MIT OpenCourseWare",
+      "org": "美國麻省理工學院 (MIT)",
+      "url": "https://ocw.mit.edu/",
+      "description": "麻省理工學院公開超過 2500 門大學課程的教材、講義、作業與影片，採 CC 授權完全免費。高中生可提前接觸頂尖大學的數理科學內容,適合探索科系與自主學習。",
+      "tags": [
+        "公開課程",
+        "理工科學",
+        "大學先修"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "harvard-cs50",
+      "category": "open-courses",
+      "name": "Harvard CS50 程式設計導論",
+      "org": "美國哈佛大學 (HarvardX)",
+      "url": "https://cs50.harvard.edu/x/",
+      "description": "哈佛最受歡迎的計算機科學入門課,涵蓋 C、Python、SQL 與網頁開發,課程與完課證書皆完全免費。是高中生踏入程式設計與資訊科學的經典首選。",
+      "tags": [
+        "程式設計",
+        "資訊科學",
+        "免費證書"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "khan-academy",
+      "category": "open-courses",
+      "name": "Khan Academy 可汗學院",
+      "org": "Khan Academy(非營利組織)",
+      "url": "https://www.khanacademy.org/",
+      "description": "全站完全免費的非營利學習平台,提供數學、自然科學、計算機科學與 SAT 等練習與教學影片。高中生可依進度補強學科基礎或挑戰進階主題。",
+      "tags": [
+        "學科練習",
+        "數理基礎",
+        "免費平台"
+      ],
+      "lang": "中英",
+      "level": "皆可"
+    },
+    {
+      "id": "freecodecamp",
+      "category": "open-courses",
+      "name": "freeCodeCamp",
+      "org": "freeCodeCamp.org(非營利組織)",
+      "url": "https://www.freecodecamp.org/",
+      "description": "全球最大的免費程式學習平台,提供約 3000 小時互動式課程與多張認證,涵蓋 HTML、CSS、JavaScript、Python 等。高中生可零基礎自學寫程式並動手做專案。",
+      "tags": [
+        "程式設計",
+        "互動練習",
+        "免費認證"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "edx",
+      "category": "open-courses",
+      "name": "edX 線上課程平台",
+      "org": "edX(2U / 哈佛與 MIT 創辦)",
+      "url": "https://www.edx.org/",
+      "description": "彙集哈佛、MIT、劍橋等頂尖學府課程的 MOOC 平台,多數課程可免費旁聽 (audit) 觀看教材。高中生能免費修讀大學等級課程,證書則需付費。",
+      "tags": [
+        "公開課程",
+        "大學先修",
+        "免費旁聽"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "coursera",
+      "category": "open-courses",
+      "name": "Coursera 線上課程平台",
+      "org": "Coursera(史丹佛教授創辦)",
+      "url": "https://www.coursera.org/",
+      "description": "與全球大學及企業合作的 MOOC 平台,自 2025 年改為「預覽模式」,可免費試讀每門課第一單元、部分課程仍可免費旁聽。適合高中生試探各領域興趣。",
+      "tags": [
+        "公開課程",
+        "免費試讀",
+        "職涯探索"
+      ],
+      "lang": "中英",
+      "level": "皆可"
+    },
+    {
+      "id": "stanford-online-free",
+      "category": "open-courses",
+      "name": "Stanford Online 免費課程",
+      "org": "美國史丹佛大學",
+      "url": "https://online.stanford.edu/free-courses",
+      "description": "史丹佛大學官方彙整的免費課程與公開講座,涵蓋人工智慧、計算機科學、資料科學等領域,課程內容免費、證書另計。高中生可一窺世界級研究型大學的教學。",
+      "tags": [
+        "公開課程",
+        "人工智慧",
+        "大學先修"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "ted-ed",
+      "category": "open-courses",
+      "name": "TED-Ed 教育影片",
+      "org": "TED(非營利組織)",
+      "url": "https://ed.ted.com/",
+      "description": "完全免費的動畫教育影片庫,內容橫跨數學、文學、語言與科學,並附互動測驗與討論題。短小精緻,適合高中生培養跨領域知識與好奇心。",
+      "tags": [
+        "教育影片",
+        "跨領域",
+        "免費平台"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "ntu-ocw",
+      "category": "open-courses",
+      "name": "臺大開放式課程 (NTU OCW)",
+      "org": "國立臺灣大學",
+      "url": "https://ocw.aca.ntu.edu.tw/",
+      "description": "台大公開的免費課程平台,設有「高中生推廣專區」,涵蓋文史哲藝、法社管理、理工電資與生農醫衛。是高中生用中文認識台灣頂大課程的重要管道。",
+      "tags": [
+        "公開課程",
+        "大學先修",
+        "高中專區"
+      ],
+      "lang": "中文",
+      "level": "皆可"
+    },
+    {
+      "id": "nycu-ocw",
+      "category": "open-courses",
+      "name": "陽明交大開放式課程 (NYCU OCW)",
+      "org": "國立陽明交通大學",
+      "url": "https://ocw.nycu.edu.tw/",
+      "description": "陽明交大免費提供的開放式課程,涵蓋理、工、電機、資訊、管理、生科與人文社會等學院。對偏好理工資訊領域的高中生是優質的中文先修資源。",
+      "tags": [
+        "公開課程",
+        "理工資訊",
+        "大學先修"
+      ],
+      "lang": "中文",
+      "level": "皆可"
+    },
+    {
+      "id": "ewant",
+      "category": "open-courses",
+      "name": "ewant 育網開放教育平台",
+      "org": "ewant 育網(陽明交大主導之磨課師聯盟)",
+      "url": "https://www.ewant.org/",
+      "description": "台灣大型中文 MOOC 平台,設有「高中自主學習」與「高中人才培育計畫」專區,課程涵蓋雲端、資料分析、生物等。是高中生規劃自主學習計畫與學習歷程的實用資源。",
+      "tags": [
+        "磨課師",
+        "自主學習",
+        "學習歷程"
+      ],
+      "lang": "中文",
+      "level": "皆可"
+    },
+    {
+      "id": "junyi-academy",
+      "category": "open-courses",
+      "name": "均一教育平台",
+      "org": "財團法人均一平台教育基金會",
+      "url": "https://www.junyiacademy.org/",
+      "description": "全站完全免費的台灣本土學習平台,對應 108 課綱、提供國小到高中的數學、自然、計算機科學等素養導向課程與題庫。適合高中生補強學科並準備學測。",
+      "tags": [
+        "學科練習",
+        "108課綱",
+        "免費平台"
+      ],
+      "lang": "中文",
+      "level": "皆可"
+    },
+    {
+      "id": "weizmann-window-into-the-future",
+      "category": "science-community",
+      "name": "A Window into the Future 國際青年科學俱樂部",
+      "org": "以色列魏茲曼科學研究院 Davidson 科學教育研究所",
+      "url": "https://davidson.weizmann.ac.il/en",
+      "description": "魏茲曼科學研究院為全球青少年開設的免費線上國際科學俱樂部,成員可探索研究院的前沿研究、與各國同好交流、辯論科學倫理議題並與學者直接對談。高中生可循 Davidson 研究所線上課程頁面報名參與每年招募的梯次。",
+      "tags": [
+        "國際社群",
+        "線上俱樂部",
+        "科學交流"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "cern-public-lectures-webcast",
+      "category": "science-community",
+      "name": "CERN 公開講座與線上直播",
+      "org": "歐洲核子研究組織 CERN",
+      "url": "https://webcast.cern.ch/",
+      "description": "全球最大粒子物理實驗室 CERN 透過 webcast 平台與 YouTube 免費直播 openlab 暑期學生講座、學術訓練與公開演講,涵蓋量子運算、機器學習、開放資料等主題。高中生不需報名即可線上觀看,接觸第一線科學家的研究。",
+      "tags": [
+        "粒子物理",
+        "線上講座",
+        "免費直播"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "nasa-stem-virtual-events",
+      "category": "science-community",
+      "name": "NASA STEM 線上活動與虛擬講座",
+      "org": "美國國家航空暨太空總署 NASA",
+      "url": "https://www.nasa.gov/learning-resources/nasa-stem-opportunities-activities/",
+      "description": "NASA 為學生提供完全免費的線上 STEM 活動,包括虛擬職涯講座、每週工作坊與向太空科學家提問的直播場次。高中生可透過官網報名參與,直接與 NASA 研究人員互動並使用公開的任務資料。",
+      "tags": [
+        "太空科學",
+        "線上活動",
+        "免費參與"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "zooniverse-citizen-science",
+      "category": "science-community",
+      "name": "Zooniverse 公民科學平台",
+      "org": "Zooniverse(牛津大學等機構合作)",
+      "url": "https://www.zooniverse.org/",
+      "description": "全球最大的公民科學平台,匯集逾百個真實研究專案,讓任何人協助分類星系、判讀生態影像或轉錄歷史文獻。高中生免費註冊即可參與,實際貢獻資料給正在進行的科學研究。",
+      "tags": [
+        "公民科學",
+        "線上參與",
+        "真實研究"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "scistarter-citizen-science",
+      "category": "science-community",
+      "name": "SciStarter 公民科學專案入口",
+      "org": "SciStarter Foundation",
+      "url": "https://scistarter.org/finder",
+      "description": "彙整逾千個經審核的公民科學專案與活動的入口平台,並提供免費的公民科學入門線上培訓。高中生可依興趣與地點搜尋專案,免費加入並追蹤自己的科學貢獻紀錄。",
+      "tags": [
+        "公民科學",
+        "專案搜尋",
+        "免費培訓"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "royal-institution-christmas-lectures",
+      "category": "science-community",
+      "name": "英國皇家研究院聖誕講座與線上影片庫",
+      "org": "英國皇家研究院 Royal Institution",
+      "url": "https://www.rigb.org/christmas-lectures",
+      "description": "始於 1825 年、專為大眾與青少年設計的科學講座系列,以生動方式講解單一科學主題。完整講座與大量科普影片在皇家研究院 YouTube 頻道免費開放觀看,高中生可隨時觀賞歷年內容。",
+      "tags": [
+        "科普講座",
+        "線上影片",
+        "免費觀看"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "nobel-prize-lectures",
+      "category": "science-community",
+      "name": "諾貝爾獎得主演講與教育資源",
+      "org": "諾貝爾基金會 NobelPrize.org",
+      "url": "https://www.nobelprize.org/educational/",
+      "description": "諾貝爾獎官網免費提供歷屆物理、化學、醫學得主的演講影片與教學資源,涵蓋量子糾纏、CRISPR 基因編輯、鋰電池等突破性研究。高中生可線上觀看,認識頂尖科學家的研究歷程與思考方式。",
+      "tags": [
+        "科學講座",
+        "諾貝爾獎",
+        "線上影片"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "perimeter-institute-gophysics",
+      "category": "science-community",
+      "name": "Perimeter Institute GoPhysics! 學生線上工作坊",
+      "org": "加拿大 Perimeter 理論物理研究所",
+      "url": "https://perimeterinstitute.ca/outreach/students/gophysics-online-workshops",
+      "description": "Perimeter 理論物理研究所為高中生開設免費的線上物理工作坊,以小組討論方式探索黑洞、重力、量子等前沿主題,另有大量免費教學資源與科普影片。高中生可透過官網報名參與梯次。",
+      "tags": [
+        "理論物理",
+        "線上工作坊",
+        "免費參與"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "ipho-problems-syllabus",
+      "category": "science-community",
+      "name": "國際物理奧林匹亞歷屆試題與大綱",
+      "org": "國際物理奧林匹亞 IPhO",
+      "url": "https://www.ipho-new.org/statutes-syllabus/",
+      "description": "國際物理奧林匹亞官方公開競賽大綱與歷屆試題解答(自 1967 年起),是進階自學物理的免費權威素材。對挑戰物理競賽或想深化物理能力的高中生極具實戰價值。",
+      "tags": [
+        "科學奧林匹亞",
+        "物理競賽",
+        "免費試題"
+      ],
+      "lang": "英文",
+      "level": "進階"
+    },
+    {
+      "id": "european-researchers-night",
+      "category": "science-community",
+      "name": "歐洲研究人員之夜",
+      "org": "歐盟 Marie Skłodowska-Curie Actions",
+      "url": "https://marie-sklodowska-curie-actions.ec.europa.eu/actions/msca-and-citizens/join-a-celebration-of-science",
+      "description": "歐洲規模最大的科學推廣活動,每年九月於 40 多國舉辦,提供科學秀、實驗、討論與數位活動,全部免費並開放大眾。高中生可參加線上與數位場次,直接與歐洲研究人員交流。",
+      "tags": [
+        "科學節",
+        "免費活動",
+        "國際交流"
+      ],
+      "lang": "英文",
+      "level": "入門"
+    },
+    {
+      "id": "foldit-protein-puzzle",
+      "category": "science-community",
+      "name": "Foldit 蛋白質摺疊解謎遊戲",
+      "org": "美國華盛頓大學 Center for Game Science",
+      "url": "https://fold.it/",
+      "description": "由華盛頓大學開發的免費線上解謎遊戲,玩家透過摺疊蛋白質結構協助生物醫學研究,高分解法會被科學家分析運用。高中生免費下載即可邊玩邊參與真實的結構生物學研究。",
+      "tags": [
+        "公民科學",
+        "蛋白質研究",
+        "科學遊戲"
+      ],
+      "lang": "英文",
+      "level": "皆可"
+    },
+    {
+      "id": "twsf-taiwan-international-science-fair",
+      "category": "science-community",
+      "name": "台灣國際科學展覽會",
+      "org": "國立臺灣科學教育館",
+      "url": "https://twsf.ntsec.gov.tw/",
+      "description": "由臺灣科教館主辦的年度國際高中生科學競賽,匯聚 30 多國學生發表 STEM 研究專案。台灣高中生可透過校內初選與全國科展管道參與,官網亦公開歷屆得獎作品供觀摩學習。",
+      "tags": [
+        "國際科展",
+        "科學競賽",
+        "研究發表"
+      ],
+      "lang": "中英",
+      "level": "進階"
+    }
+  ]
+}
