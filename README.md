@@ -31,7 +31,7 @@
 | 樣式 | [Tailwind CSS v4](https://tailwindcss.com/)（透過 PostCSS 套用） |
 | 內容管理 | Astro Content Collections（十大學群內容以 Markdown 撰寫） |
 | 資料驅動頁 | `public/**/*.json` 資料檔 + 建置後處理腳本 |
-| 站內搜尋 | FlexSearch + 建置時產生的 `search-index.json` |
+| 站內搜尋 | Fuse.js + 建置時產生的 `search-index.json` |
 | 部署 | GitHub Pages（GitHub Actions 自動建置與部署） |
 
 設計重點：
