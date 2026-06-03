@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-06-03",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -37,9 +37,9 @@
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "實體",
-      "deadline": "2026-05-20",
+      "deadline": "",
       "url": "https://www.mxeduc.org.tw/scienceaward/",
-      "description": "有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。第 25 屆初賽報名截止 2026-05-20。"
+      "description": "有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。第 25 屆初賽報名已於 2026-05-20 截止；下一屆（第 26 屆）報名時程請見官網最新公告。"
     },
     {
       "title": "TRML 台灣地區數學聯賽",
@@ -50,9 +50,9 @@
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "實體",
-      "deadline": "2026-05-27",
+      "deadline": "",
       "url": "https://www.99cef.org.tw/",
-      "description": "結合個人賽、團體賽與接力賽，考驗數學解題能力與團隊默契。第 28 屆報名 2026-05-20 至 05-27，競賽於 8 月舉行。"
+      "description": "結合個人賽、團體賽與接力賽，考驗數學解題能力與團隊默契。第 28 屆報名已於 2026-05-27 截止（競賽於 8 月舉行）；下一屆報名時程請見官網最新公告。"
     },
     {
       "title": "外交小尖兵—英語種籽隊",
@@ -102,9 +102,9 @@
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "混合",
-      "deadline": "2026-05-31",
+      "deadline": "",
       "url": "https://ais3.org/",
-      "description": "台灣資安人才培育旗艦計畫，含預修檢測、暑期密集課程與 EOF CTF 實戰競賽。2026 年甄選報名截止 05-31。"
+      "description": "台灣資安人才培育旗艦計畫，含預修檢測、暑期密集課程與 EOF CTF 實戰競賽。甄選報名已於 2026-05-31 截止，暑期課程於 7 月舉行；2027 年梯次報名時程請見官網。"
     },
     {
       "title": "APCS 大學程式設計先修檢測",
@@ -856,9 +856,9 @@
       "region": "英國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-05-31",
+      "deadline": "",
       "url": "https://www.johnlockeinstitute.com/essay-competition",
-      "description": "英國 John Locke Institute 主辦的頂尖學術論文競賽，涵蓋哲學、政治、經濟、歷史等七大領域。台灣學生可免費投稿，2026 年投稿截止 05-31（須先於 03-31 前完成註冊）。"
+      "description": "英國 John Locke Institute 主辦的頂尖學術論文競賽，涵蓋哲學、政治、經濟、歷史、法律等多個學科領域，台灣學生可免費投稿。2026 年度註冊（截止 2026-03-31）與投稿（截止 2026-05-31）皆已結束；下一屆（2027）題目與報名時程請見官網公告。"
     },
     {
       "title": "劍橋 Re:Think 論文競賽",
