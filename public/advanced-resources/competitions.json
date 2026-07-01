@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
-  "lastUpdated": "2026-06-03",
+  "lastUpdated": "2026-07-02",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -1025,9 +1025,9 @@
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-06-08",
+      "deadline": "",
       "url": "https://bowseat.org/programs/ocean-awareness-contest/",
-      "description": "以海洋保育為題、結合藝術、寫作、影片、音樂的國際青年創作競賽。台灣 11–18 歲學生可免費投稿，2026 年主題「Your Story, Our Ocean」，截止 06-08。"
+      "description": "以海洋保育為題、結合藝術、寫作、影片、音樂的國際青年創作競賽。台灣 11–18 歲學生可免費投稿；2026 年主題「Your Story, Our Ocean」報名已於 2026-06-08 截止，下一屆報名時程請見官網最新公告。"
     },
     {
       "title": "Breakthrough Junior Challenge 科普影片競賽",
@@ -1665,6 +1665,71 @@
       "deadline": "",
       "url": "https://www.k12ea.gov.tw/",
       "description": "台灣高中生數學、物理、化學、生物、地球科學與資訊等學科的能力競賽，亦為部分國際奧林匹亞的選才管道之一。經校內及區域初賽選拔，時程依各區公告。"
+    },
+    {
+      "title": "The Concord Review 中學歷史論文期刊",
+      "organizer": "The Concord Review, Inc.",
+      "category": "語文人文",
+      "level": "國際",
+      "form": "個人",
+      "region": "美國",
+      "eligibility": "公開報名",
+      "mode": "線上",
+      "deadline": "",
+      "url": "https://tcr.org/submit",
+      "description": "全球唯一專門刊登中學生學術歷史論文的期刊，作者橫跨逾 40 國。台灣學生可投稿（英文、篇幅約 8,500 字、含芝加哥格式註釋）；採滾動收件，每年 2/1、5/1、8/1、11/1 四梯次分別對應夏、秋、冬、春季刊。"
+    },
+    {
+      "title": "哈佛克里姆森全球論文競賽 (HCGEC)",
+      "organizer": "The Harvard Crimson",
+      "category": "語文人文",
+      "level": "國際",
+      "form": "個人",
+      "region": "美國",
+      "eligibility": "公開報名",
+      "mode": "線上",
+      "deadline": "",
+      "url": "https://www.essaycomp.org/",
+      "description": "由哈佛校報主辦的全球高中生論文競賽，分創意、論說、新聞三種賽道，全程線上，區域賽繳交約 500 字短文。台灣學生可報名；每年秋季（約 10 月）開放報名、隔年 2 月截件，與同校報主辦的商業個案賽（HCC）為不同賽事。"
+    },
+    {
+      "title": "Ayn Rand Institute 論文競賽",
+      "organizer": "Ayn Rand Institute",
+      "category": "語文人文",
+      "level": "國際",
+      "form": "個人",
+      "region": "美國",
+      "eligibility": "公開報名",
+      "mode": "線上",
+      "deadline": "2026-09-13",
+      "url": "https://aynrand.org/students/essay-contests",
+      "description": "以艾茵·蘭德小說為題的系列英文論文競賽，全球 13 歲以上中學生可免費投稿（600–1200 字，須用英文）。列表時程以 The Fountainhead 梯次為準；另有 Atlas Shrugged（約每年 9 月下旬）與 Anthem（約每年 5 月）梯次，確切時程請見官網。"
+    },
+    {
+      "title": "國際青年數學挑戰賽 (IYMC)",
+      "organizer": "International Youth Math Challenge",
+      "category": "數理",
+      "level": "國際",
+      "form": "個人",
+      "region": "全球線上",
+      "eligibility": "公開報名",
+      "mode": "線上",
+      "deadline": "",
+      "url": "https://iymc.info/en/",
+      "description": "全程線上的國際中學生數學競賽，分資格賽、預賽與決賽三階段，題目著重創意解題。台灣學生可報名，每年秋季（約 11 月）截止資格賽，後續回合跨年舉行，時程依官網公告。"
+    },
+    {
+      "title": "國際天文與天文物理競賽 (IAAC)",
+      "organizer": "International Astronomy and Astrophysics Competition",
+      "category": "科學",
+      "level": "國際",
+      "form": "個人",
+      "region": "全球線上",
+      "eligibility": "公開報名",
+      "mode": "線上",
+      "deadline": "",
+      "url": "https://iaac.space/",
+      "description": "全程線上的國際中學生天文與天文物理競賽，分 Junior（未滿 18 歲）與 Youth 兩組，含資格賽、預賽與決賽。台灣學生可免費報名，資格賽約於每年春季截止、後續回合陸續進行，確切時程依官網公告。"
     }
   ]
 }
