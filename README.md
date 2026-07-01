@@ -94,7 +94,8 @@ node build-search-index.js
 │   ├── robots.txt
 │   └── **/*.json             # 資料驅動頁的資料檔
 ├── scripts/
-│   └── check-competitions.mjs  # 競賽連結健檢腳本
+│   ├── check-competitions.mjs  # 競賽資料看門狗（截止日／欄位健檢）
+│   └── check-civic-tech.mjs    # 公民科技專案資料看門狗
 ├── src/
 │   ├── components/           # Header、Footer 等共用元件
 │   ├── layouts/              # BaseLayout.astro
@@ -106,7 +107,7 @@ node build-search-index.js
 │   │   └── clusters.ts       # 十大學群與主題的中繼資料
 │   └── styles/               # 全域樣式
 ├── tests/                    # Playwright E2E 測試
-└── .github/workflows/        # CI：部署、競賽健檢、連結檢查
+└── .github/workflows/        # CI：部署、競賽／公民科技資料看門狗、連結檢查
 ```
 
 ---

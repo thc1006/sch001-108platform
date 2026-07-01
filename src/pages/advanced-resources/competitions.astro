@@ -4,236 +4,596 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="國內外競賽資訊 - 台灣教育處方籤"
-  description="國內外競賽資訊"
+  description="彙整 130＋ 項國內外高中生競賽，依報名狀態智慧排序，即時標示即將截止與開放報名的機會，並可依領域、地區、級別、形式篩選。"
   currentSection="advanced-resources"
-  bodyClass="bg-gray-100 text-gray-800"
+  bodyClass="bg-white text-gray-800"
 >
-    <!-- Main Content -->
-    <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
-        <section class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                國內外競賽<span class="gradient-text">資訊</span>
-            </h1>
-            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                將你的知識付諸實踐，挑戰自我。這裡匯集了各類指標性競賽，讓你的才華被看見。
-            </p>
-        </section>
+  <Fragment slot="head">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </Fragment>
 
-        <!-- Filters -->
-        <section class="mb-12 sticky top-[68px] z-40 bg-gray-100/80 backdrop-blur-sm py-4">
-            <div class="bg-white p-4 rounded-xl shadow-md">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div>
-                        <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
-                        <input type="text" id="search-input" placeholder="競賽名稱、主辦單位..." class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
-                    </div>
-                    <div>
-                        <label for="category-filter" class="font-bold text-gray-700 text-sm">競賽領域</label>
-                        <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
-                            <option value="all">全部領域</option>
-                            <option value="科學">科學</option>
-                            <option value="數理">數理</option>
-                            <option value="資訊">資訊</option>
-                            <option value="語文人文">語文人文</option>
-                            <option value="商業管理">商業管理</option>
-                            <option value="藝術設計">藝術設計</option>
-                            <option value="社會永續">社會永續</option>
-                            <option value="跨領域">跨領域</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="region-filter" class="font-bold text-gray-700 text-sm">競賽地區</label>
-                        <select id="region-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
-                            <option value="all">所有地區</option>
-                            <option value="台灣">台灣</option>
-                            <option value="美國">美國</option>
-                            <option value="英國">英國</option>
-                            <option value="歐盟">歐盟</option>
-                            <option value="東亞">東亞</option>
-                            <option value="全球線上">全球線上</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="level-filter" class="font-bold text-gray-700 text-sm">競賽級別</label>
-                        <select id="level-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
-                            <option value="all">所有級別</option>
-                            <option value="校際/地區">校際/地區</option>
-                            <option value="全國">全國</option>
-                            <option value="國際">國際</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="form-filter" class="font-bold text-gray-700 text-sm">參賽形式</label>
-                        <select id="form-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white">
-                            <option value="all">所有形式</option>
-                            <option value="個人">個人</option>
-                            <option value="團體">團體</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </section>
+  <main id="main-content" class="comp-page">
+    <!-- Hero -->
+    <section class="comp-hero">
+      <div class="comp-hero__inner">
+        <p class="comp-eyebrow">進階資源探索區 · 競賽雷達</p>
+        <h1 class="comp-title">國內外競賽<span class="comp-title__accent">資訊</span></h1>
+        <p class="comp-tagline">
+          把握每一個讓世界看見你的舞台。這裡即時標示哪些競賽<strong>正在開放</strong>、哪些<strong>即將截止</strong>，
+          讓你不再錯過機會。
+        </p>
 
-        <!-- Competition Grid -->
-        <section>
-            <div id="competition-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Competition cards will be injected here -->
-            </div>
-            <div id="no-results" class="hidden text-center py-16">
-                <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">找不到競賽</h3>
-                <p class="mt-1 text-sm text-gray-500">試著放寬你的篩選條件，或探索其他類別的競賽。</p>
-            </div>
-        </section>
-    </main>
+        <div class="comp-stats" role="group" aria-label="競賽資料概況">
+          <div class="stat">
+            <span class="stat-num" id="stat-total">—</span>
+            <span class="stat-label">項競賽總覽</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num stat-num--open" id="stat-open">—</span>
+            <span class="stat-label">開放報名中</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num stat-num--soon" id="stat-soon">—</span>
+            <span class="stat-label">30 天內截止</span>
+          </div>
+          <p class="comp-updated">資料更新<span id="stat-updated">—</span></p>
+        </div>
+      </div>
+    </section>
 
-    <script is:inline>
-        // 競賽資料改由同目錄的 competitions.json 載入（見頁尾的 loadCompetitions）。
-        // 要新增或修改競賽，請編輯 competitions.json，不需要動這支 HTML。
-        let competitionsData = [];
+    <!-- Control bar -->
+    <section class="comp-controls" aria-label="競賽篩選">
+      <div class="comp-controls__inner">
+        <div class="comp-searchrow">
+          <div class="comp-search">
+            <svg class="comp-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input
+              type="text"
+              id="search-input"
+              placeholder="搜尋競賽名稱、主辦單位、關鍵字…"
+              aria-label="關鍵字搜尋競賽"
+              autocomplete="off"
+            />
+            <button id="search-clear" class="comp-search__clear" type="button" aria-label="清除搜尋" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <label class="comp-sort">
+            <span class="comp-sort__label">排序</span>
+            <select id="sort-select" aria-label="排序方式">
+              <option value="smart">智慧排序（即將截止優先）</option>
+              <option value="deadline">依報名截止日</option>
+              <option value="name">依競賽名稱</option>
+            </select>
+          </label>
+        </div>
 
-        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
-        function escapeHtml(value) {
-            return String(value).replace(/[&<>"']/g, (c) => (
-                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-            ));
+        <div class="comp-selects">
+          <select id="filter-category" aria-label="競賽領域">
+            <option value="all">全部領域</option>
+            <option value="科學">科學</option>
+            <option value="數理">數理</option>
+            <option value="資訊">資訊</option>
+            <option value="語文人文">語文人文</option>
+            <option value="商業管理">商業管理</option>
+            <option value="藝術設計">藝術設計</option>
+            <option value="社會永續">社會永續</option>
+            <option value="跨領域">跨領域</option>
+          </select>
+          <select id="filter-region" aria-label="競賽地區">
+            <option value="all">所有地區</option>
+            <option value="台灣">台灣</option>
+            <option value="美國">美國</option>
+            <option value="英國">英國</option>
+            <option value="歐盟">歐盟</option>
+            <option value="東亞">東亞</option>
+            <option value="全球線上">全球線上</option>
+            <option value="其他">其他</option>
+          </select>
+          <select id="filter-level" aria-label="競賽級別">
+            <option value="all">所有級別</option>
+            <option value="校際/地區">校際/地區</option>
+            <option value="全國">全國</option>
+            <option value="國際">國際</option>
+          </select>
+          <select id="filter-form" aria-label="參賽形式">
+            <option value="all">所有形式</option>
+            <option value="個人">個人</option>
+            <option value="團體">團體</option>
+          </select>
+        </div>
+
+        <div class="comp-chiprow">
+          <div class="comp-chips" role="group" aria-label="報名狀態快速篩選">
+            <button class="comp-chip is-active" type="button" data-status="all" aria-pressed="true">全部</button>
+            <button class="comp-chip" type="button" data-status="soon" aria-pressed="false"><span class="comp-chip__dot dot-soon"></span>即將截止</button>
+            <button class="comp-chip" type="button" data-status="open" aria-pressed="false"><span class="comp-chip__dot dot-open"></span>報名中</button>
+            <button class="comp-chip" type="button" data-status="site" aria-pressed="false"><span class="comp-chip__dot dot-site"></span>依官網公告</button>
+          </div>
+          <div class="comp-countwrap">
+            <span class="comp-count" id="result-count" aria-live="polite">—</span>
+            <button class="comp-reset" id="filter-reset" type="button">清除篩選</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid -->
+    <section class="comp-gridwrap">
+      <div id="competition-grid" class="comp-grid" aria-busy="true">
+        <p class="comp-loading">競賽資料載入中…</p>
+      </div>
+      <div id="no-results" class="comp-empty" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+        <h3 class="comp-empty__title">找不到符合的競賽</h3>
+        <p class="comp-empty__text">試著放寬篩選條件，或清除全部篩選重新探索。</p>
+      </div>
+    </section>
+  </main>
+
+  <script is:inline>
+    (function () {
+      // ── 領域配色（避免 Tailwind 動態類別掃描問題，改以 CSS 變數注入十六進位色）──
+      const CATEGORY_ACCENT = {
+        '科學': '#0891b2',
+        '數理': '#4f46e5',
+        '資訊': '#2563eb',
+        '語文人文': '#d97706',
+        '商業管理': '#059669',
+        '藝術設計': '#db2777',
+        '社會永續': '#16a34a',
+        '跨領域': '#7c3aed',
+      };
+      const DEFAULT_ACCENT = '#475569';
+
+      let competitions = [];
+      let statusFilter = 'all';
+
+      const grid = document.getElementById('competition-grid');
+      const empty = document.getElementById('no-results');
+      const searchInput = document.getElementById('search-input');
+      const searchClear = document.getElementById('search-clear');
+      const catSel = document.getElementById('filter-category');
+      const regSel = document.getElementById('filter-region');
+      const lvlSel = document.getElementById('filter-level');
+      const frmSel = document.getElementById('filter-form');
+      const sortSel = document.getElementById('sort-select');
+      const chips = Array.from(document.querySelectorAll('.comp-chip'));
+      const countEl = document.getElementById('result-count');
+      const resetBtn = document.getElementById('filter-reset');
+
+      function escapeHtml(v) {
+        return String(v).replace(/[&<>"']/g, (c) => (
+          { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+        ));
+      }
+
+      // 僅允許 http(s) 連結，擋掉 javascript: 等協定（縱深防禦；資料源本已受看門狗把關）。
+      function safeUrl(u) {
+        return /^https?:\/\//i.test(String(u)) ? encodeURI(u) : '#';
+      }
+
+      // 以 Asia/Taipei 的「日曆日」計算剩餘天數，與看門狗 check-competitions.mjs
+      // 一致；不受使用者瀏覽器所在時區影響（境外使用者也會看到台灣時區的狀態）。
+      function getStatus(deadline) {
+        if (!deadline) return { key: 'site', label: '依官網', days: null };
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+        if (!m) return { key: 'site', label: '依官網', days: null };
+        const tp = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(new Date()).split('-').map(Number);
+        const todayUTC = Date.UTC(tp[0], tp[1] - 1, tp[2]);
+        const dlUTC = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        const days = Math.round((dlUTC - todayUTC) / 86400000);
+        if (days < 0) return { key: 'closed', label: '已截止', days };
+        if (days <= 30) return { key: 'soon', label: '即將截止', days };
+        return { key: 'open', label: '報名中', days };
+      }
+
+      const STATUS_ORDER = { soon: 0, open: 1, site: 2, closed: 3 };
+
+      function statusText(s) {
+        if (s.key === 'soon') return s.days <= 0 ? '今日截止' : '即將截止 · 剩 ' + s.days + ' 天';
+        if (s.key === 'open') return '報名中 · 剩 ' + s.days + ' 天';
+        return s.label;
+      }
+
+      function accentFor(cat) {
+        return CATEGORY_ACCENT[cat] || DEFAULT_ACCENT;
+      }
+
+      function cardHtml(c, i) {
+        const s = c._status;
+        const accent = accentFor(c.category);
+        const urgent = s.key === 'soon' && s.days <= 7 ? ' is-urgent' : '';
+        const delay = Math.min(i, 14);
+        const meta = [c.region, c.level, c.form]
+          .map((x) => '<li class="comp-tag">' + escapeHtml(x) + '</li>')
+          .join('');
+        const deadlineText = c.deadline ? escapeHtml(c.deadline) : '依官網公告';
+        return (
+          '<article class="comp-card is-' + s.key + urgent + '" style="--accent:' + accent + ';--i:' + delay + '">' +
+            '<span class="comp-card__bar" aria-hidden="true"></span>' +
+            '<div class="comp-card__body">' +
+              '<div class="comp-card__head">' +
+                '<span class="comp-cat">' + escapeHtml(c.category) + '</span>' +
+                '<span class="comp-status">' + escapeHtml(statusText(s)) + '</span>' +
+              '</div>' +
+              '<h3 class="comp-card__title">' + escapeHtml(c.title) + '</h3>' +
+              '<p class="comp-card__org">' + escapeHtml(c.organizer) + '</p>' +
+              '<ul class="comp-meta">' + meta + '</ul>' +
+              '<p class="comp-elig">' + escapeHtml(c.eligibility) + ' · ' + escapeHtml(c.mode) + '</p>' +
+              '<p class="comp-card__desc">' + escapeHtml(c.description) + '</p>' +
+            '</div>' +
+            '<div class="comp-card__foot">' +
+              '<div class="comp-deadline">' +
+                '<span class="comp-deadline__label">報名截止</span>' +
+                '<span class="comp-deadline__value">' + deadlineText + '</span>' +
+              '</div>' +
+              '<a class="comp-cta" href="' + safeUrl(c.url) + '" target="_blank" rel="noopener noreferrer" aria-label="前往 ' + escapeHtml(c.title) + ' 官網">' +
+                '前往官網<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>' +
+              '</a>' +
+            '</div>' +
+          '</article>'
+        );
+      }
+
+      function currentList() {
+        const term = searchInput.value.trim().toLowerCase();
+        const cat = catSel.value, reg = regSel.value, lvl = lvlSel.value, frm = frmSel.value;
+        let list = competitions.filter((c) => {
+          if (statusFilter !== 'all' && c._status.key !== statusFilter) return false;
+          if (cat !== 'all' && c.category !== cat) return false;
+          if (reg !== 'all' && c.region !== reg) return false;
+          if (lvl !== 'all' && c.level !== lvl) return false;
+          if (frm !== 'all' && (typeof c.form !== 'string' || !c.form.includes(frm))) return false;
+          if (term) {
+            const corpus = (c.title + ' ' + c.organizer + ' ' + c.category + ' ' + c.region + ' ' + c.description).toLowerCase();
+            if (!corpus.includes(term)) return false;
+          }
+          return true;
+        });
+
+        const mode = sortSel.value;
+        list.sort((a, b) => {
+          if (mode === 'name') return a.title.localeCompare(b.title, 'zh-Hant');
+          if (mode === 'deadline') {
+            const ra = a._status.key === 'closed' ? 2 : (a._status.days == null ? 1 : 0);
+            const rb = b._status.key === 'closed' ? 2 : (b._status.days == null ? 1 : 0);
+            if (ra !== rb) return ra - rb;
+            if (ra === 0) return a._status.days - b._status.days;
+            return a._idx - b._idx;
+          }
+          // smart
+          const so = STATUS_ORDER[a._status.key] - STATUS_ORDER[b._status.key];
+          if (so !== 0) return so;
+          const ad = a._status.days == null ? 1e9 : a._status.days;
+          const bd = b._status.days == null ? 1e9 : b._status.days;
+          if (ad !== bd) return ad - bd;
+          return a._idx - b._idx;
+        });
+        return list;
+      }
+
+      function render() {
+        const list = currentList();
+        countEl.textContent = list.length + ' 項結果';
+        if (!list.length) {
+          grid.innerHTML = '';
+          grid.setAttribute('aria-busy', 'false');
+          empty.hidden = false;
+          return;
         }
+        empty.hidden = true;
+        grid.innerHTML = list.map(cardHtml).join('');
+        grid.setAttribute('aria-busy', 'false');
+      }
 
-        const competitionGrid = document.getElementById('competition-grid');
-        const noResultsDiv = document.getElementById('no-results');
-        const searchInput = document.getElementById('search-input');
-        const categoryFilter = document.getElementById('category-filter');
-        const levelFilter = document.getElementById('level-filter');
-        const formFilter = document.getElementById('form-filter');
-        const regionFilter = document.getElementById('region-filter');
+      function updateStats() {
+        const total = competitions.length;
+        let soon = 0, openNow = 0;
+        competitions.forEach((c) => {
+          if (c._status.key === 'soon') { soon++; openNow++; }
+          else if (c._status.key === 'open') openNow++;
+        });
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-open').textContent = openNow;
+        document.getElementById('stat-soon').textContent = soon;
+      }
 
-        function getStatus(deadline) {
-            if (!deadline) {
-                return { text: '依官網', color: 'bg-gray-200 text-gray-700' };
-            }
-            const now = new Date();
-            const deadlineDate = new Date(deadline);
-            const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+      // ── 事件 ──
+      let debounce;
+      searchInput.addEventListener('input', function () {
+        searchClear.hidden = this.value.length === 0;
+        clearTimeout(debounce);
+        debounce = setTimeout(render, 160);
+      });
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { searchInput.value = ''; searchClear.hidden = true; render(); }
+      });
+      searchClear.addEventListener('click', () => {
+        searchInput.value = ''; searchClear.hidden = true; searchInput.focus(); render();
+      });
+      [catSel, regSel, lvlSel, frmSel, sortSel].forEach((el) => el.addEventListener('change', render));
+      chips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          statusFilter = chip.dataset.status;
+          chips.forEach((c) => {
+            const active = c === chip;
+            c.classList.toggle('is-active', active);
+            c.setAttribute('aria-pressed', String(active));
+          });
+          render();
+        });
+      });
+      resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClear.hidden = true;
+        catSel.value = 'all'; regSel.value = 'all'; lvlSel.value = 'all'; frmSel.value = 'all';
+        sortSel.value = 'smart';
+        statusFilter = 'all';
+        chips.forEach((c) => {
+          const active = c.dataset.status === 'all';
+          c.classList.toggle('is-active', active);
+          c.setAttribute('aria-pressed', String(active));
+        });
+        render();
+      });
 
-            if (diffDays < 0) {
-                return { text: '已截止', color: 'bg-gray-200 text-gray-700' };
-            } else if (diffDays <= 30) {
-                return { text: '即將截止', color: 'bg-red-100 text-red-800' };
-            } else {
-                return { text: '報名中', color: 'bg-green-100 text-green-800' };
-            }
-        }
+      // ── 載入資料 ──
+      fetch('competitions.json', { cache: 'no-cache' })
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then((data) => {
+          const arr = Array.isArray(data.competitions) ? data.competitions : [];
+          competitions = arr.map((c, idx) => ({ ...c, _idx: idx, _status: getStatus(c.deadline) }));
+          const updated = document.getElementById('stat-updated');
+          if (updated) updated.textContent = data.lastUpdated ? '：' + data.lastUpdated : '';
+          updateStats();
+          render();
+        })
+        .catch((err) => {
+          console.error('競賽資料載入失敗：', err);
+          grid.innerHTML = '';
+          grid.setAttribute('aria-busy', 'false');
+          empty.hidden = false;
+          empty.querySelector('.comp-empty__title').textContent = '競賽資料載入失敗';
+          empty.querySelector('.comp-empty__text').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+        });
+    })();
+  </script>
 
-        function renderCompetitions() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const selectedCategory = categoryFilter.value;
-            const selectedRegion = regionFilter.value;
-            const selectedLevel = levelFilter.value;
-            const selectedForm = formFilter.value;
+  <style is:global>
+    /* ══════════════════════════════════════════════════════════════
+       競賽雷達 — competitions.astro 專屬設計系統（純 CSS，避免 Tailwind
+       動態類別掃描問題；JS 注入的卡片使用以下語意類別）。
+       ══════════════════════════════════════════════════════════════ */
+    .comp-page {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --faint: #94a3b8;
+      --line: #e6e8ee;
+      --bg: #f6f7fb;
+      --primary: #e11d48;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 480px at 78% -8%, #fff1f4 0%, rgba(255,241,244,0) 60%),
+        radial-gradient(1000px 420px at 8% -12%, #eef4ff 0%, rgba(238,244,255,0) 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
 
-            const filteredCompetitions = competitionsData.filter(comp => {
-                const searchCorpus = `${comp.title} ${comp.organizer}`.toLowerCase();
-                const matchesSearch = searchCorpus.includes(searchTerm);
-                const matchesCategory = selectedCategory === 'all' || comp.category === selectedCategory;
-                const matchesRegion = selectedRegion === 'all' || comp.region === selectedRegion;
-                const matchesLevel = selectedLevel === 'all' || comp.level === selectedLevel;
-                const matchesForm = selectedForm === 'all' || comp.form.includes(selectedForm);
-                return matchesSearch && matchesCategory && matchesRegion && matchesLevel && matchesForm;
-            });
+    /* ── Hero ── */
+    .comp-hero { padding: 4rem 1.5rem 2rem; }
+    .comp-hero__inner { max-width: 1120px; margin: 0 auto; }
+    .comp-eyebrow {
+      font-family: 'Space Mono', ui-monospace, monospace;
+      font-size: .78rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--primary); font-weight: 700; margin: 0 0 .9rem;
+    }
+    .comp-title {
+      font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 900; line-height: 1.04;
+      letter-spacing: -.01em; margin: 0; color: var(--ink);
+    }
+    .comp-title__accent {
+      background: linear-gradient(100deg, #f43f5e, #f97316);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .comp-tagline {
+      margin: 1.15rem 0 0; max-width: 42rem; font-size: 1.075rem; line-height: 1.75; color: #475569;
+    }
+    .comp-tagline strong { color: var(--ink); font-weight: 700; }
 
-            competitionGrid.innerHTML = '';
+    .comp-stats {
+      display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2.25rem;
+      margin-top: 2.25rem; padding-top: 1.6rem; border-top: 1px solid var(--line);
+    }
+    .stat { display: flex; flex-direction: column; gap: .1rem; }
+    .stat-num {
+      font-family: 'Space Mono', ui-monospace, monospace; font-size: 2.4rem; font-weight: 700;
+      line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums;
+    }
+    .stat-num--open { color: #16a34a; }
+    .stat-num--soon { color: #d97706; }
+    .stat-label { font-size: .82rem; color: var(--muted); font-weight: 600; }
+    .comp-updated {
+      margin: 0 0 .15rem auto; font-size: .78rem; color: var(--muted);
+      font-family: 'Space Mono', ui-monospace, monospace;
+    }
 
-            if (filteredCompetitions.length > 0) {
-                noResultsDiv.classList.add('hidden');
-                filteredCompetitions.forEach(comp => {
-                    const card = document.createElement('div');
-                    card.className = 'competition-card bg-white rounded-lg shadow-md flex flex-col';
+    /* ── Control bar ── */
+    .comp-controls {
+      position: sticky; top: 68px; z-index: 40;
+      background: rgba(246,247,251,.82); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      padding: 1rem 1.5rem;
+    }
+    .comp-controls__inner { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: .8rem; }
+    .comp-searchrow { display: flex; gap: .8rem; flex-wrap: wrap; }
+    .comp-search { position: relative; flex: 1 1 320px; }
+    .comp-search__icon {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      width: 1.15rem; height: 1.15rem; color: var(--faint); pointer-events: none;
+    }
+    .comp-search input {
+      width: 100%; padding: .8rem 2.6rem; border: 1.5px solid var(--line); border-radius: 999px;
+      background: #fff; font-size: 1rem; color: var(--ink); transition: border-color .2s, box-shadow .2s;
+    }
+    .comp-search input::placeholder { color: var(--faint); }
+    .comp-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(225,29,72,.12); }
+    .comp-search__clear {
+      position: absolute; right: .7rem; top: 50%; transform: translateY(-50%);
+      display: inline-flex; padding: .35rem; border: 0; background: #eef0f5; border-radius: 999px;
+      color: var(--muted); cursor: pointer; transition: background .2s, color .2s;
+    }
+    .comp-search__clear:hover { background: #e2e5ec; color: var(--ink); }
+    .comp-search__clear svg { width: 1rem; height: 1rem; }
 
-                    const status = getStatus(comp.deadline);
+    .comp-sort { display: inline-flex; align-items: center; gap: .5rem; }
+    .comp-sort__label { font-size: .82rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
 
-                    card.innerHTML = `
-                        <div class="p-6 flex-grow">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex items-center flex-wrap gap-2">
-                                    <span class="text-sm font-bold text-pink-600">${escapeHtml(comp.category)}</span>
-                                    <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.region)}</span>
-                                    <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.level)}</span>
-                                    <span class="text-gray-300">|</span>
-                                    <span class="text-sm font-semibold text-gray-500">${escapeHtml(comp.form)}</span>
-                                </div>
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color} flex-shrink-0">${status.text}</span>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">${escapeHtml(comp.title)}</h3>
-                            <p class="text-sm text-gray-500 mb-1">主辦單位：${escapeHtml(comp.organizer)}</p>
-                            <p class="text-xs font-medium text-gray-500 mb-3">參賽資格：${escapeHtml(comp.eligibility)}　·　${escapeHtml(comp.mode)}</p>
-                            <p class="text-gray-700">${escapeHtml(comp.description)}</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
-                            <div>
-                                <p class="text-xs text-gray-500">報名截止</p>
-                                <p class="font-semibold text-gray-700">${comp.deadline ? escapeHtml(comp.deadline) : '依官網公告'}</p>
-                            </div>
-                            <a href="${encodeURI(comp.url)}" target="_blank" rel="noopener noreferrer" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300">
-                                前往官網
-                            </a>
-                        </div>
-                    `;
-                    competitionGrid.appendChild(card);
-                });
-            } else {
-                noResultsDiv.classList.remove('hidden');
-            }
-        }
+    .comp-selects { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+    select#sort-select, .comp-selects select {
+      appearance: none; -webkit-appearance: none;
+      padding: .6rem 2.2rem .6rem .85rem; border: 1.5px solid var(--line); border-radius: .7rem;
+      background-color: #fff; color: var(--ink); font-size: .92rem; font-weight: 500; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right .7rem center;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    select#sort-select { min-width: 13rem; }
+    .comp-selects select:focus, select#sort-select:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(225,29,72,.1);
+    }
 
-        searchInput.addEventListener('input', renderCompetitions);
-        categoryFilter.addEventListener('change', renderCompetitions);
-        regionFilter.addEventListener('change', renderCompetitions);
-        levelFilter.addEventListener('change', renderCompetitions);
-        formFilter.addEventListener('change', renderCompetitions);
+    .comp-chiprow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; }
+    .comp-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .comp-chip {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .4rem .85rem; border: 1.5px solid var(--line); border-radius: 999px;
+      background: #fff; color: var(--muted); font-size: .86rem; font-weight: 600; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .comp-chip:hover { border-color: #cbd2dd; color: var(--ink); }
+    .comp-chip.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .comp-chip__dot { width: .5rem; height: .5rem; border-radius: 999px; }
+    .dot-soon { background: #f59e0b; }
+    .dot-open { background: #22c55e; }
+    .dot-site { background: #94a3b8; }
+    .comp-chip.is-active .comp-chip__dot { box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
 
-        // 從 competitions.json 載入競賽資料後再渲染
-        async function loadCompetitions() {
-            try {
-                const response = await fetch('competitions.json', { cache: 'no-cache' });
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                competitionsData = Array.isArray(data.competitions) ? data.competitions : [];
-                renderCompetitions();
-            } catch (error) {
-                console.error('競賽資料載入失敗：', error);
-                competitionGrid.innerHTML = '';
-                noResultsDiv.classList.remove('hidden');
-                noResultsDiv.querySelector('h3').textContent = '競賽資料載入失敗';
-                noResultsDiv.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
-            }
-        }
+    .comp-countwrap { display: inline-flex; align-items: center; gap: .9rem; }
+    .comp-count {
+      font-family: 'Space Mono', ui-monospace, monospace; font-size: .84rem; font-weight: 700; color: var(--muted);
+    }
+    .comp-reset {
+      border: 0; background: none; color: var(--primary); font-size: .84rem; font-weight: 700; cursor: pointer;
+      padding: .2rem .1rem; border-bottom: 1.5px solid transparent; transition: border-color .2s;
+    }
+    .comp-reset:hover { border-bottom-color: var(--primary); }
+    .comp-chip:focus-visible, .comp-reset:focus-visible,
+    .comp-search__clear:focus-visible, .comp-cta:focus-visible {
+      outline: 2px solid var(--primary); outline-offset: 2px;
+    }
 
-        loadCompetitions();
-    </script>
+    /* ── Grid ── */
+    .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
+    .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--faint); padding: 4rem 0; }
 
-    <style is:global>
-        body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-        }
-        .gradient-text {
-            background: -webkit-linear-gradient(45deg, #ec4899, #ef4444);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .competition-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .competition-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-    </style>
+    /* ── Card ── */
+    .comp-card {
+      position: relative; display: flex; flex-direction: column; overflow: hidden;
+      background: #fff; border: 1px solid var(--line); border-radius: 1.15rem;
+      box-shadow: 0 1px 2px rgba(15,23,42,.04);
+      transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s, border-color .28s;
+      animation: compRise .5s cubic-bezier(.2,.7,.2,1) backwards;
+      animation-delay: calc(var(--i, 0) * 45ms);
+    }
+    @keyframes compRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    .comp-card:hover {
+      transform: translateY(-6px);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+      box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--accent) 60%, transparent), 0 8px 16px -12px rgba(15,23,42,.15);
+    }
+    .comp-card__bar { height: 5px; width: 100%; background: var(--accent); background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, #fff)); }
+    .comp-card__body { padding: 1.35rem 1.4rem 1rem; flex: 1; }
+    .comp-card__head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .7rem; }
+    .comp-cat {
+      position: relative; padding-left: .9rem; font-size: .74rem; font-weight: 800;
+      letter-spacing: .03em; color: color-mix(in srgb, var(--accent) 72%, #1e293b); white-space: nowrap;
+    }
+    .comp-cat::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: .45rem; height: .45rem; border-radius: 999px; background: var(--accent);
+    }
+    .comp-status {
+      flex-shrink: 0; font-size: .72rem; font-weight: 700; padding: .22rem .6rem; border-radius: 999px;
+      background: #f1f5f9; color: #475569; white-space: nowrap;
+    }
+    .is-open .comp-status { background: #dcfce7; color: #15803d; }
+    .is-soon .comp-status { background: #fef3c7; color: #b45309; }
+    .is-site .comp-status { background: #eef2f7; color: #475569; }
+    .is-closed .comp-status { background: #f1f5f9; color: #475569; }
+    .is-urgent .comp-status { background: #fee2e2; color: #b91c1c; }
+    .comp-card__title { font-size: 1.14rem; font-weight: 800; line-height: 1.35; color: var(--ink); margin: 0 0 .3rem; }
+    .comp-card__org { font-size: .82rem; color: var(--muted); margin: 0 0 .8rem; }
+    .comp-meta { display: flex; flex-wrap: wrap; gap: .35rem; list-style: none; padding: 0; margin: 0 0 .55rem; }
+    .comp-tag {
+      font-size: .72rem; font-weight: 600; color: #475569; background: #f1f5f9;
+      padding: .18rem .5rem; border-radius: .4rem;
+    }
+    .comp-elig { font-size: .74rem; color: var(--muted); margin: 0 0 .7rem; font-weight: 600; }
+    .comp-card__desc { font-size: .875rem; line-height: 1.65; color: #475569; margin: 0; }
+    .comp-card__foot {
+      display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+      padding: .9rem 1.4rem; border-top: 1px solid var(--line); background: #fafbfc;
+    }
+    .comp-deadline { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+    .comp-deadline__label { font-size: .68rem; color: var(--muted); font-weight: 600; }
+    .comp-deadline__value {
+      font-family: 'Space Mono', ui-monospace, monospace; font-size: .92rem; font-weight: 700; color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .comp-cta {
+      display: inline-flex; align-items: center; gap: .35rem; flex-shrink: 0;
+      padding: .55rem .95rem; border-radius: .6rem; background: var(--ink); color: #fff;
+      font-size: .84rem; font-weight: 700; text-decoration: none; transition: background .2s, transform .2s;
+    }
+    .comp-cta svg { width: .95rem; height: .95rem; transition: transform .2s; }
+    .comp-cta:hover { background: var(--primary); }
+    .comp-cta:hover svg { transform: translateX(2px); }
+    .comp-card.is-closed { opacity: .68; }
+    .comp-card:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+
+    /* ── Empty ── */
+    .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
+    .comp-empty svg { width: 3rem; height: 3rem; color: var(--faint); margin: 0 auto 1rem; }
+    .comp-empty__title { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin: 0 0 .35rem; }
+    .comp-empty__text { font-size: .9rem; margin: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) { .comp-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 860px) { .comp-selects { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 620px) {
+      .comp-hero { padding: 2.75rem 1.25rem 1.5rem; }
+      .comp-stats { gap: 1.5rem; }
+      .stat-num { font-size: 2rem; }
+      .comp-updated { width: 100%; margin: .25rem 0 0; }
+      .comp-grid { grid-template-columns: 1fr; }
+      .comp-controls { top: 68px; }
+    }
+
+    /* ── Motion / a11y ── */
+    @media (prefers-reduced-motion: reduce) {
+      .comp-card { animation: none; }
+      .comp-card:hover { transform: none; }
+      .comp-cta:hover svg { transform: none; }
+    }
+    @supports not (color: color-mix(in srgb, red 50%, white)) {
+      .comp-card:hover { border-color: var(--accent); box-shadow: 0 18px 40px -18px rgba(15,23,42,.35); }
+    }
+  </style>
 </BaseLayout>
