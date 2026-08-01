@@ -1148,7 +1148,7 @@
     },
     {
       "title": "全國中小學科學探究競賽—這樣教我就懂",
-      "organizer": "國立臺灣科學教育館",
+      "organizer": "高師大、國網中心與五大科學博物館聯合主辦",
       "category": "科學",
       "level": "全國",
       "form": "個人/團體",
@@ -1156,8 +1156,8 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://www.ntsec.gov.tw/",
-      "description": "以科學影片創作為主的全國競賽，鼓勵學生用淺顯方式講解科學概念。線上投件，報名與截止時程依官網年度公告。"
+      "url": "https://sciexplore.colife.org.tw/",
+      "description": "以科學影片創作為主的全國競賽，鼓勵用淺顯方式講解生活中的科學概念，分國小、國中、普高、技高、大專社會及教師組。線上投件、免費報名，報名與截止時程依當年度官網公告。"
     },
     {
       "title": "線上物理奧林匹亞 (OPhO)",
@@ -1394,8 +1394,8 @@
       "description": "美國數學競賽體系中的進階邀請賽，僅 AMC 成績達標者可受邀參加。台灣學生若於認證考場 AMC 達標即可應試，每年約 2 月舉行。"
     },
     {
-      "title": "國際青年物理競賽—台灣選拔賽 (TYPT)",
-      "organizer": "台灣物理學會",
+      "title": "臺灣青年學生物理辯論競賽 (TYPT)",
+      "organizer": "國立臺灣師範大學物理學系",
       "category": "數理",
       "level": "全國",
       "form": "團體",
@@ -1403,38 +1403,25 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ps-taiwan.org/",
-      "description": "IYPT 的台灣國內選拔賽，以開放式研究題目進行物理擂台辯論。高中隊伍可公開報名，優勝者代表台灣參加國際賽，時程依學會公告。"
+      "url": "https://typt.phy.ntnu.edu.tw/",
+      "description": "徐有庠盃臺灣青年學生物理辯論競賽，比照 IYPT 規則全英文進行，需事前完成開放式研究並就每題做 12 分鐘簡報。全國高中職一至三年級可組隊報名（須有領隊教師），優勝者組成 IYPT 臺灣代表隊。"
     },
     {
-      "title": "全國高中職資訊科技競賽 (生活科技競賽)",
-      "organizer": "教育部國民及學前教育署",
-      "category": "資訊",
+      "title": "全國高中生活科技學藝競賽",
+      "organizer": "教育部生活科技學科中心",
+      "category": "跨領域",
       "level": "全國",
       "form": "個人/團體",
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.k12ea.gov.tw/",
-      "description": "全國高中職學生的資訊與生活科技實作競賽，含程式、自動控制與創意設計類別。經校內及區域初賽選拔，報名時程依各區公告。"
-    },
-    {
-      "title": "全國科學探究競賽—科學園遊會 (探究與實作)",
-      "organizer": "國立臺灣師範大學科學教育中心",
-      "category": "科學",
-      "level": "全國",
-      "form": "團體",
-      "region": "台灣",
-      "eligibility": "公開報名",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://www.ntnu.edu.tw/",
-      "description": "結合 108 課綱「探究與實作」精神的全國科學競賽，鼓勵團隊以動手實作呈現研究成果。報名與時程依承辦單位年度公告。"
+      "url": "https://ghresource.k12ea.gov.tw/nss/p/LivingTechnologyCompetition",
+      "description": "以科技與工程設計思維解決真實議題的高中競賽，分任務挑戰組與創意設計組，2026 年第 18 屆主題為海洋永續。全國高中職在學學生（含綜合高中學術學程）可組隊報名，報名約每年 3 月截止、4 月公布決賽名單。"
     },
     {
       "title": "總統教育獎",
-      "organizer": "教育部",
+      "organizer": "教育部國民及學前教育署",
       "category": "跨領域",
       "level": "全國",
       "form": "個人",
@@ -1442,8 +1429,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.edu.tw/",
-      "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生。經學校推薦與各層級評選，報名時程依各縣市公告。"
+      "url": "https://pea.k12ea.gov.tw/",
+      "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生，分大專、高中、國中、國小四組。經學校推薦後逐級評選，高中組獎金 20 萬元；申請約每年 12 月中截止，名單於次年 5 月公布。"
     },
     {
       "title": "全國學生鄉土歌謠比賽",
@@ -1511,8 +1498,8 @@
       "description": "哈佛主辦、於中國舉行的高中模擬聯合國會議。台灣學生可報名，惟會議地點在中國，赴中參與請留意兩岸往來規定與簽證安排。"
     },
     {
-      "title": "Spaghetti 結構橋梁設計競賽 (台灣區)",
-      "organizer": "各大學土木工程相關科系",
+      "title": "iBridge 橋梁設計與載重競賽",
+      "organizer": "亞太能源科學教育協會／高雄科技大學土木工程系",
       "category": "跨領域",
       "level": "全國",
       "form": "團體",
@@ -1520,8 +1507,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ntust.edu.tw/",
-      "description": "以義大利麵或木條搭建橋梁並測試承重的工程實作競賽，由各大學不定期舉辦。高中組可公開報名，時程依主辦校系公告。"
+      "url": "https://www.aesea.org/competitions/ibridge",
+      "description": "以輕木條（balsa）搭建橋梁並實測承重的工程實作競賽，以「最大載重÷橋梁自重」的結構效率評分，設有高中職組。台灣學生可組隊公開報名，近年於年底舉辦，時程依主辦單位年度公告。"
     },
     {
       "title": "全國高中職創新創業競賽 (青年圓夢計畫)",
@@ -1598,8 +1585,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.k12ea.gov.tw/",
-      "description": "台灣高中生數學、物理、化學、生物、地球科學與資訊等學科的能力競賽，亦為部分國際奧林匹亞的選才管道之一。經校內及區域初賽選拔，時程依各區公告。"
+      "url": "https://www.k12ea.gov.tw/Tw/Station/AffairDetail?filter=63F293A9-0155-41A3-97B7-46E43E4685FE&id=f8bd9371-62d7-4626-9f6c-ee105a6a3692",
+      "description": "普通型高中數學、物理、化學、生物、地球科學與資訊六科的學科能力競賽，分校內初賽、區域複賽與全國決賽，亦為國際奧林匹亞的選才管道之一。全國高中在學學生（含非學校型態實驗教育）可參加，時程依各區公告。"
     },
     {
       "title": "The Concord Review 中學歷史論文期刊",
