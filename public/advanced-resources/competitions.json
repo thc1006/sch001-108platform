@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
-  "lastUpdated": "2026-08-01",
+  "lastUpdated": "2026-08-02",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -605,13 +605,13 @@
       "organizer": "教育部資安人才培育計畫 AIS3",
       "category": "資訊",
       "level": "全國",
-      "form": "個人/團體",
+      "form": "個人",
       "region": "台灣",
       "eligibility": "公開報名",
-      "mode": "線上",
+      "mode": "實體",
       "deadline": "",
       "url": "https://ais3.org/mfctf/",
-      "description": "專為資安初學者設計的台灣中文 CTF 競賽，題目友善並附解說，與 AIS3 Pre-exam 合併辦理。免費報名但名額有限（約 80 名正取），須自備電腦，是台灣高中生接觸資安實戰的入門賽事。"
+      "description": "專為資安初學者設計的台灣中文 CTF 競賽，題目友善並附解說，與 AIS3 Pre-exam 合併辦理。一律以個人為單位報名、名額約 80 名正取，於陽明交通大學實體舉行並須自備電腦。"
     },
     {
       "title": "HITCON CTF",
@@ -722,13 +722,13 @@
       "organizer": "United States Artificial Intelligence Institute",
       "category": "資訊",
       "level": "國際",
-      "form": "個人/團體",
+      "form": "團體",
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
       "url": "https://aihackathon.usaii.org/",
-      "description": "全程線上的全球學生 AI 黑客松，設高中組（9–12 年級）與大專組，可個人或 5 人內組隊。2026 屆於 6 月舉行；主辦方為商業性 AI 認證機構，報名免費但相關課程為付費服務，請自行評估。"
+      "description": "全程線上的全球學生 AI 黑客松，設高中組（9–12 年級）與大專組。可先以個人身分註冊尋找隊友，但正式參賽須組成 2–5 人團隊；主辦方為商業性 AI 認證機構，報名免費但相關課程為付費服務，請自行評估。"
     },
     {
       "title": "Major League Hacking (MLH) 黑客松賽季",
@@ -754,7 +754,7 @@
       "mode": "線上",
       "deadline": "2026-10-14",
       "url": "https://www.casecomp.org/",
-      "description": "由哈佛校報與 Crimson Education 合辦的全球高中生商業個案競賽，全程線上、1–4 人一隊，開放 13–18 歲學生。2026 屆報名 7/14–10/14，10 月下旬至 11 月初區域賽，全球決賽 11 月中、12/1 公布結果。"
+      "description": "由哈佛校報與 Crimson Education 合辦的全球高中生商業個案競賽，全程線上，開放 13–18 歲學生，每隊須 2–4 人（不接受單人參賽）。2026 屆報名 7/14–10/14，10 月下旬至 11 月初區域賽，全球決賽 11 月中、12/1 公布結果。"
     },
     {
       "title": "Diamond Challenge 創業競賽",
@@ -1151,13 +1151,13 @@
       "organizer": "高師大、國網中心與五大科學博物館聯合主辦",
       "category": "科學",
       "level": "全國",
-      "form": "個人/團體",
+      "form": "團體",
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
       "url": "https://sciexplore.colife.org.tw/",
-      "description": "以科學影片創作為主的全國競賽，鼓勵用淺顯方式講解生活中的科學概念，分國小、國中、普高、技高、大專社會及教師組。線上投件、免費報名，報名與截止時程依當年度官網公告。"
+      "description": "全國性科普探究競賽，分國小、國中、普高、技高、大專社會及教師組。普高與技高組每隊 2–4 人（需指導教師），作品為 6 頁內探究報告加 3–5 分鐘影片，線上投件免費；初賽線上評比，前 6 名進決賽現場簡報。"
     },
     {
       "title": "線上物理奧林匹亞 (OPhO)",
@@ -1524,17 +1524,17 @@
       "description": "鼓勵青年學生提出創業構想並實踐的全國性競賽與培力計畫。高中職學生可組隊報名，報名與培訓時程依官網年度公告。"
     },
     {
-      "title": "國際數學奧林匹亞—台灣選拔賽 (TST)",
+      "title": "臺灣數學奧林匹亞競賽 (TMO)",
       "organizer": "數學奧林匹亞辦公室（教育部委託臺灣師範大學）",
       "category": "數理",
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
       "url": "https://tpmso.org/tmo/",
-      "description": "台灣數學奧林匹亞國手的選拔賽事，含初選、選訓決賽營與國手培訓。高中生可公開報名初選，優勝者組成 IMO／APMO 代表隊，時程依數學奧林匹亞辦公室公告。"
+      "description": "我國數學奧林匹亞國手的選拔賽事，含初選、選訓決賽營與國手培訓，優勝者組成 IMO／APMO 代表隊。限未滿 20 歲之高級中等以下學校在學學生，須由就讀學校或主管機關統一報名，不接受個人報名。"
     },
     {
       "title": "全國資訊奧林匹亞—台灣選拔賽 (TOI)",
@@ -1543,11 +1543,11 @@
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
       "url": "https://tpmso.org/toi/",
-      "description": "台灣資訊奧林匹亞國手的選拔賽事，含初選、兩階段選訓營與賽前集訓。須具 APCS 實作 3 級分以上或學科能力競賽資訊科決賽資格，報名約每年 2 月截止，優勝者組成 IOI 代表隊。"
+      "description": "我國資訊奧林匹亞國手的選拔賽事，含初選、兩階段選訓營與賽前集訓，優勝者組成 IOI 代表隊。須具 APCS 實作 3 級分以上或學科能力競賽資訊科決賽資格，並由就讀學校或地方主管機關代為報名。"
     },
     {
       "title": "國際人工智慧奧林匹亞 (IOAI)",
@@ -1697,13 +1697,13 @@
       "organizer": "NASA 及各國太空總署夥伴",
       "category": "跨領域",
       "level": "國際",
-      "form": "團體",
+      "form": "個人/團體",
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
       "url": "https://www.spaceappschallenge.org/",
-      "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加。台灣歷年設有實體會場，亦可線上（Universal Event）參與，2026 年於 11 月 14–15 日舉行。"
+      "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加。隊伍為 1–6 人（可單人成隊），台灣歷年設有實體會場，亦可線上參與，2026 年於 11 月 14–15 日舉行。"
     },
     {
       "title": "國際科學奧林匹亞—臺灣代表隊選訓",

@@ -15,9 +15,27 @@
  *
  * 本機執行：  node scripts/check-competitions.mjs
  *             node scripts/check-competitions.mjs --no-link-check   （略過連線檢查）
+ *             node scripts/check-competitions.mjs --no-link-check --strict
+ *                 （PR CI 用：欄位錯誤即以非零碼結束）
+ *
+ * 連結探測與欄位驗證的核心在 check-competitions.lib.mjs，
+ * 由 check-competitions.probe.test.mjs 以本機 http server 做確定性測試。
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
+import {
+    ALLOWED_CATEGORIES,
+    ALLOWED_LEVELS,
+    ALLOWED_REGIONS,
+    ALLOWED_ELIGIBILITY,
+    ALLOWED_MODES,
+    ALLOWED_FORMS,
+    LINK_TIMEOUT_MS,
+    probe,
+    isDeadResult,
+    classifyLink,
+    validateUrl,
+} from './check-competitions.lib.mjs';
 
 // 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
 // 供頁面 client fetch);看門狗改讀此處。
@@ -27,11 +45,8 @@ const SOON_DAYS = 30;
 
 // 除 deadline 外都必須是「非空字串」；deadline 必須是字串（允許空字串＝依官網公告）
 const TEXT_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'region', 'eligibility', 'mode', 'description', 'url'];
-const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計', '社會永續', '跨領域'];
-const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
-const ALLOWED_REGIONS = ['台灣', '美國', '英國', '歐盟', '東亞', '全球線上', '其他'];
-const ALLOWED_ELIGIBILITY = ['公開報名', '國家隊選拔', '邀請制'];
-const ALLOWED_MODES = ['線上', '實體', '混合'];
+// 欄位允許值與連結探測邏輯集中在 check-competitions.lib.mjs，
+// 由 check-competitions.probe.test.mjs 以本機 http server 做確定性測試。
 
 // 致命錯誤：寫出錯誤報告、通知 workflow 開 issue，再以非零碼結束。
 // 即使在「檔案讀不到 / JSON 無法解析」這種狀況，competitions-check.yml 仍能
@@ -114,6 +129,12 @@ list.forEach((comp, index) => {
     if (typeof comp.mode === 'string' && !ALLOWED_MODES.includes(comp.mode)) {
         schemaErrors.push(`「${label}」的 mode「${comp.mode}」不在允許清單內`);
     }
+    if (typeof comp.form === 'string' && !ALLOWED_FORMS.includes(comp.form)) {
+        schemaErrors.push(`「${label}」的 form「${comp.form}」不在允許清單內`);
+    }
+    if (typeof comp.url === 'string' && comp.url !== '') {
+        validateUrl(comp.url, label, schemaErrors);
+    }
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」
     if (!('deadline' in comp)) {
@@ -156,51 +177,14 @@ list.forEach((comp, index) => {
 // 不會出現在 astro build 的 HTML 裡，link-checker.yml 的 lychee 掃不到，因此
 // 官網換網域或改版時連結會無聲失效。改由本看門狗直接連線檢查。
 //
-// 判定原則：只有「網域解析不到」與「404/410」才算失效並觸發 issue。競賽網站
-// 大量使用 Cloudflare 等防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，
-// 一律歸入「無法判定」只做記錄，避免每週誤報。
-const DEAD_STATUSES = new Set([404, 410]);
-const LINK_TIMEOUT_MS = 20_000;
+// 判定原則見 check-competitions.lib.mjs 的 classifyLink()：只有「網域解析不到」與
+// 404/410 才算失效並觸發 issue，403/429/5xx/逾時歸為「無法判定」只做記錄。
 const LINK_CONCURRENCY = 4; // 部分官網（如 tpmso.org）併發過高會回 5xx
-// 全域時間預算。最壞情況（全部逾時）為 筆數/併發數 × (HEAD+GET) ≈ 22 分鐘，會超過
-// workflow 的 step timeout；一旦被砍，needs_attention 就不會寫進 GITHUB_OUTPUT，
-// 連「截止日過期」都不會開 issue。故超出預算即停止檢查、把剩餘筆數列為未檢查，
+// 全域時間預算。最壞情況（全部逾時）為 筆數/併發數 × 逾時，會超過 workflow 的
+// step timeout；一旦被砍，needs_attention 就不會寫進 GITHUB_OUTPUT，連「截止日
+// 過期」都不會開 issue。故超出預算即停止檢查、把剩餘筆數列為未檢查，
 // 確保腳本一定跑完並產出報告。
 const LINK_BUDGET_MS = 8 * 60_000;
-// 目的是「重現學生用瀏覽器點下去的結果」。不少競賽官網（Kaggle、tpmso.org 等）
-// 對非瀏覽器 UA 直接回 404/500，用一般爬蟲 UA 會產生大量誤判，故沿用瀏覽器 UA。
-const UA =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
-
-async function probe(url) {
-    // 先用 HEAD 省流量；但不少站台（Kaggle 回 404、tpmso.org 回 500）只是不支援
-    // HEAD 而非真的失效，故 HEAD 一有錯誤碼就改用 GET 重試，並以 GET 結果為準。
-    for (const method of ['HEAD', 'GET']) {
-        try {
-            const res = await fetch(url, {
-                method,
-                redirect: 'follow',
-                signal: AbortSignal.timeout(LINK_TIMEOUT_MS),
-                headers: {
-                    'User-Agent': UA,
-                    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8',
-                },
-            });
-            if (res.status >= 400 && method === 'HEAD') continue;
-            return { status: res.status };
-        } catch (err) {
-            if (method === 'GET') {
-                const code = err?.cause?.code || err?.code || '';
-                return { status: 0, code, message: String(err?.message || err).slice(0, 120) };
-            }
-        }
-    }
-    return { status: 0, code: '', message: 'unknown' };
-}
-
-// 網域解析不到＝連結確定失效；其餘連線層錯誤（TLS、逾時等）歸為無法判定。
-const isDeadResult = (r) => r.code === 'ENOTFOUND' || DEAD_STATUSES.has(r.status);
 
 const deadLinks = [];
 const unverifiedLinks = [];
@@ -212,18 +196,32 @@ if (!process.argv.includes('--no-link-check')) {
         .filter(({ comp }) => comp && typeof comp.url === 'string' && /^https?:\/\//i.test(comp.url));
 
     const budgetEnd = Date.now() + LINK_BUDGET_MS;
-    const outOfBudget = () => Date.now() >= budgetEnd;
+    const remainingBudget = () => budgetEnd - Date.now();
+    const outOfBudget = () => remainingBudget() <= 0;
+    // 硬截止：單筆逾時取「剩餘預算」與 LINK_TIMEOUT_MS 的較小值，並疊上全域 abort，
+    // 避免最後一筆在預算末端才起跑、又獨自跑滿 20 秒而超出預算。
+    const globalAbort = new AbortController();
+    const budgetTimer = setTimeout(() => globalAbort.abort(), LINK_BUDGET_MS);
+    const probeWithin = (url) =>
+        probe(url, AbortSignal.any([globalAbort.signal, AbortSignal.timeout(Math.max(1, Math.min(LINK_TIMEOUT_MS, remainingBudget())))]));
+
+    // 每週從不同位置起跑。若未來 runner 網路變差而經常用完預算，固定從 0 開始會讓
+    // JSON 尾端永遠檢查不到；以「當年第幾週」輪替起點可讓覆蓋率長期均勻。
+    const weekIndex = Math.floor((todayUTC - Date.UTC(todayYear, 0, 1)) / (7 * 86_400_000));
+    const startAt = targets.length ? (weekIndex * LINK_CONCURRENCY) % targets.length : 0;
+    const order = targets.map((_, i) => (startAt + i) % targets.length);
 
     let cursor = 0;
     const results = new Array(targets.length);
     await Promise.all(
         Array.from({ length: Math.min(LINK_CONCURRENCY, targets.length) }, async () => {
-            while (cursor < targets.length && !outOfBudget()) {
-                const slot = cursor++;
-                results[slot] = await probe(targets[slot].comp.url);
+            while (cursor < order.length && !outOfBudget()) {
+                const slot = order[cursor++];
+                results[slot] = await probeWithin(targets[slot].comp.url);
             }
         }),
     );
+    clearTimeout(budgetTimer);
 
     for (let i = 0; i < targets.length; i++) {
         const { comp, index } = targets[i];
@@ -234,17 +232,21 @@ if (!process.argv.includes('--no-link-check')) {
             continue;
         }
         // 判定為失效前再單獨重試一次，濾掉併發造成的暫時性錯誤；預算用盡則直接沿用首次結果
-        if (isDeadResult(result) && !outOfBudget()) result = await probe(comp.url);
+        if (isDeadResult(result) && !outOfBudget()) result = await probeWithin(comp.url);
 
-        if (isDeadResult(result)) {
+        const verdict = classifyLink(result);
+        if (verdict === 'dead') {
             deadLinks.push({ label, url: comp.url, reason: result.code === 'ENOTFOUND' ? '網域無法解析' : `HTTP ${result.status}` });
-        } else if (result.status === 0 || result.status >= 400) {
+        } else if (verdict === 'unverified') {
             unverifiedLinks.push({ label, url: comp.url, reason: result.status ? `HTTP ${result.status}` : result.code || '連線失敗' });
         }
     }
 }
 
-const needsAttention = schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0;
+// 未檢查完 ≠ 健康。覆蓋不完整也必須提醒，否則「只查了 20 筆、其餘 112 筆沒查」
+// 會和「全部查完都正常」給出一模一樣的綠燈訊號。
+const coverageComplete = skippedLinks === 0;
+const needsAttention = schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0 || !coverageComplete;
 
 // ---- 主控台摘要 ----
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
@@ -285,7 +287,11 @@ if (expiringSoon.length) {
 }
 if (skippedLinks) {
     lines.push(
-        `> ⏱️ 連線檢查逾 ${LINK_BUDGET_MS / 60_000} 分鐘預算，本次有 ${skippedLinks} 筆未檢查（未檢查 ≠ 正常）。`,
+        `### ⏱️ 連結檢查未完成（覆蓋不完整）`,
+        '',
+        `連線檢查逾 ${LINK_BUDGET_MS / 60_000} 分鐘預算，本次有 ${skippedLinks} 筆未檢查。**未檢查不等於正常**，這批連結本週沒有被驗證過。`,
+        '',
+        '若連續數週出現，代表 runner 網路品質或站台回應時間惡化，需調整預算或併發數。',
         '',
     );
 }
@@ -303,7 +309,21 @@ await writeFile(REPORT_PATH, lines.join('\n'), 'utf8');
 
 // ---- 回傳結果給 GitHub Actions ----
 if (process.env.GITHUB_OUTPUT) {
-    await appendFile(process.env.GITHUB_OUTPUT, `needs_attention=${needsAttention}\n`);
+    await appendFile(
+        process.env.GITHUB_OUTPUT,
+        `needs_attention=${needsAttention}\ncoverage_complete=${coverageComplete}\n`,
+    );
 }
 
+if (!coverageComplete) {
+    console.log(`→ 連結檢查未完成：${skippedLinks} 筆未檢查（覆蓋不完整，不可視為健康）。`);
+}
 console.log(needsAttention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');
+
+// --strict：供 PR CI 使用，欄位錯誤即讓 job 失敗。
+// 只看 schemaErrors（結構性錯誤，是這次改動造成的），不看 expired／deadLinks——
+// 那兩者取決於外部世界隨時間變化，不該讓無關的 PR 無故變紅。
+if (process.argv.includes('--strict') && schemaErrors.length > 0) {
+    console.error(`\n❌ --strict：發現 ${schemaErrors.length} 項欄位錯誤，請修正 competitions.json。`);
+    process.exit(1);
+}
