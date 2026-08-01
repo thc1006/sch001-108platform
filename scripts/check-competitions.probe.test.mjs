@@ -11,7 +11,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 
-import { probe, isDeadResult, classifyLink, validateUrl, ALLOWED_FORMS } from './check-competitions.lib.mjs';
+import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
 
 let base;
 let server;
@@ -140,4 +140,99 @@ test('合法 https url 不應產生錯誤', () => {
 test('form 只接受三種值', () => {
     assert.deepEqual(ALLOWED_FORMS, ['個人', '團體', '個人/團體']);
     assert.ok(!ALLOWED_FORMS.includes('個人與團隊'));
+});
+
+// ── 年度週期（cycle）──
+
+test('cycle：只知月份時取該月最後一天（保守，不會誤判成已截止）', () => {
+    const today = Date.UTC(2026, 7, 2); // 2026-08-02
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    assert.equal(iso(nextOccurrenceUTC('03', today)), '2027-03-31');
+    assert.equal(iso(nextOccurrenceUTC('12', today)), '2026-12-31');
+});
+
+test('cycle：今年已過就推到明年，未到則用今年', () => {
+    const today = Date.UTC(2026, 7, 2);
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    assert.equal(iso(nextOccurrenceUTC('07-31', today)), '2027-07-31');
+    assert.equal(iso(nextOccurrenceUTC('09-15', today)), '2026-09-15');
+});
+
+test('cycle：當天算「還沒過」', () => {
+    const today = Date.UTC(2026, 7, 2);
+    assert.equal(new Date(nextOccurrenceUTC('08-02', today)).toISOString().slice(0, 10), '2026-08-02');
+});
+
+test('cycle：格式錯誤回 null，不可靜默當成有效', () => {
+    const today = Date.UTC(2026, 7, 2);
+    for (const bad of ['13', '00', '07-32', '7-1', '2026-07-31', '', null, undefined]) {
+        assert.equal(nextOccurrenceUTC(bad, today), null, `${bad} 應為 null`);
+    }
+});
+
+test('cycle：schema 驗證攔下非法值', () => {
+    const cases = [
+        [{ closes: '13-01' }, '月份超界'],
+        [{ opens: '7' }, '未補零'],
+        [{ foo: 1 }, '未知欄位'],
+        [{}, '全空'],
+        ['not-object', '非物件'],
+        [{ note: '  ' }, 'note 空白'],
+    ];
+    for (const [val, why] of cases) {
+        const errs = [];
+        validateCycle(val, '測試', errs);
+        assert.ok(errs.length > 0, `${why} 應被攔下`);
+    }
+});
+
+test('cycle：合法值與未提供都不報錯', () => {
+    for (const ok of [undefined, { closes: '07-31' }, { opens: '01', closes: '07-31' }, { note: '不定期' }]) {
+        const errs = [];
+        validateCycle(ok, '測試', errs);
+        assert.equal(errs.length, 0, `${JSON.stringify(ok)} 不應報錯`);
+    }
+});
+
+test('cycle：不存在的日期必須被攔下（02-30、04-31…）', () => {
+    for (const bad of ['02-30', '02-31', '04-31', '06-31', '09-31', '11-31']) {
+        const errs = [];
+        validateCycle({ closes: bad }, '測試', errs);
+        assert.ok(errs.length > 0, `${bad} 不是實際存在的日期，應被攔下`);
+    }
+    // 02-29 僅閏年存在，仍屬合法設定
+    const errs = [];
+    validateCycle({ closes: '02-29' }, '測試', errs);
+    assert.equal(errs.length, 0, '02-29 應視為合法');
+});
+
+test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    assert.equal(iso(nextOccurrenceUTC('02-29', Date.UTC(2027, 0, 1))), '2027-02-28');
+    assert.equal(iso(nextOccurrenceUTC('02-29', Date.UTC(2028, 0, 1))), '2028-02-29');
+});
+
+// ── 前後端邏輯防漂移 ──
+// nextOccurrenceUTC 在 lib（Node）與 competitions.astro（瀏覽器 is:inline）各有
+// 一份實作——後者無法 import Node 模組。兩份若漂移，頁面與看門狗就會對同一筆
+// 競賽給出不同的「下次截止日」。這個測試把 .astro 裡那份抽出來實際比對。
+test('cycle：頁面與看門狗的推算結果必須完全一致', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const m = src.match(/function nextOccurrenceUTC\(closes, todayUTC\) \{[\s\S]*?\n      \}/);
+    assert.ok(m, '在 competitions.astro 找不到 nextOccurrenceUTC——若已改名請同步更新本測試');
+
+    const browserFn = new Function(`${m[0]}; return nextOccurrenceUTC;`)();
+
+    const days = ['01-01', '02-28', '02-29', '03', '06-30', '07-31', '08', '12-31', '13-01', '02-30', '', 'x'];
+    const bases = [Date.UTC(2026, 7, 2), Date.UTC(2027, 0, 1), Date.UTC(2028, 1, 29), Date.UTC(2026, 11, 31)];
+    for (const c of days) {
+        for (const t of bases) {
+            assert.equal(
+                browserFn(c, t),
+                nextOccurrenceUTC(c, t),
+                `closes=${c} today=${new Date(t).toISOString().slice(0, 10)} 兩份實作結果不一致`,
+            );
+        }
+    }
 });

@@ -35,6 +35,8 @@ import {
     isDeadResult,
     classifyLink,
     validateUrl,
+    validateCycle,
+    nextOccurrenceUTC,
 } from './check-competitions.lib.mjs';
 
 // 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
@@ -97,6 +99,7 @@ const todayUTC = Date.UTC(todayYear, todayMonth - 1, todayDay);
 
 const schemaErrors = [];
 const expired = [];
+const staleCycle = []; // 已截止但有 cycle、且下屆將近——提醒去查本屆確切日期
 const expiringSoon = [];
 
 list.forEach((comp, index) => {
@@ -135,6 +138,7 @@ list.forEach((comp, index) => {
     if (typeof comp.url === 'string' && comp.url !== '') {
         validateUrl(comp.url, label, schemaErrors);
     }
+    validateCycle(comp.cycle, label, schemaErrors);
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」
     if (!('deadline' in comp)) {
@@ -166,11 +170,44 @@ list.forEach((comp, index) => {
 
     const diffDays = Math.ceil((deadlineUTC - todayUTC) / 86_400_000);
     if (diffDays < 0) {
-        expired.push({ label, deadline: comp.deadline });
+        // 已過的截止日若配有 cycle，代表「本屆已結束、下屆時間可推算」——那是有效
+        // 狀態而非過時資料，不再要求維護者把 deadline 清空（清空反而丟掉資訊，也是
+        // #63→#66→#68 反覆出現的原因）。下屆逼近的提醒統一在迴圈後處理。
+        if (!comp.cycle?.closes) expired.push({ label, deadline: comp.deadline });
     } else if (diffDays <= SOON_DAYS) {
         expiringSoon.push({ label, deadline: comp.deadline, diffDays });
     }
 });
+
+// ---- 年度週期：下屆逼近時提醒去查確切日期 ----
+// 必須獨立於 deadline 的處理之外。先前這段寫在「deadline 已過」的分支裡，導致
+// 只有已填過 deadline 的條目會被提醒；但 cycle 的價值正是「沒有確切日期、只知道
+// 大概何時」，19 筆有週期的條目中有 15 筆 deadline 為空，那批永遠不會被提醒——
+// 剛好漏掉最需要提醒的一群。
+for (const comp of list) {
+    if (comp === null || typeof comp !== 'object') continue;
+    const closes = comp.cycle?.closes;
+    if (!closes) continue;
+    const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
+
+    // 已經填了「未來的」確切日期就不必提醒——那正是提醒想要的結果
+    if (typeof comp.deadline === 'string' && DATE_RE.test(comp.deadline)) {
+        const [, y, m, d] = DATE_RE.exec(comp.deadline);
+        if (Date.UTC(Number(y), Number(m) - 1, Number(d)) >= todayUTC) continue;
+    }
+
+    const nextUTC = nextOccurrenceUTC(closes, todayUTC);
+    if (nextUTC === null) continue;
+    const untilNext = Math.ceil((nextUTC - todayUTC) / 86_400_000);
+    if (untilNext <= SOON_DAYS * 2) {
+        staleCycle.push({
+            label,
+            deadline: comp.deadline || '（空）',
+            next: new Date(nextUTC).toISOString().slice(0, 10),
+            untilNext,
+        });
+    }
+}
 
 // ---- 連結健檢 ----
 // 競賽頁是資料驅動的（前端 fetch competitions.json 後才渲染卡片），這些 url
@@ -246,13 +283,15 @@ if (!process.argv.includes('--no-link-check')) {
 // 未檢查完 ≠ 健康。覆蓋不完整也必須提醒，否則「只查了 20 筆、其餘 112 筆沒查」
 // 會和「全部查完都正常」給出一模一樣的綠燈訊號。
 const coverageComplete = skippedLinks === 0;
-const needsAttention = schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0 || !coverageComplete;
+const needsAttention =
+    schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0 || staleCycle.length > 0 || !coverageComplete;
 
 // ---- 主控台摘要 ----
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
 console.log(`  競賽總數：${list.length}`);
 console.log(`  欄位錯誤：${schemaErrors.length}`);
 console.log(`  已過期　：${expired.length}`);
+console.log(`  週期待查：${staleCycle.length}`);
 console.log(`  即將截止：${expiringSoon.length}`);
 console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
@@ -278,6 +317,15 @@ if (expired.length) {
 if (deadLinks.length) {
     lines.push('### 🔗 連結失效（官網已換網域或頁面不存在，請更新 url）', '');
     for (const e of deadLinks) lines.push(`- **${e.label}**　${e.reason}：${e.url}`);
+    lines.push('');
+}
+if (staleCycle.length) {
+    lines.push('### 🔁 下屆將近，請查證本屆確切截止日', '');
+    lines.push('這些競賽有年度週期（cycle），本屆已截止屬正常狀態、不需清空 deadline；', '');
+    lines.push('但下次截止日即將到來，請上官網確認新一屆的確切日期後更新 deadline。', '');
+    for (const e of staleCycle) {
+        lines.push(`- **${e.label}**　目前 deadline ${e.deadline}，依週期推算下次約 ${e.next}（剩 ${e.untilNext} 天）`);
+    }
     lines.push('');
 }
 if (expiringSoon.length) {

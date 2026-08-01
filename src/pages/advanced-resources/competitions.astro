@@ -111,6 +111,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <button class="comp-chip is-active" type="button" data-status="all" aria-pressed="true">全部</button>
             <button class="comp-chip" type="button" data-status="soon" aria-pressed="false"><span class="comp-chip__dot dot-soon"></span>即將截止</button>
             <button class="comp-chip" type="button" data-status="open" aria-pressed="false"><span class="comp-chip__dot dot-open"></span>報名中</button>
+            <button class="comp-chip" type="button" data-status="cycle" aria-pressed="false"><span class="comp-chip__dot dot-cycle"></span>每年固定辦理</button>
             <button class="comp-chip" type="button" data-status="site" aria-pressed="false"><span class="comp-chip__dot dot-site"></span>依官網公告</button>
           </div>
           <div class="comp-countwrap">
@@ -178,27 +179,87 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       // 以 Asia/Taipei 的「日曆日」計算剩餘天數，與看門狗 check-competitions.mjs
       // 一致；不受使用者瀏覽器所在時區影響（境外使用者也會看到台灣時區的狀態）。
-      function getStatus(deadline) {
-        if (!deadline) return { key: 'site', label: '依官網', days: null };
-        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
-        if (!m) return { key: 'site', label: '依官網', days: null };
+      function todayTaipeiUTC() {
         const tp = new Intl.DateTimeFormat('en-CA', {
           timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
         }).format(new Date()).split('-').map(Number);
-        const todayUTC = Date.UTC(tp[0], tp[1] - 1, tp[2]);
-        const dlUTC = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-        const days = Math.round((dlUTC - todayUTC) / 86400000);
-        if (days < 0) return { key: 'closed', label: '已截止', days };
-        if (days <= 30) return { key: 'soon', label: '即將截止', days };
-        return { key: 'open', label: '報名中', days };
+        return Date.UTC(tp[0], tp[1] - 1, tp[2]);
       }
 
-      const STATUS_ORDER = { soon: 0, open: 1, site: 2, closed: 3 };
+      // 依 cycle.closes（MM 或 MM-DD）推算下一次截止日。只知月份時取該月最後一天，
+      // 保守起見不會把還開放的競賽說成已截止。與看門狗 check-competitions.lib.mjs
+      // 的 nextOccurrenceUTC 同一套規則。
+      function nextOccurrenceUTC(closes, todayUTC) {
+        if (typeof closes !== 'string' || !/^(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/.test(closes)) return null;
+        const parts = closes.split('-').map(Number);
+        const mm = parts[0], dd = parts[1];
+        const y = new Date(todayUTC).getUTCFullYear();
+        // dd 未給則取該月最後一天。給了 dd 但該年無此日（例如平年的 02-29）時同樣
+        // 退回該月最後一天，避免 Date 靜默跨月（02-29 → 03-01）。
+        const build = (yy) => {
+          if (!dd) return Date.UTC(yy, mm, 0);
+          const wanted = Date.UTC(yy, mm - 1, dd);
+          return new Date(wanted).getUTCMonth() === mm - 1 ? wanted : Date.UTC(yy, mm, 0);
+        };
+        const thisYear = build(y);
+        return thisYear >= todayUTC ? thisYear : build(y + 1);
+      }
+
+      function fmtUTC(ms) {
+        const d = new Date(ms);
+        return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+      }
+
+      // 狀態判斷。關鍵在 'cycle'：許多競賽每年固定時節舉辦，「本屆已截止」不等於
+      // 資料過時——只要知道週期就能告訴學生下次何時，比一律顯示「依官網公告」有用。
+      function getStatus(c) {
+        const todayUTC = todayTaipeiUTC();
+        const closes = c.cycle && c.cycle.closes;
+        const nextUTC = nextOccurrenceUTC(closes, todayUTC);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c.deadline || '');
+
+        if (m) {
+          const dlUTC = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+          const days = Math.round((dlUTC - todayUTC) / 86400000);
+          if (days >= 0) {
+            return days <= 30
+              ? { key: 'soon', label: '即將截止', days: days }
+              : { key: 'open', label: '報名中', days: days };
+          }
+          // 本屆已截止：有週期就換算下屆，沒有才算真的過時
+          if (nextUTC !== null) {
+            return { key: 'cycle', label: '本屆已截止', days: null, next: fmtUTC(nextUTC), closes: closes };
+          }
+          return { key: 'closed', label: '已截止', days: days };
+        }
+
+        // 沒有確切日期，但知道年度週期
+        if (nextUTC !== null) {
+          return { key: 'cycle', label: '每年固定辦理', days: null, next: fmtUTC(nextUTC), closes: closes };
+        }
+        return { key: 'site', label: '依官網', days: null };
+      }
+
+      // 已知下屆時間的排在「依官網公告」之前——那是更有用的資訊
+      const STATUS_ORDER = { soon: 0, open: 1, cycle: 2, site: 3, closed: 4 };
 
       function statusText(s) {
         if (s.key === 'soon') return s.days <= 0 ? '今日截止' : '即將截止 · 剩 ' + s.days + ' 天';
         if (s.key === 'open') return '報名中 · 剩 ' + s.days + ' 天';
+        if (s.key === 'cycle') return s.label + ' · 下次約 ' + s.next;
         return s.label;
+      }
+
+      // 卡片底部的「報名截止」欄位：有週期時把它講清楚，而不是只寫「依官網公告」
+      function deadlineLabel(c, s) {
+        if (s.key === 'cycle') {
+          const p = s.closes.split('-');
+          const when = p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月';
+          return c.deadline
+            ? '本屆 ' + c.deadline + ' 已截止 · 每年約 ' + when
+            : '每年約 ' + when + '截止';
+        }
+        return c.deadline ? c.deadline : '依官網公告';
       }
 
       function accentFor(cat) {
@@ -213,7 +274,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const meta = [c.region, c.level, c.form]
           .map((x) => '<li class="comp-tag">' + escapeHtml(x) + '</li>')
           .join('');
-        const deadlineText = c.deadline ? escapeHtml(c.deadline) : '依官網公告';
+        const deadlineText = escapeHtml(deadlineLabel(c, s));
         return (
           '<article class="comp-card is-' + s.key + urgent + '" style="--accent:' + accent + ';--i:' + delay + '">' +
             '<span class="comp-card__bar" aria-hidden="true"></span>' +
@@ -348,7 +409,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then((data) => {
           const arr = Array.isArray(data.competitions) ? data.competitions : [];
-          competitions = arr.map((c, idx) => ({ ...c, _idx: idx, _status: getStatus(c.deadline) }));
+          competitions = arr.map((c, idx) => ({ ...c, _idx: idx, _status: getStatus(c) }));
           const updated = document.getElementById('stat-updated');
           if (updated) updated.textContent = data.lastUpdated ? '：' + data.lastUpdated : '';
           updateStats();
@@ -481,6 +542,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .comp-chip__dot { width: .5rem; height: .5rem; border-radius: 999px; }
     .dot-soon { background: #f59e0b; }
     .dot-open { background: #22c55e; }
+    .dot-cycle { background: #6366f1; }
     .dot-site { background: #94a3b8; }
     .comp-chip.is-active .comp-chip__dot { box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
 
@@ -535,6 +597,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
     .is-open .comp-status { background: #dcfce7; color: #15803d; }
     .is-soon .comp-status { background: #fef3c7; color: #b45309; }
+    .is-cycle .comp-status { background: #e0e7ff; color: #4338ca; }
     .is-site .comp-status { background: #eef2f7; color: #475569; }
     .is-closed .comp-status { background: #f1f5f9; color: #475569; }
     .is-urgent .comp-status { background: #fee2e2; color: #b91c1c; }
