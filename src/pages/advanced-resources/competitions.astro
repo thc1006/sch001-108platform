@@ -194,7 +194,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const parts = closes.split('-').map(Number);
         const mm = parts[0], dd = parts[1];
         const y = new Date(todayUTC).getUTCFullYear();
-        const build = (yy) => (dd ? Date.UTC(yy, mm - 1, dd) : Date.UTC(yy, mm, 0));
+        // dd 未給則取該月最後一天。給了 dd 但該年無此日（例如平年的 02-29）時同樣
+        // 退回該月最後一天，避免 Date 靜默跨月（02-29 → 03-01）。
+        const build = (yy) => {
+          if (!dd) return Date.UTC(yy, mm, 0);
+          const wanted = Date.UTC(yy, mm - 1, dd);
+          return new Date(wanted).getUTCMonth() === mm - 1 ? wanted : Date.UTC(yy, mm, 0);
+        };
         const thisYear = build(y);
         return thisYear >= todayUTC ? thisYear : build(y + 1);
       }

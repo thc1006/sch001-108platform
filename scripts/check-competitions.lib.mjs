@@ -117,6 +117,18 @@ export function validateCycle(cycle, label, errors) {
         if (cycle[key] === undefined) continue;
         if (typeof cycle[key] !== 'string' || !CYCLE_MMDD_RE.test(cycle[key])) {
             errors.push(`「${label}」的 cycle.${key}「${cycle[key]}」須為 MM 或 MM-DD`);
+            continue;
+        }
+        // 正規表示式只管 01-12 與 01-31，攔不掉 02-30、04-31 這種不存在的日期。
+        // 沿用 deadline 那套「日期往返檢查」：Date 會把 02-30 正規化成 3 月，
+        // 比對回來就抓得到。不做這關的話，二月的競賽會被算成「下次約 3/2」。
+        const [mm, dd] = cycle[key].split('-').map(Number);
+        if (dd !== undefined) {
+            // 用閏年（2024）驗證，讓 02-29 這種「僅閏年存在」的日期視為合法
+            const probeDate = new Date(Date.UTC(2024, mm - 1, dd));
+            if (probeDate.getUTCMonth() !== mm - 1 || probeDate.getUTCDate() !== dd) {
+                errors.push(`「${label}」的 cycle.${key}「${cycle[key]}」不是實際存在的日期`);
+            }
         }
     }
     if (cycle.note !== undefined && (typeof cycle.note !== 'string' || !cycle.note.trim())) {
@@ -136,7 +148,13 @@ export function nextOccurrenceUTC(closes, todayUTC) {
     if (typeof closes !== 'string' || !CYCLE_MMDD_RE.test(closes)) return null;
     const [mm, dd] = closes.split('-').map(Number);
     const year = new Date(todayUTC).getUTCFullYear();
-    const build = (y) => (dd ? Date.UTC(y, mm - 1, dd) : Date.UTC(y, mm, 0)); // dd 未給則取該月最後一天
+    // dd 未給則取該月最後一天。給了 dd 但該年無此日（例如平年的 02-29）時同樣
+    // 退回該月最後一天，避免 Date 靜默跨月（02-29 → 03-01）。
+    const build = (y) => {
+        if (!dd) return Date.UTC(y, mm, 0);
+        const wanted = Date.UTC(y, mm - 1, dd);
+        return new Date(wanted).getUTCMonth() === mm - 1 ? wanted : Date.UTC(y, mm, 0);
+    };
     const thisYear = build(year);
     return thisYear >= todayUTC ? thisYear : build(year + 1);
 }
