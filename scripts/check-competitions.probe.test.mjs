@@ -193,3 +193,46 @@ test('cycle：合法值與未提供都不報錯', () => {
         assert.equal(errs.length, 0, `${JSON.stringify(ok)} 不應報錯`);
     }
 });
+
+test('cycle：不存在的日期必須被攔下（02-30、04-31…）', () => {
+    for (const bad of ['02-30', '02-31', '04-31', '06-31', '09-31', '11-31']) {
+        const errs = [];
+        validateCycle({ closes: bad }, '測試', errs);
+        assert.ok(errs.length > 0, `${bad} 不是實際存在的日期，應被攔下`);
+    }
+    // 02-29 僅閏年存在，仍屬合法設定
+    const errs = [];
+    validateCycle({ closes: '02-29' }, '測試', errs);
+    assert.equal(errs.length, 0, '02-29 應視為合法');
+});
+
+test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    assert.equal(iso(nextOccurrenceUTC('02-29', Date.UTC(2027, 0, 1))), '2027-02-28');
+    assert.equal(iso(nextOccurrenceUTC('02-29', Date.UTC(2028, 0, 1))), '2028-02-29');
+});
+
+// ── 前後端邏輯防漂移 ──
+// nextOccurrenceUTC 在 lib（Node）與 competitions.astro（瀏覽器 is:inline）各有
+// 一份實作——後者無法 import Node 模組。兩份若漂移，頁面與看門狗就會對同一筆
+// 競賽給出不同的「下次截止日」。這個測試把 .astro 裡那份抽出來實際比對。
+test('cycle：頁面與看門狗的推算結果必須完全一致', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const m = src.match(/function nextOccurrenceUTC\(closes, todayUTC\) \{[\s\S]*?\n      \}/);
+    assert.ok(m, '在 competitions.astro 找不到 nextOccurrenceUTC——若已改名請同步更新本測試');
+
+    const browserFn = new Function(`${m[0]}; return nextOccurrenceUTC;`)();
+
+    const days = ['01-01', '02-28', '02-29', '03', '06-30', '07-31', '08', '12-31', '13-01', '02-30', '', 'x'];
+    const bases = [Date.UTC(2026, 7, 2), Date.UTC(2027, 0, 1), Date.UTC(2028, 1, 29), Date.UTC(2026, 11, 31)];
+    for (const c of days) {
+        for (const t of bases) {
+            assert.equal(
+                browserFn(c, t),
+                nextOccurrenceUTC(c, t),
+                `closes=${c} today=${new Date(t).toISOString().slice(0, 10)} 兩份實作結果不一致`,
+            );
+        }
+    }
+});
