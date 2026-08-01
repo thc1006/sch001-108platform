@@ -14,7 +14,8 @@
     "test:puter-ai": "playwright test tests/e2e/puter-ai.spec.js",
     "test:puter-ai:ui": "playwright test tests/e2e/puter-ai.spec.js --ui",
     "test:puter-ai:headed": "playwright test tests/e2e/puter-ai.spec.js --headed",
-    "serve": "python -m http.server 8000"
+    "serve": "python -m http.server 8000",
+    "audit:consistency": "node scripts/audit-competition-consistency.mjs"
   },
   "keywords": [],
   "author": "",

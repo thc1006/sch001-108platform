@@ -296,7 +296,7 @@
       "form": "個人",
       "region": "東亞",
       "eligibility": "國家隊選拔",
-      "mode": "線上",
+      "mode": "實體",
       "deadline": "",
       "url": "https://apmo-official.org/",
       "description": "亞太地區函授制數學競賽，由各國於本國同步舉辦並寄回評分。台灣由國手培訓隊參加，每年 3 月舉行。"
@@ -322,7 +322,7 @@
       "form": "個人",
       "region": "東亞",
       "eligibility": "國家隊選拔",
-      "mode": "線上",
+      "mode": "混合",
       "deadline": "",
       "url": "https://tpmso.org/toi/",
       "description": "亞太地區線上同步舉辦的中學生程式競賽，各國於本地考場應試，每年 5 月舉行。台灣不開放個人報名，由資訊奧林匹亞（TOI）選訓隊代表參加，相關公告見資奧辦公室網站。"
@@ -767,7 +767,7 @@
       "mode": "混合",
       "deadline": "",
       "url": "https://diamondchallenge.org/",
-      "description": "德拉瓦大學主辦的全球高中創業競賽，分商業概念與社會創新兩組，須有成年顧問。台灣學生可報名；2025–26 屆已於 1 月截止，下屆預計 9 月開放。"
+      "description": "德拉瓦大學主辦的全球高中創業競賽，分商業概念與社會創新兩組，須有成年顧問。台灣學生可組隊報名；賽季約每年 9 月開放、次年 1 月截交提案，決賽於春季舉行，確切時程依官網年度公告。"
     },
     {
       "title": "Conrad Challenge",
@@ -1101,7 +1101,7 @@
       "level": "國際",
       "form": "個人",
       "region": "東亞",
-      "eligibility": "公開報名",
+      "eligibility": "邀請制",
       "mode": "實體",
       "deadline": "",
       "url": "https://steamahead.simcc.org/ijmo/",
@@ -1154,7 +1154,7 @@
       "form": "團體",
       "region": "台灣",
       "eligibility": "公開報名",
-      "mode": "線上",
+      "mode": "混合",
       "deadline": "",
       "url": "https://sciexplore.colife.org.tw/",
       "description": "全國性科普探究競賽，分國小、國中、普高、技高、大專社會及教師組。普高與技高組每隊 2–4 人（需指導教師），作品為 6 頁內探究報告加 3–5 分鐘影片，線上投件免費；初賽線上評比，前 6 名進決賽現場簡報。"
