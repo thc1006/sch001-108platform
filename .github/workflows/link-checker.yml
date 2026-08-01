@@ -73,7 +73,11 @@ jobs:
       - name: Build Astro site
         run: npx astro build
 
-      - uses: lycheeverse/lychee-action@v1
+      # v1 預設「發現壞連結也不讓 job 失敗」，等於這個檢查一直是裝飾性的；
+      # v2 起預設 fail=true，此處刻意不覆寫，讓 HTML 連結的檢查真正具備把關能力。
+      # 若日後因外部站台暫時性故障而頻繁誤擋，再評估改用 --accept 放寬狀態碼，
+      # 而不是整個關掉失敗行為。
+      - uses: lycheeverse/lychee-action@v2
         with:
           # 掃描 astro build 產物 dist/ 內的 .html。內部 /sch001-108platform/ 連結
           # 由 Astro 建置與遷移稽核保證,且 lychee 對 base 前綴的根相對路徑無法
