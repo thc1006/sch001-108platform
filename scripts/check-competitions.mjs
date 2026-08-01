@@ -162,6 +162,11 @@ list.forEach((comp, index) => {
 const DEAD_STATUSES = new Set([404, 410]);
 const LINK_TIMEOUT_MS = 20_000;
 const LINK_CONCURRENCY = 4; // 部分官網（如 tpmso.org）併發過高會回 5xx
+// 全域時間預算。最壞情況（全部逾時）為 筆數/併發數 × (HEAD+GET) ≈ 22 分鐘，會超過
+// workflow 的 step timeout；一旦被砍，needs_attention 就不會寫進 GITHUB_OUTPUT，
+// 連「截止日過期」都不會開 issue。故超出預算即停止檢查、把剩餘筆數列為未檢查，
+// 確保腳本一定跑完並產出報告。
+const LINK_BUDGET_MS = 8 * 60_000;
 // 目的是「重現學生用瀏覽器點下去的結果」。不少競賽官網（Kaggle、tpmso.org 等）
 // 對非瀏覽器 UA 直接回 404/500，用一般爬蟲 UA 會產生大量誤判，故沿用瀏覽器 UA。
 const UA =
@@ -199,17 +204,21 @@ const isDeadResult = (r) => r.code === 'ENOTFOUND' || DEAD_STATUSES.has(r.status
 
 const deadLinks = [];
 const unverifiedLinks = [];
+let skippedLinks = 0;
 
 if (!process.argv.includes('--no-link-check')) {
     const targets = list
         .map((comp, index) => ({ comp, index }))
         .filter(({ comp }) => comp && typeof comp.url === 'string' && /^https?:\/\//i.test(comp.url));
 
+    const budgetEnd = Date.now() + LINK_BUDGET_MS;
+    const outOfBudget = () => Date.now() >= budgetEnd;
+
     let cursor = 0;
     const results = new Array(targets.length);
     await Promise.all(
         Array.from({ length: Math.min(LINK_CONCURRENCY, targets.length) }, async () => {
-            while (cursor < targets.length) {
+            while (cursor < targets.length && !outOfBudget()) {
                 const slot = cursor++;
                 results[slot] = await probe(targets[slot].comp.url);
             }
@@ -220,8 +229,12 @@ if (!process.argv.includes('--no-link-check')) {
         const { comp, index } = targets[i];
         const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : `第 ${index + 1} 筆`;
         let result = results[i];
-        // 判定為失效前再單獨重試一次，濾掉併發造成的暫時性錯誤
-        if (isDeadResult(result)) result = await probe(comp.url);
+        if (!result) {
+            skippedLinks++; // 預算用盡，這筆沒檢查到
+            continue;
+        }
+        // 判定為失效前再單獨重試一次，濾掉併發造成的暫時性錯誤；預算用盡則直接沿用首次結果
+        if (isDeadResult(result) && !outOfBudget()) result = await probe(comp.url);
 
         if (isDeadResult(result)) {
             deadLinks.push({ label, url: comp.url, reason: result.code === 'ENOTFOUND' ? '網域無法解析' : `HTTP ${result.status}` });
@@ -241,6 +254,7 @@ console.log(`  已過期　：${expired.length}`);
 console.log(`  即將截止：${expiringSoon.length}`);
 console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
+if (skippedLinks) console.log(`  未檢查　：${skippedLinks}（連線檢查逾時間預算）`);
 
 // ---- Markdown 報告（供 workflow 開 issue 用）----
 const lines = ['## 競賽資料檢查報告', ''];
@@ -269,12 +283,19 @@ if (expiringSoon.length) {
     for (const e of expiringSoon) lines.push(`- ${e.label}　截止日 ${e.deadline}（剩 ${e.diffDays} 天）`);
     lines.push('');
 }
+if (skippedLinks) {
+    lines.push(
+        `> ⏱️ 連線檢查逾 ${LINK_BUDGET_MS / 60_000} 分鐘預算，本次有 ${skippedLinks} 筆未檢查（未檢查 ≠ 正常）。`,
+        '',
+    );
+}
 if (unverifiedLinks.length) {
     lines.push('<details><summary>ℹ️ 連線無法判定的連結（多為防爬機制，通常瀏覽器仍可開啟，不需處理）</summary>', '');
     for (const e of unverifiedLinks) lines.push(`- ${e.label}　${e.reason}：${e.url}`);
     lines.push('', '</details>', '');
 }
-if (!needsAttention && !expiringSoon.length) {
+// 有未檢查的連結時不能報「一切正常」——那只代表沒查完，不代表沒問題。
+if (!needsAttention && !expiringSoon.length && !skippedLinks) {
     lines.push('✅ 一切正常，沒有過期、欄位錯誤或連結失效。', '');
 }
 

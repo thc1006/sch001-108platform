@@ -752,9 +752,9 @@
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "",
+      "deadline": "2026-10-14",
       "url": "https://www.casecomp.org/",
-      "description": "由哈佛校報主辦的全球高中生商業個案競賽，全程線上、1–4 人一隊，開放 13–18 歲學生。台灣學生可自行組隊報名，全球決賽約每年 6 月底舉行，報名時程依官網公告。"
+      "description": "由哈佛校報與 Crimson Education 合辦的全球高中生商業個案競賽，全程線上、1–4 人一隊，開放 13–18 歲學生。2026 屆報名 7/14–10/14，10 月下旬至 11 月初區域賽，全球決賽 11 月中、12/1 公布結果。"
     },
     {
       "title": "Diamond Challenge 創業競賽",
@@ -1117,8 +1117,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://language.moe.gov.tw/",
-      "description": "台灣規模最大的語文競賽，含演說、朗讀、作文、字音字形與本土語言等項目。經校內及縣市初賽選拔進入全國賽，報名時程依各縣市公告；每年另有年度專屬網站（如 language115.eduweb.tw）。"
+      "url": "https://language115.eduweb.tw/",
+      "description": "台灣規模最大的語文競賽，含演說、朗讀、作文、字音字形與本土語言等項目，經校內及縣市初賽選拔進入全國賽。官網逐年更換（格式為 language{民國年}.eduweb.tw），歷年成果另見教育部語文成果入口網 language.moe.gov.tw。"
     },
     {
       "title": "全國高級中等學校小論文寫作比賽",
@@ -1170,7 +1170,7 @@
       "mode": "線上",
       "deadline": "",
       "url": "https://opho.physoly.org/",
-      "description": "學生社群發起的全程線上物理競賽，1–3 人一隊。台灣學生可免費組隊報名，是 IPhO 之外的線上練兵管道；2026 屆於 8 月 21–23 日舉行，時程依官網公告。"
+      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名，是 IPhO 之外的線上練兵管道；2026 屆於 8 月 21–23 日舉行。"
     },
     {
       "title": "美國數學競賽 (AMC 10/12)",
@@ -1274,7 +1274,7 @@
       "mode": "線上",
       "deadline": "",
       "url": "https://intchc.org/",
-      "description": "全程線上、監考制的國際化學競賽，依年級分 Junior、Youth、Senior 三組，題型貼近化學奧林匹亞。台灣學生可報名，作為 IChO 之外的練習管道，考試期約每年 5 月。"
+      "description": "全程線上、監考制的國際化學競賽，依年級分 Junior、Youth、Senior 三組，題型貼近化學奧林匹亞。資格賽免費（約每年 3 月截止），晉級複賽需繳約 12 歐元報名費（設有經濟弱勢補助），決賽約每年 6 月。"
     },
     {
       "title": "美國國家經濟學挑戰賽 (National Economics Challenge)",
@@ -1473,7 +1473,7 @@
     },
     {
       "title": "全國學生舞蹈比賽",
-      "organizer": "教育部／國立臺灣師範大學",
+      "organizer": "教育部／臺灣師範大學體育研究與發展中心",
       "category": "藝術設計",
       "level": "全國",
       "form": "個人/團體",
@@ -1509,19 +1509,6 @@
       "deadline": "",
       "url": "https://www.hmunchina.org/",
       "description": "哈佛主辦、於中國舉行的高中模擬聯合國會議。台灣學生可報名，惟會議地點在中國，赴中參與請留意兩岸往來規定與簽證安排。"
-    },
-    {
-      "title": "iF 設計新秀獎 (iF Design Student Award)",
-      "organizer": "iF International Forum Design",
-      "category": "藝術設計",
-      "level": "國際",
-      "form": "個人/團體",
-      "region": "歐盟",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://ifdesign.com/en/if-design-student-award",
-      "description": "德國 iF 設計獎旗下的學生競賽，作品須呼應聯合國永續發展目標（SDGs 1–15）。免費投件、獎金共 5 萬歐元，惟參賽資格以大專院校在學生及畢業 2 年內者為主，高中生請先確認官網資格規定。"
     },
     {
       "title": "Spaghetti 結構橋梁設計競賽 (台灣區)",
@@ -1681,7 +1668,7 @@
     },
     {
       "title": "IOAI 臺灣代表隊選拔 (TOAI)",
-      "organizer": "教育部委託辦理／IOAI 臺灣代表隊選拔工作小組",
+      "organizer": "國立中央大學（教育部指導）",
       "category": "資訊",
       "level": "全國",
       "form": "個人",
@@ -1690,7 +1677,7 @@
       "mode": "混合",
       "deadline": "",
       "url": "https://ioaitw.github.io/",
-      "description": "國際人工智慧奧林匹亞（IOAI）臺灣代表隊的選拔管道，開放全國高級中等學校在學學生報名，含全國能力測驗與實體培訓營。2026 屆報名已於 6 月底截止，下屆時程依官網公告。"
+      "description": "國際人工智慧奧林匹亞（IOAI）臺灣代表隊的公開遴選管道，由中央大學主辦、朝陽科技大學協辦，開放全國高中職在學學生報名，含全國能力測驗與實體培訓營。2026 屆報名已於 6 月底截止，下屆時程依官網公告。"
     },
     {
       "title": "Taiwan Brain Bee 腦科學競賽",
@@ -1703,7 +1690,7 @@
       "mode": "實體",
       "deadline": "",
       "url": "https://www.taiwanbrainbee.com/",
-      "description": "源自美國的國際腦科學知識競賽台灣區賽事，分國中組與高中組，於台北、新竹、台中、高雄、花蓮等考區辦理初試。冠軍可代表我國參加 International Brain Bee，適合對神經科學與醫學有興趣的學生，賽期約每年 5–6 月。"
+      "description": "源自美國的國際腦科學知識競賽台灣區賽事，分國中組與高中組（高中組需未滿 19 歲），於學生就學城市設考場（台北、新竹、台中、高雄、花蓮及離島等）。屬付費報名活動，設有弱勢與偏遠地區補助；冠軍由主辦方推薦參加 International Brain Bee，賽期約每年 5–6 月。"
     },
     {
       "title": "育秀盃創意獎—高中職 AI 競賽",
@@ -1733,7 +1720,7 @@
     },
     {
       "title": "國際科學奧林匹亞—臺灣代表隊選訓",
-      "organizer": "教育部國教署／臺灣師範大學科學教育中心",
+      "organizer": "教育部委託臺灣師範大學各科奧林匹亞辦公室",
       "category": "科學",
       "level": "全國",
       "form": "個人",
@@ -1741,8 +1728,8 @@
       "eligibility": "國家隊選拔",
       "mode": "混合",
       "deadline": "",
-      "url": "https://tpmso.org/",
-      "description": "物理（IPhO／APhO）、生物（IBO）、地球科學（IESO）等國際科學奧林匹亞的臺灣選訓入口，含全國初選、選訓決賽營與國手培訓。初選多於每年 1 月前後辦理，各科時程與簡章依所屬辦公室公告。"
+      "url": "https://tpmso.org/ipho/",
+      "description": "物理奧林匹亞（IPhO／APhO）臺灣選訓辦公室網站，含全國初選、選訓決賽營與國手培訓時程。頁內「各科資訊」可跳轉至數學、資訊、生物、化學、地球科學及國中科學奧林匹亞等各科選訓辦公室，是查詢各科國手選拔的統一入口。"
     }
   ]
 }
