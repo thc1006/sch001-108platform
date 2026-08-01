@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
           cache: 'npm'
@@ -34,14 +34,34 @@ jobs:
       # search-index.json 現在輸出在 dist/ 內、隨 deploy.yml 一起部署，
       # 故不再需要回寫 repo 根目錄、也不再開 PR 更新索引。
 
+  # 競賽頁是資料驅動的，lychee 掃 dist/*.html 看不到 competitions.json 裡的欄位與
+  # 網址，故在 PR 階段另跑看門狗的 schema 驗證與探測邏輯單元測試。兩者都不連外網：
+  # schema 驗證用 --no-link-check，單元測試打本機 http server，不會因站台狀態而飄。
+  validate-data:
+    name: Validate Data & Watchdog Logic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+
+      - name: Validate competition data (schema only)
+        run: npm run check:competitions
+
+      - name: Run watchdog probe/schema unit tests
+        run: npm run test:watchdog
+
   link-check:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
           cache: 'npm'

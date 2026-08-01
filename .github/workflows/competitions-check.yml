@@ -1,7 +1,9 @@
 name: Competitions Data Check
 
 # 競賽資料看門狗：每週檢查 advanced-resources/competitions.json，
-# 若有競賽報名截止日過期或欄位錯誤，自動開 / 更新一個 issue 提醒維護者。
+# 若有競賽報名截止日過期、欄位錯誤或官網連結失效，自動開 / 更新一個 issue
+# 提醒維護者。連結檢查會實際連線各競賽官網（競賽頁是資料驅動的，這些 url
+# 不會進到 build 產物，link-checker.yml 的 lychee 掃不到），故本 job 需連外網路。
 # 本 workflow 只讀取資料、不修改檔案，不會產生 commit 或 PR。
 
 on:
@@ -19,16 +21,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
 
       - name: Run competition data watchdog
         id: check
+        timeout-minutes: 15
         run: node scripts/check-competitions.mjs
+
+      # 沒有待辦項目時不會開 issue，報告內容原本無處可見（連「無法判定」清單也看不到）。
+      # 一律貼到 job summary，讓每週的檢查結果在 Actions 頁面直接可讀。
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          if [ -f competition-report.md ]; then
+            cat competition-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '看門狗未產出報告（competition-report.md 不存在）。' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Open or update issue when attention is needed
         # always() 確保即使 check 步驟以致命錯誤結束（exit 1），只要看門狗已

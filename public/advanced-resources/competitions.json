@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「公開報名且已查到確切日期」才填，國家隊選拔制／邀請制／僅知月份者一律留空字串（頁面會顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
-  "lastUpdated": "2026-07-02",
+  "lastUpdated": "2026-08-02",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -64,8 +64,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://youthambassadors.mofa.gov.tw/",
-      "description": "以英語為工具探討國際議題，培養青年的國際視野與英語演說能力。2026 年報名預計於 9 月開放，確切時程請見官網。"
+      "url": "https://youthtaiwan.mofa.gov.tw/",
+      "description": "以英語為工具探討國際議題，培養青年的國際視野與英語演說能力。限高中一、二年級及五專一至三年級，須具 CEFR B1 以上英檢證明；報名約每年 9 月開放，確切時程請見外交部青年學員網站。"
     },
     {
       "title": "台灣國際學生創意設計大賽 (TISDC)",
@@ -76,9 +76,9 @@
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "混合",
-      "deadline": "2026-07-06",
+      "deadline": "",
       "url": "https://www.tisdc.org/",
-      "description": "全球規模最大的學生設計競賽之一，分產品、視覺、數位等類別。2026 年主題「韌性」，收件至 2026-07-06。"
+      "description": "全球規模最大的學生設計競賽之一，分產品、視覺、數位動畫、建築與景觀、時尚等類別。2026 年主題「韌性」，收件已於 07-15（延長收件）截止；下一屆約每年 4 月開放報名，時程依官網公告。"
     },
     {
       "title": "全國學生美術比賽",
@@ -246,7 +246,7 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://iolinguistics.org/",
+      "url": "https://ioling.org/",
       "description": "以邏輯推理破解陌生語言的中學生競賽，台灣經選拔賽組隊。2026 年於羅馬尼亞舉行（預計 7–8 月）。"
     },
     {
@@ -296,7 +296,7 @@
       "form": "個人",
       "region": "東亞",
       "eligibility": "國家隊選拔",
-      "mode": "線上",
+      "mode": "實體",
       "deadline": "",
       "url": "https://apmo-official.org/",
       "description": "亞太地區函授制數學競賽，由各國於本國同步舉辦並寄回評分。台灣由國手培訓隊參加，每年 3 月舉行。"
@@ -322,10 +322,10 @@
       "form": "個人",
       "region": "東亞",
       "eligibility": "國家隊選拔",
-      "mode": "線上",
+      "mode": "實體",
       "deadline": "",
-      "url": "https://apio.olympiad.org.au/",
-      "description": "亞太地區線上同步舉辦的中學生程式競賽，各國於本地考場應試。台灣由資奧培訓隊參加，每年 5 月舉行。"
+      "url": "https://tpmso.org/toi/",
+      "description": "亞太地區同步舉行的中學生程式競賽，各國於本地監考考場實體應試（如香港設於城市大學），每年 5 月舉行。台灣不開放個人報名，由資訊奧林匹亞（TOI）選訓隊代表參加，相關公告見資奧辦公室網站。"
     },
     {
       "title": "歐洲女子數學奧林匹亞 (EGMO)",
@@ -377,7 +377,7 @@
       "mode": "實體",
       "deadline": "",
       "url": "https://eucys.eu/",
-      "description": "歐盟主辦的頂級青年科研競賽，主要對歐盟會員國開放。台灣高中生通常以受邀觀摩或合作國身分參與，2026 年於德國舉行。"
+      "description": "歐盟主辦的頂級青年科研競賽，開放 14–20 歲、以歐盟會員國及聯繫國選拔隊為主。台灣高中生無法直接報名，多經 ISEF 特別獎受邀觀摩；2026 年第 37 屆於 9 月 22–27 日在德國基爾舉行。"
     },
     {
       "title": "倫敦國際青年科學論壇 (LIYSF)",
@@ -471,19 +471,6 @@
       "description": "歐洲區環境科學團隊競賽，主要對歐洲國家開放。台灣高中生通常不符正式參賽資格，僅列作環境類競賽參考。"
     },
     {
-      "title": "國際大都會奧林匹亞 (IOM)",
-      "organizer": "International Olympiad of Metropolises",
-      "category": "跨領域",
-      "level": "國際",
-      "form": "團體",
-      "region": "其他",
-      "eligibility": "邀請制",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://educationcontest.org/en/",
-      "description": "以城市代表隊形式舉行的跨科目競賽，由莫斯科市政府主辦。台灣城市非受邀對象，且地點位於俄羅斯，赴賽風險高，僅列作參考。"
-    },
-    {
       "title": "Codeforces 程式競賽",
       "organizer": "Codeforces",
       "category": "資訊",
@@ -571,7 +558,7 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://cemc.uwaterloo.ca/contests/ccc.html",
+      "url": "https://cemc.uwaterloo.ca/contests/ccc",
       "description": "滑鐵盧大學主辦的程式競賽，分初級與高級組。台灣學生須透過認證考場（如合作學校或補習機構）監考應試，每年 2 月舉行。"
     },
     {
@@ -615,16 +602,16 @@
     },
     {
       "title": "My First CTF",
-      "organizer": "台灣資安社群",
+      "organizer": "教育部資安人才培育計畫 AIS3",
       "category": "資訊",
       "level": "全國",
-      "form": "個人/團體",
+      "form": "個人",
       "region": "台灣",
       "eligibility": "公開報名",
-      "mode": "線上",
+      "mode": "實體",
       "deadline": "",
-      "url": "https://myfirst.ctf.tw/",
-      "description": "專為資安初學者設計的台灣中文 CTF 競賽，題目友善並附解說。免費報名，是台灣高中生接觸資安實戰的入門賽事。"
+      "url": "https://ais3.org/mfctf/",
+      "description": "專為資安初學者設計的台灣中文 CTF 競賽，題目友善並附解說，與 AIS3 Pre-exam 合併辦理。一律以個人為單位報名、名額約 80 名正取，於陽明交通大學實體舉行並須自備電腦。"
     },
     {
       "title": "HITCON CTF",
@@ -675,7 +662,7 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://zindi.africa/competitions",
+      "url": "https://zindi.world/competitions",
       "description": "聚焦非洲與新興市場議題的資料科學競賽平台。免費註冊即可參加，是接觸跨國 AI 應用題材的管道。"
     },
     {
@@ -727,21 +714,21 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://www.comap.com/highschool/contests/",
+      "url": "https://www.comap.com/contests/himcm-midmcm",
       "description": "美國 COMAP 主辦的高中數學建模競賽，作品線上提交。須有指導老師（advisor）帶隊報名，台灣學生可參加，每年約 11 月舉行。"
     },
     {
-      "title": "USACO 模擬訓練：USAII AI 黑客松",
+      "title": "USAII 全球 AI 黑客松 (Global AI Hackathon)",
       "organizer": "United States Artificial Intelligence Institute",
       "category": "資訊",
       "level": "國際",
-      "form": "個人/團體",
+      "form": "團體",
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://www.usaii.org/",
-      "description": "聚焦人工智慧主題的線上黑客松，鼓勵學生開發 AI 應用原型。報名與時程依官網場次公告，適合對 AI 實作有興趣的學生。"
+      "url": "https://aihackathon.usaii.org/",
+      "description": "全程線上的全球學生 AI 黑客松，設高中組（9–12 年級）與大專組。可先以個人身分註冊尋找隊友，但正式參賽須組成 2–5 人團隊；主辦方為商業性 AI 認證機構，報名免費但相關課程為付費服務，請自行評估。"
     },
     {
       "title": "Major League Hacking (MLH) 黑客松賽季",
@@ -753,7 +740,7 @@
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
-      "url": "https://mlh.io/",
+      "url": "https://www.mlh.com/",
       "description": "全球最大的學生黑客松聯盟，全年舉辦數百場線上與實體活動。多數活動免費，台灣學生可參加線上場次，依各活動頁面報名。"
     },
     {
@@ -765,9 +752,9 @@
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "",
-      "url": "https://www.thecrimsoncompetitions.org/",
-      "description": "由哈佛校報主辦的全球高中生商業個案競賽，採線上多輪賽制。台灣學生可組隊報名，報名與時程依官網年度公告。"
+      "deadline": "2026-10-14",
+      "url": "https://www.casecomp.org/",
+      "description": "由哈佛校報與 Crimson Education 合辦的全球高中生商業個案競賽，全程線上，開放 13–18 歲學生，每隊須 2–4 人（不接受單人參賽）。2026 屆報名 7/14–10/14，10 月下旬至 11 月初區域賽，全球決賽 11 月中、12/1 公布結果。"
     },
     {
       "title": "Diamond Challenge 創業競賽",
@@ -780,7 +767,7 @@
       "mode": "混合",
       "deadline": "",
       "url": "https://diamondchallenge.org/",
-      "description": "德拉瓦大學主辦的全球高中創業競賽，分商業概念與社會創新兩組，須有成年顧問。台灣學生可報名；2025–26 屆已於 1 月截止，下屆預計 9 月開放。"
+      "description": "德拉瓦大學主辦的全球高中創業競賽，分商業概念與社會創新兩組，須有成年顧問。台灣學生可組隊報名；賽季約每年 9 月開放、次年 1 月截交提案，決賽於春季舉行，確切時程依官網年度公告。"
     },
     {
       "title": "Conrad Challenge",
@@ -793,7 +780,7 @@
       "mode": "混合",
       "deadline": "",
       "url": "https://www.conradchallenge.org/",
-      "description": "結合科學、創新與創業的全球高中團隊競賽，鼓勵以科技解決真實問題。台灣學生可報名；2025–26 屆創新階段已於 1 月截止，下屆預計 8 月啟動。"
+      "description": "結合科學、創新與創業的全球高中團隊競賽，開放 13–18 歲學生，鼓勵以科技解決真實問題。台灣學生可報名；賽季約每年 8 月啟動、10 月底完成註冊，創新成果發表會於次年 4 月在休士頓太空中心舉行。"
     },
     {
       "title": "Blue Ocean 學生創業競賽",
@@ -831,7 +818,7 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://ecolymp.org/",
+      "url": "https://ieo-official.org/",
       "description": "中學生經濟學、金融素養與商業個案綜合競賽。台灣經選拔賽組隊參加，舉辦地點每年不同，赴賽請評估當地情勢。"
     },
     {
@@ -896,8 +883,8 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://www.thewha.org/awards/world-historian-student-essay-competition/",
-      "description": "世界歷史學會主辦的中學生歷史論文獎，鼓勵以全球視野探討歷史與自身連結。台灣學生可投稿，截止日通常為每年 5 月。"
+      "url": "https://www.thewha.org/",
+      "description": "世界歷史學會主辦的中學生歷史論文獎，開放 K–12 學生免費投稿（約 1000 字），鼓勵以全球視野連結家族、地方史與世界史。台灣學生可投稿，首獎 500 美元，截止日通常為每年 5 月 1 日。"
     },
     {
       "title": "Foyle 年度青年詩人獎",
@@ -908,9 +895,9 @@
       "region": "英國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-07-31",
+      "deadline": "",
       "url": "https://foyleyoungpoets.org/",
-      "description": "英國詩社主辦的國際青年詩歌獎，開放 11–17 歲學生。台灣學生可免費投稿（國際組限投一首），2026 年截止 07-31，嚴禁使用生成式 AI 創作。"
+      "description": "英國詩社主辦的國際青年詩歌獎，開放 11–17 歲學生免費投稿。固定每年約 1 月開放、7 月 31 日截止，得獎名單於同年秋季公布；2026 屆已截止，下屆時程依官網公告。嚴禁使用生成式 AI 創作。"
     },
     {
       "title": "ESU 國際公眾演說競賽",
@@ -922,8 +909,8 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.esu.org/our-work/public-speaking/",
-      "description": "英語聯盟主辦的國際公眾演說競賽，匯聚各國中學生代表。台灣須先經國內選拔賽產生代表，決賽於倫敦舉行。"
+      "url": "https://www.esu.org/ipsc/",
+      "description": "英語聯盟主辦的國際公眾演說競賽，開放 16–20 歲學生，匯聚各國中學生代表。台灣須先經國內選拔賽產生代表，初選報名約每年 11 月截止，決賽 7 月於倫敦舉行。"
     },
     {
       "title": "世界中學生辯論錦標賽 (WSDC)",
@@ -936,7 +923,7 @@
       "mode": "實體",
       "deadline": "",
       "url": "https://wsdcdebating.org/",
-      "description": "世界最高層級的中學生英語辯論賽。台灣須經國內選拔產生代表隊，2026 年於肯亞舉行，赴賽請留意當地簽證與安全資訊。"
+      "description": "世界最高層級的中學生英語辯論賽。台灣須經國內選拔產生代表隊；2026 年賽事已於 7 月在肯亞奈洛比舉行，下屆主辦地依官網公告，赴賽請留意當地簽證與安全資訊。"
     },
     {
       "title": "哈佛模擬聯合國 (HMUN)",
@@ -1013,7 +1000,7 @@
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
-      "url": "https://tsl-education.org/",
+      "url": "https://trustforsustainableliving.org/",
       "description": "英國永續生活信託主辦的國際學生永續議題論文與辯論競賽。台灣學生可投稿，截止與辯論時程依官網年度主題公告。"
     },
     {
@@ -1078,7 +1065,7 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ihbbasia.com/",
+      "url": "https://iacompetitionsasia.com/",
       "description": "以英語進行的搶答式國際歷史競賽，設有個人賽與團體賽。台灣學生可報名亞洲區賽事，時程與地點依官網年度公告。"
     },
     {
@@ -1109,16 +1096,16 @@
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
-      "organizer": "SEAMO（東南亞數學奧林匹亞）",
+      "organizer": "SIMCC（新加坡國際數學競賽中心）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
       "region": "東亞",
-      "eligibility": "公開報名",
+      "eligibility": "邀請制",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.seamo-official.org/ijmo",
-      "description": "SEAMO 體系下的國際晉級賽，由各區優異者受邀參加。屬商業性質公開競賽，台灣學生可經在地代辦報名，舉辦地點每年不同。"
+      "url": "https://steamahead.simcc.org/ijmo/",
+      "description": "SIMCC 體系下的國際晉級賽，須先於 SASMO、AMO、SIMOC 等賽事取得金／銀獎才會受邀。屬商業性質競賽，台灣學生可經在地代辦報名，舉辦地點每年不同。"
     },
     {
       "title": "全國語文競賽",
@@ -1130,8 +1117,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://ntct.k12ea.gov.tw/",
-      "description": "台灣規模最大的語文競賽，含演說、朗讀、作文、字音字形與本土語言等項目。經校內及縣市初賽選拔進入全國賽，報名時程依各縣市公告。"
+      "url": "https://language115.eduweb.tw/",
+      "description": "台灣規模最大的語文競賽，含演說、朗讀、作文、字音字形與本土語言等項目，經校內及縣市初賽選拔進入全國賽。官網逐年更換（格式為 language{民國年}.eduweb.tw），歷年成果另見教育部語文成果入口網 language.moe.gov.tw。"
     },
     {
       "title": "全國高級中等學校小論文寫作比賽",
@@ -1161,19 +1148,19 @@
     },
     {
       "title": "全國中小學科學探究競賽—這樣教我就懂",
-      "organizer": "國立臺灣科學教育館",
+      "organizer": "高師大、國網中心與五大科學博物館聯合主辦",
       "category": "科學",
       "level": "全國",
-      "form": "個人/團體",
+      "form": "團體",
       "region": "台灣",
       "eligibility": "公開報名",
-      "mode": "線上",
+      "mode": "混合",
       "deadline": "",
-      "url": "https://www.ntsec.gov.tw/",
-      "description": "以科學影片創作為主的全國競賽，鼓勵學生用淺顯方式講解科學概念。線上投件，報名與截止時程依官網年度公告。"
+      "url": "https://sciexplore.colife.org.tw/",
+      "description": "全國性科普探究競賽，分國小、國中、普高、技高、大專社會及教師組。普高與技高組每隊 2–4 人（需指導教師），作品為 6 頁內探究報告加 3–5 分鐘影片，線上投件免費；初賽線上評比，前 6 名進決賽現場簡報。"
     },
     {
-      "title": "國際物理奧林匹亞線上模擬賽 (Online Physics Olympiad)",
+      "title": "線上物理奧林匹亞 (OPhO)",
       "organizer": "Online Physics Olympiad",
       "category": "數理",
       "level": "國際",
@@ -1182,8 +1169,8 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://www.physicsbrawl.org/",
-      "description": "由學生社群發起的全程線上物理競賽，分初賽與決賽。台灣學生可免費組隊報名，是 IPhO 之外的線上練兵管道，時程依官網公告。"
+      "url": "https://opho.physoly.org/",
+      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名，是 IPhO 之外的線上練兵管道；2026 屆於 8 月 21–23 日舉行。"
     },
     {
       "title": "美國數學競賽 (AMC 10/12)",
@@ -1277,8 +1264,8 @@
       "description": "結合機器人組裝、程式與任務挑戰的國際競賽，每年設不同主題。台灣有全國賽選拔晉級國際賽，報名時程依在地承辦單位公告。"
     },
     {
-      "title": "國際科學奧林匹亞線上化學賽 (IChO 模擬：IrChO/線上化學競賽)",
-      "organizer": "International Online Chemistry Competitions",
+      "title": "國際化學競賽 (IChC)",
+      "organizer": "International Chemistry Competition",
       "category": "科學",
       "level": "國際",
       "form": "個人",
@@ -1286,8 +1273,8 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "url": "https://ioc-official.org/",
-      "description": "由學生與教師社群舉辦的線上化學競賽，題型貼近化學奧林匹亞。台灣學生可免費報名，作為 IChO 之外的練習管道，時程依官網公告。"
+      "url": "https://intchc.org/",
+      "description": "全程線上、監考制的國際化學競賽，依年級分 Junior、Youth、Senior 三組，題型貼近化學奧林匹亞。資格賽免費（約每年 3 月截止），晉級複賽需繳約 12 歐元報名費（設有經濟弱勢補助），決賽約每年 6 月。"
     },
     {
       "title": "美國國家經濟學挑戰賽 (National Economics Challenge)",
@@ -1329,19 +1316,6 @@
       "description": "華頓商學院青年計畫舉辦的商業時事評論與寫作活動，鼓勵高中生分析商業新聞。台灣學生可免費線上參與，時程依官網公告。"
     },
     {
-      "title": "國際青少年永續發展論壇",
-      "organizer": "聯合國永續發展相關青年組織",
-      "category": "社會永續",
-      "level": "國際",
-      "form": "團體",
-      "region": "全球線上",
-      "eligibility": "公開報名",
-      "mode": "混合",
-      "deadline": "",
-      "url": "https://sdgs.un.org/",
-      "description": "圍繞聯合國永續發展目標（SDGs）的青年提案與論壇活動，鼓勵學生提出在地行動方案。台灣學生可透過合作組織報名，時程依各場次公告。"
-    },
-    {
       "title": "iGEM 國際基因工程機器競賽",
       "organizer": "iGEM Foundation",
       "category": "科學",
@@ -1355,7 +1329,7 @@
       "description": "全球最大的合成生物學競賽，設有高中組。台灣有高中隊伍參與，須組隊並繳交隊伍費用，每年 11 月於決賽展示，賽季時程依官網公告。"
     },
     {
-      "title": "國際永續專題研究獎 (Genes in Space / 太空生物實驗競賽)",
+      "title": "Genes in Space 太空生物實驗競賽",
       "organizer": "Genes in Space",
       "category": "科學",
       "level": "國際",
@@ -1365,7 +1339,7 @@
       "mode": "線上",
       "deadline": "",
       "url": "https://www.genesinspace.org/",
-      "description": "鼓勵學生設計可在國際太空站執行的 DNA 實驗的競賽，主要面向美國學生。台灣學生參賽資格有限，列作太空生物研究的參考指標。"
+      "description": "鼓勵學生設計可在國際太空站執行的 DNA 實驗的競賽，主要面向美國學生。台灣學生參賽資格有限，列作太空生物研究的題目發想與研究方法參考。"
     },
     {
       "title": "Earth Science Week 國際短片與海報競賽",
@@ -1390,12 +1364,12 @@
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
-      "url": "https://www.seedasdan.org/",
+      "url": "https://www.seedasdan.com/",
       "description": "以模擬企業營運為核心的高中商業競賽，於亞太多地設賽區。台灣學生可組隊報名，部分賽區與決賽在中國舉行，赴中請留意兩岸往來規定。"
     },
     {
-      "title": "國際青年模擬聯合國—亞洲區會議",
-      "organizer": "亞洲區模擬聯合國組織",
+      "title": "THIMUN 新加坡模擬聯合國會議",
+      "organizer": "THIMUN Foundation",
       "category": "社會永續",
       "level": "國際",
       "form": "團體",
@@ -1403,8 +1377,8 @@
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
-      "url": "https://www.thmun.org/",
-      "description": "在亞洲多個城市舉辦的高中模擬聯合國會議，鍛鍊國際議題分析與英語議事能力。台灣學生可以代表團報名，各場次時程依官網公告。"
+      "url": "https://singapore.thimun.org/",
+      "description": "THIMUN 基金會在新加坡舉辦的中學生模擬聯合國會議，每年 10 月舉行，鍛鍊國際議題分析與英語議事能力。須以學校代表團身分申請，新參與學校需另行提出申請。"
     },
     {
       "title": "美國高中生數學邀請賽 (AIME)",
@@ -1420,8 +1394,8 @@
       "description": "美國數學競賽體系中的進階邀請賽，僅 AMC 成績達標者可受邀參加。台灣學生若於認證考場 AMC 達標即可應試，每年約 2 月舉行。"
     },
     {
-      "title": "國際青年物理競賽—台灣選拔賽 (TYPT)",
-      "organizer": "台灣物理學會",
+      "title": "臺灣青年學生物理辯論競賽 (TYPT)",
+      "organizer": "國立臺灣師範大學物理學系",
       "category": "數理",
       "level": "全國",
       "form": "團體",
@@ -1429,38 +1403,25 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ps-taiwan.org/",
-      "description": "IYPT 的台灣國內選拔賽，以開放式研究題目進行物理擂台辯論。高中隊伍可公開報名，優勝者代表台灣參加國際賽，時程依學會公告。"
+      "url": "https://typt.phy.ntnu.edu.tw/",
+      "description": "徐有庠盃臺灣青年學生物理辯論競賽，比照 IYPT 規則全英文進行，需事前完成開放式研究並就每題做 12 分鐘簡報。全國高中職一至三年級可組隊報名（須有領隊教師），優勝者組成 IYPT 臺灣代表隊。"
     },
     {
-      "title": "全國高中職資訊科技競賽 (生活科技競賽)",
-      "organizer": "教育部國民及學前教育署",
-      "category": "資訊",
+      "title": "全國高中生活科技學藝競賽",
+      "organizer": "教育部生活科技學科中心",
+      "category": "跨領域",
       "level": "全國",
       "form": "個人/團體",
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.k12ea.gov.tw/",
-      "description": "全國高中職學生的資訊與生活科技實作競賽，含程式、自動控制與創意設計類別。經校內及區域初賽選拔，報名時程依各區公告。"
-    },
-    {
-      "title": "全國科學探究競賽—科學園遊會 (探究與實作)",
-      "organizer": "國立臺灣師範大學科學教育中心",
-      "category": "科學",
-      "level": "全國",
-      "form": "團體",
-      "region": "台灣",
-      "eligibility": "公開報名",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://www.ntnu.edu.tw/",
-      "description": "結合 108 課綱「探究與實作」精神的全國科學競賽，鼓勵團隊以動手實作呈現研究成果。報名與時程依承辦單位年度公告。"
+      "url": "https://ghresource.k12ea.gov.tw/nss/p/LivingTechnologyCompetition",
+      "description": "以科技與工程設計思維解決真實議題的高中競賽，分任務挑戰組與創意設計組，2026 年第 18 屆主題為海洋永續。全國高中職在學學生（含綜合高中學術學程）可組隊報名，報名約每年 3 月截止、4 月公布決賽名單。"
     },
     {
       "title": "總統教育獎",
-      "organizer": "教育部",
+      "organizer": "教育部國民及學前教育署",
       "category": "跨領域",
       "level": "全國",
       "form": "個人",
@@ -1468,8 +1429,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.edu.tw/",
-      "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生。經學校推薦與各層級評選，報名時程依各縣市公告。"
+      "url": "https://pea.k12ea.gov.tw/",
+      "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生，分大專、高中、國中、國小四組。經學校推薦後逐級評選，高中組獎金 20 萬元；申請約每年 12 月中截止，名單於次年 5 月公布。"
     },
     {
       "title": "全國學生鄉土歌謠比賽",
@@ -1498,8 +1459,8 @@
       "description": "台灣規模最大的學生音樂競賽，涵蓋器樂、聲樂、合唱與管弦樂團等項目。經各縣市初賽進入全國決賽，報名時程依各區公告。"
     },
     {
-      "title": "全國中小學藝術才能比賽—舞蹈類",
-      "organizer": "國立臺灣藝術教育館",
+      "title": "全國學生舞蹈比賽",
+      "organizer": "教育部／臺灣師範大學體育研究與發展中心",
       "category": "藝術設計",
       "level": "全國",
       "form": "個人/團體",
@@ -1507,8 +1468,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://web.arte.gov.tw/dance/",
-      "description": "台灣最具規模的學生舞蹈競賽，分古典舞、現代舞、民俗舞等項目。經各縣市初賽選拔進入全國賽，報名時程依各區公告。"
+      "url": "https://studentdance.perdc.ntnu.edu.tw/",
+      "description": "台灣最具規模的學生舞蹈競賽，分古典舞、現代舞、民俗舞等項目，經各縣市初賽選拔進入全國賽。自 115 學年度起增列芭蕾個人組、116 學年度起增列芭蕾團體組，報名時程依各區公告。"
     },
     {
       "title": "美國學術寫作與藝術獎 (Scholastic Art & Writing Awards)",
@@ -1537,21 +1498,8 @@
       "description": "哈佛主辦、於中國舉行的高中模擬聯合國會議。台灣學生可報名，惟會議地點在中國，赴中參與請留意兩岸往來規定與簽證安排。"
     },
     {
-      "title": "國際永續設計競賽 (iF Design Student Award)",
-      "organizer": "iF International Forum Design",
-      "category": "藝術設計",
-      "level": "國際",
-      "form": "個人/團體",
-      "region": "歐盟",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://ifdesign.com/en/talent-portfolio/if-design-student-award",
-      "description": "德國 iF 設計獎旗下的學生競賽，重視永續與創新設計理念。台灣學生可線上投件，每年設多次截止梯次，時程依官網公告。"
-    },
-    {
-      "title": "Spaghetti 結構橋梁設計競賽 (台灣區)",
-      "organizer": "各大學土木工程相關科系",
+      "title": "iBridge 橋梁設計與載重競賽",
+      "organizer": "亞太能源科學教育協會／高雄科技大學土木工程系",
       "category": "跨領域",
       "level": "全國",
       "form": "團體",
@@ -1559,8 +1507,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ntust.edu.tw/",
-      "description": "以義大利麵或木條搭建橋梁並測試承重的工程實作競賽，由各大學不定期舉辦。高中組可公開報名，時程依主辦校系公告。"
+      "url": "https://www.aesea.org/competitions/ibridge",
+      "description": "以輕木條（balsa）搭建橋梁並實測承重的工程實作競賽，以「最大載重÷橋梁自重」的結構效率評分，設有高中職組。台灣學生可組隊公開報名，近年於年底舉辦，時程依主辦單位年度公告。"
     },
     {
       "title": "全國高中職創新創業競賽 (青年圓夢計畫)",
@@ -1576,59 +1524,33 @@
       "description": "鼓勵青年學生提出創業構想並實踐的全國性競賽與培力計畫。高中職學生可組隊報名，報名與培訓時程依官網年度公告。"
     },
     {
-      "title": "國際數學奧林匹亞—台灣選拔賽 (TST)",
-      "organizer": "中華民國數學奧林匹亞委員會",
+      "title": "臺灣數學奧林匹亞競賽 (TMO)",
+      "organizer": "數學奧林匹亞辦公室（教育部委託臺灣師範大學）",
       "category": "數理",
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://tw.imo-official.org/",
-      "description": "台灣數學奧林匹亞國手的選拔賽事，含初選、複選與培訓營。高中生可公開報名初選，優勝者組成 IMO 代表隊，時程依委員會公告。"
+      "url": "https://tpmso.org/tmo/",
+      "description": "我國數學奧林匹亞國手的選拔賽事，含初選、選訓決賽營與國手培訓，優勝者組成 IMO／APMO 代表隊。限未滿 20 歲之高級中等以下學校在學學生，須由就讀學校或主管機關統一報名，不接受個人報名。"
     },
     {
       "title": "全國資訊奧林匹亞—台灣選拔賽 (TOI)",
-      "organizer": "中華民國資訊學會",
+      "organizer": "資訊奧林匹亞辦公室（教育部委託臺灣師範大學）",
       "category": "資訊",
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://toi.tw/",
-      "description": "台灣資訊奧林匹亞（IOI）國手的選拔賽事，含入營考、初選與培訓。高中生可公開報名，優勝者組成 IOI 代表隊，時程依學會公告。"
+      "url": "https://tpmso.org/toi/",
+      "description": "我國資訊奧林匹亞國手的選拔賽事，含初選、兩階段選訓營與賽前集訓，優勝者組成 IOI 代表隊。須具 APCS 實作 3 級分以上或學科能力競賽資訊科決賽資格，並由就讀學校或地方主管機關代為報名。"
     },
     {
-      "title": "國際永續行動獎 (Global Action Award / 全球行動挑戰)",
-      "organizer": "T4 Education / 國際教育組織",
-      "category": "社會永續",
-      "level": "國際",
-      "form": "團體",
-      "region": "全球線上",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://t4.education/",
-      "description": "鼓勵學生團隊針對永續發展目標提出並執行在地行動的國際獎項。台灣學生可線上報名提案，賽季與截止日依官網年度公告。"
-    },
-    {
-      "title": "國際語文能力檢定競賽—多益／托福校園賽 (English Olympics)",
-      "organizer": "各國語言測驗機構",
-      "category": "語文人文",
-      "level": "國際",
-      "form": "個人",
-      "region": "全球線上",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://www.ets.org/",
-      "description": "結合英語測驗的校園競賽活動，鼓勵學生提升英語綜合能力。台灣學生可透過學校或測驗中心參加，各場次時程依承辦單位公告。"
-    },
-    {
-      "title": "國際青年人工智慧競賽 (International AI Olympiad / IOAI)",
+      "title": "國際人工智慧奧林匹亞 (IOAI)",
       "organizer": "International Olympiad in Artificial Intelligence",
       "category": "資訊",
       "level": "國際",
@@ -1638,7 +1560,7 @@
       "mode": "實體",
       "deadline": "",
       "url": "https://ioai-official.org/",
-      "description": "新興的中學生人工智慧國際奧林匹亞，含機器學習與科學競賽兩部分。台灣採選拔制組隊，舉辦地點每年不同，時程依官網公告。"
+      "description": "中學生人工智慧國際奧林匹亞，含機器學習與科學競賽兩部分。台灣採選拔制組隊（見「IOAI 臺灣代表隊選拔」）；2026 年第 3 屆於 8 月 2–8 日在哈薩克阿斯塔納舉行。"
     },
     {
       "title": "國際數學競賽—澳洲數學競賽 (AMC, Australia)",
@@ -1663,8 +1585,8 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.k12ea.gov.tw/",
-      "description": "台灣高中生數學、物理、化學、生物、地球科學與資訊等學科的能力競賽，亦為部分國際奧林匹亞的選才管道之一。經校內及區域初賽選拔，時程依各區公告。"
+      "url": "https://www.k12ea.gov.tw/Tw/Station/AffairDetail?filter=63F293A9-0155-41A3-97B7-46E43E4685FE&id=f8bd9371-62d7-4626-9f6c-ee105a6a3692",
+      "description": "普通型高中數學、物理、化學、生物、地球科學與資訊六科的學科能力競賽，分校內初賽、區域複賽與全國決賽，亦為國際奧林匹亞的選才管道之一。全國高中在學學生（含非學校型態實驗教育）可參加，時程依各區公告。"
     },
     {
       "title": "The Concord Review 中學歷史論文期刊",
@@ -1701,9 +1623,9 @@
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-09-13",
+      "deadline": "",
       "url": "https://aynrand.org/students/essay-contests",
-      "description": "以艾茵·蘭德小說為題的系列英文論文競賽，全球 13 歲以上中學生可免費投稿（600–1200 字，須用英文）。列表時程以 The Fountainhead 梯次為準；另有 Atlas Shrugged（約每年 9 月下旬）與 Anthem（約每年 5 月）梯次，確切時程請見官網。"
+      "description": "以艾茵·蘭德小說為題的系列英文論文競賽，全球 13 歲以上中學生可免費投稿。分 Anthem、The Fountainhead、Atlas Shrugged 等梯次，各梯次字數與截止日不同；官網目前標示下一梯次日期尚未公布，報名前請以官網為準。"
     },
     {
       "title": "國際青年數學挑戰賽 (IYMC)",
@@ -1730,6 +1652,71 @@
       "deadline": "",
       "url": "https://iaac.space/",
       "description": "全程線上的國際中學生天文與天文物理競賽，分 Junior（未滿 18 歲）與 Youth 兩組，含資格賽、預賽與決賽。台灣學生可免費報名，資格賽約於每年春季截止、後續回合陸續進行，確切時程依官網公告。"
+    },
+    {
+      "title": "IOAI 臺灣代表隊選拔 (TOAI)",
+      "organizer": "國立中央大學（教育部指導）",
+      "category": "資訊",
+      "level": "全國",
+      "form": "個人",
+      "region": "台灣",
+      "eligibility": "國家隊選拔",
+      "mode": "混合",
+      "deadline": "",
+      "url": "https://ioaitw.github.io/",
+      "description": "國際人工智慧奧林匹亞（IOAI）臺灣代表隊的公開遴選管道，由中央大學主辦、朝陽科技大學協辦，開放全國高中職在學學生報名，含全國能力測驗與實體培訓營。2026 屆報名已於 6 月底截止，下屆時程依官網公告。"
+    },
+    {
+      "title": "Taiwan Brain Bee 腦科學競賽",
+      "organizer": "Taiwan Brain Bee",
+      "category": "科學",
+      "level": "全國",
+      "form": "個人",
+      "region": "台灣",
+      "eligibility": "公開報名",
+      "mode": "實體",
+      "deadline": "",
+      "url": "https://www.taiwanbrainbee.com/",
+      "description": "源自美國的國際腦科學知識競賽台灣區賽事，分國中組與高中組（高中組需未滿 19 歲），於學生就學城市設考場（台北、新竹、台中、高雄、花蓮及離島等）。屬付費報名活動，設有弱勢與偏遠地區補助；冠軍由主辦方推薦參加 International Brain Bee，賽期約每年 5–6 月。"
+    },
+    {
+      "title": "育秀盃創意獎—高中職 AI 競賽",
+      "organizer": "育秀教育基金會（聯華神通集團）",
+      "category": "資訊",
+      "level": "全國",
+      "form": "團體",
+      "region": "台灣",
+      "eligibility": "公開報名",
+      "mode": "混合",
+      "deadline": "",
+      "url": "https://award.ysed.org.tw/",
+      "description": "已辦理逾 20 屆的全國性創意競賽，高中職 AI 組鼓勵運用生成式 AI、機器學習開發具社會價值的應用。報名約每年 10 月開放、12 月底初賽收件，決賽暨頒獎典禮於次年 4 月舉行。"
+    },
+    {
+      "title": "NASA Space Apps Challenge 全球黑客松",
+      "organizer": "NASA 及各國太空總署夥伴",
+      "category": "跨領域",
+      "level": "國際",
+      "form": "個人/團體",
+      "region": "全球線上",
+      "eligibility": "公開報名",
+      "mode": "混合",
+      "deadline": "",
+      "url": "https://www.spaceappschallenge.org/",
+      "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加。隊伍為 1–6 人（可單人成隊），台灣歷年設有實體會場，亦可線上參與，2026 年於 11 月 14–15 日舉行。"
+    },
+    {
+      "title": "國際科學奧林匹亞—臺灣代表隊選訓",
+      "organizer": "教育部委託臺灣師範大學各科奧林匹亞辦公室",
+      "category": "科學",
+      "level": "全國",
+      "form": "個人",
+      "region": "台灣",
+      "eligibility": "國家隊選拔",
+      "mode": "混合",
+      "deadline": "",
+      "url": "https://tpmso.org/ipho/",
+      "description": "物理奧林匹亞（IPhO／APhO）臺灣選訓辦公室網站，含全國初選、選訓決賽營與國手培訓時程。頁內「各科資訊」可跳轉至數學、資訊、生物、化學、地球科學及國中科學奧林匹亞等各科選訓辦公室，是查詢各科國手選拔的統一入口。"
     }
   ]
 }
