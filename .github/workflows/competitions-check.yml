@@ -33,6 +33,17 @@ jobs:
         timeout-minutes: 15
         run: node scripts/check-competitions.mjs
 
+      # 沒有待辦項目時不會開 issue，報告內容原本無處可見（連「無法判定」清單也看不到）。
+      # 一律貼到 job summary，讓每週的檢查結果在 Actions 頁面直接可讀。
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          if [ -f competition-report.md ]; then
+            cat competition-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '看門狗未產出報告（competition-report.md 不存在）。' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Open or update issue when attention is needed
         # always() 確保即使 check 步驟以致命錯誤結束（exit 1），只要看門狗已
         # 寫出 needs_attention=true，仍會開 issue 通知維護者。
