@@ -93,3 +93,50 @@ export function validateUrl(value, label, errors) {
     }
     return parsed;
 }
+
+// ── 年度週期（cycle）──
+// 許多競賽每年固定時節舉辦（Foyle 每年 7/31 截止、APMO 每年 3 月）。先前這類
+// 資訊只寫在 description 裡，程式算不出來，於是「本屆已截止」的處理方式變成把
+// deadline 清空、顯示「依官網公告」——資訊反而被丟掉，而且下一輪看門狗又會
+// 重新警告。cycle 把這個週期結構化，讓「已截止但知道下次何時」成為有效狀態。
+export const CYCLE_MMDD_RE = /^(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/;
+
+/** 驗證 cycle 欄位；錯誤推入 errors。cycle 為選填。 */
+export function validateCycle(cycle, label, errors) {
+    if (cycle === undefined) return;
+    if (cycle === null || typeof cycle !== 'object' || Array.isArray(cycle)) {
+        errors.push(`「${label}」的 cycle 必須是物件`);
+        return;
+    }
+    for (const key of Object.keys(cycle)) {
+        if (!['opens', 'closes', 'note'].includes(key)) {
+            errors.push(`「${label}」的 cycle 含未知欄位「${key}」`);
+        }
+    }
+    for (const key of ['opens', 'closes']) {
+        if (cycle[key] === undefined) continue;
+        if (typeof cycle[key] !== 'string' || !CYCLE_MMDD_RE.test(cycle[key])) {
+            errors.push(`「${label}」的 cycle.${key}「${cycle[key]}」須為 MM 或 MM-DD`);
+        }
+    }
+    if (cycle.note !== undefined && (typeof cycle.note !== 'string' || !cycle.note.trim())) {
+        errors.push(`「${label}」的 cycle.note 必須是非空字串`);
+    }
+    if (cycle.opens === undefined && cycle.closes === undefined && cycle.note === undefined) {
+        errors.push(`「${label}」的 cycle 至少須含 opens、closes 或 note 其一`);
+    }
+}
+
+/**
+ * 依 cycle.closes 推算「下一次截止日」的 UTC 毫秒值。
+ * 只知月份時以該月最後一天為準（保守，不會把還開放的競賽說成已截止）。
+ * todayUTC 由呼叫端以 Asia/Taipei 日曆日算出，確保頁面與看門狗一致。
+ */
+export function nextOccurrenceUTC(closes, todayUTC) {
+    if (typeof closes !== 'string' || !CYCLE_MMDD_RE.test(closes)) return null;
+    const [mm, dd] = closes.split('-').map(Number);
+    const year = new Date(todayUTC).getUTCFullYear();
+    const build = (y) => (dd ? Date.UTC(y, mm - 1, dd) : Date.UTC(y, mm, 0)); // dd 未給則取該月最後一天
+    const thisYear = build(year);
+    return thisYear >= todayUTC ? thisYear : build(year + 1);
+}
