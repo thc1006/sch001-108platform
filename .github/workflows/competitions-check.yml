@@ -1,7 +1,9 @@
 name: Competitions Data Check
 
 # 競賽資料看門狗：每週檢查 advanced-resources/competitions.json，
-# 若有競賽報名截止日過期或欄位錯誤，自動開 / 更新一個 issue 提醒維護者。
+# 若有競賽報名截止日過期、欄位錯誤或官網連結失效，自動開 / 更新一個 issue
+# 提醒維護者。連結檢查會實際連線各競賽官網（競賽頁是資料驅動的，這些 url
+# 不會進到 build 產物，link-checker.yml 的 lychee 掃不到），故本 job 需連外網路。
 # 本 workflow 只讀取資料、不修改檔案，不會產生 commit 或 PR。
 
 on:
@@ -28,6 +30,7 @@ jobs:
 
       - name: Run competition data watchdog
         id: check
+        timeout-minutes: 15
         run: node scripts/check-competitions.mjs
 
       - name: Open or update issue when attention is needed

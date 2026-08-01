@@ -8,11 +8,13 @@
  *   3. deadline 是否為合法日期
  *   4. 是否有競賽報名截止日「已過期」（資料過時，需要更新）
  *   5. 哪些競賽「即將截止」（僅列入報告參考，不觸發提醒）
+ *   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
  *
- * 由 .github/workflows/competitions-check.yml 每週執行；發現「過期」或
- * 「欄位錯誤」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
+ * 由 .github/workflows/competitions-check.yml 每週執行；發現「過期」「欄位錯誤」
+ * 或「連結失效」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
  *
  * 本機執行：  node scripts/check-competitions.mjs
+ *             node scripts/check-competitions.mjs --no-link-check   （略過連線檢查）
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -149,7 +151,87 @@ list.forEach((comp, index) => {
     }
 });
 
-const needsAttention = schemaErrors.length > 0 || expired.length > 0;
+// ---- 連結健檢 ----
+// 競賽頁是資料驅動的（前端 fetch competitions.json 後才渲染卡片），這些 url
+// 不會出現在 astro build 的 HTML 裡，link-checker.yml 的 lychee 掃不到，因此
+// 官網換網域或改版時連結會無聲失效。改由本看門狗直接連線檢查。
+//
+// 判定原則：只有「網域解析不到」與「404/410」才算失效並觸發 issue。競賽網站
+// 大量使用 Cloudflare 等防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，
+// 一律歸入「無法判定」只做記錄，避免每週誤報。
+const DEAD_STATUSES = new Set([404, 410]);
+const LINK_TIMEOUT_MS = 20_000;
+const LINK_CONCURRENCY = 4; // 部分官網（如 tpmso.org）併發過高會回 5xx
+// 目的是「重現學生用瀏覽器點下去的結果」。不少競賽官網（Kaggle、tpmso.org 等）
+// 對非瀏覽器 UA 直接回 404/500，用一般爬蟲 UA 會產生大量誤判，故沿用瀏覽器 UA。
+const UA =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
+async function probe(url) {
+    // 先用 HEAD 省流量；但不少站台（Kaggle 回 404、tpmso.org 回 500）只是不支援
+    // HEAD 而非真的失效，故 HEAD 一有錯誤碼就改用 GET 重試，並以 GET 結果為準。
+    for (const method of ['HEAD', 'GET']) {
+        try {
+            const res = await fetch(url, {
+                method,
+                redirect: 'follow',
+                signal: AbortSignal.timeout(LINK_TIMEOUT_MS),
+                headers: {
+                    'User-Agent': UA,
+                    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8',
+                },
+            });
+            if (res.status >= 400 && method === 'HEAD') continue;
+            return { status: res.status };
+        } catch (err) {
+            if (method === 'GET') {
+                const code = err?.cause?.code || err?.code || '';
+                return { status: 0, code, message: String(err?.message || err).slice(0, 120) };
+            }
+        }
+    }
+    return { status: 0, code: '', message: 'unknown' };
+}
+
+// 網域解析不到＝連結確定失效；其餘連線層錯誤（TLS、逾時等）歸為無法判定。
+const isDeadResult = (r) => r.code === 'ENOTFOUND' || DEAD_STATUSES.has(r.status);
+
+const deadLinks = [];
+const unverifiedLinks = [];
+
+if (!process.argv.includes('--no-link-check')) {
+    const targets = list
+        .map((comp, index) => ({ comp, index }))
+        .filter(({ comp }) => comp && typeof comp.url === 'string' && /^https?:\/\//i.test(comp.url));
+
+    let cursor = 0;
+    const results = new Array(targets.length);
+    await Promise.all(
+        Array.from({ length: Math.min(LINK_CONCURRENCY, targets.length) }, async () => {
+            while (cursor < targets.length) {
+                const slot = cursor++;
+                results[slot] = await probe(targets[slot].comp.url);
+            }
+        }),
+    );
+
+    for (let i = 0; i < targets.length; i++) {
+        const { comp, index } = targets[i];
+        const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : `第 ${index + 1} 筆`;
+        let result = results[i];
+        // 判定為失效前再單獨重試一次，濾掉併發造成的暫時性錯誤
+        if (isDeadResult(result)) result = await probe(comp.url);
+
+        if (isDeadResult(result)) {
+            deadLinks.push({ label, url: comp.url, reason: result.code === 'ENOTFOUND' ? '網域無法解析' : `HTTP ${result.status}` });
+        } else if (result.status === 0 || result.status >= 400) {
+            unverifiedLinks.push({ label, url: comp.url, reason: result.status ? `HTTP ${result.status}` : result.code || '連線失敗' });
+        }
+    }
+}
+
+const needsAttention = schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0;
 
 // ---- 主控台摘要 ----
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
@@ -157,6 +239,8 @@ console.log(`  競賽總數：${list.length}`);
 console.log(`  欄位錯誤：${schemaErrors.length}`);
 console.log(`  已過期　：${expired.length}`);
 console.log(`  即將截止：${expiringSoon.length}`);
+console.log(`  連結失效：${deadLinks.length}`);
+console.log(`  無法判定：${unverifiedLinks.length}`);
 
 // ---- Markdown 報告（供 workflow 開 issue 用）----
 const lines = ['## 競賽資料檢查報告', ''];
@@ -175,13 +259,23 @@ if (expired.length) {
     for (const e of expired) lines.push(`- **${e.label}**　截止日 ${e.deadline} 已過`);
     lines.push('');
 }
+if (deadLinks.length) {
+    lines.push('### 🔗 連結失效（官網已換網域或頁面不存在，請更新 url）', '');
+    for (const e of deadLinks) lines.push(`- **${e.label}**　${e.reason}：${e.url}`);
+    lines.push('');
+}
 if (expiringSoon.length) {
     lines.push(`### 🟡 ${SOON_DAYS} 天內即將截止（僅供參考，頁面會自動標示）`, '');
     for (const e of expiringSoon) lines.push(`- ${e.label}　截止日 ${e.deadline}（剩 ${e.diffDays} 天）`);
     lines.push('');
 }
+if (unverifiedLinks.length) {
+    lines.push('<details><summary>ℹ️ 連線無法判定的連結（多為防爬機制，通常瀏覽器仍可開啟，不需處理）</summary>', '');
+    for (const e of unverifiedLinks) lines.push(`- ${e.label}　${e.reason}：${e.url}`);
+    lines.push('', '</details>', '');
+}
 if (!needsAttention && !expiringSoon.length) {
-    lines.push('✅ 一切正常，沒有過期或欄位錯誤。', '');
+    lines.push('✅ 一切正常，沒有過期、欄位錯誤或連結失效。', '');
 }
 
 await writeFile(REPORT_PATH, lines.join('\n'), 'utf8');
