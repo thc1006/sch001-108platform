@@ -1,8 +1,13 @@
 name: CI
 
 # 每個 PR 都必須跑的確定性檢查。這些 job 不探測第三方網站的可用性——外部站台
-# 今天連不連得上屬於非確定性，不該讓無關的 PR 變紅；那部分由排程檢查負責。
+# 今天連不連得上屬於非確定性，不該讓無關的 PR 變紅。
 # （仍會用到 npm registry 與 GitHub Actions 本身，那是基礎設施而非受檢對象。）
+#
+# 目前「全站外部連結」沒有任何排程檢查：唯一在跑的是競賽看門狗，而它只涵蓋
+# competitions.json 裡的網址，不含其餘 500 個外部網址。那支排程 workflow 屬於
+# #72 的 B 部分，尚未實作——在它落地之前，本檔只保證「建置產物內可靜態解析的
+# 站內路徑」，不要把這裡的綠燈讀成外部連結也健康。
 #
 # 觸發條件刻意不限制 base 分支：先前寫 `pull_request: branches: [main]`，導致
 # 堆疊 PR（#73 的 base 是 feature 分支）一個 check 都沒跑，連 schema 驗證與
@@ -12,6 +17,12 @@ on:
     branches: [ "main" ]
   pull_request:
   merge_group:
+
+# 同一個 PR 推新 commit 時取消還在跑的舊 run。用 head_ref 而非 PR 編號，push 到
+# main 時則退回 run_id 以確保每次 push 都各自獨立、不會互相取消。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
