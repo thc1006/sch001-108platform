@@ -30,10 +30,6 @@ import {
     ALLOWED_ELIGIBILITY,
     ALLOWED_MODES,
     ALLOWED_FORMS,
-    LINK_TIMEOUT_MS,
-    probe,
-    isDeadResult,
-    classifyLink,
     validateUrl,
     validateCycle,
     nextOccurrenceUTC,
@@ -41,6 +37,10 @@ import {
     ALLOWED_COMPETITION_FIELDS,
     validateSchedule,
 } from './check-competitions.lib.mjs';
+// 探測與分類走共用的 link-health.lib.mjs（含 SSRF 防護）。刻意「不」用
+// check-competitions.lib.mjs 匯出的那個相容別名——別名為了讓既有單元測試打得到
+// 本機 http server 而放寬了 loopback，正式執行不該帶著那個放寬。
+import { runProbes, classifyLink, describeResult, isBlockedResult } from './link-health.lib.mjs';
 
 // 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
 // 供頁面 client fetch);看門狗改讀此處。
@@ -253,6 +253,7 @@ const LINK_BUDGET_MS = 8 * 60_000;
 
 const deadLinks = [];
 const unverifiedLinks = [];
+const blockedLinks = [];
 let skippedLinks = 0;
 
 if (!process.argv.includes('--no-link-check')) {
@@ -260,50 +261,35 @@ if (!process.argv.includes('--no-link-check')) {
         .map((comp, index) => ({ comp, index }))
         .filter(({ comp }) => comp && typeof comp.url === 'string' && /^https?:\/\//i.test(comp.url));
 
-    const budgetEnd = Date.now() + LINK_BUDGET_MS;
-    const remainingBudget = () => budgetEnd - Date.now();
-    const outOfBudget = () => remainingBudget() <= 0;
-    // 硬截止：單筆逾時取「剩餘預算」與 LINK_TIMEOUT_MS 的較小值，並疊上全域 abort，
-    // 避免最後一筆在預算末端才起跑、又獨自跑滿 20 秒而超出預算。
-    const globalAbort = new AbortController();
-    const budgetTimer = setTimeout(() => globalAbort.abort(), LINK_BUDGET_MS);
-    const probeWithin = (url) =>
-        probe(url, AbortSignal.any([globalAbort.signal, AbortSignal.timeout(Math.max(1, Math.min(LINK_TIMEOUT_MS, remainingBudget())))]));
-
-    // 每週從不同位置起跑。若未來 runner 網路變差而經常用完預算，固定從 0 開始會讓
+    // 併發、預算、逾時、失效前重試、起點輪替全部交給共用的 runProbes——先前這裡
+    // 有一份自己的實作，全站健檢落地後就會變成第二份，兩份遲早長出不同語意。
+    // 每週從不同位置起跑：若 runner 網路變差而經常用完預算，固定從 0 開始會讓
     // JSON 尾端永遠檢查不到；以「當年第幾週」輪替起點可讓覆蓋率長期均勻。
     const weekIndex = Math.floor((todayUTC - Date.UTC(todayYear, 0, 1)) / (7 * 86_400_000));
-    const startAt = targets.length ? (weekIndex * LINK_CONCURRENCY) % targets.length : 0;
-    const order = targets.map((_, i) => (startAt + i) % targets.length);
-
-    let cursor = 0;
-    const results = new Array(targets.length);
-    await Promise.all(
-        Array.from({ length: Math.min(LINK_CONCURRENCY, targets.length) }, async () => {
-            while (cursor < order.length && !outOfBudget()) {
-                const slot = order[cursor++];
-                results[slot] = await probeWithin(targets[slot].comp.url);
-            }
-        }),
+    const { results, skipped } = await runProbes(
+        targets.map((t) => t.comp.url),
+        { concurrency: LINK_CONCURRENCY, budgetMs: LINK_BUDGET_MS, rotateSeed: weekIndex * LINK_CONCURRENCY },
     );
-    clearTimeout(budgetTimer);
+    skippedLinks = skipped;
 
     for (let i = 0; i < targets.length; i++) {
         const { comp, index } = targets[i];
         const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : `第 ${index + 1} 筆`;
-        let result = results[i];
-        if (!result) {
-            skippedLinks++; // 預算用盡，這筆沒檢查到
+        const result = results[i];
+        if (!result) continue; // 預算用盡，這筆沒檢查到（已計入 skipped）
+
+        // 被位址政策擋下的要單獨列出、不可混進「多為防爬、不需處理」那一堆——
+        // competitions.json 裡出現指向 loopback／私網／雲端 metadata 的網址，
+        // 意義是資料被動了手腳或寫錯，不是站台防爬。
+        if (isBlockedResult(result)) {
+            blockedLinks.push({ label, url: comp.url, reason: result.reason });
             continue;
         }
-        // 判定為失效前再單獨重試一次，濾掉併發造成的暫時性錯誤；預算用盡則直接沿用首次結果
-        if (isDeadResult(result) && !outOfBudget()) result = await probeWithin(comp.url);
-
         const verdict = classifyLink(result);
         if (verdict === 'dead') {
-            deadLinks.push({ label, url: comp.url, reason: result.code === 'ENOTFOUND' ? '網域無法解析' : `HTTP ${result.status}` });
+            deadLinks.push({ label, url: comp.url, reason: describeResult(result) });
         } else if (verdict === 'unverified') {
-            unverifiedLinks.push({ label, url: comp.url, reason: result.status ? `HTTP ${result.status}` : result.code || '連線失敗' });
+            unverifiedLinks.push({ label, url: comp.url, reason: describeResult(result) });
         }
     }
 }
@@ -312,7 +298,12 @@ if (!process.argv.includes('--no-link-check')) {
 // 會和「全部查完都正常」給出一模一樣的綠燈訊號。
 const coverageComplete = skippedLinks === 0;
 const needsAttention =
-    schemaErrors.length > 0 || expired.length > 0 || deadLinks.length > 0 || staleCycle.length > 0 || !coverageComplete;
+    schemaErrors.length > 0 ||
+    expired.length > 0 ||
+    deadLinks.length > 0 ||
+    blockedLinks.length > 0 ||
+    staleCycle.length > 0 ||
+    !coverageComplete;
 
 // ---- 主控台摘要 ----
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
@@ -323,6 +314,7 @@ console.log(`  週期待查：${staleCycle.length}`);
 console.log(`  即將截止：${expiringSoon.length}`);
 console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
+if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（SSRF 政策擋下，必須處理）`);
 if (skippedLinks) console.log(`  未檢查　：${skippedLinks}（連線檢查逾時間預算）`);
 
 // ---- Markdown 報告（供 workflow 開 issue 用）----
@@ -345,6 +337,12 @@ if (expired.length) {
 if (deadLinks.length) {
     lines.push('### 🔗 連結失效（官網已換網域或頁面不存在，請更新 url）', '');
     for (const e of deadLinks) lines.push(`- **${e.label}**　${e.reason}：${e.url}`);
+    lines.push('');
+}
+if (blockedLinks.length) {
+    lines.push('### 🛑 網址被位址政策擋下（請檢查資料是否被竄改或寫錯）', '');
+    lines.push('這些網址指向 loopback／私有網段／link-local／雲端 metadata，看門狗拒絕連線。', '');
+    for (const e of blockedLinks) lines.push(`- **${e.label}**　${e.reason}`);
     lines.push('');
 }
 if (staleCycle.length) {

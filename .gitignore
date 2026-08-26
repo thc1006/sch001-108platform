@@ -79,3 +79,11 @@ school/
 
 # check-built-site 產出的外部網址 inventory（供排程健康檢查使用）
 /.reports/
+
+# 全站外部連結健檢產生的報告（CI 與本機執行 check-external-links.mjs 時產生）
+/external-links-report.md
+
+# 故障注入用的暫存副本（link-health.faults.mjs 產生，跑完就刪；
+# 中途被中斷時留下的殘骸不該進版控）
+/.faultcheck/
+/scripts-faultcheck/

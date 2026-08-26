@@ -5,6 +5,8 @@
  * 能以本機 http server 做確定性測試，不必依賴外網。
  */
 
+import { probe as guardedProbe } from './link-health.lib.mjs';
+
 // ── 欄位允許值（與 competitions.json 的 _readme 一致）──
 export const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計', '社會永續', '跨領域'];
 export const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
@@ -47,58 +49,30 @@ export const ALLOWED_COMPETITION_FIELDS = new Set([
     'sourceCheckedAt',
 ]);
 
-// ── 連結健檢 ──
-export const DEAD_STATUSES = new Set([404, 410]);
-export const LINK_TIMEOUT_MS = 20_000;
-// 目的是「重現學生用瀏覽器點下去的結果」。不少競賽官網對非瀏覽器 UA 會回
-// 403/404，用一般爬蟲 UA 會產生大量誤判，故沿用瀏覽器 UA。
-export const UA =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+// ── 連結健檢（實作已移到 link-health.lib.mjs）──
+//
+// 為什麼要搬：競賽看門狗與全站外部連結健檢都會在 runner 上、帶著寫入權限的
+// token 去連我們資料檔裡寫的任意網址。那是一條 SSRF 路徑，而防護只寫在其中
+// 一邊等於沒寫——所以探測與分類只能有一份實作。
+//
+// 這裡保留原本的 export 名稱，讓既有的呼叫端與 check-competitions.probe.test.mjs
+// 不必改動。
+export { DEAD_STATUSES, LINK_TIMEOUT_MS, UA, isDeadResult, classifyLink } from './link-health.lib.mjs';
 
 /**
- * 一律用 GET：目的是重現「學生用瀏覽器點下去」的結果，而 HEAD 不是瀏覽器實際送的
- * 請求。曾用 HEAD 省流量，但站台對 HEAD 的回應並不可靠——有的不支援而回 404/500
- * （Kaggle、tpmso.org），更糟的是有的 HEAD 回 200 但 GET 其實 404，會被誤判為健康。
+ * ⚠ 這個 probe 是**單元測試專用**的相容別名，唯一的放寬是允許 loopback
+ * （127.0.0.0/8 與 ::1）——check-competitions.probe.test.mjs 的每一個連線測試都
+ * 打本機 http server，嚴格模式下會全部被擋。
  *
- * 讀完 status 後立刻 cancel body：Node 的 undici 不像瀏覽器會積極回收，未消耗的
- * response body 會占住連線、無法重用，在這種每週上百站的批次工作下可能拖垮或卡死。
+ * 除了 loopback 之外沒有任何放寬：private、link-local、雲端 metadata、
+ * credential、非 http(s) scheme 在這裡一樣擋得死死的（link-health.test.mjs
+ * 有對應測試把這件事釘住）。
+ *
+ * 真正的看門狗 runner（check-competitions.mjs）不用這個別名，它直接 import
+ * link-health.lib.mjs 的嚴格版 probe——所以競賽資料裡若出現指向本機服務的
+ * 網址，實際執行時仍然會被擋下。
  */
-export async function probe(url, signal) {
-    let res = null;
-    try {
-        res = await fetch(url, {
-            method: 'GET',
-            redirect: 'follow',
-            signal: signal ?? AbortSignal.timeout(LINK_TIMEOUT_MS),
-            headers: {
-                'User-Agent': UA,
-                Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8',
-            },
-        });
-        return { status: res.status, finalUrl: res.url };
-    } catch (err) {
-        const code = err?.cause?.code || err?.code || '';
-        return { status: 0, code, message: String(err?.message || err).slice(0, 120) };
-    } finally {
-        // 放在 finally，確保日後新增 return 分支也不會漏掉
-        await res?.body?.cancel().catch(() => {});
-    }
-}
-
-/** 網域解析不到＝連結確定失效；其餘連線層錯誤（TLS、逾時等）歸為無法判定。 */
-export const isDeadResult = (r) => r.code === 'ENOTFOUND' || DEAD_STATUSES.has(r.status);
-
-/**
- * 只有「網域解析不到」與 404/410 才算失效並觸發 issue。競賽網站大量使用
- * Cloudflare 等防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，一律歸入
- * 「無法判定」只做記錄，避免每週誤報。
- */
-export function classifyLink(r) {
-    if (isDeadResult(r)) return 'dead';
-    if (r.status === 0 || r.status >= 400) return 'unverified';
-    return 'healthy';
-}
+export const probe = (url, signal) => guardedProbe(url, signal, { allowLoopback: true });
 
 /**
  * url 必須解析得出、且為 https。先前只檢查「非空字串」，像 htps://… 這種拼錯
