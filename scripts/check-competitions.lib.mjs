@@ -34,7 +34,18 @@ export const TEXT_FIELDS = [
  * "cyle": { "closes": "09" }（少一個 c）這種錯字只要必填欄位都在就會通過驗證，
  * 前端則靜默忽略它。該筆競賽的週期資訊等於憑空消失，且沒有任何訊號。
  */
-export const ALLOWED_COMPETITION_FIELDS = new Set([...TEXT_FIELDS, 'deadline', 'cycle']);
+export const ALLOWED_COMPETITION_FIELDS = new Set([
+    ...TEXT_FIELDS,
+    'deadline',
+    'cycle',
+    // 報名時程與賽事日期（皆選填，見下方 validateSchedule）
+    'deadlineAt',
+    'opensAt',
+    'eventStartsAt',
+    'eventEndsAt',
+    'registrationNote',
+    'sourceCheckedAt',
+]);
 
 // ── 連結健檢 ──
 export const DEAD_STATUSES = new Set([404, 410]);
@@ -115,6 +126,141 @@ export function validateUrl(value, label, errors) {
         return null;
     }
     return parsed;
+}
+
+
+// ── 報名時程與賽事日期 ──
+//
+// 原本只有一個 deadline（YYYY-MM-DD），它同時被拿來表達三件不同的事：報名截止、
+// 賽事開始、以及「大概那個時候」。混在一起會產生實際的錯誤：
+//
+//   - OPhO 的 8/21 是「比賽日期」，卻被顯示成「報名截止」；
+//   - Breakthrough 官方截止是 9/15 23:59 PDT，換算台灣是 9/16 14:59。只存日期的話，
+//     台灣時間 9/15 凌晨就顯示「今日截止」（實際還有 39 小時），9/16 00:00 起就
+//     顯示「已截止」（實際還有近 15 小時）。
+//
+// 下面這幾個欄位都是選填、可加可不加，不需要一次遷移全部資料。
+
+/** YYYY-MM-DD（純日期，無時刻概念）。 */
+export const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * ISO 8601 時刻，**必須**帶明確的時區位移（Z 或 ±HH:MM）。
+ *
+ * 不接受省略時區的寫法（"2026-09-15T23:59:00"）：那會被瀏覽器當成使用者的本地
+ * 時間解析，同一筆資料在不同時區的人眼中是不同的時刻——正是這一組欄位要修掉的
+ * 問題本身。與其容忍它再猜一個時區，不如在 CI 就擋下來。
+ */
+export const INSTANT_RE =
+    /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?(Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
+
+/** 日期是否真實存在（往返比對可抓出 2026-02-30 這種被 Date 靜默正規化的值）。 */
+function isRealDate(y, mo, d) {
+    const t = new Date(Date.UTC(y, mo - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
+}
+
+/** 驗證 YYYY-MM-DD 欄位（選填）。回傳是否有效。 */
+export function validateDateOnly(value, field, label, errors) {
+    if (value === undefined) return true;
+    if (typeof value !== 'string' || !DATE_ONLY_RE.test(value)) {
+        errors.push(`「${label}」的 ${field}「${value}」須為 YYYY-MM-DD`);
+        return false;
+    }
+    const [y, mo, d] = value.split('-').map(Number);
+    if (!isRealDate(y, mo, d)) {
+        errors.push(`「${label}」的 ${field}「${value}」不是實際存在的日期`);
+        return false;
+    }
+    return true;
+}
+
+/** 驗證帶時區的 ISO 時刻欄位（選填）。回傳是否有效。 */
+export function validateInstant(value, field, label, errors) {
+    if (value === undefined) return true;
+    if (typeof value !== 'string' || !INSTANT_RE.test(value)) {
+        errors.push(
+            `「${label}」的 ${field}「${value}」須為帶時區位移的 ISO 時刻，` +
+                '例如 2026-09-15T23:59:00-07:00（不可省略時區）',
+        );
+        return false;
+    }
+    const [y, mo, d] = value.slice(0, 10).split('-').map(Number);
+    if (!isRealDate(y, mo, d)) {
+        errors.push(`「${label}」的 ${field}「${value}」的日期部分不存在`);
+        return false;
+    }
+    if (Number.isNaN(Date.parse(value))) {
+        errors.push(`「${label}」的 ${field}「${value}」無法被解析為時刻`);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
+ *
+ * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對——那需要假設一個
+ * 時區，而假設時區正是這組欄位要消滅的東西。
+ */
+export function validateSchedule(comp, label, errors) {
+    validateInstant(comp.deadlineAt, 'deadlineAt', label, errors);
+    validateInstant(comp.opensAt, 'opensAt', label, errors);
+    validateDateOnly(comp.eventStartsAt, 'eventStartsAt', label, errors);
+    validateDateOnly(comp.eventEndsAt, 'eventEndsAt', label, errors);
+    validateDateOnly(comp.sourceCheckedAt, 'sourceCheckedAt', label, errors);
+
+    if (comp.registrationNote !== undefined) {
+        if (typeof comp.registrationNote !== 'string' || comp.registrationNote.trim() === '') {
+            errors.push(`「${label}」的 registrationNote 必須是非空字串`);
+        } else if ([...comp.registrationNote.trim()].length > 30) {
+            // 它會直接當成卡片的狀態列文字，過長會撐破版面。詳細說明請寫進 description。
+            errors.push(`「${label}」的 registrationNote 過長（上限 30 字，目前 ${[...comp.registrationNote.trim()].length} 字）`);
+        }
+    }
+
+    // 賽事結束不得早於開始
+    if (
+        typeof comp.eventStartsAt === 'string' &&
+        typeof comp.eventEndsAt === 'string' &&
+        DATE_ONLY_RE.test(comp.eventStartsAt) &&
+        DATE_ONLY_RE.test(comp.eventEndsAt) &&
+        comp.eventEndsAt < comp.eventStartsAt
+    ) {
+        errors.push(`「${label}」的 eventEndsAt（${comp.eventEndsAt}）早於 eventStartsAt（${comp.eventStartsAt}）`);
+    }
+    // 只有結束沒有開始，是資料寫了一半
+    if (comp.eventEndsAt !== undefined && comp.eventStartsAt === undefined) {
+        errors.push(`「${label}」有 eventEndsAt 卻沒有 eventStartsAt`);
+    }
+
+    // 報名開放不得晚於報名截止
+    const opensMs = typeof comp.opensAt === 'string' ? Date.parse(comp.opensAt) : NaN;
+    const closesMs = typeof comp.deadlineAt === 'string' ? Date.parse(comp.deadlineAt) : NaN;
+    if (!Number.isNaN(opensMs) && !Number.isNaN(closesMs) && opensMs >= closesMs) {
+        errors.push(`「${label}」的 opensAt 不早於 deadlineAt`);
+    }
+
+    // deadlineAt 存在時必須同時有 deadline。頁面的狀態列用 deadlineAt（精確時刻），
+    // 但卡片底部那一欄讀的是 deadline——只填其中一個會出現「報名中 · 剩 70 天」
+    // 配上「依官網公告」這種自相矛盾的卡片。
+    if (typeof comp.deadlineAt === 'string' && comp.deadlineAt && !comp.deadline) {
+        errors.push(`「${label}」有 deadlineAt 卻沒有 deadline，兩者必須並存`);
+    }
+
+    // 兩者並存時日期部分必須一致——不一致代表其中一個沒跟著更新，而頁面只會採用
+    // deadlineAt，另一個會靜默地變成錯的。
+    if (
+        typeof comp.deadlineAt === 'string' &&
+        INSTANT_RE.test(comp.deadlineAt) &&
+        typeof comp.deadline === 'string' &&
+        DATE_ONLY_RE.test(comp.deadline) &&
+        comp.deadlineAt.slice(0, 10) !== comp.deadline
+    ) {
+        errors.push(
+            `「${label}」的 deadline（${comp.deadline}）與 deadlineAt（${comp.deadlineAt.slice(0, 10)}）日期不一致`,
+        );
+    }
 }
 
 // ── 年度週期（cycle）──

@@ -1,5 +1,5 @@
 {
-  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「已查到確切日期」才填；cycle=年度固定週期（選填物件，{opens,closes,note}，opens/closes 為 MM 或 MM-DD）。截止日過了不要清空 deadline——只要補上 cycle，頁面就會顯示「本屆已截止・下次約 YYYY-MM-DD」，比一律顯示「依官網」有用，看門狗也不會再重複警告（改為下屆逼近時才提醒查確切日期）。兩者皆無才留空字串（頁面顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。",
+  "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「已查到確切日期」才填；cycle=年度固定週期（選填物件，{opens,closes,note}，opens/closes 為 MM 或 MM-DD）。截止日過了不要清空 deadline——只要補上 cycle，頁面就會顯示「本屆已截止・下次約 YYYY-MM-DD」，比一律顯示「依官網」有用，看門狗也不會再重複警告（改為下屆逼近時才提醒查確切日期）。兩者皆無才留空字串（頁面顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。deadlineAt=帶時區位移的精確報名截止時刻（選填，例 2026-09-15T23:59:00-07:00）；opensAt=精確報名開放時刻（選填，同格式）；eventStartsAt/eventEndsAt=賽事日期（選填 YYYY-MM-DD，與報名截止是兩回事，不可混填）；registrationNote=沒有固定截止日時的報名規則（選填短句，例如 NASA Space Apps 依所在地活動時間）；sourceCheckedAt=本筆最後逐項查證官網的日期（選填 YYYY-MM-DD）。時刻欄位一律必須帶時區位移，省略時區會被 CI 擋下——沒有時區的時刻在不同使用者眼中是不同的時刻。頂層 lastUpdated 是「這個檔案最後被修改的日期」，不代表 133 筆都在那天查證過；逐筆的查證日期看 sourceCheckedAt。",
   "lastUpdated": "2026-08-27",
   "competitions": [
     {
@@ -732,12 +732,16 @@
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "",
-      "url": "https://www.comap.com/contests/himcm-midmcm",
-      "description": "美國 COMAP 主辦的高中數學建模競賽，4 人一隊、作品線上提交，須有指導老師（advisor）帶隊報名。台灣學生可參加；2026 年第 29 屆賽期為 11 月 4–17 日，報名時程依官網公告。",
+      "deadline": "2026-11-04",
+      "deadlineAt": "2026-11-04T14:00:00-05:00",
+      "eventStartsAt": "2026-11-04",
+      "eventEndsAt": "2026-11-17",
       "cycle": {
         "closes": "11"
-      }
+      },
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://www.comap.com/contests/himcm-midmcm",
+      "description": "美國 COMAP 主辦的高中數學建模競賽，4 人一隊、作品線上提交，須有指導老師（advisor）帶隊報名。台灣學生可參加；2026 年第 29 屆賽期為 11 月 4–17 日，報名時程依官網公告。"
     },
     {
       "title": "USAII 全球 AI 黑客松 (Global AI Hackathon)",
@@ -1070,11 +1074,14 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "2026-09-15",
-      "url": "https://breakthroughjuniorchallenge.org/",
-      "description": "全球高中生科普影片競賽，以 2 分鐘影片詮釋物理、數學或生命科學的重大概念，最高獎學金 25 萬美元。台灣 13–18 歲學生可免費投稿，2026 年截止 09-15；投稿後另須於 09-30 前完成至少 5 件他人作品的同儕互評，否則不具評選資格。",
+      "deadlineAt": "2026-09-15T23:59:00-07:00",
+      "opensAt": "2026-05-11T00:00:00-07:00",
       "cycle": {
         "closes": "09-15"
-      }
+      },
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://breakthroughjuniorchallenge.org/",
+      "description": "全球高中生科普影片競賽，以 2 分鐘影片詮釋物理、數學或生命科學的重大概念，最高獎學金 25 萬美元。台灣 13–18 歲學生可免費投稿，2026 年截止 09-15；投稿後另須於 09-30 前完成至少 5 件他人作品的同儕互評，否則不具評選資格。"
     },
     {
       "title": "JA 社會創新挑戰賽",
@@ -1215,12 +1222,13 @@
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-08-21",
+      "deadline": "",
+      "eventStartsAt": "2026-08-21",
+      "eventEndsAt": "2026-08-23",
+      "registrationNote": "每年 8 月舉行 · 報名截止依官網",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://opho.physoly.org/",
-      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名；2026 屆已於 8 月 21–23 日舉行完畢，2027 屆時程尚未公布。",
-      "cycle": {
-        "closes": "08"
-      }
+      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名；2026 屆已於 8 月 21–23 日舉行完畢，2027 屆時程尚未公布。"
     },
     {
       "title": "美國數學競賽 (AMC 10/12)",
@@ -1771,12 +1779,15 @@
       "eligibility": "公開報名",
       "mode": "混合",
       "deadline": "",
-      "url": "https://www.spaceappschallenge.org/",
-      "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加，隊伍 1–6 人（可單人成隊）。2026 年於 11 月 14–15 日舉行，報名已開放，全球設有 450 個以上實體會場，台灣歷年亦有場次。",
+      "eventStartsAt": "2026-11-14",
+      "eventEndsAt": "2026-11-15",
+      "registrationNote": "報名開放中 · 依所在地活動時間",
       "cycle": {
-        "opens": "09",
-        "closes": "11-14"
-      }
+        "note": "每年 10–11 月舉行全球黑客松"
+      },
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://www.spaceappschallenge.org/",
+      "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加，隊伍 1–6 人（可單人成隊）。2026 年於 11 月 14–15 日舉行，報名已開放，全球設有 450 個以上實體會場，台灣歷年亦有場次。"
     },
     {
       "title": "國際科學奧林匹亞—臺灣代表隊選訓",
@@ -1800,11 +1811,14 @@
       "region": "台灣",
       "eligibility": "公開報名",
       "mode": "混合",
-      "deadline": "",
+      "deadline": "2026-05-18",
+      "deadlineAt": "2026-05-18T23:59:00+08:00",
+      "opensAt": "2026-02-23T00:00:00+08:00",
       "cycle": {
         "opens": "02",
         "closes": "05"
       },
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.samsung.com/tw/offer/2026-samsung-solve-for-tomorrow/",
       "description": "已辦理七屆的全台高中職與五專永續科技提案競賽，以科技創意回應社會與環境挑戰，2026 年首度新增「運動科技」子題。報名約每年 2 月開放、5 月中截止收件，決賽於 11 月舉行；設學長姊交流計畫，作品可作為學習歷程素材。"
     }
