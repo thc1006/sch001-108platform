@@ -190,13 +190,18 @@ for (const comp of list) {
     if (!closes) continue;
     const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
 
-    // 已經填了「未來的」確切日期就不必提醒——那正是提醒想要的結果
+    // 已經填了「未來的」確切日期就不必提醒——那正是提醒想要的結果。
+    // 已過的日期則作為 lastEdition 傳入：本屆既已辦完，下屆就在隔年的週期，
+    // 否則月份精度的週期（如 OPhO 的 08）會把同月月底誤算成「下屆將近」。
+    let lastEditionUTC = null;
     if (typeof comp.deadline === 'string' && DATE_RE.test(comp.deadline)) {
-        const [, y, m, d] = DATE_RE.exec(comp.deadline);
-        if (Date.UTC(Number(y), Number(m) - 1, Number(d)) >= todayUTC) continue;
+        const [, y, mo, dd] = DATE_RE.exec(comp.deadline);
+        const dlUTC = Date.UTC(Number(y), Number(mo) - 1, Number(dd));
+        if (dlUTC >= todayUTC) continue;
+        lastEditionUTC = dlUTC;
     }
 
-    const nextUTC = nextOccurrenceUTC(closes, todayUTC);
+    const nextUTC = nextOccurrenceUTC(closes, todayUTC, lastEditionUTC);
     if (nextUTC === null) continue;
     const untilNext = Math.ceil((nextUTC - todayUTC) / 86_400_000);
     if (untilNext <= SOON_DAYS * 2) {

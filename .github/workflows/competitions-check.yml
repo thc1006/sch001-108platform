@@ -52,13 +52,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 確保 label 存在（已存在會報錯，直接忽略）
-          gh label create competition-data \
+          gh label create competition-watchdog \
             --color FBCA04 \
-            --description "競賽資料看門狗自動回報" 2>/dev/null || true
+            --description "競賽資料看門狗自動開立的報告（勿手動加此標籤，會被看門狗接管）" 2>/dev/null || true
 
+          # 只接管「看門狗自己開的」issue。專用標籤不可與人工建立的 competition-data
+          # 混用——先前兩者同標籤，導致 #70（人工開的內容稽核追蹤）被看門狗接管，
+          # 連續四週的週報都貼錯地方。
           # 若已有開啟中的同類 issue，補上最新報告而不是再開一個
           existing=$(gh issue list \
-            --label competition-data --state open \
+            --label competition-watchdog --state open \
             --json number --jq '.[0].number // empty')
 
           if [ -n "$existing" ]; then
@@ -67,6 +70,6 @@ jobs:
           else
             gh issue create \
               --title "競賽資料需要更新（自動偵測）" \
-              --label competition-data \
+              --label competition-watchdog \
               --body-file competition-report.md
           fi

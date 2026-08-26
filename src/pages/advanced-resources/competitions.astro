@@ -189,11 +189,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       // 依 cycle.closes（MM 或 MM-DD）推算下一次截止日。只知月份時取該月最後一天，
       // 保守起見不會把還開放的競賽說成已截止。與看門狗 check-competitions.lib.mjs
       // 的 nextOccurrenceUTC 同一套規則。
-      function nextOccurrenceUTC(closes, todayUTC) {
+      function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC) {
         if (typeof closes !== 'string' || !/^(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/.test(closes)) return null;
         const parts = closes.split('-').map(Number);
         const mm = parts[0], dd = parts[1];
-        const y = new Date(todayUTC).getUTCFullYear();
+        // lastEditionUTC＝已知「本屆」的確切截止日（已過）。本屆既已用掉今年的
+        // 週期，下屆就在隔年——否則月份精度的週期會誤報成同月的月底。
+        let y =
+          lastEditionUTC === null || lastEditionUTC === undefined
+            ? new Date(todayUTC).getUTCFullYear()
+            : new Date(lastEditionUTC).getUTCFullYear() + 1;
         // dd 未給則取該月最後一天。給了 dd 但該年無此日（例如平年的 02-29）時同樣
         // 退回該月最後一天，避免 Date 靜默跨月（02-29 → 03-01）。
         const build = (yy) => {
@@ -201,8 +206,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           const wanted = Date.UTC(yy, mm - 1, dd);
           return new Date(wanted).getUTCMonth() === mm - 1 ? wanted : Date.UTC(yy, mm, 0);
         };
-        const thisYear = build(y);
-        return thisYear >= todayUTC ? thisYear : build(y + 1);
+        // 資料若久未更新（本屆截止日已過一年以上），持續往後推到未來為止
+        let candidate = build(y);
+        while (candidate < todayUTC) candidate = build(++y);
+        return candidate;
       }
 
       function fmtUTC(ms) {
@@ -215,11 +222,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       function getStatus(c) {
         const todayUTC = todayTaipeiUTC();
         const closes = c.cycle && c.cycle.closes;
-        const nextUTC = nextOccurrenceUTC(closes, todayUTC);
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c.deadline || '');
+        const dlUTC = m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+        // 已過的本屆截止日要傳進推算：本屆既已辦完，下屆就在隔年的週期。否則
+        // 月份精度的週期（如 OPhO 的 08）會把同月月底誤算成「下次約 4 天後」。
+        const lastEditionUTC = dlUTC !== null && dlUTC < todayUTC ? dlUTC : null;
+        const nextUTC = nextOccurrenceUTC(closes, todayUTC, lastEditionUTC);
 
         if (m) {
-          const dlUTC = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
           const days = Math.round((dlUTC - todayUTC) / 86400000);
           if (days >= 0) {
             return days <= 30
