@@ -1,7 +1,8 @@
 name: CI
 
-# 每個 PR 都必須跑的確定性檢查。三個 job 都不依賴外部網站——外部站台的可用性
-# 由排程的 external-links 檢查負責，不該讓無關的 PR 因為某間大學今天連不上而變紅。
+# 每個 PR 都必須跑的確定性檢查。這些 job 不探測第三方網站的可用性——外部站台
+# 今天連不連得上屬於非確定性，不該讓無關的 PR 變紅；那部分由排程檢查負責。
+# （仍會用到 npm registry 與 GitHub Actions 本身，那是基礎設施而非受檢對象。）
 #
 # 觸發條件刻意不限制 base 分支：先前寫 `pull_request: branches: [main]`，導致
 # 堆疊 PR（#73 的 base 是 feature 分支）一個 check 都沒跑，連 schema 驗證與
@@ -16,15 +17,21 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Search Index
+  site:
+    name: Site Integrity
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
+      # 第三方 action 一律 pin 到完整 commit SHA：tag 是可移動的，而這幾支 action
+      # 正好站在 merge integrity 的邊界上。三個 SHA 都已對 GitHub API 查證。
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # 這個 job 之後不需要任何 authenticated git 操作，不要把 token 留在 .git/config
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: '.node-version'
           cache: 'npm'
@@ -32,25 +39,74 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 遷移到 Astro 後，實際頁面與資產 JSON 由 astro build 產生在 dist/，
-      # build-search-index.js 掃的是 dist/，故必須先建置。
-      - name: Build Astro site
-        run: npx astro build
+      # 先跑純函式測試：契約核心壞掉時，讓失敗訊息停在單元測試而不是一堆站台錯誤
+      - name: Run site-contract unit tests
+        run: npm run test:site-integrity
 
-      - name: Build search index
-        run: node build-search-index.js
+      # 建置「實際會被部署的那一份」——包含 search index。先前 Build Search Index
+      # 與 Internal Links 各自 build 一次，被驗證的 artifact 和被檢查的不是同一份。
+      - name: Build the deployable artifact
+        run: npm run build:deployable
 
-  validate-data:
+      - name: Verify built-site contracts
+        run: npm run check:site
+
+      # 故障注入：逐一破壞一個契約，確認 checker 真的會擋。
+      # 「正常狀態綠燈」證明不了 checker 有在把關——那正是本 issue 要修的假象本身。
+      - name: Prove the checker actually blocks (fault injection)
+        run: npm run test:site-faults
+
+      # astro.config.mjs 設 base: '/sch001-108platform'，站內連結都是根相對路徑。
+      # lychee 對本機檔案的根相對連結會在「解析」階段就失敗，而 --exclude 與
+      # --scheme 都是解析之後才生效（lycheeverse/lychee#2125），因此必須重建與
+      # GitHub Pages 相同的路徑命名空間，再用 --root-dir 指向它。
+      - name: Stage GitHub Pages path namespace
+        run: |
+          rm -rf "$GITHUB_WORKSPACE/.link-root"
+          mkdir -p "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
+          cp -a dist/. "$GITHUB_WORKSPACE/.link-root/sch001-108platform/"
+
+      # 第二層 defense-in-depth。主要把關者是上面的 check:site（它懂本站的契約：
+      # 目錄 index、同源絕對網址、runtime JSON reference、canonical 自我一致性）；
+      # lychee 負責補上通用的連結擷取，抓我們可能沒想到的來源。
+      #   --index-files      ：目錄式連結必須有 index.html，不是目錄存在就算數
+      #   --include-fragments：預設完全不檢查 fragment，必須顯式開啟
+      #   fail/failIfEmpty   ：v2 預設雖已是 true，但這是安全關鍵的把關政策，顯式寫出
+      #   token: ''          ：只檢查 file:// 不需要 GitHub API token
+      - name: Defense-in-depth link check
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        with:
+          token: ''
+          fail: true
+          failIfEmpty: true
+          lycheeVersion: v0.24.2
+          args: >-
+            --root-dir "${{ github.workspace }}/.link-root"
+            --scheme file
+            --index-files index.html
+            --include-fragments=anchor-only
+            --verbose
+            --no-progress
+            './.link-root/sch001-108platform/**/*.html'
+
+  data:
     name: Validate Data
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       # --no-link-check：不連外網，確保這個關卡的結果只取決於這次改動
       - name: Validate competition data (schema only)
@@ -59,52 +115,23 @@ jobs:
       - name: Run watchdog probe/schema unit tests
         run: npm run test:watchdog
 
-  internal-links:
-    name: Internal Links
+  # 固定名稱的聚合關卡。ruleset 只要求這一個 context，日後 job 改名或增減都不必
+  # 同步調整 repository 設定——避免 workflow 與 ruleset 漂移。
+  # if: always() 確保任一上游 job 被取消或失敗時本 job 仍會執行並判定為失敗，
+  # 而不是一起被跳過（被跳過的 required check 會讓 PR 永遠等不到結果）。
+  required:
+    name: CI Required
+    if: ${{ always() }}
+    needs: [site, data]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: '.node-version'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Astro site
-        run: npx astro build
-
-      # astro.config.mjs 設定 base: '/sch001-108platform'，所以頁面裡的站內連結都是
-      # /sch001-108platform/... 這種根相對路徑。lychee 對本機檔案的根相對連結會在
-      # 「解析」階段就失敗，而 --exclude 與 --scheme 都是在解析之後才生效
-      # （見 lycheeverse/lychee#2125），所以先前那個 --exclude '^/sch001-108platform'
-      # 從來沒有真正作用過。
-      #
-      # 正解是重建出與 GitHub Pages 相同的路徑命名空間，再用 --root-dir 指向它，
-      # 讓根相對連結真的解析得到本機檔案。
-      - name: Stage GitHub Pages path namespace
+      - name: Require every deterministic job to have succeeded
+        env:
+          SITE_RESULT: ${{ needs.site.result }}
+          DATA_RESULT: ${{ needs.data.result }}
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
-          cp -a dist/. "$GITHUB_WORKSPACE/.link-root/sch001-108platform/"
-
-      # --scheme file：這個 job 只回答「站內連結有沒有壞」。外部 http(s) 連結交給
-      #   排程的 external-links 檢查，避免 PTT 或某間大學今天連不上就擋住無關 PR。
-      # fail / failIfEmpty：v2 的預設值雖然已是 true，但這是安全關鍵的把關政策，
-      #   顯式寫出來，不依賴隱含預設。failIfEmpty 特別重要——否則哪天 glob 沒掃到
-      #   任何檔案，就會回到「什麼都沒檢查但是綠燈」，那正是本次要修掉的失效模式。
-      - name: Check internal links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          fail: true
-          failIfEmpty: true
-          lycheeVersion: v0.24.2
-          args: >-
-            --root-dir "${{ github.workspace }}/.link-root"
-            --scheme file
-            --verbose
-            --no-progress
-            './.link-root/sch001-108platform/**/*.html'
+          echo "Site Integrity : $SITE_RESULT"
+          echo "Validate Data  : $DATA_RESULT"
+          test "$SITE_RESULT" = "success"
+          test "$DATA_RESULT" = "success"

@@ -93,6 +93,11 @@ function processHtmlFile(filePath, fileUrl) {
     });
     console.log(`✅ 已索引頁面: ${fileUrl}`);
 
+    // 該頁實際存在的錨點，供下方產生搜尋結果 URL 時驗證用
+    const pageAnchorIds = new Set();
+    $('[id]').each((_, el) => { const v = $(el).attr('id'); if (v) pageAnchorIds.add(v); });
+    $('a[name]').each((_, el) => { const v = $(el).attr('name'); if (v) pageAnchorIds.add(v); });
+
     // --- 特殊處理：抓取頁面內嵌的 JavaScript 資料 ---
     $('script').each((i, el) => {
         const scriptContent = $(el).html();
@@ -119,7 +124,11 @@ function processHtmlFile(filePath, fileUrl) {
                             title: `${pageTitle} - ${itemTitle}`,
                             content: cheerio.load(itemContent).text(), // 去除 HTML 標籤
                             tags: [dataType, pageTitle, ...(item.tags || [])],
-                            url: `${fileUrl}#${dataType}-${item.id || ''}` // 加上錨點方便跳轉
+                            // 錨點必須真的存在於建置產物中才加上。先前無條件產生
+                            // `#${dataType}-${item.id}`，但頁面是把項目 client-render 進
+                            // 容器（如 #sdg-grid），根本沒有逐項的 id——結果 17 筆搜尋結果
+                            // 指向不存在的錨點，點了只會停在頁面頂端。
+                            url: buildItemUrl(fileUrl, `${dataType}-${item.id || ''}`, pageAnchorIds)
                         });
                         console.log(`  ➡️ 已索引項目: ${itemTitle}`);
                     }
@@ -151,68 +160,33 @@ function processHtmlFile(filePath, fileUrl) {
 //   idPrefix  ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
 //   tag       ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
 //   anchor    ：頁內錨點 id
-const JSON_DATA_PAGES = {
-    'advanced-resources/competitions.html': {
-        json: 'advanced-resources/competitions.json',
-        arrayKey: 'competitions', idPrefix: 'competition', tag: '競賽',
-        anchor: 'competition-grid',
-    },
-    'advanced-resources/online-courses.html': {
-        json: 'advanced-resources/online-courses.json',
-        arrayKey: 'courses', idPrefix: 'course', tag: '線上課程',
-        anchor: 'course-grid',
-    },
-    'advanced-resources/open-education.html': {
-        json: 'advanced-resources/open-education.json',
-        arrayKey: 'resources', idPrefix: 'resource', tag: '開放教育資源',
-        anchor: 'resource-grid',
-    },
-    'career-exploration/senior-interviews.html': {
-        json: 'career-exploration/senior-interviews.json',
-        arrayKey: 'interviews', idPrefix: 'interview', tag: '學長姐訪談',
-        anchor: 'interview-grid',
-    },
-    'learning-portfolio/portfolio-gallery.html': {
-        json: 'learning-portfolio/portfolio-gallery.json',
-        arrayKey: 'portfolio', idPrefix: 'portfolio', tag: '作品集',
-        anchor: 'portfolio-grid',
-    },
-    'autonomous-learning/methodology.html': {
-        json: 'autonomous-learning/methodology.json',
-        arrayKey: 'methods', idPrefix: 'method', tag: '研究方法',
-        anchor: 'methodology-grid',
-    },
-    'learning-portfolio/tools.html': {
-        json: 'learning-portfolio/tools.json',
-        arrayKey: 'tools', idPrefix: 'tool', tag: '線上工具',
-        anchor: 'tool-grid',
-    },
-    'learning-portfolio/activity-database.html': {
-        json: 'learning-portfolio/activity-database.json',
-        arrayKey: 'activities', idPrefix: 'activity', tag: '多元表現活動',
-        anchor: 'activity-grid',
-    },
-    // 巢狀結構：reading-list.json 的 themes 是「主題陣列」，每個主題底下才有 books[]。
-    // 同一本書可能跨多個主題出現，indexJsonDataPage 會在攤平後依 ISBN 去重，避免重複索引。
-    'advanced-resources/reading-list.html': {
-        json: 'advanced-resources/reading-list.json',
-        arrayKey: 'themes', nestedKey: 'books', idPrefix: 'book', tag: '主題書單',
-        anchor: 'reading-lists-container',
-    },
-};
+// 資料驅動頁面的設定改由 scripts/data-pages.json 提供，與 check-built-site.mjs 共用。
+// 先前這份對應表只存在於本檔，站台契約檢查若要知道「JSON 的相對路徑該相對哪個
+// 頁面解析」就得手抄第二份——手抄必然漂移，那正是 #72 一路在修的失效模式。
+const dataPagesConfig = require('./scripts/data-pages.json');
+const JSON_DATA_PAGES = dataPagesConfig.pages;
 
 // 各資料頁的項目欄位不盡相同（如競賽用 title、訪談用 name、書單用 recommendation），
 // 故以下採欄位聯集。
 const ITEM_TITLE_FIELDS = ['title', 'name', 'question'];
 const ITEM_TEXT_FIELDS = ['organizer', 'provider', 'platform', 'major', 'university', 'quote', 'description', 'author', 'original_title', 'recommendation'];
-const ITEM_HTML_FIELDS = ['content_html', 'analysis_html'];
+const ITEM_HTML_FIELDS = dataPagesConfig.htmlFields;
+
+// 搜尋結果的 URL：錨點存在才加，否則只回頁面路徑。
+// 指向不存在的錨點不會讓連結壞掉（頁面仍載入），但會讓「跳到該項目」這個承諾
+// 失效，且靜默——這正是 scripts/check-built-site.mjs 現在會擋下的那一類。
+function buildItemUrl(fileUrl, anchor, anchorIds) {
+    return anchorIds && anchorIds.has(anchor) ? `${fileUrl}#${anchor}` : fileUrl;
+}
 
 // 通用：讀一個資料 JSON，為其中每筆項目建立搜尋索引項目。
 function indexJsonDataPage(pageTitle, fileUrl, cfg) {
     const jsonPath = path.join(projectRoot, cfg.json);
+    // fail closed：這些 JSON 是 JSON_DATA_PAGES 明確設定的必要資料來源，不是
+    // 選配。先前缺檔時只 warn 後略過，整個資料頁的搜尋項目會靜默消失而 CI 全綠
+    // ——「少了一整頁的搜尋結果」不該是一個警告，而該是建置失敗。
     if (!fs.existsSync(jsonPath)) {
-        console.warn(`⚠️ 找不到 ${cfg.json}，略過 ${fileUrl} 的項目索引`);
-        return;
+        throw new Error(`必要的資料來源不存在：${cfg.json}（供 ${fileUrl} 使用）`);
     }
     try {
         const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
@@ -250,7 +224,9 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg) {
             console.log(`  ➡️ 已索引項目: ${itemTitle}`);
         });
     } catch (e) {
-        console.warn(`⚠️ 解析 ${cfg.json} 時發生錯誤: ${e.message}`);
+        // 同上：設定過的資料來源解析不了，代表搜尋功能已經殘缺，應直接讓建置與
+        // 部署失敗，而不是產出一份「看起來成功、實際少了東西」的索引。
+        throw new Error(`必要的資料來源解析失敗：${cfg.json}：${e.message}`);
     }
 }
 
