@@ -12,6 +12,8 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 
 import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
+import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS } from './check-competitions.lib.mjs';
+import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
 let base;
 let server;
@@ -212,6 +214,118 @@ test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
     assert.equal(iso(nextOccurrenceUTC('02-29', Date.UTC(2028, 0, 1))), '2028-02-29');
 });
 
+
+
+// ── 競賽物件的欄位白名單 ──
+// cycle 內部本來就有同類的白名單，但物件本身先前沒有。"cyle"（少一個 c）這種錯字
+// 只要必填欄位都在就會通過驗證，前端則靜默忽略它——該筆競賽的週期資訊等於憑空
+// 消失且沒有任何訊號。
+test('schema：實際資料不得出現白名單以外的欄位', async () => {
+    const { readFileSync } = await import('node:fs');
+    const data = JSON.parse(
+        readFileSync(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'),
+    );
+    const seen = new Set();
+    for (const c of data.competitions) for (const k of Object.keys(c)) seen.add(k);
+    const unknown = [...seen].filter((k) => !ALLOWED_COMPETITION_FIELDS.has(k));
+    assert.deepEqual(
+        unknown,
+        [],
+        `competitions.json 出現白名單以外的欄位：${unknown.join('、')}。` +
+            '若是刻意新增的欄位，請同步更新 ALLOWED_COMPETITION_FIELDS；若是錯字，請修正資料。',
+    );
+    // 反向：白名單裡的必填欄位每一筆都要有，否則白名單形同虛設
+    for (const f of TEXT_FIELDS) {
+        assert.ok(seen.has(f), `白名單列了 ${f}，但實際資料一筆都沒有——白名單與資料已漂移`);
+    }
+});
+
+test('schema：常見錯字不在白名單內', () => {
+    // 這幾個都是實際容易打錯的形狀，全部必須被視為未知欄位而攔下
+    for (const typo of ['cyle', 'cycles', 'Cycle', 'deadLine', 'dead_line', 'URL']) {
+        assert.ok(!ALLOWED_COMPETITION_FIELDS.has(typo), `${typo} 不該在白名單內`);
+    }
+});
+
+// ── 看門狗的 issue 認領 ──
+// 這五個情境先前只用人工假造的 gh 驗過一次，沒有留下回歸測試——而認領邏輯正是
+// 出過事的那一段：#70（人工開立）用了同一個標籤，連續四週的週報全貼到那裡。
+// 判斷邏輯移到 watchdog-issue.lib.mjs 之後，這裡把五個情境固定下來。
+const bot = (number, body) => ({ number, author: { login: ACTIONS_APP_LOGIN }, body });
+const human = (number, body) => ({ number, author: { login: 'thc1006' }, body });
+
+test('watchdog：人工開立的 issue 即使貼了同一個標籤也不接管', () => {
+    // 實際發生過的情況：#70 是人工開的，標籤相同。標籤是共用屬性，不能單獨決定歸屬。
+    const r = selectCanonicalIssue([human(70, `追蹤：資料稽核\n${WATCHDOG_MARKER}`)]);
+    assert.deepEqual(r, { action: 'create' }, '人工 issue 就算 body 有標記也不得接管');
+});
+
+test('watchdog：Actions 開的但沒有機器標記時不接管', () => {
+    // repo 內其他自動化同樣以 Actions App 身分開 issue，只看作者會誤認。
+    assert.deepEqual(selectCanonicalIssue([bot(80, '別的 workflow 開的 issue')]), { action: 'create' });
+});
+
+test('watchdog：作者與標記都符合時接管既有 issue', () => {
+    assert.deepEqual(selectCanonicalIssue([bot(81, `${WATCHDOG_MARKER}\n\n上週報告`)]), {
+        action: 'comment',
+        number: 81,
+    });
+});
+
+test('watchdog：完全沒有候選時新開 issue', () => {
+    assert.deepEqual(selectCanonicalIssue([]), { action: 'create' });
+});
+
+test('watchdog：出現多個 canonical issue 時必須大聲失敗，不可安靜取第一個', () => {
+    // 取第一個會讓另一個永遠收不到報告，而且沒有任何訊號——正是本 issue 在修的失效模式。
+    const r = selectCanonicalIssue([bot(91, WATCHDOG_MARKER), bot(90, WATCHDOG_MARKER)]);
+    assert.equal(r.action, 'fail');
+    assert.deepEqual(r.numbers, [90, 91], '應列出全部重複的 issue 供人工處理');
+});
+
+test('watchdog：畸形輸入不得被當成可接管', () => {
+    const bad = [null, undefined, 'x', 42, {}, { number: 1 }, { author: { login: ACTIONS_APP_LOGIN } }];
+    assert.deepEqual(selectCanonicalIssue(bad), { action: 'create' });
+    assert.deepEqual(selectCanonicalIssue(null), { action: 'create' });
+    // number 不是整數時不可接管——後續會被當成 issue 編號傳給 gh
+    assert.deepEqual(
+        selectCanonicalIssue([{ number: '81', author: { login: ACTIONS_APP_LOGIN }, body: WATCHDOG_MARKER }]),
+        { action: 'create' },
+    );
+});
+
+// workflow 實際呼叫的是 CLI，不是函式本身。只測函式會漏掉 stdin 解析、輸出格式與
+// 退出碼這層接線——而 workflow 正是靠退出碼決定要不要中止。
+test('watchdog：CLI 的輸出格式與退出碼', async () => {
+    const { execFileSync } = await import('node:child_process');
+    const { fileURLToPath } = await import('node:url');
+    // 用 fileURLToPath 而非手刻 pathname 轉換：pathname 是 percent-encoded，
+    // 路徑含空白或非 ASCII（本 repo 就在 .claude/worktrees 下）時會解析錯誤。
+    const cli = fileURLToPath(new URL('./find-watchdog-issue.mjs', import.meta.url));
+    const run = (payload) =>
+        execFileSync(process.execPath, [cli], { input: JSON.stringify(payload), encoding: 'utf8' }).trim();
+
+    assert.equal(run([]), 'create');
+    assert.equal(run([bot(81, WATCHDOG_MARKER)]), 'comment 81');
+    assert.equal(run([human(70, WATCHDOG_MARKER)]), 'create');
+
+    let code = 0;
+    let stderr = '';
+    try {
+        execFileSync(process.execPath, [cli], {
+            input: JSON.stringify([bot(90, WATCHDOG_MARKER), bot(91, WATCHDOG_MARKER)]),
+            encoding: 'utf8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+        });
+    } catch (err) {
+        code = err.status;
+        stderr = String(err.stderr);
+    }
+    assert.equal(code, 2, '多個 canonical issue 必須以非零退出碼中止 workflow');
+    assert.match(stderr, /#90/, '錯誤訊息要指名重複的 issue');
+    assert.match(stderr, /#91/);
+});
+
 // ── 前後端邏輯防漂移 ──
 // nextOccurrenceUTC 在 lib（Node）與 competitions.astro（瀏覽器 is:inline）各有
 // 一份實作——後者無法 import Node 模組。兩份若漂移，頁面與看門狗就會對同一筆
@@ -224,10 +338,10 @@ test('cycle：頁面與看門狗的推算結果必須完全一致', async () => 
 
     const browserFn = new Function(`${m[0]}; return nextOccurrenceUTC;`)();
 
-    const days = ['01-01', '02-28', '02-29', '03', '06-30', '07-31', '08', '12-31', '13-01', '02-30', '', 'x'];
+    const days = ['01-01', '01', '02-28', '02-29', '03', '06-30', '07-31', '08', '12', '12-31', '13-01', '02-30', '', 'x'];
     const bases = [Date.UTC(2026, 7, 2), Date.UTC(2027, 0, 1), Date.UTC(2028, 1, 29), Date.UTC(2026, 11, 31)];
     // 第三維：lastEditionUTC（null＝未知本屆；其餘為已過的本屆截止日）
-    const lasts = [null, Date.UTC(2026, 7, 21), Date.UTC(2024, 0, 15), Date.UTC(2026, 6, 31)];
+    const lasts = [null, Date.UTC(2026, 7, 21), Date.UTC(2024, 0, 15), Date.UTC(2026, 6, 31), Date.UTC(2025, 11, 20), Date.UTC(2026, 0, 15)];
     for (const c of days) {
         for (const t of bases) {
             for (const le of lasts) {
@@ -250,6 +364,45 @@ test('cycle：已知本屆截止日時，下屆須在隔年——不可算成同
     assert.equal(iso(nextOccurrenceUTC('08', today, Date.UTC(2026, 7, 21))), '2027-08-31');
     // MM-DD 精度同理
     assert.equal(iso(nextOccurrenceUTC('07-31', today, Date.UTC(2026, 6, 31))), '2027-07-31');
+});
+
+// 「本屆年份 + 1」在跨年季會整整漏掉一輪：截止日 2026-01-15、週期記 12 月時，
+// 那個截止日屬於 2025-12 那一輪，下一輪是 2026-12 而非 2027-12。實際發生時，頁面
+// 會把還能報名的一整年說成「下次約 2027」。現在改為先把本屆對應回最近的週期實例。
+test('cycle：跨年季不可漏掉一整輪', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    const today = Date.UTC(2026, 7, 27);
+
+    // 月份精度：1 月的截止日屬於前一年 12 月那一輪
+    assert.equal(iso(nextOccurrenceUTC('12', today, Date.UTC(2026, 0, 15))), '2026-12-31');
+    // 日精度同理
+    assert.equal(iso(nextOccurrenceUTC('12-20', today, Date.UTC(2026, 0, 5))), '2026-12-20');
+    // 反向：12 月的截止日配 1 月的週期，屬於「隔年 1 月」那一輪，下一輪是再隔年
+    assert.equal(iso(nextOccurrenceUTC('01', today, Date.UTC(2025, 11, 20))), '2027-01-31');
+});
+
+test('cycle：截止月與週期月相符時，錨定結果與原本一致', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    const today = Date.UTC(2026, 7, 27);
+    // 同月（OPhO）
+    assert.equal(iso(nextOccurrenceUTC('08', today, Date.UTC(2026, 7, 21))), '2027-08-31');
+    // 同月同日
+    assert.equal(iso(nextOccurrenceUTC('10-30', today, Date.UTC(2025, 9, 30))), '2026-10-30');
+});
+
+test('cycle：週期在兩屆之間被改動時，取離本屆最近的實例當錨點', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    const today = Date.UTC(2026, 7, 27);
+    // 本屆確切截止 2026-03-10，但 cycle 已被更新成 10 月（主辦單位改期）。
+    // 2026-10 仍在未來，不應該跳過它而報 2027-10。
+    assert.equal(iso(nextOccurrenceUTC('10', today, Date.UTC(2026, 2, 10))), '2026-10-31');
+});
+
+test('cycle：跨年季且資料久未更新時，仍推到未來而非停在過去', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    const today = Date.UTC(2026, 7, 27);
+    // 本屆停在 2023-01-15、週期記 12 月：錨點是 2022-12，往後推須一路到 2026-12
+    assert.equal(iso(nextOccurrenceUTC('12', today, Date.UTC(2023, 0, 15))), '2026-12-31');
 });
 
 test('cycle：lastEdition 已過一年以上時，持續往後推到未來', () => {
