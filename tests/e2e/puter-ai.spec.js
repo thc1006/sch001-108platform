@@ -501,4 +501,154 @@ test.describe('PuterAI 共用 module', () => {
             expect(logsLeft).toBe(0);
         });
     });
+
+    test.describe('ensureSignedIn（明確要求建立臨時帳號）', () => {
+        test.beforeEach(async ({ page }) => { await gotoFixture(page); });
+
+        test('未登入時呼叫 signIn，並帶上 attempt_temp_user_creation', async ({ page }) => {
+            const result = await page.evaluate(async () => {
+                const calls = [];
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => false,
+                        signIn: async (opts) => { calls.push(opts); },
+                        getUser: async () => ({ username: 'temp_abc', is_temp: true })
+                    },
+                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
+                };
+                const info = await PuterAI.ensureSignedIn();
+                return { calls, info };
+            });
+            expect(result.calls).toHaveLength(1);
+            expect(result.calls[0]).toEqual({ attempt_temp_user_creation: true });
+            expect(result.info).toEqual({ username: 'temp_abc', temporary: true });
+        });
+
+        test('已登入時不重複呼叫 signIn', async ({ page }) => {
+            const result = await page.evaluate(async () => {
+                let signInCount = 0;
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => true,
+                        signIn: async () => { signInCount++; },
+                        getUser: async () => ({ username: 'real_user', is_temp: false })
+                    },
+                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
+                };
+                const info = await PuterAI.ensureSignedIn();
+                return { signInCount, info };
+            });
+            expect(result.signInCount).toBe(0);
+            expect(result.info).toEqual({ username: 'real_user', temporary: false });
+        });
+
+        test('轉向一般登入時，temporary 必須誠實回報 false', async ({ page }) => {
+            // 限制二：瀏覽器已有 Puter 使用紀錄時，Puter 可能不建立臨時帳號而
+            // 轉向一般登入／註冊。此時不可假設一定是臨時帳號。
+            const info = await page.evaluate(async () => {
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => false,
+                        signIn: async () => {},
+                        getUser: async () => ({ username: 'existing_person', is_temp: false })
+                    },
+                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
+                };
+                return PuterAI.ensureSignedIn();
+            });
+            expect(info).toEqual({ username: 'existing_person', temporary: false });
+        });
+
+        test('併發呼叫只彈一次 signIn', async ({ page }) => {
+            const count = await page.evaluate(async () => {
+                let signInCount = 0;
+                let signedIn = false;
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => signedIn,
+                        signIn: async () => {
+                            signInCount++;
+                            await new Promise((r) => setTimeout(r, 30));
+                            signedIn = true;
+                        },
+                        getUser: async () => ({ username: 't', is_temp: true })
+                    },
+                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
+                };
+                await Promise.all([
+                    PuterAI.ensureSignedIn(),
+                    PuterAI.ensureSignedIn(),
+                    PuterAI.ensureSignedIn()
+                ]);
+                return signInCount;
+            });
+            expect(count).toBe(1);
+        });
+
+        test('signIn 失敗（popup 被擋／使用者取消）不得阻斷 AI 呼叫', async ({ page }) => {
+            const result = await page.evaluate(async () => {
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => false,
+                        signIn: async () => { throw { error: { code: 'popup_blocked', message: 'blocked' } }; },
+                        getUser: async () => { throw new Error('never'); }
+                    },
+                    ai: { chat: async () => ({ message: { content: 'still works' } }) }
+                };
+                const r = await PuterAI.callGeminiWithFallback('hi');
+                return r.message.content;
+            });
+            expect(result).toBe('still works');
+        });
+
+        test('puter.auth 不存在時優雅降級（相容既有 mock）', async ({ page }) => {
+            const result = await page.evaluate(async () => {
+                window.puter = { ai: { chat: async () => ({ message: { content: 'no auth api' } }) } };
+                const info = await PuterAI.ensureSignedIn();
+                const r = await PuterAI.callGeminiWithFallback('hi');
+                return { info, content: r.message.content };
+            });
+            expect(result.info).toBeNull();
+            expect(result.content).toBe('no auth api');
+        });
+
+        test('callGeminiWithFallback 會在呼叫 ai.chat 前先完成登入', async ({ page }) => {
+            // 限制一：signIn() 必須在 user activation 內，所以它必須是第一個 await。
+            // 這裡驗證順序：signIn 一定早於 chat。
+            const order = await page.evaluate(async () => {
+                const seq = [];
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => false,
+                        signIn: async () => { seq.push('signIn'); },
+                        getUser: async () => { seq.push('getUser'); return { username: 't', is_temp: true }; }
+                    },
+                    ai: { chat: async () => { seq.push('chat'); return { message: { content: 'ok' } }; } }
+                };
+                await PuterAI.callGeminiWithFallback('hi');
+                return seq;
+            });
+            expect(order.indexOf('signIn')).toBeLessThan(order.indexOf('chat'));
+            expect(order).toEqual(['signIn', 'getUser', 'chat']);
+        });
+
+        test('isSignedIn 拋錯時視為未登入而非崩潰', async ({ page }) => {
+            const result = await page.evaluate(async () => {
+                const calls = [];
+                window.puter = {
+                    auth: {
+                        isSignedIn: () => { throw new Error('boom'); },
+                        signIn: async (o) => { calls.push(o); },
+                        getUser: async () => ({ username: 't', is_temp: true })
+                    },
+                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
+                };
+                const info = await PuterAI.ensureSignedIn();
+                return { calls, info };
+            });
+            expect(result.calls).toHaveLength(1);
+            expect(result.info.temporary).toBe(true);
+        });
+    });
+
 });
