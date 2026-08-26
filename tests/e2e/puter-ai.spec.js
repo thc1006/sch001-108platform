@@ -2,12 +2,15 @@
  * PuterAI helper 單元測試（以 Playwright 執行）
  *
  * 前置：
- *   npm install
- *   npx playwright install
- *   npm run serve      # 另一個 terminal 啟 http://localhost:8000
+ *   npm ci
+ *   npx playwright install chromium
  *
  * 執行：
  *   npx playwright test tests/e2e/puter-ai.spec.js
+ *
+ * 伺服器由 playwright.config.js 的 webServer 自動啟動，不需要另開 terminal。
+ * 先前沒有那個設定檔（而且 .gitignore 還把它擋掉了），說明文件要求人工跑
+ * npm run serve——結果這些測試從來沒有真的被跑過，也進不了 CI。
  */
 
 const { test, expect } = require('@playwright/test');
@@ -25,7 +28,7 @@ async function gotoFixture(page, queryString = '') {
 test.describe('PuterAI 共用 module', () => {
 
     test.describe('全域物件', () => {
-        test('PuterAI 已定義且版本為 2', async ({ page }) => {
+        test('PuterAI 已定義且版本為 3', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
                 defined: typeof window.PuterAI === 'object',
@@ -37,7 +40,7 @@ test.describe('PuterAI 共用 module', () => {
                 models: window.PuterAI.MODELS,
             }));
             expect(info.defined).toBe(true);
-            expect(info.version).toBe(2);
+            expect(info.version).toBe(3);
             expect(info.hasFormat).toBe(true);
             expect(info.hasCall).toBe(true);
             expect(info.hasLog).toBe(true);

@@ -19,7 +19,12 @@ node_modules/
 test-results/
 playwright-report/
 playwright/.cache/
-playwright.config.js
+# playwright.config.js 必須入版控：CI 靠它啟動 webServer 與指定 testDir。
+# 先前被 ignore，導致設定檔只存在於本地——測試因此從來沒進過 CI，說明文件
+# 也只好要求人工另開 npm run serve。
+
+# Playwright MCP 瀏覽器工作階段的暫存輸出
+/.playwright-mcp/
 
 # OS files
 .DS_Store
