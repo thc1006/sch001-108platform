@@ -107,4 +107,4 @@ jobs:
             --scheme file
             --verbose
             --no-progress
-            './.link-root/sch001-108platform/**/*.html'
+            './.link-root/sch001-108platform/**/*.NO-SUCH-EXTENSION'
