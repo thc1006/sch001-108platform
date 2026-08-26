@@ -124,6 +124,71 @@ jobs:
         with:
           path: dist
 
+  # 靜態檢查證明得了「這個 URL 指得到東西」，證明不了「頁面在瀏覽器裡跑得起來」。
+  # 競賽頁與資源頁都是資料驅動的——瀏覽器先 fetch() JSON 再渲染。JSON 壞掉或前端
+  # JS 丟例外時，check:site 全綠、build 成功，使用者只看到空白容器。這個 job 補那
+  # 一段：在真的 Chromium 裡開頁面，等資料渲染出來，且不接受任何 console error、
+  # pageerror 或本站資源的失敗請求。
+  #
+  # 它第一次跑就抓到首頁用 hostname.endsWith('github.io') 分支硬寫搜尋索引路徑——
+  # 在正式站上剛好成立，換自訂網域或本機預覽就整個失效。
+  browser:
+    name: Browser Tests
+    # 刻意「不」自己重新 build，而是拿 site job 上傳的那一份。理由與 deploy job
+    # 完全相同：如果這裡另外 build 一份來測，被測的就不是會被部署的那一份，
+    # 這個 job 的綠燈也就證明不了部署出去的東西沒問題。
+    needs: [site]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 只裝 chromium：這些是前端邏輯與渲染測試，跨瀏覽器差異不是這裡要驗的東西
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # site job 通過全部靜態檢查後上傳的那一份。upload-pages-artifact 內部包成
+      # artifact.tar，所以這裡要解開。
+      - name: Download the artifact that passed the static checks
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: github-pages
+
+      # site smoke test 要在 GitHub Pages 的路徑命名空間下跑：站台連結都是根相對
+      # 路徑，直接從產物根目錄開會全部指錯地方，測不出真實行為。
+      - name: Unpack into the GitHub Pages path namespace
+        run: |
+          rm -rf "$GITHUB_WORKSPACE/.link-root"
+          mkdir -p "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
+          tar -xf artifact.tar -C "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
+          test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/index.html"
+          test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/search-index.json"
+
+      - name: Run browser tests
+        run: npx playwright test
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   data:
     name: Validate Data
     runs-on: ubuntu-latest
@@ -157,7 +222,7 @@ jobs:
   required:
     name: CI Required
     if: ${{ always() }}
-    needs: [site, data]
+    needs: [site, data, browser]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -165,11 +230,14 @@ jobs:
         env:
           SITE_RESULT: ${{ needs.site.result }}
           DATA_RESULT: ${{ needs.data.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           echo "Site Integrity : $SITE_RESULT"
           echo "Validate Data  : $DATA_RESULT"
+          echo "Browser Tests  : $BROWSER_RESULT"
           test "$SITE_RESULT" = "success"
           test "$DATA_RESULT" = "success"
+          test "$BROWSER_RESULT" = "success"
 
   # 只有在 CI Required 通過後才部署，而且部署的是 site job 上傳的那一份 artifact，
   # 不是重新建置的。needs: required 是這裡的關鍵——它讓「通過檢查」成為部署的

@@ -19,7 +19,7 @@
 (function (global) {
     'use strict';
 
-    if (global.PuterAI && global.PuterAI.__version === 2) {
+    if (global.PuterAI && global.PuterAI.__version === 3) {
         return; // 已載入，避免重複定義
     }
 
@@ -360,6 +360,84 @@
     }
 
     // ------------------------------------------------------------
+    // 驗證：明確要求建立 temporary user
+    // ------------------------------------------------------------
+    //
+    // 為什麼要顯式做這件事：先前完全不碰 puter.auth，直接呼叫 puter.ai.chat()，
+    // 由 Puter.js 自行決定何時、以什麼方式要求使用者驗證。改為明確呼叫
+    // signIn({ attempt_temp_user_creation: true })，讓首次造訪的學生能以臨時帳號
+    // 直接試用，不必先註冊。
+    //
+    // 兩個限制務必理解，否則會寫出看似正常、實際被瀏覽器擋掉的程式碼：
+    //
+    //   1. signIn() 必須在 user gesture（click／tap）的 transient activation
+    //      期間內呼叫，否則 popup 會被瀏覽器封鎖。因此 ensureSignedIn() 必須是
+    //      callGeminiWithFallback() 的「第一個 await」——呼叫端都是在 click
+    //      handler 內同步呼叫本函式，中間不得插入其他 await。
+    //      （已稽核 9 個呼叫點，全部符合。）
+    //
+    //   2. attempt_temp_user_creation 主要服務首次造訪者。若瀏覽器已有 Puter
+    //      使用紀錄、舊 session、登出狀態，或被判定不適合建立臨時帳號，Puter
+    //      仍可能轉向一般登入／註冊流程。因此登入後一律以 getUser() 回報實際
+    //      的 is_temp，不可假設一定是臨時帳號。
+    //
+    var signInPromise = null; // 同頁併發呼叫共用，避免同時彈出多個 popup
+
+    async function describeCurrentUser() {
+        try {
+            var user = await puter.auth.getUser();
+            var info = {
+                username: user && user.username,
+                temporary: Boolean(user && user.is_temp)
+            };
+            log('info', 'Puter 已登入', info);
+            return info;
+        } catch (err) {
+            // 已登入但拿不到使用者資訊：不阻斷後續 AI 呼叫
+            log('warn', '取得 Puter 使用者資訊失敗：' + formatPuterError(err));
+            return null;
+        }
+    }
+
+    async function ensureSignedIn() {
+        // puter.auth 不存在（舊版 Puter.js、或測試只 mock 了 ai）→ 不阻斷，
+        // 交由 puter.ai.chat() 沿用既有行為。
+        if (typeof puter === 'undefined' || !puter || !puter.auth ||
+            typeof puter.auth.signIn !== 'function') {
+            log('debug', 'puter.auth 不可用，略過顯式登入');
+            return null;
+        }
+
+        var signedIn = false;
+        try {
+            signedIn = puter.auth.isSignedIn();
+        } catch (err) {
+            log('warn', 'isSignedIn() 失敗，視為未登入：' + formatPuterError(err));
+        }
+        if (signedIn) return describeCurrentUser();
+
+        // 併發時共用同一個登入流程，否則多個 AI 呼叫會各彈一個 popup
+        if (signInPromise) return signInPromise;
+
+        signInPromise = (async function () {
+            try {
+                log('info', '要求 Puter 登入（嘗試建立臨時帳號）');
+                await puter.auth.signIn({ attempt_temp_user_creation: true });
+                return await describeCurrentUser();
+            } catch (err) {
+                // 使用者關閉 popup、popup 被擋、或轉向一般登入後放棄，都會走到這裡。
+                // 不 throw：讓後續 puter.ai.chat() 產生真正的錯誤，行為不比改動前差。
+                log('error', 'Puter 登入未完成：' + formatPuterError(err));
+                return null;
+            } finally {
+                signInPromise = null;
+            }
+        })();
+        return signInPromise;
+    }
+
+
+    // ------------------------------------------------------------
     // callGeminiWithFallback（加入 logger）
     // ------------------------------------------------------------
     async function callGeminiWithFallback(prompt, options) {
@@ -369,6 +447,10 @@
             log('error', 'Puter.js 未就緒', { hasPuter: typeof puter !== 'undefined' });
             throw e;
         }
+
+        // 必須是本函式的第一個 await：呼叫端在 click handler 內同步呼叫本函式，
+        // 這樣 signIn() 仍在 transient user activation 期間內，popup 不會被擋。
+        await ensureSignedIn();
 
         log('info', 'AI 呼叫開始', { promptLength: prompt ? prompt.length : 0, options: { stream: !!options.stream, hasSignal: !!options.signal } });
 
@@ -487,9 +569,10 @@
     // 匯出
     // ------------------------------------------------------------
     global.PuterAI = {
-        __version: 2,
+        __version: 3,
         MODELS: MODELS,
         formatPuterError: formatPuterError,
+        ensureSignedIn: ensureSignedIn,
         callGeminiWithFallback: callGeminiWithFallback,
         renderMarkdown: renderMarkdown,
         log: log,

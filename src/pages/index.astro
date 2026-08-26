@@ -171,17 +171,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       let selectedIndex = -1;
       let resultElements = [];
 
-      const CACHE_KEY = 'search-index-cache';
+      // 鍵值必須依部署路徑隔離。GitHub Pages 把同一帳號下的所有專案頁放在同一個
+      // origin（thc1006.github.io），而 localStorage 是 per-origin 不是 per-path——
+      // 固定字串鍵會讓同帳號的其他專案頁互相覆蓋彼此的搜尋快取，症狀是搜尋結果
+      // 指向另一個站台的頁面，而且清快取才會好。
+      const CACHE_KEY = 'search-index-cache:' + window.location.pathname.replace(/[^/]*$/, '');
       const CACHE_VERSION = '1.0';
       const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
-      // 依目前部署環境決定搜尋索引路徑(GitHub Pages 專案頁需含 repo 名稱)
-      let searchPath;
-      if (window.location.hostname.endsWith('github.io')) {
-        searchPath = '/sch001-108platform/search-index.json';
-      } else {
-        searchPath = '/search-index.json';
-      }
+      // 相對路徑。本頁建置後就在 base 的根目錄（部署為 /sch001-108platform/index.html），
+      // 所以 'search-index.json' 會解析成 /sch001-108platform/search-index.json；本機
+      // 從 / 開時則解析成 /search-index.json。兩邊都對，而且不必知道 base 是什麼。
+      //
+      // 先前是用 window.location.hostname.endsWith('github.io') 分支硬寫兩條路徑。
+      // 那在正式站上剛好會成立，但只要不是 *.github.io——自訂網域、本機預覽、PR
+      // preview——就會 fetch 到不存在的 /search-index.json，搜尋整個失效且只有
+      // console 裡有訊息。瀏覽器 smoke test 第一次跑就是抓到這個。
+      const searchPath = 'search-index.json';
 
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
