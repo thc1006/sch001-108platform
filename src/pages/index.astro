@@ -176,7 +176,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       // 固定字串鍵會讓同帳號的其他專案頁互相覆蓋彼此的搜尋快取，症狀是搜尋結果
       // 指向另一個站台的頁面，而且清快取才會好。
       const CACHE_KEY = 'search-index-cache:' + window.location.pathname.replace(/[^/]*$/, '');
-      const CACHE_VERSION = '1.0';
+      // 索引結構一改就必須跟著跳版，否則舊快取（有效期 24 小時）會讓使用者拿著
+      // 沒有 competencies／sdgs／taxonomy 的舊索引，搜「A2」照樣找不到東西，
+      // 而且只有清快取才會好——那種症狀使用者無從自救，也不會回報。
+      // 2.0：新增 competencies／sdgs／taxonomy 三個分類欄位（#14）。
+      const CACHE_VERSION = '2.0';
       const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
       // 相對路徑。本頁建置後就在 base 的根目錄（部署為 /sch001-108platform/index.html），
@@ -269,10 +273,26 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         searchData = data;
         const fuseOptions = {
           includeScore: true,
+          // 用來說明「這筆為什麼被找出來」。命中的是素養代碼還是議題標籤，
+          // 對使用者的意義完全不同，但只看標題與摘要是看不出來的。
+          includeMatches: true,
           shouldSort: true,
           threshold: 0.4,
+          // competencies（A1-C3 代碼）與 sdgs（SDG11…）給的權重比 title 還高：
+          // 會打「A2」或「SDG11」進搜尋框的人要的就是那個分類，不是標題裡剛好
+          // 有這兩個字的東西。Fuse 會把 keys 的 weight 正規化，所以這裡調的是
+          // 相對關係；實測（405 筆索引，改動前這四個查詢分別是 0／0／3／11 筆）：
+          //   A2       → 9 筆，每一筆都真的標了 A2（5 個學群 + 4 個公民科技專案）
+          //   系統思考 → 同上 9 筆
+          //   環保     → 3 筆公民科技專案，score 0.000
+          //   SDG      → 18 筆，公民科技專案排第 1（權重 0.6 時排第 9）
+          // 並以 20 個既有查詢（競賽／Python／學長姐／書單…）比對過 top-10，
+          // 排序完全沒有變動。
           keys: [
             { name: 'title', weight: 0.7 },
+            { name: 'competencies', weight: 1.0 },
+            { name: 'sdgs', weight: 1.0 },
+            { name: 'taxonomy', weight: 0.65 },
             { name: 'tags', weight: 0.5 },
             { name: 'content', weight: 0.2 },
           ],
@@ -378,16 +398,77 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             tagsDiv.appendChild(tagSpan);
           });
 
+          // 素養／SDG 的中文標籤。一律走 textContent，不進 innerHTML：
+          // 這一頁其他地方要走 innerHTML 都得先過 escapeHTML()，而這些字串是
+          // 從資料檔一路帶到瀏覽器的，連「忘了 escape」的機會都不該留。
+          const taxonomy = Array.isArray(item.taxonomy) ? item.taxonomy : [];
+          const taxDiv = document.createElement('div');
+          taxDiv.className = 'mt-2 flex flex-wrap gap-1';
+          taxonomy.forEach((label) => {
+            const taxSpan = document.createElement('span');
+            taxSpan.className =
+              'inline-block px-2 py-1 text-xs font-semibold rounded-full ' +
+              (label.indexOf('SDG') === 0 ? 'text-emerald-800 bg-emerald-100' : 'text-sky-800 bg-sky-100');
+            taxSpan.textContent = label;
+            taxDiv.appendChild(taxSpan);
+          });
+
+          // 命中說明：讓使用者看得出「這筆是因為素養代碼被找出來的」，而不是
+          // 只看到一個標題卻不知道關鍵字在哪。同樣只用 textContent。
+          const matchEl = document.createElement('p');
+          matchEl.className = 'mt-2 text-xs text-gray-500';
+          matchEl.textContent = describeMatches(result.matches);
+
           linkEl.appendChild(titleEl);
           linkEl.appendChild(contentEl);
           if (item.tags.length > 0) {
             linkEl.appendChild(tagsDiv);
+          }
+          if (taxonomy.length > 0) {
+            linkEl.appendChild(taxDiv);
+          }
+          if (matchEl.textContent) {
+            linkEl.appendChild(matchEl);
           }
           resultsContainer.appendChild(linkEl);
         });
 
         selectedIndex = -1;
         resultElements = Array.from(resultsContainer.querySelectorAll('a'));
+      }
+
+      // Fuse 的 key → 給使用者看的中文欄位名。key 不在表裡就不顯示（例如日後
+      // 新增了只給排序用的內部欄位），避免把內部鍵名端到使用者面前。
+      const MATCH_FIELD_LABELS = {
+        title: '標題',
+        competencies: '核心素養',
+        sdgs: 'SDGs',
+        taxonomy: '分類標籤',
+        tags: '標籤',
+        content: '內文',
+      };
+      // 分類欄位命中時要一併講出命中的值（「核心素養（A2）」）；標題與內文已經
+      // 有 highlight 標黃，再重複一次只是雜訊。
+      const MATCH_FIELDS_WITH_VALUE = ['competencies', 'sdgs', 'taxonomy', 'tags'];
+
+      function describeMatches(matches) {
+        if (!Array.isArray(matches) || matches.length === 0) return '';
+        const byLabel = new Map();
+        matches.forEach((m) => {
+          const label = MATCH_FIELD_LABELS[m.key];
+          if (!label) return;
+          if (!byLabel.has(label)) byLabel.set(label, []);
+          if (MATCH_FIELDS_WITH_VALUE.indexOf(m.key) !== -1 && typeof m.value === 'string' && m.value) {
+            byLabel.get(label).push(m.value);
+          }
+        });
+        if (byLabel.size === 0) return '';
+        const parts = [];
+        byLabel.forEach((values, label) => {
+          const uniq = values.filter((v, i) => values.indexOf(v) === i).slice(0, 3);
+          parts.push(uniq.length ? label + '（' + uniq.join('、') + '）' : label);
+        });
+        return '命中：' + parts.join('・');
       }
 
       function highlight(text, query) {

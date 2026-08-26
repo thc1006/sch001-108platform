@@ -65,6 +65,10 @@ yarn-error.log*
 dist/
 .astro/
 
+# 故障注入用的暫存副本（腳本跑完會自己刪掉；崩在中途時不該被誤 commit）
+/dist-faultcheck/
+/.taxonomy-faultcheck/
+
 # 工作過程文件與本地研究資料：保留於本地、不納入版控
 # （docs/ 為一次性工作文件、school/ 為本地研究資料,均不入版控）
 docs/

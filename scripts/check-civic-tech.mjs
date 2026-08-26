@@ -6,9 +6,11 @@
  *   1. JSON 格式與必填欄位是否正確
  *   2. id 格式（小寫英數與連字號）與唯一性
  *   3. status 欄位值是否在允許清單內
- *   4. subjects / competencies / sdgs 陣列的型別與內容
+ *   4. subjects / competencies / sdgs / tags 陣列的型別與內容
  *      - competencies 須符合 108 課綱核心素養代碼（A1-A3、B1-B3、C1-C3）
  *      - sdgs 須為 1-17 的整數
+ *      - tags（議題關鍵字）選填，填了就必須是不重複的非空字串陣列
+ *      - 合法代碼的唯一來源是 scripts/taxonomy.json，與搜尋索引共用同一份
  *   5. url 是否為合法的 http(s) 連結
  *   6. 哪些專案 status 為 dormant（近期活動較少，需提醒讀者查證最新狀態）
  *
@@ -20,18 +22,25 @@
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 
+import { validateTaxonomyFields } from './taxonomy.lib.mjs';
+
 // 公民科技專案資料的單一家為 public/(會被 astro build 複製進 dist/);
 // 看門狗讀此處,並與 src/pages/civic-tech-map/index.astro 頁面內容對應。
-const DATA_PATH = new URL('../public/civic-tech-map/projects.json', import.meta.url);
-const REPORT_PATH = 'civic-tech-report.md';
+//
+// CIVIC_TECH_DATA / CIVIC_TECH_REPORT 可改指到別的檔案。故障注入需要一份可以
+// 隨意破壞的副本,絕不能動到版控裡的那一份(與 check-built-site.mjs 的 SITE_DIST
+// 同一個道理)。
+const DATA_PATH = process.env.CIVIC_TECH_DATA
+    || new URL('../public/civic-tech-map/projects.json', import.meta.url);
+const REPORT_PATH = process.env.CIVIC_TECH_REPORT || 'civic-tech-report.md';
 
 // 必填文字欄位:必須存在且為非空字串
 const TEXT_FIELDS = ['id', 'name', 'org', 'url', 'description'];
-// 必填陣列欄位:必須存在且為陣列(sdgs 允許空陣列＝無對應 SDG)
-const ARRAY_FIELDS = ['subjects', 'competencies', 'sdgs'];
+// 必填陣列欄位:必須存在且為陣列。competencies / sdgs / tags 三個分類欄位改由
+// scripts/taxonomy.lib.mjs 的 validateTaxonomyFields 一手負責,避免同一個欄位
+// 有兩個檢查者卻各報一次錯。
+const ARRAY_FIELDS = ['subjects'];
 const ALLOWED_STATUS = ['active', 'maintenance', 'dormant'];
-// 108 課綱核心素養代碼:三面九項(A1-A3 自主行動、B1-B3 溝通互動、C1-C3 社會參與)
-const COMPETENCY_RE = /^[ABC][1-3]$/;
 const ID_RE = /^[a-z0-9-]+$/;
 
 // 致命錯誤:寫出錯誤報告、通知 workflow 開 issue,再以非零碼結束。
@@ -130,26 +139,13 @@ list.forEach((proj, index) => {
         });
     }
 
-    // competencies:陣列內每一項須符合 108 課綱核心素養代碼,且至少有一項
-    if (Array.isArray(proj.competencies)) {
-        if (proj.competencies.length === 0) {
-            schemaErrors.push(`「${label}」的 competencies 至少需要一個核心素養代碼`);
-        }
-        proj.competencies.forEach((c) => {
-            if (typeof c !== 'string' || !COMPETENCY_RE.test(c)) {
-                schemaErrors.push(`「${label}」的 competencies「${c}」不是合法的核心素養代碼（須為 A1-A3、B1-B3、C1-C3）`);
-            }
-        });
-    }
-
-    // sdgs:陣列內每一項須為 1-17 的整數(允許空陣列)
-    if (Array.isArray(proj.sdgs)) {
-        proj.sdgs.forEach((n) => {
-            if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 17) {
-                schemaErrors.push(`「${label}」的 sdgs「${n}」不是合法的 SDG 編號（須為 1-17 的整數）`);
-            }
-        });
-    }
+    // competencies / sdgs / tags:代碼合法性、重複、型別。合法代碼與中文標籤的
+    // 唯一來源是 scripts/taxonomy.json,build-search-index.js 讀的是同一份——
+    // 先前這裡自己寫了一條 /^[ABC][1-3]$/,與索引端各自維護,必然漂移。
+    validateTaxonomyFields(proj, label, schemaErrors, {
+        requireCompetencies: true,
+        requireSdgs: true,
+    });
 
     // status:必填,且須在允許清單內
     if (!('status' in proj)) {

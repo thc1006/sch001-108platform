@@ -85,6 +85,41 @@ const cases = [
     mutate: (t) => t.replace(/"url":\s*"[^"]+"/, '"url": "definitely-missing-page.html"'),
   },
   {
+    // 以下五項對應 #14 新增的搜尋分類層。少了它們，「索引裡的素養／SDG 標籤」
+    // 這件事在建置產物上就完全沒有把關——標籤壞掉的症狀是「搜尋找不到」，
+    // 頁面看起來一切正常，沒有人會回報。
+    name: 'search-index 出現非法的核心素養代碼',
+    expect: /不是合法的核心素養代碼/,
+    file: `${DIST}/search-index.json`,
+    mutate: (t) => t.replace('"A2",', '"Z9",'),
+  },
+  {
+    name: 'search-index 出現不存在的 SDG 編號',
+    expect: /不是合法的 SDG 標籤/,
+    file: `${DIST}/search-index.json`,
+    mutate: (t) => t.replace('"SDG11",', '"SDG99",'),
+  },
+  {
+    name: 'search-index 有素養代碼卻少了對應的中文標籤',
+    expect: /taxonomy 卻缺少對應的中文標籤/,
+    file: `${DIST}/search-index.json`,
+    mutate: (t) => t.replace('"A2 系統思考與解決問題",', '"（標籤不見了）",'),
+  },
+  {
+    name: '來源 JSON 有的專案，search-index 裡卻找不到',
+    expect: /搜尋索引卻沒有對應的 url/,
+    file: `${DIST}/search-index.json`,
+    mutate: (t) => t.replace('"civic-tech-map/index.html#disfactory"', '"civic-tech-map/index.html#cofacts"'),
+  },
+  {
+    // 逐項錨點的契約：頁面上的 id 改名，索引裡的 fragment 就成了空頭支票。
+    // #78 修掉的 17 筆壞錨點正是這個失效模式，這裡確保它不會再悄悄回來。
+    name: '公民科技專案的頁內錨點被改名',
+    expect: /沒有 id="disfactory"/,
+    file: `${DIST}/civic-tech-map/index.html`,
+    mutate: (t) => t.replace('id="disfactory"', 'id="disfactory-renamed"'),
+  },
+  {
     name: 'search-index.json 整份不見',
     expect: /找不到 search-index\.json/,
     apply: () => renameSync(`${DIST}/search-index.json`, `${DIST}/search-index.json.bak`),

@@ -98,3 +98,118 @@ test.describe('部署產物 smoke test', () => {
         expect(items.length).toBeGreaterThan(0);
     });
 });
+
+/**
+ * #14 的驗收標準：搜尋 A2／系統思考／環保／SDG 要找得到對應的公民科技專案。
+ * --------------------------------------------------------------
+ * 這幾條刻意在真的瀏覽器裡打字驗證，而不是拿 search-index.json 做字串比對。
+ * 索引裡「有那個欄位」和「使用者打進去搜得到」之間隔著 Fuse 的 keys 權重與
+ * threshold——只驗前者的話，把 keys 改壞、把 threshold 調到 0.1，測試照樣全綠。
+ *
+ * 同時驗證兩件靜態檢查看不到的事：
+ *   1. 搜尋結果的錨點真的能跳到那個專案（#78 的壞錨點就是點了停在頁首）
+ *   2. 分類標籤是用 textContent 塞進去的，不是 innerHTML
+ */
+test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
+    /** 開首頁並等到搜尋引擎就緒（索引 fetch 回來、Fuse 初始化完才會解除 disabled）。 */
+    async function openHome(page) {
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+        const input = page.locator('#search-input');
+        await expect(input).toBeEnabled({ timeout: 15_000 });
+        return input;
+    }
+
+    /** 打進關鍵字，回傳結果清單的 locator。 */
+    async function searchFor(page, query) {
+        const input = await openHome(page);
+        await input.fill(query);
+        const results = page.locator('#search-results-container a[role="option"]');
+        await expect(results.first()).toBeVisible({ timeout: 10_000 });
+        return results;
+    }
+
+    // 素養類查詢：命中的不只公民科技專案，「未來生涯GPS」的學群卡片也標了同一個
+    // 素養（它的來源資料寫的是中文名，建索引時被正規化成代碼）。這裡驗的是
+    // 精確度——整份結果清單都必須真的帶有那個素養標籤，而不是模糊比對撈進來的
+    // 雜訊；同時公民科技專案必須在其中。只驗「第一筆是誰」擋不住 threshold 被
+    // 調鬆之後撈進一堆無關項目。
+    for (const { query, why, label } of [
+        { query: 'A2', why: '核心素養代碼', label: 'A2 系統思考與解決問題' },
+        { query: '系統思考', why: '素養的中文標籤', label: 'A2 系統思考與解決問題' },
+    ]) {
+        test(`搜尋「${query}」（${why}）命中的每一筆都真的標了該素養`, async ({ page }) => {
+            const errors = watchForErrors(page);
+            const results = await searchFor(page, query);
+
+            const count = await results.count();
+            expect(count).toBeGreaterThan(0);
+
+            const chipSets = await results.evaluateAll((els) =>
+                els.map((el) => [...el.querySelectorAll('span')].map((s) => s.textContent.trim())),
+            );
+            for (const chips of chipSets) {
+                expect(chips, `搜尋「${query}」有一筆結果沒有標「${label}」：${chips.join(' / ')}`).toContain(label);
+            }
+
+            const hrefs = await results.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
+            expect(
+                hrefs.filter((h) => h.includes('civic-tech-map/index.html#')).length,
+                `搜尋「${query}」的結果：${hrefs.join(', ')}`,
+            ).toBeGreaterThan(0);
+
+            expect(errors(), errors().join('\n')).toEqual([]);
+        });
+    }
+
+    // 議題關鍵字與 SDGs：這兩個查詢只有公民科技專案帶有對應標籤，所以要求更嚴——
+    // 第一筆就必須是公民科技專案。issue 要的是「權重較高地顯示」，只要「出現在
+    // 某個位置」是不夠的。
+    for (const { query, why } of [
+        { query: '環保', why: '議題關鍵字' },
+        { query: 'SDG', why: 'SDGs' },
+    ]) {
+        test(`搜尋「${query}」（${why}）第一筆就是公民科技專案`, async ({ page }) => {
+            const errors = watchForErrors(page);
+            const results = await searchFor(page, query);
+
+            expect(await results.count()).toBeGreaterThan(0);
+            const firstHref = await results.first().getAttribute('href');
+            expect(firstHref, `搜尋「${query}」的第一筆是 ${firstHref}`).toContain('civic-tech-map/index.html#');
+
+            expect(errors(), errors().join('\n')).toEqual([]);
+        });
+    }
+
+    test('素養代碼命中時會說明是「核心素養」命中的', async ({ page }) => {
+        const results = await searchFor(page, 'A2');
+        const summary = await results.first().locator('p').last().textContent();
+        expect(summary).toContain('核心素養');
+        expect(summary).toContain('A2');
+    });
+
+    test('分類標籤走 textContent，不會被當成 HTML 解析', async ({ page }) => {
+        const results = await searchFor(page, 'SDG');
+        const chips = results.first().locator('span');
+        expect(await chips.count()).toBeGreaterThan(0);
+        // textContent 塞進去的節點不可能有子元素；若哪天改成 innerHTML，
+        // 標籤裡只要出現一個 < 就會長出子節點，這一條會紅。
+        const childCounts = await chips.evaluateAll((els) => els.map((el) => el.childElementCount));
+        expect(childCounts.every((n) => n === 0)).toBe(true);
+        const texts = await chips.allTextContents();
+        expect(texts.some((t) => t.startsWith('SDG '))).toBe(true);
+    });
+
+    test('點搜尋結果會跳到該專案，而不是停在頁首', async ({ page }) => {
+        const errors = watchForErrors(page);
+        const results = await searchFor(page, '假訊息');
+        const href = await results.first().getAttribute('href');
+        expect(href).toContain('#');
+        const anchor = href.split('#')[1];
+
+        await results.first().click();
+        await page.waitForURL(new RegExp(`#${anchor}$`), { timeout: 10_000 });
+        // 錨點必須真的存在於頁面上，否則瀏覽器只會停在頁首而不報任何錯
+        await expect(page.locator(`#${anchor}`)).toBeVisible();
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
+});
