@@ -39,6 +39,7 @@ import {
     nextOccurrenceUTC,
     TEXT_FIELDS,
     ALLOWED_COMPETITION_FIELDS,
+    validateSchedule,
 } from './check-competitions.lib.mjs';
 
 // 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
@@ -147,6 +148,9 @@ list.forEach((comp, index) => {
         validateUrl(comp.url, label, schemaErrors);
     }
     validateCycle(comp.cycle, label, schemaErrors);
+    // 報名時程與賽事日期（deadlineAt / opensAt / eventStartsAt / eventEndsAt /
+    // registrationNote / sourceCheckedAt）——皆選填，但填了就必須合法且自洽。
+    validateSchedule(comp, label, schemaErrors);
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」
     if (!('deadline' in comp)) {
@@ -176,8 +180,18 @@ list.forEach((comp, index) => {
         return;
     }
 
+    // 「是否已過」在有 deadlineAt（帶時區的精確時刻）時以它為準：只看台北日曆日
+    // 會在跨時區的競賽上差半天到一天。上面的 validateSchedule 已確保兩者日期部分
+    // 一致，所以剩餘天數仍用日曆日算，與頁面顯示的「剩 N 天」保持同一套語意。
+    //
+    // 注意不要在這裡提早 return：那會連「即將截止」的提醒一起跳過，看門狗就再也
+    // 不會提醒任何有精確時刻的競賽——本檔存在的理由正是那個提醒。
+    const exactMs = typeof comp.deadlineAt === 'string' ? Date.parse(comp.deadlineAt) : NaN;
+    const hasExact = !Number.isNaN(exactMs);
     const diffDays = Math.ceil((deadlineUTC - todayUTC) / 86_400_000);
-    if (diffDays < 0) {
+    const past = hasExact ? exactMs < Date.now() : diffDays < 0;
+
+    if (past) {
         // 已過的截止日若配有 cycle，代表「本屆已結束、下屆時間可推算」——那是有效
         // 狀態而非過時資料，不再要求維護者把 deadline 清空（清空反而丟掉資訊，也是
         // #63→#66→#68 反覆出現的原因）。下屆逼近的提醒統一在迴圈後處理。

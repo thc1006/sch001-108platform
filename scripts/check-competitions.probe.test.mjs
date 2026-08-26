@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 
 import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
-import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS } from './check-competitions.lib.mjs';
+import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS, validateInstant, validateDateOnly, validateSchedule } from './check-competitions.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
 let base;
@@ -215,6 +215,219 @@ test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
 });
 
 
+
+
+// ── 報名時程欄位 ──
+const errsOf = (fn) => {
+    const e = [];
+    fn(e);
+    return e;
+};
+
+test('schedule：時刻必須帶明確時區位移', () => {
+    // 省略時區的時刻會被瀏覽器當成使用者的本地時間解析，同一筆資料在不同時區的人
+    // 眼中是不同的時刻——正是這組欄位要修掉的問題本身，不能容忍再猜一個時區。
+    for (const good of ['2026-09-15T23:59:00-07:00', '2026-11-04T14:00:00-05:00', '2026-05-18T23:59:00+08:00', '2026-01-01T00:00Z']) {
+        assert.deepEqual(errsOf((e) => validateInstant(good, 'deadlineAt', 'X', e)), [], `${good} 應被接受`);
+    }
+    for (const bad of ['2026-09-15T23:59:00', '2026-09-15', '2026-09-15T25:00:00Z', '2026-02-30T00:00:00Z', 42, null]) {
+        assert.ok(errsOf((e) => validateInstant(bad, 'deadlineAt', 'X', e)).length > 0, `${bad} 應被拒絕`);
+    }
+    // undefined＝未提供，選填欄位不得報錯
+    assert.deepEqual(errsOf((e) => validateInstant(undefined, 'deadlineAt', 'X', e)), []);
+});
+
+test('schedule：純日期欄位攔得住不存在的日期', () => {
+    assert.deepEqual(errsOf((e) => validateDateOnly('2026-11-14', 'eventStartsAt', 'X', e)), []);
+    for (const bad of ['2026-02-30', '2026-13-01', '2026-11-31', '26-11-14', '2026/11/14']) {
+        assert.ok(errsOf((e) => validateDateOnly(bad, 'eventStartsAt', 'X', e)).length > 0, `${bad} 應被拒絕`);
+    }
+});
+
+test('schedule：欄位之間的先後關係', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+
+    // 賽事結束早於開始
+    assert.ok(bad({ eventStartsAt: '2026-11-15', eventEndsAt: '2026-11-14' }).some((m) => m.includes('早於')));
+    // 只有結束沒有開始＝資料寫了一半
+    assert.ok(bad({ eventEndsAt: '2026-11-15' }).some((m) => m.includes('沒有 eventStartsAt')));
+    // 報名開放不早於截止
+    assert.ok(
+        bad({ opensAt: '2026-09-16T00:00:00Z', deadlineAt: '2026-09-15T00:00:00Z' }).some((m) => m.includes('不早於')),
+    );
+    // deadline 與 deadlineAt 的日期部分不一致——頁面只採用 deadlineAt，另一個會靜默變錯
+    assert.ok(
+        bad({ deadline: '2026-09-14', deadlineAt: '2026-09-15T23:59:00-07:00' }).some((m) => m.includes('不一致')),
+    );
+    // 合法組合不得報錯
+    assert.deepEqual(
+        bad({
+            deadline: '2026-11-04',
+            deadlineAt: '2026-11-04T14:00:00-05:00',
+            eventStartsAt: '2026-11-04',
+            eventEndsAt: '2026-11-17',
+            sourceCheckedAt: '2026-08-27',
+        }),
+        [],
+    );
+});
+
+test('schedule：registrationNote 有長度上限', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+    assert.deepEqual(bad({ registrationNote: '報名開放中 · 依所在地活動時間' }), []);
+    assert.ok(bad({ registrationNote: '' }).length > 0);
+    // 它會直接當狀態列文字，過長會撐破卡片版面
+    assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
+});
+
+// ── 前端狀態：時區行為 ──
+// 這是本次要修的實際錯誤。Breakthrough 官方截止 2026-09-15 23:59 PDT ＝ 台灣
+// 9/16 14:59。只存日期的話，台灣 9/15 凌晨就顯示「今日截止」（實際還有 39 小時），
+// 9/16 00:00 起顯示「已截止」（實際還有近 15 小時）。
+test('status：帶時區的截止時刻在跨日邊界上不得算錯', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}——若已改名請同步更新本測試`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText']
+        .map(grab)
+        .join('\n');
+
+    const comp = {
+        deadline: '2026-09-15',
+        deadlineAt: '2026-09-15T23:59:00-07:00',
+        cycle: { closes: '09-15' },
+    };
+    const at = (iso) => {
+        const fixed = new Date(iso).getTime();
+        // 只在被抽出的程式碼範圍內遮蔽 Date，不污染全域
+        class FixedDate extends Date {
+            constructor(...a) {
+                super(...(a.length ? a : [fixed]));
+            }
+            static now() {
+                return fixed;
+            }
+        }
+        const f = new Function('Date', `${bundle}; return { getStatus, statusText };`)(FixedDate);
+        return f.statusText(f.getStatus(comp));
+    };
+
+    assert.equal(at('2026-09-15T00:00:00Z'), '即將截止 · 剩 1 天', '台灣 9/15 08:00：還有 1 天多，不是今日截止');
+    assert.equal(at('2026-09-15T16:00:00Z'), '今日截止', '台灣 9/16 00:00：還有近 15 小時，不是已截止');
+    assert.equal(at('2026-09-16T06:00:00Z'), '今日截止', '台灣 9/16 14:00：截止前一小時仍可報名');
+    assert.match(at('2026-09-16T07:30:00Z'), /^本屆已截止/, '台灣 9/16 15:30：確實已過');
+});
+
+test('status：報名尚未開放時不得顯示「報名中」', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`))[0];
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText']
+        .map(grab)
+        .join('\n');
+
+    const fixed = new Date('2026-01-10T00:00:00Z').getTime();
+    class FixedDate extends Date {
+        constructor(...a) {
+            super(...(a.length ? a : [fixed]));
+        }
+        static now() {
+            return fixed;
+        }
+    }
+    const f = new Function('Date', `${bundle}; return { getStatus, statusText };`)(FixedDate);
+
+    // 報名 2/23 才開放、5/18 截止。先前只要 deadline 在未來就一律「報名中」，
+    // 即使報名根本還沒開始——學生點進去只會看到「敬請期待」。
+    const s = f.getStatus({
+        deadline: '2026-05-18',
+        deadlineAt: '2026-05-18T23:59:00+08:00',
+        opensAt: '2026-02-23T00:00:00+08:00',
+    });
+    assert.equal(s.key, 'upcoming');
+    assert.match(f.statusText(s), /尚未開放/);
+});
+
+
+// 篩選 chip 是寫死在 HTML 裡的，而狀態 key 是 JS 算出來的。新增一個狀態卻忘了加
+// chip，那些競賽在使用者點任一篩選時就會整批消失——實作這次改動時我就先犯了一次。
+// 這個測試把兩邊綁在一起。
+test('status：每個狀態 key 都要有對應的篩選 chip 與樣式', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+
+    const orderLine = src.match(/const STATUS_ORDER = \{([^}]*)\}/);
+    assert.ok(orderLine, '抽不到 STATUS_ORDER——若已改名請同步更新本測試');
+    const keys = [...orderLine[1].matchAll(/(\w+)\s*:/g)].map((m) => m[1]);
+    assert.ok(keys.length >= 5, `STATUS_ORDER 只抽到 ${keys.length} 個 key，抽取邏輯可能壞了`);
+
+    // getStatus 實際可能回傳的 key，必須是 STATUS_ORDER 的子集（排序表不可漏）
+    const produced = [...src.matchAll(/return \{ key: '(\w+)'/g)].map((m) => m[1]);
+    for (const k of new Set(produced)) {
+        assert.ok(keys.includes(k), `getStatus 會回傳 '${k}'，但 STATUS_ORDER 沒有它——排序會是 undefined`);
+    }
+
+    for (const k of keys) {
+        assert.ok(src.includes(`.is-${k} .comp-status`), `狀態 '${k}' 沒有對應的 .is-${k} .comp-status 樣式`);
+        // 'closed' 刻意不提供篩選：已經結束又沒有週期的競賽對學生沒有可行動性，
+        // 只在「全部」裡出現。其餘每個 key 都必須可篩選。
+        if (k === 'closed') continue;
+        assert.ok(
+            src.includes(`data-status="${k}"`),
+            `狀態 '${k}' 沒有對應的篩選 chip——使用者點任一篩選時這些競賽會整批消失`,
+        );
+        assert.ok(src.includes(`dot-${k}`), `狀態 '${k}' 的 chip 缺少 dot-${k} 顏色`);
+    }
+});
+
+// ── 已查證的五筆資料 ──
+// 這五筆是逐一開官網查證過的。寫成測試是為了讓「改回錯的值」變成紅燈，而不是
+// 靠人記得。若官方日期真的變了，改測試與改資料要一起做。
+test('data：五筆已查證競賽的報名時程不得被改回錯的值', async () => {
+    const { readFileSync } = await import('node:fs');
+    const data = JSON.parse(
+        readFileSync(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'),
+    );
+    const find = (needle) => {
+        const hits = data.competitions.filter((c) => c.title.includes(needle));
+        assert.equal(hits.length, 1, `「${needle}」應恰好比對到 1 筆`);
+        return hits[0];
+    };
+
+    // OPhO：官網只公布 8/21–23 的比賽日期，沒有報名截止日。
+    const opho = find('OPhO');
+    assert.equal(opho.deadline, '', 'OPhO 的比賽日期不可再被填進 deadline 顯示成「報名截止」');
+    assert.equal(opho.eventStartsAt, '2026-08-21');
+    assert.equal(opho.eventEndsAt, '2026-08-23');
+
+    // Samsung：初賽報名 2/23 – 5/18 23:59（台灣時間）
+    const samsung = find('Solve for Tomorrow');
+    assert.equal(samsung.deadlineAt, '2026-05-18T23:59:00+08:00');
+    assert.equal(samsung.opensAt, '2026-02-23T00:00:00+08:00');
+
+    // HiMCM：報名截止 11/4 14:00 EST，賽程 11/4–11/17
+    const himcm = find('HiMCM');
+    assert.equal(himcm.deadlineAt, '2026-11-04T14:00:00-05:00');
+    assert.equal(himcm.eventEndsAt, '2026-11-17');
+
+    // NASA：無全球統一截止日，11/14 是活動開始而非報名截止
+    const nasa = find('Space Apps');
+    assert.equal(nasa.deadline, '');
+    assert.equal(nasa.eventStartsAt, '2026-11-14');
+    assert.ok(!nasa.cycle?.closes, 'NASA 不得再把活動開始日當成 cycle.closes');
+    assert.ok(nasa.registrationNote, '應說明報名規則而不是捏造一個截止日');
+
+    // Breakthrough：9/15 23:59 PDT
+    assert.equal(find('Breakthrough').deadlineAt, '2026-09-15T23:59:00-07:00');
+
+    for (const t of ['OPhO', 'Solve for Tomorrow', 'HiMCM', 'Space Apps', 'Breakthrough']) {
+        assert.equal(find(t).sourceCheckedAt, '2026-08-27', `${t} 應記錄逐筆查證日期`);
+    }
+});
 
 // ── 競賽物件的欄位白名單 ──
 // cycle 內部本來就有同類的白名單，但物件本身先前沒有。"cyle"（少一個 c）這種錯字

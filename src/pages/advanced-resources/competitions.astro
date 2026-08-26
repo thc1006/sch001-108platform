@@ -39,7 +39,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <span class="stat-num stat-num--soon" id="stat-soon">—</span>
             <span class="stat-label">30 天內截止</span>
           </div>
-          <p class="comp-updated">資料更新<span id="stat-updated">—</span></p>
+          <p class="comp-updated">資料檔更新<span id="stat-updated">—</span></p>
         </div>
       </div>
     </section>
@@ -111,6 +111,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <button class="comp-chip is-active" type="button" data-status="all" aria-pressed="true">全部</button>
             <button class="comp-chip" type="button" data-status="soon" aria-pressed="false"><span class="comp-chip__dot dot-soon"></span>即將截止</button>
             <button class="comp-chip" type="button" data-status="open" aria-pressed="false"><span class="comp-chip__dot dot-open"></span>報名中</button>
+            <button class="comp-chip" type="button" data-status="upcoming" aria-pressed="false"><span class="comp-chip__dot dot-upcoming"></span>尚未開放</button>
             <button class="comp-chip" type="button" data-status="cycle" aria-pressed="false"><span class="comp-chip__dot dot-cycle"></span>每年固定辦理</button>
             <button class="comp-chip" type="button" data-status="site" aria-pressed="false"><span class="comp-chip__dot dot-site"></span>依官網公告</button>
           </div>
@@ -234,20 +235,54 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       // 狀態判斷。關鍵在 'cycle'：許多競賽每年固定時節舉辦，「本屆已截止」不等於
       // 資料過時——只要知道週期就能告訴學生下次何時，比一律顯示「依官網公告」有用。
+      // 把一個絕對時刻換算成台北的日曆日。
+      //
+      // 「剩 N 天」用日曆日算（與其他項目的顯示一致），但「是否已截止」用真正的
+      // 時刻——只看日曆日正是 date-only 會算錯的地方：Breakthrough 官方截止是
+      // 9/15 23:59 PDT ＝ 台灣 9/16 14:59。只存日期的話，台灣 9/15 凌晨就顯示
+      // 「今日截止」（實際還有 39 小時），9/16 00:00 起顯示「已截止」（實際還有
+      // 近 15 小時）。
+      function taipeiDayUTC(ms) {
+        const tp = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(new Date(ms)).split('-').map(Number);
+        return Date.UTC(tp[0], tp[1] - 1, tp[2]);
+      }
+
       function getStatus(c) {
         const todayUTC = todayTaipeiUTC();
+        const nowMs = Date.now();
         const closes = c.cycle && c.cycle.closes;
+
+        // 報名截止：有帶時區的精確時刻就以它為準，否則退回日期精度。
+        const exactMs = typeof c.deadlineAt === 'string' ? Date.parse(c.deadlineAt) : NaN;
+        const hasExact = !Number.isNaN(exactMs);
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c.deadline || '');
-        const dlUTC = m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+        const dlUTC = hasExact
+          ? taipeiDayUTC(exactMs)
+          : m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+        const closed = hasExact ? nowMs > exactMs : dlUTC !== null && dlUTC < todayUTC;
+
         // 已過的本屆截止日要傳進推算：不傳的話，月份精度的週期（如 OPhO 的 08）
         // 會把同月月底誤算成「下次約 4 天後」。推算方式見 nextOccurrenceUTC——它會
         // 先把本屆對應回最近的一個週期實例，而不是直接用「本屆年份 + 1」。
-        const lastEditionUTC = dlUTC !== null && dlUTC < todayUTC ? dlUTC : null;
+        const lastEditionUTC = dlUTC !== null && closed ? dlUTC : null;
         const nextUTC = nextOccurrenceUTC(closes, todayUTC, lastEditionUTC);
 
-        if (m) {
+        // 報名還沒開放。先前只要 deadline 在未來就一律顯示「報名中」，即使報名根本
+        // 還沒開始——學生點進去只會看到「敬請期待」。
+        const opensMs = typeof c.opensAt === 'string' ? Date.parse(c.opensAt) : NaN;
+        if (!Number.isNaN(opensMs) && nowMs < opensMs) {
+          return {
+            key: 'upcoming', label: '尚未開放報名', days: null,
+            opens: fmtUTC(taipeiDayUTC(opensMs)),
+            next: dlUTC !== null ? fmtUTC(dlUTC) : null, closes: closes,
+          };
+        }
+
+        if (dlUTC !== null) {
           const days = Math.round((dlUTC - todayUTC) / 86400000);
-          if (days >= 0) {
+          if (!closed) {
             return days <= 30
               ? { key: 'soon', label: '即將截止', days: days }
               : { key: 'open', label: '報名中', days: days };
@@ -259,6 +294,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           return { key: 'closed', label: '已截止', days: days };
         }
 
+        // 沒有確切截止日，但主辦單位有明確的報名規則。NASA Space Apps 就是這一類：
+        // 註冊期限由各地活動的開始時間決定，捏造一個全球統一的截止日反而是錯的。
+        //
+        // 刻意沿用 'site' 這個 key 而不另開一個：篩選 chip 是寫死在 HTML 裡的，
+        // 新增 key 會讓這些競賽在使用者點任一篩選時整批消失（也沒有對應的顏色）。
+        // 語意上它們本來就屬於「依官網公告」那一類，只是能講得更具體。
+        if (typeof c.registrationNote === 'string' && c.registrationNote.trim()) {
+          return { key: 'site', label: c.registrationNote.trim(), days: null, note: true };
+        }
+
         // 沒有確切日期，但知道年度週期
         if (nextUTC !== null) {
           return { key: 'cycle', label: '每年固定辦理', days: null, next: fmtUTC(nextUTC), closes: closes };
@@ -267,25 +312,55 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
 
       // 已知下屆時間的排在「依官網公告」之前——那是更有用的資訊
-      const STATUS_ORDER = { soon: 0, open: 1, cycle: 2, site: 3, closed: 4 };
+      const STATUS_ORDER = { soon: 0, open: 1, upcoming: 2, cycle: 3, site: 4, closed: 5 };
 
       function statusText(s) {
         if (s.key === 'soon') return s.days <= 0 ? '今日截止' : '即將截止 · 剩 ' + s.days + ' 天';
         if (s.key === 'open') return '報名中 · 剩 ' + s.days + ' 天';
+        if (s.key === 'upcoming') return '尚未開放 · 預計 ' + s.opens + ' 開放';
         if (s.key === 'cycle') return s.label + ' · 下次約 ' + s.next;
         return s.label;
       }
 
+      // 賽事日期。這是「比賽哪天舉行」，與「報名何時截止」是兩回事——先前資料把
+      // OPhO 的比賽首日（8/21）填進 deadline，頁面就把它顯示成「報名截止」。
+      function eventLabel(c) {
+        if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
+        const short = (d) => Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10));
+        if (typeof c.eventEndsAt === 'string' && c.eventEndsAt && c.eventEndsAt !== c.eventStartsAt) {
+          return c.eventStartsAt.slice(0, 4) + ' 賽事 ' + short(c.eventStartsAt) + '–' + short(c.eventEndsAt);
+        }
+        return c.eventStartsAt + ' 舉行';
+      }
+
+      // 卡片底部那一欄的標題。先前一律寫「報名截止」，但 OPhO／NASA 這類沒有公布
+      // 報名截止日的競賽，欄位裡放的其實是賽事日期——標題寫「報名截止」就等於把
+      // 賽事日期謊稱成報名截止，正是這次要修掉的那個錯誤的顯示層版本。
+      function deadlineFieldLabel(c) {
+        if (c.deadline) return '報名截止';
+        if (typeof c.eventStartsAt === 'string' && c.eventStartsAt) return '賽事日期';
+        return '報名截止';
+      }
+
       // 卡片底部的「報名截止」欄位：有週期時把它講清楚，而不是只寫「依官網公告」
       function deadlineLabel(c, s) {
+        const ev = eventLabel(c);
         if (s.key === 'cycle') {
           const p = s.closes.split('-');
           const when = p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月';
-          return c.deadline
+          const base = c.deadline
             ? '本屆 ' + c.deadline + ' 已截止 · 每年約 ' + when
             : '每年約 ' + when + '截止';
+          return ev ? base + ' · ' + ev : base;
         }
-        return c.deadline ? c.deadline : '依官網公告';
+        if (s.key === 'upcoming') {
+          const base = '預計 ' + s.opens + ' 開放報名' + (s.next ? ' · ' + s.next + ' 截止' : '');
+          return ev ? base + ' · ' + ev : base;
+        }
+        // 沒有報名截止日但知道賽事日期時，寧可顯示賽事日期，也不要謊稱「依官網公告」
+        // 之外還有截止日。兩者都沒有才退回「依官網公告」。
+        if (!c.deadline) return ev || (s.note ? s.label : '依官網公告');
+        return ev ? c.deadline + ' · ' + ev : c.deadline;
       }
 
       function accentFor(cat) {
@@ -301,6 +376,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           .map((x) => '<li class="comp-tag">' + escapeHtml(x) + '</li>')
           .join('');
         const deadlineText = escapeHtml(deadlineLabel(c, s));
+        // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
+        // 「資料更新」會讓人以為 133 筆都在那天查證過——實際上大多數只做過連結
+        // 存活檢查。有逐筆查證日期的就據實顯示，沒有的就不顯示，不要假裝有。
+        const checkedText =
+          typeof c.sourceCheckedAt === 'string' && c.sourceCheckedAt
+            ? '<span class="comp-checked">官網查證 ' + escapeHtml(c.sourceCheckedAt) + '</span>'
+            : '';
         return (
           '<article class="comp-card is-' + s.key + urgent + '" style="--accent:' + accent + ';--i:' + delay + '">' +
             '<span class="comp-card__bar" aria-hidden="true"></span>' +
@@ -317,8 +399,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             '</div>' +
             '<div class="comp-card__foot">' +
               '<div class="comp-deadline">' +
-                '<span class="comp-deadline__label">報名截止</span>' +
+                '<span class="comp-deadline__label">' + escapeHtml(deadlineFieldLabel(c)) + '</span>' +
                 '<span class="comp-deadline__value">' + deadlineText + '</span>' +
+                checkedText +
               '</div>' +
               '<a class="comp-cta" href="' + safeUrl(c.url) + '" target="_blank" rel="noopener noreferrer" aria-label="前往 ' + escapeHtml(c.title) + ' 官網">' +
                 '前往官網<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>' +
@@ -505,6 +588,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .stat-num--open { color: #16a34a; }
     .stat-num--soon { color: #d97706; }
     .stat-label { font-size: .82rem; color: var(--muted); font-weight: 600; }
+    .comp-checked {
+      display: block;
+      margin-top: .15rem;
+      font-size: .72rem;
+      color: #64748b;
+    }
     .comp-updated {
       margin: 0 0 .15rem auto; font-size: .78rem; color: var(--muted);
       font-family: 'Space Mono', ui-monospace, monospace;
@@ -568,6 +657,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .comp-chip__dot { width: .5rem; height: .5rem; border-radius: 999px; }
     .dot-soon { background: #f59e0b; }
     .dot-open { background: #22c55e; }
+    .dot-upcoming { background: #0ea5e9; }
     .dot-cycle { background: #6366f1; }
     .dot-site { background: #94a3b8; }
     .comp-chip.is-active .comp-chip__dot { box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
@@ -623,6 +713,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
     .is-open .comp-status { background: #dcfce7; color: #15803d; }
     .is-soon .comp-status { background: #fef3c7; color: #b45309; }
+    .is-upcoming .comp-status { background: #e0f2fe; color: #0369a1; }
     .is-cycle .comp-status { background: #e0e7ff; color: #4338ca; }
     .is-site .comp-status { background: #eef2f7; color: #475569; }
     .is-closed .comp-status { background: #f1f5f9; color: #475569; }
