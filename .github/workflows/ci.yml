@@ -1,6 +1,13 @@
 name: CI
 
-# 每個 PR 都必須跑的確定性檢查。這些 job 不探測第三方網站的可用性——外部站台
+# 每個 PR 都必須跑的確定性檢查，以及 main 的部署。
+#
+# 檢查與部署放在同一個 workflow 是刻意的。先前 deploy.yml 是獨立觸發的，會用
+# npm install（CI 用 npm ci）重新建置**另一份** dist/ 然後直接上線——被驗證的
+# artifact 和被部署的不是同一份，中間任何差異都不會有人發現。現在 deploy job
+# 部署的就是 site job 檢查過的那一份位元組。
+#
+# 這些 job 不探測第三方網站的可用性——外部站台
 # 今天連不連得上屬於非確定性，不該讓無關的 PR 變紅。
 # （仍會用到 npm registry 與 GitHub Actions 本身，那是基礎設施而非受檢對象。）
 #
@@ -17,6 +24,9 @@ on:
     branches: [ "main" ]
   pull_request:
   merge_group:
+  # 手動重新部署。原本在 deploy.yml，合併進來時必須一起保留——沒有它就只能靠
+  # 推一個空 commit 才能重跑部署。
+  workflow_dispatch:
 
 # 同一個 PR 推新 commit 時取消還在跑的舊 run。用 head_ref 而非 PR 編號，push 到
 # main 時則退回 run_id 以確保每次 push 都各自獨立、不會互相取消。
@@ -100,6 +110,20 @@ jobs:
             --no-progress
             './.link-root/sch001-108platform/**/*.html'
 
+      # 放在 job 的最後一步：上傳的就是通過上面每一項檢查的那一份 dist/。
+      # 任何一步紅了，這步不會執行，也就沒有 artifact 可部署。
+      #
+      # 故障注入是在 dist/ 的副本上做的（見 check-built-site.faults.mjs），
+      # 所以這裡上傳的內容與 check:site 驗證的完全相同。
+      #
+      # 刻意「不」限定只在 main 上傳。限定的話，打包這一步只會在合併之後才第一次
+      # 執行——真的壞掉時，PR 全綠、合併、然後 main 的部署才紅。每個 PR 都跑一次，
+      # 打包失敗就在 PR 階段擋下。artifact 預設保留 1 天，成本可忽略。
+      - name: Upload the artifact that passed every check
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: dist
+
   data:
     name: Validate Data
     runs-on: ubuntu-latest
@@ -146,3 +170,31 @@ jobs:
           echo "Validate Data  : $DATA_RESULT"
           test "$SITE_RESULT" = "success"
           test "$DATA_RESULT" = "success"
+
+  # 只有在 CI Required 通過後才部署，而且部署的是 site job 上傳的那一份 artifact，
+  # 不是重新建置的。needs: required 是這裡的關鍵——它讓「通過檢查」成為部署的
+  # 前置條件，而不是兩件平行發生、誰快誰先上線的事。
+  deploy:
+    name: Deploy to GitHub Pages
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    needs: [required]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 權限只給這個 job。其餘 job 維持 workflow 層級的 contents: read。
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # 同時間只允許一個 Pages 部署。放在 job 層級而非 workflow 層級：workflow 的
+    # concurrency group 依 run 區分（push 到 main 時每個 run 都必須各自跑完），
+    # 兩者管的是不同的事。
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the verified artifact
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
