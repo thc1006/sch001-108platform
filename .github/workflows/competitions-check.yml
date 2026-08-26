@@ -51,25 +51,43 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 確保 label 存在（已存在會報錯，直接忽略）
-          gh label create competition-watchdog \
+          # 只能接管「自己開的」issue。先前用標籤辨認，但標籤是任何人都能貼的共用
+          # 屬性——結果 #70（人工開立的追蹤 issue）用了同一個標籤，連續四週的週報
+          # 全被貼到那裡，而且完全沒有錯誤訊號。改標籤名只降低機率、沒改變機制，
+          # 故改用兩個「人類無法偽造」的條件：
+          #
+          #   1. author.login == "app/github-actions"
+          #      issue 層級的 bot 作者格式（留言層級是 "github-actions"，勿混用）。
+          #      人無法以 Actions app 的身分開 issue，這是硬保證。
+          #   2. body 內含機器標記 <!-- competitions-watchdog:v1 -->
+          #      證明是本 workflow 寫的，擋掉 repo 內其他自動化開的 issue。
+          #
+          # 兩者其一不符時寧可另開新 issue（會吵，但看得見），也不要安靜地貼錯地方。
+          # --force：標籤已存在時仍更新描述，避免描述停在舊的誤導文字。
+          gh label create --force competition-watchdog \
             --color FBCA04 \
-            --description "競賽資料看門狗自動開立的報告（勿手動加此標籤，會被看門狗接管）" 2>/dev/null || true
+            --description "看門狗自動開立，請勿手動使用此標籤" || true
 
-          # 只接管「看門狗自己開的」issue。專用標籤不可與人工建立的 competition-data
-          # 混用——先前兩者同標籤，導致 #70（人工開的內容稽核追蹤）被看門狗接管，
-          # 連續四週的週報都貼錯地方。
-          # 若已有開啟中的同類 issue，補上最新報告而不是再開一個
           existing=$(gh issue list \
-            --label competition-watchdog --state open \
-            --json number --jq '.[0].number // empty')
+            --label competition-watchdog --state open --limit 50 \
+            --json number,author,body \
+            --jq '[ .[]
+                    | select(.author.login == "app/github-actions")
+                    | select(.body | contains("<!-- competitions-watchdog:v1 -->"))
+                  ] | .[0].number // empty')
+
+          # 機器標記必須寫進 body，下一輪才認得出這是自己開的
+          { echo '<!-- competitions-watchdog:v1 -->'; echo; cat competition-report.md; } > issue-body.md
 
           if [ -n "$existing" ]; then
-            echo "已有開啟中的 issue #$existing，補上最新報告。"
+            echo "接管既有 issue #$existing，補上最新報告。"
             gh issue comment "$existing" --body-file competition-report.md
+            echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
           else
-            gh issue create \
+            url=$(gh issue create \
               --title "競賽資料需要更新（自動偵測）" \
               --label competition-watchdog \
-              --body-file competition-report.md
+              --body-file issue-body.md)
+            echo "沒有可接管的 issue，已新開：$url"
+            echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
           fi
