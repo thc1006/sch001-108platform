@@ -37,6 +37,8 @@ import {
     validateUrl,
     validateCycle,
     nextOccurrenceUTC,
+    TEXT_FIELDS,
+    ALLOWED_COMPETITION_FIELDS,
 } from './check-competitions.lib.mjs';
 
 // 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
@@ -46,7 +48,7 @@ const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
 // 除 deadline 外都必須是「非空字串」；deadline 必須是字串（允許空字串＝依官網公告）
-const TEXT_FIELDS = ['title', 'organizer', 'category', 'level', 'form', 'region', 'eligibility', 'mode', 'description', 'url'];
+// TEXT_FIELDS 與 ALLOWED_COMPETITION_FIELDS 定義在 lib，讓單元測試測得到。
 // 欄位允許值與連結探測邏輯集中在 check-competitions.lib.mjs，
 // 由 check-competitions.probe.test.mjs 以本機 http server 做確定性測試。
 
@@ -108,6 +110,12 @@ list.forEach((comp, index) => {
         return;
     }
     const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : `第 ${index + 1} 筆`;
+
+    for (const key of Object.keys(comp)) {
+        if (!ALLOWED_COMPETITION_FIELDS.has(key)) {
+            schemaErrors.push(`「${label}」含未知欄位「${key}」——若是新欄位請同步更新 ALLOWED_COMPETITION_FIELDS`);
+        }
+    }
 
     // 必填文字欄位：必須存在且為非空字串（頁面會直接當字串用，例如 comp.form.includes()）
     for (const field of TEXT_FIELDS) {
@@ -191,8 +199,9 @@ for (const comp of list) {
     const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
 
     // 已經填了「未來的」確切日期就不必提醒——那正是提醒想要的結果。
-    // 已過的日期則作為 lastEdition 傳入：本屆既已辦完，下屆就在隔年的週期，
-    // 否則月份精度的週期（如 OPhO 的 08）會把同月月底誤算成「下屆將近」。
+    // 已過的日期則作為 lastEdition 傳入：不傳的話，月份精度的週期（如 OPhO 的 08）
+    // 會把同月月底誤算成「下屆將近」。推算方式見 nextOccurrenceUTC——它會先把本屆
+    // 對應回最近的一個週期實例，而不是直接用「本屆年份 + 1」。
     let lastEditionUTC = null;
     if (typeof comp.deadline === 'string' && DATE_RE.test(comp.deadline)) {
         const [, y, mo, dd] = DATE_RE.exec(comp.deadline);

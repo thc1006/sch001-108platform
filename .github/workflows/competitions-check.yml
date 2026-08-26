@@ -11,6 +11,13 @@ on:
     - cron: '0 1 * * 1'   # 每週一 01:00 UTC（台灣時間 09:00）
   workflow_dispatch:       # 也可在 Actions 頁手動觸發
 
+# 排程與手動觸發若同時在跑，兩個 run 都會查到「沒有既有 issue」，於是各開一個。
+# cancel-in-progress 必須是 false：後到的那個要排隊等前一個做完才看得到它開的
+# issue；取消掉反而會漏掉一次報告。
+concurrency:
+  group: competitions-watchdog
+  cancel-in-progress: false
+
 permissions:
   contents: read
   issues: write
@@ -21,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: '.node-version'
 
@@ -53,41 +60,66 @@ jobs:
         run: |
           # 只能接管「自己開的」issue。先前用標籤辨認，但標籤是任何人都能貼的共用
           # 屬性——結果 #70（人工開立的追蹤 issue）用了同一個標籤，連續四週的週報
-          # 全被貼到那裡，而且完全沒有錯誤訊號。改標籤名只降低機率、沒改變機制，
-          # 故改用兩個「人類無法偽造」的條件：
+          # 全被貼到那裡，而且完全沒有錯誤訊號。改標籤名只降低機率、沒改變機制。
           #
-          #   1. author.login == "app/github-actions"
-          #      issue 層級的 bot 作者格式（留言層級是 "github-actions"，勿混用）。
-          #      人無法以 Actions app 的身分開 issue，這是硬保證。
-          #   2. body 內含機器標記 <!-- competitions-watchdog:v1 -->
-          #      證明是本 workflow 寫的，擋掉 repo 內其他自動化開的 issue。
+          # 現在的認領條件是「Actions App 作者 ＋ body 機器標記」，判斷邏輯抽到
+          # scripts/watchdog-issue.lib.mjs 由單元測試覆蓋——內嵌在 YAML 裡的 jq 沒
+          # 辦法寫測試，改壞了 CI 不會知道。
           #
-          # 兩者其一不符時寧可另開新 issue（會吵，但看得見），也不要安靜地貼錯地方。
+          # 這組條件擋得住實際發生過的那種意外撞號，但它不是 workflow 層級的來源
+          # 證明：同 repo 內任何用 GITHUB_TOKEN 的 workflow 作者都是 Actions App，
+          # 有寫入權限的人也能把標記貼進自己的 issue。它的作用是讓標籤不再單獨
+          # 決定歸屬，不要讀成「無法偽造」。
+          #
           # --force：標籤已存在時仍更新描述，避免描述停在舊的誤導文字。
           gh label create --force competition-watchdog \
             --color FBCA04 \
             --description "看門狗自動開立，請勿手動使用此標籤" || true
 
-          existing=$(gh issue list \
-            --label competition-watchdog --state open --limit 50 \
-            --json number,author,body \
-            --jq '[ .[]
-                    | select(.author.login == "app/github-actions")
-                    | select(.body | contains("<!-- competitions-watchdog:v1 -->"))
-                  ] | .[0].number // empty')
+          # 刻意「不」用 gh issue list --app 做伺服器端過濾。實測（gh 2.96、本 repo
+          # 有 3 個 Actions 開的 issue）：
+          #   --app github-actions        → 0 筆，exit 0，無任何警告
+          #   --search author:app/github-actions → 3 筆
+          #   不加過濾、由下游比對 author  → 3 筆
+          # 也就是說 --app 會靜默地什麼都找不到。若採用它，看門狗每週都會判定
+          # 「沒有可接管的 issue」而新開一個，重複 issue 每週長一個且毫無訊號。
+          #
+          # --search 雖然找得到，但它走 GitHub 的搜尋索引，而索引有延遲；剛開好的
+          # issue 可能還搜不到，同樣會造成重開。這裡的 --json 走 GraphQL 直接列表，
+          # 沒有索引延遲問題，作者比對交給有單元測試覆蓋的 selectCanonicalIssue()。
+          gh issue list \
+            --label competition-watchdog --state open --limit 100 \
+            --json number,author,body > watchdog-candidates.json
+
+          # 找到多於一個 canonical issue 時這裡會 exit 2，整個 job 紅掉。安靜地挑
+          # 第一個會讓另一個 issue 永遠收不到報告，而且沒有任何訊號。
+          # 顯式判斷退出碼，不依賴「GitHub 預設 shell 帶 -e」這個假設：認領錯了的
+          # 代價是報告靜默貼到別人的 issue，不能讓它取決於 runner 的預設值。
+          if ! decision=$(node scripts/find-watchdog-issue.mjs < watchdog-candidates.json); then
+            echo "無法決定要接管哪個 issue（見上方訊息），中止而不亂貼。" >&2
+            exit 1
+          fi
 
           # 機器標記必須寫進 body，下一輪才認得出這是自己開的
           { echo '<!-- competitions-watchdog:v1 -->'; echo; cat competition-report.md; } > issue-body.md
 
-          if [ -n "$existing" ]; then
-            echo "接管既有 issue #$existing，補上最新報告。"
-            gh issue comment "$existing" --body-file competition-report.md
-            echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
-          else
-            url=$(gh issue create \
-              --title "競賽資料需要更新（自動偵測）" \
-              --label competition-watchdog \
-              --body-file issue-body.md)
-            echo "沒有可接管的 issue，已新開：$url"
-            echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          case "$decision" in
+            comment\ *)
+              existing="${decision#comment }"
+              echo "接管既有 issue #$existing，補上最新報告。"
+              gh issue comment "$existing" --body-file competition-report.md
+              echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            create)
+              url=$(gh issue create \
+                --title "競賽資料需要更新（自動偵測）" \
+                --label competition-watchdog \
+                --body-file issue-body.md)
+              echo "沒有可接管的 issue，已新開：$url"
+              echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "find-watchdog-issue.mjs 回傳了未預期的結果：$decision" >&2
+              exit 1
+              ;;
+          esac

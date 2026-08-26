@@ -13,6 +13,29 @@ export const ALLOWED_ELIGIBILITY = ['公開報名', '國家隊選拔', '邀請�
 export const ALLOWED_MODES = ['線上', '實體', '混合'];
 export const ALLOWED_FORMS = ['個人', '團體', '個人/團體'];
 
+/** 必填的文字欄位——頁面會直接當字串用（例如 comp.form.includes()）。 */
+export const TEXT_FIELDS = [
+    'title',
+    'organizer',
+    'category',
+    'level',
+    'form',
+    'region',
+    'eligibility',
+    'mode',
+    'description',
+    'url',
+];
+
+/**
+ * 競賽物件允許出現的全部欄位。
+ *
+ * cycle 內部本來就有同類的白名單，但物件本身先前沒有——於是
+ * "cyle": { "closes": "09" }（少一個 c）這種錯字只要必填欄位都在就會通過驗證，
+ * 前端則靜默忽略它。該筆競賽的週期資訊等於憑空消失，且沒有任何訊號。
+ */
+export const ALLOWED_COMPETITION_FIELDS = new Set([...TEXT_FIELDS, 'deadline', 'cycle']);
+
 // ── 連結健檢 ──
 export const DEAD_STATUSES = new Set([404, 410]);
 export const LINK_TIMEOUT_MS = 20_000;
@@ -156,11 +179,28 @@ export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
     };
     // lastEditionUTC＝已知「本屆」的確切截止日（必須是已過的日期）。有了它就不能
     // 只看今天：OPhO 本屆 8/21 結束、週期僅精確到月（08），單看今天會算出同月的
-    // 8/31，誤報成「下屆剩 4 天」。既然本屆已用掉今年的週期，下屆就在隔年。
-    let year =
-        lastEditionUTC === null
-            ? new Date(todayUTC).getUTCFullYear()
-            : new Date(lastEditionUTC).getUTCFullYear() + 1;
+    // 8/31，誤報成「下屆剩 4 天」。
+    //
+    // 但也不能直接用「本屆年份 + 1」：跨年季會整整漏掉一輪。截止日 2026-01-15、
+    // 週期記 12 月時，那個截止日屬於 2025-12 那一輪，下一輪是 2026-12——用 +1 會
+    // 算成 2027-12，把學生還能報名的整整一年吃掉。所以要先問「本屆對應到週期的
+    // 哪一個實例」：取離本屆截止日最近的那一年當錨點，再往後推一輪。
+    let year;
+    if (lastEditionUTC === null) {
+        year = new Date(todayUTC).getUTCFullYear();
+    } else {
+        const ly = new Date(lastEditionUTC).getUTCFullYear();
+        let anchor = ly;
+        let best = Infinity;
+        for (const y of [ly - 1, ly, ly + 1]) {
+            const gap = Math.abs(build(y) - lastEditionUTC);
+            if (gap < best) {
+                best = gap;
+                anchor = y;
+            }
+        }
+        year = anchor + 1;
+    }
     let candidate = build(year);
     // 資料若久未更新（本屆截止日已過一年以上），持續往後推到未來為止
     while (candidate < todayUTC) candidate = build(++year);
