@@ -30,7 +30,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # 遷移到 Astro 後，實際頁面與資產 JSON 由 astro build 產生在 dist/，
       # build-search-index.js 掃的是 dist/，故必須先建置。
@@ -73,7 +73,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Astro site
         run: npx astro build
@@ -107,4 +107,4 @@ jobs:
             --scheme file
             --verbose
             --no-progress
-            './.link-root/sch001-108platform/**/*.NO-SUCH-EXTENSION'
+            './.link-root/sch001-108platform/**/*.html'
