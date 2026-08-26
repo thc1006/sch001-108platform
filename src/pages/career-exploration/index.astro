@@ -44,8 +44,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
 
                 <div class="flex gap-2">
-                    <input type="text" id="chat-input" class="flex-grow bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
-                    <button id="chat-submit" class="bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
+                    <input type="text" id="chat-input" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
+                    <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
                         <span class="hidden sm:inline">發送</span>
                         <ion-icon name="send-outline" class="sm:hidden text-xl"></ion-icon>
                     </button>

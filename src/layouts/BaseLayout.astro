@@ -124,6 +124,10 @@ const canonical = new URL(canonicalPath, Astro.site).href;
     <slot />
     <Footer />
 
+    <!-- 手機上讓 sticky 篩選面板在向下捲動時讓開畫面。
+         沒有 [data-autohide-filters] 的頁面會直接 return，不做任何事。 -->
+    <script is:inline defer src={`${base}/shared/sticky-filters.js`}></script>
+
     <!-- GoatCounter 流量統計 -->
     <script
       is:inline

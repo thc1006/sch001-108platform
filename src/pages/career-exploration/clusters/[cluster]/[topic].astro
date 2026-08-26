@@ -51,7 +51,7 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
         <h1 class="text-3xl md:text-4xl font-black text-gray-800">{entry.data.title}</h1>
       </header>
 
-      <div class="prose prose-lg max-w-none">
+      <div class="prose prose-lg max-w-none md-content">
         <Content />
       </div>
 
@@ -111,4 +111,19 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
       </div>
     </article>
   </main>
+
+  <style is:global>
+    /* Markdown 表格在窄視窗會把整頁撐寬（實測 360px 視窗下溢出 27px，手機上會
+       左右晃）。內容來自 src/content/clusters 底下的 Markdown，作者無法逐一控制欄寬，
+       所以在渲染層讓表格自己橫向捲動，而不是讓它撐破版面。
+       包一層 block 容器才有捲動軸——直接對 table 設 overflow 在多數瀏覽器無效。 */
+    .md-content > table,
+    .md-content table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
 </BaseLayout>
