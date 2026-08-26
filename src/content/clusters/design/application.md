@@ -148,5 +148,3 @@ description: 設計學群是 18 學群中管道最分歧、規定最因校而異
 - [2026 大學「個人申請」面試必勝秘笈｜設計系主任與學長姊經驗分享 — Dcard 升大學考試版](https://www.dcard.tw/f/freshman/p/257589934)
 - [【設計群】統測攻略 — Craftsman School](https://craftsman.school/b/OlFL4zOeIM5L6BtwqQKa)
 - [115 統測報名查詢！重要日程、考試科目、應考須知全掌握 — 遠見雜誌](https://www.gvm.com.tw/article/127108)
-
-[深層覆蓋率測試](/sch001-108platform/deep-page-missing-target.html)
