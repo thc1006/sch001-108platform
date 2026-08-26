@@ -144,10 +144,9 @@ export function validateCycle(cycle, label, errors) {
  * 只知月份時以該月最後一天為準（保守，不會把還開放的競賽說成已截止）。
  * todayUTC 由呼叫端以 Asia/Taipei 日曆日算出，確保頁面與看門狗一致。
  */
-export function nextOccurrenceUTC(closes, todayUTC) {
+export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
     if (typeof closes !== 'string' || !CYCLE_MMDD_RE.test(closes)) return null;
     const [mm, dd] = closes.split('-').map(Number);
-    const year = new Date(todayUTC).getUTCFullYear();
     // dd 未給則取該月最後一天。給了 dd 但該年無此日（例如平年的 02-29）時同樣
     // 退回該月最後一天，避免 Date 靜默跨月（02-29 → 03-01）。
     const build = (y) => {
@@ -155,6 +154,15 @@ export function nextOccurrenceUTC(closes, todayUTC) {
         const wanted = Date.UTC(y, mm - 1, dd);
         return new Date(wanted).getUTCMonth() === mm - 1 ? wanted : Date.UTC(y, mm, 0);
     };
-    const thisYear = build(year);
-    return thisYear >= todayUTC ? thisYear : build(year + 1);
+    // lastEditionUTC＝已知「本屆」的確切截止日（必須是已過的日期）。有了它就不能
+    // 只看今天：OPhO 本屆 8/21 結束、週期僅精確到月（08），單看今天會算出同月的
+    // 8/31，誤報成「下屆剩 4 天」。既然本屆已用掉今年的週期，下屆就在隔年。
+    let year =
+        lastEditionUTC === null
+            ? new Date(todayUTC).getUTCFullYear()
+            : new Date(lastEditionUTC).getUTCFullYear() + 1;
+    let candidate = build(year);
+    // 資料若久未更新（本屆截止日已過一年以上），持續往後推到未來為止
+    while (candidate < todayUTC) candidate = build(++year);
+    return candidate;
 }

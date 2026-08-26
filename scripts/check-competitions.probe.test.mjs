@@ -219,20 +219,42 @@ test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
 test('cycle：頁面與看門狗的推算結果必須完全一致', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
-    const m = src.match(/function nextOccurrenceUTC\(closes, todayUTC\) \{[\s\S]*?\n      \}/);
+    const m = src.match(/function nextOccurrenceUTC\((?:[^)]*)\) \{[\s\S]*?\n      \}/);
     assert.ok(m, '在 competitions.astro 找不到 nextOccurrenceUTC——若已改名請同步更新本測試');
 
     const browserFn = new Function(`${m[0]}; return nextOccurrenceUTC;`)();
 
     const days = ['01-01', '02-28', '02-29', '03', '06-30', '07-31', '08', '12-31', '13-01', '02-30', '', 'x'];
     const bases = [Date.UTC(2026, 7, 2), Date.UTC(2027, 0, 1), Date.UTC(2028, 1, 29), Date.UTC(2026, 11, 31)];
+    // 第三維：lastEditionUTC（null＝未知本屆；其餘為已過的本屆截止日）
+    const lasts = [null, Date.UTC(2026, 7, 21), Date.UTC(2024, 0, 15), Date.UTC(2026, 6, 31)];
     for (const c of days) {
         for (const t of bases) {
-            assert.equal(
-                browserFn(c, t),
-                nextOccurrenceUTC(c, t),
-                `closes=${c} today=${new Date(t).toISOString().slice(0, 10)} 兩份實作結果不一致`,
-            );
+            for (const le of lasts) {
+                assert.equal(
+                    browserFn(c, t, le),
+                    nextOccurrenceUTC(c, t, le),
+                    `closes=${c} today=${new Date(t).toISOString().slice(0, 10)} last=${le} 兩份實作結果不一致`,
+                );
+            }
         }
     }
+});
+
+test('cycle：已知本屆截止日時，下屆須在隔年——不可算成同月月底', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    // OPhO 實例：本屆 2026-08-21 辦完，週期僅精確到月（08），今天 2026-08-27。
+    // 未傳 lastEdition 會得到同月的 08-31（誤報「下屆剩 4 天」）。
+    const today = Date.UTC(2026, 7, 27);
+    assert.equal(iso(nextOccurrenceUTC('08', today)), '2026-08-31', '未傳 lastEdition 時維持原行為');
+    assert.equal(iso(nextOccurrenceUTC('08', today, Date.UTC(2026, 7, 21))), '2027-08-31');
+    // MM-DD 精度同理
+    assert.equal(iso(nextOccurrenceUTC('07-31', today, Date.UTC(2026, 6, 31))), '2027-07-31');
+});
+
+test('cycle：lastEdition 已過一年以上時，持續往後推到未來', () => {
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+    const today = Date.UTC(2026, 7, 27);
+    // 本屆停留在 2023 的資料：2024/2025/2026 的週期都已過，應推到 2027
+    assert.equal(iso(nextOccurrenceUTC('03', today, Date.UTC(2023, 2, 1))), '2027-03-31');
 });
