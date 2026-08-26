@@ -13,14 +13,28 @@
  *
  * 執行：  npm run test:site-faults    （需先 npm run build:deployable）
  */
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync, cpSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 
-const DIST = 'dist';
+// 故障注入一律在 dist/ 的副本上進行——被破壞的那份絕不能是要部署的那份。
+//
+// 還原邏輯本身是寫對的（每個 case 都有 finally，最後也會確認基準回到綠燈才
+// exit 0），但只要有一個 case 在 undo 之前崩潰，dist/ 就會留著壞掉的內容，而
+// CI 下一步就把它上傳部署。用副本讓這個風險在結構上不存在，而不是靠還原寫得夠好。
+const SOURCE = process.env.SITE_DIST_SOURCE || 'dist';
+const DIST = process.env.SITE_DIST_WORK || 'dist-faultcheck';
+if (!existsSync(SOURCE)) {
+  console.error(`找不到建置產物 ${SOURCE}/，請先執行 npm run build:deployable`);
+  process.exit(1);
+}
+rmSync(DIST, { recursive: true, force: true });
+cpSync(SOURCE, DIST, { recursive: true });
+console.log(`故障注入在副本 ${DIST}/ 上進行，${SOURCE}/ 不會被更動。\n`);
+
 const run = () => {
   try {
-    execSync('node scripts/check-built-site.mjs', { stdio: 'pipe' });
+    execSync('node scripts/check-built-site.mjs', { stdio: 'pipe', env: { ...process.env, SITE_DIST: DIST } });
     return { code: 0, out: '' };
   } catch (e) {
     return { code: e.status ?? 1, out: String(e.stdout || '') + String(e.stderr || '') };
@@ -141,5 +155,9 @@ for (const c of cases) {
 
 console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${cases.length} 項）`);
 const after = run();
-console.log(after.code === 0 ? '還原後仍為綠燈 ✅' : '⚠ 還原後仍是紅的，dist 可能沒復原乾淨');
+console.log(after.code === 0 ? '還原後仍為綠燈 ✅' : `⚠ 還原後仍是紅的，${DIST} 沒復原乾淨`);
+
+// 副本用完就刪。留著會讓下一次 check:site 之類的工具多掃一份重複產物。
+rmSync(DIST, { recursive: true, force: true });
+
 process.exit(fail === 0 && after.code === 0 ? 0 : 1);

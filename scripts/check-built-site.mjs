@@ -21,6 +21,7 @@
 
 import { readFile, readdir, stat, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
 
 import {
@@ -33,8 +34,13 @@ import {
     walkJsonStrings,
 } from './site-contract.lib.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
-const DIST = path.join(ROOT, 'dist');
+// fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
+// 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
+const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
+
+// 要檢查哪一份建置產物。預設 dist/，可用 SITE_DIST 指定——故障注入需要一份
+// 可以隨意破壞的副本，不能動到真正要部署的那一份。
+const DIST = path.resolve(ROOT, process.env.SITE_DIST || 'dist');
 const BASE = '/sch001-108platform';
 const SITE = 'https://thc1006.github.io';
 const CTX = { base: BASE, site: SITE };

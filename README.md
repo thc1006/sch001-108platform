@@ -77,7 +77,9 @@ node build-search-index.js
 
 `build-search-index.js` 會掃描 `dist/` 下的所有頁面，擷取標題、描述、關鍵字與內文，並讀取資料驅動頁對應的 JSON（競賽、線上課程、學長姐訪談等），輸出 `dist/search-index.json` 隨網站一起部署。
 
-> GitHub Actions 部署流程（`.github/workflows/deploy.yml`）已自動串接「`astro build` → `build-search-index.js` → 上傳 Pages artifact」，推送到 `main` 後即自動部署，毋需手動操作。
+> GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
+>
+> 部署的是**通過全部檢查的那一份 artifact**，不是另外重建的：檢查與部署刻意放在同一個 workflow，`deploy` job 以 `needs: [required]` 等 `CI Required` 通過後才執行。任一檢查紅燈就不會有 artifact 可部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
 
 ---
 
