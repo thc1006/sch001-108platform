@@ -64,3 +64,6 @@ dist/
 # （docs/ 為一次性工作文件、school/ 為本地研究資料,均不入版控）
 docs/
 school/
+
+# lychee 內部連結檢查用的 GitHub Pages 路徑命名空間（CI 產生）
+/.link-root/

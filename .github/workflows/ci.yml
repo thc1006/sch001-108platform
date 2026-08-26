@@ -1,0 +1,110 @@
+name: CI
+
+# 每個 PR 都必須跑的確定性檢查。三個 job 都不依賴外部網站——外部站台的可用性
+# 由排程的 external-links 檢查負責，不該讓無關的 PR 因為某間大學今天連不上而變紅。
+#
+# 觸發條件刻意不限制 base 分支：先前寫 `pull_request: branches: [main]`，導致
+# 堆疊 PR（#73 的 base 是 feature 分支）一個 check 都沒跑，連 schema 驗證與
+# watchdog 測試都被繞過——而那個 PR 改的正是 competitions schema 與前端狀態機。
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Search Index
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 遷移到 Astro 後，實際頁面與資產 JSON 由 astro build 產生在 dist/，
+      # build-search-index.js 掃的是 dist/，故必須先建置。
+      - name: Build Astro site
+        run: npx astro build
+
+      - name: Build search index
+        run: node build-search-index.js
+
+  validate-data:
+    name: Validate Data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+
+      # --no-link-check：不連外網，確保這個關卡的結果只取決於這次改動
+      - name: Validate competition data (schema only)
+        run: npm run check:competitions
+
+      - name: Run watchdog probe/schema unit tests
+        run: npm run test:watchdog
+
+  internal-links:
+    name: Internal Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Astro site
+        run: npx astro build
+
+      # astro.config.mjs 設定 base: '/sch001-108platform'，所以頁面裡的站內連結都是
+      # /sch001-108platform/... 這種根相對路徑。lychee 對本機檔案的根相對連結會在
+      # 「解析」階段就失敗，而 --exclude 與 --scheme 都是在解析之後才生效
+      # （見 lycheeverse/lychee#2125），所以先前那個 --exclude '^/sch001-108platform'
+      # 從來沒有真正作用過。
+      #
+      # 正解是重建出與 GitHub Pages 相同的路徑命名空間，再用 --root-dir 指向它，
+      # 讓根相對連結真的解析得到本機檔案。
+      - name: Stage GitHub Pages path namespace
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
+          cp -a dist/. "$GITHUB_WORKSPACE/.link-root/sch001-108platform/"
+
+      # --scheme file：這個 job 只回答「站內連結有沒有壞」。外部 http(s) 連結交給
+      #   排程的 external-links 檢查，避免 PTT 或某間大學今天連不上就擋住無關 PR。
+      # fail / failIfEmpty：v2 的預設值雖然已是 true，但這是安全關鍵的把關政策，
+      #   顯式寫出來，不依賴隱含預設。failIfEmpty 特別重要——否則哪天 glob 沒掃到
+      #   任何檔案，就會回到「什麼都沒檢查但是綠燈」，那正是本次要修掉的失效模式。
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          failIfEmpty: true
+          lycheeVersion: v0.24.2
+          args: >-
+            --root-dir "${{ github.workspace }}/.link-root"
+            --scheme file
+            --verbose
+            --no-progress
+            './.link-root/sch001-108platform/**/*.html'
