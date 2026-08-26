@@ -215,6 +215,13 @@ jobs:
       - name: Run watchdog probe/schema unit tests
         run: npm run test:watchdog
 
+      # schema 綠燈只證明「格式合法」，證明不了「值是對的」。逐筆開過官網查證的
+      # 競賽，其報名時程／賽事日期／官網網址在這裡被釘住——被改回錯的值就會紅。
+      # 沒有這一關的話，#63 → #66 → #68 那種「格式全過、內容全錯」的資料仍然
+      # 可以一路合併進 main。
+      - name: Run per-entry verified-data regression tests
+        run: npm run test:competitions-data
+
   # 固定名稱的聚合關卡。ruleset 只要求這一個 context，日後 job 改名或增減都不必
   # 同步調整 repository 設定——避免 workflow 與 ruleset 漂移。
   # if: always() 確保任一上游 job 被取消或失敗時本 job 仍會執行並判定為失敗，
