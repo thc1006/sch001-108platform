@@ -67,3 +67,6 @@ school/
 
 # lychee 內部連結檢查用的 GitHub Pages 路徑命名空間（CI 產生）
 /.link-root/
+
+# check-built-site 產出的外部網址 inventory（供排程健康檢查使用）
+/.reports/

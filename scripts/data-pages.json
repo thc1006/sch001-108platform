@@ -1,0 +1,80 @@
+{
+  "_readme": "資料驅動頁面的單一設定來源。build-search-index.js 用它建索引，scripts/check-built-site.mjs 用它決定「JSON 內的相對路徑要相對哪一個頁面解析」。兩邊共用同一份，避免各自維護一份而漸漸漂移——那正是 #72 一路在修的失效模式。欄位：key＝頁面（相對 dist 根）；json＝該頁在瀏覽器端 fetch 的資料檔；arrayKey/nestedKey/idPrefix/tag/anchor 供搜尋索引使用。",
+  "localAssetFields": [
+    "thumbnail_url",
+    "logo",
+    "thumbnail",
+    "image",
+    "icon"
+  ],
+  "htmlFields": [
+    "content_html",
+    "analysis_html"
+  ],
+  "pages": {
+    "advanced-resources/competitions.html": {
+      "json": "advanced-resources/competitions.json",
+      "arrayKey": "competitions",
+      "idPrefix": "competition",
+      "tag": "競賽",
+      "anchor": "competition-grid"
+    },
+    "advanced-resources/online-courses.html": {
+      "json": "advanced-resources/online-courses.json",
+      "arrayKey": "courses",
+      "idPrefix": "course",
+      "tag": "線上課程",
+      "anchor": "course-grid"
+    },
+    "advanced-resources/open-education.html": {
+      "json": "advanced-resources/open-education.json",
+      "arrayKey": "resources",
+      "idPrefix": "resource",
+      "tag": "開放教育資源",
+      "anchor": "resource-grid"
+    },
+    "career-exploration/senior-interviews.html": {
+      "json": "career-exploration/senior-interviews.json",
+      "arrayKey": "interviews",
+      "idPrefix": "interview",
+      "tag": "學長姐訪談",
+      "anchor": "interview-grid"
+    },
+    "learning-portfolio/portfolio-gallery.html": {
+      "json": "learning-portfolio/portfolio-gallery.json",
+      "arrayKey": "portfolio",
+      "idPrefix": "portfolio",
+      "tag": "作品集",
+      "anchor": "portfolio-grid"
+    },
+    "autonomous-learning/methodology.html": {
+      "json": "autonomous-learning/methodology.json",
+      "arrayKey": "methods",
+      "idPrefix": "method",
+      "tag": "研究方法",
+      "anchor": "methodology-grid"
+    },
+    "learning-portfolio/tools.html": {
+      "json": "learning-portfolio/tools.json",
+      "arrayKey": "tools",
+      "idPrefix": "tool",
+      "tag": "線上工具",
+      "anchor": "tool-grid"
+    },
+    "learning-portfolio/activity-database.html": {
+      "json": "learning-portfolio/activity-database.json",
+      "arrayKey": "activities",
+      "idPrefix": "activity",
+      "tag": "多元表現活動",
+      "anchor": "activity-grid"
+    },
+    "advanced-resources/reading-list.html": {
+      "json": "advanced-resources/reading-list.json",
+      "arrayKey": "themes",
+      "nestedKey": "books",
+      "idPrefix": "book",
+      "tag": "主題書單",
+      "anchor": "reading-lists-container"
+    }
+  }
+}
