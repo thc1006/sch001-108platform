@@ -41,11 +41,11 @@
     "cheerio": "^1.1.0",
     "feather-icons": "^4.29.2",
     "fuse.js": "^6.6.2",
-    "ionicons": "^7.1.0",
-    "tailwindcss": "^4.3.0"
+    "ionicons": "^8.1.0",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "@tailwindcss/typography": "^0.5.19"
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/typography": "^0.5.20"
   }
 }

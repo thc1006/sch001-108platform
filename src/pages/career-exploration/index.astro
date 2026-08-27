@@ -113,7 +113,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
          從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。 -->
     <script is:inline type="module" src={`${vendorBase}/vendor/ionicons/ionicons.esm.js`}></script>
-    <script is:inline nomodule src={`${vendorBase}/vendor/ionicons/ionicons.js`}></script>
+    <!-- ionicons 8 起不再提供 nomodule 建置（v7 有 ionicons.js，v8 只剩 ESM loader）。
+         那個 fallback 針對的是不支援 ES module 的瀏覽器（IE11 等），2026 年已無實際
+         使用者。留著只會讓 check:site 抓到一個 404 的 script src。 -->
 
     <script is:inline src="https://js.puter.com/v2/"></script>
 
