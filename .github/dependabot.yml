@@ -33,6 +33,20 @@ updates:
     groups:
       # 這三個是自架到 public/vendor/ 的前端函式庫（見 scripts/vendor-assets.mjs）。
       # 版本一動就會改變使用者實際下載的檔案，分成一組讓它們的變更容易一起審。
+      # tailwindcss 與 @tailwindcss/* 必須一起升。
+      # @tailwindcss/vite 對 tailwindcss 是**精確 pin**（4.3.3 依賴 tailwindcss 4.3.3），
+      # 而 package.json 宣告的是 caret 範圍 ^4.3.3。只升其中一個就會產生 split tree：
+      #   node_modules/tailwindcss                              新版  ← 根
+      #   node_modules/@tailwindcss/vite/node_modules/tailwindcss  舊版  ← 巢狀
+      #   node_modules/@tailwindcss/node/node_modules/tailwindcss  舊版  ← 巢狀
+      # 實測（把 tailwindcss 釘回 4.3.2）可重現：3 份副本、2 個版本、
+      # npm install exit 0、零警告。Vite 外掛用巢狀那份引擎編譯 CSS，
+      # 而 @tailwindcss/typography 是對著根那份解析的——產出會悄悄不一致。
+      # 分在同一組讓它們只會被一起升；scripts/check-dep-tree.mjs 是第二層保險。
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss/*'
       vendored-frontend:
         patterns:
           - 'fuse.js'

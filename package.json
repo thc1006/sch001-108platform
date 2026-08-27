@@ -20,7 +20,7 @@
     "serve": "node scripts/static-server.mjs 8000",
     "audit:consistency": "node scripts/audit-competition-consistency.mjs",
     "vendor": "node scripts/vendor-assets.mjs",
-    "build:deployable": "node scripts/vendor-assets.mjs && astro build && node build-search-index.js && node scripts/build-info.mjs",
+    "build:deployable": "node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && astro build && node build-search-index.js && node scripts/build-info.mjs",
     "verify:deploy": "node scripts/verify-deploy.mjs",
     "check:site": "node scripts/check-built-site.mjs",
     "check:link-policy": "node scripts/check-link-policy.mjs",
@@ -29,7 +29,9 @@
     "test:site-faults": "node scripts/check-built-site.faults.mjs",
     "test:link-health": "node --test scripts/link-health.test.mjs",
     "test:link-faults": "node scripts/link-health.faults.mjs",
-    "verify:site": "npm run build:deployable && npm run check:site"
+    "verify:site": "npm run build:deployable && npm run check:site",
+    "check:deps": "node scripts/check-dep-tree.mjs",
+    "test:deps-faults": "node scripts/check-dep-tree.faults.mjs"
   },
   "keywords": [],
   "author": "",
