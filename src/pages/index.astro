@@ -377,14 +377,16 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       //
       // 競賽頁已經做對了（#result-count 帶 aria-live="polite"），這裡照同樣的形狀補。
       // 用 role="status"，它隱含 aria-live="polite" 與 aria-atomic="true"。
-      let searchStatusEl = null;
+      // live region 必須在內容第一次變動「之前」就存在於無障礙樹中。第一版是在
+      // 第一次播報時才建立元素、同一個 task 內就設文字——那是已知的反模式，多數
+      // 螢幕閱讀器會漏掉那一次播報（也就是使用者的第一次搜尋，最需要回饋的那次）。
+      // 改成頁面載入時就建立，之後只更新文字。
+      const searchStatusEl = document.createElement('div');
+      searchStatusEl.setAttribute('role', 'status');
+      searchStatusEl.className = 'sr-only';
+      resultsContainer.parentNode.insertBefore(searchStatusEl, resultsContainer);
+
       function announceResults(count, query) {
-        if (!searchStatusEl) {
-          searchStatusEl = document.createElement('div');
-          searchStatusEl.setAttribute('role', 'status');
-          searchStatusEl.className = 'sr-only';
-          resultsContainer.parentNode.insertBefore(searchStatusEl, resultsContainer);
-        }
         // 一律用 textContent：這裡會放使用者輸入的字串。
         searchStatusEl.textContent = !query
           ? ''
