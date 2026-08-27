@@ -529,21 +529,6 @@
       "level": "皆可"
     },
     {
-      "id": "weizmann-window-into-the-future",
-      "category": "science-community",
-      "name": "A Window into the Future 國際青年科學俱樂部",
-      "org": "以色列魏茲曼科學研究院 Davidson 科學教育研究所",
-      "url": "https://davidson.weizmann.ac.il/en/programs/online-courses-0",
-      "description": "魏茲曼科學研究院為全球青少年開設的免費線上國際科學俱樂部,成員可探索研究院的前沿研究、與各國同好交流、辯論科學倫理議題並與學者直接對談。高中生可循 Davidson 研究所線上課程頁面報名參與每年招募的梯次。",
-      "tags": [
-        "國際社群",
-        "線上俱樂部",
-        "科學交流"
-      ],
-      "lang": "英文",
-      "level": "皆可"
-    },
-    {
       "id": "cern-public-lectures-webcast",
       "category": "science-community",
       "name": "CERN 公開講座與線上直播",

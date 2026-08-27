@@ -136,4 +136,4 @@ description: 醫藥衛生學群學習歷程多元表現策略指南，涵蓋醫�
 - [志工招募 — 志願服務｜新光醫院](https://www.skh.org.tw/skh/ff5bd25815.html)
 - [招募志工｜台灣醫療改革基金會](https://www.thrf.org.tw/page/140)
 - [參加國際數理學科奧林匹亞競賽及國際科展成績優良學生升學優待辦法｜教育部主管法規共用系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=FL029775)
-- [2026 暑假營隊總覽：高中醫學、法律、AI 與設計 PBL 實作營｜全台攏學 Luyi Academy](https://www.luyiacademy.com/course.php?act=view&id=516)
+- [2026 暑假高中生營隊總覽｜醫學・AI・法律・設計｜全台攏學 Luyi Academy](https://www.luyiacademy.com/course.php?act=view&id=522)

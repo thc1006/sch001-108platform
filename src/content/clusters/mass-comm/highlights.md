@@ -121,7 +121,7 @@ ColleGo! 將「媒體素養」列為大眾傳播學類最重視的能力（約 1
 
 ## 參考來源
 
-- [大學如何審查學習歷程？招聯會「3 重 2 不」原則，聯合新聞網](https://udn.com/news/story/121690/5072410)
+- [【作伙學手冊】學習歷程——大學申請入學第二階段準備指南（第一章說明大學審查備審資料的「三重二不」原則），教育部學習歷程檔案審議計畫](https://www.108epo.com/results-detail.php?Key=38)
 - [課程學習成果是什麼？從規定、格式到內容一次懂，104 職場力](https://blog.104.com.tw/learning-outcome/)
 - [大眾傳播學類核心能力，ColleGo!](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=84)
 - [青春還鄉—2026 地方創生微電影競賽](https://regional-revitalization-film.tw/)

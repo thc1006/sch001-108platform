@@ -86,10 +86,10 @@ description: 生命科學學群多元表現實戰指南，依份量分級拆解�
 ## 參考來源
 
 - [學習歷程「三重二不」審查核心原則，大學招生委員會聯合會](https://www.cac.edu.tw/apply114/guide.php)
-- [〈學習歷程防弊 大學營隊不得發證書〉，聯合新聞網文教](https://udn.com/news/story/6885/6156259)
+- [〈教育部：大學收費營隊不可明示或暗示有助學習歷程〉，中央社（教育部 111 年 3 月 9 日公函：涉及學習歷程檔案準備者不得收費、不得發參與證明）](https://www.cna.com.tw/news/ahel/202203100368.aspx)
 - [國立臺灣大學「生命科學系」書面資料準備指引（探究與實作成果、多元表現綜整心得字數規定，國立臺灣大學教務處）](https://www.aca.ntu.edu.tw/)
 - [〈成大生科特殊選才面試考古題分享〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/interview-archaeology/)
 - [國立臺灣科學教育館—科學展覽資訊管理系統（全國科展、國際科展）](https://twsf.ntsec.gov.tw/)
-- [中華民國生物奧林匹亞委員會](https://www.ctbo.org.tw/)
+- [中華民國生物奧林匹亞（教育部委託國立中山大學生物科學系辦理選拔、培訓及參賽）](https://tpmso.k12ea.gov.tw/ibo/)
 - [〈2025 年第 36 屆國際生物奧林匹亞競賽 我國獲 1 金 3 銀〉，教育部新聞稿](https://www.edu.tw/News_Content.aspx?n=9E7AC85F1954DDA8)
 - [「科學探究競賽—這樣教我就懂」官網，國家教育研究院 / colife](https://sciexplore2026.colife.org.tw/)

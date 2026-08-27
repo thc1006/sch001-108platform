@@ -45,6 +45,5 @@ description: 逐一破解資訊學群升學的常見迷思，包含程式設計�
 - [學習歷程資訊能力迷思澄清相關 — 招聯會宣導資料](https://www.swjh.tyc.edu.tw/DEPT/FFF_files/FFF2328.pdf)
 - [成功大學資工系招生指引](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
 - [葉丙成：別再為學習歷程花錢參加營隊](https://tw.news.yahoo.com/%E8%A6%81%E9%AB%98%E4%B8%AD%E7%94%9F%E5%88%A5%E5%86%8D%E7%82%BA%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B%E8%8A%B1%E9%8C%A2%E5%8F%83%E5%8A%A0%E7%87%9F%E9%9A%8A-%E8%91%89%E4%B8%99%E6%88%90%E6%8F%AD%E7%9C%9F%E7%9B%B8-%E6%95%99%E6%8E%88%E4%B8%8D%E6%9C%83%E5%8A%A0%E5%88%86-060954172.html)
-- [學習歷程本質是忠實呈現自己 — 聯合新聞網](https://udn.com/news/story/7339/8793538)
 - [政治大學資管系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006026)
 - [教授會不會看我的學習歷程？大學教授現身說法](https://blog.luckertw.com/professor-suggestions/)

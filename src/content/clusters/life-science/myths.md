@@ -106,8 +106,8 @@ description: 逐一查證生命科學學群六大升學迷思，釐清「四大�
 ## 參考來源
 
 - [ColleGo! 選才育才輔助系統—生命科學學群（學群定義、重要學科、未來發展，大學招生委員會聯合會 / 大考中心）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
-- [〈如何選科系？生科系 vs 生醫系 vs 醫科系〉，IOH 開放個人經驗平台](https://ioh.tw/programs/How-to-Choose-College-Major)
-- [國立陽明交通大學生命科學系暨基因體科學研究所—常見問答](https://dls.nycu.edu.tw/feature/dls-faq.html)
+- [〈如何選科系？生科系 vs 生醫系 vs 醫科系〉，IOH 開放個人經驗平台](https://ioh.tw/programs/How-to-Choose-College-Major-%20生科生醫類)
+- [國立陽明交通大學生命科學系暨基因體科學研究所—常見問答](https://dls.nycu.edu.tw/dls/ch/app/artwebsite/view?module=artwebsite&id=35338&serno=40a4e171-9ad8-4cb3-9e95-21e7c33c70aa)
 - [清華大學生命科學暨醫學院 / 醫學科學系—常見問答（不提供臨床訓練之說明）](https://dms.site.nthu.edu.tw/)
 - [〈念生科系 CP 值低是因為系很爛？〉顏聖紘，udn 鳴人堂](https://opinion.udn.com/opinion/story/7492/1838547)
 - [〈生命科學出路有哪些？生科薪水、未來潛力一篇看懂〉，Cake](https://www.cake.me/resources/life-science)
