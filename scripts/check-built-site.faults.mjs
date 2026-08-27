@@ -213,6 +213,25 @@ const cases = [
     },
   },
   {
+    // 只驗「存在」的話，被截斷的檔案照樣全綠——實測把 fuse.esm.js 截成 0 位元組，
+    // check:site「錯誤：0 ✅ 全部通過」而全站搜尋已死。這是 artifact 上傳不完整／
+    // 解壓被截斷的形狀，而本 repo 的 CI 前提就是「驗過的位元組＝被部署的位元組」。
+    // 要截哪個檔從清單推導，不寫死檔名。
+    name: 'vendor 清單：產出被截斷成 0 位元組（存在但內容沒了）',
+    expect: /的大小與 vendor 步驟產出時不符：預期 \d+ 位元組，實際 0 位元組/,
+    apply() {
+      const manifest = JSON.parse(readFileSync(`${DIST}/vendor/vendor-manifest.json`, 'utf8'));
+      const target = manifest.files.find((f) => f.bytes > 0 && f.path.endsWith('.js'));
+      if (!target) throw new Error('清單裡沒有任何非空的 JS 產出，這個注入的前提不成立');
+      this.file = `${DIST}/vendor/${target.path}`;
+      this.body = readFileSync(this.file);
+      writeFileSync(this.file, '');
+    },
+    undo() {
+      writeFileSync(this.file, this.body);
+    },
+  },
+  {
     // 清單自己不見也要紅。否則「刪掉清單」就等於把上面那一關關掉——這一系列
     // issue 反覆出現的正是這種「保護可以被一個編輯動作繞過」。
     name: 'vendor 清單：清單檔本身被刪掉',

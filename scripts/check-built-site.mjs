@@ -466,12 +466,31 @@ let vendorManifestCount = 0;
             }
             vendorManifestCount = list.length;
             for (const entry of list) {
-                if (typeof entry !== 'string' || entry.startsWith('/') || entry.includes('..')) {
-                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `不合法的清單項目：${String(entry).slice(0, 80)}`);
+                const rel = entry?.path;
+                const bytes = entry?.bytes;
+                if (typeof rel !== 'string' || rel.startsWith('/') || rel.includes('..') || !Number.isInteger(bytes) || bytes < 0) {
+                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `不合法的清單項目：${JSON.stringify(entry).slice(0, 80)}`);
                     continue;
                 }
-                if (!distFileSet.has(`vendor/${entry}`)) {
-                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `vendor 步驟產出過 ${entry}，但它不在建置產物裡`);
+                const distRel = `vendor/${rel}`;
+                if (!distFileSet.has(distRel)) {
+                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `vendor 步驟產出過 ${rel}，但它不在建置產物裡`);
+                    continue;
+                }
+                // 存在還不夠——大小也要對得上。只驗存在的話，被截斷成 0 位元組的
+                // 檔案照樣全綠：link[href]／script[src] 只看存不存在，import 圖
+                // 走訪讀到空檔也找不到任何 import 可驗（實測 fuse.esm.js 截成 0，
+                // check:site「錯誤：0 ✅ 全部通過」而全站搜尋已死）。
+                // 這正是 artifact 上傳不完整／解壓被截斷會留下的形狀，而本 repo
+                // 的 CI 前提就是「驗過的位元組＝被部署的位元組」。
+                const actual = (await stat(path.join(DIST, distRel))).size;
+                if (actual !== bytes) {
+                    addError(
+                        VENDOR_MANIFEST_REL,
+                        'vendor 產出清單',
+                        `${rel} 的大小與 vendor 步驟產出時不符：預期 ${bytes} 位元組，實際 ${actual} 位元組` +
+                            (actual === 0 ? '（檔案是空的，多半是打包或解壓被截斷）' : ''),
+                    );
                 }
             }
         }
@@ -524,7 +543,7 @@ console.log(`  HTML ${htmlFiles.length} 檔、dist 檔案 ${distFiles.length} �
 console.log(`  檢查的 reference：${refCount}`);
 console.log(`  站內需解析：${internal.length}`);
 console.log(`  vendor ES module import 圖：走訪 ${vendorModuleCount} 個模組（起點來自 HTML 屬性；追不到動態 import）`);
-console.log(`  vendor 產出清單：${vendorManifestCount} 筆全部存在於 dist/（不受 HTML 形狀與動態 import 影響）`);
+console.log(`  vendor 產出清單：${vendorManifestCount} 筆全部存在於 dist/ 且位元組數一致（不受 HTML 形狀與動態 import 影響）`);
 // 去重數與出現次數都要列出：只列去重數會讓總和對不起來，讀的人會誤以為有
 // 一批 reference 憑空消失（我自己在 review 時就這樣誤判過一次）。
 const externalOccurrences = [...external.values()].reduce((a, b) => a + b.occurrences.length, 0);

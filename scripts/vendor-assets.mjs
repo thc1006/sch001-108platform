@@ -779,13 +779,25 @@ const emittedJs = [...emittedFiles].filter((f) => /\.[cm]?js$/.test(f));
 //
 // 清單不包含它自己（它是索引不是被索引者）；check:site 那邊也會在「有 vendor/
 // 產出卻沒有清單」時報錯，否則刪掉清單就等於把這一關關掉。
-const manifestEntries = listEmitted().sort();
+//
+// 每一筆連**位元組數**一起記。只記檔名的話，清單驗的仍然只是「存在」——實測把
+// dist/vendor/fuse.esm.js 截成 0 位元組，check:site 照樣「錯誤：0 ✅ 全部通過」
+// 而全站搜尋已經死了：link[href] 與 script[src] 只看存不存在，import 圖走訪
+// 讀到空檔案也就找不到任何 import 可驗。0 位元組在來源端（vetCandidate）早就
+// 擋著，部署端卻一直沒有人看。
+//
+// 這件事對本 repo 特別重要：整套 CI 的前提是「驗過的那些位元組，就是被部署的
+// 那些位元組」，而中間隔著一次 artifact 的打包與解開——上傳不完整、解壓被截斷
+// 正是那一段會發生的事。大小比雜湊便宜，而且足以抓到這一類截斷。
+const manifestEntries = listEmitted()
+    .sort()
+    .map((rel) => ({ path: rel, bytes: statSync(path.join(OUT, rel)).size }));
 emit(
     VENDOR_MANIFEST,
     JSON.stringify(
         {
             generatedBy: 'scripts/vendor-assets.mjs',
-            note: '這一輪 vendor 出來的完整檔案清單。scripts/check-built-site.mjs 會要求每一筆都存在於 dist/。不要手改：它由建置產生，改它只會讓檢查對不上真實產物。',
+            note: '這一輪 vendor 出來的完整檔案清單與各檔位元組數。scripts/check-built-site.mjs 會要求每一筆都存在於 dist/ 且大小一致。不要手改：它由建置產生，改它只會讓檢查對不上真實產物。',
             files: manifestEntries,
         },
         null,
@@ -805,5 +817,5 @@ console.log(
         `  頁面引用驗證 ${vendorRefs.length} 個：${vendorRefs.join('、')}\n` +
         `  import 圖驗證 ${emittedJs.length} 個 JS 產出，靜態 import 全部指得到
 ` +
-        `  產出清單 ${VENDOR_MANIFEST}：${manifestEntries.length} 筆（check:site 會逐一確認它們都進了 dist/）`,
+        `  產出清單 ${VENDOR_MANIFEST}：${manifestEntries.length} 筆、含位元組數（check:site 會逐一確認它們都進了 dist/ 且大小一致）`,
 );
