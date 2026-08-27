@@ -45,7 +45,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </section>
 
     <!-- Control bar -->
-    <section class="comp-controls" aria-label="競賽篩選">
+    <section class="comp-controls" aria-label="競賽篩選" data-autohide-filters>
       <div class="comp-controls__inner">
         <div class="comp-searchrow">
           <div class="comp-search">
@@ -763,7 +763,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       .stat-num { font-size: 2rem; }
       .comp-updated { width: 100%; margin: .25rem 0 0; }
       .comp-grid { grid-template-columns: 1fr; }
-      .comp-controls { top: 68px; }
+      /* 面板本身在手機上也太厚：收緊內距與各列間距，實測省下約 60px。
+         另一半的改善來自 shared/sticky-filters.js——向下捲動時整個讓開。
+         註：曾試過把 .comp-chips 改成單行橫向捲動，實測反而變高（431→462px）：
+         .comp-chiprow 是 space-between 的 wrap 容器，強制不換行會把計數列擠到
+         下一行，還多出捲軸高度。故不採用。 */
+      .comp-controls { top: 68px; padding: .6rem 1rem; }
+      .comp-controls__inner { gap: .5rem; }
+      .comp-searchrow { gap: .5rem; }
+      .comp-selects { gap: .4rem; }
+      .comp-chips { gap: .3rem; }
+      .comp-chip { padding: .3rem .6rem; font-size: .78rem; }
     }
 
     /* ── Motion / a11y ── */
