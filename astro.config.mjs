@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import tailwindcss from '@tailwindcss/vite';
 import { CLUSTERS } from './src/data/clusters.ts';
 
 // 台灣教育處方籤 — 部署於 GitHub Pages 專案頁(網址含 /sch001-108platform 前綴)。
@@ -11,12 +12,20 @@ import { CLUSTERS } from './src/data/clusters.ts';
 // 完整保留既有網址、不破壞外部連結、書籤與 SEO。
 // (註:'file' 會把 foo/index.astro 壓成 foo.html,破壞區段首頁網址,故不可用。)
 //
-// Tailwind v4 透過 postcss.config.mjs 套用(不用 @tailwindcss/vite —— 該外掛
-// 與 Astro 6 的 rolldown-vite 尚不相容)。
+// Tailwind v4 經由 @tailwindcss/vite 套用。Astro 7 帶的是 Vite 8，它的
+// postcss-import 解析不了 @import "tailwindcss" 這種裸模組名
+// (ENOENT ... open '...\tailwindcss')，所以 PostCSS 那條路在 Astro 7 已經走不通。
 export default defineConfig({
+  vite: { plugins: [tailwindcss()] },
   site: 'https://thc1006.github.io',
   base: '/sch001-108platform',
   trailingSlash: 'ignore',
+  // Astro 7 把預設改成 compressHTML: 'jsx'，會移除元素之間的空白文字節點。
+  // 實測 93 頁的版面幾何：73 頁有約 4px 的水平位移（原本靠 inline 空白提供的
+  // 間距消失，例如麵包屑的分隔線）。元素數量完全相同、沒有內容遺失，但那是
+  // 使用者看得到的變化，不該夾在版本升級裡悄悄發生。
+  // 明確設回 true（Astro 6 的行為），要改樣式時再單獨決定。
+  compressHTML: true,
   build: {
     format: 'preserve',
   },
