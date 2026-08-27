@@ -36,7 +36,7 @@
   "license": "ISC",
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
-    "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "astro": "^6.3.5",
     "cheerio": "^1.1.0",
     "feather-icons": "^4.29.2",
