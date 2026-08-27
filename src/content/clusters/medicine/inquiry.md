@@ -86,7 +86,7 @@ description: 醫藥衛生學群自主學習計畫與探究專題的選題方向�
 
 ## 五、呈現策略：把自主學習寫成「有說服力的成果」
 
-招聯會規範下，課程學習成果最多 3 件、多元表現最多 10 件，自主學習成果可放在多元表現中。要讓自主學習成果發揮最大效力，掌握以下要點：
+依《大學申請入學招生簡章》（大學甄選入學委員會），課程學習成果最多 3 件、多元表現最多 10 件，自主學習成果可放在多元表現的「高中自主學習計畫與成果」項下。要讓自主學習成果發揮最大效力，掌握以下要點：
 
 ### 完整呈現「探究的歷程」
 
@@ -126,7 +126,7 @@ description: 醫藥衛生學群自主學習計畫與探究專題的選題方向�
 ## 參考來源
 
 - [醫學系學習歷程檔案累積全攻略！115 上榜醫科決勝關鍵｜TKB 甄戰學習顧問中心](https://www.reallygood.com.tw/newExam/inside?str=BCA9056F6E0DCA2623D6DA8B4BFCB7A7)
-- [選才育才輔助系統 — 醫藥衛生學群｜ColleGo! 大考中心](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=4)
+- [選才育才輔助系統 — 醫藥衛生學群｜ColleGo!（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=4)
 - [自主學習是什麼？重點概念、撰寫訣竅、參考範本與資源全收錄｜布朗實驗教育機構](https://highschool.ltbrown.hcc.edu.tw/announcement-detail/self-learning/)
 - [自主學習計畫該怎麼寫？教授解密｜天下雜誌](https://www.cw.com.tw/article/5120375)
 - [高級中等學校自主學習網｜國立公共資訊圖書館](https://sdl.ntl.edu.tw/)

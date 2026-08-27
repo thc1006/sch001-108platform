@@ -14,7 +14,7 @@ description: 設計學群橫跨藝術與工程技術，涵蓋視覺傳達、工�
 
 ## 學群定位：橫跨藝術與工程的特殊學群
 
-設計學群是台灣 18 學群中橫跨「藝術」與「工程技術」的特殊學群。在教育部大學招生委員會聯合會建置的官方選才系統 ColleGo! 分類中，設計相關科系主要落在「**建築設計學群**」之下，涵蓋九大學類：
+設計學群是台灣 18 學群中橫跨「藝術」與「工程技術」的特殊學群。在大學招生委員會聯合會（招聯會）主辦的官方選才系統 ColleGo! 分類中，設計相關科系主要落在「**建築設計學群**」之下，涵蓋九大學類：
 
 - 媒體設計
 - 建築
@@ -118,7 +118,7 @@ ColleGo! 對建築設計學群列出的核心能力與性格特質為：
 
 ## 參考來源
 
-- [ColleGo! 選才育才輔助系統 — 建築設計學群（教育部大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)
+- [ColleGo! 選才育才輔助系統 — 建築設計學群（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)
 - [ColleGo! — 認識學群](https://collego.edu.tw/Highschool/CollegeList)
 - [【設計力研究系列2】AI 世代的設計突圍 — 台灣設計研究院 TDRI](https://www.tdri.org.tw/zh-TW/news/538)
 - [校園巡禮｜國立臺北科技大學 工業設計系 — 設計王 DesignWant](https://www.designwant.com/article/10561)

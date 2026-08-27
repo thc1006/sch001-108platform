@@ -40,7 +40,7 @@ description: 大眾傳播學群完整總覽——學群定位、五大學類差�
 
 ## 三、大傳學群版圖：五大學類
 
-教育部與 ColleGo! 將大眾傳播學群分為**五個學類**：
+招聯會 ColleGo! 將大眾傳播學群分為**五個學類**：
 
 | 學類 | 核心關懷 | 你會喜歡，如果你…… | 代表科系（例） |
 |---|---|---|---|
@@ -128,7 +128,7 @@ description: 大眾傳播學群完整總覽——學群定位、五大學類差�
 
 ## 參考來源
 
-- [大眾傳播學群／學類，ColleGo!（教育部／大考中心）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=11)
+- [大眾傳播學群／學類，ColleGo!（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=11)
 - [大眾傳播學類核心能力與學科建議，ColleGo!](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=84)
 - [國立政治大學傳播學院大一大二不分系](https://comm.nccu.edu.tw/PageDoc?fid=11335)
 - [國立陽明交通大學傳播與科技學系](https://dcat.nycu.edu.tw/)

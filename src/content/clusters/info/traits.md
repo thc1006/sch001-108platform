@@ -61,7 +61,7 @@ description: 解碼資訊學群教授的審查視角，涵蓋三足鼎立的核�
 
 ## 參考來源
 
-- [學習歷程檔案暨考招制度宣導（招聯會「三重二不」）](https://www.swjh.tyc.edu.tw/DEPT/FFF_files/FFF2328.pdf)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [成功大學資工系招生指引](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
 - [清華大學資工系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)
 - [人物專訪：探尋的邏輯——專訪陳宜欣教授](https://case.ntu.edu.tw/blog/?p=42471)
