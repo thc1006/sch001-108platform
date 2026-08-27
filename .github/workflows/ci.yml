@@ -202,9 +202,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 只裝 chromium：這些是前端邏輯與渲染測試，跨瀏覽器差異不是這裡要驗的東西
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # 只裝 chromium：這些是前端邏輯與渲染測試，跨瀏覽器差異不是這裡要驗的東西。
+      #
+      # --only-shell 再省一層：不指定 channel 的 headless 執行用的是 chromium
+      # headless shell（約 104 MiB），不是完整的 Chromium（約 174 MiB）。本 repo 的
+      # projects 只有 devices['Desktop Chrome']，實測它沒有 channel 欄位，測試也全程
+      # headless，所以完整版下載下來根本不會被啟動。（有人日後加上 channel 或改跑
+      # headed，這一步就會失敗——那是對的，因為那時確實需要完整瀏覽器。）
+      #
+      # --with-deps 必須保留：版面預算測試量的是中文字型實際排出來的高度，少了 OS
+      # 層的字型相依會讓量測漂移，那比省下的下載時間貴得多。
+      #
+      # 刻意不快取瀏覽器：版本跟 Playwright 綁在一起，而 cache 體積大，restore 未必
+      # 比從 CDN 下載便宜。要改的話請先量 p50/p95，不要憑單次數字決定。
+      - name: Install Chromium headless shell
+        run: npx playwright install --with-deps --only-shell chromium
 
       # site job 通過全部靜態檢查後上傳的那一份。upload-pages-artifact 內部包成
       # artifact.tar，所以這裡要解開。
@@ -332,14 +344,7 @@ jobs:
     # 實際踩過：原本這裡是 10 分鐘，而 deploy-pages 的 timeout 預設也正好是 600000ms。
     # GitHub Pages 的 updating_pages 階段變慢時（2026-08-27 當天就是如此），job 逾時
     # 先把整個 job 砍掉，action 來不及回報自己的錯誤——而**逾時被砍的 job 在 UI 上
-    # 顯示成 cancelled，不是 failure**。連續兩次部署沒有落地，main 的其他四個 job
-    # 全綠（deploy 只在 push 到 main 時跑，本來就不可能列入 PR 的 required check），
-    # 沒有任何人會發現。實測兩次都是恰好 10m03s / 10m05s。
-    #
-    # 注意 deploy-pages 的 timeout **不能調大**：MAX_TIMEOUT = 600000 是寫死的，
-    # this.timeout = Math.min(timeoutInput, MAX_TIMEOUT)，傳更大的值只會被靜默夾回去
-    # 並印一行警告。這個上限對齊 Pages 平台本身「部署超過 10 分鐘就失敗」的限制，
-    # 所以正確做法不是等更久，而是失敗後重試一次（見下方）。
+    # 顯示成 cancelled，不是 failure**。實測兩次都是恰好 10m03s / 10m05s。
     timeout-minutes: 25
     # 權限只給這個 job。其餘 job 維持 workflow 層級的 contents: read。
     permissions:
@@ -352,25 +357,53 @@ jobs:
     # 同時間只允許一個 Pages 部署。放在 job 層級而非 workflow 層級：workflow 的
     # concurrency group 依 run 區分（push 到 main 時每個 run 都必須各自跑完），
     # 兩者管的是不同的事。
+    #
+    # queue: max —— 預設是 queue: single，一個 group 只留得住**一個** pending。連續
+    # 推第三次時，還在排隊的第二次會被直接取消，那個 commit 就這樣沒有部署，而且 job
+    # 顯示成 cancelled 而不是 failure。queue: max 讓同一個 group 最多排 100 個並依
+    # FIFO 依序處理。已對 GitHub 真正的 workflow parser schema 查證：job-concurrency
+    # 與 workflow-concurrency 指向同一個 concurrency-mapping，queue 的 allowed-values
+    # 是 ["single", "max"]，所以 job 層級可用。
+    #
+    # 注意 queue: max 與 cancel-in-progress: true 併用會是 workflow 驗證錯誤；這裡
+    # 本來就必須是 false——部署不可以被後來的 run 砍掉。
+    #
+    # 還要注意 FIFO 是依「開始等待這個 group 的時間」排序，不是依 commit 順序。各 run
+    # 的 CI 耗時本來就有落差（實測整條 run 331～414 秒），所以較舊的 commit 仍有可能
+    # 最後才部署，讓線上停在比 main 更舊的版本。那件事不是這把鎖能處理的，由
+    # verify-deploy 去抓——它會發現線上是自己的祖先。
     concurrency:
       group: pages
       cancel-in-progress: false
+      queue: max
     steps:
-      # 刻意不傳 timeout：MAX_TIMEOUT = 600000 寫死，傳更大的值會被 Math.min 夾回去。
+      # 刻意不傳 timeout 參數。MAX_TIMEOUT = 600000 寫死在 action 裡
+      # （src/internal/deployment.js:26，第 58 行是
+      #  this.timeout = Math.min(timeoutInput, MAX_TIMEOUT)），傳更大的值只會被靜默
+      # 夾回去並多印一行警告——寫 timeout: 900000 看起來像 15 分鐘，實際仍是 10 分鐘。
+      # 這個上限對齊 Pages 平台本身「部署超過 10 分鐘就失敗」的限制，所以正確做法
+      # 不是等更久，而是失敗後重試一次。
       - name: Deploy the verified artifact
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
 
       # Pages 後端偶發會讓部署卡到平台的 10 分鐘上限（actions/deploy-pages#406，
-      # 2026-01 開至今未修；#418 同類）。第一次卡死時 action 的 SIGTERM handler 會把
-      # 那個 deployment 主動取消掉，所以第二次是乾淨的重新開始。
+      # 2026-01 開至今未修；#418 同類）。第一次卡到 action 自己的 MAX_TIMEOUT 時，
+      # 它走的是 check() → core.setFailed('Timeout reached, aborting!') → this.cancel()
+      # → cancelPagesDeployment，會把那個 deployment 主動取消掉，所以第二次是乾淨的
+      # 重新開始。（不是 SIGTERM handler——那條路徑只在 runner 主動送訊號時才會走到。）
       #
       # 這是唯一能把「後端抖動」變成「最終成功」的手段——等更久沒有用，平台端本來
       # 就會在 10 分鐘砍掉。
+      #
+      # 這一步同樣掛 continue-on-error：沒有的話它一失敗就直接讓 job 結束，下面那個
+      # 「兩次都沒成功」的步驟永遠不會執行（隱含的 success() 前置條件不成立），
+      # 錯誤訊息也就少掉「去看 githubstatus」這句可執行的指引。
       - name: Retry once if the first attempt did not land
         if: ${{ steps.deployment.outcome == 'failure' }}
         id: deployment-retry
+        continue-on-error: true
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
 
       # continue-on-error 會讓失敗的 step 不影響 job 結論，所以兩次都失敗時要自己喊。
@@ -387,9 +420,13 @@ jobs:
   # 沒有訊號——因為 deploy 只在 push 到 main 時跑，不可能列入 PR 的 required check，
   # 而 main 的 run 顯示的是 cancelled，沒有人會去看。
   #
-  # 這個 job 去線上把 build-info.json 抓下來比對 commit，讓「部署落地」變成可驗證
-  # 的事實而不是假設。它刻意不放在 deploy job 內：deploy 被取消時該 job 的步驟
-  # 不會執行，而這一關必須在 deploy 沒成功時也跑得到（if: always()）。
+  # 這個 job 刻意**不**放進 deploy 的 pages concurrency group，也刻意不併進 deploy
+  # job。它要回答的問題是「站台現在到底在服務什麼」，而那個問題只有在鎖外面才問得
+  # 出來——在鎖裡面驗，就只能確認「我剛剛部署的東西部署好了」，永遠看不到別人後來
+  # 把站台換成了什麼。
+  #
+  # 對應地，verify-deploy.mjs 的判定不是「精確相等」而是「相等或線上是我的後代」：
+  # 較新的部署先上線是正常的，不該誤報；線上若是本 commit 的祖先才是真的有問題。
   verify-deploy:
     name: Verify Deployment Landed
     if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
@@ -397,6 +434,7 @@ jobs:
     runs-on: ubuntu-latest
     # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，
     # 否則「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
+    # 預算是 660 秒，這裡給 15 分鐘，留 240 秒餘裕。
     timeout-minutes: 15
     # 只 checkout，然後對線上站台發匿名 HTTPS 請求，不碰任何 GitHub 寫入 API。
     permissions:
@@ -412,7 +450,7 @@ jobs:
         with:
           node-version-file: '.node-version'
 
-      # deploy 被取消或失敗時就不必等了，直接指出問題——否則要空等 5 分鐘逾時。
+      # deploy 被取消或失敗時就不必等了，直接指出問題——否則要空等到逾時。
       - name: Fail fast when the deploy job did not succeed
         if: ${{ needs.deploy.result != 'success' }}
         run: |
@@ -420,5 +458,42 @@ jobs:
           echo "常見原因：被較新的 run 取消、GitHub Pages 服務異常、Pages 來源設定不是 GitHub Actions。" >&2
           exit 1
 
+      # 給 step 自己的逾時，比腳本的 660 秒預算多一點。用 step timeout 而不是只靠
+      # job timeout：step 逾時的結果是 failure、訊息明確；job 逾時被砍的結果是
+      # cancelled，那正是 #92 當初沒人發現的形狀。
+      #
+      # GITHUB_TOKEN 是給 compare API 用的（查線上的 commit 是不是本 commit 的後代）。
+      # 公開 repo 不給也能查，但配額低很多；GITHUB_REPOSITORY 由 Actions 自動提供。
       - name: Verify the live site serves this commit
+        timeout-minutes: 12
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: npm run verify:deploy
+
+  # 固定名稱的部署關卡，本身不持有任何權限。
+  #
+  # 為什麼需要它：job 因為 timeout-minutes 被砍、或因為 concurrency 被取代時，UI 上
+  # 顯示的是 cancelled 而不是 failure，整個 run 的結論也跟著是 cancelled——#92 就是
+  # 這樣連續兩次部署沒落地卻沒有任何人發現。這個 job 用 always() 明確比對上游結果，
+  # 把「被取消」與「被跳過」都變成紅燈。
+  #
+  # ⚠️ 不要把這個 check 加進 branch ruleset。它只在 push／workflow_dispatch 到 main
+  # 時執行，在 PR 上永遠是 skipped，而被跳過的 required check 會讓 PR 永遠等不到
+  # 結果（同樣的理由見上面 required job 的註解）。PR 的關卡只有「CI Required」。
+  deployment-required:
+    name: Deployment Required
+    if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    needs: [deploy, verify-deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require deployment and live verification
+        env:
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          VERIFY_RESULT: ${{ needs.verify-deploy.result }}
+        run: |
+          echo "Deploy to GitHub Pages   : $DEPLOY_RESULT"
+          echo "Verify Deployment Landed : $VERIFY_RESULT"
+          test "$DEPLOY_RESULT" = "success"
+          test "$VERIFY_RESULT" = "success"
