@@ -208,7 +208,8 @@ jobs:
       # headless shell（約 104 MiB），不是完整的 Chromium（約 174 MiB）。本 repo 的
       # projects 只有 devices['Desktop Chrome']，實測它沒有 channel 欄位，測試也全程
       # headless，所以完整版下載下來根本不會被啟動。（有人日後加上 channel 或改跑
-      # headed，這一步就會失敗——那是對的，因為那時確實需要完整瀏覽器。）
+      # headed 時，失敗的會是**下面跑測試那一步**——它找不到完整瀏覽器的執行檔；
+      # 這個安裝步驟本身仍然會成功。那時把 --only-shell 拿掉即可。）
       #
       # --with-deps 必須保留：版面預算測試量的是中文字型實際排出來的高度，少了 OS
       # 層的字型相依會讓量測漂移，那比省下的下載時間貴得多。
@@ -432,11 +433,24 @@ jobs:
     if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     needs: [deploy]
     runs-on: ubuntu-latest
-    # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，
-    # 否則「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
-    # 預算是 660 秒，這裡給 15 分鐘，留 240 秒餘裕。
-    timeout-minutes: 15
-    # 只 checkout，然後對線上站台發匿名 HTTPS 請求，不碰任何 GitHub 寫入 API。
+    # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，否則
+    # 「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
+    #
+    # 預算組成（腳本最壞路徑，走的是「後代命中」那條——它的落地輪比精確命中多一次
+    # compare）：660 秒輪詢預算 ＋ 落地輪的 build-info 15 秒與 compare 15 秒 ＝ 690 秒；
+    # 接著 45 秒再確認，再加上再確認自己的 build-info 15 秒與 compare 15 秒 ＝ 765 秒。
+    # step 給 14 分鐘（840 秒），留約 75 秒。job 再加 checkout 約 10 秒、setup-node
+    # 約 15～30 秒、runner 起停約 30～60 秒 ≈ 965 秒，所以 job 給 18 分鐘。
+    #
+    # 重點是 step 的上限**必須小於** job 的上限：step 逾時的結果是 failure、訊息明確；
+    # job 逾時被砍的結果是 cancelled，那正是 #92 當初沒人發現的形狀。
+    timeout-minutes: 18
+    # 這個 job 會 checkout、對線上站台發 HTTPS 請求，並且用 GITHUB_TOKEN 打 GitHub 的
+    # compare API，判斷線上的 commit 是不是本 commit 的後代（見 verify-deploy.mjs）。
+    #
+    # 所以這裡**必須**是 contents: read，不能是 {}。給 {} 的話 compare 會 401，而腳本
+    # 對「查不出關係」的處置是繼續等——於是它會靜默退回「精確相等」那條舊判定，main
+    # 連續合併時的誤報就回來了，日誌卻只會說「線上仍是 X，繼續等」，看起來像部署慢。
     permissions:
       contents: read
     steps:
@@ -465,7 +479,7 @@ jobs:
       # GITHUB_TOKEN 是給 compare API 用的（查線上的 commit 是不是本 commit 的後代）。
       # 公開 repo 不給也能查，但配額低很多；GITHUB_REPOSITORY 由 Actions 自動提供。
       - name: Verify the live site serves this commit
-        timeout-minutes: 12
+        timeout-minutes: 14
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: npm run verify:deploy

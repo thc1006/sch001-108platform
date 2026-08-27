@@ -63,9 +63,14 @@ const deadline = Date.now() + TIMEOUT_MS;
 let attempt = 0;
 let last = '（尚未取得）';
 let landed = false;
-// 同一個線上 commit 只查一次祖先關係，免得每 10 秒打一次 GitHub API
+// 同一個線上 commit 只查一次祖先關係，免得每 10 秒打一次 GitHub API。
+// 只有「查得出結果」的那次才記進來——理由見迴圈裡 rel === null 的說明。
 let probed = '';
 let behindNote = '';
+let apiFailures = 0;
+let landedExact = false;
+// 精確命中之後再看一次的間隔（見檔案末端的再確認）。設 0 可停用。
+const RECHECK_MS = Number(process.env.VERIFY_RECHECK ?? 45) * 1000;
 
 console.log(`驗證線上站台是否已服務 ${want.slice(0, 12)}`);
 console.log(`  ${url}`);
@@ -97,6 +102,13 @@ async function fetchInfo() {
         if (res.status !== 200) return { commit: '', label: `HTTP ${res.status}`, age };
         const info = await res.json();
         const commit = String(info.commit || '');
+        // 這個字串來自「被驗證的對象自己」，不可以直接塞進 api.github.com 的網址。
+        // WHATWG 的 URL 正規化會先把 ../ 收掉，所以一個精心構造的 commit 值可以把
+        // compare 請求導向**另一組**比較、讓它回 ahead——正好偽造出一個綠燈，而這支
+        // 腳本存在的理由本來就是「不要相信部署出來的東西」。
+        if (commit && !/^[0-9a-f]{40}$/.test(commit)) {
+            return { commit: '', label: '(commit 欄位不是 40 位十六進位，已拒絕)', age };
+        }
         return { commit, label: commit || '(無 commit 欄位)', age };
     } finally {
         clearTimeout(timer);
@@ -142,24 +154,36 @@ while (Date.now() < deadline) {
         if (r.commit && r.commit === want) {
             console.log(`✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}（Age=${r.age}s）`);
             landed = true;
+            landedExact = true;
             break;
         }
         // 線上不是我們，但可能是「更新的那一版已經先上線」。
         if (r.commit && r.commit !== probed) {
-            probed = r.commit;
             const rel = await compareWithLive(r.commit);
-            if (rel === 'ahead') {
-                console.log(
-                    `✅ 第 ${attempt} 次嘗試：線上是 ${r.commit.slice(0, 12)}，為 ${want.slice(0, 12)} 的後代。` +
-                        '較新的部署已經先上線，本 commit 確實落地過。',
-                );
-                landed = true;
-                break;
-            }
-            if (rel === 'behind' || rel === 'diverged') {
-                behindNote =
-                    `線上的 ${r.commit.slice(0, 12)} 是 ${want.slice(0, 12)} 的` +
-                    (rel === 'behind' ? '祖先' : '分岔版本');
+            if (rel === null) {
+                // 判不出來就**不要**記進 probed。記下去的話，一次暫時性的 API 失誤
+                // （403 配額、502、逾時、JSON 壞掉——全都回 null）會讓這個 commit 的
+                // 祖先判定永遠不再重試：之後每一輪都直接跳過，白等到逾時再誤報部署
+                // 失敗。實測過：第一次 502 之後，接下來四輪一次 compare 都沒有再打。
+                // 而 main 忙碌、run 互相重疊的時候，正好也是 API 最容易抖的時候——
+                // 也就是這個判定最需要派上用場的時候。
+                apiFailures++;
+                console.log(`  第 ${attempt} 次：compare API 沒有回應，稍後再判定祖先關係`);
+            } else {
+                probed = r.commit;
+                if (rel === 'ahead') {
+                    console.log(
+                        `✅ 第 ${attempt} 次嘗試：線上是 ${r.commit.slice(0, 12)}，為 ${want.slice(0, 12)} 的` +
+                            '後代——站台服務的內容不會比本 commit 舊。',
+                    );
+                    landed = true;
+                    break;
+                }
+                if (rel === 'behind') {
+                    behindNote = `線上的 ${r.commit.slice(0, 12)} 是 ${want.slice(0, 12)} 的祖先，站台在服務更舊的版本`;
+                } else if (rel === 'diverged') {
+                    behindNote = `線上的 ${r.commit.slice(0, 12)} 與 ${want.slice(0, 12)} 分岔，不在同一條歷史上`;
+                }
             }
         }
         // Age 說明這份回應是幾秒前回源取得的。Age 很大時，這個「不符」只代表
@@ -174,15 +198,51 @@ while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_MS));
 }
 
+// 精確命中之後的再確認。
+//
+// 第一次看到自己就收工的話，會漏掉「更舊的部署在我們剛確認完之後才落地」：concurrency
+// 佇列是依開始等待的時間 FIFO，不是依 commit 順序，各 run 的 CI 耗時又有落差（實測整條
+// run 331～414 秒），所以較舊的 commit 完全可能排在後面。那種情形下站台真的退版了，
+// 而每個 run 各自都只看到自己、全部是綠的。等一段時間再看一次，線上若已經變成本
+// commit 的祖先就失敗。
+//
+// 只在**精確命中**後做：命中的是「後代」時線上本來就比我們新，再等沒有意義。
+// 成本是每次 main 部署多等 RECHECK_MS。
+if (landed && landedExact && RECHECK_MS > 0) {
+    console.log(`  ${Math.round(RECHECK_MS / 1000)} 秒後再確認一次，看有沒有更舊的部署後來居上……`);
+    await new Promise((r) => setTimeout(r, RECHECK_MS));
+    try {
+        const again = await fetchInfo();
+        if (again.commit && again.commit !== want) {
+            const rel = await compareWithLive(again.commit);
+            if (rel === 'behind') {
+                behindNote = `線上已變成 ${again.commit.slice(0, 12)}，那是 ${want.slice(0, 12)} 的祖先`;
+                landed = false;
+            } else if (rel === 'diverged') {
+                behindNote = `線上已變成 ${again.commit.slice(0, 12)}，與 ${want.slice(0, 12)} 分岔`;
+                landed = false;
+            } else {
+                console.log(`  再確認：線上是 ${again.commit.slice(0, 12)}（${rel ?? '關係未知'}），沒有退版。`);
+            }
+        } else {
+            console.log('  再確認：線上仍是本 commit。');
+        }
+    } catch {
+        // 再確認本身失敗時不推翻已經成立的結論——不要把一次網路抖動變成紅燈。
+        console.log('  再確認時取不到線上資料，維持原本的成功結論。');
+    }
+}
+
 if (!landed) {
     console.error(
-        `\n❌ 逾時：等了 ${Math.round(TIMEOUT_MS / 1000)} 秒，線上仍不是 ${want.slice(0, 12)}，` +
-            `也不是它的後代（最後看到：${last}）。\n` +
-            (behindNote
-                ? `  ${behindNote}——部署順序被倒過來了，站台正在服務比這個 commit 更舊的版本。\n`
+        `\n❌ 線上站台沒有服務 ${want.slice(0, 12)}，也不是它的後代（最後看到：${last}）。\n` +
+            (behindNote ? `  ${behindNote}——部署順序被倒過來了。\n` : '') +
+            (apiFailures
+                ? `  注意：compare API 有 ${apiFailures} 次沒有回應，祖先判定可能因此不完整。\n`
                 : '') +
-            '部署沒有真的落地。常見原因：deploy job 被取消、GitHub Pages 服務異常、\n' +
-            '或 Pages 的來源設定不是 GitHub Actions。請到 Actions 頁確認該次 run 的 Deploy job。',
+            `  已等待 ${Math.round(TIMEOUT_MS / 1000)} 秒。常見原因：deploy job 被取消、GitHub Pages\n` +
+            '  服務異常、Pages 的來源設定不是 GitHub Actions，或部署順序被倒過來了。\n' +
+            '  請到 Actions 頁確認該次 run 的 Deploy job。',
     );
 }
 // 設 exitCode 而不是 process.exit()：讓 Node 把未完成的 handle 收乾淨再結束。
