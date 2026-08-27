@@ -436,11 +436,11 @@ jobs:
     # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，否則
     # 「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
     #
-    # 預算組成（腳本最壞路徑，走的是「後代命中」那條——它的落地輪比精確命中多一次
-    # compare）：660 秒輪詢預算 ＋ 落地輪的 build-info 15 秒與 compare 15 秒 ＝ 690 秒；
-    # 接著 45 秒再確認，再加上再確認自己的 build-info 15 秒與 compare 15 秒 ＝ 765 秒。
-    # step 給 14 分鐘（840 秒），留約 75 秒。job 再加 checkout 約 10 秒、setup-node
-    # 約 15～30 秒、runner 起停約 30～60 秒 ≈ 965 秒，所以 job 給 18 分鐘。
+    # 預算組成（腳本最壞路徑）：命中最晚可能發生在 660 秒的輪詢預算尾端，該輪加上
+    # build-info 的 15 秒 AbortController ＝ 675 秒；接著是 45 秒再確認，再加上再確認
+    # 自己的 build-info 15 秒與 compare 15 秒 ＝ 750 秒。step 給 14 分鐘（840 秒），
+    # 留約 90 秒。job 再加 checkout 約 10 秒、setup-node 約 15～30 秒、runner 起停
+    # 約 30～60 秒 ≈ 950 秒，所以 job 給 18 分鐘。
     #
     # 重點是 step 的上限**必須小於** job 的上限：step 逾時的結果是 failure、訊息明確；
     # job 逾時被砍的結果是 cancelled，那正是 #92 當初沒人發現的形狀。

@@ -25,7 +25,8 @@
  *   node scripts/verify-deploy.mjs <commit-sha>
  * 環境變數：
  *   SITE_URL           站台根網址（預設正式站）
- *   VERIFY_TIMEOUT     逾時秒數（預設 660，必須大於線上的 max-age=600）
+ *   VERIFY_TIMEOUT     輪詢逾時秒數（預設 660，必須大於線上的 max-age=600）
+ *   VERIFY_RECHECK     命中後再確認一次的間隔秒數（預設 45；設 0 停用）
  *   GITHUB_REPOSITORY  owner/repo，用來查祖先／後代關係；沒有就退回精確相等
  *   GITHUB_TOKEN       查詢用（公開 repo 不給也能查，只是配額低很多）
  */
@@ -37,7 +38,25 @@ const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SITE = (process.env.SITE_URL || 'https://thc1006.github.io/sch001-108platform').replace(/\/+$/, '');
 // 線上的 Cache-Control 是 max-age=600。輪詢預算必須大於它，否則「CDN 還沒過期」
 // 本身就足以讓這一關誤報失敗——部署其實成功了，卻被判定沒落地。
-const TIMEOUT_MS = Number(process.env.VERIFY_TIMEOUT || 660) * 1000;
+/**
+ * 從環境變數讀秒數。空字串與非數字都退回預設值，而且會說出來。
+ *
+ * 不寫成 Number(env ?? 預設)：?? 只擋 undefined，空字串會變成 0——而
+ * `env: VERIFY_RECHECK: ${{ vars.X }}` 在 X 沒設定時給的正好是空字串。那會讓底下的
+ * 再確認被靜默停用，保護等於不存在。垃圾值同理，不能默默生效也不能默默失效。
+ */
+function secondsFromEnv(name, fallback) {
+    const raw = process.env[name];
+    if (raw === undefined || raw === '') return fallback;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0) {
+        console.log(`  ${name}=${JSON.stringify(raw)} 不是合法的秒數，改用預設值 ${fallback}`);
+        return fallback;
+    }
+    return n;
+}
+
+const TIMEOUT_MS = secondsFromEnv('VERIFY_TIMEOUT', 660) * 1000;
 const POLL_MS = 10_000;
 
 function expectedCommit() {
@@ -68,9 +87,15 @@ let landed = false;
 let probed = '';
 let behindNote = '';
 let apiFailures = 0;
-let landedExact = false;
-// 精確命中之後再看一次的間隔（見檔案末端的再確認）。設 0 可停用。
-const RECHECK_MS = Number(process.env.VERIFY_RECHECK ?? 45) * 1000;
+let exhausted = false;
+// 命中之後再看一次的間隔（見檔案末端的再確認）。設 0 停用。
+const RECHECK_MS = secondsFromEnv('VERIFY_RECHECK', 45) * 1000;
+// 再確認時，多舊的快取副本就不採信。真的退版會清掉邊緣快取，所以退版之後那份物件的
+// Age 會很小；Age 很大的那份是在我們部署**之前**就從來源取回的，不構成退版的證據。
+const FRESH_MAX_AGE_S = Math.round(RECHECK_MS / 1000) + 30;
+
+/** SHA 就縮短；其他（像「格式不合法」那種說明文字）原樣印出，不要攔腰切斷。 */
+const short = (s) => (/^[0-9a-f]{40}$/.test(s) ? s.slice(0, 12) : s);
 
 console.log(`驗證線上站台是否已服務 ${want.slice(0, 12)}`);
 console.log(`  ${url}`);
@@ -154,7 +179,6 @@ while (Date.now() < deadline) {
         if (r.commit && r.commit === want) {
             console.log(`✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}（Age=${r.age}s）`);
             landed = true;
-            landedExact = true;
             break;
         }
         // 線上不是我們，但可能是「更新的那一版已經先上線」。
@@ -189,7 +213,9 @@ while (Date.now() < deadline) {
         // Age 說明這份回應是幾秒前回源取得的。Age 很大時，這個「不符」只代表
         // 我們拿到一份陳舊的快取副本，不代表部署失敗——所以只是繼續等，
         // 而總預算（預設 660 秒）本來就設得比 max-age=600 長。
-        console.log(`  第 ${attempt} 次：線上仍是 ${last.slice(0, 12)}（Age=${r.age}s，快取副本），繼續等`);
+        console.log(
+            `  第 ${attempt} 次：線上仍是 ${short(last)}（Age=${r.age}s${r.age > 0 ? '，快取副本' : ''}），繼續等`,
+        );
     } catch (err) {
         last = String(err?.cause?.code || err?.message || err).slice(0, 60);
         console.log(`  第 ${attempt} 次：${last}，繼續等`);
@@ -198,51 +224,78 @@ while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_MS));
 }
 
-// 精確命中之後的再確認。
+exhausted = !landed;
+
+// 命中之後的再確認。
 //
 // 第一次看到自己就收工的話，會漏掉「更舊的部署在我們剛確認完之後才落地」：concurrency
 // 佇列是依開始等待的時間 FIFO，不是依 commit 順序，各 run 的 CI 耗時又有落差（實測整條
 // run 331～414 秒），所以較舊的 commit 完全可能排在後面。那種情形下站台真的退版了，
-// 而每個 run 各自都只看到自己、全部是綠的。等一段時間再看一次，線上若已經變成本
-// commit 的祖先就失敗。
+// 而每個 run 各自都只看到自己、全部是綠的。
 //
-// 只在**精確命中**後做：命中的是「後代」時線上本來就比我們新，再等沒有意義。
+// **不論是精確命中還是後代命中都要再確認。** 一度只在精確命中後做，理由寫的是「命中
+// 後代時線上本來就比我們新」——那是把「現在比較新」當成「之後也會比較新」。看到 ahead
+// 恰恰代表別人的部署已經超車、pages 佇列正在排空，也就是順序倒置最可能發生的時刻；
+// 那條路徑反而最需要再確認。
+//
 // 成本是每次 main 部署多等 RECHECK_MS。
-if (landed && landedExact && RECHECK_MS > 0) {
+if (landed && RECHECK_MS > 0) {
     console.log(`  ${Math.round(RECHECK_MS / 1000)} 秒後再確認一次，看有沒有更舊的部署後來居上……`);
     await new Promise((r) => setTimeout(r, RECHECK_MS));
     try {
         const again = await fetchInfo();
+        last = again.label;
         if (again.commit && again.commit !== want) {
             const rel = await compareWithLive(again.commit);
-            if (rel === 'behind') {
-                behindNote = `線上已變成 ${again.commit.slice(0, 12)}，那是 ${want.slice(0, 12)} 的祖先`;
-                landed = false;
-            } else if (rel === 'diverged') {
-                behindNote = `線上已變成 ${again.commit.slice(0, 12)}，與 ${want.slice(0, 12)} 分岔`;
-                landed = false;
+            if (rel === null) {
+                apiFailures++;
+                console.log(`  再確認：線上是 ${short(again.commit)}，但 compare API 沒有回應，關係查不出來，保留原本的成功結論。`);
+            } else if (rel === 'behind' || rel === 'diverged') {
+                // Age 是這裡唯一能用的新鮮度資訊。真的退版會清掉邊緣快取，所以退版後
+                // 那份物件的 Age 會很小；Age 很大的那份，是在我們部署之前就從來源取回
+                // 的舊副本，拿它當退版證據會把健康的部署判成紅燈。主迴圈對「不符」本來
+                // 就是這樣看待的（見上面「Age 很大時只是陳舊快取」那段），再確認沒有
+                // 理由用相反的標準。
+                if (again.age <= FRESH_MAX_AGE_S) {
+                    behindNote =
+                        rel === 'behind'
+                            ? `線上已變成 ${short(again.commit)}，那是 ${short(want)} 的祖先`
+                            : `線上已變成 ${short(again.commit)}，與 ${short(want)} 分岔`;
+                    landed = false;
+                } else {
+                    console.log(
+                        `  再確認：拿到 Age=${again.age}s 的快取副本（超過 ${FRESH_MAX_AGE_S}s），` +
+                            '那是我們部署之前就取回的舊副本，不採信，維持成功結論。',
+                    );
+                }
             } else {
-                console.log(`  再確認：線上是 ${again.commit.slice(0, 12)}（${rel ?? '關係未知'}），沒有退版。`);
+                console.log(`  再確認：線上是 ${short(again.commit)}（${rel}），沒有退版。`);
             }
         } else {
             console.log('  再確認：線上仍是本 commit。');
         }
     } catch {
-        // 再確認本身失敗時不推翻已經成立的結論——不要把一次網路抖動變成紅燈。
+        // 再確認的取用本身失敗時不推翻已經成立的結論——不要把一次網路抖動變成紅燈。
+        // （compareWithLive 不會 throw，它自己 catch 後回 null，走上面那條分支。）
+        apiFailures++;
         console.log('  再確認時取不到線上資料，維持原本的成功結論。');
     }
 }
 
+if (landed && apiFailures) {
+    console.log(`  ⚠ compare API 有 ${apiFailures} 次沒有回應，祖先判定不完整——這次的綠燈信心較低。`);
+}
+
 if (!landed) {
     console.error(
-        `\n❌ 線上站台沒有服務 ${want.slice(0, 12)}，也不是它的後代（最後看到：${last}）。\n` +
+        `\n❌ 線上站台沒有服務 ${short(want)}，也不是它的後代（最後看到：${last}）。\n` +
             (behindNote ? `  ${behindNote}——部署順序被倒過來了。\n` : '') +
             (apiFailures
                 ? `  注意：compare API 有 ${apiFailures} 次沒有回應，祖先判定可能因此不完整。\n`
                 : '') +
-            `  已等待 ${Math.round(TIMEOUT_MS / 1000)} 秒。常見原因：deploy job 被取消、GitHub Pages\n` +
-            '  服務異常、Pages 的來源設定不是 GitHub Actions，或部署順序被倒過來了。\n' +
-            '  請到 Actions 頁確認該次 run 的 Deploy job。',
+            (exhausted ? `  已等滿 ${Math.round(TIMEOUT_MS / 1000)} 秒的輪詢預算。\n` : '  失敗發生在命中後的再確認。\n') +
+            '  常見原因：deploy job 被取消、GitHub Pages 服務異常、Pages 的來源設定不是\n' +
+            '  GitHub Actions，或部署順序被倒過來了。請到 Actions 頁確認該次 run 的 Deploy job。',
     );
 }
 // 設 exitCode 而不是 process.exit()：讓 Node 把未完成的 handle 收乾淨再結束。
