@@ -31,7 +31,7 @@ import {
     runProbes,
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
-import { validatePolicy, matchPolicy, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
+import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
@@ -499,6 +499,123 @@ test('政策：403 這種 unverified 才會被例外壓下去', () => {
     assert.ok(matchPolicy(entries, 'https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html'));
 });
 
+
+// ──────────────────────────────────────────────────────────────
+// 六之二、hijacked：被接管的網域（方向與 allowlist 相反）
+// ──────────────────────────────────────────────────────────────
+
+const validHijack = (over = {}) => ({
+    match: { host: 'ieso-info.org' },
+    reason: '舊網域已被轉作線上博弈站，與原賽事完全無關，且回 HTTP 200',
+    evidence: '2026-08-28 實測 301 轉至 www 子網域，title 為 Best Online Pokies in Australia 2026',
+    owner: 'thc1006',
+    expires: '2026-10-01',
+    ...over,
+});
+const hijackErrors = (over) => validatePolicy({ version: 1, entries: [], hijacked: [validHijack(over)] }, TODAY).errors;
+
+test('hijacked：合法的一筆通過驗證', () => {
+    const { errors, hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack()] }, TODAY);
+    assert.deepEqual(errors, []);
+    assert.equal(hijacked.length, 1);
+    assert.equal(hijacked[0]._key, 'hijacked:ieso-info.org');
+});
+
+test('hijacked：缺 evidence 一律拒絕（到期時要比對的就是它）', () => {
+    assert.ok(hijackErrors({ evidence: undefined }).some((m) => m.includes('evidence')));
+    assert.ok(hijackErrors({ evidence: 'x' }).some((m) => m.includes('evidence')), '敷衍的 evidence 不算');
+});
+
+test('hijacked：缺 reason／owner／expires 一律拒絕', () => {
+    assert.ok(hijackErrors({ reason: undefined }).some((m) => m.includes('reason')));
+    assert.ok(hijackErrors({ owner: undefined }).some((m) => m.includes('owner')));
+    assert.ok(hijackErrors({ expires: undefined }).some((m) => m.includes('expires')));
+});
+
+test('hijacked：過期必須讓確定性 CI 失敗（強迫重新查證是否仍被接管）', () => {
+    const errs = hijackErrors({ expires: '2026-08-27' });
+    assert.ok(errs.some((m) => m.includes('到期')), `實際：${errs.join('；')}`);
+    // 過期的那一筆絕不可以被回傳出去繼續生效
+    const { hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack({ expires: '2026-08-27' })] }, TODAY);
+    assert.deepEqual(hijacked, []);
+});
+
+test('hijacked：不得有無期限警示（超過上限的 expires 一樣拒絕）', () => {
+    assert.ok(hijackErrors({ expires: '2099-12-31' }).some((m) => m.includes('無期限')));
+});
+
+test('hijacked：只接受精確主機名，不接受萬用字元／路徑／網址', () => {
+    assert.ok(hijackErrors({ match: { host: '*.ieso-info.org' } }).some((m) => m.includes('萬用字元')));
+    assert.ok(hijackErrors({ match: { host: 'ieso-info.org/path' } }).some((m) => m.includes('主機名')));
+    assert.ok(hijackErrors({ match: { host: 'IESO-Info.ORG' } }).some((m) => m.includes('小寫')));
+    // 被接管是整台主機的性質，不是單一頁面，所以不收 url
+    assert.ok(hijackErrors({ match: { url: 'https://ieso-info.org/x' } }).some((m) => m.includes('host')));
+});
+
+test('hijacked：目標本身也必須通過位址政策', () => {
+    assert.ok(hijackErrors({ match: { host: 'metadata.google.internal' } }).some((m) => m.includes('位址政策')));
+    assert.ok(hijackErrors({ match: { host: '127.0.0.1' } }).some((m) => m.includes('位址政策')));
+});
+
+test('hijacked：重複條目與未知欄位要報錯', () => {
+    const dup = validatePolicy({ version: 1, entries: [], hijacked: [validHijack(), validHijack()] }, TODAY).errors;
+    assert.ok(dup.some((m) => m.includes('重複')));
+    assert.ok(hijackErrors({ note: 'x' }).some((m) => m.includes('note')));
+});
+
+test('hijacked：同一台主機不可同時是例外與被接管（自相矛盾的宣告）', () => {
+    const { errors } = validatePolicy(
+        {
+            version: 1,
+            entries: [validEntry({ match: { host: 'ieso-info.org' } })],
+            hijacked: [validHijack()],
+        },
+        TODAY,
+    );
+    assert.ok(errors.some((m) => m.includes('同時出現在 entries')), `實際：${errors.join('；')}`);
+});
+
+test('hijacked：比對是完全相等，不得順帶涵蓋子網域或相似網域', () => {
+    const { hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack()] }, TODAY);
+    assert.ok(matchHijacked(hijacked, 'https://ieso-info.org/'), '同主機命中');
+    assert.ok(matchHijacked(hijacked, 'https://ieso-info.org/any/path?q=1'), '路徑不影響');
+    assert.equal(matchHijacked(hijacked, 'https://www.ieso-info.org/'), null, '子網域不算');
+    assert.equal(matchHijacked(hijacked, 'https://ieso-info.org.tw/'), null, '相似網域不算');
+    assert.equal(matchHijacked(hijacked, 'https://evil-ieso-info.org/'), null, '子字串比對會誤中這個');
+    assert.equal(matchHijacked(hijacked, 'not a url'), null);
+    assert.equal(matchHijacked([], 'https://ieso-info.org/'), null);
+});
+
+test('hijacked：判定必須排在三態分類之前，否則 200 會被算成健康', () => {
+    // 這是整份機制的重點：被接管的網域回的就是 200，一旦先跑 classifyLink，
+    // 它就會進 healthy 而永遠不會被列出來——等於用檢查器替博弈站背書。
+    // 註解裡提到 classifyLink 不算「呼叫」。比對前先把註解拿掉，否則這一條會被
+    // 自己的說明文字騙過去——第一版就是這樣紅的：解釋順序的那句註解裡有
+    // 「classifyLink」，位置比真正的 matchHijacked 還前面。
+    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .split(/\r?\n/)
+        .map((line) => line.replace(/(^|[^:])\/\/.*$/, '$1'))
+        .join('\n');
+    for (const scope of [/for \(let i = 0; i < targets\.length[\s\S]*?\n}/, /for \(let i = 0; i < bareHosts\.length[\s\S]*?\n    }/]) {
+        const body = (src.match(scope) || [''])[0];
+        assert.ok(body, '找不到分類迴圈，測試需要更新');
+        const hijackIdx = body.indexOf('matchHijacked');
+        const classifyIdx = body.indexOf('classifyLink');
+        assert.ok(hijackIdx > 0, '分類迴圈裡必須查 hijacked 名單');
+        assert.ok(hijackIdx < classifyIdx, 'matchHijacked 必須排在 classifyLink 之前');
+    }
+});
+
+test('hijacked：repo 內的 link-policy.json 的 hijacked 現在就是有效的', () => {
+    const file = fileURLToPath(new URL('./link-policy.json', import.meta.url));
+    const { errors, hijacked } = validatePolicy(JSON.parse(readFileSync(file, 'utf8')), new Date().toISOString().slice(0, 10));
+    assert.deepEqual(errors, [], `link-policy.json 無效：${errors.join('；')}`);
+    assert.ok(hijacked.length > 0, 'hijacked 名單不應是空的——實測有三個被接管的網域');
+    for (const h of hijacked) {
+        assert.ok(/20\d\d-\d\d-\d\d/.test(h.evidence), `${h.match.host} 的 evidence 必須寫明實測日期`);
+    }
+});
 // ──────────────────────────────────────────────────────────────
 // 七、看門狗 issue 認領（沿用既有的 selectCanonicalIssue）
 // ──────────────────────────────────────────────────────────────

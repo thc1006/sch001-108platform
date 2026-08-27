@@ -93,13 +93,6 @@ const CANDIDATE = /(?<![A-Za-z0-9._@/\\-])((?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A
 /** 用等長空白遮蔽，讓後續比對的 index 仍然對得上原字串。 */
 const maskWith = (text, re) => text.replace(re, (m) => ' '.repeat(m.length));
 
-/** 單一 DNS label 是否合法。 */
-function isValidLabel(label) {
-    if (!label || label.length > 63) return false;
-    if (label.startsWith('-') || label.endsWith('-')) return false;
-    return /^[A-Za-z0-9-]+$/.test(label);
-}
-
 /**
  * Stage 1：純字串的裸網域擷取。**不連網**，因此可以跑在擋 PR 的確定性檢查裡。
  *
@@ -121,12 +114,13 @@ export function extractBareDomainCandidates(text) {
         // 結尾的連字號不屬於主機名（regex 的字元類允許它結尾）
         const raw = m[1].replace(/-+$/, '');
         const host = raw.toLowerCase();
+        // 單一 label 的形狀（開頭結尾必須是英數、不得超過 63 字、至少兩段）已經
+        // 完全由 CANDIDATE 的字元類與量詞決定，再檢查一次是抓不到東西的死碼——
+        // 故障注入實測把那段拿掉，測試依然全綠，所以刪掉而不是留著當裝飾。
+        // 整串主機名的長度上限是 regex 管不到的（label 數量不設限），必須留著。
         if (host.length > 253) continue;
 
         const labels = host.split('.');
-        if (labels.length < 2) continue;
-        if (!labels.every(isValidLabel)) continue;
-
         const tld = labels[labels.length - 1];
         // TLD 至少兩個字元，且不可含數字（真實 TLD 沒有含數字的；這一條讓
         // 版本號與代號在不連網的情況下就先被擋掉）

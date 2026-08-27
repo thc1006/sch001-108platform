@@ -123,6 +123,32 @@ test('反例：電子郵件的右半邊是郵件主機，不是網站', () => {
     assert.deepEqual(hostsOf('mailto:hctsai@linux.com'), []);
 });
 
+test('反例：信箱的「左」半邊帶點時也不可被當成網域', () => {
+    // 這一條是故障注入抓出來的漏洞。右半邊靠左界的 lookbehind（@ 擋掉）就夠了，
+    // 但左半邊沒有任何東西擋：把遮蔽信箱那一步拿掉之後，first.last@maa.org 會
+    // 擷出 first.last、hctsai.linux@example.com 會擷出 hctsai.linux，而原本的
+    // 測試全部照樣是綠的。
+    assert.deepEqual(hostsOf('寄到 first.last@maa.org'), []);
+    assert.deepEqual(hostsOf('寄到 hctsai.linux@example.com'), []);
+});
+
+test('反例：網址的 query／fragment 裡帶網域也不可被擷出', () => {
+    // 同樣是故障注入抓出來的。左界的 lookbehind 擋得掉路徑（前面是 /），卻擋不掉
+    // 「?ref=」「&subid=」「#」後面的網域——= 與 # 都不在 lookbehind 的字元類裡。
+    // 這不是假設的情況：本站資料實際記錄的轉址鏈就長這樣。
+    assert.deepEqual(hostsOf('轉址到 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW 的廣告頁'), []);
+    assert.deepEqual(hostsOf('見 https://a.com/x?ref=foo.org 一文'), []);
+    assert.deepEqual(hostsOf('見 https://a.com/x#frag.org 一節'), []);
+});
+
+test('反例：整串主機名超過 253 字元（label 數量不設限，regex 管不到）', () => {
+    const tooLong = `${Array.from({ length: 60 }, (_, i) => `l${i}abc`).join('.')}.org`;
+    assert.ok(tooLong.length > 253, `語料本身要夠長（實際 ${tooLong.length}）`);
+    assert.deepEqual(hostsOf(`見 ${tooLong} 說明`), []);
+    // 剛好在上限內的仍然要擷得出來，證明不是整條規則被關掉
+    assert.deepEqual(hostsOf('見 sub.example.org 說明'), ['sub.example.org']);
+});
+
 test('反例：完整網址已由既有擷取涵蓋，不可重複擷出，路徑也不可被誤判', () => {
     assert.deepEqual(hostsOf('官網 https://twsf.ntsec.gov.tw/ 報名'), []);
     // 網址路徑裡的 .org 結尾片段最容易被誤擷
