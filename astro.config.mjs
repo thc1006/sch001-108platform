@@ -16,7 +16,26 @@ import { CLUSTERS } from './src/data/clusters.ts';
 // postcss-import 解析不了 @import "tailwindcss" 這種裸模組名
 // (ENOENT ... open '...\tailwindcss')，所以 PostCSS 那條路在 Astro 7 已經走不通。
 export default defineConfig({
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    // cssMinify 必須顯式指定 'esbuild'，不能吃 Vite 8 的預設。
+    //
+    // Vite 8 把 server consumer 的預設從 esbuild 改成 lightningcss
+    // （dist/node/chunks/node.js：cssMinify ?? (consumer === "server" ? "lightningcss" : …)；
+    //  Vite 7.3.3 同一行是 "esbuild"）。Astro 的 CSS 就是走 server consumer，於是升上
+    // Astro 7 之後 lightningcss 把全站每一條斷點改寫成 MQ Level 4 的 range 語法：
+    //
+    //   @media(min-width:40rem)  →  @media (width>=40rem)     ← 全部 sm:/md:/lg:/xl:/2xl:
+    //   @media(max-width:860px)  →  @media (width<=860px)
+    //
+    // range 語法要 Safari／iOS 16.4+。舊瀏覽器不會報錯，那些規則只是**永遠不匹配**，
+    // 版面靜默塌回最窄的基準樣式——而 build 退出 0、CSS 也不是空的，所以「CSS 有產出」
+    // 這種檢查完全擋不住。實測 main 上的產出確實含 12 條 range 語法、0 條 min-width 斷點。
+    //
+    // 釘回 esbuild 之後產出與 Astro 6 同一份 Tailwind 的結果位元組相同。
+    // 這裡的原則和底下 compressHTML 那條一樣：瀏覽器支援度不該夾在框架升級裡悄悄移動。
+    build: { cssMinify: 'esbuild' },
+  },
   site: 'https://thc1006.github.io',
   base: '/sch001-108platform',
   trailingSlash: 'ignore',
