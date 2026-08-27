@@ -127,7 +127,7 @@ ColleGo! 把「科技資訊與媒體素養」列為大眾傳播學類**最重視
 ## 參考來源
 
 - [大眾傳播學類核心能力與性格特質，ColleGo!](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=84)
-- [大學如何審查學習歷程？招聯會「3 重 2 不」原則，聯合新聞網](https://udn.com/news/story/121690/5072410)
+- [【作伙學手冊】學習歷程——大學申請入學第二階段準備指南（第一章說明大學審查備審資料的「三重二不」原則），教育部學習歷程檔案審議計畫](https://www.108epo.com/results-detail.php?Key=38)
 - [課程學習成果作品呈現建議——如何呈現學習過程與素養性能力，作伙學](https://www.108epo.com/results-detail.php?Key=28)
 - [國立中正大學傳播學系定位、教育目標與核心能力](https://telecom.ccu.edu.tw/p/405-1088-36882,c2039.php)
 - [世新大學新聞傳播學院各系簡介](https://cjc.shu.edu.tw/elementor-4893/)

@@ -96,5 +96,5 @@ description: 從生科系教授的審查視角拆解六大核心特質與能力�
 - [〈成大生科特殊選才面試考古題分享〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/interview-archaeology/)
 - [國立成功大學生命科學系大學特殊選才面試資訊（成功大學生命科學系官網）](https://www.bio.ncku.edu.tw/)
 - [國立清華大學生命科學系官網（課程含微積分、物理、程式語言）](https://dls.site.nthu.edu.tw/)
-- [國立陽明交通大學生命科學系暨基因體科學研究所—招生資訊](https://dls.nycu.edu.tw/enrollment.html)
+- [國立陽明交通大學生命科學系暨基因體科學研究所—學士班招生](https://dls.nycu.edu.tw/dls/ch/app/artwebsite/view?module=artwebsite&id=35367&serno=610d7c66-6255-4c7c-8ad1-3aca2b117575)
 - [〈申請入學面試常見問題大揭密〉，ColleGo! 焦點話題](https://collego.edu.tw/Media/Article/754)

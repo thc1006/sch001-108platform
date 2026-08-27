@@ -169,7 +169,7 @@ MMI 評分的核心特點是：**重視「過程」勝於「單一標準答案�
 
 - [115 學年度個人申請第二階段審查資料的完整說明｜方格子 vocus](https://vocus.cc/article/69bb4225fd8978000194746b)
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
-- [醫途關鍵站：MMI 面試必勝攻略｜Helios Education](https://helios-edu.com/zh/university-intro/醫途關鍵站-mmi-面試必勝攻略/)
+- [醫途關鍵站：MMI 面試必勝攻略｜Helios Education](https://helios-edu.com/zh/university-intro/醫途關鍵站：mmi-面試必勝攻略/)
 - [MMI 概念介紹與評分準則｜臺大醫院新竹臺大分院教師培育中心](https://www.hch.gov.tw/?aid=81&pid=74&page_name=detail&iid=7)
 - [醫學系面試篇 Part 2：認識 PBL 與 MMI｜高綺主任醫科團隊](https://dreamtutor.net/醫學系面試篇-part-2-認識pbl與mmi/)
 - [重要時程 — 申請入學｜大學甄選入學委員會](https://www.cac.edu.tw/apply115/schedule.php)

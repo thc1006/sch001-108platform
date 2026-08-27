@@ -146,7 +146,7 @@ description: 大眾傳播學群個人申請完整攻略——備審資料逐項�
 
 ## 參考來源
 
-- [大學如何審查學習歷程？招聯會「3 重 2 不」原則，聯合新聞網](https://udn.com/news/story/121690/5072410)
+- [【作伙學手冊】學習歷程——大學申請入學第二階段準備指南（第一章說明大學審查備審資料的「三重二不」原則），教育部學習歷程檔案審議計畫](https://www.108epo.com/results-detail.php?Key=38)
 - [課程學習成果作品呈現建議——如何呈現學習過程與素養性能力，作伙學](https://www.108epo.com/results-detail.php?Key=28)
 - [審查資料準備指引——申請入學，大學甄選入學委員會](https://www.cac.edu.tw/apply115/guide.php)
 - [傳播學門考生該如何準備面試？世新廣電家族日記簿](https://rtfshu.pixnet.net/blog/post/109571111)
