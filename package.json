@@ -37,7 +37,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
     "@tailwindcss/postcss": "^4.3.3",
-    "astro": "^6.3.5",
+    "astro": "^7.2.6",
     "cheerio": "^1.2.0",
     "feather-icons": "^4.29.2",
     "fuse.js": "^6.6.2",
