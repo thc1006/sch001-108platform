@@ -39,16 +39,26 @@ const SITE = (process.env.SITE_URL || 'https://thc1006.github.io/sch001-108platf
 // 線上的 Cache-Control 是 max-age=600。輪詢預算必須大於它，否則「CDN 還沒過期」
 // 本身就足以讓這一關誤報失敗——部署其實成功了，卻被判定沒落地。
 /**
- * 從環境變數讀秒數。空字串與非數字都退回預設值，而且會說出來。
+ * 從環境變數讀秒數。空白、空字串與非數字一律退回預設值，而且每一種都會印出來。
  *
  * 不寫成 Number(env ?? 預設)：?? 只擋 undefined，空字串會變成 0——而
  * `env: VERIFY_RECHECK: ${{ vars.X }}` 在 X 沒設定時給的正好是空字串。那會讓底下的
- * 再確認被靜默停用，保護等於不存在。垃圾值同理，不能默默生效也不能默默失效。
+ * 再確認被靜默停用，保護等於不存在。
+ *
+ * 也必須先 trim：一個空白既不是 undefined 也不是 ''，而 Number(' ') 是 0——finite
+ * 又非負，會被當成合法值直接生效，跟空字串是一模一樣的洞。YAML 很容易產生尾隨空白
+ * （"${{ vars.X }} "、block scalar），所以這不是理論問題。
  */
 function secondsFromEnv(name, fallback) {
     const raw = process.env[name];
-    if (raw === undefined || raw === '') return fallback;
-    const n = Number(raw);
+    const trimmed = raw === undefined ? undefined : raw.trim();
+    if (trimmed === undefined || trimmed === '') {
+        if (raw !== undefined) {
+            console.log(`  ${name}=${JSON.stringify(raw)} 是空值，改用預設值 ${fallback}`);
+        }
+        return fallback;
+    }
+    const n = Number(trimmed);
     if (!Number.isFinite(n) || n < 0) {
         console.log(`  ${name}=${JSON.stringify(raw)} 不是合法的秒數，改用預設值 ${fallback}`);
         return fallback;
@@ -87,12 +97,18 @@ let landed = false;
 let probed = '';
 let behindNote = '';
 let apiFailures = 0;
+let discounted = 0;
 let exhausted = false;
 // 命中之後再看一次的間隔（見檔案末端的再確認）。設 0 停用。
-const RECHECK_MS = secondsFromEnv('VERIFY_RECHECK', 45) * 1000;
+const RECHECK_S = secondsFromEnv('VERIFY_RECHECK', 45);
+const RECHECK_MS = RECHECK_S * 1000;
 // 再確認時，多舊的快取副本就不採信。真的退版會清掉邊緣快取，所以退版之後那份物件的
 // Age 會很小；Age 很大的那份是在我們部署**之前**就從來源取回的，不構成退版的證據。
-const FRESH_MAX_AGE_S = Math.round(RECHECK_MS / 1000) + 30;
+//
+// 上限夾在 120 秒：這個界線該跟著 CDN 的 max-age 走，不是跟著輪詢節奏走。沒有夾的話，
+// VERIFY_RECHECK 一旦設到 570 以上，門檻就會超過線上的 max-age=600，於是每一份陳舊
+// 副本都會被當成退版採信——R3-1 修掉的誤報會無聲地回來。
+const FRESH_MAX_AGE_S = Math.min(RECHECK_S + 30, 120);
 
 /** SHA 就縮短；其他（像「格式不合法」那種說明文字）原樣印出，不要攔腰切斷。 */
 const short = (s) => (/^[0-9a-f]{40}$/.test(s) ? s.slice(0, 12) : s);
@@ -240,7 +256,7 @@ exhausted = !landed;
 //
 // 成本是每次 main 部署多等 RECHECK_MS。
 if (landed && RECHECK_MS > 0) {
-    console.log(`  ${Math.round(RECHECK_MS / 1000)} 秒後再確認一次，看有沒有更舊的部署後來居上……`);
+    console.log(`  ${RECHECK_S} 秒後再確認一次，看有沒有更舊的部署後來居上……`);
     await new Promise((r) => setTimeout(r, RECHECK_MS));
     try {
         const again = await fetchInfo();
@@ -263,6 +279,11 @@ if (landed && RECHECK_MS > 0) {
                             : `線上已變成 ${short(again.commit)}，與 ${short(want)} 分岔`;
                     landed = false;
                 } else {
+                    // 這是本檔唯一一處刻意違反「關係不明就寧可紅」的地方，所以要記一筆。
+                    // 這裡若改成失敗，命中後拿到舊快取的每一次部署都會誤報——而那是
+                    // exact-match 的常態路徑。開放是對的，但不能讓它跟「毫無疑問通過」
+                    // 長得一模一樣。
+                    discounted++;
                     console.log(
                         `  再確認：拿到 Age=${again.age}s 的快取副本（超過 ${FRESH_MAX_AGE_S}s），` +
                             '那是我們部署之前就取回的舊副本，不採信，維持成功結論。',
@@ -282,8 +303,12 @@ if (landed && RECHECK_MS > 0) {
     }
 }
 
-if (landed && apiFailures) {
-    console.log(`  ⚠ compare API 有 ${apiFailures} 次沒有回應，祖先判定不完整——這次的綠燈信心較低。`);
+if (landed && (apiFailures || discounted)) {
+    const why = [
+        apiFailures ? `compare API 有 ${apiFailures} 次沒有回應` : '',
+        discounted ? `有 ${discounted} 次因為快取副本太舊而未採信` : '',
+    ].filter(Boolean).join('；');
+    console.log(`  ⚠ ${why}——祖先判定不完整，這次的綠燈信心較低。`);
 }
 
 if (!landed) {
