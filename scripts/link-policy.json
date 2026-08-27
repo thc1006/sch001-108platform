@@ -1,5 +1,5 @@
 {
-  "_readme": "外部連結健檢的例外政策。規則與驗證在 scripts/link-policy.lib.mjs，由 scripts/check-link-policy.mjs 在每個 PR 上確定性地檢查。三條紅線：(1) 例外只會降低 unverified 的通知噪音，永遠不會把 404/410 或網域解析不到變成健康；(2) 只接受精確網址（match.url）或精確主機名（match.host），沒有萬用字元、沒有子字串比對；(3) 每一筆都必須有 reason／owner／expires，且 expires 到期後 CI 會紅，逼人重新查證而不是無限延續（上限 180 天）。要新增一筆，請先貼上實際的探測輸出，說明為什麼在 runner 上驗不過、而瀏覽器可以開。",
+  "_readme": "外部連結健檢的連結政策。規則與驗證在 scripts/link-policy.lib.mjs，由 scripts/check-link-policy.mjs 在每個 PR 上確定性地檢查。本檔有兩份方向相反的名單。entries（例外／allowlist）壓低訊號，三條紅線：(1) 只會降低 unverified 的通知噪音，永遠不會把 404/410 或網域解析不到變成健康；(2) 只接受精確網址（match.url）或精確主機名（match.host），沒有萬用字元、沒有子字串比對；(3) 每一筆都必須有 reason／owner／expires，且 expires 到期後 CI 會紅，逼人重新查證而不是無限延續（上限 180 天）。要新增一筆，請先貼上實際的探測輸出，說明為什麼在 runner 上驗不過、而瀏覽器可以開。hijacked（被接管的網域）放大訊號，用來補三態分類的結構性盲點：網域易主之後照樣回 HTTP 200，狀態碼完全健康、內容卻已經換人，狀態碼永遠看不出這件事。命中者不論狀態碼一律單獨大聲列出，且永不計入健康。紀律與 entries 相同（精確主機名、reason／owner／expires、到期讓 CI 紅），另外必須有 evidence：到期時要重新查證的是「它是否仍被接管」，沒有當初看到什麼的紀錄就無從比對。同一台主機不可以同時出現在 entries 與 hijacked。",
   "version": 1,
   "entries": [
     {
@@ -15,6 +15,35 @@
         "host": "www.ptt.cc"
       },
       "reason": "PTT 封鎖資料中心 IP 段，GitHub runner 一律 connection reset（#72 實測）。本機（一般網路）實測同一個網址回 HTTP 200。這是整台主機層級的來源 IP 封鎖，不是單一頁面問題，所以用 host 而非單一網址。",
+      "owner": "thc1006",
+      "expires": "2026-11-30"
+    }
+  ],
+  "hijacked": [
+    {
+      "match": {
+        "host": "ieso-info.org"
+      },
+      "reason": "國際地球科學奧林匹亞（IESO）原先登記的網域已被第三方取得，轉作澳洲線上博弈站，與 IESO 完全無關。它回 HTTP 200，三態分類會把它算成「健康」——這正是狀態碼健康但內容被接管的盲點。本站資料只在說明文字裡提到它（作為警告），沒有做成連結；現行國際官方頁面是 www.igeoscied.org。",
+      "evidence": "2026-08-28 實測：https://ieso-info.org/ 以 301 轉至 https://www.ieso-info.org/（HTTP 200，server: cloudflare），<title> 為「Best Online Pokies in Australia 2026 - Play For Real Money」，meta description 為「Enjoy the best real money pokies in Australia at trusted casinos. Claim free spins, grab exclusive bonuses…」。",
+      "owner": "thc1006",
+      "expires": "2026-11-30"
+    },
+    {
+      "match": {
+        "host": "www.sasmo.sg"
+      },
+      "reason": "新加坡與亞洲數學奧林匹亞（SASMO）舊網域已失守，整條轉址鏈把訪客導向聯盟廣告頁，與 SASMO 無關。最終頁回 HTTP 200，會被三態分類誤計為健康。現行官網是 sasmo.simcc.org。",
+      "evidence": "2026-08-28 實測轉址鏈：https://www.sasmo.sg/ 301 → https://sasmo.sg/ 302 → https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en（HTTP 200），<title>「Press START - Play Free | Arcade.now」。轉址參數 subid2=TW 顯示這條漏斗會依訪客地區投放，台灣訪客同樣會被導過去。",
+      "owner": "thc1006",
+      "expires": "2026-11-30"
+    },
+    {
+      "match": {
+        "host": "hmun.org"
+      },
+      "reason": "哈佛模擬聯合國（HMUN）舊網域已成停放網域，導向點擊變現的廣告網路。回 HTTP 200，會被誤計為健康。現行官網是 harvardmun.org。",
+      "evidence": "2026-08-28 實測：https://hmun.org/ 回 HTTP 200 但只有 470 bytes、<title> 為「Loading...」的 JS 轉址殼（server: Cowboy）；同日另一次探測則以 302 轉至 http://xml-v4.pushub.net/click?i=… 再轉 http://live.sportsvot.com/filter?q=hmun。兩種回應交替出現，是停放網域變現的典型行為。",
       "owner": "thc1006",
       "expires": "2026-11-30"
     }
