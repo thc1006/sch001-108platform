@@ -5,7 +5,7 @@
   "main": "build-search-index.js",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/vendor-assets.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "test": "playwright test",
@@ -19,7 +19,8 @@
     "test:puter-ai:headed": "playwright test tests/e2e/puter-ai.spec.js --headed",
     "serve": "node scripts/static-server.mjs 8000",
     "audit:consistency": "node scripts/audit-competition-consistency.mjs",
-    "build:deployable": "astro build && node build-search-index.js",
+    "vendor": "node scripts/vendor-assets.mjs",
+    "build:deployable": "node scripts/vendor-assets.mjs && astro build && node build-search-index.js",
     "check:site": "node scripts/check-built-site.mjs",
     "check:link-policy": "node scripts/check-link-policy.mjs",
     "check:external-links": "node scripts/check-external-links.mjs",
@@ -37,6 +38,9 @@
     "@tailwindcss/postcss": "^4.3.0",
     "astro": "^6.3.5",
     "cheerio": "^1.1.0",
+    "feather-icons": "^4.29.2",
+    "fuse.js": "^6.6.2",
+    "ionicons": "^7.1.0",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {

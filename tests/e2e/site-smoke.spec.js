@@ -213,3 +213,70 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
         expect(errors(), errors().join('\n')).toEqual([]);
     });
 });
+
+/**
+ * 自架的第三方函式庫（#72 後續）
+ * --------------------------------------------------------------
+ * 本站原本有四個 runtime CDN 依賴且全都沒有 SRI：fuse.js（搜尋引擎，載不到就整個
+ * 搜尋失效）、feather-icons、ionicons。第三方網域的可用性直接決定本站功能能不能用，
+ * 而且沒有任何建置期檢查會發現它們掛掉——CDN 壞掉時 build 綠、check:site 綠，
+ * 使用者打開才發現搜尋框永遠停在「載入中」。
+ *
+ * check:site 已經會擋下「vendor 檔案不見」（script[src] 解析不到就紅）。這裡補的是
+ * 靜態檢查看不到的兩件事：函式庫在瀏覽器裡真的能用，以及沒有偷偷留下 CDN 請求。
+ */
+test.describe('自架的第三方函式庫', () => {
+    /** 攔截所有對外請求，回傳取得清單的函式。 */
+    function watchThirdParty(page) {
+        const hits = [];
+        page.on('request', (r) => {
+            const u = r.url();
+            if (/unpkg\.com|cdn\.jsdelivr\.net/.test(u)) hits.push(u);
+        });
+        return () => hits;
+    }
+
+    test('首頁的搜尋引擎來自本站，不是 CDN', async ({ page }) => {
+        const cdn = watchThirdParty(page);
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+
+        // Fuse 真的載進來且可用——搜尋框解除 disabled 就代表索引與 Fuse 都就緒
+        await expect(page.locator('#search-input')).toBeEnabled({ timeout: 15_000 });
+        expect(await page.evaluate(() => typeof window.Fuse)).toBe('function');
+
+        expect(cdn(), `仍有 CDN 請求：${cdn().join(', ')}`).toEqual([]);
+    });
+
+    test('生涯探索頁的 ionicons 真的渲染出 SVG', async ({ page }) => {
+        const cdn = watchThirdParty(page);
+        const errors = watchForErrors(page);
+        await page.goto(P('/career-exploration/index.html'), { waitUntil: 'networkidle' });
+
+        // ion-icon 是 web component，載入成功後會在 shadow DOM 裡放一個 <svg>。
+        // 找不到 SVG 時它不會報錯，只是不顯示——所以要直接檢查 shadow DOM。
+        await page.waitForFunction(
+            () => {
+                const els = [...document.querySelectorAll('ion-icon')];
+                return els.length > 0 && els.every((e) => e.shadowRoot && e.shadowRoot.querySelector('svg'));
+            },
+            { timeout: 15_000 },
+        );
+        const n = await page.locator('ion-icon').count();
+        expect(n).toBeGreaterThan(5);
+
+        expect(cdn(), `仍有 CDN 請求：${cdn().join(', ')}`).toEqual([]);
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
+
+    test('素養地圖的 feather icons 真的被替換成 SVG', async ({ page }) => {
+        const cdn = watchThirdParty(page);
+        await page.goto(P('/career-exploration/competency-map.html'), { waitUntil: 'networkidle' });
+
+        // feather.replace() 會把 <i data-feather> 換成 <svg class="feather">。
+        // 沒被換掉代表 feather.min.js 沒載到或沒執行。
+        await page.waitForFunction(() => document.querySelectorAll('svg.feather').length > 0, { timeout: 15_000 });
+        expect(await page.locator('svg.feather').count()).toBeGreaterThan(2);
+
+        expect(cdn(), `仍有 CDN 請求：${cdn().join(', ')}`).toEqual([]);
+    });
+});
