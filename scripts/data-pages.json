@@ -1,5 +1,5 @@
 {
-  "_readme": "資料驅動頁面的單一設定來源。build-search-index.js 用它建索引，scripts/check-built-site.mjs 用它決定「JSON 內的相對路徑要相對哪一個頁面解析」。兩邊共用同一份，避免各自維護一份而漸漸漂移——那正是 #72 一路在修的失效模式。欄位：key＝頁面（相對 dist 根）；json＝該頁在瀏覽器端 fetch 的資料檔；arrayKey/nestedKey/idPrefix/tag/anchor 供搜尋索引使用。",
+  "_readme": "資料頁與其來源 JSON 的單一設定來源。build-search-index.js 用它建索引，scripts/check-built-site.mjs 用它決定「JSON 內的相對路徑要相對哪一個頁面解析」。兩邊共用同一份，避免各自維護一份而漸漸漂移——那正是 #72 一路在修的失效模式。欄位：key＝頁面（相對 dist 根）；json＝該頁的資料檔（多數頁面由瀏覽器 fetch 後 client-render，civic-tech-map 則是頁面在 .astro 內靜態寫死、JSON 作為同一份資料的結構化副本）；arrayKey/nestedKey/idPrefix/tag 供搜尋索引使用；anchor 與 anchorField 二擇一——anchor 是整頁共用的固定錨點（client-render 的頁面沒有逐項 id，只能指向容器），anchorField 則指定「用項目的哪一個欄位當錨點」（頁面靜態寫死、每筆都有自己的 id 時使用）。兩者都必須真的存在於建置產物中，否則 build-search-index.js 直接讓建置失敗——#78 修的正是「錨點不存在但照樣寫進索引」的靜默失效。",
   "localAssetFields": [
     "thumbnail_url",
     "logo",
@@ -75,6 +75,13 @@
       "idPrefix": "book",
       "tag": "主題書單",
       "anchor": "reading-lists-container"
+    },
+    "civic-tech-map/index.html": {
+      "json": "civic-tech-map/projects.json",
+      "arrayKey": "projects",
+      "idPrefix": "civic",
+      "tag": "公民科技",
+      "anchorField": "id"
     }
   }
 }

@@ -77,6 +77,20 @@ node build-search-index.js
 
 `build-search-index.js` 會掃描 `dist/` 下的所有頁面，擷取標題、描述、關鍵字與內文，並讀取資料驅動頁對應的 JSON（競賽、線上課程、學長姐訪談等），輸出 `dist/search-index.json` 隨網站一起部署。
 
+#### 素養與 SDGs 分類標籤
+
+來源 JSON 上的 `competencies`（108 課綱核心素養代碼 A1–C3）、`sdgs`（1–17 整數）與 `tags`（議題關鍵字，如「環保」「假訊息」）三個**選填**欄位，會被展開成搜尋索引的三個欄位：
+
+| 索引欄位 | 內容 | 使用者打什麼會命中 |
+| --- | --- | --- |
+| `competencies` | `["A2", "C1"]` | `A2` |
+| `sdgs` | `["SDG11", "SDG15"]` | `SDG`、`SDG11` |
+| `taxonomy` | `["A2 系統思考與解決問題", "自主行動", "SDG 11 永續城鄉", …]` | `系統思考`、`永續城鄉`、`社會參與` |
+
+代碼與中文標籤的唯一來源是 `scripts/taxonomy.json`（`build-search-index.js` 是 CommonJS、`scripts/*.mjs` 是 ESM，共用設定只能走 JSON）。這些欄位**選填，但填了就必須合法**：非法代碼會讓建置直接失敗，而不是靜默略過——被丟掉的標籤只會表現成「搜尋找不到」，那種症狀不會有人回報。
+
+同理，資料頁若用 `anchorField` 指定逐項錨點（見 `scripts/data-pages.json`），該錨點必須真的存在於建置後的頁面，否則建置失敗。指向不存在的錨點不會讓連結壞掉，只會讓「跳到該項目」這個承諾靜默失效。
+
 > GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
 >
 > 部署的是**通過全部檢查的那一份 artifact**，不是另外重建的：檢查與部署刻意放在同一個 workflow，`deploy` job 以 `needs: [required]` 等 `CI Required` 通過後才執行。任一檢查紅燈就不會有 artifact 可部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
@@ -97,7 +111,11 @@ node build-search-index.js
 │   └── **/*.json             # 資料驅動頁的資料檔
 ├── scripts/
 │   ├── check-competitions.mjs  # 競賽資料看門狗（截止日／欄位健檢）
-│   └── check-civic-tech.mjs    # 公民科技專案資料看門狗
+│   ├── check-civic-tech.mjs    # 公民科技專案資料看門狗
+│   ├── data-pages.json         # 資料頁 → 來源 JSON 的單一設定來源
+│   ├── taxonomy.json           # 素養代碼／SDGs 的代碼與中文標籤（CJS 與 ESM 共用）
+│   ├── taxonomy.lib.mjs        # 分類欄位的共用驗證
+│   └── *.faults.mjs            # 故障注入：證明各檢查真的會擋，而不是裝飾品
 ├── src/
 │   ├── components/           # Header、Footer 等共用元件
 │   ├── layouts/              # BaseLayout.astro
@@ -174,6 +192,7 @@ node build-search-index.js
 | 學長姐真心話 | `public/career-exploration/senior-interviews.json` |
 | 優質範例藝廊 | `public/learning-portfolio/portfolio-gallery.json` |
 | 線上製作工具箱 | `public/learning-portfolio/tools.json` |
+| 公民科技專案地圖 | `public/civic-tech-map/projects.json`（頁面內容寫在 `.astro` 內，此檔是同一份資料的結構化副本，供看門狗與搜尋索引使用，兩處需同步更新） |
 
 十大學群的內容則以 Markdown 維護於 `src/content/clusters/<學群>/<主題>.md`，學群與主題的清單（slug、名稱）集中定義於 `src/data/clusters.ts`。
 

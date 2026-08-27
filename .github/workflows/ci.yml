@@ -77,6 +77,12 @@ jobs:
       - name: Prove the checker actually blocks (fault injection)
         run: npm run test:site-faults
 
+      # 分類欄位（素養／SDGs／議題標籤）的故障注入。放在 site job 是因為它要
+      # 一份建置產物才能驗「錨點對不上時建置會不會失敗」。同樣在副本上注入，
+      # 上面那份要部署的 dist/ 不會被動到。
+      - name: Prove the taxonomy validators actually block (fault injection)
+        run: npm run test:taxonomy-faults
+
       # astro.config.mjs 設 base: '/sch001-108platform'，站內連結都是根相對路徑。
       # lychee 對本機檔案的根相對連結會在「解析」階段就失敗，而 --exclude 與
       # --scheme 都是解析之後才生效（lycheeverse/lychee#2125），因此必須重建與
@@ -221,6 +227,12 @@ jobs:
       # 可以一路合併進 main。
       - name: Run per-entry verified-data regression tests
         run: npm run test:competitions-data
+
+      # 公民科技專案資料的 schema。先前只掛在每週排程的 civic-tech-check.yml 上,
+      # 於是改壞 projects.json 的 PR 全綠合併,最快也要等到下週一才會有人知道。
+      # 這支不連外網、只驗結構,完全確定性,本來就該在每個 PR 上跑。
+      - name: Validate civic tech project data (schema only)
+        run: npm run check:civic-tech
 
   # 固定名稱的聚合關卡。ruleset 只要求這一個 context，日後 job 改名或增減都不必
   # 同步調整 repository 設定——避免 workflow 與 ruleset 漂移。

@@ -33,6 +33,7 @@ import {
     parseCssUrls,
     walkJsonStrings,
 } from './site-contract.lib.mjs';
+import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -195,12 +196,23 @@ for (const rel of distFiles.filter((f) => /sitemap.*\.xml$/.test(f))) {
 
 // ── search-index.json：其 url 帶 fragment，先前完全不在檢查面內 ──
 const searchIndexRel = 'search-index.json';
+/** @type {any[] | null} 供下方「來源分類欄位是否真的進了索引」比對用 */
+let searchIndex = null;
 if (distFiles.includes(searchIndexRel)) {
     const idx = JSON.parse(await readFile(path.join(DIST, searchIndexRel), 'utf8'));
     if (!Array.isArray(idx)) addError(searchIndexRel, '', '最外層應為陣列');
-    else idx.forEach((item, i) => {
-        if (item && typeof item.url === 'string') record(item.url, `${BASE}/`, searchIndexRel, `/${i}/url`);
-    });
+    else {
+        searchIndex = idx;
+        idx.forEach((item, i) => {
+            if (item && typeof item.url === 'string') record(item.url, `${BASE}/`, searchIndexRel, `/${i}/url`);
+            if (!item || typeof item !== 'object') return;
+            // 分類欄位（competencies／sdgs／taxonomy）的合法性與自洽性。非法代碼
+            // 不會讓頁面壞掉，只會讓那個標籤永遠搜不到——那種症狀沒有人會回報。
+            const taxErrors = [];
+            validateIndexedTaxonomy(item, `索引項目 #${i}（${item.title || item.url || '未命名'}）`, taxErrors);
+            for (const e of taxErrors) addError(searchIndexRel, `/${i}`, e);
+        });
+    }
 } else {
     addError('dist/', searchIndexRel, '找不到 search-index.json——請確認建置有跑 build-search-index.js');
 }
@@ -225,6 +237,43 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
         addError(jsonRel, '', `JSON 無法解析：${e.message}`);
         continue;
     }
+    // ── 來源 JSON 的分類欄位是否真的進了 search-index.json ──
+    // 只對「每筆項目都有自己錨點」的頁面做（anchorField），因為只有那種頁面的
+    // 索引 url 是可預測的。少了這一條，把 civic-tech-map 從 data-pages.json 拿掉、
+    // 或 build-search-index.js 不再輸出 competencies，站台檢查都會照樣全綠而
+    // 搜尋功能已經沒了——「CI 綠不等於有在把關」的典型。
+    if (cfg.anchorField && searchIndex) {
+        const byUrl = new Map(searchIndex.filter((it) => it && typeof it.url === 'string').map((it) => [it.url, it]));
+        const top = Array.isArray(data[cfg.arrayKey]) ? data[cfg.arrayKey] : [];
+        const items = cfg.nestedKey
+            ? top.flatMap((g) => (g && Array.isArray(g[cfg.nestedKey]) ? g[cfg.nestedKey] : []))
+            : top;
+        for (const item of items) {
+            if (!item || typeof item !== 'object') continue;
+            const anchor = item[cfg.anchorField];
+            if (typeof anchor !== 'string' || !anchor) {
+                addError(jsonRel, cfg.anchorField, `項目缺少 anchorField 指定的欄位 ${cfg.anchorField}`);
+                continue;
+            }
+            const indexed = byUrl.get(`${page}#${anchor}`);
+            if (!indexed) {
+                addError(searchIndexRel, `${page}#${anchor}`, `來源資料有這筆項目，搜尋索引卻沒有對應的 url`);
+                continue;
+            }
+            for (const [field, expected] of [
+                ['competencies', Array.isArray(item.competencies) ? item.competencies : null],
+                ['sdgs', Array.isArray(item.sdgs) ? item.sdgs.map((n) => `SDG${n}`) : null],
+            ]) {
+                if (!expected || expected.length === 0) continue;
+                const actual = Array.isArray(indexed[field]) ? indexed[field] : [];
+                const missing = expected.filter((v) => !actual.includes(v));
+                if (missing.length) {
+                    addError(searchIndexRel, `${page}#${anchor}`, `來源的 ${field} 有「${missing.join('、')}」，索引裡卻沒有`);
+                }
+            }
+        }
+    }
+
     for (const { pointer, value } of walkJsonStrings(data)) {
         const field = pointer.split('/').pop();
         if (dataPages.localAssetFields.includes(field)) {
