@@ -135,7 +135,7 @@ for (const rel of htmlFiles) {
     }
 
     for (const [sel, attr] of [
-        ['a[href]', 'href'], ['link[href]', 'href'], ['area[href]', 'href'],
+        ['a[href]', 'href'], ['area[href]', 'href'],
         ['img[src]', 'src'], ['script[src]', 'src'], ['iframe[src]', 'src'],
         ['source[src]', 'src'], ['video[src]', 'src'], ['audio[src]', 'src'],
         ['embed[src]', 'src'], ['object[data]', 'data'], ['form[action]', 'action'],
@@ -145,6 +145,24 @@ for (const rel of htmlFiles) {
             if (v != null) record(v, fromUrl, rel, `${sel}[${attr}]`);
         });
     }
+    // <link> 要看 rel。rel=preconnect／dns-prefetch 只是連線提示，瀏覽器不會對它
+    // 發出任何請求；把它當成一般連結送進排程健檢會得到穩定的假失效——實測
+    // GET https://fonts.googleapis.com/ 與 https://fonts.gstatic.com/ 都回 404，
+    // 而這兩個網址在全部 94 個頁面上都只是 preconnect。每週固定誤報兩筆，正是
+    // 最會把維護者訓練成忽略通知的那種訊號。
+    $('link[href]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href == null) return;
+        const linkRel = ($(el).attr('rel') || '').toLowerCase().split(/\s+/);
+        if (linkRel.includes('preconnect') || linkRel.includes('dns-prefetch')) {
+            refCount++;
+            const key = 'link rel=preconnect／dns-prefetch（連線提示，瀏覽器不會擷取）';
+            if (!ignored.has(key)) ignored.set(key, { count: 0, sample: String(href).slice(0, 60) });
+            ignored.get(key).count++;
+            return;
+        }
+        record(href, fromUrl, rel, 'link[href]');
+    });
     $('[srcset]').each((_, el) => {
         for (const u of parseSrcset($(el).attr('srcset'))) record(u, fromUrl, rel, 'srcset');
     });
@@ -317,7 +335,10 @@ await mkdir(path.dirname(INVENTORY_PATH), { recursive: true });
 await writeFile(
     INVENTORY_PATH,
     JSON.stringify(
-        { generatedFrom: 'dist', total: external.size, urls: [...external.values()].sort((a, b) => a.url.localeCompare(b.url)) },
+        // generatedFrom 記的是「這份盤點掃的是哪一個目錄」，不是固定字串。
+        // 故障注入會用 SITE_DIST 指向 dist 的副本，那一輪同樣會覆寫這個檔案；
+        // 下游（check-link-policy.mjs）據此拒絕拿被破壞過的副本當成正式盤點。
+        { generatedFrom: path.basename(DIST), total: external.size, urls: [...external.values()].sort((a, b) => a.url.localeCompare(b.url)) },
         null,
         2,
     ),

@@ -21,8 +21,12 @@
     "audit:consistency": "node scripts/audit-competition-consistency.mjs",
     "build:deployable": "astro build && node build-search-index.js",
     "check:site": "node scripts/check-built-site.mjs",
+    "check:link-policy": "node scripts/check-link-policy.mjs",
+    "check:external-links": "node scripts/check-external-links.mjs",
     "test:site-integrity": "node --test scripts/check-built-site.test.mjs",
     "test:site-faults": "node scripts/check-built-site.faults.mjs",
+    "test:link-health": "node --test scripts/link-health.test.mjs",
+    "test:link-faults": "node scripts/link-health.faults.mjs",
     "verify:site": "npm run build:deployable && npm run check:site"
   },
   "keywords": [],

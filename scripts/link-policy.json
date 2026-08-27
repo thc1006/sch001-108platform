@@ -1,0 +1,22 @@
+{
+  "_readme": "外部連結健檢的例外政策。規則與驗證在 scripts/link-policy.lib.mjs，由 scripts/check-link-policy.mjs 在每個 PR 上確定性地檢查。三條紅線：(1) 例外只會降低 unverified 的通知噪音，永遠不會把 404/410 或網域解析不到變成健康；(2) 只接受精確網址（match.url）或精確主機名（match.host），沒有萬用字元、沒有子字串比對；(3) 每一筆都必須有 reason／owner／expires，且 expires 到期後 CI 會紅，逼人重新查證而不是無限延續（上限 180 天）。要新增一筆，請先貼上實際的探測輸出，說明為什麼在 runner 上驗不過、而瀏覽器可以開。",
+  "version": 1,
+  "entries": [
+    {
+      "match": {
+        "url": "https://adm21.cmu.edu.tw/sites/default/files/%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B-%E5%A4%A7%E5%AD%B8%E7%94%B3%E8%AB%8B%E5%85%A5%E5%AD%B8%E7%AC%AC%E4%BA%8C%E9%9A%8E%E6%AE%B5%E6%BA%96%E5%82%99%E6%8C%87%E5%8D%97.pdf"
+      },
+      "reason": "中國醫藥大學這台主機沒有送出中繼憑證，憑證鏈不完整（#72 在 runner 上實測到 SSL 錯誤）。桌上型瀏覽器會自己補抓中繼憑證所以開得起來——本機實測同一個網址回 HTTP 200，runner 上則驗不過。範圍縮到這一個檔案，不放行整個主機。",
+      "owner": "thc1006",
+      "expires": "2026-11-30"
+    },
+    {
+      "match": {
+        "host": "www.ptt.cc"
+      },
+      "reason": "PTT 封鎖資料中心 IP 段，GitHub runner 一律 connection reset（#72 實測）。本機（一般網路）實測同一個網址回 HTTP 200。這是整台主機層級的來源 IP 封鎖，不是單一頁面問題，所以用 host 而非單一網址。",
+      "owner": "thc1006",
+      "expires": "2026-11-30"
+    }
+  ]
+}

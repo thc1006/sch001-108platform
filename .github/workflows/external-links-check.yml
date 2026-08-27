@@ -1,0 +1,182 @@
+name: External Links Health Check
+
+# 全站外部連結的排程健檢（#72 的最後一塊）。
+#
+# 在這支落地之前，全站外部連結沒有任何東西在把關：ci.yml 的 lychee 只驗
+# build 產物裡可靜態解析的站內路徑，競賽看門狗只涵蓋 competitions.json 的
+# 133 個網址——其餘 300 多個去重網址是完全沒人看的。
+#
+# 網址來源是 check-built-site.mjs 產出的 .reports/url-inventory.json（實測 499
+# 個去重網址／1273 處引用，含每一處的出處檔案）。刻意不自己再掃一次：同一件事
+# 有兩份擷取邏輯就會漂移，#78 出事的原因正是「對應表被手抄成第二份」。
+#
+# 本 workflow 只讀取資料、不修改檔案，不會產生 commit 或 PR。
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # 每週一 03:00 UTC（台灣時間 11:00）。刻意與競賽看門狗
+                          # （01:00 UTC）錯開兩小時，兩支都要連上百個站台，同時
+                          # 跑會互相搶頻寬並拉高逾時誤判。
+  workflow_dispatch:       # 也可在 Actions 頁手動觸發（僅限 main，見下方 if）
+
+# 排程與手動觸發若同時在跑，兩個 run 都會查到「沒有既有 issue」，於是各開一個。
+# cancel-in-progress 必須是 false：後到的那個要排隊等前一個做完才看得到它開的
+# issue；取消掉反而會漏掉一次報告。
+concurrency:
+  group: external-links-watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    name: 檢查全站外部連結
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 只在 default branch 跑。
+    #
+    # 這是安全條件，不是方便性設定：這個 job 會拿 repo 裡的資料當網址去連線，
+    # 而且帶著 issues: write。如果它能被任意分支觸發，任何人只要推一個分支再
+    # 手動 dispatch，就能讓我們的 runner 去連他指定的位址、並把回應寫進 issue。
+    #
+    # 同理，本檔**刻意不使用** pull_request 或 pull_request_target：
+    # pull_request_target 會用 base 的 workflow 定義搭配 head 的程式碼與資料，
+    # 並且帶著可寫入的 token——用它去探測 PR 提供的網址，等於把 SSRF 與 token
+    # 外洩做成一個現成的入口。外部連結的可用性本來就不該擋 PR。
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # 第三方 action 一律 pin 到完整 commit SHA：tag 是可移動的。
+      # 兩個 SHA 都已用 gh api repos/<owner>/<repo>/git/ref/tags/<tag> 查證，
+      # .object.type 為 commit（不是 tag object）。
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # 這個 job 之後不需要任何 authenticated git 操作（gh 走的是 GH_TOKEN
+          # 環境變數，不是 .git/config 裡的憑證），不要把 token 留在 .git/config
+          persist-credentials: false
+
+      # 上面的 if: 是防線，但 if: 很容易在日後改動時被順手拿掉，而拿掉之後不會有
+      # 任何訊號。這一步把同一個不變量寫成會 exit 1 的檢查，讓它壞掉時當場看得到。
+      - name: Refuse to run outside the default branch
+        run: |
+          echo "ref = $GITHUB_REF / event = $GITHUB_EVENT_NAME"
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "本 workflow 只能在 main 上執行（帶著 issues:write 去探測任意網址）。" >&2
+            exit 1
+          fi
+          case "$GITHUB_EVENT_NAME" in
+            schedule|workflow_dispatch) ;;
+            *)
+              echo "只接受 schedule 與 workflow_dispatch，實際為 $GITHUB_EVENT_NAME。" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 網址盤點是 build 產物的副產品。這裡跑的是與 ci.yml 完全相同的兩個指令，
+      # 所以被檢查的網址就是實際會被部署出去的那一份頁面上的網址。
+      - name: Build the deployable artifact
+        run: npm run build:deployable
+
+      - name: Produce the external URL inventory
+        run: npm run check:site
+
+      # 例外政策先驗一次再開始探測。政策過期（或被寫壞）時不可「當作沒有例外」
+      # 繼續跑——那會讓每週報告突然多出一堆早就審過的雜訊，維護者只會學會忽略。
+      # 這一步在 ci.yml 也會跑，所以正常情況下不會在這裡才第一次紅。
+      - name: Validate the exception policy
+        run: npm run check:link-policy
+
+      - name: Run the external link health check
+        id: check
+        timeout-minutes: 20
+        run: npm run check:external-links
+
+      # 沒有待辦項目時不會開 issue，報告內容原本無處可見（連「無法判定」清單也看不到）。
+      # 一律貼到 job summary，讓每週的檢查結果在 Actions 頁面直接可讀。
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          if [ -f external-links-report.md ]; then
+            cat external-links-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '健檢未產出報告（external-links-report.md 不存在）。' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open or update issue when attention is needed
+        # always() 確保即使 check 步驟以致命錯誤結束（exit 1），只要健檢已寫出
+        # needs_attention=true，仍會開 issue 通知維護者。
+        if: always() && steps.check.outputs.needs_attention == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 機器標記的單一來源是 scripts/watchdog-issue.lib.mjs 的
+          # EXTERNAL_LINKS_MARKER；link-health.test.mjs 會比對本檔這一行與該常數，
+          # 兩邊漂移時測試會紅（否則這支排程會安靜地每週新開一個重複 issue）。
+          MARKER: '<!-- external-links-watchdog:v1 -->'
+        run: |
+          # 報告的第一行就是機器標記，下一輪才認得出這則 issue 是自己開的。
+          # 標記不見時寧可中止，也不要開一個下週認不出來的 issue。
+          if ! grep -qF -- "$MARKER" external-links-report.md; then
+            echo "報告缺少機器標記 $MARKER，中止而不開 issue。" >&2
+            exit 1
+          fi
+
+          # --force：標籤已存在時仍更新描述，避免描述停在舊的誤導文字。
+          gh label create --force external-links-watchdog \
+            --color 0E8A16 \
+            --description "看門狗自動開立，請勿手動使用此標籤" || true
+
+          # 刻意「不」用 gh issue list --app 做伺服器端過濾。實測（gh 2.96、本 repo
+          # 有 3 個 Actions 開的 issue）：
+          #   --app github-actions        → 0 筆，exit 0，無任何警告
+          #   --search author:app/github-actions → 3 筆
+          #   不加過濾、由下游比對 author  → 3 筆
+          # 也就是說 --app 會靜默地什麼都找不到。若採用它，看門狗每週都會判定
+          # 「沒有可接管的 issue」而新開一個，重複 issue 每週長一個且毫無訊號。
+          #
+          # --search 雖然找得到，但它走 GitHub 的搜尋索引，而索引有延遲；剛開好的
+          # issue 可能還搜不到，同樣會造成重開。這裡的 --json 走 GraphQL 直接列表，
+          # 沒有索引延遲問題，作者比對交給有單元測試覆蓋的 selectCanonicalIssue()。
+          gh issue list \
+            --label external-links-watchdog --state open --limit 100 \
+            --json number,author,body > watchdog-candidates.json
+
+          # 找到多於一個 canonical issue 時這裡會 exit 2，整個 job 紅掉。安靜地挑
+          # 第一個會讓另一個 issue 永遠收不到報告，而且沒有任何訊號。
+          # --marker 一定要傳：不傳會退回競賽看門狗的標記，於是這支排程可能去接管
+          # 競賽看門狗的 issue，把兩份報告混在一起。
+          if ! decision=$(node scripts/find-watchdog-issue.mjs --marker "$MARKER" < watchdog-candidates.json); then
+            echo "無法決定要接管哪個 issue（見上方訊息），中止而不亂貼。" >&2
+            exit 1
+          fi
+
+          case "$decision" in
+            comment\ *)
+              existing="${decision#comment }"
+              echo "接管既有 issue #$existing，補上最新報告。"
+              gh issue comment "$existing" --body-file external-links-report.md
+              echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            create)
+              url=$(gh issue create \
+                --title "全站外部連結需要更新（自動偵測）" \
+                --label external-links-watchdog \
+                --body-file external-links-report.md)
+              echo "沒有可接管的 issue，已新開：$url"
+              echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "find-watchdog-issue.mjs 回傳了未預期的結果：$decision" >&2
+              exit 1
+              ;;
+          esac
