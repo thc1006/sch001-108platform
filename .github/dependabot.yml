@@ -38,3 +38,16 @@ updates:
           - 'fuse.js'
           - 'feather-icons'
           - 'ionicons'
+
+    ignore:
+      # fuse.js 7.x 拿掉了 UMD／全域建置。實測 7.5.0 的 exports 只有
+      # dist/fuse.mjs、dist/fuse.cjs、dist/fuse.min.mjs——沒有 dist/fuse.min.js。
+      #
+      # 首頁是 <script is:inline src="…/vendor/fuse.min.js"> 靠全域 window.Fuse
+      # 使用它，ESM 建置不會設全域。升上去不是換版號，是要把那段 inline script
+      # 改成 module + import——那件事應該和「inline handler 退場 → 啟用 CSP」一起
+      # 規劃，不該夾在例行相依更新裡發生。
+      #
+      # 只擋 major：7.x 以外的修正版仍會照常提 PR。
+      - dependency-name: 'fuse.js'
+        update-types: ['version-update:semver-major']
