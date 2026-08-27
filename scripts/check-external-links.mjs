@@ -173,11 +173,18 @@ for (let i = 0; i < targets.length; i++) {
 // 反過來 readme.md、logo.ai、test.sh 都被蹲域名的人註冊、解析得到。詳見
 // bare-domains.lib.mjs 的檔頭。
 const BARE_BUDGET_MS = 3 * 60_000;
-const bareInfo = inventory.bareDomainCandidates ?? { total: 0, alreadyCoveredByUrls: 0, hosts: [] };
+// 與上面 inventory.urls 同一個道理：「盤點裡沒有這個欄位」和「一個裸網域都沒有」
+// 在報告上長得一模一樣。欄位不存在只可能是盤點檔是舊版的，或 check-built-site.mjs
+// 的擷取被拿掉了，兩種都必須當成錯誤——實測不擋的話會靜靜印出「實際探測：0」、
+// needs_attention=false、coverage_complete=true，然後 CI 全綠。
+if (!inventory.bareDomainCandidates || !Array.isArray(inventory.bareDomainCandidates.hosts)) {
+    await die('盤點裡沒有 bareDomainCandidates。這代表盤點檔是舊版的，或 check-built-site.mjs 的裸網域擷取壞了，不是「沒有裸網域」。請先執行 npm run build:deployable && npm run check:site。');
+}
+const bareInfo = inventory.bareDomainCandidates;
 const bareCandidates = limit > 0 ? bareInfo.hosts.slice(0, limit) : bareInfo.hosts;
 const occurrencesOfHost = new Map(bareCandidates.map((h) => [h.host, h.occurrences ?? []]));
 
-const { accepted: bareHosts, rejected: bareRejected } = await screenBareDomains(
+const { accepted: bareHosts, rejected: bareRejected, unresolved: bareUnresolved } = await screenBareDomains(
     bareCandidates.map((h) => h.host),
     { resolveNs: (name) => dns.promises.resolveNs(name) },
 );
@@ -215,7 +222,8 @@ if (bareHosts.length) {
     }
 }
 
-const coverageComplete = skipped === 0 && bareSkipped === 0;
+// 問不到 TLD 答案的候選並沒有被探測過，等同「未檢查」——不可以算進完整覆蓋。
+const coverageComplete = skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
 // 被接管的網域一定要讓人看到——它回 200，不會出現在任何一個「壞掉」的桶子裡。
 const needsAttention =
     dead.length > 0 || blocked.length > 0 || bareDead.length > 0 || bareBlocked.length > 0 || hijackedHits.length > 0 || !coverageComplete;
@@ -244,7 +252,8 @@ console.log(`  已列例外：${suppressed.length}`);
 if (skipped) console.log(`  未檢查　：${skipped}（逾時間預算）`);
 console.log('內文裸網域（只寫在說明文字裡的網域）');
 console.log(`  盤點候選：${bareInfo.total}（其中 ${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋，不重複檢查）`);
-console.log(`  DNS 篩掉：${bareRejected.length}（TLD 不存在＝檔名或縮寫，不是網域）`);
+console.log(`  DNS 篩掉：${bareRejected.length}（TLD 確定不存在＝檔名或縮寫，不是網域）`);
+if (bareUnresolved.length) console.log(`  DNS 未答：${bareUnresolved.length}（查不到答案，本次未檢查——不等於它們不是網域）`);
 console.log(`  實際探測：${bareHosts.length}`);
 console.log(`  健康　　：${bareHealthy}`);
 console.log(`  失效　　：${bareDead.length}`);
@@ -259,7 +268,7 @@ lines.push(`- 檢查日期：${todayISO}（UTC）`);
 lines.push(`- 盤點：${inventory.urls.length} 個去重外部網址，來自 check-built-site.mjs 的建置產物掃描`);
 lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${blocked.length}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
 lines.push(
-    `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
+    `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
 );
 lines.push('');
 
@@ -335,9 +344,24 @@ if (bareOther.length) {
     lines.push('', '</details>', '');
 }
 
+if (bareUnresolved.length) {
+    lines.push('### ⚠️ 裸網域的 TLD 這次查不到答案（本次未檢查）', '');
+    lines.push(
+        '判斷「這串字到底是不是網域」要查該 TLD 在 DNS 根區的 NS 記錄。下列候選這次沒有問到答案',
+        '（SERVFAIL、逾時、連不到 resolver 等），因此**沒有被探測**。',
+        '',
+        '這一段與下面「被 DNS 篩掉」是兩件完全不同的事：那些是根區明確回答「沒有這個 TLD」，',
+        '這些是我們根本沒問到。若整批候選都落在這裡，代表 runner 的 DNS 有問題，本次裸網域',
+        '檢查等於沒有跑，**不可以視為正常**。',
+        '',
+    );
+    for (const u of bareUnresolved) lines.push(`- ${u.host} — ${u.reason}`);
+    lines.push('');
+}
+
 if (bareRejected.length) {
     lines.push(
-        `<details><summary>🧪 被 DNS 篩掉的裸網域候選 ${bareRejected.length} 筆（不是網域，未探測）</summary>`,
+        `<details><summary>🧪 被 DNS 篩掉的裸網域候選 ${bareRejected.length} 筆（根區確定沒有這個 TLD，不是網域）</summary>`,
         '',
         '擷取規則是純字串比對，會擷到檔名與縮寫。這裡用「該 TLD 在 DNS 根區存不存在」把它們篩掉，',
         '列出來是為了讓擷取規則退化時看得出來——這一區應該只有檔名，出現真的網域就是規則出問題了。',

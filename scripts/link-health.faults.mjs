@@ -293,7 +293,7 @@ const bareDomainMutations = [
     },
     {
         name: '左界的 lookbehind 被拿掉（路徑片段與網域中段都會被擷出）',
-        apply: (s) => s.replace('/(?<![A-Za-z0-9._@/\\\\-])((?:', '/((?:'),
+        apply: (s) => s.replace('/(?<![A-Za-z0-9._@/\\\\=#?&-])((?:', '/((?:'),
     },
     {
         name: '主機名總長度上限不再檢查（253 字元以上也放行）',
@@ -309,7 +309,18 @@ const bareDomainMutations = [
     },
     {
         name: 'TLD 存在與否不再判斷（Node.js、fuse.min.js 會被拿去探測）',
-        apply: (s) => s.replace('        if (await tldExists(tld)) accepted.push(host);', '        if (true) accepted.push(host);'),
+        apply: (s) => s.replace("        if (verdict === 'yes') accepted.push(host);", '        if (true) accepted.push(host);'),
+    },
+    {
+        // DNS 沒回答時若被歸成「確定不是網域」，resolver 一掛掉就會把整批候選
+        // 靜靜判成「不是網域」，報告乾乾淨淨、CI 全綠，而一個裸網域都沒檢查。
+        // 實測（resolver 指向 192.0.2.1）：30 個候選全滅、coverage_complete=true。
+        name: '「DNS 沒回答」被併回「確定不是網域」（resolver 一掛就靜默漏檢）',
+        apply: (s) =>
+            s.replace(
+                "            verdict = DEFINITIVE_ABSENT.has(code) ? 'no' : 'unknown';",
+                "            void code; verdict = 'no';",
+            ),
     },
     {
         name: 'TLD 查詢結果不再快取（同一個 TLD 會被查幾十次）',
@@ -322,9 +333,9 @@ const bareDomainMutations = [
         name: '改用「可不可解析」當作「是不是網域」的判準（會對死網域失明）',
         apply: (s) =>
             s.replace(
-                '        if (await tldExists(tld)) accepted.push(host);',
+                "        if (verdict === 'yes') accepted.push(host);",
                 [
-                    '        if (await tldExists(tld)) {',
+                    "        if (verdict === 'yes') {",
                     '            try {',
                     '                if (deps.lookup) await deps.lookup(host);',
                     '                accepted.push(host);',
@@ -344,6 +355,20 @@ let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
 const bad = (name, why) => { fail++; console.log(`  ❌ ${name} → ${why}`); };
 
+/** 基準單元測試。初始與收尾共用同一支，避免兩邊的定義漂移。 */
+function runBaselineTests() {
+    try {
+        execFileSync(
+            process.execPath,
+            ['--test', path.join(SCRIPTS, 'link-health.test.mjs'), path.join(SCRIPTS, 'bare-domains.test.mjs')],
+            { encoding: 'utf8', stdio: 'pipe' },
+        );
+        return 0;
+    } catch (e) {
+        return e.status ?? 1;
+    }
+}
+
 console.log('先確認基準狀態為綠：');
 const basePolicy = write('policy-base.json', realPolicy);
 const baseInv = write('inventory-base.json', baselineInventory);
@@ -352,7 +377,16 @@ if (base.code !== 0) {
     console.error(`  ❌ 基準已經是紅的，無法進行故障注入\n${base.out.slice(0, 800)}`);
     process.exit(1);
 }
-console.log('  ✅ 基準綠燈\n');
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B／C 兩段的
+// 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
+// 要等收尾那道檢查才抓得到——而摘要早就印成「43 擋下 / 0 漏掉」了。
+// 實測：把 extractBareDomainCandidates 改成永遠回 []，初始基準仍顯示綠燈。
+const baseTests = runBaselineTests();
+if (baseTests !== 0) {
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs）');
+    process.exit(1);
+}
+console.log('  ✅ 基準綠燈（政策檢查 ＋ 單元測試）\n');
 
 console.log('A. 例外政策的故障注入（check-link-policy.mjs 必須紅）：');
 policyCases.forEach((c, i) => {
@@ -422,18 +456,7 @@ try {
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
-const afterTests = (() => {
-    try {
-        execFileSync(
-            process.execPath,
-            ['--test', path.join(SCRIPTS, 'link-health.test.mjs'), path.join(SCRIPTS, 'bare-domains.test.mjs')],
-            { encoding: 'utf8', stdio: 'pipe' },
-        );
-        return 0;
-    } catch (e) {
-        return e.status ?? 1;
-    }
-})();
+const afterTests = runBaselineTests();
 console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈' : '  ❌ 還原後仍是紅的，副本沒有清乾淨');
 
 rmSync(TMP, { recursive: true, force: true });

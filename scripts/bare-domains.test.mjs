@@ -139,6 +139,15 @@ test('反例：網址的 query／fragment 裡帶網域也不可被擷出', () =>
     assert.deepEqual(hostsOf('轉址到 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW 的廣告頁'), []);
     assert.deepEqual(hostsOf('見 https://a.com/x?ref=foo.org 一文'), []);
     assert.deepEqual(hostsOf('見 https://a.com/x#frag.org 一節'), []);
+
+    // 上面三條全都帶 scheme，所以是被 URL_LIKE 整段遮掉才通過的——它們並沒有測到
+    // 註解裡點名的真正成因（= 與 # 不在 lookbehind 裡）。內文若把轉址鏈寫成沒有
+    // scheme 的形式，URL_LIKE 就遮不到，參數值會被當成主機名擷出去探測。
+    // 這正是本站 competitions.json 記錄 sasmo.sg 轉址鏈時可能出現的寫法。
+    assert.deepEqual(hostsOf('會被導向 arcade.now/lp1/play?subid=sasmo.sg&subid2=TW'), ['arcade.now']);
+    assert.deepEqual(hostsOf('追蹤網址 tracker.com/x?ref=partner.org'), ['tracker.com']);
+    assert.deepEqual(hostsOf('參見 example.org/docs#section.org 的說明'), ['example.org']);
+    assert.deepEqual(hostsOf('見 a.com/x?a=1&b=evil.org 一文'), ['a.com']);
 });
 
 test('反例：整串主機名超過 253 字元（label 數量不設限，regex 管不到）', () => {
@@ -154,6 +163,14 @@ test('反例：完整網址已由既有擷取涵蓋，不可重複擷出，路�
     // 網址路徑裡的 .org 結尾片段最容易被誤擷
     assert.deepEqual(hostsOf('見 https://example.com/files/report.org 一文'), []);
     assert.deepEqual(hostsOf('見 http://a.tw/b.com/c.net 頁'), []);
+
+    // 路徑的分隔字元不是只有 /。逗號、分號、加號、百分比編碼後面的片段，左界的
+    // lookbehind 一概擋不掉，只有「先把整條網址遮掉」才擋得住。少了下面這幾條，
+    // 把 URL_LIKE 遮蔽拿掉之後整組測試仍然全綠（故障注入實測），等於那道遮蔽沒人守。
+    assert.deepEqual(hostsOf('見 https://a.com/path,report.org 一文'), []);
+    assert.deepEqual(hostsOf('見 https://a.com/path;report.org 一文'), []);
+    assert.deepEqual(hostsOf('見 https://a.com/path+report.org 一文'), []);
+    assert.deepEqual(hostsOf('見 https://a.com/path%20report.org 一文'), []);
 });
 
 test('反例：路徑片段（左界不可接在斜線或英數之後）', () => {
@@ -248,14 +265,41 @@ test('stage2：同一個 TLD 只查一次（快取）', async () => {
     assert.deepEqual(nsCalls, ['org.', 'tw.'], `實際查詢：${nsCalls.join('、')}`);
 });
 
-test('stage2：DNS 查詢失敗一律不採用（寧可漏掉也不要製造噪音）', async () => {
-    const { accepted, rejected } = await screenBareDomains(['x.org'], {
-        resolveNs: async () => {
-            throw Object.assign(new Error('SERVFAIL'), { code: 'SERVFAIL' });
-        },
-    });
-    assert.deepEqual(accepted, []);
-    assert.equal(rejected.length, 1);
+test('stage2：DNS 沒回答的候選不採用，但必須進 unresolved 而不是 rejected', async () => {
+    // 「根區說沒有這個 TLD」與「這次沒問到答案」是兩件事，先前都被壓成 rejected。
+    // 壓在一起的代價實測過：把 resolver 指到 192.0.2.1（無人回應），30 個候選全數
+    // 變成 rejected，報告寫「.org 不是 DNS 根區裡的 TLD」，而 needs_attention=false、
+    // coverage_complete=true——一個裸網域都沒檢查，CI 全綠。那正是靜默漏檢。
+    for (const code of ['SERVFAIL', 'ETIMEOUT', 'ECONNREFUSED', 'EAI_AGAIN', 'ECANCELLED']) {
+        const { accepted, rejected, unresolved } = await screenBareDomains(['x.org'], {
+            resolveNs: async () => {
+                throw Object.assign(new Error(code), { code });
+            },
+        });
+        assert.deepEqual(accepted, [], `${code}：沒把握就不可以拿去探測`);
+        assert.deepEqual(rejected, [], `${code}：沒問到答案不可以被斷言成「不是網域」`);
+        assert.equal(unresolved.length, 1, `${code}：必須單獨回報，否則就是靜默漏檢`);
+        assert.match(unresolved[0].reason, /查不到答案/);
+    }
+});
+
+test('stage2：根區明確說沒有這個 TLD 才可以進 rejected', async () => {
+    for (const code of ['ENOTFOUND', 'NOTFOUND', 'ENODATA', 'NODATA', 'NXDOMAIN']) {
+        const { accepted, rejected, unresolved } = await screenBareDomains(['node.js'], {
+            resolveNs: async () => {
+                throw Object.assign(new Error(code), { code });
+            },
+        });
+        assert.deepEqual(accepted, []);
+        assert.equal(rejected.length, 1, `${code}：這是明確的「沒有這個名字」`);
+        assert.deepEqual(unresolved, []);
+    }
+});
+
+test('stage2：三桶的總數必須等於輸入數（不可以有候選人間蒸發）', async () => {
+    const hosts = ['a.org', 'node.js', 'b.tw', 'x.unknowntld'];
+    const { accepted, rejected, unresolved } = await screen(hosts);
+    assert.equal(accepted.length + rejected.length + unresolved.length, hosts.length);
 });
 
 test('stage2：沒有注入 resolver 就必須拋錯（測試不得連外網）', () => {

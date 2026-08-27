@@ -85,10 +85,15 @@ const EMAIL_LIKE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[
  * 後面。少了它，沒遮乾淨的路徑 /files/report.org 會被擷出 report.org，而且
  * a.b.c 這種會從中間再擷一次 b.c。
  *
+ * = # ? & 也在字元類裡，擋的是「網址的 query／fragment 參數值」。URL_LIKE 只遮得掉
+ * 帶 scheme 的網址，內文寫成 arcade.now/lp1/play?subid=sasmo.sg（沒有 https://）時
+ * 遮不到，而 = 不在左界就會把參數值 sasmo.sg 擷成一台主機去探測——那是內文根本沒有
+ * 在推薦的網域。實測本站資料加上這四個字元後候選數不變（45／15／30），代價為 0。
+ *
  * 右界靠字元類自然結束。中文標點不在字元類裡，所以「官網為 tcr.org。」會正確
  * 停在 org；換行同理，example.\norg 不會被接起來（已於測試中固定）。
  */
-const CANDIDATE = /(?<![A-Za-z0-9._@/\\-])((?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z][A-Za-z0-9-]{0,62})/g;
+const CANDIDATE = /(?<![A-Za-z0-9._@/\\=#?&-])((?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z][A-Za-z0-9-]{0,62})/g;
 
 /** 用等長空白遮蔽，讓後續比對的 index 仍然對得上原字串。 */
 const maskWith = (text, re) => text.replace(re, (m) => ' '.repeat(m.length));
@@ -166,6 +171,12 @@ export function collectBareDomains(data, accept) {
 }
 
 /**
+ * 只有這些錯誤碼代表 DNS 明確回答「沒有這個名字」。其餘（SERVFAIL、逾時、連不到
+ * resolver、EAI_AGAIN…）都只代表「這一次沒問到」，不可以拿來斷言該 TLD 不存在。
+ */
+const DEFINITIVE_ABSENT = new Set(['ENOTFOUND', 'NOTFOUND', 'ENODATA', 'NODATA', 'NXDOMAIN']);
+
+/**
  * Stage 2：用 DNS 根區判斷「這個 TLD 存不存在」，藉此淘汰 Node.js／fuse.min.js／
  * e.g. 這類形態相符但根本不是網域的候選。
  *
@@ -174,7 +185,8 @@ export function collectBareDomains(data, accept) {
  *
  * 結果會快取——同一份資料裡 .org 會出現幾十次，不該查幾十次。
  *
- * @param {{resolveNs?: (name: string) => Promise<string[]>, cache?: Map<string, boolean>}} [deps]
+ * 回傳 'yes'（根區裡有）／'no'（根區明確說沒有）／'unknown'（這次問不到答案）。
+ * @param {{resolveNs?: (name: string) => Promise<string[]>, cache?: Map<string, 'yes'|'no'|'unknown'>}} [deps]
  */
 export function makeTldChecker(deps = {}) {
     const cache = deps.cache ?? new Map();
@@ -184,41 +196,53 @@ export function makeTldChecker(deps = {}) {
     return async function tldExists(tld) {
         const key = String(tld).toLowerCase();
         if (cache.has(key)) return cache.get(key);
-        let exists;
+        let verdict;
         try {
             const ns = await resolveNs(`${key}.`);
-            exists = Array.isArray(ns) && ns.length > 0;
-        } catch {
-            // ENOTFOUND／NXDOMAIN＝沒有這個 TLD。其他錯誤（SERVFAIL、逾時）也一律
-            // 視為「無法確認」而不採用——寧可漏掉一個候選，也不要拿一個沒把握的
-            // 字串去當網域探測，那會直接變成報告噪音。
-            exists = false;
+            verdict = Array.isArray(ns) && ns.length > 0 ? 'yes' : 'no';
+        } catch (err) {
+            // 「DNS 說沒有這個名字」與「DNS 根本沒回答」是兩件事，先前都被壓成
+            // false。壓成同一件事的代價實測過：把 resolver 指到無人回應的位址，
+            // 30 個候選全部被歸成「不是網域」，報告白紙黑字寫「.org 不是 DNS 根區
+            // 裡的 TLD」，而 needs_attention=false、coverage_complete=true——
+            // 一個裸網域都沒檢查，CI 全綠。這正是本 repo 一路在修的靜默漏檢。
+            const code = String(err?.code || err?.errno || '');
+            verdict = DEFINITIVE_ABSENT.has(code) ? 'no' : 'unknown';
         }
-        cache.set(key, exists);
-        return exists;
+        // 三種答案都快取：同一批候選裡 .org 會出現幾十次，resolver 掛掉時若不快取
+        // 會把一次逾時放大成幾十次逾時（實測 8 個 TLD 就花了 208 秒）。
+        cache.set(key, verdict);
+        return verdict;
     };
 }
 
 /**
- * Stage 2 的批次版：把候選主機名分成「確定是網域」與「淘汰」兩堆。
+ * Stage 2 的批次版：把候選主機名分成三堆——accepted（TLD 確實存在）、rejected
+ * （根區明確說沒有這個 TLD）、unresolved（這次問不到答案）。第三堆刻意不併進
+ * rejected：兩者都不會被探測，但只有前者可以宣稱「它不是網域」。
  *
  * 注意這裡**不做**可解析性判斷。死掉的網域必須留在 accepted 裡走完整的探測與
  * 三態分類，否則檢查器會對自己唯一該抓的東西失明（見檔頭）。
  *
  * @param {string[]} hosts
- * @param {{resolveNs?: Function, cache?: Map<string, boolean>}} [deps]
- * @returns {Promise<{accepted: string[], rejected: {host: string, reason: string}[]}>}
+ * @param {{resolveNs?: Function, cache?: Map<string, 'yes'|'no'|'unknown'>}} [deps]
+ * @returns {Promise<{accepted: string[], rejected: {host: string, reason: string}[], unresolved: {host: string, reason: string}[]}>}
  */
 export async function screenBareDomains(hosts, deps = {}) {
     const tldExists = makeTldChecker(deps);
     const accepted = [];
     const rejected = [];
+    const unresolved = [];
     for (const host of hosts) {
         const tld = String(host).toLowerCase().split('.').pop();
-        if (await tldExists(tld)) accepted.push(host);
-        else rejected.push({ host, reason: `.${tld} 不是 DNS 根區裡的 TLD（多半是檔名或縮寫，不是網域）` });
+        const verdict = await tldExists(tld);
+        if (verdict === 'yes') accepted.push(host);
+        else if (verdict === 'no') rejected.push({ host, reason: `.${tld} 不是 DNS 根區裡的 TLD（多半是檔名或縮寫，不是網域）` });
+        // 問不到答案的不會被探測（維持「沒把握就不送出去」），但**必須**單獨回報：
+        // 它與「確定不是網域」在報告上長得一模一樣，混在一起就是靜默漏檢。
+        else unresolved.push({ host, reason: `.${tld} 這次查不到答案（DNS 沒有回應；這不代表該 TLD 不存在）` });
     }
-    return { accepted, rejected };
+    return { accepted, rejected, unresolved };
 }
 
 /**
