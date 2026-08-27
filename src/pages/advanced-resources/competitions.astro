@@ -327,19 +327,34 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       function eventLabel(c) {
         if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
         const short = (d) => Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10));
+        // 已經辦完的賽事必須講清楚。逐筆查證後，資料裡開始出現「上一屆」的賽事
+        // 日期（iBridge 的 2025-12-13、APIO 的 2026-05-09），先前一律顯示成
+        // 「2025-12-13 舉行」，讀起來像是即將舉行——比不顯示還糟。
+        const last = (typeof c.eventEndsAt === 'string' && c.eventEndsAt) || c.eventStartsAt;
+        const past = Date.UTC(
+          Number(last.slice(0, 4)), Number(last.slice(5, 7)) - 1, Number(last.slice(8, 10)),
+        ) < todayTaipeiUTC();
         if (typeof c.eventEndsAt === 'string' && c.eventEndsAt && c.eventEndsAt !== c.eventStartsAt) {
-          return c.eventStartsAt.slice(0, 4) + ' 賽事 ' + short(c.eventStartsAt) + '–' + short(c.eventEndsAt);
+          const range = c.eventStartsAt.slice(0, 4) + ' 賽事 ' + short(c.eventStartsAt) + '–' + short(c.eventEndsAt);
+          return past ? '上屆 ' + range + ' 已結束' : range;
         }
-        return c.eventStartsAt + ' 舉行';
+        return past ? '上屆 ' + c.eventStartsAt + ' 已結束' : c.eventStartsAt + ' 舉行';
       }
 
       // 卡片底部那一欄的標題。先前一律寫「報名截止」，但 OPhO／NASA 這類沒有公布
       // 報名截止日的競賽，欄位裡放的其實是賽事日期——標題寫「報名截止」就等於把
       // 賽事日期謊稱成報名截止，正是這次要修掉的那個錯誤的顯示層版本。
-      function deadlineFieldLabel(c) {
-        if (c.deadline) return '報名截止';
-        if (typeof c.eventStartsAt === 'string' && c.eventStartsAt) return '賽事日期';
-        return '報名截止';
+      // 欄位標題必須由「內容實際是什麼」決定，不能各算各的。先前標題看
+      // c.eventStartsAt、內容看 s.key，兩者會不一致：ESU 沒有 deadline 但有 cycle
+      // 與賽事日期，於是標題寫「賽事日期」、內容卻是「每年約 11 月截止 · 2026 賽事
+      // 7/13–7/18」——標題在說賽事，內容在說報名。
+      // 回傳一個物件讓兩者不可能漂移。
+      function deadlineField(c, s) {
+        const ev = eventLabel(c);
+        const value = deadlineLabel(c, s);
+        // 內容只剩賽事資訊時才叫「賽事日期」；只要含有報名相關敘述就是「報名截止」。
+        const eventOnly = !!ev && value === ev;
+        return { label: eventOnly ? '賽事日期' : '報名截止', value: value };
       }
 
       // 卡片底部的「報名截止」欄位：有週期時把它講清楚，而不是只寫「依官網公告」
@@ -375,7 +390,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const meta = [c.region, c.level, c.form]
           .map((x) => '<li class="comp-tag">' + escapeHtml(x) + '</li>')
           .join('');
-        const deadlineText = escapeHtml(deadlineLabel(c, s));
+        const dField = deadlineField(c, s);
+        const deadlineText = escapeHtml(dField.value);
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
         // 「資料更新」會讓人以為 133 筆都在那天查證過——實際上大多數只做過連結
         // 存活檢查。有逐筆查證日期的就據實顯示，沒有的就不顯示，不要假裝有。
@@ -399,7 +415,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             '</div>' +
             '<div class="comp-card__foot">' +
               '<div class="comp-deadline">' +
-                '<span class="comp-deadline__label">' + escapeHtml(deadlineFieldLabel(c)) + '</span>' +
+                '<span class="comp-deadline__label">' + escapeHtml(dField.label) + '</span>' +
                 '<span class="comp-deadline__value">' + deadlineText + '</span>' +
                 checkedText +
               '</div>' +

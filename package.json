@@ -10,6 +10,7 @@
     "astro": "astro",
     "test": "playwright test",
     "test:watchdog": "node --test scripts/check-competitions.probe.test.mjs",
+    "test:competitions-data": "node --test scripts/competitions-data.test.mjs",
     "check:competitions": "node scripts/check-competitions.mjs --no-link-check --strict",
     "test:puter-ai": "playwright test tests/e2e/puter-ai.spec.js",
     "test:puter-ai:ui": "playwright test tests/e2e/puter-ai.spec.js --ui",
