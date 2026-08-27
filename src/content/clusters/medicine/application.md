@@ -167,6 +167,9 @@ MMI 評分的核心特點是：**重視「過程」勝於「單一標準答案�
 
 ## 參考來源
 
+- [115 學年度大學申請入學招生簡章總則（審查資料項目與件數上限；資料不實之處理），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題（進入頁面後於「常見問題」中尋找該題）](https://nsdua.moe.edu.tw/#/qa)
+
 - [115 學年度個人申請第二階段審查資料的完整說明｜方格子 vocus](https://vocus.cc/article/69bb4225fd8978000194746b)
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
 - [醫途關鍵站：MMI 面試必勝攻略｜Helios Education](https://helios-edu.com/zh/university-intro/醫途關鍵站：mmi-面試必勝攻略/)
