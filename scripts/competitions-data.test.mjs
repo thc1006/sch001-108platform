@@ -703,11 +703,18 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.equal(sony.deadline, '2027-01-05');
     assert.equal(sony.deadlineAt, undefined, '官網時刻自相矛盾（16:00 vs 13:00 GMT），不得擇一寫死');
 
-    // TYPT 官網規則頁寫競賽 2026-03-06 至 03-09，但成績與得獎名單 2026-02-24 就發布了，
-    // 且時程細節只存在圖片中——自相矛盾就不填賽事日期
+    // TYPT：第 18 屆已辦完、第 19 屆只公告了題目。報名截止 2026-01-19 已過且無
+    // 多年證據可推週期，因此 deadline 留空、以 registrationNote 說明，賽事日期照填。
+    //（查證過程的教訓：最初誤以為官網自相矛盾——成績頁顯示 2026-02-24 早於競賽日
+    //  2026-03-06。那一欄的表頭是 Joomla 的「建立日期」而不是發布日，是賽前先建好的
+    //  占位頁。報名規則頁的文字本身沒有任何矛盾，且 3/6=週五、3/9=週一與 2026 年
+    //  曆法逐日吻合。「看起來矛盾」不等於矛盾，要先確認自己讀的是哪個欄位。）
     const typt = find('臺灣青年學生物理辯論競賽');
-    assert.equal(typt.eventStartsAt, undefined, '官網日期自相矛盾，不得擇一寫入');
+    assert.equal(typt.deadline, '', '第 18 屆報名已於 2026-01-19 截止、第 19 屆未公告，不得填舊日期');
+    assert.equal(typt.eventStartsAt, '2026-03-06');
+    assert.equal(typt.eventEndsAt, '2026-03-09');
     assert.ok(typt.registrationNote?.includes('19'));
+    assert.match(typt.description, /115\. 03\. 06 ~ 115\. 03\. 09/, '請保留官網逐字原文');
 });
 
 // ── 帶時區的精確截止時刻（第二輪） ──
