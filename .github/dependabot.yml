@@ -31,22 +31,31 @@ updates:
     commit-message:
       prefix: 'chore(deps)'
     groups:
-      # 這三個是自架到 public/vendor/ 的前端函式庫（見 scripts/vendor-assets.mjs）。
-      # 版本一動就會改變使用者實際下載的檔案，分成一組讓它們的變更容易一起審。
-      # tailwindcss 與 @tailwindcss/* 必須一起升。
-      # @tailwindcss/vite 對 tailwindcss 是**精確 pin**（4.3.3 依賴 tailwindcss 4.3.3），
-      # 而 package.json 宣告的是 caret 範圍 ^4.3.3。只升其中一個就會產生 split tree：
-      #   node_modules/tailwindcss                              新版  ← 根
+      # tailwindcss 與 @tailwindcss/* 分在同一組。
+      #
+      # 先說清楚這一組**不能**做到什麼，免得被當成防護：分組只是把「當下剛好都有
+      # 新版」的更新併進同一個 PR，它擋不住「只有 tailwindcss 出新版」的情況。
+      # dependabot-core 的 message_builder.rb 對 dependencies.one? 有專屬分支
+      # （標題會變成「bump X … in the tailwind group」），也就是「一個群組、只有
+      # 一筆更新」本來就是官方預期行為。真正會擋下來的是 scripts/check-dep-tree.mjs。
+      #
+      # 為什麼要擋：@tailwindcss/vite 與 @tailwindcss/node 對 tailwindcss 都是
+      # **精確 pin**（4.3.3 依賴 tailwindcss 4.3.3），而 package.json 宣告的是 caret
+      # 範圍 ^4.3.3。只升其中一個就會產生 split tree：
+      #   node_modules/tailwindcss                                 新版  ← 根
       #   node_modules/@tailwindcss/vite/node_modules/tailwindcss  舊版  ← 巢狀
       #   node_modules/@tailwindcss/node/node_modules/tailwindcss  舊版  ← 巢狀
-      # 實測（把 tailwindcss 釘回 4.3.2）可重現：3 份副本、2 個版本、
-      # npm install exit 0、零警告。Vite 外掛用巢狀那份引擎編譯 CSS，
-      # 而 @tailwindcss/typography 是對著根那份解析的——產出會悄悄不一致。
-      # 分在同一組讓它們只會被一起升；scripts/check-dep-tree.mjs 是第二層保險。
+      # 實測（把根釘回 4.3.2、其餘 4.3.3）：npm install exit 0、零警告，而重建全站後
+      # BaseLayout 的 CSS 由 76,092 變成 75,938 bytes——全站預設字體 --font-sans 被換掉，
+      # 且產出是混血：內容等同純 4.3.2，檔頭 banner 卻寫著 v4.3.3。
+      #
+      # 分在同一組的價值是「相關變更會一起被看到、一起被審」，不是預防。
       tailwind:
         patterns:
           - 'tailwindcss'
           - '@tailwindcss/*'
+      # 這三個是自架到 public/vendor/ 的前端函式庫（見 scripts/vendor-assets.mjs）。
+      # 版本一動就會改變使用者實際下載的檔案，分成一組讓它們的變更容易一起審。
       vendored-frontend:
         patterns:
           - 'fuse.js'
