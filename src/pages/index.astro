@@ -344,6 +344,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
       });
 
+      // WCAG 4.1.2（A 級）：這是 combobox 的 focus-stays-on-input 模式——焦點不會移到
+      // 選項上，所以「目前選到哪一筆」只能靠 aria-activedescendant 傳達。
+      //
+      // 先前只改了 class 與 aria-selected。實測（正式站、按 ArrowDown 之後）：
+      //   aria-activedescendant = null，且 9 個選項全部沒有 id
+      // 也就是螢幕閱讀器使用者用方向鍵瀏覽時，完全聽不到任何回饋。
       function updateSelection() {
         resultElements.forEach((el, idx) => {
           if (idx === selectedIndex) {
@@ -355,6 +361,36 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             el.setAttribute('aria-selected', 'false');
           }
         });
+        const active = selectedIndex >= 0 ? resultElements[selectedIndex] : null;
+        if (active && active.id) {
+          searchInput.setAttribute('aria-activedescendant', active.id);
+        } else {
+          // 沒有作用中的選項時必須「移除」而不是設成空字串：空字串仍是一個指向
+          // 不存在元素的參照，部分螢幕閱讀器會因此停留在上一筆。
+          searchInput.removeAttribute('aria-activedescendant');
+        }
+      }
+
+      // WCAG 4.1.3「狀態訊息」（AA 級）：結果數量的變化是狀態訊息，必須在不移動
+      // 焦點的情況下被播報。實測本頁原本**完全沒有任何 live region**，看不到畫面的
+      // 使用者打完字之後不會知道有沒有結果、有幾筆。
+      //
+      // 競賽頁已經做對了（#result-count 帶 aria-live="polite"），這裡照同樣的形狀補。
+      // 用 role="status"，它隱含 aria-live="polite" 與 aria-atomic="true"。
+      let searchStatusEl = null;
+      function announceResults(count, query) {
+        if (!searchStatusEl) {
+          searchStatusEl = document.createElement('div');
+          searchStatusEl.setAttribute('role', 'status');
+          searchStatusEl.className = 'sr-only';
+          resultsContainer.parentNode.insertBefore(searchStatusEl, resultsContainer);
+        }
+        // 一律用 textContent：這裡會放使用者輸入的字串。
+        searchStatusEl.textContent = !query
+          ? ''
+          : count === 0
+            ? '找不到符合「' + query + '」的結果'
+            : '找到 ' + count + ' 筆符合「' + query + '」的結果，可用上下方向鍵瀏覽';
       }
 
       clearBtn.addEventListener('click', () => {
@@ -375,16 +411,25 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           emptyDiv.className = 'p-4 my-2 text-center text-gray-500 bg-white rounded-lg shadow-sm';
           emptyDiv.textContent = `找不到與「${query}」相關的結果`;
           resultsContainer.appendChild(emptyDiv);
+          // 空結果也要播報。這條路徑會提早 return，不補的話「查無結果」對螢幕
+          // 閱讀器使用者是完全無聲的——那正是最需要回饋的情況。
+          selectedIndex = -1;
+          searchInput.removeAttribute('aria-activedescendant');
+          resultElements = [];
+          announceResults(0, query);
           return;
         }
 
-        results.forEach((result) => {
+        results.forEach((result, index) => {
           const item = result.item;
           const linkEl = document.createElement('a');
           linkEl.href = item.url;
           linkEl.className = 'block p-4 my-2 transition duration-300 ease-in-out bg-white rounded-lg shadow-sm hover:shadow-lg hover:bg-blue-50';
           linkEl.setAttribute('role', 'option');
           linkEl.setAttribute('aria-selected', 'false');
+          // aria-activedescendant 只能指向「有 id 的元素」。沒有 id 的話，焦點留在
+          // 輸入框、螢幕閱讀器就完全播報不出使用者正用方向鍵移到哪一筆。
+          linkEl.id = 'search-option-' + index;
 
           const titleEl = document.createElement('h3');
           titleEl.className = 'text-lg font-semibold text-blue-700';
@@ -439,7 +484,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         });
 
         selectedIndex = -1;
+        searchInput.removeAttribute('aria-activedescendant');
         resultElements = Array.from(resultsContainer.querySelectorAll('a'));
+        announceResults(resultElements.length, query);
       }
 
       // Fuse 的 key → 給使用者看的中文欄位名。key 不在表裡就不顯示（例如日後

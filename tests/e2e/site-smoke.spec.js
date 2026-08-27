@@ -280,3 +280,72 @@ test.describe('自架的第三方函式庫', () => {
         expect(cdn(), `仍有 CDN 請求：${cdn().join(', ')}`).toEqual([]);
     });
 });
+
+/**
+ * 搜尋框的無障礙契約（WCAG 4.1.2 A 級 / 4.1.3 AA 級）
+ * --------------------------------------------------------------
+ * 這兩條都是實測抓到的既有失敗，不是假想情境：
+ *
+ *   按 ArrowDown 之後 aria-activedescendant = null，9 個選項全部沒有 id
+ *     → 焦點留在輸入框的 combobox 模式下，螢幕閱讀器使用者用方向鍵瀏覽時
+ *       完全聽不到任何回饋。WCAG 4.1.2（A 級）失敗。
+ *
+ *   全頁沒有任何 aria-live / role=status
+ *     → 打完字之後不會知道有沒有結果、有幾筆。WCAG 4.1.3（AA 級）失敗。
+ *
+ * 這兩件事在畫面上完全看不出來——視覺使用者一切正常。只有實際查 DOM 才會發現，
+ * 所以必須有測試釘住。
+ */
+test.describe('搜尋框的無障礙契約', () => {
+    async function openAndSearch(page, query) {
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+        const input = page.locator('#search-input');
+        await expect(input).toBeEnabled({ timeout: 15_000 });
+        await input.fill(query);
+        return input;
+    }
+
+    test('方向鍵瀏覽時 aria-activedescendant 必須指向實際存在的選項', async ({ page }) => {
+        const input = await openAndSearch(page, 'A2');
+        await expect(page.locator('#search-results-container a[role="option"]').first()).toBeVisible({
+            timeout: 10_000,
+        });
+
+        // 每個選項都要有 id，否則 aria-activedescendant 沒有東西可指
+        const ids = await page
+            .locator('#search-results-container a[role="option"]')
+            .evaluateAll((els) => els.map((e) => e.id));
+        expect(ids.every((i) => i && i.length > 0), `有選項沒有 id：${JSON.stringify(ids)}`).toBe(true);
+        expect(new Set(ids).size, 'id 必須唯一').toBe(ids.length);
+
+        await input.press('ArrowDown');
+        const active1 = await input.getAttribute('aria-activedescendant');
+        expect(active1, '按 ArrowDown 之後必須指向第一個選項').toBe(ids[0]);
+        // 指向的 id 必須真的存在於文件中
+        expect(await page.locator(`#${active1}`).count()).toBe(1);
+
+        await input.press('ArrowDown');
+        expect(await input.getAttribute('aria-activedescendant'), '再按一次要移到第二個').toBe(ids[1]);
+
+        // 往回退到「沒有選取」時必須移除屬性，而不是留下空字串或舊值
+        await input.press('ArrowUp');
+        await input.press('ArrowUp');
+        expect(await input.getAttribute('aria-activedescendant'), '退回未選取時必須移除屬性').toBeNull();
+    });
+
+    test('結果數量必須以 live region 播報，查無結果也要', async ({ page }) => {
+        await openAndSearch(page, 'A2');
+        const status = page.locator('[role="status"], [aria-live="polite"]');
+        await expect(status.first()).toHaveCount(1, { timeout: 10_000 });
+
+        await expect
+            .poll(async () => (await status.first().textContent()) || '', { timeout: 10_000 })
+            .toMatch(/找到 \d+ 筆/);
+
+        // 查無結果是最需要回饋的情況，而它走的是提早 return 的那條路徑
+        await page.locator('#search-input').fill('zzzz不可能存在的關鍵字zzzz');
+        await expect
+            .poll(async () => (await status.first().textContent()) || '', { timeout: 10_000 })
+            .toMatch(/找不到/);
+    });
+});

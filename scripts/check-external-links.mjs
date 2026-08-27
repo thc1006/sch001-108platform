@@ -202,12 +202,40 @@ if (skipped) {
 }
 
 if (unverified.length) {
-    lines.push(
-        `<details><summary>ℹ️ 無法判定的連結 ${unverified.length} 筆（多為防爬機制，通常瀏覽器仍可開啟，不需處理）</summary>`,
-        '',
-    );
-    for (const u of unverified) lines.push(`- ${u.reason}：${u.url}`);
-    lines.push('', '</details>', '');
+    // 「無法判定」底下其實有兩種完全不同的東西，先前被同一句「多為防爬機制，通常
+    // 瀏覽器仍可開啟，不需處理」蓋過去：
+    //
+    //   403／429／5xx  → 站台有回應，只是拒絕這個 client。瀏覽器多半打得開。
+    //   逾時／連線被拒 → TCP 層完全不通。這種很可能是真的死站，只是我們刻意不把它
+    //                    判成 dead——runner 的網路環境（境外資料中心 IP）常被台灣的
+    //                    政府與學校站台整段封鎖，貿然判死會產生大量誤報。
+    //
+    // 實際發生過：sdl.ntl.edu.tw（6 個頁面引用）與 12basic.edu.tw 在台灣本地也是
+    // 連線逾時，等於已經死掉，卻被那句「不需處理」放行。分類規則刻意不改（只有
+    // ENOTFOUND 與 404/410 才開 issue），但報告必須讓人看得出差別。
+    const isUnreachable = (u) => /逾時|拒絕|連線失敗|refused|reset/i.test(u.reason || '');
+    const unreachable = unverified.filter(isUnreachable);
+    const rejected = unverified.filter((u) => !isUnreachable(u));
+
+    if (unreachable.length) {
+        lines.push(
+            `<details open><summary>⚠️ 連得上但沒有回應的連結 ${unreachable.length} 筆（TCP 層不通，<strong>值得人工確認是否已停站</strong>）</summary>`,
+            '',
+            'runner 位於境外資料中心，台灣的政府／學校站台常整段封鎖這類 IP，所以不自動判定為失效。',
+            '但若你在本地瀏覽器也開不起來，那就是真的停站了，請更新或移除連結。',
+            '',
+        );
+        for (const u of unreachable) lines.push(`- ${u.reason}：${u.url}`);
+        lines.push('', '</details>', '');
+    }
+    if (rejected.length) {
+        lines.push(
+            `<details><summary>ℹ️ 被站台拒絕的連結 ${rejected.length} 筆（403／429／5xx，多為防爬機制，瀏覽器通常仍可開啟）</summary>`,
+            '',
+        );
+        for (const u of rejected) lines.push(`- ${u.reason}：${u.url}`);
+        lines.push('', '</details>', '');
+    }
 }
 
 if (suppressed.length) {
