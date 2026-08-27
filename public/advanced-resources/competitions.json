@@ -173,7 +173,7 @@
     },
     {
       "title": "國際數學奧林匹亞 (IMO)",
-      "organizer": "各國數學學會",
+      "organizer": "International Mathematical Olympiad（台灣由數學奧林匹亞辦公室選訓）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
@@ -181,12 +181,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-07-10",
+      "eventEndsAt": "2026-07-21",
+      "registrationNote": "由 TMO 選拔國家隊 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.imo-official.org/",
-      "description": "世界最高等級的中學生數學競賽。台灣採國手選拔制（每年秋季初選）。第 67 屆 2026 年 7 月於中國上海舉行，赴中參賽請留意兩岸往來規定。"
+      "description": "世界最高等級的中學生數學競賽。第 67 屆 2026 年 7 月 10 至 21 日於中國上海舉行已結束；第 68 屆 2027 年 7 月 16 至 26 日於匈牙利布達佩斯舉行。台灣採國手選拔制，由教育部委託臺師大數學系的數學奧林匹亞辦公室辦理（APMO 初選、TMO、IMO 三階段選訓營），須經就讀學校報名、不接受個人報名。赴中參賽請留意兩岸往來規定。"
     },
     {
       "title": "國際資訊奧林匹亞 (IOI)",
-      "organizer": "各國資訊學會",
+      "organizer": "International Olympiad in Informatics（台灣由資訊奧林匹亞辦公室選訓）",
       "category": "資訊",
       "level": "國際",
       "form": "個人",
@@ -194,12 +198,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-08-09",
+      "eventEndsAt": "2026-08-16",
+      "registrationNote": "由 TOI 選拔國家隊 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://ioinformatics.org/",
-      "description": "全球中學生程式設計與演算法的頂級競賽。台灣採國手選拔制。第 38 屆 2026 年 8 月於烏茲別克塔什干舉行。"
+      "description": "全球中學生程式設計與演算法的頂級競賽。第 38 屆 2026 年 8 月 9 至 16 日於烏茲別克舉行，我國獲 1 金 2 銀 1 榮譽獎；官網公告「Germany was selected to host IOI 2027」（ioi2027.de），日期尚未公布。台灣採國手選拔制，由教育部國教署委託臺師大資工系的資訊奧林匹亞辦公室辦理（3/7 初選、兩階段選訓營、賽前集訓），須經就讀學校報名、不接受個人報名。"
     },
     {
       "title": "國際物理奧林匹亞 (IPhO)",
-      "organizer": "各國物理學會",
+      "organizer": "International Physics Olympiad（台灣由物理奧林匹亞選訓辦公室選訓）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
@@ -207,12 +215,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://ipho2026.com/",
-      "description": "中學生物理最高等級競賽。台灣採國手選拔制。2026 年於哥倫比亞舉行。"
+      "eventStartsAt": "2026-07-04",
+      "eventEndsAt": "2026-07-12",
+      "registrationNote": "由物奧選訓選拔 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://www.ipho-new.org/",
+      "description": "中學生物理最高等級競賽，官網自述為「the most prestigious international physics competition for secondary school students」，各國代表隊至多 5 人。第 56 屆 2026 年 7 月 4 至 12 日於哥倫比亞 Bucaramanga 舉行，2027 屆尚未公布。原先登記的 ipho2026.com 只是單屆網站、明年即失效，常設官網為臺灣物奧選訓辦公室所連結的 ipho-new.org。台灣採國手選拔制：初選 2025-11-01、複選 2026-01-31、決選研習營 2026-03-16 至 04-04，須經就讀學校報名。"
     },
     {
       "title": "國際化學奧林匹亞 (IChO)",
-      "organizer": "臺灣化學奧林匹亞委員會",
+      "organizer": "International Chemistry Olympiad Steering Committee（台灣由化學奧林匹亞選訓辦公室選訓）",
       "category": "科學",
       "level": "國際",
       "form": "個人",
@@ -220,12 +232,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-07-10",
+      "eventEndsAt": "2026-07-19",
+      "registrationNote": "由化奧選訓選拔 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.ichosc.org/",
-      "description": "中學生化學最高等級競賽。台灣採國手選拔制。2026 年於烏茲別克塔什干舉行。"
+      "description": "中學生化學最高等級競賽。ichosc.org 是 IChO 國際指導委員會的官網（原資料把主辦單位寫成台灣的委員會並不正確）。官網時程逐字：「2026 July 10-19, Uzbekistan」、「2027 July 19-28, Chinese Taipei」——2027 年由我國主辦。每隊參賽費用逐字「The participation fee for IChO is 3000 USD for one team」，由代表隊負擔。台灣採國手選拔制，由教育部委託臺師大化學系的中學生化學奧林匹亞（TWICHO）辦公室辦理，須經就讀學校報名。"
     },
     {
       "title": "國際生物奧林匹亞 (IBO)",
-      "organizer": "各國生物學會",
+      "organizer": "International Biology Olympiad e.V.（台灣由生物奧林匹亞選訓辦公室選訓）",
       "category": "科學",
       "level": "國際",
       "form": "個人",
@@ -233,12 +249,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2027-07-18",
+      "eventEndsAt": "2027-07-25",
+      "registrationNote": "由生奧選訓選拔 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.ibo-info.org/",
-      "description": "中學生生物最高等級競賽。台灣採國手選拔制。第 37 屆 2026 年於立陶宛維爾紐斯舉行。"
+      "description": "中學生生物最高等級競賽，官網自述為「the premier high school biology student competition worldwide」，逾 70 個國家與地區的國家生物奧林匹亞優勝者參加。官網 Future IBOs 頁公布：第 38 屆 2027 年 7 月 18 至 25 日於波蘭華沙、第 39 屆 2028 年 7 月 16 至 24 日於荷蘭、第 40 屆 2029 年於捷克布爾諾、第 41 屆 2030 年於巴西聖保羅（暫定）；2026 年第 37 屆已結束，不再列於該頁。台灣採國手選拔制，須經就讀學校報名。"
     },
     {
       "title": "國際天文與天文物理奧林匹亞 (IOAA)",
-      "organizer": "各國天文學會",
+      "organizer": "International Olympiad on Astronomy and Astrophysics",
       "category": "科學",
       "level": "國際",
       "form": "個人",
@@ -246,8 +266,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ioaastrophysics.org/",
-      "description": "中學生天文與天文物理最高等級競賽。台灣採國手選拔制。2026 年於越南舉行（預計 9–10 月）。"
+      "eventStartsAt": "2026-09-25",
+      "eventEndsAt": "2026-10-05",
+      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://ioaastrophysics.org/",
+      "description": "中學生天文與天文物理最高等級競賽，官網目標逐字寫明是希望「more bright high-school students will be eager to study astronomy at the university level」。第 19 屆 2026 年 9 月 25 日至 10 月 5 日於越南河內舉行。台灣採國家代表隊選拔制，個別學生無法直接報名，須循國內選拔管道。（www.ioaastrophysics.org 會 301 轉址至 ioaastrophysics.org。）"
     },
     {
       "title": "國際初級天文奧林匹亞 (IOAA-jr)",
@@ -259,12 +283,16 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ioaastrophysics.org/",
-      "description": "面向國中與高一學生的天文奧林匹亞，台灣採選拔制。2026 年於泰國舉行（預計 11 月）。"
+      "eventStartsAt": "2026-11-01",
+      "eventEndsAt": "2026-11-08",
+      "registrationNote": "限 16 歲以下 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://ioaastrophysics.org/junior-ioaa/current-junior-ioaa-olympiad",
+      "description": "IOAA 體系下面向低年級學生的天文奧林匹亞，官網逐字「an annual competition for junior high school students under the age of 16」——台灣學制下多數高中生已超齡，實際適用對象是國中生與部分高一生。第 5 屆 2026 年 11 月 1 至 8 日於泰國 Ubon Ratchathani 舉行，官網開放各國 pre-registration（由國家代表隊辦理，非個人報名）。"
     },
     {
       "title": "國際地球科學奧林匹亞 (IESO)",
-      "organizer": "International Earth Science Olympiad",
+      "organizer": "International Geoscience Education Organisation（台灣由臺師大地球科學系選訓）",
       "category": "科學",
       "level": "國際",
       "form": "個人",
@@ -272,8 +300,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://ieso-info.org/",
-      "description": "中學生地球科學最高等級競賽，含實地考察與國際合作測驗。台灣採國手選拔制。2026 年於義大利舉行（預計 8 月）。"
+      "eventStartsAt": "2026-08-20",
+      "eventEndsAt": "2026-08-27",
+      "registrationNote": "須由就讀學校報名 · 不接受個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://tpmso.k12ea.gov.tw/ieso/",
+      "description": "中學生地球科學競賽，由 International Geoscience Education Organisation (IGEO) 主辦，國際官方頁面為 igeoscied.org/activities/ieso-2/。重要警告：原先登記的 ieso-info.org 網域已被轉作澳洲線上博弈網站（標題「Best Online Pokies in Australia 2026」），與 IESO 完全無關，切勿再連過去。台灣選訓由教育部國教署委託臺師大地球科學系辦理：第 19 屆全國初選報名 2026-01-05 至 01-12、初選 3/7、選訓決賽營 4/8 至 4/19、國家代表隊選拔營 5/5 至 5/17、輔導營 6 至 8 月，國際賽 2026 年 8 月 20 至 27 日於義大利杜林（Torino）舉行。須由就讀學校報名，不接受個人報名。"
     },
     {
       "title": "國際語言學奧林匹亞 (IOL)",
