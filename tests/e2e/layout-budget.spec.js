@@ -58,19 +58,53 @@ async function measure(page) {
         const vh = window.innerHeight;
         const vw = window.innerWidth;
         const settle = (ms) => new Promise((r) => setTimeout(r, ms));
+        const overflowOf = () => {
+            const de = document.documentElement;
+            return Math.max(de.scrollWidth, document.body.scrollWidth) - vw;
+        };
+        const wideOf = () => {
+            const out = [];
+            if (overflowOf() <= 1) return out;
+            for (const el of document.querySelectorAll('body *')) {
+                const r = el.getBoundingClientRect();
+                if (r.right <= vw + 0.5 || r.height <= 0) continue;
+                const c = getComputedStyle(el);
+                if (c.overflowX === 'auto' || c.overflowX === 'scroll') continue;
+                out.push(`${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : ''} w=${Math.round(r.width)} right=${Math.round(r.right)}`);
+                if (out.length >= 3) break;
+            }
+            return out;
+        };
 
         // 在多個位置各量一次取最壞值。只量單一位置會漏掉東西：資料驅動的頁面
         // 在 JS 渲染完成前後 scrollHeight 差很多，用 scrollHeight/3 當唯一取樣點
         // 時，learning-portfolio/activity-database 這類頁面會量到「還沒進入釘住
         // 狀態」的位置而顯示為正常——實際上它有跟其他頁一樣的問題。
         const H = document.body.scrollHeight;
-        const targets = [700, Math.floor(H / 3), Math.floor(H / 2)].filter((t) => t > 0 && t < H);
+        const maxScroll = Math.max(0, H - vh);
+        const STEP = 120;
+
+        // 頁面根本捲不動時沒有「捲動中被遮住」這回事，直接回 0。
+        // 不這樣做的話會誤判成 100%：scrollTo(target) 與 scrollTo(target + STEP)
+        // 都會被夾在同一個位置，於是「捲了卻沒動」的判定對**每一個**元素都成立，
+        // 連 1964px 高的 <main> 都會被算成釘住的 chrome。實際踩過，而且因為頁面
+        // 高度取決於資料何時渲染完，症狀是時好時壞的 flaky。
+        if (maxScroll < STEP + 40) {
+            return { pct: 0, covered: 0, chrome: [], overflowX: overflowOf(), wide: wideOf() };
+        }
+
+        // 每個取樣點都要留得下 STEP 的捲動空間，否則同樣會夾在邊界。
+        const cap = maxScroll - STEP - 10;
+        const targets = [...new Set([700, Math.floor(H / 3), Math.floor(H / 2)].map((t) => Math.min(t, cap)))].filter(
+            (t) => t > 0,
+        );
         let worst = null;
         for (const target of targets) {
             const r = await sampleAt(target);
+            if (r === null) continue; // 這一點沒有真的捲動，樣本無效
             if (!worst || r.covered > worst.covered) worst = r;
         }
-        return worst;
+        return worst || { pct: 0, covered: 0, chrome: [], overflowX: overflowOf(), wide: wideOf() };
 
         async function sampleAt(target) {
         window.scrollTo(0, target);
@@ -84,8 +118,11 @@ async function measure(page) {
         });
         const before = cands.map((el) => el.getBoundingClientRect().top);
 
-        window.scrollTo(0, target + 120);
+        const yBefore = window.scrollY;
+        window.scrollTo(0, target + STEP);
         await settle(320);
+        // 真的捲動了才有判斷依據。沒捲動的話所有元素都會「看起來沒動」。
+        if (Math.abs(window.scrollY - yBefore) < STEP - 20) return null;
         const after = cands.map((el) => el.getBoundingClientRect().top);
 
         const pinned = [];
@@ -106,19 +143,8 @@ async function measure(page) {
         }
         if (s0 !== null) covered += e0 - s0;
 
-        const de = document.documentElement;
-        const overflowX = Math.max(de.scrollWidth, document.body.scrollWidth) - vw;
-        const wide = [];
-        if (overflowX > 1) {
-            for (const el of document.querySelectorAll('body *')) {
-                const r = el.getBoundingClientRect();
-                if (r.right <= vw + 0.5 || r.height <= 0) continue;
-                const c = getComputedStyle(el);
-                if (c.overflowX === 'auto' || c.overflowX === 'scroll') continue;
-                wide.push(`${el.tagName.toLowerCase()}${typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : ''} w=${Math.round(r.width)} right=${Math.round(r.right)}`);
-                if (wide.length >= 3) break;
-            }
-        }
+        const overflowX = overflowOf();
+        const wide = wideOf();
 
         return {
             pct: Math.round((covered / vh) * 100),
