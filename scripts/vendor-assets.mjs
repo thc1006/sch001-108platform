@@ -74,11 +74,14 @@ import { fileURLToPath } from 'node:url';
 // 靜態 import 掃描與本檔、與 scripts/check-built-site.mjs 共用同一份實作。
 // 同一件事有兩份擷取邏輯正是這一系列 issue 一路在修的失效模式；而且那份實作
 // 會先剝掉註解與字串，避免把 banner 裡的使用範例誤判成真的 import。
-import { staticImportSpecifiers } from './site-contract.lib.mjs';
+import { staticImportSpecifiers, stripJsCommentsAndStrings } from './site-contract.lib.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const NM = path.join(ROOT, 'node_modules');
 const OUT = path.join(ROOT, 'public', 'vendor');
+// 產出清單的檔名。scripts/check-built-site.mjs 也認同一個名字——改名要兩邊一起改，
+// 而漏改會被那邊的「有 vendor/ 產出卻找不到清單」擋下，不會靜默失效。
+const VENDOR_MANIFEST = 'vendor-manifest.json';
 
 /** 一律中止並印出理由。靜默略過會讓建置產物少一個檔，而那正是要防的失效模式。 */
 function die(...lines) {
@@ -304,25 +307,49 @@ const ESM_SYNTAX =
  *   `…?module.exports=n():"function"==typeof define&&define.amd?define([],n):…e.feather=n()`
  * 命中 UMD_BANNER，通過。
  *
- * 已知的取捨：老派「頂層 var 就是全域」的 IIFE build（既沒有 UMD banner 也沒有
- * 明寫 window.x=）會被否決。那是刻意的——寧可停在一個講得出「我找的是什麼、
- * 在這個檔裡沒找到」的訊息上，也不要放行一個載進去什麼都不會發生的檔。
+ * 判斷一律對「抹掉註解與字串之後」的內容做。不然一句
+ *   // this build no longer does window.feather = ...
+ * 就足以冒充正面訊號，而那正是這一系列修改一路在消滅的「用文件製造綠燈」。
+ *
+ * 已知的取捨，要說得準確——被否決的不只是「老派」寫法，而是**目前兩大打包器的
+ * iife 輸出**。實測會被否決的形狀：
+ *     esbuild   var feather=(()=>{…})();
+ *     rollup    var feather=function(){…}();
+ * 兩者都靠「頂層 var 在 classic script 裡就是全域」，檔案裡不會出現任何
+ * window/self/globalThis 字樣，也沒有 AMD 分支。這個取捨仍然是刻意的：寧可停在
+ * 一個講得出「我找的是什麼、在這個檔裡沒找到」的訊息上，讓人五秒內看懂並決定，
+ * 也不要放行一個載進去什麼都不會發生的檔。真的遇到時的正確處置是在這裡加一條
+ * 新的正面訊號，而不是把檢查拿掉。
+ * （Object.defineProperty(window,"x",…) 是合法的掛全域方式，已列入正面訊號。）
  */
 const CJS_SYNTAX = /(?:^|[^\w$.])(?:module\s*\.\s*exports\b|exports\s*\.\s*[A-Za-z_$]|require\s*\(\s*["'])/;
 const UMD_BANNER = /\bdefine\s*\.\s*amd\b|\bdefine\s*\(\s*(?:\[|["'])/;
-const GLOBAL_ASSIGN = /\b(?:window|self|globalThis|global)\s*(?:\.\s*[A-Za-z_$][\w$]*|\[\s*["'][^"']*["']\s*\])\s*=(?!=)/;
+const GLOBAL_ASSIGN =
+    /\b(?:window|self|globalThis|global)\s*(?:\.\s*[A-Za-z_$][\w$]*|\[\s*[\"'][^\"']*[\"']\s*\])\s*=(?!=)|\bObject\s*\.\s*defineProperty\s*\(\s*(?:window|self|globalThis|global)\b/;
+// UMD 變體：AMD 分支被拿掉，全域是「把 this／self 當參數傳進工廠函式」再用別名
+// 指派的（`}(this, function(){…})` ＋ 內部的 `g.feather=f()`）。這種檔看得出是
+// UMD 家族，但看不出它把全域掛在哪個名字上——所以仍然否決，但理由要說對：
+// 它不是「純 CommonJS」。第一版把它歸成純 CJS，那是一句錯的診斷。
+const GLOBAL_FACTORY_ARG = /\}\s*\)?\s*\(\s*(?:this|self|window|globalThis)\s*[,)]|typeof\s+self\s*[?:]/;
 
 function isEsModule(src) {
     return ESM_SYNTAX.test(src);
 }
 
-/** classic 的正面訊號：這個檔會不會在瀏覽器裡掛出全域。 */
+/** classic 的正面訊號：這個檔會不會在瀏覽器裡掛出全域。一律看抹白後的內容。 */
 function assignsBrowserGlobal(src) {
-    return UMD_BANNER.test(src) || GLOBAL_ASSIGN.test(src);
+    const clean = stripJsCommentsAndStrings(src);
+    return UMD_BANNER.test(clean) || GLOBAL_ASSIGN.test(clean);
 }
 
 function isCommonJsOnly(src) {
-    return CJS_SYNTAX.test(src) && !assignsBrowserGlobal(src);
+    const clean = stripJsCommentsAndStrings(src);
+    return CJS_SYNTAX.test(clean) && !assignsBrowserGlobal(src) && !GLOBAL_FACTORY_ARG.test(clean);
+}
+
+/** UMD 家族但認不出全域掛在哪：仍然否決，只是理由不同於「純 CommonJS」。 */
+function isUnrecognisedUmd(src) {
+    return !assignsBrowserGlobal(src) && GLOBAL_FACTORY_ARG.test(stripJsCommentsAndStrings(src));
 }
 
 /**
@@ -355,6 +382,10 @@ function resolveEntry(name, flavor, purpose) {
         }
         if (flavor === 'classic' && isCommonJsOnly(src)) {
             tried.push(`  ${field} = ${rel}（是純 CommonJS，用 <script src> 載會丟 ReferenceError: module is not defined）`);
+            continue;
+        }
+        if (flavor === 'classic' && isUnrecognisedUmd(src)) {
+            tried.push(`  ${field} = ${rel}（是 UMD 變體但沒有 AMD 分支，全域透過參數別名指派，認不出它掛在哪個名字上）`);
             continue;
         }
         if (flavor === 'classic' && !assignsBrowserGlobal(src)) {
@@ -728,6 +759,40 @@ if (missingRefs.length) {
 const emittedFiles = verifyEmittedImportGraph();
 const emittedJs = [...emittedFiles].filter((f) => /\.[cm]?js$/.test(f));
 
+// ③ 把「這一輪到底產出了哪些檔」寫成清單，交給 check:site 逐一確認它們真的
+//    進了 dist/。
+//
+// 為什麼需要這個而不是再擴充 import 圖走訪：走訪這件事本身有三個結構性的盲點，
+// 而且每一個都被實測打穿過——
+//
+//   · 動態 import 看不到。stencil 用 import(變數) 載 ion-icon 的 entry chunk，
+//     刪掉它 → check:site 全綠，瀏覽器 17 個 ion-icon 全部有 shadowRoot 但
+//     0 個有 <svg>，console 是 TypeError: Failed to fetch dynamically imported
+//     module。ionicons 8 上走訪只碰得到 9 個產出裡的 2 個。
+//   · 非 JS 的產出根本不在圖上。刪掉 svg/search-outline.svg → 全綠。
+//   · 走訪會被餓死。它的起點來自 HTML 屬性，所以只要哪天頁面改用 inline
+//     import() 載 vendor 程式碼，起點就是空集合——實測印出「走訪 0 個模組」、
+//     「錯誤：0」、「✅ 全部通過」，而引擎跟 chunk 都已經被刪掉。
+//
+// 清單沒有這三個盲點：它不管 HTML 長什麼樣、不管靜態還是動態、也不管副檔名。
+// 這是同一個保護第四次被搬家而不是被關上，到此為止。
+//
+// 清單不包含它自己（它是索引不是被索引者）；check:site 那邊也會在「有 vendor/
+// 產出卻沒有清單」時報錯，否則刪掉清單就等於把這一關關掉。
+const manifestEntries = listEmitted().sort();
+emit(
+    VENDOR_MANIFEST,
+    JSON.stringify(
+        {
+            generatedBy: 'scripts/vendor-assets.mjs',
+            note: '這一輪 vendor 出來的完整檔案清單。scripts/check-built-site.mjs 會要求每一筆都存在於 dist/。不要手改：它由建置產生，改它只會讓檢查對不上真實產物。',
+            files: manifestEntries,
+        },
+        null,
+        2,
+    ) + '\n',
+);
+
 console.log(
     'vendor 完成：\n' +
         `  fuse.esm.js ← fuse.js@${fuse.version} 的 ${fuse.field} → ${fuse.rel}\n` +
@@ -738,5 +803,7 @@ console.log(
         `\n  ionicon SVG ${wantedIon.length} 個：${wantedIon.join('、')}\n` +
         `  feather 名稱驗證 ${wantedFeather.length} 個：${wantedFeather.join('、')}\n` +
         `  頁面引用驗證 ${vendorRefs.length} 個：${vendorRefs.join('、')}\n` +
-        `  import 圖驗證 ${emittedJs.length} 個 JS 產出，靜態 import 全部指得到`,
+        `  import 圖驗證 ${emittedJs.length} 個 JS 產出，靜態 import 全部指得到
+` +
+        `  產出清單 ${VENDOR_MANIFEST}：${manifestEntries.length} 筆（check:site 會逐一確認它們都進了 dist/）`,
 );

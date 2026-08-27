@@ -217,8 +217,8 @@ export function walkJsonStrings(node, pointer = '', out = []) {
  * 還沒踩到；但那是運氣，而「訊息斬釘截鐵地說錯一件事」正是這一整組修改要
  * 消滅的東西——誤診比沒有訊息更糟。
  *
- * 抹成等長空白而不是刪除：行號與位移都不變，所以掃描結果還能拿位移回原始碼
- * 取出真正的 specifier 內容。
+ * 抹成等長空白而不是刪除：長度、行號與 UTF-16 位移都不變（切割方式見下面
+ * 迴圈開頭的註解），所以掃描結果還能拿位移回原始碼取出真正的 specifier 內容。
  *
  * 除法與正則字面值的分辨用業界通用的啟發式——`/` 前一個有意義的字元若是識別字／
  * 數字／`)`／`]` 就是除法，否則是正則的開頭。這不是完整的 parser，但失敗方向
@@ -226,7 +226,14 @@ export function walkJsonStrings(node, pointer = '', out = []) {
  * 藏在正則裡。
  */
 export function stripJsCommentsAndStrings(src) {
-    const out = Array.from(src);
+    // src.split('') 而不是 Array.from(src)：後者切的是**碼位**，但下面整個掃描
+    // 迴圈用的是 UTF-16 索引（src[i]、src.indexOf）。只要檔案裡出現一個星狀
+    // 平面字元（emoji、CJK 擴充 B、𝄞…），兩套索引就從那裡開始各差一格，抹白
+    // 落在錯誤的位置。實測兩個方向都會發生：一種是憑空報出
+    // 「靜態 import 了「」——不是相對路徑」這種內容是空字串的假錯誤，另一種更糟，
+    // 是真的 ./real.js 被漏掉、悄悄退出檢查範圍。目前八個 vendor 產出都沒有星狀
+    // 平面字元所以還沒踩到，但 minifier 保留的 banner 放個 emoji 是很平常的事。
+    const out = src.split('');
     const blank = (from, to) => {
         for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' ';
     };

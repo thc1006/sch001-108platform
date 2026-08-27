@@ -420,6 +420,64 @@ const distFileSet = new Set(distFiles);
     vendorModuleCount = visited.size;
 }
 
+// ── vendor 產出清單（scripts/vendor-assets.mjs 寫的）──
+//
+// 上面的 import 圖走訪有三個結構性盲點，每一個都被實測打穿過：
+//
+//   · 動態 import 看不到。stencil 用 import(變數) 載 ion-icon 的 entry chunk，
+//     刪掉它 → 走訪毫無反應、check:site 全綠，而瀏覽器是 17 個 ion-icon
+//     全部有 shadowRoot 但 0 個有 <svg>，console 印
+//     TypeError: Failed to fetch dynamically imported module。
+//     ionicons 8 上，走訪只碰得到 9 個產出裡的 2 個。
+//   · 非 JS 的產出不在圖上。刪掉 vendor/ionicons/svg/search-outline.svg → 全綠。
+//   · 走訪會被餓死。它的起點來自 HTML 屬性，所以只要頁面改用 inline import()
+//     載 vendor 程式碼，起點就是空集合——實測印出「走訪 0 個模組」、「錯誤：0」、
+//     「✅ 全部通過」，而引擎與 chunk 都已經被刪掉。
+//
+// 清單沒有這三個盲點：vendor 步驟本來就精確知道自己產出了哪些檔，把那個集合寫
+// 下來、在這裡逐一確認它們進了 dist/ 就好。不管 HTML 長什麼樣、不管靜態還是
+// 動態、也不管副檔名。這是同一個保護第四次被搬家而不是被關上，到此為止。
+//
+// 清單本身不見時也要紅：否則刪掉清單就等於把這一關關掉。只有「dist 裡完全沒有
+// vendor/ 產出」時才不要求（那種站台沒有自架函式庫可談）。
+const VENDOR_MANIFEST_REL = 'vendor/vendor-manifest.json';
+let vendorManifestCount = 0;
+{
+    const hasVendorOutput = distFiles.some((f) => f.startsWith('vendor/'));
+    if (hasVendorOutput && !distFileSet.has(VENDOR_MANIFEST_REL)) {
+        addError(
+            VENDOR_MANIFEST_REL,
+            'vendor 產出清單',
+            'dist/ 裡有 vendor/ 產出卻找不到這份清單。它由 scripts/vendor-assets.mjs 產生，缺了它等於整個 vendor 產物沒有人在驗。',
+        );
+    } else if (hasVendorOutput) {
+        let manifest;
+        try {
+            manifest = JSON.parse(await readFile(path.join(DIST, VENDOR_MANIFEST_REL), 'utf8'));
+        } catch (e) {
+            addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `無法解析：${e.message}`);
+        }
+        const list = Array.isArray(manifest?.files) ? manifest.files : null;
+        if (manifest && !list) {
+            addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', 'files 欄位不是陣列，清單格式不對');
+        } else if (list) {
+            if (list.length === 0) {
+                addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', '清單是空的——vendor 步驟不可能沒有任何產出，這代表清單本身壞了');
+            }
+            vendorManifestCount = list.length;
+            for (const entry of list) {
+                if (typeof entry !== 'string' || entry.startsWith('/') || entry.includes('..')) {
+                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `不合法的清單項目：${String(entry).slice(0, 80)}`);
+                    continue;
+                }
+                if (!distFileSet.has(`vendor/${entry}`)) {
+                    addError(VENDOR_MANIFEST_REL, 'vendor 產出清單', `vendor 步驟產出過 ${entry}，但它不在建置產物裡`);
+                }
+            }
+        }
+    }
+}
+
 // ── 外部網址 inventory（供排程健康檢查使用）──
 // 已經寫成 url 的主機名不必再從內文查一次（實測 44 個候選裡有 14 個是重複的）。
 // 比對用「完全相同的主機名」：ctf.hitcon.org 與 hitcon.org 是不同主機，
@@ -465,7 +523,8 @@ console.log('建置產物站台契約檢查');
 console.log(`  HTML ${htmlFiles.length} 檔、dist 檔案 ${distFiles.length} 個`);
 console.log(`  檢查的 reference：${refCount}`);
 console.log(`  站內需解析：${internal.length}`);
-console.log(`  vendor ES module import 圖：走訪 ${vendorModuleCount} 個模組（起點來自 HTML 屬性）`);
+console.log(`  vendor ES module import 圖：走訪 ${vendorModuleCount} 個模組（起點來自 HTML 屬性；追不到動態 import）`);
+console.log(`  vendor 產出清單：${vendorManifestCount} 筆全部存在於 dist/（不受 HTML 形狀與動態 import 影響）`);
 // 去重數與出現次數都要列出：只列去重數會讓總和對不起來，讀的人會誤以為有
 // 一批 reference 憑空消失（我自己在 review 時就這樣誤判過一次）。
 const externalOccurrences = [...external.values()].reduce((a, b) => a + b.occurrences.length, 0);
