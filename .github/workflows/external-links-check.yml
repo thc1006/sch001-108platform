@@ -26,15 +26,24 @@ concurrency:
   group: external-links-watchdog
   cancel-in-progress: false
 
+# issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
+# **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
+# job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
+# 新 job 就只會拿到下面這個 contents: read 的地板，要開 issue 必須自己寫出來。
 permissions:
   contents: read
-  issues: write
 
 jobs:
   check:
     name: 檢查全站外部連結
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # contents: read → checkout；issues: write → 最後一步的 gh issue create/comment。
+    # 這個 job 會拿 repo 裡的資料當網址去連線，所以它握著的寫入權限越窄越好；
+    # 下面的 if: 與「Refuse to run outside the default branch」是同一道防線的另兩層。
+    permissions:
+      contents: read
+      issues: write
     # 只在 default branch 跑。
     #
     # 這是安全條件，不是方便性設定：這個 job 會拿 repo 裡的資料當網址去連線，
