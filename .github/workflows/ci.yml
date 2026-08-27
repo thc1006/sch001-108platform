@@ -109,6 +109,17 @@ jobs:
       - name: Prove the taxonomy validators actually block (fault injection)
         run: npm run test:taxonomy-faults
 
+      # 相依樹的故障注入。package.json 宣告 tailwindcss: "^4.3.3"（caret），而
+      # @tailwindcss/vite@4.3.3 對 tailwindcss 是精確 pin 4.3.3——只要其中一邊被
+      # 單獨升級就會長出 split tree：樹裡同時存在兩個 tailwindcss 版本，npm install
+      # exit 0、零警告，但 Vite 外掛拿巢狀那份引擎編譯 CSS，產出悄悄不一致。
+      # 這一關證明守衛真的會擋，而不是「現在剛好沒事」。
+      #
+      # 相依：npm run test:deps-faults 由 fix/tailwind-split-tree-guard 提供，
+      # 那支 PR 必須先合併，否則這一步會找不到 script。
+      - name: Prove the dependency-tree guard actually blocks (fault injection)
+        run: npm run test:deps-faults
+
       # astro.config.mjs 設 base: '/sch001-108platform'，站內連結都是根相對路徑。
       # lychee 對本機檔案的根相對連結會在「解析」階段就失敗，而 --exclude 與
       # --scheme 都是解析之後才生效（lycheeverse/lychee#2125），因此必須重建與
