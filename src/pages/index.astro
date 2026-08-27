@@ -161,8 +161,24 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
   <!-- 1. 引入 Fuse.js 函式庫 -->
   <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
-         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。 -->
-  <script is:inline src={`${vendorBase}/vendor/fuse.min.js`}></script>
+         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。
+
+         type="module" 而不是原本的 classic script（#94）：fuse.js 7 起 dist/
+         底下只剩 .cjs 與 .mjs，UMD／IIFE build 一個都沒有了——也就是說「載進來
+         就有 window.Fuse」這條路徑在 7 以後不存在。ESM 則是 6（dist/fuse.esm.js）
+         與 7（dist/fuse.min.mjs）都有，所以改走 ESM 才是同時吃得下兩個大版的
+         那一條。上游檔名的差異由 vendor-assets.mjs 吸收：它一律輸出成
+         vendor/fuse.esm.js，並產生這裡載的 fuse-global.js（三行的 import ＋
+         window.Fuse = Fuse），所以這個網址不隨相依升級改變。
+
+         載入順序是有保證的，不是碰運氣：module script 沒有 async 時一律 defer，
+         規格要求它在文件解析完之後、DOMContentLoaded 之前執行完；下面那段
+         classic script 是在 DOMContentLoaded 裡才第一次碰到 Fuse。
+
+         失效行為與改動前相同：這個檔載不到時 Fuse 是 undefined，
+         initializeFuse() 內的 new Fuse(...) 會丟例外，而它兩個呼叫點都在
+         try/catch 或 .catch() 裡，使用者看到的仍是同一個紅色錯誤框。 -->
+  <script is:inline type="module" src={`${vendorBase}/vendor/fuse-global.js`}></script>
 
   <!-- 2. 全站搜尋功能邏輯 -->
   <script is:inline>

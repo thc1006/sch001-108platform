@@ -111,11 +111,27 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
     <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
-         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。 -->
+         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。
+
+         原本這裡還有一行 nomodule 的 ES5 後備（vendor/ionicons/ionicons.js），
+         已經移除（#94）。三個理由，每一個都是量出來的：
+
+         1. ionicons 8 不再提供這一半。7.1.0 有 dist/ionicons/ionicons.js
+            （ES5 loader，119.7kB）與五個 p-*.system*.js；8.1.0 一個都沒有。
+            升級後這一行會 404，而 check:site 驗 script[src]——CI 會直接紅，
+            但紅的理由跟真正的原因（上游刪了 ES5 build）看不出關係。
+         2. nomodule 只在「不支援 ES module」的瀏覽器執行，也就是 IE11／
+            Edge ≤18／Safari ≤10。那些瀏覽器連本頁自己的 <script is:inline>
+            都跑不了：它第一行就是 `document.addEventListener('DOMContentLoaded', () => {`，
+            箭頭函式在 IE11 是 SyntaxError，整段腳本不會執行，左側學群清單根本
+            不會渲染。首頁的搜尋腳本也一樣（用了 `firstItem?.title`，ES2020）。
+            也就是說這個後備保護的是一群本來就打不開本站的瀏覽器。
+         3. 少了 142.5kB 從來沒有被請求過的檔案進建置產物。
+
+         現代瀏覽器的行為完全不變：ion-icon 仍由下面這個 module loader 註冊，
+         tests/e2e/site-smoke.spec.js 會檢查每個 ion-icon 的 shadow DOM 裡真的
+         有 <svg>（找不到 SVG 時 ion-icon 不報錯只是不顯示，所以必須這樣驗）。 -->
     <script is:inline type="module" src={`${vendorBase}/vendor/ionicons/ionicons.esm.js`}></script>
-    <!-- ionicons 8 起不再提供 nomodule 建置（v7 有 ionicons.js，v8 只剩 ESM loader）。
-         那個 fallback 針對的是不支援 ES module 的瀏覽器（IE11 等），2026 年已無實際
-         使用者。留著只會讓 check:site 抓到一個 404 的 script src。 -->
 
     <script is:inline src="https://js.puter.com/v2/"></script>
 

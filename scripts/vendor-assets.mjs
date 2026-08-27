@@ -19,8 +19,48 @@
  *
  * public/vendor/ 不入版控（見 .gitignore）：它完全由 node_modules 推導得出，
  * commit 進去只會造成「lockfile 更新了但 vendor 忘了重跑」的漂移。
+ *
+ *
+ * 為什麼不寫死 dist 路徑（#94）
+ * ----------------------------------------------------------------
+ * 第一版把三個檔案的位置直接寫死（fuse.js/dist/fuse.min.js、
+ * ionicons/dist/ionicons/），缺檔時印的是「請先執行 npm ci」。dependabot #94
+ * （fuse.js ^6.6.2 → ^7.5.0、ionicons ^7.1.0 → ^8.1.0）於是變成一則**誤診**：
+ * npm ci 明明跑過而且成功了，真正的原因是 fuse.js 7 把 UMD build 整個刪掉。
+ * 把維護者指向一個沒有問題的地方，比沒有訊息更糟。
+ *
+ * 量到的事實（npm view ＋ npm pack --dry-run）：
+ *
+ *   fuse.js 6.6.2   main=./dist/fuse.common.js  module=./dist/fuse.esm.js
+ *                   unpkg=./dist/fuse.js        沒有 exports 欄位
+ *                   dist/ 有 fuse.min.js（UMD，23.5kB）
+ *   fuse.js 7.5.0   main=./dist/fuse.cjs        module=./dist/fuse.mjs
+ *                   exports['./min'].import=./dist/fuse.min.mjs（26.1kB）
+ *                   dist/ 底下只剩 .cjs 與 .mjs——UMD／IIFE build 一個都沒有，
+ *                   所以「掛出 window.Fuse 的 classic script」這條路徑不存在了
+ *
+ *   ionicons 7.1.0  unpkg=dist/ionicons.js  ← stencil 的舊版相容 shim（962B），
+ *                   它自己 appendChild 出 dist/ionicons/ionicons.esm.js
+ *                   與 nomodule 的 dist/ionicons/ionicons.js（ES5，119.7kB）
+ *   ionicons 8.1.0  unpkg=dist/ionicons/ionicons.esm.js
+ *                   dist/ionicons/ionicons.js 與全部 *.system.js 都不存在了
+ *                   ——ES5／SystemJS 那一半整個被移除，nomodule 沒有東西可載
+ *
+ * 所以：要複製哪一個檔，一律問套件自己的 package.json（exports／module／
+ * unpkg／jsdelivr／main），而且解析出來的檔還要再驗一次「它真的是我們要的那種
+ * 模組格式」。大版號一動，要嘛照樣解析得到（fuse 6→7 就是這樣走完的），要嘛
+ * 停在一個講得出「哪個套件、裝的是哪一版、它現在不再提供什麼」的訊息上。
+ *
+ * 被否決的做法：
+ *   - 「在 package.json 釘死 6.x／7.x」：把問題變成永遠不升級，而升級不了的
+ *     相依最後都會變成安全性通知。
+ *   - 「解析不到就靜默略過」：建置產物會少一個檔，而那正是這支腳本要防的失效
+ *     模式。缺檔一律中止，一個都不例外。
+ *   - 「改用 import.meta.resolve()／require.resolve()」：那兩個只看得到 exports
+ *     的 '.' 與明確列出的子路徑，拿不到 unpkg／jsdelivr 這兩個「瀏覽器 build」
+ *     專用欄位——ionicons 8 的 loader 位置正是只寫在 unpkg。
  */
-import { mkdirSync, copyFileSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,14 +68,10 @@ const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const NM = path.join(ROOT, 'node_modules');
 const OUT = path.join(ROOT, 'public', 'vendor');
 
-/** 缺檔一律中止。靜默略過會讓建置產物少一個檔案，而那正是要防的失效模式。 */
-function need(rel) {
-    const p = path.join(NM, rel);
-    if (!existsSync(p)) {
-        console.error(`找不到 node_modules/${rel}\n請先執行 npm ci（版本由 package-lock.json 鎖定）。`);
-        process.exit(1);
-    }
-    return p;
+/** 一律中止並印出理由。靜默略過會讓建置產物少一個檔，而那正是要防的失效模式。 */
+function die(...lines) {
+    for (const l of lines) console.error(l);
+    process.exit(1);
 }
 
 function copy(srcAbs, destRel) {
@@ -44,6 +80,216 @@ function copy(srcAbs, destRel) {
     copyFileSync(srcAbs, dest);
     return dest;
 }
+
+function emit(destRel, text) {
+    const dest = path.join(OUT, destRel);
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(dest, text, 'utf8');
+    return dest;
+}
+
+// ────────────────────────────────────────────────────────────────
+// 從套件自己的 package.json 推導「瀏覽器要載的是哪一個檔」
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * 讀套件的 manifest。這裡才是真正的「沒安裝」——訊息就只講這件事，不要像上一版
+ * 那樣把「套件裝好了但檔名變了」也說成「請先執行 npm ci」。
+ */
+function readManifest(name) {
+    const p = path.join(NM, name, 'package.json');
+    if (!existsSync(p)) {
+        die(`找不到 node_modules/${name}/package.json——這個套件沒有安裝。`, '請先執行 npm ci（版本由 package-lock.json 鎖定）。');
+    }
+    return JSON.parse(readFileSync(p, 'utf8'));
+}
+
+/**
+ * exports 欄位的最小解析器。
+ *
+ * 只做本腳本需要的那一段：子路徑（'.'／'./min'）＋ 條件（browser／import／
+ * default）。刻意不支援萬用字元子路徑（'./*'）——目前三個套件都沒用到，而且
+ * 沒解析到只會走到下一個候選欄位，不會靜默拿到錯的檔。
+ *
+ * conditions 是白名單而不是「除了 types 以外都收」：fuse.js 7 的
+ * exports['./min'].import 是 { types: './dist/fuse.d.ts', default: './dist/fuse.min.mjs' }，
+ * 只要順序寫錯就會 vendor 出一個 .d.ts 檔，而那在 runtime 是靜默失效。
+ */
+function pickCondition(node, conditions) {
+    if (node == null) return null;
+    if (typeof node === 'string') return node;
+    if (Array.isArray(node)) {
+        for (const alt of node) {
+            const hit = pickCondition(alt, conditions);
+            if (hit) return hit;
+        }
+        return null;
+    }
+    for (const c of conditions) {
+        if (Object.hasOwn(node, c)) {
+            const hit = pickCondition(node[c], conditions);
+            if (hit) return hit;
+        }
+    }
+    return null;
+}
+
+function resolveExports(exportsField, subpath, conditions) {
+    if (exportsField == null) return null;
+    if (typeof exportsField === 'string') return subpath === '.' ? exportsField : null;
+    // exports 可以是「條件物件」或「子路徑對照表」；只要有 key 以 '.' 開頭就是後者
+    const isSubpathMap = Object.keys(exportsField).some((k) => k.startsWith('.'));
+    if (!isSubpathMap) return subpath === '.' ? pickCondition(exportsField, conditions) : null;
+    if (!Object.hasOwn(exportsField, subpath)) return null;
+    return pickCondition(exportsField[subpath], conditions);
+}
+
+const ESM_CONDITIONS = ['browser', 'import', 'module', 'default'];
+
+/**
+ * 候選欄位的順序＝「最像瀏覽器要的那一個」在前。
+ *
+ * exports['./min'] 排第一，是因為那是套件自己宣告的壓縮版；fuse.js 7 就是靠
+ * 這一格拿到 dist/fuse.min.mjs（26.1kB）而不是 dist/fuse.mjs（50.4kB）。
+ * fuse.js 6 沒有 exports 欄位，會一路掉到 module=./dist/fuse.esm.js（41.3kB）。
+ *
+ * 6 的 dist/ 其實還有一個 fuse.esm.min.js（15.7kB），但它沒有被任何 metadata
+ * 指名。用「把 X.js 換成 X.min.js 再試試看」去猜檔名，正是這次要拔掉的那種
+ * 寫死；多出來的 25.6kB 未壓縮（GitHub Pages 會 gzip，實際差距遠小於此）
+ * 換到的是「升級時不會猜錯檔」，這個交換划算。
+ */
+function browserEntryCandidates(m) {
+    return [
+        ["exports['./min']", resolveExports(m.exports, './min', ESM_CONDITIONS)],
+        ["exports['.']", resolveExports(m.exports, '.', ESM_CONDITIONS)],
+        ['module', typeof m.module === 'string' ? m.module : null],
+        ['unpkg', typeof m.unpkg === 'string' ? m.unpkg : null],
+        ['jsdelivr', typeof m.jsdelivr === 'string' ? m.jsdelivr : null],
+        ['browser', typeof m.browser === 'string' ? m.browser : null],
+        ['main', typeof m.main === 'string' ? m.main : null],
+    ];
+}
+
+/**
+ * 解析出來的檔到底是不是 ES module／是不是 classic script。
+ *
+ * 這一關是必要的：欄位語意會騙人。ionicons 兩個大版的 module 欄位都指向
+ * dist/index.js（那是給 bundler 用的 addIcons API，不是瀏覽器 loader），
+ * feather-icons 的 unpkg 指向 UMD。只信欄位名稱就會 vendor 出一個「載進去
+ * 什麼都不會發生」的檔——而那在 runtime 是靜默失效。
+ *
+ * 是語法嗅探不是 parser，判準刻意收窄：
+ *   - export {／export *／export default／export const|let|var|function|class|async
+ *   - import {／import *／import "…"／import 名字
+ *   - 不算 import(：動態 import 在 classic script 裡完全合法
+ * UMD build 裡的 `exports.Fuse=` 不會誤判成 export（後面接的是 s 不是 {）。
+ */
+const ESM_SYNTAX =
+    /(?:^|[\s;{}()])export\s*(?:\{|\*|default\b|(?:const|let|var|function|class|async)\b)|(?:^|[\s;{}()])import\s*(?:\{|\*|["'])|(?:^|[\s;{}()])import\s+[A-Za-z_$]/;
+
+function isEsModule(abs) {
+    return ESM_SYNTAX.test(readFileSync(abs, 'utf8'));
+}
+
+/**
+ * 從 metadata 找出符合指定模組格式的瀏覽器進入點。
+ *
+ * flavor：'esm'（會被 <script type="module"> 或 import 載入）
+ *         'classic'（靠 <script src> 掛出全域變數）
+ */
+function resolveEntry(name, flavor, purpose) {
+    const m = readManifest(name);
+    const tried = [];
+    for (const [field, rel] of browserEntryCandidates(m)) {
+        if (!rel) continue; // 套件沒提供這一格，不值得列進錯誤訊息
+        const abs = path.join(NM, name, rel);
+        if (!existsSync(abs)) {
+            tried.push(`  ${field} = ${rel}（此檔已不存在）`);
+            continue;
+        }
+        // .cjs 一定不是瀏覽器能直接載的東西，先擋掉再談語法
+        if (rel.endsWith('.cjs')) {
+            tried.push(`  ${field} = ${rel}（CommonJS，瀏覽器載不了）`);
+            continue;
+        }
+        const esm = isEsModule(abs);
+        if (flavor === 'esm' && !esm) {
+            tried.push(`  ${field} = ${rel}（不是 ES module）`);
+            continue;
+        }
+        if (flavor === 'classic' && esm) {
+            tried.push(`  ${field} = ${rel}（是 ES module，掛不出全域變數）`);
+            continue;
+        }
+        return { abs, rel, field, version: m.version };
+    }
+    die(
+        `${name}@${m.version} 找不到可用的${flavor === 'esm' ? ' ES module ' : ' classic script '}瀏覽器 build。`,
+        `用途：${purpose}`,
+        tried.length ? `已依序試過它自己 package.json 宣告的：\n${tried.join('\n')}` : '  它的 package.json 沒有宣告任何進入點欄位。',
+        `這通常代表 ${name} 在某個大版把這一種 build 移除了（fuse.js 7 就移除了全部 UMD build）。`,
+        `請先確認 ${name} 現在提供哪些 build（npm pack ${name} --dry-run 會列出全部檔案），`,
+        '再決定 scripts/vendor-assets.mjs 與載入端要怎麼改；不要只是回退版本——那只是把升級成本往後推。',
+    );
+}
+
+/**
+ * stencil 的 lazy-load loader 目錄。
+ *
+ * ionicons 不是「複製一個檔」而是「複製一整個目錄」：loader 進入點會去 lazy-load
+ * 一堆 p-<hash>.js chunk，檔名帶 hash，挑著複製只會在 runtime 少一塊。
+ *
+ * 判準是「這個目錄裡同時有 *.esm.js 進入點與 p-*.js chunk」——那是驗證出來的
+ * 事實，不是猜的。兩個大版都通得過：
+ *   ionicons 7：unpkg=dist/ionicons.js 是舊版相容 shim（檔案裡有 stencil 自己
+ *               印的 data-stencil-namespace），它轉送到 dist/ionicons/
+ *   ionicons 8：unpkg 直接就是 dist/ionicons/ionicons.esm.js
+ */
+function isStencilLoaderDir(dir) {
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) return false;
+    const files = readdirSync(dir);
+    return files.some((f) => /^p-[A-Za-z0-9_-]+\.(?:entry\.)?js$/.test(f)) && files.some((f) => f.endsWith('.esm.js'));
+}
+
+function resolveStencilLoaderDir(name, purpose) {
+    const m = readManifest(name);
+    const tried = [];
+    for (const [field, rel] of browserEntryCandidates(m)) {
+        if (!rel) continue;
+        const abs = path.join(NM, name, rel);
+        if (!existsSync(abs)) {
+            tried.push(`  ${field} = ${rel}（此檔已不存在）`);
+            continue;
+        }
+        // ① 候選檔本身就在 loader 目錄裡
+        if (isStencilLoaderDir(path.dirname(abs))) {
+            return { dir: path.dirname(abs), entry: path.basename(abs), field, version: m.version };
+        }
+        // ② 候選檔是 stencil 的舊版相容 shim。它在 runtime 會 appendChild 出
+        //    <ns>/<ns>.esm.js，約定是「dist/<ns>.js 轉送到 dist/<ns>/」；照這個
+        //    約定推一次，再用上面同一個判準驗證，驗不過就當作沒解析到。
+        if (/data-stencil-namespace/.test(readFileSync(abs, 'utf8'))) {
+            const fwdDir = abs.replace(/\.js$/, '');
+            const fwdEntry = `${path.basename(fwdDir)}.esm.js`;
+            if (isStencilLoaderDir(fwdDir) && existsSync(path.join(fwdDir, fwdEntry))) {
+                return { dir: fwdDir, entry: fwdEntry, field: `${field}（stencil 相容 shim 轉送）`, version: m.version };
+            }
+            tried.push(`  ${field} = ${rel}（stencil 相容 shim，但它轉送的 ${path.relative(path.join(NM, name), fwdDir)}/ 不是 loader 目錄）`);
+            continue;
+        }
+        tried.push(`  ${field} = ${rel}（所在目錄沒有 stencil 的 p-*.js chunk）`);
+    }
+    die(
+        `${name}@${m.version} 找不到 stencil 的 lazy-load loader 目錄。`,
+        `用途：${purpose}`,
+        tried.length ? `已依序試過它自己 package.json 宣告的：\n${tried.join('\n')}` : '  它的 package.json 沒有宣告任何進入點欄位。',
+        `請先確認 ${name} 現在把 loader 放在哪裡（npm pack ${name} --dry-run 會列出全部檔案），再決定要怎麼改。`,
+    );
+}
+
+// ────────────────────────────────────────────────────────────────
+// 從原始碼推導「要哪些圖示」與「頁面實際引用了哪些 vendor 檔」
+// ────────────────────────────────────────────────────────────────
 
 /** 逐一走訪 src/ 底下可能含有圖示名稱的檔案。 */
 function eachSourceFile(fn) {
@@ -88,35 +334,115 @@ function collectIconNames() {
     return { ion: [...ion].sort(), feather: [...feather].sort() };
 }
 
+/**
+ * 頁面實際 <script src> 到哪些 vendor 檔，同樣從原始碼推導。
+ *
+ * 這一關把「上游改檔名 → vendor 出來的名字跟著變 → 頁面還指著舊名字」擋在
+ * 建置期。沒有它的話這種錯要等到 check:site（script[src] 解析不到）才會紅，
+ * 而 check:site 只在 astro build 之後才跑得了，訊息也講不出「是哪個套件改了什麼」。
+ */
+function collectVendorRefs() {
+    const refs = new Set();
+    eachSourceFile((_p, src) => {
+        for (const m of src.matchAll(/\/vendor\/([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\.(?:js|mjs|css|svg))/g)) refs.add(m[1]);
+    });
+    return [...refs].sort();
+}
+
+// ════════════════════════════════════════════════════════════════
+// 實際複製
+// ════════════════════════════════════════════════════════════════
 rmSync(OUT, { recursive: true, force: true });
 
-// ── 搜尋引擎 ──
-copy(need('fuse.js/dist/fuse.min.js'), 'fuse.min.js');
+// ── 搜尋引擎（fuse.js）──
+// 載入端改成 ES module，理由見 src/pages/index.astro：fuse.js 7 起不再有任何
+// UMD build，classic script 那條路整個消失了；ESM 則是 6 與 7 都有。
+const fuse = resolveEntry('fuse.js', 'esm', '首頁搜尋框的模糊搜尋引擎');
+copy(fuse.abs, 'fuse.esm.js');
+
+// 輸出檔名固定成 fuse.esm.js，再產一個把它掛成 window.Fuse 的 shim。
+//
+// 為什麼要多這一個檔：外部 module script 的 export 不會變成全域，而首頁的搜尋
+// 邏輯是一段 classic script（Astro 的 is:inline，拿不到 static import 需要的
+// 字面 specifier，而 base 路徑還是 /sch001-108platform/）。
+//
+// 被否決的做法：把搜尋邏輯整段改成 inline module。inline module 沒有 src，而
+// check:site 驗的是 script[src]——那等於把「vendor 檔不見時 CI 會紅」這個保護
+// 拆掉，而那正是當初自架取代 CDN 的主要理由。現在頁面只認 vendor/fuse-global.js
+// 這一個穩定網址，上游檔名怎麼改都不必動 .astro。
+emit(
+    'fuse-global.js',
+    [
+        '// 由 scripts/vendor-assets.mjs 產生，請勿手動編輯。',
+        `// 來源：fuse.js@${fuse.version} 的 ${fuse.field} → ${fuse.rel}`,
+        '// fuse.js 6 與 7 的瀏覽器 build 檔名不同（6：dist/fuse.esm.js，',
+        '// 7：dist/fuse.min.mjs），但兩版都 export default。首頁的搜尋邏輯因此',
+        '// 不必知道上游檔名，也不必隨大版升級改 <script src>。',
+        "import Fuse from './fuse.esm.js';",
+        'window.Fuse = Fuse;',
+        '',
+    ].join('\n'),
+);
 
 // ── feather-icons ──
-copy(need('feather-icons/dist/feather.min.js'), 'feather.min.js');
+// 這個仍然是 classic script：頁面靠 window.feather.replace() 就地換掉
+// [data-feather] 元素，而 feather 4 只提供 UMD（unpkg=dist/feather.min.js）。
+const feather = resolveEntry('feather-icons', 'classic', '兩個頁面的 data-feather 圖示');
+copy(feather.abs, 'feather.min.js');
 
 // ── ionicons：loader ＋ 只複製真的用到的 SVG ──
-// dist/ionicons/ 底下的 *.js 是 loader 與它 lazy-load 的 chunk，必須整組帶走
-// （檔名帶 hash，挑著複製只會在 runtime 少一塊）。svg/ 有 1338 個檔約 2.5MB，
-// 本站只用得到十幾個，所以逐一挑。
-const ioniconsDir = path.join(NM, 'ionicons/dist/ionicons');
-if (!existsSync(ioniconsDir)) {
-    console.error('找不到 node_modules/ionicons/dist/ionicons，請先執行 npm ci。');
-    process.exit(1);
-}
+const ion = resolveStencilLoaderDir('ionicons', '生涯探索頁的 ion-icon web component');
+
+// ESM loader 與它 lazy-load 的 p-*.js chunk 必須整組帶走（檔名帶 hash）。
+// ES5／SystemJS 那一半則刻意不帶：
+//   - 它只會被 <script nomodule src=".../ionicons.js"> 這個進入點載到，而那一行
+//     已經從 career-exploration/index.astro 移除（理由見該檔）。
+//   - ionicons 8 根本不再提供這一半，不帶走等於讓 7 與 8 vendor 出來的檔案集合
+//     語意一致，升級時不會有「7 有 8 沒有」的差異要解釋。
+//   - 實測 ionicons 7.1.0：ionicons.js（119.7kB）＋ 五個 *.system*.js（22.8kB）
+//     ＝ 142.5kB，從來沒有任何頁面請求過。ESM loader（ionicons.esm.js）import
+//     的是 p-d15ec307.js／p-1c0b2c47.entry.js（非 system），與 ES5 那半不相交。
+// 用排除法而不是列舉法：不認識的檔一律照樣複製，只有這兩類「確定只屬於 nomodule
+// 進入點」的才跳過——猜錯的方向必須是多複製，不能是少複製。
+//
+// ES5 loader 的檔名是「把進入點的 .esm.js 換成 .js」推出來的，所以只有在進入點
+// 真的叫 <ns>.esm.js 時才成立。否則寧可不推：推錯會讓 es5Loader 剛好等於進入點
+// 自己，把唯一要載的那個檔跳過——那是「少複製」，正是上面說不能發生的方向。
+const es5Loader = ion.entry.endsWith('.esm.js') ? ion.entry.replace(/\.esm\.js$/, '.js') : null;
+const skippedEs5 = [];
 let loaderCount = 0;
-for (const f of readdirSync(ioniconsDir)) {
+for (const f of readdirSync(ion.dir)) {
     if (!f.endsWith('.js')) continue;
-    copy(path.join(ioniconsDir, f), path.join('ionicons', f));
+    if (f === es5Loader || /\.system\./.test(f)) {
+        skippedEs5.push(f);
+        continue;
+    }
+    copy(path.join(ion.dir, f), path.join('ionicons', f));
     loaderCount++;
+}
+if (!existsSync(path.join(OUT, 'ionicons', ion.entry))) {
+    die(
+        `ionicons@${ion.version} 的 loader 進入點 ${ion.entry} 沒有被複製出來。`,
+        `loader 目錄：${path.relative(NM, ion.dir)}（由 ${ion.field} 解析而得）`,
+        skippedEs5.length ? `這一輪跳過的是：${skippedEs5.join('、')}` : '這一輪沒有跳過任何檔。',
+        '這是這支腳本的邏輯錯誤，不是相依的問題——排除規則不該把進入點本身排掉。',
+    );
 }
 
 const { ion: wantedIon, feather: wantedFeather } = collectIconNames();
 
+// svg/ 有一千多個檔約 2.5MB，本站只用得到十幾個，所以逐一挑。
+const svgDir = path.join(ion.dir, 'svg');
+if (!existsSync(svgDir)) {
+    die(
+        `ionicons@${ion.version} 的 loader 目錄底下沒有 svg/。`,
+        `loader 目錄：${path.relative(NM, ion.dir)}（由 ${ion.field} 解析而得）`,
+        'ion-icon 找不到 SVG 時不會報錯，只是不顯示——所以這裡直接中止，不讓它變成 runtime 的靜默失效。',
+    );
+}
 const missingIon = [];
 for (const name of wantedIon) {
-    const svg = path.join(ioniconsDir, 'svg', `${name}.svg`);
+    const svg = path.join(svgDir, `${name}.svg`);
     if (!existsSync(svg)) {
         missingIon.push(name);
         continue;
@@ -126,19 +452,52 @@ for (const name of wantedIon) {
 
 // feather 的圖示全部內嵌在 feather.min.js 裡，不需要挑檔；但名稱打錯同樣是
 // 「安靜地不顯示」，所以一併驗證。
-const featherIcons = JSON.parse(readFileSync(need('feather-icons/dist/icons.json'), 'utf8'));
+//
+// 名單改成 import 套件本身（走它的 main）而不是讀 dist/icons.json：後者又是一條
+// 寫死的 dist 路徑，套件換個目錄結構就會變成一則誤診訊息，正是這次要拔掉的東西。
+let featherIcons;
+try {
+    const mod = await import('feather-icons');
+    featherIcons = mod.icons ?? mod.default?.icons;
+} catch (err) {
+    die(`載入 feather-icons@${feather.version} 取圖示名單失敗：${err.message}`, '請確認該套件是否改變了進入點格式（例如改為純 ESM）。');
+}
+if (!featherIcons || typeof featherIcons !== 'object') {
+    die(
+        `feather-icons@${feather.version} 沒有匯出 icons 物件，無法驗證圖示名稱。`,
+        '名稱打錯時 feather 只會安靜地不顯示，所以這個驗證不能略過。',
+    );
+}
 const missingFeather = wantedFeather.filter((n) => !(n in featherIcons));
 
 if (missingIon.length || missingFeather.length) {
     // 名字打錯時兩個庫都只會安靜地不顯示，不會有任何錯誤——在這裡就擋下來。
-    if (missingIon.length) console.error(`原始碼用到的 ionicon 在套件中不存在：${missingIon.join('、')}`);
-    if (missingFeather.length) console.error(`原始碼用到的 feather icon 不存在：${missingFeather.join('、')}`);
-    console.error('請確認名稱拼寫，或確認該檔案載入的是哪一個圖示庫。');
-    process.exit(1);
+    const lines = [];
+    if (missingIon.length) lines.push(`原始碼用到的 ionicon 在 ionicons@${ion.version} 中不存在：${missingIon.join('、')}`);
+    if (missingFeather.length) lines.push(`原始碼用到的 feather icon 在 feather-icons@${feather.version} 中不存在：${missingFeather.join('、')}`);
+    lines.push('請確認名稱拼寫、確認該檔案載入的是哪一個圖示庫，或確認該圖示是否在新版被更名／移除。');
+    die(...lines);
+}
+
+// ── 最後一關：頁面 <script src> 指到的 vendor 檔，這一輪真的產出來了嗎 ──
+const vendorRefs = collectVendorRefs();
+const missingRefs = vendorRefs.filter((r) => !existsSync(path.join(OUT, r)));
+if (missingRefs.length) {
+    die(
+        `src/ 底下的頁面引用了這些 vendor 檔，但這一輪沒有產出：${missingRefs.join('、')}`,
+        `這一輪產出的是：${readdirSync(OUT).sort().join('、')}`,
+        '通常代表上游改了檔名（或這支腳本改了輸出檔名），而頁面還指著舊名字。',
+    );
 }
 
 console.log(
-    `vendor 完成：fuse.min.js、feather.min.js、ionicons loader ${loaderCount} 檔、\n` +
-        `  ionicon SVG ${wantedIon.length} 個：${wantedIon.join('、')}\n` +
-        `  feather 名稱驗證 ${wantedFeather.length} 個：${wantedFeather.join('、')}`,
+    'vendor 完成：\n' +
+        `  fuse.esm.js ← fuse.js@${fuse.version} 的 ${fuse.field} → ${fuse.rel}\n` +
+        '  fuse-global.js（產生的 window.Fuse shim）\n' +
+        `  feather.min.js ← feather-icons@${feather.version} 的 ${feather.field} → ${feather.rel}\n` +
+        `  ionicons/ ← ionicons@${ion.version} 的 ${ion.field}：ESM loader ${ion.entry} ＋ 共 ${loaderCount} 個 .js` +
+        (skippedEs5.length ? `（跳過只屬於 nomodule 的 ${skippedEs5.length} 個：${skippedEs5.join('、')}）` : '') +
+        `\n  ionicon SVG ${wantedIon.length} 個：${wantedIon.join('、')}\n` +
+        `  feather 名稱驗證 ${wantedFeather.length} 個：${wantedFeather.join('、')}\n` +
+        `  頁面引用驗證 ${vendorRefs.length} 個：${vendorRefs.join('、')}`,
 );
