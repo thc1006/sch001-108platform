@@ -144,8 +144,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-05-09",
+      "eventEndsAt": "2026-05-15",
+      "registrationNote": "由附屬科展選拔 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.societyforscience.org/isef/",
-      "description": "全球規模最大的高中生科學競賽。台灣代表隊經「台灣國際科學展覽會」選拔產生，並非公開報名；2026 年於美國舉行。"
+      "description": "由 Society for Science 主辦、Regeneron 冠名的全球最大中學生科學競賽，2026 年入圍者選自「365 affiliate fairs in more than 60 countries, regions, and territories」。沒有全球統一的報名截止日：參賽者須先在 Society 附屬科展獲獎晉級，台灣經臺灣國際科學展覽會選拔。2026 年 5 月 9 至 15 日於美國鳳凰城舉行已結束；官網公告 2027 年將回到洛杉磯，確切日期尚未公布（官網另有一處寫鳳凰城，兩處矛盾，以專頁公告為準）。"
     },
     {
       "title": "國際數學奧林匹亞 (IMO)",
@@ -261,8 +265,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2027-07-21",
+      "eventEndsAt": "2027-07-28",
+      "registrationNote": "僅受理國家代表隊 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://ioling.org/",
-      "description": "以邏輯推理破解陌生語言的中學生競賽，台灣經選拔賽組隊。2026 年於羅馬尼亞舉行（預計 7–8 月）。"
+      "description": "以邏輯推理破解陌生語言的中學生競賽，官網章程規定參賽者須「less than 20 years old on the first day of the competition」且為大學前學生，各國一隊至多 4 人。第 23 屆 2026 年 7 月 26 日至 8 月 2 日於羅馬尼亞布加勒斯特舉行已結束；第 24 屆 2027 年 7 月 21 至 28 日於泰國曼谷舉行，報名時程官網標示 TBA。台灣經國內選拔賽組隊。"
     },
     {
       "title": "國際哲學奧林匹亞 (IPO)",
@@ -274,8 +282,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-05-14",
+      "eventEndsAt": "2026-05-17",
+      "registrationNote": "僅受理國家代表團 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.philosophy-olympiad.org/",
-      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽。台灣採選拔制，2026 年於波蘭舉行。"
+      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽，章程逐字寫明「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、年齡上限為競賽年底滿 20 歲。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。注意：官網 How to participate 頁列出的約 70 個參加國名單中未見台灣，目前查無台灣代表團的報名管道。"
     },
     {
       "title": "國際地理奧林匹亞 (iGeo)",
@@ -287,8 +299,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-08-11",
+      "eventEndsAt": "2026-08-17",
+      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.geoolympiad.org/",
-      "description": "中學生地理綜合能力競賽，含寫作測驗、多媒體測驗與野外實察。台灣採選拔制，2026 年於土耳其舉行（預計 8 月）。"
+      "description": "由 International Geographical Union (IGU) Olympiad Commission 主辦的中學生地理競賽，含寫作測驗、多媒體測驗與野外實察，官網逐字「an annual competition for the best 16 to 19-year-old geography students」，各國一隊 4 人加 2 名領隊。2026 年於土耳其伊斯坦堡舉行（8/11–17）已結束；2027 年於拉脫維亞 Jelgava、2028 年於澳洲墨爾本舉行，日期尚未公布。台灣採選拔制。"
     },
     {
       "title": "國際國中科學奧林匹亞 (IJSO)",
@@ -300,8 +316,10 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://www.ijso-official.org/",
-      "description": "面向 15 歲以下學生的跨領域科學競賽（物理、化學、生物）。台灣採選拔制，2026 年於德國舉行（預計 11–12 月）。"
+      "registrationNote": "限 15 歲以下 · 由學校報名選訓",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://ijsoweb.org/",
+      "description": "跨領域（物理、化學、生物）科學競賽，官網逐字限「students who are fifteen years or younger on 31st December of the competition year」——台灣學制下多數高二、高三學生已超齡，實際適用對象是國中生與部分高一生。第 23 屆 2026 年於保加利亞索菲亞舉行（官網僅寫 December 2026，確切日期未公布），報名連結開放 8/1 至 8/31。台灣由國中科學奧林匹亞選訓辦公室選拔。原 www.ijso-official.org 的網域註冊已過期（HTTPS 交握失敗、HTTP 回 Namecheap 停放頁「Domain registration has expired.」），現行官網為 ijsoweb.org。"
     },
     {
       "title": "亞太數學奧林匹亞 (APMO)",
@@ -331,8 +349,15 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://apho.org/",
-      "description": "亞洲區中學生物理競賽，為 IPhO 的重要前哨戰。台灣採國手選拔制，2026 年於韓國舉行。"
+      "eventStartsAt": "2026-05-17",
+      "eventEndsAt": "2026-05-25",
+      "registrationNote": "每年 5 月舉行 · 無公開報名",
+      "cycle": {
+        "note": "每年 5 月舉行，由物理奧林匹亞選訓隊代表參加"
+      },
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://tpmso.k12ea.gov.tw/ipho/",
+      "description": "亞洲區中學生物理競賽，為 IPhO 的重要前哨戰。章程限「The age of the participants should not exceed twenty on June 30th of the year of the competition」，且須為高中在學或當年畢業尚未入大學者，每隊至多 8 人。第 26 屆 2026 年 5 月 17 至 25 日於韓國釜山舉行。台灣不開放個人報名，由物理奧林匹亞選訓隊代表參加。APhO 沒有常設官網（apho.org 已成 GoDaddy 待售停放頁，僅回 114 bytes 的轉址殼），各屆由主辦國自建，相關公告見臺灣選訓辦公室網站。"
     },
     {
       "title": "亞太資訊奧林匹亞 (APIO)",
@@ -363,8 +388,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-04-09",
+      "eventEndsAt": "2026-04-15",
+      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.egmo.org/",
-      "description": "鼓勵女性中學生投入數學的國際競賽。台灣女子數學代表隊採選拔制，2026 年於法國舉行。"
+      "description": "鼓勵女性中學生投入數學的國際競賽，官網逐字「made exclusively for high school female students」「Participation is by invitation only, with each country nominating up to four students」，參賽國已逾 60 國並含非歐洲國家。台灣確有參賽：官網國家頁以 Taiwan (TWN) 列出 2023 至 2026 各屆成績（2026 年為 2 銀 1 銅）。第 15 屆 2026 年 4 月 9 至 15 日於法國波爾多舉行已結束；2027 年於克羅埃西亞 Šibenik、2028 年於立陶宛維爾紐斯舉行，日期尚未公布。台灣選拔由數學奧林匹亞辦公室辦理，2026 屆 EGMO 初選 2025-09-20、報名 9/1 至 9/10。"
     },
     {
       "title": "歐洲女子資訊奧林匹亞 (EGOI)",
@@ -376,8 +405,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-05-12",
+      "eventEndsAt": "2026-05-18",
+      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://egoi.org/",
-      "description": "鼓勵女性中學生投入程式設計的國際競賽。台灣女子資訊代表隊採選拔制，2026 年於義大利舉行。"
+      "description": "鼓勵女性與非二元性別中學生投入程式設計的國際競賽，資格為「not older than twenty years on July 1st」且「enrolled at a school not higher than secondary education」，並須符合同年 IOI 參賽資格。非歐洲國家亦可參加：台灣於 2026 年首度組隊，官方統計頁列出 Taiwan 獲 2 銀 2 銅。2026 屆 5 月 12 至 18 日於義大利 Cesenatico 舉行已結束；2027 年於波蘭華沙舉行，日期標示 TBA。台灣選拔由資訊奧林匹亞辦公室辦理，2026 屆初選 2026-01-24。"
     },
     {
       "title": "丘成桐中學科學獎",
@@ -393,30 +426,21 @@
       "description": "由數學家丘成桐發起，分數學、物理、化學、生物、計算機、經濟金融建模六大領域。台灣學生可報名，決賽在中國舉行，赴中請留意兩岸往來規定。"
     },
     {
-      "title": "歐盟青年科學家競賽 (EUCYS)",
-      "organizer": "European Union Contest for Young Scientists",
-      "category": "科學",
-      "level": "國際",
-      "form": "個人/團體",
-      "region": "歐盟",
-      "eligibility": "國家隊選拔",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://eucys.eu/",
-      "description": "歐盟主辦的頂級青年科研競賽，開放 14–20 歲、以歐盟會員國及聯繫國選拔隊為主。台灣高中生無法直接報名，多經 ISEF 特別獎受邀觀摩；2026 年第 37 屆於 9 月 22–27 日在德國基爾舉行。"
-    },
-    {
       "title": "倫敦國際青年科學論壇 (LIYSF)",
       "organizer": "London International Youth Science Forum",
       "category": "科學",
       "level": "國際",
       "form": "個人",
       "region": "英國",
-      "eligibility": "邀請制",
+      "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2027-07-18",
+      "eventEndsAt": "2027-07-31",
+      "registrationNote": "先到先審 · 額滿為止",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.liysf.org.uk/",
-      "description": "為期兩週的科學交流營隊，含名校參訪與諾貝爾講者。採申請與推薦制，台灣多由科教館或學校推薦遴選，2026 年於倫敦舉行。"
+      "description": "由 London International Youth Science Forum CIC 主辦的兩週科學論壇，官網逐字「Participation is open to students of science aged between 16 and 21 years old」，並非邀請制而是公開申請、先到先審。台灣不在官網列出的 national coordinator 國家名單中，學生可自行申請。費用逐字「The participation fee/charge is £3,450.00 GBP per student」，不含機票。2027 屆於 7 月 18 至 31 日於倫敦舉行。"
     },
     {
       "title": "GENIUS Olympiad 環境主題競賽",
@@ -441,8 +465,10 @@
       "eligibility": "國家隊選拔",
       "mode": "線上",
       "deadline": "",
+      "registrationNote": "由各國賽區選拔 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.immchallenge.org/",
-      "description": "為期數日的團隊數學建模競賽，作品線上提交。台灣經區域選拔產生代表隊，每年約 3 月舉行。"
+      "description": "由 COMAP (the Consortium for Mathematics and Its Applications) 與 NeoUnion ESC Organization 主辦的中學生數學建模競賽，自述為「the world's premier international mathematical modeling competition for secondary school students」，各國／區至多 2 隊晉級國際賽。2026 屆於 2 至 4 月間的五日窗口進行、8 月 5 至 9 日於美國波士頓頒獎；2027 屆自 2 月 1 日開始。官網未列出參賽國名單，2026 年得獎名單中亦未見 Chinese Taipei，台灣賽區的報名管道請逕洽主辦單位（info@immchallenge.org）確認。"
     },
     {
       "title": "國際青年物理學家辯論賽 (IYPT)",
@@ -454,47 +480,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2027-07-05",
+      "eventEndsAt": "2027-07-12",
+      "registrationNote": "由 TYPT 選拔國家隊 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://www.iypt.org/",
-      "description": "以「物理擂台」形式辯論開放式研究題目的團隊競賽。台灣採選拔制組隊，2026 年於瑞士舉行。"
-    },
-    {
-      "title": "Regeneron 科學人才獎 (Regeneron STS)",
-      "organizer": "Society for Science（美國）",
-      "category": "科學",
-      "level": "國際",
-      "form": "個人",
-      "region": "美國",
-      "eligibility": "邀請制",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://www.societyforscience.org/regeneron-sts/",
-      "description": "美國歷史最悠久的高中科研競賽，僅限美國高中畢業班學生申請。台灣高中生不符報名資格，僅列作參考指標。"
-    },
-    {
-      "title": "國際天文奧林匹亞 (IAO)",
-      "organizer": "International Astronomy Olympiad",
-      "category": "科學",
-      "level": "國際",
-      "form": "個人",
-      "region": "其他",
-      "eligibility": "國家隊選拔",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://issp.ac.ru/iao/",
-      "description": "由歐亞天文學會主辦的中學生天文競賽，與 IOAA 為不同系統。台灣較少組隊，舉辦地點多在中亞／東歐，赴賽請評估當地情勢。"
-    },
-    {
-      "title": "歐洲環境永續奧林匹亞 (EOES)",
-      "organizer": "European Olympiad of Environmental Sciences",
-      "category": "社會永續",
-      "level": "國際",
-      "form": "團體",
-      "region": "歐盟",
-      "eligibility": "邀請制",
-      "mode": "實體",
-      "deadline": "",
-      "url": "https://eoes.science/",
-      "description": "歐洲區環境科學團隊競賽，主要對歐洲國家開放。台灣高中生通常不符正式參賽資格，僅列作環境類競賽參考。"
+      "description": "中學生以團隊形式對開放式物理題進行研究與辯論的國際賽事，參賽逾 38 國，各國多以國內選拔賽組隊，台灣經臺灣青年學生物理辯論競賽（TYPT）選拔（官網存有 Chinese Taipei 的申請文件）。2026 屆 7 月 5 至 12 日於瑞士蘇黎世舉行已結束；第 40 屆 2027 年 7 月 5 至 12 日於紐西蘭奧克蘭舉行，報名截止日尚未公布。"
     },
     {
       "title": "Codeforces 程式競賽",
@@ -859,19 +850,6 @@
       "description": "全程線上、以 5 分鐘提案影片參賽的高中創業競賽。台灣學生可免費報名；2026 屆已於 2 月截止，下屆時程請見官網。"
     },
     {
-      "title": "全球青年創業挑戰賽 (GYEC)",
-      "organizer": "Global Youth Entrepreneurship Challenge（日本）",
-      "category": "商業管理",
-      "level": "國際",
-      "form": "團體",
-      "region": "東亞",
-      "eligibility": "公開報名",
-      "mode": "混合",
-      "deadline": "",
-      "url": "https://www.gyec.org/",
-      "description": "源自日本、面向亞洲與全球高中生的創業競賽，鼓勵提出可行的商業計畫。台灣學生可組隊報名，報名時程依官網年度公告。"
-    },
-    {
       "title": "國際經濟學奧林匹亞 (IEO)",
       "organizer": "International Economics Olympiad",
       "category": "商業管理",
@@ -881,8 +859,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-07-12",
+      "eventEndsAt": "2026-07-20",
+      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://ieo-official.org/",
-      "description": "中學生經濟學、金融素養與商業個案綜合競賽。台灣經選拔賽組隊參加，舉辦地點每年不同，赴賽請評估當地情勢。"
+      "description": "中學生經濟學、金融素養與商業個案綜合競賽，資格為競賽當年 6 月 30 日前未滿 20 歲、且高中畢業日晚於前一年 12 月 1 日。台灣確有參賽：Chinese Taipei 列於 IEO 2026 官方參賽名單。第 9 屆 2026 年 7 月 12 至 20 日於中國深圳舉行已結束，2027 屆尚未公布。學生須經國內選拔進入國家代表隊，官網公布的報名期限（2025-10-30 預先申請、2026-01-31 早鳥、2026-04-30 最終）是各國代表隊向 IEO 報名之用，不是學生個人的報名截止日。"
     },
     {
       "title": "華頓全球高中投資競賽 (KWHS Investment Competition)",
@@ -997,8 +979,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-07-14",
+      "eventEndsAt": "2026-07-24",
+      "registrationNote": "經 Taiwan Debate Union 選拔",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://wsdcdebating.org/",
-      "description": "世界最高層級的中學生英語辯論賽。台灣須經國內選拔產生代表隊；2026 年賽事已於 7 月在肯亞奈洛比舉行，下屆主辦地依官網公告，赴賽請留意當地簽證與安全資訊。"
+      "description": "由 WSDC Ltd. 主辦的世界中學生英語辯論錦標賽，由各國辯論組織選派國家代表隊，官網列出 78 個國家／地區組織。台灣以 Taiwan 之名列於其中，國家組織為 Taiwan Debate Union，學生須經該組織選拔。2026 年 7 月 14 至 24 日於肯亞舉行已結束，2027 屆主辦國與日期尚未公布。官網未刊登逐字的年齡上限條款。"
     },
     {
       "title": "哈佛模擬聯合國 (HMUN)",
@@ -1109,19 +1095,6 @@
       "sourceCheckedAt": "2026-08-27",
       "url": "https://breakthroughjuniorchallenge.org/",
       "description": "全球高中生科普影片競賽，以 2 分鐘影片詮釋物理、數學或生命科學的重大概念，最高獎學金 25 萬美元。台灣 13–18 歲學生可免費投稿，2026 年截止 09-15；投稿後另須於 09-30 前完成至少 5 件他人作品的同儕互評，否則不具評選資格。"
-    },
-    {
-      "title": "JA 社會創新挑戰賽",
-      "organizer": "JA Worldwide",
-      "category": "社會永續",
-      "level": "國際",
-      "form": "團體",
-      "region": "全球線上",
-      "eligibility": "公開報名",
-      "mode": "混合",
-      "deadline": "",
-      "url": "https://www.jaworldwide.org/",
-      "description": "JA Worldwide 推動的全球青年社會創新與創業競賽，鼓勵以商業思維解決社會問題。台灣有 JA 在地組織協助報名，時程依年度活動公告。"
     },
     {
       "title": "World Scholar's Cup 世界學者盃",
@@ -1380,32 +1353,6 @@
       "description": "美國最大的高中經濟學知識競賽，亦設國際組。台灣學生可組隊報名國際賽道，賽程含線上初賽與決賽，時程依官網公告。"
     },
     {
-      "title": "DECA 國際職涯發展商業競賽",
-      "organizer": "DECA Inc.",
-      "category": "商業管理",
-      "level": "國際",
-      "form": "個人/團體",
-      "region": "美國",
-      "eligibility": "公開報名",
-      "mode": "混合",
-      "deadline": "",
-      "url": "https://www.deca.org/",
-      "description": "聚焦行銷、財金、創業與管理的高中商業競賽，採角色扮演個案與簡報賽制。台灣學生可透過國際分會參與，時程依官網公告。"
-    },
-    {
-      "title": "華頓全球高中議題寫作競賽 (Wharton Global Youth Comment & Win)",
-      "organizer": "Wharton Global Youth Program, University of Pennsylvania",
-      "category": "商業管理",
-      "level": "國際",
-      "form": "個人",
-      "region": "美國",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://globalyouth.wharton.upenn.edu/",
-      "description": "華頓商學院青年計畫舉辦的商業時事評論與寫作活動，鼓勵高中生分析商業新聞。台灣學生可免費線上參與，時程依官網公告。"
-    },
-    {
       "title": "iGEM 國際基因工程機器競賽",
       "organizer": "iGEM Foundation",
       "category": "科學",
@@ -1570,19 +1517,6 @@
       "description": "台灣最具規模的學生舞蹈競賽，分古典舞、現代舞、民俗舞等項目，經各縣市初賽選拔進入全國賽。自 115 學年度起增列芭蕾個人組、116 學年度起增列芭蕾團體組，報名時程依各區公告。"
     },
     {
-      "title": "美國學術寫作與藝術獎 (Scholastic Art & Writing Awards)",
-      "organizer": "Alliance for Young Artists & Writers",
-      "category": "藝術設計",
-      "level": "國際",
-      "form": "個人",
-      "region": "美國",
-      "eligibility": "公開報名",
-      "mode": "線上",
-      "deadline": "",
-      "url": "https://www.artandwriting.org/",
-      "description": "美國歷史最悠久的學生藝術與寫作獎，但僅限美國、加拿大及部分美屬地區在學學生投稿。台灣學生不符報名資格，僅列作參考。"
-    },
-    {
       "title": "哈佛模擬聯合國—中國會議 (HMUN China)",
       "organizer": "Harvard International Relations Council",
       "category": "社會永續",
@@ -1634,8 +1568,11 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://tpmso.org/tmo/",
-      "description": "我國數學奧林匹亞國手的選拔賽事，含初選、選訓決賽營與國手培訓，優勝者組成 IMO／APMO 代表隊。限未滿 20 歲之高級中等以下學校在學學生，須由就讀學校或主管機關統一報名，不接受個人報名。"
+      "eventStartsAt": "2026-02-04",
+      "registrationNote": "須由就讀學校報名 · 不接受個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://tpmso.k12ea.gov.tw/tmo/",
+      "description": "我國數學奧林匹亞國手的選拔賽事，由教育部國教署委託臺灣師範大學數學系「數學奧林匹亞辦公室」承辦，優勝者組成 IMO／APMO／EGMO 代表隊。依教育部遴選要點第四點，「擬參加本競賽之學生，應經由就讀學校於各學科選訓計畫所定期間內，向承辦大學或機構報名」，不接受個人報名。2026 屆 TMO 報名 1/12 09:00 至 1/20 17:00、2/4 於臺師大公館校區筆試；同體系另有 EGMO 初選（2025-09-20）、APMO 初選一階（2025-11-08）與二階（2026-01-28）。原 tpmso.org 已成 233 bytes 的轉址空殼，現行網域為 tpmso.k12ea.gov.tw。"
     },
     {
       "title": "全國資訊奧林匹亞—台灣選拔賽 (TOI)",
@@ -1647,8 +1584,11 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
-      "url": "https://tpmso.org/toi/",
-      "description": "我國資訊奧林匹亞國手的選拔賽事，含初選、兩階段選訓營與賽前集訓，優勝者組成 IOI 代表隊。須具 APCS 實作 3 級分以上或學科能力競賽資訊科決賽資格，並由就讀學校或地方主管機關代為報名。"
+      "eventStartsAt": "2026-03-07",
+      "registrationNote": "須由就讀學校報名 · 不接受個人報名",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://tpmso.k12ea.gov.tw/toi/",
+      "description": "我國資訊奧林匹亞國手的選拔賽事，由教育部國教署委託臺灣師範大學資訊工程學系承辦，優勝者組成 IOI 代表隊。依教育部遴選要點，學生「應經由就讀學校…向承辦大學或機構報名」，不接受個人報名。2026 屆行事曆：3/7 初選、3/16–28 第一階段選訓營、4/13–25 第二階段選訓營、5/9 APIO、7/6–25 賽前集訓、8/9–16 IOI（烏茲別克，我國獲 1 金 2 銀 1 榮譽獎）。官網另辦全年 6 梯次線上練習賽（各梯次賽前約一至兩週開放報名）與女子組鬥 Code 夏令營。原 tpmso.org 已成轉址空殼。"
     },
     {
       "title": "國際人工智慧奧林匹亞 (IOAI)",
@@ -1660,8 +1600,12 @@
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
+      "eventStartsAt": "2026-08-02",
+      "eventEndsAt": "2026-08-08",
+      "registrationNote": "由 TOAI 選拔組隊 · 無個人報名",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://ioai-official.org/",
-      "description": "中學生人工智慧國際奧林匹亞，含機器學習與科學競賽兩部分。台灣採選拔制組隊（見「IOAI 臺灣代表隊選拔」）；2026 年第 3 屆於 8 月 2–8 日在哈薩克阿斯塔納舉行。"
+      "description": "中學生人工智慧國際奧林匹亞，含機器學習與科學競賽兩部分。資格為 IOAI 當年 7 月 1 日 20 歲以下、且前一年 12 月 1 日之後仍在中小學正常在學；國家隊須經「the recognized national body」辦理、且對全國居民開放的選拔產生，台灣見「IOAI 臺灣代表隊選拔」。第 3 屆 2026 年 8 月 2 至 8 日於哈薩克阿斯塔納舉行已結束（各國隊伍報名分早鳥、標準、逾期三階段，最晚至 2026-06-01，另收每隊 1,550 至 2,600 歐元費用）；2027 屆官網列出新加坡，日期尚未公布。"
     },
     {
       "title": "國際數學競賽—澳洲數學競賽 (AMC, Australia)",
@@ -1764,8 +1708,10 @@
       "eligibility": "國家隊選拔",
       "mode": "混合",
       "deadline": "",
+      "registrationNote": "下屆時程依官網公告",
+      "sourceCheckedAt": "2026-08-27",
       "url": "https://ioaitw.github.io/",
-      "description": "國際人工智慧奧林匹亞（IOAI）臺灣代表隊的公開遴選管道，由中央大學主辦、朝陽科技大學協辦，開放全國高中職在學學生報名，含全國能力測驗與實體培訓營。2026 屆報名已於 6 月底截止，下屆時程依官網公告。"
+      "description": "國際人工智慧奧林匹亞（IOAI）臺灣代表隊的公開遴選管道，由國立中央大學主辦、朝陽科技大學協辦、教育部指導，含全國能力測驗與實體培訓營。官網目前僅公告 IOAI 2026（2026-08-02 至 08-08，哈薩克阿斯塔納），尚未公布下屆選拔時程，報名資格與期程請以官網最新公告為準。"
     },
     {
       "title": "Taiwan Brain Bee 腦科學競賽",
@@ -1835,8 +1781,10 @@
       "eligibility": "國家隊選拔",
       "mode": "混合",
       "deadline": "",
-      "url": "https://tpmso.org/ipho/",
-      "description": "物理奧林匹亞（IPhO／APhO）臺灣選訓辦公室網站，含全國初選、選訓決賽營與國手培訓時程。頁內「各科資訊」可跳轉至數學、資訊、生物、化學、地球科學及國中科學奧林匹亞等各科選訓辦公室，是查詢各科國手選拔的統一入口。"
+      "registrationNote": "須由就讀學校報名 · 依各科公告",
+      "sourceCheckedAt": "2026-08-27",
+      "url": "https://tpmso.k12ea.gov.tw/ipho/",
+      "description": "物理奧林匹亞（IPhO／APhO）臺灣選訓辦公室網站，由教育部委託臺師大物理系辦理。2026 屆時程：初選 2025-11-01、複選 2026-01-31、決選研習營 2026-03-16 至 04-04、APhO 2026-05-17 至 05-25（韓國釜山）、IPhO 2026-07-04 至 07-12（哥倫比亞）。頁尾「各科資訊」可跳轉至數學（TMO）、化學（TWICHO）、生物（IBO）、資訊（TOI）、地球科學（IESO）與國中科學（IJSO）等各科選訓辦公室，是查詢各科國手選拔的統一入口。原 tpmso.org 已成 235 bytes 的轉址空殼，現行網域為 tpmso.k12ea.gov.tw。"
     },
     {
       "title": "三星 Solve for Tomorrow 永續創新提案競賽",
