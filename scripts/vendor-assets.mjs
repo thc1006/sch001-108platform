@@ -14,7 +14,13 @@
  *
  * 改成自架之後：
  *   - 版本由 package-lock.json 鎖定（比 SRI 更完整：連相依都鎖）
- *   - 檔案缺少時 scripts/check-built-site.mjs 會在 CI 就擋下（script[src] 會被驗證）
+ *   - 檔案缺少時 CI 會擋下——但要分兩層看，別把保護範圍講得比實際大：
+ *       · 頁面用 HTML 屬性直接指名的（script[src]、link[rel=modulepreload]）由
+ *         scripts/check-built-site.mjs 驗；它讀的是 HTML 屬性，不會去追 ES
+ *         module 的 import 圖。
+ *       · import 圖那一層由本腳本最後的「產出自我一致性」關卡驗（見檔尾）。
+ *         少了它，vendor/fuse-global.js 背後那顆 41kB 的引擎可以整個消失而
+ *         check:site 照樣全綠——實測過，所以那一關不是裝飾。
  *   - 沒有第三方 runtime 請求
  *
  * public/vendor/ 不入版控（見 .gitignore）：它完全由 node_modules 推導得出，
@@ -41,7 +47,7 @@
  *
  *   ionicons 7.1.0  unpkg=dist/ionicons.js  ← stencil 的舊版相容 shim（962B），
  *                   它自己 appendChild 出 dist/ionicons/ionicons.esm.js
- *                   與 nomodule 的 dist/ionicons/ionicons.js（ES5，119.7kB）
+ *                   與 nomodule 的 dist/ionicons/ionicons.js（ES5，119,689 B）
  *   ionicons 8.1.0  unpkg=dist/ionicons/ionicons.esm.js
  *                   dist/ionicons/ionicons.js 與全部 *.system.js 都不存在了
  *                   ——ES5／SystemJS 那一半整個被移除，nomodule 沒有東西可載
@@ -108,12 +114,22 @@ function readManifest(name) {
  * exports 欄位的最小解析器。
  *
  * 只做本腳本需要的那一段：子路徑（'.'／'./min'）＋ 條件（browser／import／
- * default）。刻意不支援萬用字元子路徑（'./*'）——目前三個套件都沒用到，而且
- * 沒解析到只會走到下一個候選欄位，不會靜默拿到錯的檔。
+ * module／default）。刻意不支援萬用字元子路徑（'./*'）——目前三個套件都沒用到，
+ * 而且沒解析到只會走到下一個候選欄位，不會靜默拿到錯的檔。
  *
- * conditions 是白名單而不是「除了 types 以外都收」：fuse.js 7 的
+ * **依物件的 key 順序取第一個成立的條件**，不是依我們偏好的順序去挑。這是
+ * Node 與所有 bundler／CDN 的規則（條件物件是有序的，先寫的先贏），而第一版
+ * 是反過來跑白名單——那會讓同一份 package.json 在這裡解析到 A、在 Node／
+ * webpack／unpkg 解析到 B。故意偏好某個條件是一回事，跟整個生態系不一致而且
+ * 沒人講是另一回事。實測畸形 manifest
+ * `{ default: node 專用 build, browser: 瀏覽器 build }`：Node 會取 default，
+ * 舊寫法取 browser。
+ *
+ * 白名單的作用改成「哪些 key 算數」：不在白名單的 key（types／node／deno…）
+ * 直接跳過，不當成成立的條件。fuse.js 7 的
  * exports['./min'].import 是 { types: './dist/fuse.d.ts', default: './dist/fuse.min.mjs' }，
- * 只要順序寫錯就會 vendor 出一個 .d.ts 檔，而那在 runtime 是靜默失效。
+ * types 排第一但被跳過，所以拿到的是 .min.mjs 而不是 .d.ts。
+ * （即使如此，.d.ts 仍在 vetCandidate 再擋一次——單靠條件順序防守太薄。）
  */
 function pickCondition(node, conditions) {
     if (node == null) return null;
@@ -125,11 +141,10 @@ function pickCondition(node, conditions) {
         }
         return null;
     }
-    for (const c of conditions) {
-        if (Object.hasOwn(node, c)) {
-            const hit = pickCondition(node[c], conditions);
-            if (hit) return hit;
-        }
+    for (const key of Object.keys(node)) {
+        if (!conditions.includes(key)) continue;
+        const hit = pickCondition(node[key], conditions);
+        if (hit) return hit;
     }
     return null;
 }
@@ -153,10 +168,19 @@ const ESM_CONDITIONS = ['browser', 'import', 'module', 'default'];
  * 這一格拿到 dist/fuse.min.mjs（26.1kB）而不是 dist/fuse.mjs（50.4kB）。
  * fuse.js 6 沒有 exports 欄位，會一路掉到 module=./dist/fuse.esm.js（41.3kB）。
  *
- * 6 的 dist/ 其實還有一個 fuse.esm.min.js（15.7kB），但它沒有被任何 metadata
- * 指名。用「把 X.js 換成 X.min.js 再試試看」去猜檔名，正是這次要拔掉的那種
- * 寫死；多出來的 25.6kB 未壓縮（GitHub Pages 會 gzip，實際差距遠小於此）
- * 換到的是「升級時不會猜錯檔」，這個交換划算。
+ * 這裡有一個要講清楚的代價，不要用「差距遠小於此」帶過。首頁實際下載的那個檔
+ * 從 fuse.min.js 變成 fuse.esm.js，實測（gzip -9）：
+ *
+ *     23,539 B → 41,322 B   未壓縮 +75%
+ *      7,293 B → 10,814 B   gzip   +48%
+ *
+ * 也就是說在 #94 真的合併進來之前，每一位造訪首頁的人都要多付這 3.5kB
+ * （gzip 後）。6 的 dist/ 其實有一個 fuse.esm.min.js（15,745 B／gzip 5,297 B）
+ * 比原本還小，但它沒有被任何 metadata 指名；用「把 X.js 換成 X.min.js 再試試
+ * 看」去猜檔名，正是這次要拔掉的那種寫死。換到的是「升級時不會猜錯檔」，而且
+ * 這個代價在 #94 落地後自動消失（7 的 exports['./min'] 直接給壓縮版）。
+ * 頁面另外加了 <link rel="modulepreload">，把 shim 帶來的那一趟序列化往返
+ * 補回來（見 src/pages/index.astro）。
  */
 function browserEntryCandidates(m) {
     return [
@@ -168,6 +192,45 @@ function browserEntryCandidates(m) {
         ['browser', typeof m.browser === 'string' ? m.browser : null],
         ['main', typeof m.main === 'string' ? m.main : null],
     ];
+}
+
+/**
+ * 候選路徑的前置檢查：位置合法、是檔案、副檔名不是一望即知載不了的東西。
+ *
+ * 回傳 null 代表可以往下驗語法；回傳字串代表「這個候選被否決，理由是這句」。
+ * 位置不合法則直接中止（見下面 ① 的理由）。
+ *
+ * 每一條都是實際打出來的洞：
+ *   ① exports 指到套件外面（`"." : "../../SECRET.js"`）。Node 的規格本來就
+ *      禁止逃出套件根目錄，但 path.join 不會擋——舊版會安然 exit 0，把套件
+ *      外的檔案複製進 public/ 這個會被部署出去的目錄。這不是「上游改了檔名」
+ *      那種可以往下試下一個候選的情況，是 manifest 壞掉或有惡意，直接中止。
+ *   ② 欄位指到一個目錄（`"main": "./lib"`，folder-as-module 是合法寫法）。
+ *      existsSync 對目錄回 true，舊版會在 readFileSync 噴 EISDIR 的原始
+ *      stack trace——那正是這支腳本要消滅的那一類訊息。
+ *   ③ .cjs／.d.ts／.ts：瀏覽器一定載不了。.d.ts 特別要擋，因為型別宣告檔在
+ *      語法上是合法的 ES module，光靠下面的語法嗅探會直接放行
+ *      （實測 `exports['./min'].browser = './dist/fuse.d.ts'` → 舊版 exit 0
+ *      並把 .d.ts 當成搜尋引擎 vendor 出去）。
+ */
+function vetCandidate(pkgRoot, rel, name, field) {
+    const abs = path.resolve(pkgRoot, rel);
+    const inside = path.relative(pkgRoot, abs);
+    if (inside === '' || inside.startsWith('..') || path.isAbsolute(inside)) {
+        die(
+            `${name} 的 package.json 用 ${field} 指到套件根目錄外面：${rel}`,
+            `解析後的絕對路徑：${abs}`,
+            `套件根目錄：${pkgRoot}`,
+            'Node 的 exports 規格禁止這種寫法。這裡直接中止而不是換下一個候選——',
+            'vendor 出來的東西會被部署到公開的 public/vendor/，把套件外的檔案複製進去不是「降級」而是外洩。',
+        );
+    }
+    if (!existsSync(abs)) return '此檔已不存在';
+    if (!statSync(abs).isFile()) return '是目錄不是檔案（folder-as-module 這種寫法瀏覽器載不了）';
+    if (/\.cjs$/i.test(abs)) return 'CommonJS，瀏覽器載不了';
+    if (/\.d\.[cm]?ts$/i.test(abs)) return '是型別宣告檔（.d.ts），不是可執行的 build';
+    if (/\.[cm]?tsx?$/i.test(abs)) return '是 TypeScript 原始碼，不是可執行的 build';
+    return null;
 }
 
 /**
@@ -187,8 +250,31 @@ function browserEntryCandidates(m) {
 const ESM_SYNTAX =
     /(?:^|[\s;{}()])export\s*(?:\{|\*|default\b|(?:const|let|var|function|class|async)\b)|(?:^|[\s;{}()])import\s*(?:\{|\*|["'])|(?:^|[\s;{}()])import\s+[A-Za-z_$]/;
 
-function isEsModule(abs) {
-    return ESM_SYNTAX.test(readFileSync(abs, 'utf8'));
+/**
+ * classic script 這一側同樣要擋 CommonJS——而「不是 ESM」不等於「classic 載得動」。
+ *
+ * 純 CJS 檔用 <script src> 載進去，第一行 `module.exports = …` 就是
+ * ReferenceError: module is not defined，然後整頁的 feather 圖示安靜地消失。
+ * 舊版只驗「不是 ESM」，所以 CJS 一路放行；今天沒出事純粹是因為
+ * feather-icons 4 的 unpkg 剛好是 UMD 而且排在 main 前面。
+ *
+ * UMD 會同時命中 CJS 特徵（`module.exports=`／`exports.feather=`）與 AMD 分支
+ * （`define.amd`），而它就是設計成三種環境都能用的——所以判準是
+ * 「有 CJS 特徵、又沒有 AMD 分支、也沒有指派任何全域」才否決。
+ * 實測 feather-icons 4.29.2 的 dist/feather.min.js：
+ *   `…?module.exports=n():"function"==typeof define&&define.amd?define([],n)…`
+ * 命中 CJS_SYNTAX 也命中 UMD_BANNER，照樣通過。
+ */
+const CJS_SYNTAX = /(?:^|[^\w$.])(?:module\s*\.\s*exports\b|exports\s*\.\s*[A-Za-z_$]|require\s*\(\s*["'])/;
+const UMD_BANNER = /\bdefine\s*\.\s*amd\b|\bdefine\s*\(\s*(?:\[|["'])/;
+const GLOBAL_ASSIGN = /\b(?:window|self|globalThis|global)\s*(?:\.\s*[A-Za-z_$][\w$]*|\[\s*["'][^"']*["']\s*\])\s*=(?!=)/;
+
+function isEsModule(src) {
+    return ESM_SYNTAX.test(src);
+}
+
+function isCommonJsOnly(src) {
+    return CJS_SYNTAX.test(src) && !UMD_BANNER.test(src) && !GLOBAL_ASSIGN.test(src);
 }
 
 /**
@@ -199,26 +285,28 @@ function isEsModule(abs) {
  */
 function resolveEntry(name, flavor, purpose) {
     const m = readManifest(name);
+    const pkgRoot = path.join(NM, name);
     const tried = [];
     for (const [field, rel] of browserEntryCandidates(m)) {
         if (!rel) continue; // 套件沒提供這一格，不值得列進錯誤訊息
-        const abs = path.join(NM, name, rel);
-        if (!existsSync(abs)) {
-            tried.push(`  ${field} = ${rel}（此檔已不存在）`);
+        const fault = vetCandidate(pkgRoot, rel, name, field);
+        if (fault) {
+            tried.push(`  ${field} = ${rel}（${fault}）`);
             continue;
         }
-        // .cjs 一定不是瀏覽器能直接載的東西，先擋掉再談語法
-        if (rel.endsWith('.cjs')) {
-            tried.push(`  ${field} = ${rel}（CommonJS，瀏覽器載不了）`);
-            continue;
-        }
-        const esm = isEsModule(abs);
+        const abs = path.resolve(pkgRoot, rel);
+        const src = readFileSync(abs, 'utf8');
+        const esm = isEsModule(src);
         if (flavor === 'esm' && !esm) {
             tried.push(`  ${field} = ${rel}（不是 ES module）`);
             continue;
         }
         if (flavor === 'classic' && esm) {
             tried.push(`  ${field} = ${rel}（是 ES module，掛不出全域變數）`);
+            continue;
+        }
+        if (flavor === 'classic' && isCommonJsOnly(src)) {
+            tried.push(`  ${field} = ${rel}（是純 CommonJS，用 <script src> 載會丟 ReferenceError: module is not defined）`);
             continue;
         }
         return { abs, rel, field, version: m.version };
@@ -253,14 +341,18 @@ function isStencilLoaderDir(dir) {
 
 function resolveStencilLoaderDir(name, purpose) {
     const m = readManifest(name);
+    const pkgRoot = path.join(NM, name);
     const tried = [];
     for (const [field, rel] of browserEntryCandidates(m)) {
         if (!rel) continue;
-        const abs = path.join(NM, name, rel);
-        if (!existsSync(abs)) {
-            tried.push(`  ${field} = ${rel}（此檔已不存在）`);
+        // 與 resolveEntry 共用同一組前置檢查——逃出套件根目錄、目錄當進入點、
+        // .d.ts 這幾個洞在這條路徑上一樣會出現（這裡下面也要 readFileSync）。
+        const fault = vetCandidate(pkgRoot, rel, name, field);
+        if (fault) {
+            tried.push(`  ${field} = ${rel}（${fault}）`);
             continue;
         }
+        const abs = path.resolve(pkgRoot, rel);
         // ① 候選檔本身就在 loader 目錄裡
         if (isStencilLoaderDir(path.dirname(abs))) {
             return { dir: path.dirname(abs), entry: path.basename(abs), field, version: m.version };
@@ -291,13 +383,22 @@ function resolveStencilLoaderDir(name, purpose) {
 // 從原始碼推導「要哪些圖示」與「頁面實際引用了哪些 vendor 檔」
 // ────────────────────────────────────────────────────────────────
 
-/** 逐一走訪 src/ 底下可能含有圖示名稱的檔案。 */
+/**
+ * 逐一走訪 src/ 底下可能含有圖示名稱或 vendor 引用的檔案。
+ *
+ * 副檔名清單原本只有 astro|html|js|mjs|json，而 src/ 實際上是 60 個 .md、
+ * 28 個 .astro、2 個 .ts、1 個 .css——也就是**九成的檔案根本沒被掃到**。
+ * 下面 collectIconNames 的整套推導都建立在這個 walker 上，所以在
+ * src/data/clusters.ts 或任何內容 .md 裡新增一個 <ion-icon name="…">／
+ * `icon: '…'`，vendor 步驟不會知道，那個 SVG 就在 runtime 靜默 404——
+ * 正是那段註解宣稱要堵住的洞。清單改成涵蓋 src/ 會出現的所有文字型原始碼。
+ */
 function eachSourceFile(fn) {
     const walk = (dir) => {
         for (const e of readdirSync(dir, { withFileTypes: true })) {
             const p = path.join(dir, e.name);
             if (e.isDirectory()) walk(p);
-            else if (/\.(astro|html|js|mjs|json)$/.test(e.name)) fn(p, readFileSync(p, 'utf8'));
+            else if (/\.(astro|html|jsx?|[cm]js|tsx?|[cm]ts|json|mdx?)$/.test(e.name)) fn(p, readFileSync(p, 'utf8'));
         }
     };
     walk(path.join(ROOT, 'src'));
@@ -335,11 +436,18 @@ function collectIconNames() {
 }
 
 /**
- * 頁面實際 <script src> 到哪些 vendor 檔，同樣從原始碼推導。
+ * 頁面實際指名哪些 vendor 檔（<script src>、<link rel=modulepreload>…），
+ * 同樣從原始碼推導。
  *
  * 這一關把「上游改檔名 → vendor 出來的名字跟著變 → 頁面還指著舊名字」擋在
  * 建置期。沒有它的話這種錯要等到 check:site（script[src] 解析不到）才會紅，
  * 而 check:site 只在 astro build 之後才跑得了，訊息也講不出「是哪個套件改了什麼」。
+ *
+ * 已知的死角，寫在這裡免得誤以為它是全稱保證：這是純文字比對，抓得到的只有
+ * **字面常數**。`src={`${vendorBase}/vendor/${lib}.js`}` 這種把檔名算出來的
+ * 寫法看不到，`/vendor/` 前面不是斜線的（例如註解裡寫「（vendor/x.js）」）
+ * 也看不到。目前三個引用都是字面常數；真的要動態組檔名時，得同時想清楚這一關
+ * 就保護不到了。
  */
 function collectVendorRefs() {
     const refs = new Set();
@@ -347,6 +455,77 @@ function collectVendorRefs() {
         for (const m of src.matchAll(/\/vendor\/([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\.(?:js|mjs|css|svg))/g)) refs.add(m[1]);
     });
     return [...refs].sort();
+}
+
+/** 遞迴列出 public/vendor/ 底下所有檔案（相對 OUT 的 POSIX 路徑）。 */
+function listEmitted(dir = OUT, prefix = '', out = []) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const rel = prefix ? `${prefix}/${e.name}` : e.name;
+        if (e.isDirectory()) listEmitted(path.join(dir, e.name), rel, out);
+        else out.push(rel);
+    }
+    return out;
+}
+
+/**
+ * 把一個 JS 檔裡的**靜態** import／export-from specifier 抓出來。
+ *
+ * 只抓靜態形式。stencil 的 loader 是用 `import(变数)` 去 lazy-load chunk 的，
+ * 那種本來就靜態分析不到——ionicons 整個目錄照單全收正是為了這件事。
+ */
+function staticImportSpecifiers(src) {
+    const specs = new Set();
+    // import x／{x}／* as x from "…"　和　export {x}／* from "…"
+    const fromRe =
+        /(?:^|[^\w$.])(?:import|export)\s*(?:\{[^}]*\}|\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|[A-Za-z_$][\w$]*(?:\s*,\s*(?:\{[^}]*\}|\*\s+as\s+[A-Za-z_$][\w$]*))?)?\s*from\s*["']([^"']+)["']/g;
+    // 純副作用 import "…"
+    const bareRe = /(?:^|[^\w$.])import\s*["']([^"']+)["']/g;
+    for (const m of src.matchAll(fromRe)) specs.add(m[1]);
+    for (const m of src.matchAll(bareRe)) specs.add(m[1]);
+    return [...specs];
+}
+
+/**
+ * 產出的自我一致性：vendor 出來的每一個 ES module，它靜態 import 的東西都要
+ * 真的在 public/vendor/ 裡，而且必須是瀏覽器解析得出來的相對路徑。
+ *
+ * 為什麼一定要有這一關——這是 review 打出來的洞，不是假想：
+ * `rm dist/vendor/fuse.esm.js` 之後 `npm run check:site` 仍然是
+ * 「錯誤：0 ✅ 站台契約全部通過」，而全站搜尋已經死了。原因是
+ * scripts/check-built-site.mjs 讀的是 HTML 屬性（script[src] 等），
+ * 它不會去追 ES module 的 import 圖；改成 shim 之後被 HTML 指名的只剩那 7 行
+ * 的 fuse-global.js，它 import 的 41kB 引擎對 check:site 是隱形的。
+ * （對照組：`rm dist/vendor/feather.min.js` → check:site EXIT=1，訊息精準。）
+ *
+ * 順帶擋掉另一類：bare specifier（`node:fs`、`lodash`）與絕對網址。瀏覽器沒有
+ * import map 時解析不了這種，而它正是「manifest 指到 node 專用 build」會留下的
+ * 痕跡——pickCondition 現在照 Node 的 key 順序走，若某個套件真的把 node build
+ * 排在前面，就會在這裡被抓住而不是等使用者開頁面才發現。
+ */
+function verifyEmittedImportGraph() {
+    const emitted = new Set(listEmitted());
+    const problems = [];
+    for (const rel of emitted) {
+        if (!/\.[cm]?js$/.test(rel)) continue;
+        const src = readFileSync(path.join(OUT, rel), 'utf8');
+        for (const spec of staticImportSpecifiers(src)) {
+            if (!spec.startsWith('./') && !spec.startsWith('../')) {
+                problems.push(`${rel} 靜態 import 了「${spec}」——不是相對路徑，瀏覽器沒有 import map 解析不了`);
+                continue;
+            }
+            const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec.split(/[?#]/)[0]));
+            if (!emitted.has(target)) problems.push(`${rel} 靜態 import 了「${spec}」，但 ${target} 不在這一輪的產出裡`);
+        }
+    }
+    if (problems.length) {
+        die(
+            'vendor 產出的 import 圖不完整：',
+            ...problems.map((p) => `  ${p}`),
+            `這一輪產出的是：${[...emitted].sort().join('、')}`,
+            'check:site 只驗 HTML 屬性指名的檔，追不到 import 圖——這一關漏掉的東西不會有第二個人擋。',
+        );
+    }
+    return emitted;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -366,10 +545,16 @@ copy(fuse.abs, 'fuse.esm.js');
 // 邏輯是一段 classic script（Astro 的 is:inline，拿不到 static import 需要的
 // 字面 specifier，而 base 路徑還是 /sch001-108platform/）。
 //
-// 被否決的做法：把搜尋邏輯整段改成 inline module。inline module 沒有 src，而
-// check:site 驗的是 script[src]——那等於把「vendor 檔不見時 CI 會紅」這個保護
+// 被否決的做法：把搜尋邏輯整段改成 inline module。inline module 連 src 都沒有，
+// check:site 驗的是 HTML 屬性——那等於把「vendor 檔不見時 CI 會紅」這個保護整個
 // 拆掉，而那正是當初自架取代 CDN 的主要理由。現在頁面只認 vendor/fuse-global.js
 // 這一個穩定網址，上游檔名怎麼改都不必動 .astro。
+//
+// 但要講清楚 shim 本身也削弱了那個保護：被 script[src] 指名的只剩這 7 行，
+// 它 import 的 fuse.esm.js 對 check:site 是隱形的。補法有兩層——頁面加
+// <link rel="modulepreload" href=".../fuse.esm.js">（把它放回 check:site 的
+// HTML 屬性掃描範圍，順便省掉一趟序列化往返），以及本檔尾端的
+// verifyEmittedImportGraph()（驗產出之間的 import 圖）。
 emit(
     'fuse-global.js',
     [
@@ -399,9 +584,12 @@ const ion = resolveStencilLoaderDir('ionicons', '生涯探索頁的 ion-icon web
 //     已經從 career-exploration/index.astro 移除（理由見該檔）。
 //   - ionicons 8 根本不再提供這一半，不帶走等於讓 7 與 8 vendor 出來的檔案集合
 //     語意一致，升級時不會有「7 有 8 沒有」的差異要解釋。
-//   - 實測 ionicons 7.1.0：ionicons.js（119.7kB）＋ 五個 *.system*.js（22.8kB）
-//     ＝ 142.5kB，從來沒有任何頁面請求過。ESM loader（ionicons.esm.js）import
-//     的是 p-d15ec307.js／p-1c0b2c47.entry.js（非 system），與 ES5 那半不相交。
+//   - 實測 ionicons 7.1.0：ionicons.js（119,689 B）＋ 五個 *.system*.js
+//     （合計 22,742 B）＝ 142,431 B，從來沒有任何頁面請求過。
+//     ESM loader（ionicons.esm.js）唯一的靜態 import 是 ./p-d15ec307.js；
+//     ion-icon 的 entry chunk（p-1c0b2c47.entry.js）是 runtime 才 lazy-load 的，
+//     靜態分析看不到——所以這裡不能只複製「靜態 import 得到的」，必須整個目錄搬。
+//     ES5 那一半的入口 ionicons.js 引用的是 p-60d56620.system.js，兩組完全不相交。
 // 用排除法而不是列舉法：不認識的檔一律照樣複製，只有這兩類「確定只屬於 nomodule
 // 進入點」的才跳過——猜錯的方向必須是多複製，不能是少複製。
 //
@@ -479,16 +667,20 @@ if (missingIon.length || missingFeather.length) {
     die(...lines);
 }
 
-// ── 最後一關：頁面 <script src> 指到的 vendor 檔，這一輪真的產出來了嗎 ──
+// ── 最後兩關 ──
+// ① 頁面用 HTML 屬性指名的 vendor 檔，這一輪真的產出來了嗎
 const vendorRefs = collectVendorRefs();
 const missingRefs = vendorRefs.filter((r) => !existsSync(path.join(OUT, r)));
 if (missingRefs.length) {
     die(
         `src/ 底下的頁面引用了這些 vendor 檔，但這一輪沒有產出：${missingRefs.join('、')}`,
-        `這一輪產出的是：${readdirSync(OUT).sort().join('、')}`,
+        `這一輪產出的是：${listEmitted().sort().join('、')}`,
         '通常代表上游改了檔名（或這支腳本改了輸出檔名），而頁面還指著舊名字。',
     );
 }
+// ② HTML 屬性看不到的那一層：產出之間的 import 圖
+const emittedFiles = verifyEmittedImportGraph();
+const emittedJs = [...emittedFiles].filter((f) => /\.[cm]?js$/.test(f));
 
 console.log(
     'vendor 完成：\n' +
@@ -499,5 +691,6 @@ console.log(
         (skippedEs5.length ? `（跳過只屬於 nomodule 的 ${skippedEs5.length} 個：${skippedEs5.join('、')}）` : '') +
         `\n  ionicon SVG ${wantedIon.length} 個：${wantedIon.join('、')}\n` +
         `  feather 名稱驗證 ${wantedFeather.length} 個：${wantedFeather.join('、')}\n` +
-        `  頁面引用驗證 ${vendorRefs.length} 個：${vendorRefs.join('、')}`,
+        `  頁面引用驗證 ${vendorRefs.length} 個：${vendorRefs.join('、')}\n` +
+        `  import 圖驗證 ${emittedJs.length} 個 JS 產出，靜態 import 全部指得到`,
 );

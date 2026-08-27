@@ -161,15 +161,30 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
   <!-- 1. 引入 Fuse.js 函式庫 -->
   <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
-         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。
+         從 node_modules 複製。
 
          type="module" 而不是原本的 classic script（#94）：fuse.js 7 起 dist/
          底下只剩 .cjs 與 .mjs，UMD／IIFE build 一個都沒有了——也就是說「載進來
          就有 window.Fuse」這條路徑在 7 以後不存在。ESM 則是 6（dist/fuse.esm.js）
          與 7（dist/fuse.min.mjs）都有，所以改走 ESM 才是同時吃得下兩個大版的
          那一條。上游檔名的差異由 vendor-assets.mjs 吸收：它一律輸出成
-         vendor/fuse.esm.js，並產生這裡載的 fuse-global.js（三行的 import ＋
-         window.Fuse = Fuse），所以這個網址不隨相依升級改變。
+         vendor/fuse.esm.js，並產生這裡載的 fuse-global.js（7 行：5 行說明 ＋
+         import 與 window.Fuse = Fuse 各一行），所以這個網址不隨相依升級改變。
+
+         下面那行 modulepreload 有兩個作用，兩個都是必要的：
+
+         (a) 效能。shim 這個間接層會多一趟序列化往返——瀏覽器要先抓完
+             fuse-global.js、剖析完，才「發現」還要去抓 fuse.esm.js。
+             modulepreload 讓兩個請求同時出發。
+
+         (b) CI 保護。check:site 驗的是 HTML 屬性（script[src]、link[href]），
+             它不會去追 ES module 的 import 圖。只有 <script src> 的話，被驗到的
+             就只剩這 7 行的 shim，而它背後那顆 41kB 的引擎對 check:site 是隱形的
+             ——實測 `rm dist/vendor/fuse.esm.js` 後 check:site 仍然「錯誤：0
+             ✅ 全部通過」，但全站搜尋已經死了。把 fuse.esm.js 用
+             link[rel=modulepreload] 明寫在 HTML 裡，它就重新回到 check:site 的
+             驗證範圍。（vendor-assets.mjs 另有一關驗產出之間的 import 圖，
+             兩者擋的是不同時點的同一件事。）
 
          載入順序是有保證的，不是碰運氣：module script 沒有 async 時一律 defer，
          規格要求它在文件解析完之後、DOMContentLoaded 之前執行完；下面那段
@@ -178,6 +193,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          失效行為與改動前相同：這個檔載不到時 Fuse 是 undefined，
          initializeFuse() 內的 new Fuse(...) 會丟例外，而它兩個呼叫點都在
          try/catch 或 .catch() 裡，使用者看到的仍是同一個紅色錯誤框。 -->
+  <link rel="modulepreload" href={`${vendorBase}/vendor/fuse.esm.js`} />
   <script is:inline type="module" src={`${vendorBase}/vendor/fuse-global.js`}></script>
 
   <!-- 2. 全站搜尋功能邏輯 -->
