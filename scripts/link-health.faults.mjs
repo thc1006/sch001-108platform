@@ -237,7 +237,15 @@ policyCases.forEach((c, i) => {
 console.log('\nB. SSRF 防護的突變測試（link-health.test.mjs 必須紅）：');
 rmSync(MUTANT_DIR, { recursive: true, force: true });
 try {
-    const libSource = readFileSync(path.join(SCRIPTS, 'link-health.lib.mjs'), 'utf8');
+    // 換行一律正規化成 LF 再做字串比對。這個 repo 的檔案在 Windows 上是 CRLF，
+    // 而下面每一條 mutation 的比對字串都是用 LF 寫的——不正規化的話，跨行的比對
+    // 會靜默失敗（String.replace 找不到就原樣回傳，不會報錯），整條保護在 Windows
+    // 上等於沒有測到，在 Linux CI 上卻是綠的。實際發生過：「DNS 解析結果不再逐一
+    // 檢查」這一條在本機顯示「注入未生效」，在 CI 上卻正常。
+    // mutant 只是丟棄用的副本，寫回 LF 沒有副作用。
+    const libSource = readFileSync(path.join(SCRIPTS, 'link-health.lib.mjs'), 'utf8')
+        .split(/\r?\n/)
+        .join('\n');
     for (const m of guardMutations) {
         cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
         const mutated = m.apply(libSource);
