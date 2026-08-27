@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+// 自架的第三方函式庫放在 public/vendor/，路徑要帶上部署的 base。
+const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <BaseLayout
@@ -107,8 +109,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     </main>
 
-    <script is:inline type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script is:inline nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
+         檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
+         從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。 -->
+    <script is:inline type="module" src={`${vendorBase}/vendor/ionicons/ionicons.esm.js`}></script>
+    <script is:inline nomodule src={`${vendorBase}/vendor/ionicons/ionicons.js`}></script>
 
     <script is:inline src="https://js.puter.com/v2/"></script>
 

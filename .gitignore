@@ -87,3 +87,8 @@ school/
 # 中途被中斷時留下的殘骸不該進版控）
 /.faultcheck/
 /scripts-faultcheck/
+
+# 自架的第三方前端函式庫（scripts/vendor-assets.mjs 從 node_modules 複製）。
+# 完全由 package-lock.json 推導得出，入版控只會造成「lockfile 更新了但 vendor
+# 忘了重跑」的漂移；缺檔時 check:site 會在 CI 擋下。
+/public/vendor/
