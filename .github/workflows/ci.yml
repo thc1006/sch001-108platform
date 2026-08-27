@@ -287,7 +287,16 @@ jobs:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [required]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 這個值必須明顯大於下面 deploy-pages 的 timeout（15 分鐘），否則兩者會互相競爭。
+    #
+    # 實際踩過：原本這裡是 10 分鐘，而 actions/deploy-pages 的 timeout 預設也正好是
+    # 600000ms＝10 分鐘。當 GitHub Pages 的 updating_pages 階段變慢（2026-08-27 當天
+    # 就是如此），job 逾時先把整個 job 砍掉，action 來不及回報自己的錯誤——而**逾時
+    # 被砍的 job 在 UI 上顯示成 cancelled，不是 failure**。結果是連續兩次部署沒有落地，
+    # main 的其他四個 job 全綠，沒有任何人會發現。
+    #
+    # 正確的分層是：內層工具先逾時並講清楚原因，外層只當「連工具都卡死」的保險。
+    timeout-minutes: 25
     # 權限只給這個 job。其餘 job 維持 workflow 層級的 contents: read。
     permissions:
       contents: read
@@ -306,3 +315,45 @@ jobs:
       - name: Deploy the verified artifact
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+        with:
+          # 預設 600000ms（10 分鐘）。Pages 變慢時這個值到期，action 會以明確訊息
+          # 失敗；上面的 job timeout-minutes 必須更大，才輪得到它講話。
+          timeout: 900000
+
+  # deploy-pages 成功只證明「部署請求被接受」，證明不了站台在服務新內容。
+  #
+  # #89 合併後實際發生過：五個 job 有四個成功、GitHub 的 deployments API 有該
+  # commit 的紀錄，但線上服務的仍是舊版本（vendor/fuse.min.js 回 404），而且完全
+  # 沒有訊號——因為 deploy 只在 push 到 main 時跑，不可能列入 PR 的 required check，
+  # 而 main 的 run 顯示的是 cancelled，沒有人會去看。
+  #
+  # 這個 job 去線上把 build-info.json 抓下來比對 commit，讓「部署落地」變成可驗證
+  # 的事實而不是假設。它刻意不放在 deploy job 內：deploy 被取消時該 job 的步驟
+  # 不會執行，而這一關必須在 deploy 沒成功時也跑得到（if: always()）。
+  verify-deploy:
+    name: Verify Deployment Landed
+    if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: '.node-version'
+
+      # deploy 被取消或失敗時就不必等了，直接指出問題——否則要空等 5 分鐘逾時。
+      - name: Fail fast when the deploy job did not succeed
+        if: ${{ needs.deploy.result != 'success' }}
+        run: |
+          echo "Deploy job 的結果是「${{ needs.deploy.result }}」，站台不會更新。" >&2
+          echo "常見原因：被較新的 run 取消、GitHub Pages 服務異常、Pages 來源設定不是 GitHub Actions。" >&2
+          exit 1
+
+      - name: Verify the live site serves this commit
+        run: npm run verify:deploy
