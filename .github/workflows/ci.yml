@@ -40,6 +40,15 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
+# workflow 層級是「地板」：任何日後新增而忘記寫 permissions 的 job 都只會拿到
+# contents: read。但地板不等於宣告——底下每個 job 都再各自寫一次自己真正需要的
+# 範圍，理由有二：
+#   1. 這一行被誰放寬（或被搬走）時，不會連帶把六個 job 一起放寬。
+#   2. 讀 job 的人不必往上翻檔頭才知道它拿得到什麼 token。
+# 倉庫設定 default_workflow_permissions 只對「完全沒有 permissions 鍵」的 job 生效，
+# 所以把它收成 read 之後本檔的有效權限一格都不會變：2026-08-27 main 的 run
+# 33120520304 六個 job 的日誌實測就已經是 Contents: read（deploy 另有 Pages: write），
+# 而當時倉庫預設仍是 write。
 permissions:
   contents: read
 
@@ -48,6 +57,10 @@ jobs:
     name: Site Integrity
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # checkout + npm ci + upload-pages-artifact。artifact 走 Actions runtime token，
+    # 不吃 GITHUB_TOKEN 的 actions 範圍，所以這裡只需要讀原始碼。
+    permissions:
+      contents: read
     steps:
       # 第三方 action 一律 pin 到完整 commit SHA：tag 是可移動的，而這幾支 action
       # 正好站在 merge integrity 的邊界上。三個 SHA 都已對 GitHub API 查證。
@@ -159,6 +172,10 @@ jobs:
     needs: [site]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # download-artifact 取的是**同一個 run** 的 artifact，走 runtime token；
+    # 只有跨 run 下載（run-id + github-token）才需要 actions: read。
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -215,6 +232,8 @@ jobs:
     name: Validate Data
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -271,6 +290,10 @@ jobs:
     needs: [site, data, browser]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # 這個 job 不 checkout、不呼叫任何 API，只讀 needs.*.result 然後 echo/test。
+    # 它同時是 ruleset 唯一的 required check，也就是最不該握著任何 token 的那一個。
+    # `{}` 表示所有範圍都設為 none（Metadata: read 是平台一律附帶、關不掉的）。
+    permissions: {}
     steps:
       - name: Require every deterministic job to have succeeded
         env:
@@ -364,6 +387,9 @@ jobs:
     # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，
     # 否則「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
     timeout-minutes: 15
+    # 只 checkout，然後對線上站台發匿名 HTTPS 請求，不碰任何 GitHub 寫入 API。
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

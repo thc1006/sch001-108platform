@@ -18,14 +18,21 @@ concurrency:
   group: competitions-watchdog
   cancel-in-progress: false
 
+# issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
+# **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
+# job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
+# 新 job 就只會拿到下面這個 contents: read 的地板，要開 issue 必須自己寫出來。
 permissions:
   contents: read
-  issues: write
 
 jobs:
   check:
     name: 檢查競賽資料
     runs-on: ubuntu-latest
+    # contents: read → checkout；issues: write → 最後一步的 gh issue create/comment。
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
