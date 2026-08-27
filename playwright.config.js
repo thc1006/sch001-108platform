@@ -16,6 +16,11 @@ module.exports = defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
+    // retry 的用途是拿到 flaky 的診斷（trace、report），不是讓 flaky 過關。
+    // 沒有這一行的話，重試後通過的 test 仍然算綠燈——間歇性失敗被當成成功，
+    // 而那正是最需要被看見的訊號。加上之後，本來就穩定的 run 不會變慢也不會變紅，
+    // 只有原本會被 retry 蓋掉的 flake 變成明確失敗。
+    failOnFlakyTests: !!process.env.CI,
     reporter: process.env.CI ? [['list'], ['github']] : 'list',
     use: {
         baseURL: process.env.BASE_URL || 'http://localhost:8000',
