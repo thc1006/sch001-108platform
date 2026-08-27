@@ -14,13 +14,14 @@
  *
  * 改成自架之後：
  *   - 版本由 package-lock.json 鎖定（比 SRI 更完整：連相依都鎖）
- *   - 檔案缺少時 CI 會擋下——但要分兩層看，別把保護範圍講得比實際大：
- *       · 頁面用 HTML 屬性直接指名的（script[src]、link[rel=modulepreload]）由
- *         scripts/check-built-site.mjs 驗；它讀的是 HTML 屬性，不會去追 ES
- *         module 的 import 圖。
- *       · import 圖那一層由本腳本最後的「產出自我一致性」關卡驗（見檔尾）。
- *         少了它，vendor/fuse-global.js 背後那顆 41kB 的引擎可以整個消失而
- *         check:site 照樣全綠——實測過，所以那一關不是裝飾。
+ *   - 檔案缺少時 CI 會擋下，而且**權威在 check:site 而不是在這裡**：
+ *       · scripts/check-built-site.mjs 從建置產物出發，先解析 HTML 屬性
+ *         （script[src]、link[href]…），再從解析到的 vendor JS 遞移走它們的
+ *         ES module import 圖，要求每個靜態 import 的目標都在 dist/ 裡。
+ *         那一關不依賴任何人在 .astro 裡寫對什麼，所以刪不掉。
+ *       · 本腳本檔尾也有一份同樣語意的檢查，但它的價值只是「更早失敗、訊息更
+ *         具體」（講得出是哪個套件的哪個欄位）。真的漏掉時，check:site 會擋。
+ *         兩份共用 site-contract.lib.mjs 的同一個掃描器，不是兩套邏輯。
  *   - 沒有第三方 runtime 請求
  *
  * public/vendor/ 不入版控（見 .gitignore）：它完全由 node_modules 推導得出，
@@ -66,9 +67,14 @@
  *     的 '.' 與明確列出的子路徑，拿不到 unpkg／jsdelivr 這兩個「瀏覽器 build」
  *     專用欄位——ionicons 8 的 loader 位置正是只寫在 unpkg。
  */
-import { mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// 靜態 import 掃描與本檔、與 scripts/check-built-site.mjs 共用同一份實作。
+// 同一件事有兩份擷取邏輯正是這一系列 issue 一路在修的失效模式；而且那份實作
+// 會先剝掉註解與字串，避免把 banner 裡的使用範例誤判成真的 import。
+import { staticImportSpecifiers } from './site-contract.lib.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const NM = path.join(ROOT, 'node_modules');
@@ -205,28 +211,58 @@ function browserEntryCandidates(m) {
  *      禁止逃出套件根目錄，但 path.join 不會擋——舊版會安然 exit 0，把套件
  *      外的檔案複製進 public/ 這個會被部署出去的目錄。這不是「上游改了檔名」
  *      那種可以往下試下一個候選的情況，是 manifest 壞掉或有惡意，直接中止。
+ *
+ *      **字面比對不夠**：套件裡放一個指向外面的 symlink，路徑字串完全乾淨，
+ *      舊版照樣 exit 0 把外面的檔案 vendor 出去。而 pnpm 與 yarn workspace 的
+ *      node_modules 整棵樹本來就是 symlink 組出來的，這不是理論上的情況。
+ *      所以兩邊都先 realpathSync 再比。
  *   ② 欄位指到一個目錄（`"main": "./lib"`，folder-as-module 是合法寫法）。
  *      existsSync 對目錄回 true，舊版會在 readFileSync 噴 EISDIR 的原始
  *      stack trace——那正是這支腳本要消滅的那一類訊息。
- *   ③ .cjs／.d.ts／.ts：瀏覽器一定載不了。.d.ts 特別要擋，因為型別宣告檔在
+ *   ③ 0 位元組。截斷的檔案（下載中斷、磁碟滿）語法檢查一定通過——它什麼特徵
+ *      都沒有——然後 vendor 得乾乾淨淨、build 全綠，而圖示全部消失。
+ *   ④ .cjs／.d.ts／.ts：瀏覽器一定載不了。.d.ts 特別要擋，因為型別宣告檔在
  *      語法上是合法的 ES module，光靠下面的語法嗅探會直接放行
  *      （實測 `exports['./min'].browser = './dist/fuse.d.ts'` → 舊版 exit 0
  *      並把 .d.ts 當成搜尋引擎 vendor 出去）。
+ *
+ * 回傳的理由字串不自帶括號——呼叫端會用「（…）」包起來，自帶會變成雙層括號。
  */
 function vetCandidate(pkgRoot, rel, name, field) {
     const abs = path.resolve(pkgRoot, rel);
-    const inside = path.relative(pkgRoot, abs);
-    if (inside === '' || inside.startsWith('..') || path.isAbsolute(inside)) {
+    const escapes = (root, target) => {
+        const inside = path.relative(root, target);
+        return inside === '' || inside.startsWith('..') || path.isAbsolute(inside);
+    };
+    const bail = (realAbs) =>
         die(
             `${name} 的 package.json 用 ${field} 指到套件根目錄外面：${rel}`,
-            `解析後的絕對路徑：${abs}`,
-            `套件根目錄：${pkgRoot}`,
+            `解析後的絕對路徑：${realAbs}`,
+            `套件根目錄：${(() => {
+                try {
+                    return realpathSync(pkgRoot);
+                } catch {
+                    return pkgRoot;
+                }
+            })()}`,
             'Node 的 exports 規格禁止這種寫法。這裡直接中止而不是換下一個候選——',
             'vendor 出來的東西會被部署到公開的 public/vendor/，把套件外的檔案複製進去不是「降級」而是外洩。',
         );
-    }
+    // 先做字面比對：不必碰檔案系統就能擋掉最明顯的那一種
+    if (escapes(pkgRoot, abs)) bail(abs);
     if (!existsSync(abs)) return '此檔已不存在';
-    if (!statSync(abs).isFile()) return '是目錄不是檔案（folder-as-module 這種寫法瀏覽器載不了）';
+    // 再解 symlink 比一次。pnpm／yarn workspace 的樹就是 symlink 組成的，
+    // 字面乾淨不代表真的在套件裡。
+    try {
+        const realRoot = realpathSync(pkgRoot);
+        const realAbs = realpathSync(abs);
+        if (escapes(realRoot, realAbs)) bail(realAbs);
+    } catch {
+        // realpath 失敗（權限、競態）就維持字面比對的結論，不放寬
+    }
+    const st = statSync(abs);
+    if (!st.isFile()) return '是目錄不是檔案，folder-as-module 這種寫法瀏覽器載不了';
+    if (st.size === 0) return '是 0 位元組的空檔，不可能是可用的 build';
     if (/\.cjs$/i.test(abs)) return 'CommonJS，瀏覽器載不了';
     if (/\.d\.[cm]?ts$/i.test(abs)) return '是型別宣告檔（.d.ts），不是可執行的 build';
     if (/\.[cm]?tsx?$/i.test(abs)) return '是 TypeScript 原始碼，不是可執行的 build';
@@ -251,19 +287,26 @@ const ESM_SYNTAX =
     /(?:^|[\s;{}()])export\s*(?:\{|\*|default\b|(?:const|let|var|function|class|async)\b)|(?:^|[\s;{}()])import\s*(?:\{|\*|["'])|(?:^|[\s;{}()])import\s+[A-Za-z_$]/;
 
 /**
- * classic script 這一側同樣要擋 CommonJS——而「不是 ESM」不等於「classic 載得動」。
+ * classic script 這一側改成**要求正面訊號**，不再只是「排除 ESM 與 CJS」。
  *
- * 純 CJS 檔用 <script src> 載進去，第一行 `module.exports = …` 就是
- * ReferenceError: module is not defined，然後整頁的 feather 圖示安靜地消失。
- * 舊版只驗「不是 ESM」，所以 CJS 一路放行；今天沒出事純粹是因為
- * feather-icons 4 的 unpkg 剛好是 UMD 而且排在 main 前面。
+ * 為什麼不能只用排除法：那是一個沒有下限的篩子。實測把 feather.min.js 截成
+ * 0 位元組——不是 ESM、也沒有 CJS 特徵——舊版直接放行，vendor 乾淨、build 全綠，
+ * 而整頁的 feather 圖示消失。純 CJS 也一樣：`module.exports = …` 用
+ * <script src> 載進去就是 ReferenceError: module is not defined，圖示同樣
+ * 安靜消失。（0 位元組那條現在也在 vetCandidate 提早擋掉，這裡是第二層。）
  *
- * UMD 會同時命中 CJS 特徵（`module.exports=`／`exports.feather=`）與 AMD 分支
- * （`define.amd`），而它就是設計成三種環境都能用的——所以判準是
- * 「有 CJS 特徵、又沒有 AMD 分支、也沒有指派任何全域」才否決。
+ * 正面訊號＝這個檔真的會在瀏覽器裡掛出全域：
+ *   - UMD banner：有 AMD 分支（`define.amd` 或 `define([…]`）。UMD 就是設計成
+ *     三種環境都能用，所以它同時有 CJS 特徵是正常的。
+ *   - 明確指派全域：`window.x=`／`self.x=`／`globalThis.x=`／`global.x=`。
+ *
  * 實測 feather-icons 4.29.2 的 dist/feather.min.js：
- *   `…?module.exports=n():"function"==typeof define&&define.amd?define([],n)…`
- * 命中 CJS_SYNTAX 也命中 UMD_BANNER，照樣通過。
+ *   `…?module.exports=n():"function"==typeof define&&define.amd?define([],n):…e.feather=n()`
+ * 命中 UMD_BANNER，通過。
+ *
+ * 已知的取捨：老派「頂層 var 就是全域」的 IIFE build（既沒有 UMD banner 也沒有
+ * 明寫 window.x=）會被否決。那是刻意的——寧可停在一個講得出「我找的是什麼、
+ * 在這個檔裡沒找到」的訊息上，也不要放行一個載進去什麼都不會發生的檔。
  */
 const CJS_SYNTAX = /(?:^|[^\w$.])(?:module\s*\.\s*exports\b|exports\s*\.\s*[A-Za-z_$]|require\s*\(\s*["'])/;
 const UMD_BANNER = /\bdefine\s*\.\s*amd\b|\bdefine\s*\(\s*(?:\[|["'])/;
@@ -273,8 +316,13 @@ function isEsModule(src) {
     return ESM_SYNTAX.test(src);
 }
 
+/** classic 的正面訊號：這個檔會不會在瀏覽器裡掛出全域。 */
+function assignsBrowserGlobal(src) {
+    return UMD_BANNER.test(src) || GLOBAL_ASSIGN.test(src);
+}
+
 function isCommonJsOnly(src) {
-    return CJS_SYNTAX.test(src) && !UMD_BANNER.test(src) && !GLOBAL_ASSIGN.test(src);
+    return CJS_SYNTAX.test(src) && !assignsBrowserGlobal(src);
 }
 
 /**
@@ -307,6 +355,10 @@ function resolveEntry(name, flavor, purpose) {
         }
         if (flavor === 'classic' && isCommonJsOnly(src)) {
             tried.push(`  ${field} = ${rel}（是純 CommonJS，用 <script src> 載會丟 ReferenceError: module is not defined）`);
+            continue;
+        }
+        if (flavor === 'classic' && !assignsBrowserGlobal(src)) {
+            tried.push(`  ${field} = ${rel}（找不到 UMD banner 或 window/self/globalThis 的全域指派，載進去不會掛出任何東西）`);
             continue;
         }
         return { abs, rel, field, version: m.version };
@@ -436,23 +488,33 @@ function collectIconNames() {
 }
 
 /**
- * 頁面實際指名哪些 vendor 檔（<script src>、<link rel=modulepreload>…），
- * 同樣從原始碼推導。
+ * 頁面實際指名哪些 vendor 檔（<script src>、<link href>…），從原始碼推導。
  *
  * 這一關把「上游改檔名 → vendor 出來的名字跟著變 → 頁面還指著舊名字」擋在
- * 建置期。沒有它的話這種錯要等到 check:site（script[src] 解析不到）才會紅，
- * 而 check:site 只在 astro build 之後才跑得了，訊息也講不出「是哪個套件改了什麼」。
+ * 建置期，比 check:site 早、訊息也更具體（講得出是哪個套件改了什麼）。
+ * 但**它不是最後一道防線**：真正擋不掉的是 scripts/check-built-site.mjs
+ * 從建置產物走 import 圖那一關，因為那一關不依賴任何人在樣板裡寫對什麼。
  *
- * 已知的死角，寫在這裡免得誤以為它是全稱保證：這是純文字比對，抓得到的只有
- * **字面常數**。`src={`${vendorBase}/vendor/${lib}.js`}` 這種把檔名算出來的
- * 寫法看不到，`/vendor/` 前面不是斜線的（例如註解裡寫「（vendor/x.js）」）
- * 也看不到。目前三個引用都是字面常數；真的要動態組檔名時，得同時想清楚這一關
- * 就保護不到了。
+ * 兩個必要的收窄，都是被實際打出來的：
+ *
+ *   ① 先剝掉 HTML 註解。原本的版本會把**說明文字**當成引用——這個檔案的註解
+ *      裡就寫著「實測 `rm dist/vendor/fuse.esm.js`」，於是即使把
+ *      <link rel="modulepreload"> 整行刪掉，這一關照樣印出
+ *      「頁面引用驗證 … fuse.esm.js」宣稱它被引用了。一個由自己的說明文件
+ *      製造出來的綠燈，比沒有這一關更糟。
+ *   ② 要求前面有 src=／href= 屬性。散文提到路徑不算引用。
+ *
+ * 剩下的死角要講明白：這是文字比對，只抓得到**字面常數**。
+ * `src={`${vendorBase}/vendor/${lib}.js`}` 這種把檔名算出來的寫法看不到。
+ * 目前三個引用都是字面常數；真要動態組檔名時，這一關就保護不到——但
+ * check:site 那一關仍然會從建置產物把它抓出來。
  */
 function collectVendorRefs() {
     const refs = new Set();
     eachSourceFile((_p, src) => {
-        for (const m of src.matchAll(/\/vendor\/([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\.(?:js|mjs|css|svg))/g)) refs.add(m[1]);
+        const withoutComments = src.replace(/<!--[\s\S]*?-->/g, ' ');
+        const re = /(?:\bsrc|\bhref)\s*=\s*[^>]{0,80}?\/vendor\/([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\.(?:js|mjs|css|svg))/g;
+        for (const m of withoutComments.matchAll(re)) refs.add(m[1]);
     });
     return [...refs].sort();
 }
@@ -468,39 +530,22 @@ function listEmitted(dir = OUT, prefix = '', out = []) {
 }
 
 /**
- * 把一個 JS 檔裡的**靜態** import／export-from specifier 抓出來。
- *
- * 只抓靜態形式。stencil 的 loader 是用 `import(变数)` 去 lazy-load chunk 的，
- * 那種本來就靜態分析不到——ionicons 整個目錄照單全收正是為了這件事。
- */
-function staticImportSpecifiers(src) {
-    const specs = new Set();
-    // import x／{x}／* as x from "…"　和　export {x}／* from "…"
-    const fromRe =
-        /(?:^|[^\w$.])(?:import|export)\s*(?:\{[^}]*\}|\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|[A-Za-z_$][\w$]*(?:\s*,\s*(?:\{[^}]*\}|\*\s+as\s+[A-Za-z_$][\w$]*))?)?\s*from\s*["']([^"']+)["']/g;
-    // 純副作用 import "…"
-    const bareRe = /(?:^|[^\w$.])import\s*["']([^"']+)["']/g;
-    for (const m of src.matchAll(fromRe)) specs.add(m[1]);
-    for (const m of src.matchAll(bareRe)) specs.add(m[1]);
-    return [...specs];
-}
-
-/**
  * 產出的自我一致性：vendor 出來的每一個 ES module，它靜態 import 的東西都要
  * 真的在 public/vendor/ 裡，而且必須是瀏覽器解析得出來的相對路徑。
  *
- * 為什麼一定要有這一關——這是 review 打出來的洞，不是假想：
- * `rm dist/vendor/fuse.esm.js` 之後 `npm run check:site` 仍然是
- * 「錯誤：0 ✅ 站台契約全部通過」，而全站搜尋已經死了。原因是
- * scripts/check-built-site.mjs 讀的是 HTML 屬性（script[src] 等），
- * 它不會去追 ES module 的 import 圖；改成 shim 之後被 HTML 指名的只剩那 7 行
- * 的 fuse-global.js，它 import 的 41kB 引擎對 check:site 是隱形的。
- * （對照組：`rm dist/vendor/feather.min.js` → check:site EXIT=1，訊息精準。）
+ * 這一關**不是**最後防線，別把它寫成最後防線——真正擋不掉的是
+ * scripts/check-built-site.mjs：它從建置產物出發、遞移走同一張 import 圖，
+ * 不依賴任何人在 .astro 或在這裡寫對什麼。兩邊共用
+ * site-contract.lib.mjs 的同一個掃描器，所以不是兩套會各自腐爛的邏輯。
  *
- * 順帶擋掉另一類：bare specifier（`node:fs`、`lodash`）與絕對網址。瀏覽器沒有
- * import map 時解析不了這種，而它正是「manifest 指到 node 專用 build」會留下的
- * 痕跡——pickCondition 現在照 Node 的 key 順序走，若某個套件真的把 node build
- * 排在前面，就會在這裡被抓住而不是等使用者開頁面才發現。
+ * 那為什麼還留著：失敗得更早（不必等 astro build 跑完）而且訊息更具體——
+ * 這裡講得出「是 fuse.js@7 的 exports['./min'] 換了檔名」，check:site 只講得出
+ * 「dist 裡少了某個檔」。升級相依時，前者才是你想看到的那一句。
+ *
+ * 擋的兩類同上：相對路徑的目標必須存在；bare specifier（`node:fs`、`lodash`）
+ * 與絕對網址一律否決——瀏覽器沒有 import map 解析不了，而那正是「manifest 指到
+ * node 專用 build」會留下的痕跡。pickCondition 照 Node 的 key 順序走，若某個
+ * 套件真把 node build 排在前面，會在這裡被抓住而不是等使用者開頁面才發現。
  */
 function verifyEmittedImportGraph() {
     const emitted = new Set(listEmitted());
@@ -522,7 +567,7 @@ function verifyEmittedImportGraph() {
             'vendor 產出的 import 圖不完整：',
             ...problems.map((p) => `  ${p}`),
             `這一輪產出的是：${[...emitted].sort().join('、')}`,
-            'check:site 只驗 HTML 屬性指名的檔，追不到 import 圖——這一關漏掉的東西不會有第二個人擋。',
+            '（同一張圖 check:site 也會走一次，但在這裡就停下來比較省事：那邊只講得出「dist 少了某個檔」。）',
         );
     }
     return emitted;
@@ -550,11 +595,12 @@ copy(fuse.abs, 'fuse.esm.js');
 // 拆掉，而那正是當初自架取代 CDN 的主要理由。現在頁面只認 vendor/fuse-global.js
 // 這一個穩定網址，上游檔名怎麼改都不必動 .astro。
 //
-// 但要講清楚 shim 本身也削弱了那個保護：被 script[src] 指名的只剩這 7 行，
-// 它 import 的 fuse.esm.js 對 check:site 是隱形的。補法有兩層——頁面加
-// <link rel="modulepreload" href=".../fuse.esm.js">（把它放回 check:site 的
-// HTML 屬性掃描範圍，順便省掉一趟序列化往返），以及本檔尾端的
-// verifyEmittedImportGraph()（驗產出之間的 import 圖）。
+// shim 這個間接層曾經削弱過 CI 的保護：被 script[src] 指名的只剩這 7 行，
+// 而 check:site 當時只認 HTML 屬性，所以它 import 的 41kB 引擎是隱形的
+// （實測刪掉引擎，check:site 照樣「錯誤：0 ✅ 全部通過」）。
+// 現在 check:site 會從產物遞移走 ES module 的 import 圖，那個洞已經補在
+// checker 本身，不再靠頁面上寫什麼——頁面的 <link rel="modulepreload">
+// 因此退回它本來的身分：純粹的效能提示。
 emit(
     'fuse-global.js',
     [

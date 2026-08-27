@@ -111,10 +111,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
     <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
-         從 node_modules 複製；這個檔被 script[src] 指名，所以 check:site 會驗它
-         （但 check:site 只讀 HTML 屬性、不追 import 圖——loader 之後 lazy-load
-         的 p-*.js chunk 不在它的守備範圍，那一層靠 vendor 步驟整個目錄搬過來，
-         以及 tests/e2e 的 shadow DOM 檢查）。
+         從 node_modules 複製。這個檔被 script[src] 指名，check:site 會驗它，
+         而且會從它遞移走 ES module 的 import 圖——所以它靜態 import 的
+         p-*.js chunk 同樣在守備範圍內（chunk 檔名帶 hash，寫不進這裡的樣板，
+         只可能靠 import 圖驗；實測刪掉那個 chunk，17 個 ion-icon 全部不渲染）。
+
+         守備範圍到此為止，別多說：stencil 的 loader 是用 import(變數) 去
+         lazy-load ion-icon 的 entry chunk 的，那種靜態分析看不到。那一層靠
+         vendor 步驟整個目錄搬過來，以及 tests/e2e 的 shadow DOM 檢查。
 
          原本這裡還有一行 nomodule 的 ES5 後備（vendor/ionicons/ionicons.js），
          已經移除（#94）。三個理由，每一個都是量出來的：

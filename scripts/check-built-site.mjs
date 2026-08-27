@@ -32,6 +32,7 @@ import {
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
+    staticImportSpecifiers,
 } from './site-contract.lib.mjs';
 import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
 import { collectBareDomains, makeSkipFieldFilter } from './bare-domains.lib.mjs';
@@ -49,6 +50,9 @@ const CTX = { base: BASE, site: SITE };
 const INVENTORY_PATH = path.join(ROOT, '.reports', 'url-inventory.json');
 
 const dataPages = JSON.parse(await readFile(path.join(ROOT, 'scripts', 'data-pages.json'), 'utf8'));
+
+// 走過的 vendor ES module 數（報告用；在 import 圖那一節填入）
+let vendorModuleCount = 0;
 
 // 不是由 BaseLayout 產生的檔案，不套用版面契約（canonical、main#main-content）。
 // 目前只有 Google Search Console 的驗證檔；它必須維持 Google 指定的原樣。
@@ -329,12 +333,15 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
 }
 
 // ── 解析所有站內 reference ──
+// 順帶記下「從 HTML 屬性解析到的 vendor JS」，那是下面 import 圖走訪的起點。
+const vendorJsSeeds = new Set();
 for (const ref of internal) {
     const res = resolveInternalPath(ref.path, routeMap);
     if (!res.ok) {
         addError(ref.file, ref.location, `${res.reason}：${ref.path}`);
         continue;
     }
+    if (/^vendor\/.+\.[cm]?js$/.test(res.file)) vendorJsSeeds.add(res.file);
     if (!ref.fragment) continue;
     if (!res.file.endsWith('.html')) {
         addError(ref.file, ref.location, `對非 HTML 檔案使用 fragment：${ref.path}#${ref.fragment}`);
@@ -349,6 +356,68 @@ for (const ref of internal) {
     if (!anchors.has(ref.fragment)) {
         addError(ref.file, ref.location, `目標頁面沒有 id="${ref.fragment}"：${ref.path}#${ref.fragment}`);
     }
+}
+
+// ── vendor 的 ES module import 圖（遞移）──
+//
+// 為什麼一定要在這裡做，而不是只靠 vendor 步驟自己驗：
+// 本檔原本只認 HTML 屬性（script[src]、link[href]…）。自架的函式庫改成 ES
+// module 之後，被屬性指名的往往只是一個很小的進入點，真正的程式碼躲在它的
+// import 後面——那一整層對本檔是隱形的。實測過兩個洞，兩個都是「CI 全綠而
+// 功能已死」：
+//
+//   rm dist/vendor/fuse.esm.js            → 舊版：錯誤 0、✅ 全部通過；全站搜尋已死
+//   rm dist/vendor/ionicons/p-*.js        → 舊版：錯誤 0、✅ 全部通過；
+//                                            瀏覽器實測 17 個 ion-icon 全部沒有 shadowRoot
+//
+// 曾經試過的替代方案：在頁面補 <link rel="modulepreload">，把進入點的相依也
+// 寫成 HTML 屬性。那對 fuse 有效，但（a）刪掉那一行就悄悄退回原狀，(b) ionicons
+// 的 chunk 檔名帶 hash，根本沒辦法寫進 .astro。也就是說它把「保護」寄託在
+// 一行可以被任何人順手刪掉的樣板上。所以改成從產物本身走 import 圖——
+// 那是刪不掉的：只要頁面還載那個進入點，這一關就會跟著跑。
+// modulepreload 因此回到它本來的身分：純粹的效能提示。
+//
+// 範圍限定在 vendor/：那是 scripts/vendor-assets.mjs 手動複製出來的樹，也是
+// 漂移真正會發生的地方。_astro/ 底下的 chunk 由 Vite 自己產生與命名，它的
+// import 圖一致性由打包器保證，重複驗只是多一份會壞掉的邏輯。
+//
+// 只驗靜態 import。stencil 的 loader 是 import(變數) 去 lazy-load chunk 的，
+// 那種靜態分析不到——所以這一關的主張僅止於「靜態 import 的目標都在」，
+// 不宣稱「所有會被載入的檔都驗過」（後者由 vendor 步驟整個目錄搬過來，
+// 以及 tests/e2e 的 shadow DOM 檢查負責）。
+const distFileSet = new Set(distFiles);
+{
+    const visited = new Set();
+    const queue = [...vendorJsSeeds];
+    while (queue.length) {
+        const rel = queue.shift();
+        if (visited.has(rel)) continue;
+        visited.add(rel);
+        let src;
+        try {
+            src = await readFile(path.join(DIST, rel), 'utf8');
+        } catch (e) {
+            addError(rel, 'import', `讀不到這個檔案：${e.message}`);
+            continue;
+        }
+        for (const spec of staticImportSpecifiers(src)) {
+            if (!spec.startsWith('./') && !spec.startsWith('../')) {
+                addError(rel, 'ESM import', `靜態 import 了「${spec}」——不是相對路徑，瀏覽器沒有 import map 解析不了`);
+                continue;
+            }
+            const target = path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec.split(/[?#]/)[0]));
+            if (target.startsWith('..')) {
+                addError(rel, 'ESM import', `靜態 import 了「${spec}」，解析後逸出建置產物：${target}`);
+                continue;
+            }
+            if (!distFileSet.has(target)) {
+                addError(rel, 'ESM import', `靜態 import 了「${spec}」，但 ${target} 不在建置產物裡`);
+                continue;
+            }
+            queue.push(target);
+        }
+    }
+    vendorModuleCount = visited.size;
 }
 
 // ── 外部網址 inventory（供排程健康檢查使用）──
@@ -396,6 +465,7 @@ console.log('建置產物站台契約檢查');
 console.log(`  HTML ${htmlFiles.length} 檔、dist 檔案 ${distFiles.length} 個`);
 console.log(`  檢查的 reference：${refCount}`);
 console.log(`  站內需解析：${internal.length}`);
+console.log(`  vendor ES module import 圖：走訪 ${vendorModuleCount} 個模組（起點來自 HTML 屬性）`);
 // 去重數與出現次數都要列出：只列去重數會讓總和對不起來，讀的人會誤以為有
 // 一批 reference 憑空消失（我自己在 review 時就這樣誤判過一次）。
 const externalOccurrences = [...external.values()].reduce((a, b) => a + b.occurrences.length, 0);

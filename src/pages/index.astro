@@ -171,20 +171,19 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          vendor/fuse.esm.js，並產生這裡載的 fuse-global.js（7 行：5 行說明 ＋
          import 與 window.Fuse = Fuse 各一行），所以這個網址不隨相依升級改變。
 
-         下面那行 modulepreload 有兩個作用，兩個都是必要的：
+         下面那行 modulepreload 是**純粹的效能提示**，不要拿它當保護。
+         shim 這個間接層會多一趟序列化往返——瀏覽器要先抓完 fuse-global.js、
+         剖析完，才「發現」還要去抓 fuse.esm.js。modulepreload 讓兩個請求同時
+         出發（實測 performance entries：25ms／26ms 起跑，原本是等前者回來才開始）。
 
-         (a) 效能。shim 這個間接層會多一趟序列化往返——瀏覽器要先抓完
-             fuse-global.js、剖析完，才「發現」還要去抓 fuse.esm.js。
-             modulepreload 讓兩個請求同時出發。
-
-         (b) CI 保護。check:site 驗的是 HTML 屬性（script[src]、link[href]），
-             它不會去追 ES module 的 import 圖。只有 <script src> 的話，被驗到的
-             就只剩這 7 行的 shim，而它背後那顆 41kB 的引擎對 check:site 是隱形的
-             ——實測 `rm dist/vendor/fuse.esm.js` 後 check:site 仍然「錯誤：0
-             ✅ 全部通過」，但全站搜尋已經死了。把 fuse.esm.js 用
-             link[rel=modulepreload] 明寫在 HTML 裡，它就重新回到 check:site 的
-             驗證範圍。（vendor-assets.mjs 另有一關驗產出之間的 import 圖，
-             兩者擋的是不同時點的同一件事。）
+         這一行曾經被當成 CI 保護寫在這裡，那是錯的，記在這裡免得有人再走一次：
+         當時的理由是「check:site 只驗 HTML 屬性，把 fuse.esm.js 用 link[href]
+         寫進 HTML 就能重新被驗到」。它對 fuse 有效，但保護寄託在一行可以被順手
+         刪掉的樣板上——刪掉之後 CI 立刻悄悄退回原狀；而且 ionicons 的 chunk 檔名
+         帶 hash，這招對它根本用不了（實測刪掉那兩個 chunk，17 個 ion-icon 全部
+         不渲染而 check:site 全綠）。現在 scripts/check-built-site.mjs 直接從產物
+         走 ES module 的 import 圖，那是刪不掉的：只要頁面還載 fuse-global.js，
+         它 import 的 fuse.esm.js 就會被一起驗。
 
          載入順序是有保證的，不是碰運氣：module script 沒有 async 時一律 defer，
          規格要求它在文件解析完之後、DOMContentLoaded 之前執行完；下面那段
