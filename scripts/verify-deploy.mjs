@@ -23,7 +23,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SITE = (process.env.SITE_URL || 'https://thc1006.github.io/sch001-108platform').replace(/\/+$/, '');
-const TIMEOUT_MS = Number(process.env.VERIFY_TIMEOUT || 300) * 1000;
+// 線上的 Cache-Control 是 max-age=600。輪詢預算必須大於它，否則「CDN 還沒過期」
+// 本身就足以讓這一關誤報失敗——部署其實成功了，卻被判定沒落地。
+const TIMEOUT_MS = Number(process.env.VERIFY_TIMEOUT || 660) * 1000;
 const POLL_MS = 10_000;
 
 function expectedCommit() {
@@ -65,16 +67,22 @@ async function fetchInfo() {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 15_000);
     try {
-        // cache-buster：GitHub Pages 與中間的 CDN 都會快取，不繞過就可能一直讀到舊的
-        const res = await fetch(`${url}?t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
-            signal: ac.signal,
-        });
-        if (res.status !== 200) return { commit: '', label: `HTTP ${res.status}` };
+        // 刻意不加 cache-buster query string：實測 GitHub Pages 的 Fastly 邊緣**不把
+        // query string 放進 cache key**。對照實驗（線上站台，5 個從未用過的 nonce）：
+        //
+        //   無 query（第一次）   X-Cache=MISS
+        //   無 query（第二次）   X-Cache=HIT
+        //   ?t=…（三個不同值）   X-Cache=HIT   ← 全部命中同一份物件
+        //   不存在的路徑         X-Cache=MISS  ← 對照組，確認 X-Cache 判讀正確
+        //
+        // 請求標頭的 Cache-Control: no-cache / Pragma 同樣不會強制回源。
+        // 唯一可用的新鮮度資訊是回應的 Age 標頭。
+        const res = await fetch(url, { signal: ac.signal });
+        const age = Number(res.headers.get('age') || 0);
+        if (res.status !== 200) return { commit: '', label: `HTTP ${res.status}`, age };
         const info = await res.json();
         const commit = String(info.commit || '');
-        return { commit, label: commit || '(無 commit 欄位)' };
+        return { commit, label: commit || '(無 commit 欄位)', age };
     } finally {
         clearTimeout(timer);
     }
@@ -86,11 +94,14 @@ while (Date.now() < deadline) {
         const r = await fetchInfo();
         last = r.label;
         if (r.commit && r.commit === want) {
-            console.log(`✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}`);
+            console.log(`✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}（Age=${r.age}s）`);
             landed = true;
             break;
         }
-        console.log(`  第 ${attempt} 次：線上仍是 ${last.slice(0, 12)}，繼續等`);
+        // Age 說明這份回應是幾秒前回源取得的。Age 很大時，這個「不符」只代表
+        // 我們拿到一份陳舊的快取副本，不代表部署失敗——所以只是繼續等，
+        // 而總預算（預設 660 秒）本來就設得比 max-age=600 長。
+        console.log(`  第 ${attempt} 次：線上仍是 ${last.slice(0, 12)}（Age=${r.age}s，快取副本），繼續等`);
     } catch (err) {
         last = String(err?.cause?.code || err?.message || err).slice(0, 60);
         console.log(`  第 ${attempt} 次：${last}，繼續等`);

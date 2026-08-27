@@ -31,10 +31,13 @@ on:
   # 推一個空 commit 才能重跑部署。
   workflow_dispatch:
 
-# 同一個 PR 推新 commit 時取消還在跑的舊 run。用 head_ref 而非 PR 編號，push 到
-# main 時則退回 run_id 以確保每次 push 都各自獨立、不會互相取消。
+# 同一個 PR 推新 commit 時取消還在跑的舊 run；push 到 main 時退回 run_id，確保
+# 每次 push 各自獨立、不會互相取消。
+#
+# 用 PR 編號而不是 head_ref：head_ref 是**純分支名稱不含 owner**，兩個來自不同
+# fork、分支同樣叫 patch-1 或 main 的 PR 會落進同一個 group 並互相取消。
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -177,8 +180,11 @@ jobs:
 
       # site job 通過全部靜態檢查後上傳的那一份。upload-pages-artifact 內部包成
       # artifact.tar，所以這裡要解開。
+      # v8 才把 digest 不符的預設行為從 warning 改成 error（新增 digest-mismatch
+      # 參數，預設 'error'）。整個 CI 的論點是「被驗證的位元組 == 被部署的位元組」，
+      # 而 v7 遇到雜湊不符只會印一行警告然後繼續——那等於這個論點沒有被檢查。
       - name: Download the artifact that passed the static checks
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: github-pages
 
@@ -287,15 +293,19 @@ jobs:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [required]
     runs-on: ubuntu-latest
-    # 這個值必須明顯大於下面 deploy-pages 的 timeout（15 分鐘），否則兩者會互相競爭。
+    # 必須明顯大於 actions/deploy-pages 自己的 10 分鐘上限，且要容納下面的一次重試。
     #
-    # 實際踩過：原本這裡是 10 分鐘，而 actions/deploy-pages 的 timeout 預設也正好是
-    # 600000ms＝10 分鐘。當 GitHub Pages 的 updating_pages 階段變慢（2026-08-27 當天
-    # 就是如此），job 逾時先把整個 job 砍掉，action 來不及回報自己的錯誤——而**逾時
-    # 被砍的 job 在 UI 上顯示成 cancelled，不是 failure**。結果是連續兩次部署沒有落地，
-    # main 的其他四個 job 全綠，沒有任何人會發現。
+    # 實際踩過：原本這裡是 10 分鐘，而 deploy-pages 的 timeout 預設也正好是 600000ms。
+    # GitHub Pages 的 updating_pages 階段變慢時（2026-08-27 當天就是如此），job 逾時
+    # 先把整個 job 砍掉，action 來不及回報自己的錯誤——而**逾時被砍的 job 在 UI 上
+    # 顯示成 cancelled，不是 failure**。連續兩次部署沒有落地，main 的其他四個 job
+    # 全綠（deploy 只在 push 到 main 時跑，本來就不可能列入 PR 的 required check），
+    # 沒有任何人會發現。實測兩次都是恰好 10m03s / 10m05s。
     #
-    # 正確的分層是：內層工具先逾時並講清楚原因，外層只當「連工具都卡死」的保險。
+    # 注意 deploy-pages 的 timeout **不能調大**：MAX_TIMEOUT = 600000 是寫死的，
+    # this.timeout = Math.min(timeoutInput, MAX_TIMEOUT)，傳更大的值只會被靜默夾回去
+    # 並印一行警告。這個上限對齊 Pages 平台本身「部署超過 10 分鐘就失敗」的限制，
+    # 所以正確做法不是等更久，而是失敗後重試一次（見下方）。
     timeout-minutes: 25
     # 權限只給這個 job。其餘 job 維持 workflow 層級的 contents: read。
     permissions:
@@ -312,13 +322,29 @@ jobs:
       group: pages
       cancel-in-progress: false
     steps:
+      # 刻意不傳 timeout：MAX_TIMEOUT = 600000 寫死，傳更大的值會被 Math.min 夾回去。
       - name: Deploy the verified artifact
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
-        with:
-          # 預設 600000ms（10 分鐘）。Pages 變慢時這個值到期，action 會以明確訊息
-          # 失敗；上面的 job timeout-minutes 必須更大，才輪得到它講話。
-          timeout: 900000
+
+      # Pages 後端偶發會讓部署卡到平台的 10 分鐘上限（actions/deploy-pages#406，
+      # 2026-01 開至今未修；#418 同類）。第一次卡死時 action 的 SIGTERM handler 會把
+      # 那個 deployment 主動取消掉，所以第二次是乾淨的重新開始。
+      #
+      # 這是唯一能把「後端抖動」變成「最終成功」的手段——等更久沒有用，平台端本來
+      # 就會在 10 分鐘砍掉。
+      - name: Retry once if the first attempt did not land
+        if: ${{ steps.deployment.outcome == 'failure' }}
+        id: deployment-retry
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+
+      # continue-on-error 會讓失敗的 step 不影響 job 結論，所以兩次都失敗時要自己喊。
+      - name: Fail when neither attempt landed
+        if: ${{ steps.deployment.outcome == 'failure' && steps.deployment-retry.outcome != 'success' }}
+        run: |
+          echo "兩次部署都沒有成功。請到 https://www.githubstatus.com/ 確認 Pages 是否異常。" >&2
+          exit 1
 
   # deploy-pages 成功只證明「部署請求被接受」，證明不了站台在服務新內容。
   #
@@ -335,7 +361,9 @@ jobs:
     if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
     needs: [deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # 線上的 Cache-Control 是 max-age=600，所以輪詢預算必須大於 10 分鐘，
+    # 否則「CDN 還沒過期」本身就足以讓這一關誤報失敗（見 verify-deploy.mjs）。
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

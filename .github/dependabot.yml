@@ -1,0 +1,40 @@
+# Dependabot 設定
+# ================================================================
+# 這個 repo 把所有 action 都 pin 到完整 commit SHA（那是唯一能讓 action 版本不可
+# 變的方式）。代價是「不會自動拿到上游修正」——包含安全性修正。
+#
+# Dependabot 對 SHA-pinned 的 `uses:` 一樣會開 PR，而且會保留 SHA 格式並同步更新
+# 後面的 `# vN` 註解（前提是註解已存在，本 repo 都有）。所以 pin SHA 與自動更新
+# 不衝突，反而必須一起用——只 pin 不更新，等於把版本凍結在某個過去的時間點。
+#
+# 這件事有實例：download-artifact 我們 pin 在 v7，而 v8 才把「artifact 雜湊不符」
+# 的預設行為從 warning 改成 error。整個 CI 的論點是「被驗證的位元組 == 被部署的
+# 位元組」，v7 遇到不符只印警告然後繼續——那個論點其實一直沒有被檢查。
+# 沒有自動更新的話，這種「新版才有的保護」不會有人發現。
+version: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(actions)'
+
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # 這三個是自架到 public/vendor/ 的前端函式庫（見 scripts/vendor-assets.mjs）。
+      # 版本一動就會改變使用者實際下載的檔案，分成一組讓它們的變更容易一起審。
+      vendored-frontend:
+        patterns:
+          - 'fuse.js'
+          - 'feather-icons'
+          - 'ionicons'
