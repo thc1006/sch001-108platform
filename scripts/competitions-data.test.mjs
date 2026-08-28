@@ -79,6 +79,11 @@ function assertVerified(needle) {
 }
 
 test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
+    // 沒有這一行的話，把 VERIFIED_2026_08_27 清成 [] 之後，這一支以及底下另外兩支
+    // 也在跑同一份清單的測試會一起印綠字，而其實一筆都沒比——測試名稱說「18 筆」，
+    // 實作卻連清單長度都不看。底下的 VERIFIED_ROUND2／REMOVED_ROUND2 都有釘長度，
+    // 只有第一輪這一份漏了。
+    assert.equal(VERIFIED_2026_08_27.length, 18, '清單長度變動代表有人動了查證範圍，請一併更新測試名稱與 PR 說明');
     for (const needle of VERIFIED_2026_08_27) assertVerified(needle);
 });
 

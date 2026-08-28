@@ -339,17 +339,39 @@ export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
  * 修第一處（competitions-data.test.mjs）時漏了第二處
  * （check-competitions.probe.test.mjs）——同一個 bug 存在兩份實作，正是它會被
  * 漏掉的原因。所以判定抽到這裡，兩邊共用，不留會漂移的第二份。
- *
- * @returns {string|null} 有問題時回傳原因，沒問題回 null
  */
 export const SOURCE_CHECKED_NOT_BEFORE = '2026-08-27';
 
-export function sourceCheckedProblem(value, notBefore = SOURCE_CHECKED_NOT_BEFORE) {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+/**
+ * 未來端的一天餘裕：查證的人可能在 UTC+14，寫下的當地日期會比 UTC 日期早一天。
+ * 再往後就不是時區問題——那一天還沒發生過，不可能有人在那天開過官網。
+ */
+const SOURCE_CHECKED_FUTURE_SLACK_MS = 24 * 60 * 60 * 1000;
+
+/** sourceCheckedAt 允許的最晚值（含時區餘裕）。抽出來是為了讓測試能注入固定時間。 */
+export function sourceCheckedNotAfter(nowMs = Date.now()) {
+    return new Date(nowMs + SOURCE_CHECKED_FUTURE_SLACK_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * @returns {string|null} 有問題時回傳原因，沒問題回 null
+ */
+export function sourceCheckedProblem(
+    value,
+    notBefore = SOURCE_CHECKED_NOT_BEFORE,
+    notAfter = sourceCheckedNotAfter(),
+) {
+    if (typeof value !== 'string' || !DATE_ONLY_RE.test(value)) {
         return `不是 YYYY-MM-DD 格式（實際：${JSON.stringify(value)}）——它是「這一筆真的開過官網」的唯一憑證`;
     }
-    if (!Number.isFinite(Date.parse(`${value}T00:00:00Z`))) return `「${value}」不是有效日期`;
+    // Date.parse('2026-09-31T00:00:00Z') 會靜靜捲成 10/01 而不是 NaN，所以不能拿它
+    // 判日期是否存在——本檔上面的 isRealDate 就是為了這件事存在的，直接沿用。
+    const [y, mo, d] = value.split('-').map(Number);
+    if (!isRealDate(y, mo, d)) return `「${value}」不是實際存在的日期`;
     // ISO 日期字串可以直接字典序比較
     if (value < notBefore) return `是 ${value}，早於基準日 ${notBefore}——查證日期只能往前走，不能倒退`;
+    // 未來的日期是「不用真的查也能讓測試永遠綠」的後門：寫成 2099-01-01 之後，
+    // 它永遠不早於任何基準日，任何人都不必再開一次官網。
+    if (value > notAfter) return `是 ${value}，那一天還沒到——未來的日期不可能是「已經開過官網」的憑證`;
     return null;
 }
