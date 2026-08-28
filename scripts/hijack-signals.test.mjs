@@ -15,6 +15,7 @@ import {
     crossSiteRedirect,
     extractHeadText,
     contentSquatSignals,
+    visibleText,
     detectHijackSignals,
     inertText,
     SQUAT_PHRASES,
@@ -213,6 +214,61 @@ test('contentSquatSignals：門檻是「相異」詞組，同一個詞出現兩�
 });
 
 // 反例——這一組比正例更重要。誤判會讓維護者把整個偵測關掉。
+test('visibleText：結束標籤帶空白或屬性一樣要剝掉（CodeQL js/bad-tag-filter）', () => {
+    // HTML 解析器接受 `</script >`、`</script foo>`，瀏覽器照樣收工。原本的
+    // `<\/script>` 對不上它們，於是整段 JS 原始碼被算成「可見文字」——實測洩漏
+    // 56 個字元，門檻是 4，opaqueShell 直接回 null。偵測對象是被接管的網域，
+    // 對方只要在結束標籤裡多打一個空格就繞過去了。
+    const body = 'window.location.replace("https://parked.example/?ref=1")';
+    for (const close of ['</script>', '</script >', '</script foo>', '</SCRIPT >']) {
+        assert.equal(
+            visibleText(`<body><script>${body}${close}</body>`),
+            '',
+            `結束標籤寫成 ${close} 時腳本內容沒有被剝掉`,
+        );
+    }
+    // 沒有結束標籤：解析器會把後面全部當成腳本內容，這裡要照做
+    assert.equal(visibleText(`<body><script>${body}`), '');
+    assert.equal(visibleText('<body><style>.a{color:red}</style ></body>'), '');
+
+    // ── 這一段釘的是**配對規則本身**，不是「有沒有被剝掉」 ──
+    //
+    // 上面那條「未閉合就吃到檔尾」的規則會順手蓋掉漏檢：`</script >` 對不上
+    // 配對規則時，未閉合規則會從 <script> 一路吃到檔尾，結果照樣是空字串。
+    // 所以只驗「腳本內容不見了」的話，把配對規則改回不容許空白也測不出來
+    //（故障注入當場證實：58 擋下 / 1 漏掉）。
+    //
+    // 兩條規則真正的差別在**結束標籤後面還有內容**的時候：配對規則正確時，
+    // 後面那段真實文字留得下來；退回舊寫法就會被未閉合規則連同吃掉，一個
+    // 有實質內容的正常頁面於是被判成「可見文字為零」的空殼——誤判，而且是
+    // 訊號 C 最不能犯的那一種錯。
+    assert.equal(
+        visibleText('<body><script>var a=1</script >歡迎光臨中華數學協會</body>'),
+        '歡迎光臨中華數學協會',
+        '結束標籤後面的真實內容被連同吃掉了——配對規則沒有容許結束標籤裡的空白',
+    );
+    assert.equal(
+        opaqueShell('<body><script>location.replace("/x")</script >歡迎光臨中華數學協會</body>'),
+        null,
+        '有實質內容的頁面被判成空殼',
+    );
+});
+
+test('opaqueShell：結束標籤帶空白的 JS 殼一樣要被抓到', () => {
+    const evade = '<body><script>window.location.replace("https://parked.example/?ref=1")</script ></body>';
+    const shell = opaqueShell(evade);
+    assert.ok(shell, '帶空白的結束標籤被拿來繞過訊號 C');
+    assert.equal(shell.visible, 0);
+});
+
+test('opaqueShell：noscript 的結束標籤帶空白時，排除條件仍然要生效', () => {
+    // 這一邊漏掉的方向相反：對不上就等於「找不到 noscript」，排除失效，
+    // 正當的 SPA 反而被標成盲區。
+    const spa = '<body><div id="app"></div><noscript>請開啟 JavaScript 以使用本站</noscript >'
+        + '<script>window.location.href = "/app"</script></body>';
+    assert.equal(opaqueShell(spa), null, 'noscript 裡有內容，不該被標成盲區');
+});
+
 test('contentSquatSignals：詞界在「至少兩個相異詞組」的門檻下仍然承重', () => {
     // 這一格是被 CI 逼出來的。原本驗詞界的反例都只放**一個**近似命中，門檻拉到
     // 兩個相異詞組之後，那些反例不論詞界對不對都回空——故障注入把詞界比對整條

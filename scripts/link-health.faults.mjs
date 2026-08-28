@@ -322,6 +322,17 @@ const hijackMutations = [
             ),
     },
     {
+        // CodeQL js/bad-tag-filter。`</script >` 是合法的結束標籤，瀏覽器照樣收工，
+        // 而 `<\/script>` 對不上它——整段 JS 原始碼會被算成「可見文字」，
+        // 訊號 C 直接瞎掉。被偵測的是敵意主機，多打一個空格就是一種繞法。
+        name: 'script 的結束標籤退回不容許空白（多一個空格就繞過訊號 C）',
+        apply: (s) =>
+            s.replace(
+                '.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script\\b[^>]*>/gi, \' \')',
+                '.replace(/<script[\\s\\S]*?<\\/script>/gi, \' \')',
+            ),
+    },
+    {
         name: '內容標記永遠回空（ieso-info.org 那類接管會漏掉）',
         apply: (s) =>
             s.replace(

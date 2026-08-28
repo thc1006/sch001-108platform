@@ -287,13 +287,31 @@ const VISIBLE_TEXT_MAX = 4;
 const JS_LOCATION = /location\s*\.\s*(?:replace|assign|href)\s*[=(]|(?:window|parent|top|self)\s*\.\s*location\s*=/i;
 const META_REFRESH = /<meta[^>]+http-equiv=["']?refresh["']?[^>]*>/i;
 
-/** 拿掉 script／style／head／註解與所有標籤之後，使用者眼睛看得到的文字。 */
+/**
+ * 拿掉 script／style／head／註解與所有標籤之後，使用者眼睛看得到的文字。
+ *
+ * ── 結束標籤不是只有 `</script>` 一種寫法 ──
+ *
+ * HTML 解析器接受結束標籤裡帶空白與屬性：`</script >`、`</script foo>` 都是
+ * 合法的結束標籤，瀏覽器照樣收工。而 `<\/script>` 這種寫法對不上它們。
+ *
+ * 這裡的輸入是**被接管的網域自己送出來的 HTML**。對方只要在結束標籤裡多打一個
+ * 空格，整段 JavaScript 原始碼就會被算進「可見文字」，長度輕鬆越過門檻，
+ * opaqueShell 回 null，訊號 C 整個瞎掉——而訊號 C 是三個訊號裡唯一在真實語料
+ * 上抓到真陽性的那一個。CodeQL 的 js/bad-tag-filter 抓的正是這一條。
+ *
+ * 另外補上「沒有結束標籤」的情況：解析器會把 `<script>` 之後的所有東西都當成
+ * 腳本內容直到檔尾，這裡照做。不照做的話，少打一個結束標籤是同一個繞法。
+ */
 export function visibleText(html) {
     return String(html)
         .replace(/<!--[\s\S]*?-->/g, ' ')
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<head[\s\S]*?<\/head>/gi, ' ')
+        .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, ' ')
+        .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ')
+        // 未閉合：一路吃到檔尾，與解析器的行為一致
+        .replace(/<script\b[^>]*>[\s\S]*$/i, ' ')
+        .replace(/<style\b[^>]*>[\s\S]*$/i, ' ')
+        .replace(/<head\b[^>]*>[\s\S]*?<\/head\b[^>]*>/gi, ' ')
         .replace(/<[^>]*>/g, ' ')
         .replace(/&[a-z#0-9]{2,8};/gi, ' ')
         .replace(/\s+/g, ' ')
@@ -314,7 +332,9 @@ export function opaqueShell(bodyHead, truncated = false) {
     // 「唯一的前進方式需要執行 JS」的反面，不需要再看長度。
     // 這一條是複查用 SPA 空殼打破長度門檻之後補的：那種頁面的 <noscript> 寫著
     // 「請開啟 JavaScript 才能使用本站的報名系統」——使用者看得到，不是盲區。
-    const noscript = bodyHead.match(/<noscript[^>]*>([\s\S]*?)<\/noscript>/i);
+    // 結束標籤同樣要容許空白與屬性。這一邊漏掉的方向相反：對不上就等於
+    // 「找不到 noscript」，於是排除條件失效，正當的 SPA 反而會被標成盲區。
+    const noscript = bodyHead.match(/<noscript\b[^>]*>([\s\S]*?)<\/noscript\b[^>]*>/i);
     if (noscript && visibleText(noscript[1]).length > 0) return null;
     const bytes = Buffer.byteLength(bodyHead, 'utf8');
     const visible = visibleText(bodyHead);
