@@ -28,7 +28,42 @@ async function gotoFixture(page, queryString = '') {
 test.describe('PuterAI 共用 module', () => {
 
     test.describe('全域物件', () => {
-        test('PuterAI 已定義且版本為 3', async ({ page }) => {
+        // 這一頁有九個 .astro 頁面各自寫一行 <script src=".../puter-ai.js">，而使用者
+        // 在站內移動時瀏覽器快取、bfcache、以及日後可能出現的第三方嵌入都會讓同一份
+        // 腳本被載入不只一次。守衛原本寫的是 __version === 3：一旦有一份**比較舊**的
+        // 副本在新版之後跑起來，它會發現版號不等於自己的，於是不返回、把新版整個
+        // 覆蓋掉——安靜降級，而且沒有任何地方會出聲。
+        test('已載入的新版不得被後來跑起來的舊版覆蓋', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PuterAI = { __version: 99, __sentinel: 'newer' };
+            });
+            await page.goto(FIXTURE_URL);
+            await page.waitForFunction(() => window.__READY__ === true);
+            const after = await page.evaluate(() => ({
+                version: window.PuterAI.__version,
+                sentinel: window.PuterAI.__sentinel,
+            }));
+            expect(after.version).toBe(99);
+            expect(after.sentinel).toBe('newer');
+        });
+
+        // 反向：舊版或沒版號的殘留不得擋住這一份真的載入。
+        test('版號較舊的殘留不得擋住新版載入', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PuterAI = { __version: 1, __sentinel: 'older' };
+            });
+            await gotoFixture(page);
+            const after = await page.evaluate(() => ({
+                version: window.PuterAI.__version,
+                sentinel: window.PuterAI.__sentinel,
+                hasCall: typeof window.PuterAI.callGeminiWithFallback === 'function',
+            }));
+            expect(after.version).toBeGreaterThan(1);
+            expect(after.sentinel).toBeUndefined();
+            expect(after.hasCall).toBe(true);
+        });
+
+        test('PuterAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
                 defined: typeof window.PuterAI === 'object',
@@ -40,7 +75,12 @@ test.describe('PuterAI 共用 module', () => {
                 models: window.PuterAI.MODELS,
             }));
             expect(info.defined).toBe(true);
-            expect(info.version).toBe(3);
+            // 這一支驗的是「共用 module 載進來了、介面完整」，版號是附帶資訊。
+            // 釘成字面值的話，改版時這裡會紅，而它紅的原因跟它想守的東西無關——
+            // 測試名稱還會跟著漂（原本叫「版本為 3」）。改成驗它是個正整數：
+            // 缺欄位、被寫成字串、被寫成 0 都會紅，單純改版不會。
+            expect(Number.isInteger(info.version)).toBe(true);
+            expect(info.version).toBeGreaterThan(0);
             expect(info.hasFormat).toBe(true);
             expect(info.hasCall).toBe(true);
             expect(info.hasLog).toBe(true);
