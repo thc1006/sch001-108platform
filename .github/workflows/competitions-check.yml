@@ -29,16 +29,41 @@ jobs:
   check:
     name: 檢查競賽資料
     runs-on: ubuntu-latest
+    # 沒有這行會吃 Actions 的預設 360 分鐘。下面的看門狗步驟自己有 15 分鐘上限，
+    # 這裡再包一層，讓 checkout／setup 卡住時也有天花板。
+    timeout-minutes: 20
     # contents: read → checkout；issues: write → 最後一步的 gh issue create/comment。
+    # 這個 job 會拿 repo 裡的資料當網址去連線（check-competitions.mjs 匯入
+    # link-health.lib.mjs 的 runProbes），所以它握著的寫入權限越窄越好；
+    # 下面的 if: 與「Refuse to run outside the default branch」是同一道防線的另兩層。
     permissions:
       contents: read
       issues: write
+    # 只在 default branch 跑。
+    #
+    # 這是安全條件，不是方便性設定：這個 job 會拿 repo 裡的資料當網址去連線，
+    # 而且帶著 issues: write。如果它能被任意分支觸發，任何人只要推一個分支再
+    # 手動 dispatch，就能讓我們的 runner 去連他指定的位址、並把回應寫進 issue。
+    #
+    # external-links-check.yml 從一開始就有這道守衛，而這支做的是同一件事
+    # 卻一直沒有——三支看門狗應該同一個形狀。
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # 這個 job 之後不需要 authenticated git 操作，不要把 token 留在 .git/config
           persist-credentials: false
+
+      # 上面的 if: 是防線，但 if: 很容易在日後改動時被順手拿掉，而拿掉之後不會有
+      # 任何訊號。這一步把同一個不變量寫成會 exit 1 的檢查，讓它壞掉時當場看得到。
+      - name: Refuse to run outside the default branch
+        run: |
+          echo "ref = $GITHUB_REF / event = $GITHUB_EVENT_NAME"
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "本 workflow 只能在 main 上執行（帶著 issues:write 去探測任意網址）。" >&2
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7

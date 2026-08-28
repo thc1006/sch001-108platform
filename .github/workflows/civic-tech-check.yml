@@ -9,6 +9,13 @@ on:
     - cron: '30 1 * * 1'   # 每週一 01:30 UTC（台灣時間 09:30），錯開競賽看門狗
   workflow_dispatch:       # 也可在 Actions 頁手動觸發
 
+# 排程與手動觸發若同時在跑，兩個 run 都會查到「沒有既有 issue」，於是各開一個。
+# cancel-in-progress 必須是 false：後到的那個要排隊等前一個做完才看得到它開的
+# issue；取消掉反而會漏掉一次報告。（與 competitions-check.yml 同理，那支已有。）
+concurrency:
+  group: civic-tech-watchdog
+  cancel-in-progress: false
+
 # issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
 # **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
 # job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
@@ -20,16 +27,38 @@ jobs:
   check:
     name: 檢查公民科技專案資料
     runs-on: ubuntu-latest
+    # 沒有這行會吃 Actions 的預設 360 分鐘。這個 job 只讀本地 JSON、不連外網，
+    # 正常幾十秒內結束；跑超過 10 分鐘代表卡住了，不該再佔六小時的額度。
+    timeout-minutes: 15
     # contents: read → checkout；issues: write → 最後一步的 gh issue create/comment。
     permissions:
       contents: read
       issues: write
+    # 只在 default branch 跑。
+    #
+    # 這裡的理由和 external-links-check.yml **不同**，不要照抄它的說法：
+    # check-civic-tech.mjs 只解析 URL 驗證協定，**不會發出任何網路請求**
+    # （對照 check-competitions.mjs，那支 import 了 link-health.lib.mjs 的 runProbes）。
+    # 所以這道守衛擋的不是 SSRF，而是「帶著 issues: write 去執行任意分支的程式碼
+    # 與資料，並把產出寫進 issue」。同 repo 內有寫入權限的人本來就能推自己的
+    # workflow，所以這不是提權防線，是防呆與一致性：三支看門狗應該同一個形狀。
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # 這個 job 之後不需要 authenticated git 操作，不要把 token 留在 .git/config
           persist-credentials: false
+
+      # 上面的 if: 是防線，但 if: 很容易在日後改動時被順手拿掉，而拿掉之後不會有
+      # 任何訊號。這一步把同一個不變量寫成會 exit 1 的檢查，讓它壞掉時當場看得到。
+      - name: Refuse to run outside the default branch
+        run: |
+          echo "ref = $GITHUB_REF / event = $GITHUB_EVENT_NAME"
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "本 workflow 只能在 main 上執行（帶著 issues:write 跑分支程式碼）。" >&2
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -54,7 +83,10 @@ jobs:
           #
           #   1. author.login == "app/github-actions"
           #      issue 層級的 bot 作者格式（留言層級是 "github-actions"，勿混用）。
-          #      人無法以 Actions app 的身分開 issue，這是硬保證。
+          #      注意：這**不是**來源證明。同 repo 內任何用 GITHUB_TOKEN 的 workflow
+          #      作者都是 Actions App，有寫入權限的人也能把標記貼進自己的 issue。
+          #      它的作用是讓標籤不再單獨決定歸屬，不要讀成「無法偽造」。
+          #      （competitions-check.yml 早已更正過這個說法，此處對齊。）
           #   2. body 內含機器標記 <!-- civic-tech-watchdog:v1 -->
           #      證明是本 workflow 寫的，擋掉 repo 內其他自動化開的 issue。
           #
@@ -64,26 +96,42 @@ jobs:
             --color FBCA04 \
             --description "看門狗自動開立，請勿手動使用此標籤" || true
 
-          existing=$(gh issue list \
-            --label civic-tech-watchdog --state open --limit 50 \
-            --json number,author,body \
-            --jq '[ .[]
-                    | select(.author.login == "app/github-actions")
-                    | select(.body | contains("<!-- civic-tech-watchdog:v1 -->"))
-                  ] | .[0].number // empty')
+          # 認領邏輯抽到 scripts/watchdog-issue.lib.mjs 由單元測試覆蓋——內嵌在 YAML
+          # 裡的 jq 沒辦法寫測試，改壞了 CI 不會知道。原本那段 jq 的 .[0].number 在
+          # 有多個候選時會**安靜地挑第一個**，另一個 issue 就永遠收不到報告；
+          # find-watchdog-issue.mjs 在那種情況 exit 2，讓整個 job 紅掉。
+          # （competitions-check.yml 早已改成這樣，此處對齊。）
+          gh issue list \
+            --label civic-tech-watchdog --state open --limit 100 \
+            --json number,author,body > watchdog-candidates.json
+
+          if ! decision=$(node scripts/find-watchdog-issue.mjs \
+                            --marker '<!-- civic-tech-watchdog:v1 -->' \
+                            < watchdog-candidates.json); then
+            echo "無法決定要接管哪個 issue（見上方訊息），中止而不亂貼。" >&2
+            exit 1
+          fi
 
           # 機器標記必須寫進 body，下一輪才認得出這是自己開的
           { echo '<!-- civic-tech-watchdog:v1 -->'; echo; cat civic-tech-report.md; } > issue-body.md
 
-          if [ -n "$existing" ]; then
-            echo "接管既有 issue #$existing，補上最新報告。"
-            gh issue comment "$existing" --body-file civic-tech-report.md
-            echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
-          else
-            url=$(gh issue create \
-              --title "公民科技專案地圖資料需要更新（自動偵測）" \
-              --label civic-tech-watchdog \
-              --body-file issue-body.md)
-            echo "沒有可接管的 issue，已新開：$url"
-            echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          case "$decision" in
+            comment\ *)
+              existing="${decision#comment }"
+              echo "接管既有 issue #$existing，補上最新報告。"
+              gh issue comment "$existing" --body-file civic-tech-report.md
+              echo "📋 報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            create)
+              url=$(gh issue create \
+                --title "公民科技專案地圖資料需要更新（自動偵測）" \
+                --label civic-tech-watchdog \
+                --body-file issue-body.md)
+              echo "沒有可接管的 issue，已新開：$url"
+              echo "🆕 已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "find-watchdog-issue.mjs 回傳了未預期的結果：$decision" >&2
+              exit 1
+              ;;
+          esac
