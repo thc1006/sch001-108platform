@@ -190,8 +190,10 @@ const { accepted: bareHosts, rejected: bareRejected, unresolved: bareUnresolved 
 );
 
 const bareDead = [];
-const bareBlocked = [];
 const bareOther = [];
+// url 路徑先前有幾筆被擋。裸網域被擋下的會併進同一個 blocked 桶（見下方註解），
+// 這裡先記住分界，好讓主控台的兩段數字仍然分得開。
+const urlBlockedCount = blocked.length;
 let bareHealthy = 0;
 let bareSkipped = 0;
 if (bareHosts.length) {
@@ -207,7 +209,11 @@ if (bareHosts.length) {
         const host = bareHosts[i];
         const item = { url: probeUrlFor(host), host, occurrences: occurrencesOfHost.get(host) ?? [], reason: describeResult(r) };
         if (isBlockedResult(r)) {
-            bareBlocked.push({ ...item, reason: r.reason });
+            // 被位址政策擋下＝這筆資料指向 loopback／私網／雲端 metadata。那是**資料被
+            // 竄改或寫錯**的訊號，不是「網域失效、請改寫內文」。先前它被折進下面那段
+            // 🔤「說明文字裡的網域失效」，訊號當場被稀釋掉；改成與 url 路徑共用同一個
+            // 🛑 桶子，不論從哪條路徑進來都用同樣大聲的措辭。
+            blocked.push({ ...item, reason: r.reason });
             continue;
         }
         const hijack = matchHijacked(hijackedEntries, item.url);
@@ -223,10 +229,11 @@ if (bareHosts.length) {
 }
 
 // 問不到 TLD 答案的候選並沒有被探測過，等同「未檢查」——不可以算進完整覆蓋。
-const coverageComplete = skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
+// --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘**完全沒看過**。先前它仍會
+// 回報 coverage_complete=true，等於用一次只驗 3 筆的執行宣稱「全站都查過了」。
+const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
 // 被接管的網域一定要讓人看到——它回 200，不會出現在任何一個「壞掉」的桶子裡。
-const needsAttention =
-    dead.length > 0 || blocked.length > 0 || bareDead.length > 0 || bareBlocked.length > 0 || hijackedHits.length > 0 || !coverageComplete;
+const needsAttention = dead.length > 0 || blocked.length > 0 || bareDead.length > 0 || hijackedHits.length > 0 || !coverageComplete;
 
 const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => o.file))].sort();
 // 出處全列會炸掉報告：同一個網址可能出現在 90 幾個頁面（例如共用的頁尾連結），
@@ -246,7 +253,7 @@ console.log(`  盤點來源：${INVENTORY_PATH}（${inventory.urls.length} 個�
 console.log(`  本次檢查：${targets.length}`);
 console.log(`  健康　　：${healthy}`);
 console.log(`  失效　　：${dead.length}`);
-console.log(`  位址封鎖：${blocked.length}`);
+console.log(`  位址封鎖：${urlBlockedCount}`);
 console.log(`  無法判定：${unverified.length}`);
 console.log(`  已列例外：${suppressed.length}`);
 if (skipped) console.log(`  未檢查　：${skipped}（逾時間預算）`);
@@ -257,23 +264,23 @@ if (bareUnresolved.length) console.log(`  DNS 未答：${bareUnresolved.length}�
 console.log(`  實際探測：${bareHosts.length}`);
 console.log(`  健康　　：${bareHealthy}`);
 console.log(`  失效　　：${bareDead.length}`);
-console.log(`  位址封鎖：${bareBlocked.length}`);
+console.log(`  位址封鎖：${blocked.length - urlBlockedCount}`);
 console.log(`  無法判定：${bareOther.length}`);
 if (bareSkipped) console.log(`  未檢查　：${bareSkipped}（逾時間預算）`);
-if (hijackedHits.length) console.log(`🚨 已知被接管的網域：${hijackedHits.length}`);
+if (hijackedHits.length) console.log(`🚨 已知不可信任的主機：${hijackedHits.length}`);
 
 // ── Markdown 報告 ──
 const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
 lines.push(`- 檢查日期：${todayISO}（UTC）`);
 lines.push(`- 盤點：${inventory.urls.length} 個去重外部網址，來自 check-built-site.mjs 的建置產物掃描`);
-lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${blocked.length}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
+lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${urlBlockedCount}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
 lines.push(
     `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
 );
 lines.push('');
 
 if (hijackedHits.length) {
-    lines.push('### 🚨 已知被接管的網域（狀態碼健康，內容已經換人）', '');
+    lines.push('### 🚨 已知不可信任的主機（狀態碼健康，內容不可信）', '');
     lines.push(
         '這些主機列在 `scripts/link-policy.json` 的 `hijacked`。它們多半回 HTTP 200——三態分類看不出任何異常，',
         '所以必須靠這份名單標出來。名單只會**放大**訊號，不會壓低任何東西；每一筆都有到期日，到期會讓確定性 CI 紅，',
@@ -281,7 +288,8 @@ if (hijackedHits.length) {
         '',
     );
     for (const h of hijackedHits) {
-        lines.push(`- **${h.policy.match.host}**（本次探測：${h.reason}）`);
+        const kindLabel = h.policy.kind === 'terminus' ? '接管鏈的終點（本來就不是教育網域）' : '這台主機本身已被接管';
+        lines.push(`- **${h.policy.match.host}** — ${kindLabel}（本次探測：${h.reason}）`);
         lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域' : 'url 欄位'}　\`${h.url}\``);
         lines.push(`  - 情況：${h.policy.reason}`);
         lines.push(`  - 證據：${h.policy.evidence}`);
@@ -294,6 +302,7 @@ if (hijackedHits.length) {
 if (blocked.length) {
     lines.push('### 🛑 網址被位址政策擋下（請立刻檢查資料是否被竄改）', '');
     lines.push('這些網址指向 loopback／私有網段／link-local／雲端 metadata，健檢拒絕連線。', '');
+    lines.push('（含只寫在說明文字裡的裸網域——不論從哪條路徑進來，指向內網都是同一件事。）', '');
     lines.push('正常的教育資源不會長這樣；出現在這裡代表資料檔被寫錯或被動過手腳。', '');
     for (const b of blocked) {
         lines.push(`- **${b.reason}**`);
@@ -313,7 +322,7 @@ if (dead.length) {
     lines.push('');
 }
 
-if (bareDead.length || bareBlocked.length) {
+if (bareDead.length) {
     lines.push('### 🔤 說明文字裡的網域失效（請改寫內文或補上現行網址）', '');
     lines.push(
         '這些網域只出現在說明文字裡、沒有做成連結，所以讀者不會點到——但它們仍然值得每週看一次。',
@@ -328,7 +337,7 @@ if (bareDead.length || bareBlocked.length) {
         '   就是該把它加進 link-policy.json 的 hijacked 名單的時候。',
         '',
     );
-    for (const d of [...bareBlocked, ...bareDead]) {
+    for (const d of bareDead) {
         lines.push(`- **${d.reason}**：${d.host}`);
         lines.push(...sourceLines(d));
     }
@@ -469,5 +478,6 @@ if (process.env.GITHUB_OUTPUT) {
     await appendFile(process.env.GITHUB_OUTPUT, `needs_attention=${needsAttention}\ncoverage_complete=${coverageComplete}\n`);
 }
 
-if (!coverageComplete) console.log(`→ 覆蓋不完整：${skipped} 筆未檢查，不可視為健康。`);
+if (limit > 0) console.log(`→ 使用了 --limit ${limit}：只驗了一部分，coverage_complete 一律為 false。`);
+if (!coverageComplete) console.log(`→ 覆蓋不完整：${skipped + bareSkipped} 筆未檢查、${bareUnresolved.length} 筆未篩選，不可視為健康。`);
 console.log(needsAttention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');

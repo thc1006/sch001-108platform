@@ -506,6 +506,7 @@ test('政策：403 這種 unverified 才會被例外壓下去', () => {
 
 const validHijack = (over = {}) => ({
     match: { host: 'ieso-info.org' },
+    kind: 'hijacked',
     reason: '舊網域已被轉作線上博弈站，與原賽事完全無關，且回 HTTP 200',
     evidence: '2026-08-28 實測 301 轉至 www 子網域，title 為 Best Online Pokies in Australia 2026',
     owner: 'thc1006',
@@ -519,6 +520,19 @@ test('hijacked：合法的一筆通過驗證', () => {
     assert.deepEqual(errors, []);
     assert.equal(hijacked.length, 1);
     assert.equal(hijacked[0]._key, 'hijacked:ieso-info.org');
+});
+
+test('hijacked：kind 必須是 hijacked 或 terminus', () => {
+    // 名單裡有兩種不同的東西：hijacked 是「這台主機本身易主」（ieso-info.org），
+    // terminus 是「接管鏈的終點，本來就不是教育網域」（arcade.now 是 www.sasmo.sg
+    // 轉過去的廣告漏斗）。兩者處置相同，但把 terminus 稱作「被接管的網域」是不實
+    // 敘述——arcade.now 沒有被誰接管，它就是接管方。標籤不實的警示沒有人會相信。
+    assert.match(hijackErrors({ kind: undefined }).join('；'), /kind/);
+    assert.match(hijackErrors({ kind: 'suspicious' }).join('；'), /kind/);
+    assert.match(hijackErrors({ kind: '' }).join('；'), /kind/);
+    for (const kind of ['hijacked', 'terminus']) {
+        assert.deepEqual(hijackErrors({ kind }), [], `${kind} 必須是合法值`);
+    }
 });
 
 test('hijacked：缺 evidence 一律拒絕（到期時要比對的就是它）', () => {

@@ -22,6 +22,7 @@ import {
     makeTldChecker,
     probeUrlFor,
     SHADOWED_BY_FILE_EXT,
+    makeSkipFieldFilter,
 } from './bare-domains.lib.mjs';
 import { staticUrlPolicy } from './link-health.lib.mjs';
 
@@ -106,14 +107,27 @@ test('反例：句中縮寫 e.g. / i.e.（TLD 長度不足 2）', () => {
 });
 
 test('反例：與副檔名撞名的 TLD 一律不從內文擷取（確定性，不靠 DNS）', () => {
-    // 實測：readme.md、logo.ai、test.sh、cargo.rs 都被蹲域名的人註冊、解析得到，
-    // 所以「可不可解析」對這一組毫無鑑別力，只能靠形態直接排除。
-    for (const s of ['README.md', 'libc.so', 'logo.ai', 'main.py', 'test.sh', 'Cargo.rs', 'archive.zip']) {
+    // 實測：readme.md、test.sh、cargo.rs 都被蹲域名的人註冊、解析得到，所以
+    // 「可不可解析」對這一組毫無鑑別力，只能靠形態直接排除。
+    for (const s of ['README.md', 'libc.so', 'main.py', 'test.sh', 'Cargo.rs', 'archive.zip',
+                     'Utils.pm', 'main.tf', 'parser.ml', 'driver.cab', 'poster.pub', 'bundle.js.map', 'Xcode.app']) {
         assert.deepEqual(hostsOf(`請見 ${s} 檔案`), [], `不該擷出：${s}`);
     }
-    for (const tld of ['md', 'so', 'ai', 'sh', 'py', 'rs', 'zip']) {
+    for (const tld of ['md', 'so', 'sh', 'py', 'rs', 'zip', 'pm', 'tf', 'ml', 'cab', 'pub', 'map', 'app']) {
         assert.ok(SHADOWED_BY_FILE_EXT.has(tld), `${tld} 應在撞名清單內`);
     }
+});
+
+test('.ai 刻意不遮蔽——遮了會漏掉本站內文推薦的真實網站', () => {
+    // 原始清單把 .ai 當成 Adobe Illustrator 遮掉，並宣稱「代價為 0」。canary 測試
+    // 一跑就推翻了：online-courses.json 的課程提供者是「DeepLearning.AI」、
+    // methodology.json 推薦「Otter.ai (AI語音轉文字)」，兩個都是真實網站，卻永遠
+    // 不會被檢查。.ai 現在是 AI 產品的主流網域，內文裡出現真網域的機率遠高於
+    // 出現 Illustrator 檔名，因此不遮——代價是 logo.ai 這種檔名會被探測，
+    // 拿到的結果只是一筆無害的噪音，遠比永久漏檢兩個真網站好。
+    assert.ok(!SHADOWED_BY_FILE_EXT.has('ai'), '.ai 不可以在遮蔽清單裡');
+    assert.deepEqual(hostsOf('課程由 DeepLearning.AI 提供'), ['deeplearning.ai']);
+    assert.deepEqual(hostsOf('可使用 Otter.ai (AI語音轉文字) 協助整理逐字稿'), ['otter.ai']);
 });
 
 test('反例：電子郵件的右半邊是郵件主機，不是網站', () => {
@@ -304,6 +318,74 @@ test('stage2：三桶的總數必須等於輸入數（不可以有候選人間�
 
 test('stage2：沒有注入 resolver 就必須拋錯（測試不得連外網）', () => {
     assert.throws(() => makeTldChecker({}), /resolveNs/);
+});
+
+test('反例：非 CJK 字母緊貼網域時不可截斷成另一台主機（張冠李戴）', () => {
+    // 這比誤判更糟：內文點名 A 網域，檢查器去驗 B 網域並回報 B 的健康狀態，
+    // 產生的是**錯誤的保證**。西里爾 е 與全形 Ａ 都不在 ASCII 左界字元類裡，
+    // 少了第二道 lookbehind 就會擷出 vil.org／bc.org 這兩台真實存在的主機。
+    assert.deepEqual(hostsOf('假冒網站 еvil.org 請勿點擊'), []);
+    assert.deepEqual(hostsOf('請見 Ａbc.org 的說明'), []);
+    assert.deepEqual(hostsOf('見 αlpha.org 說明'), []);
+});
+
+test('正例：CJK 緊貼網域必須照樣擷得出來（本站語料的實際形態）', () => {
+    // 上一條的左界不可以連中文一起擋掉——「官網為tpmso.org」沒有空白，
+    // 而那正是 competitions.json 描述文字裡最常見的寫法。
+    assert.deepEqual(hostsOf('官網為tpmso.org，請注意'), ['tpmso.org']);
+    assert.deepEqual(hostsOf('サイトはtcr.orgです'), ['tcr.org']);
+    assert.deepEqual(hostsOf('現行官網為 harvardmun.org。'), ['harvardmun.org']);
+});
+
+test('makeSkipFieldFilter：pointer 的任何一段命中就跳過（不是只看最後一段）', () => {
+    const accept = makeSkipFieldFilter(['thumbnail_url', 'image', '_readme']);
+    assert.equal(accept('/competitions/0/description'), true);
+    assert.equal(accept('/_readme'), false);
+    assert.equal(accept('/competitions/0/image'), false);
+    // 這四條是重點：欄位一旦變成陣列或物件，最後一段就會變成索引或子鍵。
+    // 舊的「只比最後一段」寫法在這裡會靜默失效，把檔名與圖片路徑放進候選。
+    assert.equal(accept('/_readme/0'), false);
+    assert.equal(accept('/_readme/notes/3'), false);
+    assert.equal(accept('/gallery/0/image/src'), false);
+    assert.equal(accept('/items/2/thumbnail_url'), false);
+});
+
+test('遮蔽的代價必須是 0：本站語料不得有網域落在被遮蔽的 TLD 上', async () => {
+    // SHADOWED_BY_FILE_EXT 是啟發式清單（副檔名撞名），代價是「用這些 TLD 的真實
+    // 網域永遠不會被內文擷取」。那個代價現在是 0，但它必須**持續**是 0：哪天有競賽
+    // 官網是 foo.app、或說明文字提到 something.map，這條測試會紅，逼人當場決定要
+    // 不要把該 TLD 從遮蔽清單拿掉，而不是靜靜地永久漏檢。
+    const dataPages = JSON.parse(await readFile(path.join(ROOT, 'scripts/data-pages.json'), 'utf8'));
+    const accept = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
+    const lost = new Map();
+    for (const cfg of Object.values(dataPages.pages)) {
+        const data = JSON.parse(await readFile(path.join(ROOT, 'public', cfg.json), 'utf8'));
+        const withShadow = new Set(collectBareDomains(data, accept).keys());
+        for (const [host, at] of collectBareDomains(data, accept, { keepShadowedTlds: true })) {
+            if (!withShadow.has(host)) lost.set(host, `${cfg.json} ${at[0]}`);
+        }
+    }
+    assert.deepEqual(
+        [...lost.entries()],
+        [],
+        `有候選被 SHADOWED_BY_FILE_EXT 遮掉了。若它們其實是真網域，請把該 TLD 從清單移除；` +
+            `若確實是檔名，請改寫內文或把它寫成完整網址。目前遮掉：${[...lost.keys()].join('、')}`,
+    );
+});
+
+test('stage2：篩選有時間預算，用盡的候選歸 unresolved 而不是 rejected', async () => {
+    // 篩選跑在 runProbes 的 12＋3 分鐘預算之外，先前完全沒有上限——實測 resolver
+    // 掛掉時光是篩 30 個候選就多花 208 秒，全部白白疊在 job 上。
+    let clock = 0;
+    const { accepted, rejected, unresolved } = await screenBareDomains(['a.org', 'b.tw', 'c.de'], {
+        resolveNs: fakeResolveNs,
+        budgetMs: 100,
+        now: () => (clock += 60), // 第 2 筆之後就超出預算
+    });
+    assert.deepEqual(accepted, ['a.org'], '預算內的那一筆要正常處理');
+    assert.deepEqual(rejected, [], '沒問到的不可以被斷言成「不是網域」');
+    assert.deepEqual(unresolved.map((u) => u.host), ['b.tw', 'c.de']);
+    assert.match(unresolved[0].reason, /時間預算/);
 });
 
 // ──────────────────────────────────────────────────────────────

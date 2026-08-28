@@ -143,6 +143,18 @@ const policyCases = [
         policy: () => { const p = clonePolicy(); p.hijacked[0].expires = '2099-12-31'; return p; },
     },
     {
+        name: '接管警示沒有 kind（無法分辨「本身被接管」與「接管鏈終點」）',
+        expect: /kind/,
+        policy: () => { const p = clonePolicy(); delete p.hijacked[0].kind; return p; },
+    },
+    {
+        // 名單裡混進一個沒人認得的 kind，報告就只能亂貼標籤。arcade.now 標成
+        // hijacked 會被寫成「這台主機本身已被接管」——它並沒有，它是接管方。
+        name: '接管警示的 kind 不是 hijacked／terminus',
+        expect: /kind/,
+        policy: () => { const p = clonePolicy(); p.hijacked[0].kind = 'suspicious'; return p; },
+    },
+    {
         name: '接管警示沒有 evidence（到期時無從比對）',
         expect: /evidence/,
         policy: () => { const p = clonePolicy(); delete p.hijacked[0].evidence; return p; },
@@ -293,7 +305,18 @@ const bareDomainMutations = [
     },
     {
         name: '左界的 lookbehind 被拿掉（路徑片段與網域中段都會被擷出）',
-        apply: (s) => s.replace('/(?<![A-Za-z0-9._@/\\\\=#?&-])((?:', '/((?:'),
+        apply: (s) => s.replace('(?<![A-Za-z0-9._@/\\\\=#?&-])', ''),
+    },
+    {
+        // 這一條守的是「張冠李戴」：非 CJK 的 Unicode 字母緊貼網域時，少了這道
+        // lookbehind 會把西里爾的 еvil.org 截成 vil.org、全形的 Ａbc.org 截成 bc.org，
+        // 檢查器去驗了另一台主機還回報它健康——產生的是錯誤的保證，比漏檢更糟。
+        name: '非 CJK 字母的左界被拿掉（homograph 會被截成另一台真實主機）',
+        apply: (s) =>
+            s.replace(
+                '(?<=^|[^\\p{L}]|[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}])',
+                '',
+            ),
     },
     {
         name: '主機名總長度上限不再檢查（253 字元以上也放行）',
@@ -305,7 +328,7 @@ const bareDomainMutations = [
     },
     {
         name: '與副檔名撞名的 TLD 不再排除（README.md、libc.so 變成網域）',
-        apply: (s) => s.replace('        if (SHADOWED_BY_FILE_EXT.has(tld)) continue;', '        void SHADOWED_BY_FILE_EXT;'),
+        apply: (s) => s.replace('        if (!opts.keepShadowedTlds && SHADOWED_BY_FILE_EXT.has(tld)) continue;', '        void SHADOWED_BY_FILE_EXT;'),
     },
     {
         name: 'TLD 存在與否不再判斷（Node.js、fuse.min.js 會被拿去探測）',
@@ -320,6 +343,27 @@ const bareDomainMutations = [
             s.replace(
                 "            verdict = DEFINITIVE_ABSENT.has(code) ? 'no' : 'unknown';",
                 "            void code; verdict = 'no';",
+            ),
+    },
+    {
+        // _readme 或圖片欄位一旦變成陣列，pointer 會是 /_readme/0，最後一段是 "0"。
+        // 只比最後一段的話跳過邏輯當場失效，檔名與圖片路徑會整批變成裸網域候選，
+        // 而且沒有任何訊號。
+        name: '欄位跳過改回「只比 pointer 最後一段」（陣列化就靜默失效）',
+        apply: (s) =>
+            s.replace(
+                "    return (pointer) => !String(pointer).split('/').some((seg) => skip.has(seg));",
+                "    return (pointer) => !skip.has(String(pointer).split('/').pop());",
+            ),
+    },
+    {
+        // 篩選階段跑在 runProbes 的預算之外。拿掉上限，resolver 一掛就會多花
+        // 幾百秒（實測 208 秒），全部白白疊在 30 分鐘的 job 上。
+        name: '篩選階段的時間預算被拿掉（resolver 掛掉會拖垮整個 job）',
+        apply: (s) =>
+            s.replace(
+                '        if (now() >= deadline) {',
+                '        if (false) {',
             ),
     },
     {

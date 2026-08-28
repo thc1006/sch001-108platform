@@ -34,7 +34,7 @@ import {
     walkJsonStrings,
 } from './site-contract.lib.mjs';
 import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
-import { collectBareDomains } from './bare-domains.lib.mjs';
+import { collectBareDomains, makeSkipFieldFilter } from './bare-domains.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -319,8 +319,9 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
     //   _readme           是給維護者看的欄位說明，裡面全是本 repo 的檔名
     //                     （check-competitions.mjs、competitions.html…）。實測不跳過
     //                     的話，56 個候選裡有 11 個是 _readme 的檔名。
-    const SKIP_FIELDS = new Set([...dataPages.localAssetFields, '_readme']);
-    const acceptField = (pointer) => !SKIP_FIELDS.has(pointer.split('/').pop());
+    // 比對 pointer 的**每一段**而不是只比最後一段：_readme 或圖片欄位一旦變成陣列，
+    // pointer 會是 /_readme/0，最後一段是 "0"，只比最後一段的話跳過邏輯會靜默失效。
+    const acceptField = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
     for (const [host, pointers] of collectBareDomains(data, acceptField)) {
         if (!bareDomains.has(host)) bareDomains.set(host, { host, occurrences: [] });
         for (const p of pointers) bareDomains.get(host).occurrences.push({ file: jsonRel, location: p });

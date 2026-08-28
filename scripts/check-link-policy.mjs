@@ -155,7 +155,7 @@ console.log(
     `  接管警示：${hijacked.length} 筆（放大訊號，不是例外；命中者不論狀態碼一律列出且永不計入健康）`,
 );
 for (const h of hijacked) {
-    console.log(`      ${h.match.host}  → ${h.expires} 需重新查證是否仍被接管（owner: ${h.owner}）`);
+    console.log(`      ${h.match.host}  [${h.kind}]  → ${h.expires} 需重新查證（owner: ${h.owner}）`);
 }
 console.log(`  盤點的外部網址：${urls.length}（另有 ${bareHosts.length} 個只寫在說明文字裡的裸網域）`);
 console.log(`  錯誤：${errors.length}`);

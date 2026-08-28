@@ -28,6 +28,10 @@
  * 到期讓確定性 CI 紅），另外多要求一個 evidence：到期時要重新查證的是「它是否
  * 仍被接管」，沒有當初看到什麼的紀錄就無從比對。
  * 同一台主機不可以同時出現在 entries 與 hijacked——那是自相矛盾的宣告。
+ *
+ * 每一筆還要標 kind：hijacked（這台主機本身易主）或 terminus（接管鏈的終點，本來就
+ * 不是教育網域）。少了這個欄位，報告只能一律稱它們「被接管的網域」，而 arcade.now
+ * 並沒有被誰接管——它就是接管方。標籤不實的警示，下一個維護者不會相信。
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
@@ -42,7 +46,17 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries', 'hijacked']);
 const ENTRY_KEYS = new Set(['match', 'reason', 'owner', 'expires']);
 /** hijacked 多一個 evidence：沒有原始觀察就無法在到期時比對「是否仍被接管」。 */
-const HIJACKED_KEYS = new Set(['match', 'reason', 'owner', 'expires', 'evidence']);
+const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'evidence']);
+
+/**
+ * 這份名單裡有兩種不同的東西，必須分清楚，否則報告會說謊：
+ *   hijacked  這台主機**本身**曾經是教育資源的網域，後來易主（ieso-info.org 變博弈站）
+ *   terminus  這台主機是接管鏈的**終點**，它從來就不是教育網域，但我們的內文會提到它
+ *             （arcade.now 是 www.sasmo.sg 轉過去的聯盟廣告頁）
+ * 兩者都必須「不論狀態碼一律列出、永不計入健康」，但把 terminus 稱作「被接管的網域」
+ * 是不實敘述——arcade.now 沒有被誰接管，它就是接管方。
+ */
+const HIJACK_KINDS = new Set(['hijacked', 'terminus']);
 
 /** 日期是否真實存在（往返比對可抓出 2026-02-30 這種被 Date 靜默正規化的值）。 */
 function isRealDate(text) {
@@ -233,6 +247,9 @@ export function validatePolicy(policy, todayISO) {
                     }
                 }
 
+                if (!HIJACK_KINDS.has(e.kind)) {
+                    push(`${at}.kind 必須是 ${[...HIJACK_KINDS].join(' 或 ')}——hijacked 是「這台主機本身被接管」，terminus 是「它是接管鏈的終點、本來就不是教育網域」（目前：${JSON.stringify(e.kind)}）`);
+                }
                 if (typeof e.reason !== 'string' || [...e.reason.trim()].length < MIN_REASON_CHARS) {
                     push(`${at}.reason 必須說明接管的情況，至少 ${MIN_REASON_CHARS} 字`);
                 }
