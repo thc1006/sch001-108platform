@@ -623,7 +623,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     /* ── Control bar ── */
     .comp-controls {
-      position: sticky; top: 68px; z-index: 40;
+      position: sticky; top: 4rem; z-index: 40; /* 4rem＝64px＝header 高度，見 global.css 的說明 */
       background: rgba(246,247,251,.82); backdrop-filter: blur(12px);
       border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
       padding: 1rem 1.5rem;
@@ -790,7 +790,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
          註：曾試過把 .comp-chips 改成單行橫向捲動，實測反而變高（431→462px）：
          .comp-chiprow 是 space-between 的 wrap 容器，強制不換行會把計數列擠到
          下一行，還多出捲軸高度。故不採用。 */
-      .comp-controls { top: 68px; padding: .6rem 1rem; }
+      /* top 與上面那條保持一致（4rem＝64px＝header 高度）。這裡只改 padding。
+         先前這行寫死 68px，而且因為後面接的是 padding 而不是 z-index，
+         grep 「top: NNpx; z-index」時被漏掉——是齊平測試在 375px 抓到的。 */
+      .comp-controls { top: 4rem; padding: .6rem 1rem; }
       .comp-controls__inner { gap: .5rem; }
       .comp-searchrow { gap: .5rem; }
       .comp-selects { gap: .4rem; }

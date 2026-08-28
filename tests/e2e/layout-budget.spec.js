@@ -310,6 +310,7 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
     test('每個 sticky 面板都掛了 data-autohide-filters', async () => {
         const { readFileSync } = require('node:fs');
         const missing = [];
+        let pinnedFound = 0;
         for (const rel of PAGES) {
             const html = readFileSync(path.join(DIST, rel), 'utf8');
             // Tailwind 的 sticky top-[NNpx]，以及編譯後的 position:sticky;top:NNpx
@@ -318,11 +319,14 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
                 // 只看「無條件釘住」的：有 md:／lg: 這類響應式前綴代表只在桌機釘住，
                 // 而桌機垂直空間充足，不是這條規則要管的對象。真的在手機上釘住的話，
                 // 上面那個版面預算測試會抓到。
+                // 兩種寫法都要認：`top-[NNpx]`（任意值）與 `top-16`（內建 scale）。
+                // 原本只認前者——把面板從 top-[68px] 改成 top-16 之後，這條測試會
+                // **一個面板都找不到而空洞地通過**。實際差點發生過。
+                const off = tag.match(/(?<![:\w-])top-(?:\[(\d+)px\]|(\d+))(?![\w.-])/);
                 const isPinnedBelowHeader =
-                    /(?<![:\w-])sticky\b/.test(tag) &&
-                    /(?<![:\w-])top-\[(\d+)px\]/.test(tag) &&
-                    Number(RegExp.$1) > 0;
+                    /(?<![:\w-])sticky\b/.test(tag) && off && Number(off[1] ?? off[2]) > 0;
                 if (!isPinnedBelowHeader) continue;
+                pinnedFound++;
                 if (tag.includes('data-autohide-filters')) continue;
                 missing.push(`${rel}  ${tag.slice(0, 110)}`);
             }
@@ -331,7 +335,106 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
             missing,
             '以下元素釘在 header 下方卻沒有 data-autohide-filters，手機上會把畫面吃掉：\n  ' + missing.join('\n  '),
         ).toEqual([]);
+
+        // 防空洞：這條測試靠正則辨認面板，正則跟不上寫法改變時它會安靜地零命中。
+        // 站上目前有 8 個無條件釘住的面板；低於這個數就是偵測壞了，不是面板變乾淨了。
+        expect(
+            pinnedFound,
+            `只辨認出 ${pinnedFound} 個釘住的面板（預期至少 8）。多半是偵測正則跟不上新的 ` +
+                'class 寫法，而不是面板真的變少——零命中會讓這條測試變成擺設。',
+        ).toBeGreaterThanOrEqual(8);
     });
+});
+
+// 面板釘在 header 底下，但「底下」是多少先前被寫死在十個地方、三個不同的數字
+// （68px ×7、76px ×2、原始 CSS 68px ×1），沒有一個等於 header 的實際高度 64px。
+// 兩層都是半透明的（背景色帶 /80 透明度 ＋ backdrop-blur），縫裡的內容卻是全不透明的，捲動時
+// 會出現一條對比明顯的文字帶夾在兩條模糊的 bar 之間，看起來像渲染破綻。
+//
+// 既有的檢查一條都抓不到它：版面預算量的是「固定 chrome 佔畫面多少」、溢出檢查看的
+// 是水平方向、幾何比對在 1280x900 做。三套全綠而畫面是壞的——檢查看的不是壞掉的
+// 那個維度。這一條補上那個維度。
+test.describe('結構：sticky 面板必須與 header 底部齊平', () => {
+    test.describe.configure({ timeout: 120_000 });
+
+    // 面板在 <=860px 會自動讓開，所以要先往下捲再往上捲一點讓它復原且維持釘住。
+    const STICKY_PAGES = [
+        '/advanced-resources/online-courses.html',
+        '/advanced-resources/reading-list.html',
+        '/advanced-resources/competitions.html',
+        '/autonomous-learning/resource-map.html',
+        '/career-exploration/competency-map.html',
+        '/career-exploration/senior-interviews.html',
+        '/civic-tech-map/index.html',
+        '/learning-portfolio/activity-database.html',
+        '/learning-portfolio/portfolio-gallery.html',
+    ];
+
+    for (const width of [375, 768, 1280]) {
+        test(`${width}px：每個 sticky 面板與 header 之間不得有縫或重疊`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 812 });
+            const problems = [];
+            let checked = 0;
+
+            for (const rel of STICKY_PAGES) {
+                await page.goto(BASE + '/sch001-108platform' + rel, { waitUntil: 'load' });
+                await page.addStyleTag({
+                    content: '*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}',
+                });
+                await page.evaluate(() => window.scrollTo({ top: 2600, behavior: 'instant' }));
+                await page.waitForTimeout(150);
+                await page.evaluate(() => window.scrollTo({ top: 2300, behavior: 'instant' }));
+                await page.waitForTimeout(300);
+
+                const found = await page.evaluate(() => {
+                    const header = document.querySelector('header');
+                    if (!header) return { noHeader: true };
+                    const hb = header.getBoundingClientRect();
+                    const panels = [...document.querySelectorAll('[data-autohide-filters]')];
+                    return {
+                        headerH: Math.round(hb.height),
+                        panels: panels.map((el) => {
+                            const r = el.getBoundingClientRect();
+                            const cs = getComputedStyle(el);
+                            return {
+                                cssTop: cs.top,
+                                gap: Math.round((r.top - hb.bottom) * 10) / 10,
+                                stuck: Math.abs(r.top - parseFloat(cs.top)) < 1.5,
+                            };
+                        }),
+                    };
+                });
+
+                if (found.noHeader) {
+                    problems.push(`${rel}：找不到 <header>`);
+                    continue;
+                }
+                for (const p of found.panels) {
+                    if (!p.stuck) continue; // 沒釘住時 gap 沒有意義
+                    checked++;
+                    if (Math.abs(p.gap) > 0.5) {
+                        problems.push(
+                            `${rel}：面板 top=${p.cssTop}，header 高 ${found.headerH}px，` +
+                                `${p.gap > 0 ? '露出' : '重疊'} ${Math.abs(p.gap)}px`,
+                        );
+                    }
+                }
+            }
+
+            expect(
+                problems,
+                'sticky 面板沒有與 header 底部齊平。縫裡的內容是全不透明的，會在兩條模糊的 ' +
+                    'bar 之間露出一條文字帶：\n  ' + problems.join('\n  '),
+            ).toEqual([]);
+
+            // 防空洞：一個面板都沒釘住的話，上面的斷言會空洞地通過。
+            expect(
+                checked,
+                `${width}px 下沒有任何面板進入釘住狀態，這條測試等於沒跑。` +
+                    '多半是捲動位置或 autohide 行為改了。',
+            ).toBeGreaterThan(0);
+        });
+    }
 });
 
 // 讓開畫面只是一半；另一半是「使用者要用的時候拿得回來」。這幾條沒有通過的話，
