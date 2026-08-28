@@ -549,7 +549,14 @@ const REMOVED_ROUND2 = [
 ];
 
 test('data：本輪移除的 14 筆不得被加回來', () => {
-    assert.equal(REMOVED_ROUND2.length, 14);
+    // 這個數字是承重的：清單被清空的話，底下的迴圈一圈都不會跑，這支測試就會
+    // 「通過」而且什麼都沒檢查。改動筆數時要連同下面的理由一起改，不是把數字調大。
+    assert.equal(
+        REMOVED_ROUND2.length,
+        14,
+        `REMOVED_ROUND2 現在是 ${REMOVED_ROUND2.length} 筆。這份清單是本輪查證的結果，`
+            + '不是可以隨手增減的常數——每一筆都對應一次實際的官網查核。',
+    );
     for (const [needle, reason] of REMOVED_ROUND2) {
         const hits = DATA.competitions.filter((c) => c.title.includes(needle));
         assert.deepEqual(
