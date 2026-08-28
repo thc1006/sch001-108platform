@@ -125,28 +125,91 @@ test('報告：訊號數要無條件寫進報告，不只寫在主控台', () =>
     // 「這次沒偵測到」與「偵測根本沒接上線」必須在**人真的會讀的那份東西**上
     // 分得出來。主控台只在 job step 的 log 裡；貼進 issue 的是這份 markdown。
     const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
-    const countLine = src.match(/lines\.push\(`- 自動偵測的可疑訊號：\$\{autoSignals\.length\}[^`]*`\);/);
-    assert.ok(countLine, '報告的摘要沒有無條件列出 autoSignals 的數量');
-    // 那一行不可以被包在 if (autoSignals.length) 裡——包起來就等於沒寫
-    const before = src.slice(0, src.indexOf(countLine[0]));
-    assert.ok(
-        !/if \(autoSignals\.length\) \{[^}]*$/.test(before),
-        '訊號數那一行被包在「有命中才寫」的條件裡了',
+    // 兩個等級都要有數字。只報 actionable 的話，「跨站轉址那一段今天是 0」與
+    // 「跨站轉址整段被我不小心刪掉了」在報告上長得一模一樣。
+    for (const bucket of ['actionableSignals', 'browseOnlySignals']) {
+        const re = new RegExp(`\\$\\{${bucket}\\.length\\}`);
+        const summary = src.slice(src.indexOf('const lines = '));
+        assert.ok(re.test(summary), `報告的摘要沒有列出 ${bucket} 的數量`);
+    }
+    // 摘要那一段不可以被包在「有命中才寫」的條件裡——包起來就等於沒寫。
+    //
+    // 這裡比對的是**源碼形狀**，不是行為：check-external-links.mjs 的報告產生器是
+    // 第 324–610 行的一整段頂層語句，要真的跑起來得先連 508 個目標，沒辦法做成
+    // 單元測試。所以改用一個在這個檔案裡成立、而且繞不過去的不變量——
+    // **那個 lines.push( 必須是第 0 欄的頂層語句**。
+    //
+    // 之所以不比對「有沒有被包在 if 裡」：第一版是找 `if (x) {`，結果無大括號的
+    // `if (x) lines.push(` 直接繞過去，故障注入當場證實了（突變沒被抓到）。
+    // 縮排這條線兩種寫法都擋得住，因為任何一種包裹都會讓它離開第 0 欄。
+    const srcLines = src.split(/\r?\n/);
+    const at = srcLines.findIndex((l) => l.includes('- 自動偵測：需處理'));
+    assert.ok(at > 0, '報告的摘要裡找不到訊號數那一行');
+    let open = -1;
+    for (let i = at; i >= 0; i -= 1) {
+        if (srcLines[i].includes('lines.push(')) { open = i; break; }
+    }
+    assert.ok(open >= 0, '訊號數那一行前面找不到 lines.push(');
+    assert.match(
+        srcLines[open],
+        /^lines\.push\($/,
+        `訊號數那一行的 lines.push 不是頂層語句（實際是 ${JSON.stringify(srcLines[open])}）——` +
+            '被縮排或被前綴，代表它被包進了某個條件裡，沒命中時就不會出現在報告上',
     );
 });
 
-test('contentSquatSignals：ieso-info.org 實測到的標題會被抓到', () => {
-    const hits = contentSquatSignals(
-        '<title>Best Online Pokies in Australia 2026 - Play For Real Money</title>',
+test('報告：跨站轉址不進 needsAttention，內容標記與 HTTP 盲區才進', () => {
+    // 這是這份檢查最重要的一條線。實測全站 508 個目標，跨站轉址命中 11 筆、
+    // **全部誤判**（4 筆兄弟子網域、7 筆機構改名或短網址）。把它接上通知，
+    // 維護者會在第三週學會忽略整個看門狗。
+    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
+    const cond = src.match(/const needsAttention =[\s\S]*?;/);
+    assert.ok(cond, '找不到 needsAttention 的定義');
+    assert.ok(
+        cond[0].includes('actionableSignals.length > 0'),
+        'needsAttention 沒有把 actionable 訊號算進去',
     );
-    assert.ok(hits.length > 0);
-    assert.equal(hits[0].where, 'title');
-    assert.match(hits[0].text, /Pokies/);
+    assert.ok(
+        !/\bautoSignals\.length\b/.test(cond[0]) && !/\bbrowseOnlySignals\b/.test(cond[0]),
+        'needsAttention 仍然把誤判率極高的跨站轉址算進去了',
+    );
+});
+
+test('contentSquatSignals：ieso-info.org 實測到的 head 會被抓到', () => {
+    // 2026-08-28 實測的原文。**必須連 description 一起餵**——門檻是「至少兩個
+    // 相異詞組」，只有標題的話 online pokies 一個詞組不夠，那是刻意的。
+    const hits = contentSquatSignals(
+        '<title>Best Online Pokies in Australia 2026 - Play For Real Money</title>' +
+            '<meta name="description" content="Enjoy the best real money pokies in Australia at ' +
+            'trusted casinos. Claim free spins, grab exclusive bonuses">',
+    );
+    const distinct = new Set(hits.map((h) => h.phrase));
+    assert.ok(distinct.size >= 2, `只命中 ${distinct.size} 個相異詞組：${[...distinct]}`);
+    assert.ok(hits.some((h) => h.where === 'title'));
 });
 
 test('contentSquatSignals：停放待售的網域會被抓到（過期學術網域最常見的下場）', () => {
-    assert.ok(contentSquatSignals('<title>This domain may be for sale</title>').length > 0);
-    assert.ok(contentSquatSignals('<title>Buy this domain</title>').length > 0);
+    // 真實的停放頁不會只提一次。單一詞組的版本刻意**不**命中——那正是
+    // 「至少兩個相異詞組」要擋掉的形態（教育內容常常只會提到一次）。
+    assert.ok(
+        contentSquatSignals(
+            '<title>This domain may be for sale</title>' +
+                '<meta name="description" content="Buy this domain today. Domain parking by our registrar.">',
+        ).length > 0,
+    );
+    assert.deepEqual(
+        contentSquatSignals('<title>This domain may be for sale</title>'),
+        [],
+        '只有一個詞組不該命中——那是門檻的重點',
+    );
+});
+
+test('contentSquatSignals：門檻是「相異」詞組，同一個詞出現兩次不算兩個', () => {
+    // 同一個詞在 title 與 description 各出現一次會產生 2 筆 hit，但只有 1 個相異詞組。
+    const hits = contentSquatSignals(
+        '<title>Online Casino</title><meta name="description" content="The best online casino.">',
+    );
+    assert.deepEqual(hits, [], '同一個詞組重複出現不該通過門檻');
 });
 
 // 反例——這一組比正例更重要。誤判會讓維護者把整個偵測關掉。
@@ -190,7 +253,11 @@ test.before(async () => {
         const url = new URL(req.url, 'http://x');
         if (url.pathname === '/casino') {
             res.writeHead(200, { 'content-type': 'text/html' });
-            res.end('<html><head><title>Best Online Pokies in Australia 2026</title></head><body>x</body></html>');
+            res.end(
+                '<html><head><title>Best Online Pokies in Australia 2026</title>' +
+                    '<meta name="description" content="Real money pokies and free spins at trusted casinos.">' +
+                    '</head><body>x</body></html>',
+            );
         } else if (url.pathname === '/legit') {
             res.writeHead(200, { 'content-type': 'text/html' });
             res.end('<html><head><title>國際地球科學奧林匹亞 IESO</title></head><body>x</body></html>');
@@ -231,7 +298,8 @@ test('端對端：開了 readBodyBytes 才讀得到 title，並命中內容標�
     assert.match(r.bodyHead, /Pokies/);
     const sig = detectHijackSignals(`${base}/casino`, r);
     assert.ok(sig, '應該偵測到內容標記');
-    assert.equal(sig.content[0].phrase, 'online pokies');
+    assert.ok(new Set(sig.content.map((c) => c.phrase)).size >= 2);
+    assert.equal(sig.confidence, 'actionable', '內容標記屬於會觸發 issue 的等級');
 });
 
 test('端對端：正常的競賽頁不得被標記', async () => {

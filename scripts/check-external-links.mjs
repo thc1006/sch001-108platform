@@ -258,8 +258,27 @@ const needsAttention =
     blocked.length > 0 ||
     bareDead.length > 0 ||
     hijackedHits.length > 0 ||
-    autoSignals.length > 0 ||
+    actionableSignals.length > 0 ||
     !coverageComplete;
+
+// 三個訊號的精確度差很多，混在一起會讓高精確度的那兩個被雜訊淹掉。
+// 實測（全站 508 個目標，2026-08-28）：
+//   訊號 A 跨站轉址   11 個命中、**全部是誤判**
+//     4 個是兄弟子網域（www.google.com → workspace.google.com、
+//       premium.parenting.com.tw → www.parenting.com.tw ×2、
+//       sciexplore.colife.org.tw → sciexplore2026.colife.org.tw）
+//     7 個是機構改名／搬遷／短網址（anthropic→claude、comap.com→comap.org、
+//       notion.so→notion.com、xmind.app→xmind.com、youtu.be→youtube.com、
+//       roboticseducation.org→recf.org、zindi.africa→zindi.world）
+//   訊號 B 內容標記    0 個（名單已先攔下 ieso-info.org）
+//   訊號 C HTTP 盲區   1 個、**真陽性**（apho.org 已成 GoDaddy 待售停放頁）
+//
+// 那 4 個兄弟子網域要靠 PSL 才分得掉（www.google.com／workspace.google.com 的
+// 共同後綴是兩段，a.edu.tw／b.edu.tw 也是兩段），另外 7 個**任何規則都解不掉**——
+// 合法網站確實會轉去另一個註冊網域。所以訊號 A 的精確度上限就是這樣，
+// 它適合放進報告給人瀏覽，不適合每週開一次 issue。
+const actionableSignals = autoSignals.filter((a) => a.confidence === 'actionable');
+const browseOnlySignals = autoSignals.filter((a) => a.confidence !== 'actionable');
 
 const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => o.file))].sort();
 // 出處全列會炸掉報告：同一個網址可能出現在 90 幾個頁面（例如共用的頁尾連結），
@@ -296,7 +315,10 @@ if (bareSkipped) console.log(`  未檢查　：${bareSkipped}（逾時間預算�
 if (hijackedHits.length) console.log(`🚨 已知不可信任的主機：${hijackedHits.length}`);
 // **無條件印**，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
 // 在 CI log 上長得一模一樣——那正是這個 repo 一路在修的那個病。
-console.log(`🕵️ 自動偵測的可疑訊號：${autoSignals.length}（跨站轉址／內容標記／HTTP 層盲區）`);
+console.log(
+    `🕵️ 自動偵測：需處理 ${actionableSignals.length}（內容標記／HTTP 盲區）、` +
+        `僅供瀏覽 ${browseOnlySignals.length}（跨站轉址，誤判率高）`,
+);
 
 // ── Markdown 報告 ──
 const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
@@ -310,7 +332,11 @@ lines.push(
 // job step 的 log 裡，這份報告才是貼進 issue／job summary、真的有人讀的東西。
 // 下面那一段只在有命中時才出現，所以少了這個數字的話，「這次沒偵測到」與
 // 「偵測根本沒接上線」在讀者眼裡長得一模一樣。
-lines.push(`- 自動偵測的可疑訊號：${autoSignals.length}（跨站轉址／內容標記／HTTP 層盲區；不改變上面的三態分類）`);
+lines.push(
+    `- 自動偵測：需處理 ${actionableSignals.length}（內容標記／HTTP 層盲區）、` +
+        `僅供瀏覽 ${browseOnlySignals.length}（跨站轉址；誤判率高，不觸發通知）` +
+        '　兩者都不改變上面的三態分類',
+);
 lines.push('');
 
 if (hijackedHits.length) {
@@ -336,17 +362,16 @@ if (hijackedHits.length) {
 // 自動偵測到的訊號（#117）。與上面那份名單並列而不是混在一起——名單是「已經
 // 查證過、確定不可信」，這一段是「機器覺得可疑、還沒有人看過」。兩者的可信度
 // 不同，措辭也要不同，否則讀者會把未經查證的推測當成結論。
-if (autoSignals.length) {
-    lines.push('### 🕵️ 自動偵測到的可疑訊號（尚未經人工查證）', '');
+if (actionableSignals.length) {
+    lines.push('### 🕵️ 自動偵測到的可疑訊號（需要人工查證）', '');
     lines.push(
         '這一段不在任何名單裡，是這次探測當場算出來的。**它不改變上面的三態分類**，',
         '也不代表這些連結一定壞了——需要有人看一眼再決定。',
         '',
-        '- **轉址終點跨站**：使用者最後到達的主機不在起點的網域底下。正常網站不會把訪客',
-        '  轉去另一個註冊網域（少數例外：機構改名、併購、短網址服務）。',
         '- **內容標記**：標題或描述命中蹲域名的變現詞組（博弈／成人／藥品／停放待售）。',
-        '  只比對 <title> 與 meta description，一律用多字詞組並要求詞界，避免把',
-        '  「poker as a model」「time slot」這類正當用法誤判成賭場。',
+        '  只比對 <title> 與 meta description，一律用多字詞組並要求詞界，且**至少要兩個',
+        '  相異詞組**才算命中——單一詞組會把「線上博弈防治研習」「機率論競賽：百家樂的',
+        '  期望值分析」這類正當教育內容掃進來。',
         '- **HTTP 層看不到內容**：回應是一個很小、內容只有轉址構造的殼。這一條**不指控接管**，',
         '  它陳述的是檢查器的盲區——「healthy」在這裡只代表伺服器答了，不代表使用者看得到',
         '  正常內容。對一個競賽官網來說，那本身就值得看一眼。',
@@ -355,7 +380,7 @@ if (autoSignals.length) {
         '並修掉指向它的資料。確認為誤判 → 回報，這代表偵測規則需要調整。',
         '',
     );
-    for (const a of autoSignals) {
+    for (const a of actionableSignals) {
         const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
         lines.push(`- **${where}**`);
         if (a.cross) {
@@ -376,6 +401,36 @@ if (autoSignals.length) {
             lines.push(`    - 原文：${inertText(c.text)}`);
         }
         lines.push(...sourceLines(a));
+    }
+    lines.push('');
+}
+
+// 跨站轉址單獨一段，而且**不觸發通知**。實測（全站 508 個目標）它命中 11 筆、
+// 全部是誤判：4 筆兄弟子網域（沒有 PSL 分不出 www.google.com／workspace.google.com
+// 與 a.edu.tw／b.edu.tw 的差別）、7 筆機構改名或短網址（**任何規則都解不掉**——
+// 合法網站確實會轉去另一個註冊網域）。
+//
+// 保留它是因為真的接管確實會呈現這個形狀（www.sasmo.sg → arcade.now）；
+// 但用它每週開一次 issue，維護者會在第三週學會忽略整個看門狗。
+if (browseOnlySignals.length) {
+    lines.push('### 🔀 轉址終點跨站（僅供瀏覽，不觸發通知）', '');
+    lines.push(
+        '使用者最後到達的主機不在起點的網域底下。**這一段的誤判率很高**——合法的機構',
+        '改名、併購、短網址服務、以及同一個註冊網域下的兄弟子網域都會命中，而要分辨',
+        '「兄弟子網域」與「同一個二段後綴下的不同機構」（a.edu.tw／b.edu.tw）需要公開',
+        '後綴清單，本檢查刻意不引入那份資料。',
+        '',
+        '所以它只列在這裡供瀏覽，不計入待辦。真的接管會呈現這個形狀（www.sasmo.sg →',
+        'arcade.now 就是），但它同時也是網路上很常見的正常行為。',
+        '',
+    );
+    for (const a of browseOnlySignals) {
+        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
+        lines.push(`- ${where}`);
+        if (a.cross) {
+            lines.push(`  - \`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
+            for (const h of a.cross.hops) lines.push(`    - ${inertText(h)}`);
+        }
     }
     lines.push('');
 }

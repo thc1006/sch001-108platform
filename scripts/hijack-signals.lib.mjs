@@ -185,6 +185,28 @@ function phraseHit(hay, phrase) {
  * 回傳 [] 或 [{ phrase, where, text }]。text 是命中的原文（截斷），讓報告可以
  * 直接呈現給人判斷，而不是只說「可疑」。
  */
+/**
+ * 至少要**兩個相異詞組**才算命中。
+ *
+ * 第一版只要一個就報，敵意複查用這個站自己會有的內容打破了它：
+ *
+ *   「青少年網路成癮與線上博弈防治研習」          → 線上博弈
+ *   「博弈產業與觀光管理學術研討會：娛樂城的社會成本」 → 娛樂城
+ *   「機率論競賽：百家樂與二十一點的期望值分析」    → 百家樂
+ *   「真人荷官詐騙手法解析 - 警政署宣導」          → 真人荷官
+ *   「Slot Machine Psychology and Responsible Gaming Education」
+ *   「Payday Loan Traps: Financial Literacy Competition」
+ *
+ * 這些全是正當的教育內容，而且本站已經有 finance/inquiry.md 這類金融素養主題——
+ * 未來新增一個防詐或機率論競賽的連結就會踩到。
+ *
+ * 兩個詞組的門檻把它們全部濾掉，而真正的蹲域名頁面不會只提一次：
+ * ieso-info.org 的標題「Best Online Pokies in Australia 2026 - Play For Real Money」
+ * 命中 3 個。**用相異詞組計數，不是命中次數**——同一個詞在標題與描述各出現一次
+ * 不該算成兩個。
+ */
+export const MIN_DISTINCT_PHRASES = 2;
+
 export function contentSquatSignals(html) {
     const { title, description } = extractHeadText(html);
     const hits = [];
@@ -195,7 +217,8 @@ export function contentSquatSignals(html) {
             if (phraseHit(hay, phrase)) hits.push({ phrase, where, text: text.slice(0, 160) });
         }
     }
-    return hits;
+    const distinct = new Set(hits.map((h) => h.phrase)).size;
+    return distinct >= MIN_DISTINCT_PHRASES ? hits : [];
 }
 
 /**
@@ -236,19 +259,71 @@ export function contentSquatSignals(html) {
  * <title> 而不是真正的頁面。要補的話是讓 probe 也跟隨 meta refresh——那是探測
  * 語意的變更，不屬於這個 issue 的範圍。
  */
-const SHELL_MAX_BYTES = 2048;
+/**
+ * 「沒有可見內容」的門檻（字元）。
+ *
+ * 第一版用的是「body < 2048 bytes」。那個數字是靠**單一樣本**（hmun.org 470B）
+ * 定的，敵意複查量了全站：470 與 4228 之間一個樣本都沒有，門檻就落在那個空隙裡，
+ * 而 2.5KB 的殼會直接漏掉。位元組數從來不是我們真正想問的東西。
+ *
+ * 真正想問的是註解本來就宣稱的那件事：**使用者不執行 JS 的話看得到東西嗎？**
+ * 所以改成「把 script／style／head 與所有標籤拿掉之後，剩下的可見文字少於這個長度」。
+ *
+ * 這同時修掉複查抓到的一批誤判：SPA 空殼有 <noscript> 提示、語系選擇頁有兩個
+ * 按鈕、報名導向頁有一個按鈕——那些頁面**使用者看得到東西**，不是盲區。
+ */
+/**
+ * 這個數字**不是調出來的門檻，是「幾乎等於零」**——只留給解析殘留（實體、空白）。
+ *
+ * 實測三種殼的可見文字：apho.org 0 字、hmun.org 0 字。而被複查打破的那些正當頁面
+ * 最少的是語系選擇頁的「中文 English」10 字。刻意不取兩者中間的某個值——那會變成
+ * 又一個靠少數樣本調出來的門檻（第一版的 2048 bytes 就是那樣來的，而全站量測顯示
+ * 470 與 4228 之間根本沒有樣本）。
+ *
+ * 取 4 的意思是「可見文字必須實質為零」。代價是一個只有幾個字的殼會被漏掉——
+ * 那個代價可以接受：訊號 C 是會觸發 issue 的那一個，誤判的成本遠高於漏檢。
+ */
+const VISIBLE_TEXT_MAX = 4;
 const JS_LOCATION = /location\s*\.\s*(?:replace|assign|href)\s*[=(]|(?:window|parent|top|self)\s*\.\s*location\s*=/i;
 const META_REFRESH = /<meta[^>]+http-equiv=["']?refresh["']?[^>]*>/i;
 
-export function opaqueShell(bodyHead) {
+/** 拿掉 script／style／head／註解與所有標籤之後，使用者眼睛看得到的文字。 */
+export function visibleText(html) {
+    return String(html)
+        .replace(/<!--[\s\S]*?-->/g, ' ')
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<head[\s\S]*?<\/head>/gi, ' ')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&[a-z#0-9]{2,8};/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * @param truncated body 是不是被截斷了（連線中途斷掉）。截斷的 body 看起來會像
+ *   一個很小的殼，但那是**我們沒讀完**，不是頁面真的沒內容。複查實測：伺服器在
+ *   body 中途 RST 時，一個宣稱 content-length: 200000 的頁面會以 202 bytes
+ *   resolve 成 status 200，而報告會照樣寫「回應只有 202 bytes」。
+ *   不確定的時候不要報——那正是這整支在防的東西。
+ */
+export function opaqueShell(bodyHead, truncated = false) {
     if (typeof bodyHead !== 'string' || !bodyHead) return null;
+    if (truncated) return null;
+    // <noscript> 有內容 ＝ 這一頁**直接對不執行 JS 的使用者說了話**。那正是
+    // 「唯一的前進方式需要執行 JS」的反面，不需要再看長度。
+    // 這一條是複查用 SPA 空殼打破長度門檻之後補的：那種頁面的 <noscript> 寫著
+    // 「請開啟 JavaScript 才能使用本站的報名系統」——使用者看得到，不是盲區。
+    const noscript = bodyHead.match(/<noscript[^>]*>([\s\S]*?)<\/noscript>/i);
+    if (noscript && visibleText(noscript[1]).length > 0) return null;
     const bytes = Buffer.byteLength(bodyHead, 'utf8');
-    if (bytes > SHELL_MAX_BYTES) return null;
+    const visible = visibleText(bodyHead);
+    if (visible.length > VISIBLE_TEXT_MAX) return null;
     if (!JS_LOCATION.test(bodyHead)) return null;
     // 有 meta refresh ＝ 不需要 JS 也走得下去，不是盲區
     if (META_REFRESH.test(bodyHead)) return null;
     const { title } = extractHeadText(bodyHead);
-    return { bytes, title: title.slice(0, 80) };
+    return { bytes, visible: visible.length, title: title.slice(0, 80) };
 }
 
 /**
@@ -261,7 +336,13 @@ export function detectHijackSignals(startUrl, result) {
     if (!result || result.blocked || !result.status || result.status >= 400) return null;
     const cross = crossSiteRedirect(startUrl, result.finalUrl || startUrl, result.redirects || []);
     const content = contentSquatSignals(result.bodyHead || '');
-    const shell = opaqueShell(result.bodyHead || '');
+    const shell = opaqueShell(result.bodyHead || '', result.bodyTruncated === true);
     if (!cross && content.length === 0 && !shell) return null;
-    return { url: startUrl, finalUrl: result.finalUrl || startUrl, cross, content, shell };
+    // 訊號的精確度差很多，呼叫端要分得開。實測（全站 508 個目標）：
+    //   訊號 A 跨站轉址   11 個命中、**全部是誤判**（機構改名、兄弟子網域、短網址）
+    //   訊號 B 內容標記    0 個命中（名單已經先攔下 ieso-info.org）
+    //   訊號 C HTTP 盲區   1 個命中、**真陽性**（apho.org 已成 GoDaddy 待售停放頁）
+    // 所以 A 只適合放進報告給人瀏覽，不適合觸發 issue；B 與 C 才適合。
+    const confidence = content.length > 0 || shell ? 'actionable' : 'browse-only';
+    return { url: startUrl, finalUrl: result.finalUrl || startUrl, cross, content, shell, confidence };
 }
