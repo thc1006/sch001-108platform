@@ -10,6 +10,15 @@ CLAUDE.md
 # Ignore agent files
 .claude/agents/*
 
+# Claude Code 在 repo 內開的 git worktree。它們是完整的 checkout（本次清理時
+# 累積到 10 個、2.6 GB），git 會把它們當成未追蹤目錄列出來，淹掉真正該看的
+# git status。worktree 的存在本身由 .git/worktrees 追蹤，不需要也不應該入版控。
+.claude/worktrees/
+
+# Playwright MCP 的頁面快照。除錯時每次操作都會落一個 .yml（本次清理時 181 個），
+# 是過程產物不是資產。
+.playwright-mcp/
+
 # Node.js dependencies
 node_modules/
 .npm/
