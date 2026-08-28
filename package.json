@@ -27,7 +27,7 @@
     "check:external-links": "node scripts/check-external-links.mjs",
     "test:site-integrity": "node --test scripts/check-built-site.test.mjs",
     "test:site-faults": "node scripts/check-built-site.faults.mjs",
-    "test:link-health": "node --test scripts/link-health.test.mjs",
+    "test:link-health": "node --test scripts/link-health.test.mjs scripts/bare-domains.test.mjs",
     "test:link-faults": "node scripts/link-health.faults.mjs",
     "verify:site": "npm run build:deployable && npm run check:site",
     "check:deps": "node scripts/check-dep-tree.mjs",

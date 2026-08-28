@@ -16,6 +16,22 @@
  *      審查而不是無限延續。同時限制最長有效期，堵住「expires: 2099-12-31」。
  *   5. allowlist 的目標本身必須通過靜態位址政策——不能用它把
  *      http://169.254.169.254/ 放進來。
+ *
+ * ── hijacked：方向相反的另一份清單 ──
+ * entries（allowlist）壓低訊號，hijacked 放大訊號。會需要它，是因為三態分類
+ * 有一個結構性的盲點：網域被接管之後照樣回 HTTP 200，狀態碼完全健康，內容卻
+ * 已經換人。ieso-info.org（IESO 舊網域）正是如此——現在是澳洲線上博弈站，回
+ * 200，而健檢會很有信心地把它算進「健康」。
+ *
+ * hijacked 的每一筆都會讓對應主機**不論狀態碼**被單獨大聲列出，且永遠不計入
+ * 健康。規則沿用 allowlist 的同一套紀律（精確主機名、reason／owner／expires、
+ * 到期讓確定性 CI 紅），另外多要求一個 evidence：到期時要重新查證的是「它是否
+ * 仍被接管」，沒有當初看到什麼的紀錄就無從比對。
+ * 同一台主機不可以同時出現在 entries 與 hijacked——那是自相矛盾的宣告。
+ *
+ * 每一筆還要標 kind：hijacked（這台主機本身易主）或 terminus（接管鏈的終點，本來就
+ * 不是教育網域）。少了這個欄位，報告只能一律稱它們「被接管的網域」，而 arcade.now
+ * 並沒有被誰接管——它就是接管方。標籤不實的警示，下一個維護者不會相信。
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
@@ -27,8 +43,20 @@ export const MAX_HORIZON_DAYS = 180;
 const MIN_REASON_CHARS = 10;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries']);
+const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries', 'hijacked']);
 const ENTRY_KEYS = new Set(['match', 'reason', 'owner', 'expires']);
+/** hijacked 多一個 evidence：沒有原始觀察就無法在到期時比對「是否仍被接管」。 */
+const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'evidence']);
+
+/**
+ * 這份名單裡有兩種不同的東西，必須分清楚，否則報告會說謊：
+ *   hijacked  這台主機**本身**曾經是教育資源的網域，後來易主（ieso-info.org 變博弈站）
+ *   terminus  這台主機是接管鏈的**終點**，它從來就不是教育網域，但我們的內文會提到它
+ *             （arcade.now 是 www.sasmo.sg 轉過去的聯盟廣告頁）
+ * 兩者都必須「不論狀態碼一律列出、永不計入健康」，但把 terminus 稱作「被接管的網域」
+ * 是不實敘述——arcade.now 沒有被誰接管，它就是接管方。
+ */
+const HIJACK_KINDS = new Set(['hijacked', 'terminus']);
 
 /** 日期是否真實存在（往返比對可抓出 2026-02-30 這種被 Date 靜默正規化的值）。 */
 function isRealDate(text) {
@@ -43,6 +71,52 @@ const toUTCDay = (text) => {
     const [y, m, d] = text.split('-').map(Number);
     return Date.UTC(y, m - 1, d);
 };
+
+/**
+ * expires 的共用檢查。entries 與 hijacked 都用這一份——兩邊各寫一次，遲早會有
+ * 一邊被放寬而沒人發現，而「例外悄悄變成無期限」正是整套規則要防的東西。
+ */
+function checkExpires(value, at, todayISO, todayMs, push) {
+    if (typeof value !== 'string' || !isRealDate(value)) {
+        push(`${at}.expires 必須是實際存在的 YYYY-MM-DD 日期`);
+        return;
+    }
+    const ms = toUTCDay(value);
+    if (ms <= todayMs) {
+        push(`${at}.expires（${value}）已於今天（${todayISO}）或之前到期，必須重新查證後才可延長——這是刻意讓 CI 紅的`);
+    } else if (ms - todayMs > MAX_HORIZON_DAYS * dayMs) {
+        push(`${at}.expires（${value}）距今超過 ${MAX_HORIZON_DAYS} 天，等同無期限例外，不予接受`);
+    }
+}
+
+/**
+ * 精確主機名的共用檢查（不接受萬用字元／路徑／大小寫變體，且本身要過位址政策）。
+ * 回傳正規化後的主機名，或 null（已經 push 過錯誤）。
+ */
+function checkExactHost(raw, at, push) {
+    if (typeof raw !== 'string' || !raw.trim()) {
+        push(`${at}.match.host 必須是非空字串`);
+        return null;
+    }
+    if (raw.includes('*')) {
+        push(`${at}.match.host 不得使用萬用字元——只接受精確主機名`);
+        return null;
+    }
+    if (/[/:\s]/.test(raw)) {
+        push(`${at}.match.host 只能是主機名，不得含路徑、埠號或空白`);
+        return null;
+    }
+    if (raw !== canonicalHost(raw)) {
+        push(`${at}.match.host 必須是小寫、無結尾點的形式：${canonicalHost(raw)}`);
+        return null;
+    }
+    const verdict = staticUrlPolicy(`https://${raw}/`);
+    if (!verdict.ok) {
+        push(`${at}.match.host 本身就違反位址政策：${verdict.reason}`);
+        return null;
+    }
+    return raw;
+}
 
 /**
  * 把網址正規化成與 .reports/url-inventory.json 相同的形式。
@@ -118,16 +192,8 @@ export function validatePolicy(policy, todayISO) {
                     } else key = `url:${raw}`;
                 }
             } else {
-                const raw = m.host;
-                if (typeof raw !== 'string' || !raw.trim()) push(`${at}.match.host 必須是非空字串`);
-                else if (raw.includes('*')) push(`${at}.match.host 不得使用萬用字元——只接受精確主機名`);
-                else if (/[/:\s]/.test(raw)) push(`${at}.match.host 只能是主機名，不得含路徑、埠號或空白`);
-                else if (raw !== canonicalHost(raw)) push(`${at}.match.host 必須是小寫、無結尾點的形式：${canonicalHost(raw)}`);
-                else {
-                    const verdict = staticUrlPolicy(`https://${raw}/`);
-                    if (!verdict.ok) push(`${at}.match.host 本身就違反位址政策：${verdict.reason}`);
-                    else key = `host:${raw}`;
-                }
+                const host = checkExactHost(m.host, at, push);
+                if (host) key = `host:${host}`;
             }
         }
         if (key) {
@@ -142,21 +208,63 @@ export function validatePolicy(policy, todayISO) {
         if (typeof e.owner !== 'string' || !e.owner.trim()) push(`${at}.owner 必須指名負責重審的人`);
 
         // ── expires ──
-        if (typeof e.expires !== 'string' || !isRealDate(e.expires)) {
-            push(`${at}.expires 必須是實際存在的 YYYY-MM-DD 日期`);
-        } else {
-            const ms = toUTCDay(e.expires);
-            if (ms <= todayMs) {
-                push(`${at}.expires（${e.expires}）已於今天（${todayISO}）或之前到期，必須重新查證後才可延長——這是刻意讓 CI 紅的`);
-            } else if (ms - todayMs > MAX_HORIZON_DAYS * dayMs) {
-                push(`${at}.expires（${e.expires}）距今超過 ${MAX_HORIZON_DAYS} 天，等同無期限例外，不予接受`);
-            }
-        }
+        checkExpires(e.expires, at, todayISO, todayMs, push);
 
         if (key && errors.length === errorsBefore) entries.push({ ...e, _key: key });
     });
 
-    return { errors, entries };
+    // ── hijacked：被接管的網域 ──
+    const hijacked = [];
+    if (policy.hijacked !== undefined) {
+        if (!Array.isArray(policy.hijacked)) {
+            push('hijacked 必須是陣列');
+        } else {
+            const seenHijacked = new Set();
+            policy.hijacked.forEach((e, i) => {
+                const at = `hijacked[${i}]`;
+                const errorsBefore = errors.length;
+                if (!e || typeof e !== 'object' || Array.isArray(e)) return push(`${at} 必須是物件`);
+                for (const k of Object.keys(e)) if (!HIJACKED_KEYS.has(k)) push(`${at} 含未知欄位「${k}」`);
+
+                let host = null;
+                const m = e.match;
+                if (!m || typeof m !== 'object' || Array.isArray(m)) {
+                    push(`${at}.match 必須是物件，且只含 host`);
+                } else {
+                    const keys = Object.keys(m);
+                    if (keys.length !== 1 || keys[0] !== 'host') {
+                        push(`${at}.match 只能有 host 一個欄位——被接管是整台主機的性質，不是單一頁面（目前：${keys.join('、') || '無'}）`);
+                    } else {
+                        host = checkExactHost(m.host, at, push);
+                    }
+                }
+                if (host) {
+                    if (seenHijacked.has(host)) push(`${at} 與前面的項目重複（${host}）`);
+                    seenHijacked.add(host);
+                    // 同一台主機既要壓低噪音又要標成被接管，是互相矛盾的宣告
+                    if (seen.has(`host:${host}`)) {
+                        push(`${at} 的主機 ${host} 同時出現在 entries 例外裡——不可以既壓低噪音又標為被接管`);
+                    }
+                }
+
+                if (!HIJACK_KINDS.has(e.kind)) {
+                    push(`${at}.kind 必須是 ${[...HIJACK_KINDS].join(' 或 ')}——hijacked 是「這台主機本身被接管」，terminus 是「它是接管鏈的終點、本來就不是教育網域」（目前：${JSON.stringify(e.kind)}）`);
+                }
+                if (typeof e.reason !== 'string' || [...e.reason.trim()].length < MIN_REASON_CHARS) {
+                    push(`${at}.reason 必須說明接管的情況，至少 ${MIN_REASON_CHARS} 字`);
+                }
+                if (typeof e.owner !== 'string' || !e.owner.trim()) push(`${at}.owner 必須指名負責重審的人`);
+                if (typeof e.evidence !== 'string' || [...e.evidence.trim()].length < MIN_REASON_CHARS) {
+                    push(`${at}.evidence 必須留下實際觀察到的證據（何時看到什麼），至少 ${MIN_REASON_CHARS} 字——到期時要比對的就是它`);
+                }
+                checkExpires(e.expires, at, todayISO, todayMs, push);
+
+                if (host && errors.length === errorsBefore) hijacked.push({ ...e, _key: `hijacked:${host}` });
+            });
+        }
+    }
+
+    return { errors, entries, hijacked };
 }
 
 /**
@@ -174,6 +282,24 @@ export function matchPolicy(entries, url) {
     for (const e of entries) {
         if (e.match?.url !== undefined && normalizeUrl(e.match.url) === normalized) return e;
         if (e.match?.host !== undefined && host !== null && canonicalHost(e.match.host) === host) return e;
+    }
+    return null;
+}
+
+/**
+ * 這個網址的主機有沒有被列為「已知被接管」？回傳該筆或 null。
+ * 與 matchPolicy 一樣是完全相等比對——ieso-info.org 不會順帶涵蓋
+ * evil.ieso-info.org，也不會涵蓋 ieso-info.org.tw。
+ */
+export function matchHijacked(hijacked, url) {
+    let host = null;
+    try {
+        host = canonicalHost(new URL(url).hostname);
+    } catch {
+        return null;
+    }
+    for (const e of hijacked ?? []) {
+        if (e.match?.host !== undefined && canonicalHost(e.match.host) === host) return e;
     }
     return null;
 }

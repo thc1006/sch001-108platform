@@ -34,6 +34,7 @@ import {
     walkJsonStrings,
 } from './site-contract.lib.mjs';
 import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
+import { collectBareDomains, makeSkipFieldFilter } from './bare-domains.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -80,6 +81,12 @@ const errors = [];
 const external = new Map();
 /** 待檢查的站內 reference */
 const internal = [];
+/**
+ * 內文裸網域候選：只寫在說明文字裡、沒有做成 url 的網域（例如「原 tpmso.org 已
+ * 轉址至 tpmso.k12ea.gov.tw」）。這裡只做**純字串**擷取——本檢查是擋 PR 的確定性
+ * 檢查，不可以連網；「這個 TLD 到底存不存在」需要 DNS，由排程健檢負責篩選。
+ */
+const bareDomains = new Map();
 // 被忽略的 reference 依理由計數。「靜默忽略」正是本 issue 一路在修的失效模式，
 // 所以忽略了什麼、為什麼忽略，必須出現在正常輸出裡，而不是只在出錯時才看得到。
 const ignored = new Map();
@@ -305,6 +312,20 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
             record(value, consumerUrl, jsonRel, pointer);
         }
     }
+
+    // ── 內文裸網域 ──
+    // 兩種欄位要跳過，都是實測出來的誤判來源：
+    //   localAssetFields  存的是檔案路徑而不是說明文字
+    //   _readme           是給維護者看的欄位說明，裡面全是本 repo 的檔名
+    //                     （check-competitions.mjs、competitions.html…）。實測不跳過
+    //                     的話，56 個候選裡有 11 個是 _readme 的檔名。
+    // 比對 pointer 的**每一段**而不是只比最後一段：_readme 或圖片欄位一旦變成陣列，
+    // pointer 會是 /_readme/0，最後一段是 "0"，只比最後一段的話跳過邏輯會靜默失效。
+    const acceptField = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
+    for (const [host, pointers] of collectBareDomains(data, acceptField)) {
+        if (!bareDomains.has(host)) bareDomains.set(host, { host, occurrences: [] });
+        for (const p of pointers) bareDomains.get(host).occurrences.push({ file: jsonRel, location: p });
+    }
 }
 
 // ── 解析所有站內 reference ──
@@ -331,6 +352,22 @@ for (const ref of internal) {
 }
 
 // ── 外部網址 inventory（供排程健康檢查使用）──
+// 已經寫成 url 的主機名不必再從內文查一次（實測 44 個候選裡有 14 個是重複的）。
+// 比對用「完全相同的主機名」：ctf.hitcon.org 與 hitcon.org 是不同主機，
+// www.amt.edu.au 與 amt.edu.au 也是，一律不做 www. 或母網域的正規化。
+// 這一步必須等 HTML 與 JSON 都掃完才做，否則 external 還不完整就會誤判成「沒被涵蓋」。
+const coveredHosts = new Set();
+for (const u of external.keys()) {
+    try {
+        coveredHosts.add(new URL(u).hostname.toLowerCase());
+    } catch {
+        /* 非法網址在 record() 就已經報過錯 */
+    }
+}
+const bareOnly = [...bareDomains.values()]
+    .filter((b) => !coveredHosts.has(b.host))
+    .sort((a, b) => a.host.localeCompare(b.host));
+
 await mkdir(path.dirname(INVENTORY_PATH), { recursive: true });
 await writeFile(
     INVENTORY_PATH,
@@ -338,7 +375,16 @@ await writeFile(
         // generatedFrom 記的是「這份盤點掃的是哪一個目錄」，不是固定字串。
         // 故障注入會用 SITE_DIST 指向 dist 的副本，那一輪同樣會覆寫這個檔案；
         // 下游（check-link-policy.mjs）據此拒絕拿被破壞過的副本當成正式盤點。
-        { generatedFrom: path.basename(DIST), total: external.size, urls: [...external.values()].sort((a, b) => a.url.localeCompare(b.url)) },
+        {
+            generatedFrom: path.basename(DIST),
+            total: external.size,
+            urls: [...external.values()].sort((a, b) => a.url.localeCompare(b.url)),
+            bareDomainCandidates: {
+                total: bareDomains.size,
+                alreadyCoveredByUrls: bareDomains.size - bareOnly.length,
+                hosts: bareOnly,
+            },
+        },
         null,
         2,
     ),
@@ -354,6 +400,11 @@ console.log(`  站內需解析：${internal.length}`);
 // 一批 reference 憑空消失（我自己在 review 時就這樣誤判過一次）。
 const externalOccurrences = [...external.values()].reduce((a, b) => a + b.occurrences.length, 0);
 console.log(`  外部網址（僅列入 inventory）：${external.size} 個去重網址／${externalOccurrences} 處引用`);
+// 裸網域是「候選」不是「網域」：TLD 存不存在要等排程健檢用 DNS 判斷。這裡的
+// 數字刻意分成三個，否則「候選 44」會被誤讀成「新增了 44 個要查的網址」。
+console.log(
+    `  內文裸網域候選：${bareDomains.size} 個（${bareDomains.size - bareOnly.length} 個已由 url 欄位涵蓋，${bareOnly.length} 個待排程健檢以 DNS 篩選）`,
+);
 const ignoredTotal = [...ignored.values()].reduce((a, b) => a + b.count, 0);
 console.log(`  略過不檢查：${ignoredTotal}`);
 for (const [reason, info] of [...ignored].sort((a, b) => b[1].count - a[1].count)) {
