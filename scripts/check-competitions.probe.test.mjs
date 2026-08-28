@@ -13,6 +13,7 @@ import { createServer } from 'node:http';
 
 import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
 import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS, validateInstant, validateDateOnly, validateSchedule } from './check-competitions.lib.mjs';
+import { sourceCheckedProblem } from './check-competitions.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
 let base;
@@ -424,8 +425,12 @@ test('data：五筆已查證競賽的報名時程不得被改回錯的值', asyn
     // Breakthrough：9/15 23:59 PDT
     assert.equal(find('Breakthrough').deadlineAt, '2026-09-15T23:59:00-07:00');
 
+    // 用共用的驗證器，不要再寫死日期。這裡原本是 assert.equal(..., '2026-08-27')——
+    // 訊息說「應記錄逐筆查證日期」，實作卻要求等於某一天，於是任何人重新查證都
+    // 無法更新它。HiMCM 在 2026-08-28 確實重查過（comap.com → 301 → comap.org）。
     for (const t of ['OPhO', 'Solve for Tomorrow', 'HiMCM', 'Space Apps', 'Breakthrough']) {
-        assert.equal(find(t).sourceCheckedAt, '2026-08-27', `${t} 應記錄逐筆查證日期`);
+        const why = sourceCheckedProblem(find(t).sourceCheckedAt);
+        assert.equal(why, null, `${t} 應記錄逐筆查證日期，但它 ${why}`);
     }
 });
 

@@ -24,6 +24,7 @@
  * 每一項下面都附了官網逐字原文。要改這裡的值，請先開官網確認並更新引文。
  */
 import test from 'node:test';
+import { sourceCheckedProblem } from './check-competitions.lib.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -72,27 +73,17 @@ const VERIFIED_2026_08_27 = [
  *
  * 改成「格式合法且不早於基準日」：清掉、亂填、往回改都會紅，往前更新則允許。
  */
-const VERIFIED_NOT_BEFORE = '2026-08-27';
-
 function assertVerified(needle) {
-    const v = find(needle).sourceCheckedAt;
-    assert.match(
-        String(v),
-        /^\d{4}-\d{2}-\d{2}$/,
-        `${needle} 的 sourceCheckedAt 不是 YYYY-MM-DD——它是「這一筆真的開過官網」的唯一憑證`,
-    );
-    assert.ok(
-        Number.isFinite(Date.parse(`${v}T00:00:00Z`)),
-        `${needle} 的 sourceCheckedAt「${v}」不是有效日期`,
-    );
-    // ISO 日期字串可以直接字典序比較
-    assert.ok(
-        v >= VERIFIED_NOT_BEFORE,
-        `${needle} 的 sourceCheckedAt 是 ${v}，早於基準日 ${VERIFIED_NOT_BEFORE}——查證日期只能往前走，不能倒退`,
-    );
+    const why = sourceCheckedProblem(find(needle).sourceCheckedAt);
+    assert.equal(why, null, `${needle} 的 sourceCheckedAt ${why}`);
 }
 
 test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
+    // 沒有這一行的話，把 VERIFIED_2026_08_27 清成 [] 之後，這一支以及底下另外兩支
+    // 也在跑同一份清單的測試會一起印綠字，而其實一筆都沒比——測試名稱說「18 筆」，
+    // 實作卻連清單長度都不看。底下的 VERIFIED_ROUND2／REMOVED_ROUND2 都有釘長度，
+    // 只有第一輪這一份漏了。
+    assert.equal(VERIFIED_2026_08_27.length, 18, '清單長度變動代表有人動了查證範圍，請一併更新測試名稱與 PR 說明');
     for (const needle of VERIFIED_2026_08_27) assertVerified(needle);
 });
 
@@ -497,13 +488,19 @@ test('data：第二輪逐筆查證的 96 筆都必須留下查證日期（可更
 
 // 兩輪查完之後，整份資料的每一筆都有人開過官網。這個不變式是本輪最值錢的成果：
 // 只要有人新增條目卻沒查證，它就會紅燈——而不是等到學生按著錯的資訊去報名才發現。
-test('data：每一筆競賽都必須有 sourceCheckedAt', () => {
-    const missing = DATA.competitions.filter((c) => !c.sourceCheckedAt).map((c) => c.title);
+test('data：每一筆競賽的 sourceCheckedAt 都必須是可信的查證日期', () => {
+    // 驗的是**值**，不只是欄位在不在。上面兩份清單合計 18 + 96 = 114 筆，資料有
+    // 119 筆，差額那幾筆先前只有「有沒有填」被檢查——填 2099-01-01 或隨手抄一個
+    // 日期都會過。共用驗證器既然抽出來了就套到全體，不要留一個只對子集生效的規則。
+    const bad = DATA.competitions
+        .map((c) => [c.title, sourceCheckedProblem(c.sourceCheckedAt)])
+        .filter(([, why]) => why !== null)
+        .map(([title, why]) => `${title}：${why}`);
     assert.deepEqual(
-        missing,
+        bad,
         [],
-        '新增競賽時請先逐項開官網查證（主辦單位、參賽資格、是否仍在辦理、報名截止日），並填上 sourceCheckedAt：\n  '
-        + missing.join('\n  '),
+        '新增競賽時請先逐項開官網查證（主辦單位、參賽資格、是否仍在辦理、報名截止日），'
+        + '並填上查證當天的日期：\n  ' + bad.join('\n  '),
     );
 });
 
@@ -558,7 +555,14 @@ const REMOVED_ROUND2 = [
 ];
 
 test('data：本輪移除的 14 筆不得被加回來', () => {
-    assert.equal(REMOVED_ROUND2.length, 14);
+    // 這個數字是承重的：清單被清空的話，底下的迴圈一圈都不會跑，這支測試就會
+    // 「通過」而且什麼都沒檢查。改動筆數時要連同下面的理由一起改，不是把數字調大。
+    assert.equal(
+        REMOVED_ROUND2.length,
+        14,
+        `REMOVED_ROUND2 現在是 ${REMOVED_ROUND2.length} 筆。這份清單是本輪查證的結果，`
+            + '不是可以隨手增減的常數——每一筆都對應一次實際的官網查核。',
+    );
     for (const [needle, reason] of REMOVED_ROUND2) {
         const hits = DATA.competitions.filter((c) => c.title.includes(needle));
         assert.deepEqual(
