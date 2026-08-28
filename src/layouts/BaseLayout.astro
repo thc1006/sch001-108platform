@@ -21,8 +21,6 @@ interface Props {
   ogDescription?: string;
   ogImage?: string;
   currentSection?: string | null;
-  /** 區段首頁(foo/index.astro):canonical 維持目錄式網址,不轉成 .html */
-  isSectionIndex?: boolean;
   bodyClass?: string;
 }
 const {
@@ -33,20 +31,24 @@ const {
   ogDescription = description,
   ogImage = 'https://thc1006.github.io/sch001-108platform/picture/thumbnail.png',
   currentSection = null,
-  isSectionIndex = false,
   bodyClass = 'bg-gray-50 text-gray-800',
 } = Astro.props;
 
-// canonical / og:url:build.format:'preserve' 下 Astro.url.pathname 是「路由路徑」
-// (如 /…/competitions/),需轉回實際輸出的 .html 檔路徑,否則會指向 GitHub Pages
-// 上不存在(404)的網址。站台首頁與區段首頁(/foo/)維持目錄式 —— 其 index.html
-// 可由目錄網址正確服務。
+// canonical / og:url —— 直接用 Astro.url.pathname,不再自己補 .html。
+//
+// Astro 6 時期 build.format:'preserve' 下 pathname 給的是「路由路徑」
+// (/…/competitions/),指到 GitHub Pages 上不存在的網址,所以這裡曾有一段把非
+// .html 結尾的路徑補上 .html 的修補,並用 isSectionIndex 這個 prop 把區段首頁
+// (foo/index.astro,要維持目錄式網址)排除在外。
+//
+// Astro 7.2.0 起上游已修正,pathname 就是實際輸出的檔案路徑。實測方式:在這裡把
+// 每一頁的 pathname 與轉換結果印出來建一次,93 頁裡 76 頁本來就以 .html 結尾、
+// 16 頁是區段首頁、1 頁是站台首頁,那段 if 一次都沒進去,轉換次數 0。既然分支永遠
+// 走不到,連同只為它存在的 isSectionIndex prop(及 7 個呼叫端)一併移除,免得留下
+// 一段不會執行、註解還跟現況相反的程式碼。移除前後全站 94 頁的 canonical 與
+// og:url 逐字比對 0 差異。
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
-let canonicalPath = Astro.url.pathname;
-if (canonicalPath !== base + '/' && !isSectionIndex && !canonicalPath.endsWith('.html')) {
-  canonicalPath = canonicalPath.replace(/\/$/, '') + '.html';
-}
-const canonical = new URL(canonicalPath, Astro.site).href;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <!doctype html>
