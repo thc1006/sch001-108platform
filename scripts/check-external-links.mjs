@@ -51,6 +51,7 @@ import { fileURLToPath } from 'node:url';
 import { classifyLink, describeResult, isBlockedResult, runProbes } from './link-health.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
+import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 
 const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
@@ -119,10 +120,14 @@ const weekIndex = Math.floor((Date.now() - Date.UTC(now.getUTCFullYear(), 0, 1))
 
 const CONCURRENCY = 6;
 const BUDGET_MS = 12 * 60_000;
+// 最終回應多讀這麼多位元組，供 hijack-signals 取 <title> 與 meta description。
+// 16KB 足以涵蓋幾乎所有頁面的 <head>；讀滿就 destroy，不等 end——被接管的頁面
+// 常常是很大的廣告頁，讀完整份會把一次上百站的批次工作卡住。
+const HEAD_BYTES = 16 * 1024;
 
 const { results, skipped } = await runProbes(
     targets.map((t) => t.url),
-    { concurrency: CONCURRENCY, budgetMs: BUDGET_MS, rotateSeed: weekIndex * CONCURRENCY },
+    { concurrency: CONCURRENCY, budgetMs: BUDGET_MS, rotateSeed: weekIndex * CONCURRENCY, readBodyBytes: HEAD_BYTES },
 );
 
 const dead = [];
@@ -131,6 +136,13 @@ const unverified = [];
 const suppressed = [];
 /** 已知被接管的主機。不論狀態碼都要單獨列出，且永不計入健康。 */
 const hijackedHits = [];
+/**
+ * 自動偵測到的可疑訊號（#117）。與上面那份名單的差別是它**不需要有人先發現**：
+ * 訊號 A 看轉址終點有沒有離開起點的網域，訊號 B 看標題／描述有沒有蹲域名的
+ * 變現詞組。兩者都**不改變三態分類**——誤判的代價不對稱，把正常網站判成 dead
+ * 會讓人去修沒壞的東西，多報一筆可疑只是多看一眼。
+ */
+const autoSignals = [];
 let healthy = 0;
 
 for (let i = 0; i < targets.length; i++) {
@@ -149,6 +161,9 @@ for (let i = 0; i < targets.length; i++) {
         hijackedHits.push({ ...item, policy: hijack, source: 'url' });
         continue;
     }
+    // 自動訊號跑在分類**之外**：它只是多一段報告，不動 dead/unverified/healthy。
+    const sig = detectHijackSignals(targets[i].url, r);
+    if (sig) autoSignals.push({ ...sig, source: 'url', occurrences: item.occurrences });
     const verdict = classifyLink(r);
     if (verdict === 'dead') {
         // 例外政策**不會**在這裡出現。404/410 與網域解析不到一律照實回報——
@@ -201,6 +216,7 @@ if (bareHosts.length) {
         concurrency: CONCURRENCY,
         budgetMs: BARE_BUDGET_MS,
         rotateSeed: weekIndex * CONCURRENCY,
+        readBodyBytes: HEAD_BYTES,
     });
     bareSkipped = bs;
     for (let i = 0; i < bareHosts.length; i++) {
@@ -221,6 +237,8 @@ if (bareHosts.length) {
             hijackedHits.push({ ...item, policy: hijack, source: 'bare' });
             continue;
         }
+        const bareSig = detectHijackSignals(item.url, r);
+        if (bareSig) autoSignals.push({ ...bareSig, source: 'bare', host, occurrences: item.occurrences });
         const verdict = classifyLink(r);
         if (verdict === 'dead') bareDead.push(item);
         else if (verdict === 'unverified') bareOther.push(item);
@@ -233,7 +251,34 @@ if (bareHosts.length) {
 // 回報 coverage_complete=true，等於用一次只驗 3 筆的執行宣稱「全站都查過了」。
 const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
 // 被接管的網域一定要讓人看到——它回 200，不會出現在任何一個「壞掉」的桶子裡。
-const needsAttention = dead.length > 0 || blocked.length > 0 || bareDead.length > 0 || hijackedHits.length > 0 || !coverageComplete;
+// autoSignals 也要讓 needs_attention 變 true。偵測到了卻不開 issue 的話，
+// 報告會躺在 job summary 裡沒人看——那等於沒偵測。
+const needsAttention =
+    dead.length > 0 ||
+    blocked.length > 0 ||
+    bareDead.length > 0 ||
+    hijackedHits.length > 0 ||
+    actionableSignals.length > 0 ||
+    !coverageComplete;
+
+// 三個訊號的精確度差很多，混在一起會讓高精確度的那兩個被雜訊淹掉。
+// 實測（全站 508 個目標，2026-08-28）：
+//   訊號 A 跨站轉址   11 個命中、**全部是誤判**
+//     4 個是兄弟子網域（www.google.com → workspace.google.com、
+//       premium.parenting.com.tw → www.parenting.com.tw ×2、
+//       sciexplore.colife.org.tw → sciexplore2026.colife.org.tw）
+//     7 個是機構改名／搬遷／短網址（anthropic→claude、comap.com→comap.org、
+//       notion.so→notion.com、xmind.app→xmind.com、youtu.be→youtube.com、
+//       roboticseducation.org→recf.org、zindi.africa→zindi.world）
+//   訊號 B 內容標記    0 個（名單已先攔下 ieso-info.org）
+//   訊號 C HTTP 盲區   1 個、**真陽性**（apho.org 已成 GoDaddy 待售停放頁）
+//
+// 那 4 個兄弟子網域要靠 PSL 才分得掉（www.google.com／workspace.google.com 的
+// 共同後綴是兩段，a.edu.tw／b.edu.tw 也是兩段），另外 7 個**任何規則都解不掉**——
+// 合法網站確實會轉去另一個註冊網域。所以訊號 A 的精確度上限就是這樣，
+// 它適合放進報告給人瀏覽，不適合每週開一次 issue。
+const actionableSignals = autoSignals.filter((a) => a.confidence === 'actionable');
+const browseOnlySignals = autoSignals.filter((a) => a.confidence !== 'actionable');
 
 const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => o.file))].sort();
 // 出處全列會炸掉報告：同一個網址可能出現在 90 幾個頁面（例如共用的頁尾連結），
@@ -268,6 +313,12 @@ console.log(`  位址封鎖：${blocked.length - urlBlockedCount}`);
 console.log(`  無法判定：${bareOther.length}`);
 if (bareSkipped) console.log(`  未檢查　：${bareSkipped}（逾時間預算）`);
 if (hijackedHits.length) console.log(`🚨 已知不可信任的主機：${hijackedHits.length}`);
+// **無條件印**，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
+// 在 CI log 上長得一模一樣——那正是這個 repo 一路在修的那個病。
+console.log(
+    `🕵️ 自動偵測：需處理 ${actionableSignals.length}（內容標記／HTTP 盲區）、` +
+        `僅供瀏覽 ${browseOnlySignals.length}（跨站轉址，誤判率高）`,
+);
 
 // ── Markdown 報告 ──
 const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
@@ -276,6 +327,15 @@ lines.push(`- 盤點：${inventory.urls.length} 個去重外部網址，來自 c
 lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${urlBlockedCount}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
 lines.push(
     `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
+);
+// **無條件寫**，即使是 0——理由與主控台那一行完全相同，而且更重要：主控台只在
+// job step 的 log 裡，這份報告才是貼進 issue／job summary、真的有人讀的東西。
+// 下面那一段只在有命中時才出現，所以少了這個數字的話，「這次沒偵測到」與
+// 「偵測根本沒接上線」在讀者眼裡長得一模一樣。
+lines.push(
+    `- 自動偵測：需處理 ${actionableSignals.length}（內容標記／HTTP 層盲區）、` +
+        `僅供瀏覽 ${browseOnlySignals.length}（跨站轉址；誤判率高，不觸發通知）` +
+        '　兩者都不改變上面的三態分類',
 );
 lines.push('');
 
@@ -295,6 +355,82 @@ if (hijackedHits.length) {
         lines.push(`  - 證據：${h.policy.evidence}`);
         lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);
         lines.push(...sourceLines(h));
+    }
+    lines.push('');
+}
+
+// 自動偵測到的訊號（#117）。與上面那份名單並列而不是混在一起——名單是「已經
+// 查證過、確定不可信」，這一段是「機器覺得可疑、還沒有人看過」。兩者的可信度
+// 不同，措辭也要不同，否則讀者會把未經查證的推測當成結論。
+if (actionableSignals.length) {
+    lines.push('### 🕵️ 自動偵測到的可疑訊號（需要人工查證）', '');
+    lines.push(
+        '這一段不在任何名單裡，是這次探測當場算出來的。**它不改變上面的三態分類**，',
+        '也不代表這些連結一定壞了——需要有人看一眼再決定。',
+        '',
+        '- **內容標記**：標題或描述命中蹲域名的變現詞組（博弈／成人／藥品／停放待售）。',
+        '  只比對 <title> 與 meta description，一律用多字詞組並要求詞界，且**至少要兩個',
+        '  相異詞組**才算命中——單一詞組會把「線上博弈防治研習」「機率論競賽：百家樂的',
+        '  期望值分析」這類正當教育內容掃進來。',
+        '- **HTTP 層看不到內容**：回應是一個很小、內容只有轉址構造的殼。這一條**不指控接管**，',
+        '  它陳述的是檢查器的盲區——「healthy」在這裡只代表伺服器答了，不代表使用者看得到',
+        '  正常內容。對一個競賽官網來說，那本身就值得看一眼。',
+        '',
+        '確認為接管 → 加進 `scripts/link-policy.json` 的 `hijacked`（要有 reason／owner／expires），',
+        '並修掉指向它的資料。確認為誤判 → 回報，這代表偵測規則需要調整。',
+        '',
+    );
+    for (const a of actionableSignals) {
+        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
+        lines.push(`- **${where}**`);
+        if (a.cross) {
+            lines.push(`  - 🔀 轉址終點跨站：\`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
+            for (const h of a.cross.hops) lines.push(`    - ${inertText(h)}`);
+        }
+        // shell.title 與 content.text 是**被偵測的那台主機自己寫的**字串，而這份報告會
+        // 被 gh issue create --body-file 原樣送進 issue。不包成行內程式碼的話，一個
+        // 被接管的網域就能讓看門狗的 issue 去 @ 人、cross-reference 別的 issue、
+        // 或貼出可點的釣魚連結。命中的定義就是「那台主機不可信」，所以這裡沒有
+        // 「應該還好吧」的空間。
+        if (a.shell) {
+            lines.push(`  - 🫥 HTTP 層看不到內容：回應只有 ${a.shell.bytes} bytes 且內容是轉址構造` +
+                (a.shell.title ? `（<title> 是 ${inertText(a.shell.title)}）` : '') + '，需要執行 JavaScript 才看得到真正的頁面。');
+        }
+        for (const c of a.content) {
+            lines.push(`  - 🎰 內容標記：\`${c.phrase}\`（在 ${c.where}）`);
+            lines.push(`    - 原文：${inertText(c.text)}`);
+        }
+        lines.push(...sourceLines(a));
+    }
+    lines.push('');
+}
+
+// 跨站轉址單獨一段，而且**不觸發通知**。實測（全站 508 個目標）它命中 11 筆、
+// 全部是誤判：4 筆兄弟子網域（沒有 PSL 分不出 www.google.com／workspace.google.com
+// 與 a.edu.tw／b.edu.tw 的差別）、7 筆機構改名或短網址（**任何規則都解不掉**——
+// 合法網站確實會轉去另一個註冊網域）。
+//
+// 保留它是因為真的接管確實會呈現這個形狀（www.sasmo.sg → arcade.now）；
+// 但用它每週開一次 issue，維護者會在第三週學會忽略整個看門狗。
+if (browseOnlySignals.length) {
+    lines.push('### 🔀 轉址終點跨站（僅供瀏覽，不觸發通知）', '');
+    lines.push(
+        '使用者最後到達的主機不在起點的網域底下。**這一段的誤判率很高**——合法的機構',
+        '改名、併購、短網址服務、以及同一個註冊網域下的兄弟子網域都會命中，而要分辨',
+        '「兄弟子網域」與「同一個二段後綴下的不同機構」（a.edu.tw／b.edu.tw）需要公開',
+        '後綴清單，本檢查刻意不引入那份資料。',
+        '',
+        '所以它只列在這裡供瀏覽，不計入待辦。真的接管會呈現這個形狀（www.sasmo.sg →',
+        'arcade.now 就是），但它同時也是網路上很常見的正常行為。',
+        '',
+    );
+    for (const a of browseOnlySignals) {
+        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
+        lines.push(`- ${where}`);
+        if (a.cross) {
+            lines.push(`  - \`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
+            for (const h of a.cross.hops) lines.push(`    - ${inertText(h)}`);
+        }
     }
     lines.push('');
 }

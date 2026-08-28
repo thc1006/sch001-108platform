@@ -7,6 +7,7 @@
  *
  *   A. 政策檔的每一條規則 → check-link-policy.mjs 必須以非零碼結束
  *   B. SSRF 防護的每一段   → link-health.test.mjs 必須失敗
+ *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
@@ -292,6 +293,103 @@ const runMutantTests = (testFile = 'link-health.test.mjs') => {
     }
 };
 
+// ── D：接管偵測的突變測試 ──
+// 這三個訊號的價值完全取決於**誤判率**：報得太兇會被當雜訊關掉，關掉之後就回到
+// 「只能堵已知主機」。所以除了「拿掉偵測會不會漏」，也要測「拿掉防誤判的那一層
+// 會不會開始亂報」——後者的兩條（詞界、meta refresh）都是實測逼出來的。
+const hijackMutations = [
+    {
+        name: '同站判定永遠回 true（跨站轉址完全偵測不到）',
+        apply: (s) => s.replace('    if (aHost === bHost) return true;', '    if (aHost === bHost) return true;\n    return true;'),
+    },
+    {
+        // 少了點邊界，foo.com 會被當成 evil-foo.com 的後綴 → 接管被判成同站
+        name: '後綴比對的點邊界被拿掉（evil-foo.com 會被當成 foo.com 的自家主機）',
+        apply: (s) =>
+            s.replace(
+                '    return aHost.endsWith(`.${bHost}`) || bHost.endsWith(`.${aHost}`);',
+                '    return aHost.endsWith(`${bHost}`) || bHost.endsWith(`${aHost}`);',
+            ),
+    },
+    {
+        // 這一條守的是**誤判**：純子字串比對會讓 free spins 命中
+        // 「free spins-off workshop」。寫測試時當場抓到過。
+        name: '詞組比對退回純子字串（連字號複合詞會誤判）',
+        apply: (s) =>
+            s.replace(
+                '    if (!IS_ASCII.test(phrase)) return hay.includes(phrase);',
+                '    return hay.includes(phrase);',
+            ),
+    },
+    {
+        // CodeQL js/bad-tag-filter。`</script >` 是合法的結束標籤，瀏覽器照樣收工，
+        // 而 `<\/script>` 對不上它——整段 JS 原始碼會被算成「可見文字」，
+        // 訊號 C 直接瞎掉。被偵測的是敵意主機，多打一個空格就是一種繞法。
+        name: 'script 的結束標籤退回不容許空白（多一個空格就繞過訊號 C）',
+        apply: (s) =>
+            s.replace(
+                '.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script\\b[^>]*>/gi, \' \')',
+                '.replace(/<script[\\s\\S]*?<\\/script>/gi, \' \')',
+            ),
+    },
+    {
+        name: '內容標記永遠回空（ieso-info.org 那類接管會漏掉）',
+        apply: (s) =>
+            s.replace(
+                'export function contentSquatSignals(html) {',
+                'export function contentSquatSignals(html) {\n    return [];',
+            ),
+    },
+    {
+        // 這一條也是守誤判：第一版沒有排除 meta refresh，對照組裡
+        // www.cac.edu.tw 與 tpmso.k12ea.gov.tw 的舊式轉址頁立刻被誤標。
+        name: 'meta refresh 不再排除（正當的舊式轉址頁會被誤標成盲區）',
+        apply: (s) =>
+            s.replace(
+                '    if (META_REFRESH.test(bodyHead)) return null;',
+                '    void META_REFRESH;',
+            ),
+    },
+    {
+        name: 'HTTP 層盲區偵測永遠回 null（hmun.org 那類 JS 殼會漏掉）',
+        apply: (s) =>
+            s.replace(
+                'export function opaqueShell(bodyHead, truncated = false) {',
+                'export function opaqueShell(bodyHead, truncated = false) {\n    return null;',
+            ),
+    },
+    {
+        // 這一條守的是**漏檢**：description 的引號改用「兩種引號都排除」的字元類別，
+        // 內容裡有撇號就會被截在撇號上，撇號之後的變現詞組全部看不到。
+        name: 'description 的引號退回字元類別（內容裡的撇號會把偵測截斷）',
+        apply: (s) =>
+            s.replace(
+                'html.match(/<meta[^>]+name=(["\'])description\\1[^>]*content=(["\'])([\\s\\S]*?)\\2/i)?.[3] ??',
+                'html.match(/<meta[^>]+name=(["\'])description\\1[^>]*content=(["\'])([^"\']*?)\\2/i)?.[3] ??',
+            ),
+    },
+    {
+        // 長度上限寫進量詞時，超過上限不是截斷而是整條比對失敗——「太長」與
+        // 「沒有 title」在下游長得一模一樣，而蹲域名的頁面標題常常很長。
+        name: '長度上限寫回正則量詞（過長的 title 會被整條丟掉而不是截斷）',
+        apply: (s) =>
+            s.replace(
+                'const t = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);',
+                'const t = html.match(/<title[^>]*>([\\s\\S]{0,300}?)<\\/title>/i);',
+            ),
+    },
+    {
+        // 遠端可控的 <title> 會被原樣送進 issue body（gh issue create --body-file），
+        // 而命中的定義就是「那台主機不可信」。
+        name: 'inertText 退化成原樣輸出（被接管的網域可以直接寫 issue 的 markdown）',
+        apply: (s) =>
+            s.replace(
+                'export function inertText(s) {',
+                "export function inertText(s) {\n    return String(s ?? '');",
+            ),
+    },
+];
+
 // ── C：裸網域擷取規則的突變測試 ──
 // 每一項都是「把一條規則拿掉或反過來」，然後跑 bare-domains.test.mjs。測試必須失敗。
 const bareDomainMutations = [
@@ -404,7 +502,14 @@ function runBaselineTests() {
     try {
         execFileSync(
             process.execPath,
-            ['--test', path.join(SCRIPTS, 'link-health.test.mjs'), path.join(SCRIPTS, 'bare-domains.test.mjs')],
+            [
+                '--test',
+                path.join(SCRIPTS, 'link-health.test.mjs'),
+                path.join(SCRIPTS, 'bare-domains.test.mjs'),
+                // D 段的突變要跑這一支。基準也必須涵蓋它，否則「基準是綠的」這句話
+                // 對新加的偵測是盲的——那正是這個矩陣存在的理由。
+                path.join(SCRIPTS, 'hijack-signals.test.mjs'),
+            ],
             { encoding: 'utf8', stdio: 'pipe' },
         );
         return 0;
@@ -427,7 +532,7 @@ if (base.code !== 0) {
 // 實測：把 extractBareDomainCandidates 改成永遠回 []，初始基準仍顯示綠燈。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
-    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs）');
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs）');
     process.exit(1);
 }
 console.log('  ✅ 基準綠燈（政策檢查 ＋ 單元測試）\n');
@@ -498,6 +603,29 @@ try {
     rmSync(MUTANT_DIR, { recursive: true, force: true });
 }
 
+console.log('\nD. 接管偵測的突變測試（hijack-signals.test.mjs 必須紅）：');
+try {
+    const hijackSource = readFileSync(path.join(SCRIPTS, 'hijack-signals.lib.mjs'), 'utf8')
+        .split(/\r?\n/)
+        .join('\n');
+    for (const m of hijackMutations) {
+        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
+        const mutated = m.apply(hijackSource);
+        if (mutated === hijackSource) {
+            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
+            rmSync(MUTANT_DIR, { recursive: true, force: true });
+            continue;
+        }
+        writeFileSync(path.join(MUTANT_DIR, 'hijack-signals.lib.mjs'), mutated, 'utf8');
+        const r = runMutantTests('hijack-signals.test.mjs');
+        if (r.code === 0) bad(m.name, '拿掉這一段之後測試竟然還是綠的——那些測試沒有在把關');
+        else ok(m.name);
+        rmSync(MUTANT_DIR, { recursive: true, force: true });
+    }
+} finally {
+    rmSync(MUTANT_DIR, { recursive: true, force: true });
+}
+
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
 const afterTests = runBaselineTests();
@@ -505,5 +633,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
