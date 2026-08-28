@@ -74,9 +74,13 @@ const UPDATE = process.argv.includes('--update');
  * 上游一動檔名就全變，逐檔預算會在每次升級都全部失效而失去訊號。
  * 以「一個函式庫送出去多少位元組」為單位，才是使用者實際感受到的量。
  */
+// 前兩個是**根目錄下的散檔**，所以要求 rel 裡沒有斜線。少了這個條件的話，
+// 未來多一個 fuse-icons/ 目錄，裡面的檔案會被 /^fuse[.-]/ 收進 fuse 群組——
+// 總位元組還是守得住（群組會對不上而紅燈），但紅燈會指著錯的東西，
+// 讀的人得先花時間才發現那些位元組根本不是 fuse 的。
 const GROUPS = [
-    { name: 'fuse', match: (rel) => /^fuse[.-]/.test(rel) },
-    { name: 'feather', match: (rel) => /^feather[.-]/.test(rel) },
+    { name: 'fuse', match: (rel) => !rel.includes('/') && /^fuse[.-]/.test(rel) },
+    { name: 'feather', match: (rel) => !rel.includes('/') && /^feather[.-]/.test(rel) },
     { name: 'ionicons-svg', match: (rel) => rel.startsWith('ionicons/svg/') && rel.endsWith('.svg') },
     { name: 'ionicons-js', match: (rel) => rel.startsWith('ionicons/') && rel.endsWith('.js') },
 ];
@@ -230,7 +234,15 @@ if (problems.length) {
         '使用者實際下載的位元組變了。這不是雜訊——public/vendor/ 不在版控裡，',
         '這份預算檔是那些位元組唯一的版控紀錄。',
         '',
-        '確認變動是預期的（例如相依升級）之後執行：',
+        '兩種情況都會走到這裡，請先分辨是哪一種：',
+        '',
+        '  (1) 改了內容。ionicons 只複製頁面真的用到的圖示，所以在任何一頁加上或',
+        '      刪掉一個 <ion-icon name="...">，ionicons-svg 的檔數就會變。',
+        '      這是正常的，不是錯誤——你只是需要把新的數字記進預算檔。',
+        '',
+        '  (2) 升級了相依。位元組變動是升級的一部分，本來就該在同一個 PR 裡被看到。',
+        '',
+        '確認變動是預期的之後執行：',
         '    node scripts/check-vendor-size.mjs --update',
         '並把預算檔的 diff 一起提交，在 PR 說明裡交代為什麼變。',
     ]);

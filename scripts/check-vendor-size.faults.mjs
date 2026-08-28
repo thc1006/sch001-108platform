@@ -125,6 +125,20 @@ const cases = [
 
     // ── B：有東西沒被計量 ──────────────────────────────────
     {
+        // 分組規則要錨在**頂層路徑段**，不是「開頭像」。少了 !rel.includes('/')
+        // 的話，fuse-icons/ 底下的檔案會被 /^fuse[.-]/ 收進 fuse 群組。這一條釘的
+        // 是**歸屬正確**，不是「有沒有被抓到」——兩種寫法都會紅，但錯的那種會
+        // 紅在「fuse 的位元組對不上」，而那些位元組根本不是 fuse 的，讀的人得
+        // 先繞一圈才發現紅燈指錯了地方。expect 分得開這兩種紅法。
+        name: '子目錄的檔名開頭像某一組（fuse-icons/ 不得被算進 fuse）',
+        inject: () => {
+            mkdirSync(path.join(WORK_VENDOR, 'fuse-icons'), { recursive: true });
+            writeFileSync(path.join(WORK_VENDOR, 'fuse-icons', 'a.js'), 'x'.repeat(9000), 'utf8');
+            return '新增 fuse-icons/a.js（9KB）';
+        },
+        expect: /不屬於任何分組|沒有被計量/,
+    },
+    {
         name: '多了一個不屬於任何分組的資產（新函式庫靜靜溜進去）',
         inject: () => {
             writeFileSync(path.join(WORK_VENDOR, 'sneaky-lib.js'), 'x'.repeat(30000), 'utf8');
