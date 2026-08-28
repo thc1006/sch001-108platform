@@ -19,8 +19,15 @@
 (function (global) {
     'use strict';
 
-    if (global.PuterAI && global.PuterAI.__version === 3) {
-        return; // 已載入，避免重複定義
+    // 版號只寫這一個地方。守衛與匯出各寫一次的話，有人把匯出改成 4 卻沒動守衛，
+    // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件——而那正是它想避免的事。
+    var VERSION = 3;
+
+    // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
+    // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
+    // 自己的，於是不返回、把新版整個覆蓋掉——安靜降級成舊版行為。
+    if (global.PuterAI && global.PuterAI.__version >= VERSION) {
+        return; // 同版或更新的版本已經載入了
     }
 
     var MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-3-flash-preview'];
@@ -569,7 +576,7 @@
     // 匯出
     // ------------------------------------------------------------
     global.PuterAI = {
-        __version: 3,
+        __version: VERSION,
         MODELS: MODELS,
         formatPuterError: formatPuterError,
         ensureSignedIn: ensureSignedIn,
