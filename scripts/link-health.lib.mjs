@@ -31,6 +31,16 @@ import dns from 'node:dns';
 // 只有「網域解析不到」與 404/410 才算失效。競賽與教育網站大量使用 Cloudflare 等
 // 防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，一律歸入「無法判定」只做
 // 記錄，避免每週誤報把維護者訓練成忽略通知。
+//
+// 2026-08-29 把「多半」量成了事實。leetcode.com 對這支檢查器回 403，而同一時間：
+//   curl + Chrome/126 UA（與本檔的 UA 相同）  → 200
+//   curl + Chrome/140 UA                      → 200
+//   curl --http1.1（排除 HTTP/2 的差異）      → 200
+//   根路徑、/contest/、/problemset/ 都一樣    → 200
+// UA、路徑、HTTP 版本都排除之後，剩下的差異是 TLS 指紋：Node 的 ClientHello
+// 不是 Chrome 的，Cloudflare 的 bot management 認得出來。這**不是換 header 能修的**，
+// 所以這一類 403 會永遠存在——把它們歸進 unverified 而不是 dead，是這個設計唯一
+// 能避免長期誤報的做法。
 export const DEAD_STATUSES = new Set([404, 410]);
 export const LINK_TIMEOUT_MS = 20_000;
 export const MAX_REDIRECTS = 5;
