@@ -97,7 +97,7 @@ description: 逐一破解醫藥衛生學群升學的十大常見迷思，包括�
 
 ## 參考來源
 
-- [參加國際數理學科奧林匹亞競賽及國際科學展覽成績優良學生升學優待辦法（第三條：金／銀／銅牌各自的保送與推薦範圍），全國法規資料庫](https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=H0060021)
+- [參加國際數理學科奧林匹亞競賽及國際科學展覽成績優良學生升學優待辦法 第三條（金／銀／銅牌的保送與推薦範圍），全國法規資料庫](https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=H0060021)
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
 - [醫學系學習歷程檔案累積全攻略！115 上榜醫科決勝關鍵｜TKB 甄戰學習顧問中心](https://www.reallygood.com.tw/newExam/inside?str=BCA9056F6E0DCA2623D6DA8B4BFCB7A7)
 - [選才育才輔助系統 — 醫藥衛生學群｜ColleGo!（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=4)

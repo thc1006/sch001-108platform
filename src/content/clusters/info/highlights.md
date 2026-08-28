@@ -55,8 +55,8 @@ description: 資訊學群多元表現規劃指南，涵蓋 APCS 與競賽地圖�
 
 ## 參考來源
 
-- [115 學年度申請入學統計資料——「APCS 組」38 校、54 校系、185 個招生名額（頁面另載「資安組」全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
-- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單：「APCS 組」54 列、「資安組」9 列；名額合計 185 與 32 為本站依名單加總，該表未印合計數），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
+- [115 學年度申請入學統計資料（APCS 組 38 校、54 校系、185 個名額；資安組全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
+- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單，APCS 組 54 列、資安組 9 列；名額合計為本站加總），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
 - [成功大學資工系招生指引（GitHub 標準）](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
 - [學習歷程檔案暨考招制度宣導](https://www.swjh.tyc.edu.tw/DEPT/FFF_files/FFF2328.pdf)
 - [葉丙成：別再為學習歷程花錢參加營隊](https://tw.news.yahoo.com/%E8%A6%81%E9%AB%98%E4%B8%AD%E7%94%9F%E5%88%A5%E5%86%8D%E7%82%BA%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B%E8%8A%B1%E9%8C%A2%E5%8F%83%E5%8A%A0%E7%87%9F%E9%9A%8A-%E8%91%89%E4%B8%99%E6%88%90%E6%8F%AD%E7%9C%9F%E7%9B%B8-%E6%95%99%E6%8E%88%E4%B8%8D%E6%9C%83%E5%8A%A0%E5%88%86-060954172.html)

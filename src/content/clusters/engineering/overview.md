@@ -84,10 +84,9 @@ description: 工程學群完整定位指南。涵蓋各工程學類、頂大校�
 ## 參考來源
 
 - [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
-- [115 學年度申請入學統計資料——「APCS 組」38 校、54 校系、185 個招生名額（頁面另載「資安組」全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
-- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單：「APCS 組」54 列、「資安組」9 列；名額合計 185 與 32 為本站依名單加總，該表未印合計數），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
+- [115 學年度申請入學統計資料（APCS 組 38 校、54 校系、185 個名額；資安組全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
+- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單，APCS 組 54 列、資安組 9 列；名額合計為本站加總），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
 - [APCS 大學程式設計先修檢測（國立臺灣師範大學）](https://apcs.csie.ntnu.edu.tw/index.php/apcs-introduction/)
-- [115 申請入學採計 APCS 校系（TKB 甄戰學習顧問中心）](https://www.reallygood.com.tw/newExam/inside?str=DD54442FF1689C92623E22A27B2836CA)
 - [115 學年度大學「申請入學」招生簡章（大學甄選入學委員會）](https://www.cac.edu.tw/apply115/)
 - [想讀資工資管，必懂 APCS 三重點（大學問）](https://www.unews.com.tw/News/Info/1874)
 - [國立清華大學動力機械工程學系（ColleGo!）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011036)

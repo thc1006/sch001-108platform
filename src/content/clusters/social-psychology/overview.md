@@ -71,7 +71,7 @@ description: 社會與心理學群升學總覽，涵蓋社會學與心理學的�
 ## 參考來源
 
 - [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
-- [115 學年度大學申請入學招生簡章 壹、總則（第 11 頁：審查資料上傳起始日一律為 115 年 4 月 30 日、截止日依各大學規定；每一大項檔案大小以 5MB 為限），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
+- [115 學年度大學申請入學招生簡章 總則第 11 頁（上傳起始日一律為 4 月 30 日、截止日依各大學規定；每一大項以 5MB 為限），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
 - [大學甄選入學委員會 115 學年度申請入學招生資訊與時程](https://www.cac.edu.tw/apply115/schedule.php)
 - [ColleGo！選才育才輔助系統—社會心理學群](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10)
 - [國立臺灣大學社會學系（選才理念與審查重點）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=001022)

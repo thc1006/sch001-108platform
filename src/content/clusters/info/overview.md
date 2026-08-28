@@ -50,8 +50,8 @@ description: 資訊學群升學總覽，涵蓋學群定位、資工與資管的�
 
 ## 參考來源
 
-- [115 學年度申請入學統計資料——「APCS 組」38 校、54 校系、185 個招生名額（頁面另載「資安組」全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
-- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單：「APCS 組」54 列、「資安組」9 列；名額合計 185 與 32 為本站依名單加總，該表未印合計數），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
+- [115 學年度申請入學統計資料（APCS 組 38 校、54 校系、185 個名額；資安組全組 41 校系、130 個名額），大學甄選入學委員會](https://www.cac.edu.tw/apply115/stat_2.php)
+- [115 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（逐校系名單，APCS 組 54 列、資安組 9 列；名額合計為本站加總），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115APCS_List_20251007.pdf)
 - [成功大學資工系招生指引](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
 - [成功大學資工系備審資料準備指引](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [清華大學資工系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)

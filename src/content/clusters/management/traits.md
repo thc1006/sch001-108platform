@@ -94,7 +94,7 @@ description: 管理學群教授在審查與面試時尋找什麼?本頁解析三
 ## 參考來源
 
 - [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
-- [招聯會「因應AI技術發展，大學辦理申請入學招生參考注意事項」（112 年 4 月 20 日新聞稿，對象為大學端）與考生使用 AI 工具的官方說明，教育部大學多元入學升學網「常見問題」第 36 題](https://nsdua.moe.edu.tw/#/qa)
+- [考生使用 AI 工具的官方說明（招聯會「因應 AI 技術發展…注意事項」對象為大學端），教育部大學多元入學升學網「常見問題」第 36 題](https://nsdua.moe.edu.tw/#/qa)
 - [115 學年度各大學「審查資料準備指引」彙整（各校 AI 使用規定等校內要求以此為準），大學甄選入學委員會](https://www.cac.edu.tw/apply115/guide.php)
 - [大學面試,就考這六題!(方格子)](https://vocus.cc/article/649a6c6bfd89780001fb4a5e)
 - [寫出讓教授眼睛發亮的學習歷程(典陸教育)](https://www.danlu-education.com/exam-information-detail/study-map-interview/)

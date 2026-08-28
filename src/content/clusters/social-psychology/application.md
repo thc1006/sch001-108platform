@@ -74,7 +74,7 @@ description: 社會與心理學群申請實戰指南，涵蓋學習歷程自述�
 
 ## 參考來源
 
-- [115 學年度大學申請入學招生簡章 壹、總則（第 11 頁：審查資料上傳起始日一律為 115 年 4 月 30 日、截止日依各大學規定；每一大項檔案大小以 5MB 為限），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
+- [115 學年度大學申請入學招生簡章 總則第 11 頁（上傳起始日一律為 4 月 30 日、截止日依各大學規定；每一大項以 5MB 為限），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
 - [大學甄選入學委員會 115 學年度申請入學招生資訊與時程](https://www.cac.edu.tw/apply115/schedule.php)
 - [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
 - [國立臺灣大學社會學系 115 學年度書面資料準備指引](https://www.aca.ntu.edu.tw/w/aca/LocalAdmissionClass_21072013260628724)

@@ -50,7 +50,7 @@ description: 法政學群升學總覽，涵蓋學群定位、法律、政治與�
 
 ## 參考來源
 
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題（進入頁面後於「常見問題」中尋找該題）](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [選才育才輔助系統 — 法政學群（ColleGo!）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=15)
 - [選才育才輔助系統 — 法律學類（ColleGo!）](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=104)
 - [國立政治大學法律學系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006041)
