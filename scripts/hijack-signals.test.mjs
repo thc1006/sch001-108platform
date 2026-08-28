@@ -213,6 +213,32 @@ test('contentSquatSignals：門檻是「相異」詞組，同一個詞出現兩�
 });
 
 // 反例——這一組比正例更重要。誤判會讓維護者把整個偵測關掉。
+test('contentSquatSignals：詞界在「至少兩個相異詞組」的門檻下仍然承重', () => {
+    // 這一格是被 CI 逼出來的。原本驗詞界的反例都只放**一個**近似命中，門檻拉到
+    // 兩個相異詞組之後，那些反例不論詞界對不對都回空——故障注入把詞界比對整條
+    // 換成純子字串，測試竟然還是綠的（56 擋下 / 2 漏掉）。
+    //
+    // 所以反例要放**兩個**近似命中在同一份文件裡：詞界正確時仍然是 0 個相異詞組，
+    // 退化成純子字串時就會湊到 2 個而突破門檻。
+    const html =
+        '<title>Sign up for the free spins-off workshop</title>'
+        + '<meta name="description" content="Our online casino-style probability lab for students">';
+    assert.deepEqual(
+        contentSquatSignals(html),
+        [],
+        '連字號複合詞穿過了詞界比對——free spins-off 與 online casino-style 都不是變現詞組',
+    );
+    // 同一組字，把連字號換成空白就該命中，證明上面回空不是因為根本沒在比。
+    const real = contentSquatSignals(
+        '<title>Sign up for the free spins today</title>'
+        + '<meta name="description" content="Our online casino for real players">',
+    );
+    assert.ok(
+        new Set(real.map((h) => h.phrase)).size >= 2,
+        `把連字號換成空白之後應該要命中兩個相異詞組，實際命中 ${JSON.stringify(real.map((h) => h.phrase))}`,
+    );
+});
+
 test('contentSquatSignals：正當的競賽／教育頁面一個都不得命中', () => {
     const legit = [
         '<title>國際數學奧林匹亞 IMO 2026</title>',

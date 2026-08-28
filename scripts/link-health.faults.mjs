@@ -343,8 +343,8 @@ const hijackMutations = [
         name: 'HTTP 層盲區偵測永遠回 null（hmun.org 那類 JS 殼會漏掉）',
         apply: (s) =>
             s.replace(
-                'export function opaqueShell(bodyHead) {',
-                'export function opaqueShell(bodyHead) {\n    return null;',
+                'export function opaqueShell(bodyHead, truncated = false) {',
+                'export function opaqueShell(bodyHead, truncated = false) {\n    return null;',
             ),
     },
     {
