@@ -13,7 +13,7 @@
  * 的路徑命名空間——站台的連結都是根相對路徑，路徑對不上就測不出真實行為。
  */
 import { createServer } from 'node:http';
-import { readFile, realpath, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,9 +36,9 @@ try {
 // 會外洩、帶分隔符的不會。
 //
 // 自帶分隔符還有第二個作用：守衛可以寫成**單一條件**的 !x.startsWith(前綴)，不必再
-// 補一個 x !== ROOT 的特例。那個特例正是 CodeQL 認不出這是 sanitizer 的原因——
-// js/path-injection 認的是「path.resolve／realpath 正規化之後，對同一個變數做一次
-// startsWith(根目錄) 檢查」這個形狀（見該查詢的官方說明），複合條件會讓它失配。
+// 補一個 x !== ROOT 的特例。這個形狀是刻意配合 CodeQL 的 js/path-injection——它的
+// StartsWithDirSanitizer 只在「值被標記為 normalized 且 absolute」時才生效，而複合
+// 條件會讓 guard 比對失配。
 const ROOT_PREFIX = ROOT.endsWith(path.sep) ? ROOT : ROOT + path.sep;
 const REAL_ROOT_PREFIX = REAL_ROOT.endsWith(path.sep) ? REAL_ROOT : REAL_ROOT + path.sep;
 
@@ -104,8 +104,21 @@ const server = createServer(async (req, res) => {
         //
         // 解析結果覆寫回同一個變數，讓底下 readFile 讀的就是剛剛驗過的那條路徑：
         // 讀原本那個變數的話，驗的是 A、送的是 B，中間多一次路徑解析的空窗。
+        //
+        // 用同步的 realpathSync 而不是 fs/promises 的 realpath，是為了讓 CodeQL 看得懂。
+        // 它的 ResolvingPathCall 只認三種形狀（見 TaintedPathCustomizations.qll）：
+        //
+        //     path.resolve(...)            output = 呼叫本身
+        //     fs.realpathSync(p)           output = 呼叫本身
+        //     fs.realpath(p, cb)           output = cb 的第二個參數
+        //
+        // **promise 版的 realpath 一種都不是**，所以 await 出來的值不會被標記成
+        // normalized+absolute，底下那道 startsWith 守衛也就無法生效——alert 會留著，
+        // 而它標的其實正是防護本身。這支只綁 localhost、服務的是本機小檔，同步解析
+        // 一條路徑的成本可以忽略（啟動時解析 ROOT 用的也是同一支），換到的是「工具
+        // 認得這是 sanitizer」，日後改動會被持續驗證，而不是靠有人記得某條 dismissal。
         try {
-            filePath = await realpath(filePath);
+            filePath = realpathSync(filePath);
         } catch {
             res.writeHead(404).end('404 ' + urlPath);
             return;
@@ -115,7 +128,7 @@ const server = createServer(async (req, res) => {
             return;
         }
 
-        // 仍然不是原子操作——realpath 與 readFile 是兩次獨立的系統呼叫，之間還有
+        // 仍然不是原子操作——realpathSync 與 readFile 是兩次獨立的系統呼叫，之間還有
         // TOCTOU 視窗（CodeQL 的 js/file-system-race 指的就是這件事）。要真的關掉
         // 得改用 file handle：open 一次之後只對 handle 做 stat/read。這支只綁
         // localhost、只服務 repo 內的測試資產、不進建置產物，所以停在「讀已驗過的
