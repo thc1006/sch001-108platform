@@ -88,8 +88,18 @@ const server = createServer(async (req, res) => {
         //
         // 刻意放在 stat 之後：realpath 對不存在的路徑會丟例外，而那種路徑本來就
         // 該走上面的 404，不該在這裡變成 403。
+        //
+        // 底下讀的是 real 而不是 file：要送出去的位元組，必須來自剛剛真的驗過的
+        // 那條路徑。讀 file 的話，驗的是 A、送的是 B，中間多一次路徑解析的空窗。
+        //
+        // 這仍然不是原子操作——realpath 與 readFile 是兩次獨立的系統呼叫，之間
+        // 還是有 TOCTOU 視窗（CodeQL 的 js/file-system-race 指的就是這件事）。
+        // 要真的關掉得改用 file handle：open 一次之後只對 handle 做 stat/read。
+        // 這支只綁 localhost、只服務 repo 內的測試資產、不進建置產物，所以停在
+        // 「讀已驗過的路徑」這一層；真的要收，那是另一次改動的範圍。
+        let real;
         try {
-            const real = await realpath(file);
+            real = await realpath(file);
             if (real !== REAL_ROOT && !real.startsWith(REAL_ROOT + path.sep)) {
                 res.writeHead(403).end('403');
                 return;
@@ -100,8 +110,8 @@ const server = createServer(async (req, res) => {
         }
 
         try {
-            const body = await readFile(file);
-            res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
+            const body = await readFile(real);
+            res.writeHead(200, { 'Content-Type': TYPES[path.extname(real)] || 'application/octet-stream' });
             res.end(body);
         } catch {
             res.writeHead(404).end('404 ' + urlPath);
