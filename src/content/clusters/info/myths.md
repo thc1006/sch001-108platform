@@ -42,7 +42,7 @@ description: 逐一破解資訊學群升學的常見迷思，包含程式設計�
 
 ## 參考來源
 
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [成功大學資工系招生指引](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
 - [葉丙成：別再為學習歷程花錢參加營隊](https://tw.news.yahoo.com/%E8%A6%81%E9%AB%98%E4%B8%AD%E7%94%9F%E5%88%A5%E5%86%8D%E7%82%BA%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B%E8%8A%B1%E9%8C%A2%E5%8F%83%E5%8A%A0%E7%87%9F%E9%9A%8A-%E8%91%89%E4%B8%99%E6%88%90%E6%8F%AD%E7%9C%9F%E7%9B%B8-%E6%95%99%E6%8E%88%E4%B8%8D%E6%9C%83%E5%8A%A0%E5%88%86-060954172.html)
 - [政治大學資管系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006026)

@@ -66,7 +66,7 @@ description: 管理學群自主學習與探究專題怎麼做?本頁提供商管
 ## 參考來源
 
 - [115 學年度各大學「審查資料準備指引」彙整（各校 AI 使用規定等校內要求以此為準），大學甄選入學委員會](https://www.cac.edu.tw/apply115/guide.php)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [寫出讓教授眼睛發亮的學習歷程(典陸教育)](https://www.danlu-education.com/exam-information-detail/study-map-interview/)
 - [2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣)](https://esg.businesstoday.com.tw/article/category/190807/post/202512150023)
 - [2026 金融科技趨勢(TechOrange)](https://techorange.com/2025/12/11/fintech-predictions-for-2026/)

@@ -76,7 +76,7 @@ description: 管理學群涵蓋企管、財金、國企、會計、資管等學�
 
 - [大學甄選入學委員會 115 學年度申請入學專頁(時程)](https://www.cac.edu.tw/apply115/schedule.php)
 - [115 學年度大學申請入學招生名額與報名統計（新聞稿：64 校、2,206 學系組、招生名額 50,450 個、外加名額另計）與第一階段篩選結果統計，大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [115 學測頂大採計科目變革(遠見雜誌)](https://www.gvm.com.tw/article/126783)
 - [2026 ESG 與 AI 產業趨勢(今周刊 ESG 永續台灣)](https://esg.businesstoday.com.tw/article/category/190807/post/202512150023)
 - [中原大學商學院「ESG+AI」發展策略(聯合新聞網)](https://udn.com/news/story/6928/9368738)

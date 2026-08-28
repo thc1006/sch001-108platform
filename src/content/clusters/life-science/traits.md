@@ -92,7 +92,7 @@ description: 從生科系教授的審查視角拆解六大核心特質與能力�
 
 - [國立臺灣大學「生命科學系」大學申請入學第二階段甄試書面資料準備指引（國立臺灣大學教務處）](https://www.aca.ntu.edu.tw/)
 - [ColleGo! 選才育才輔助系統—生命科學學群（核心素養與能力）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [〈成大生科特殊選才面試考古題分享〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/interview-archaeology/)
 - [國立成功大學生命科學系大學特殊選才面試資訊（成功大學生命科學系官網）](https://www.bio.ncku.edu.tw/)
 - [國立清華大學生命科學系官網（課程含微積分、物理、程式語言）](https://dls.site.nthu.edu.tw/)

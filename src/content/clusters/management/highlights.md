@@ -85,4 +85,4 @@ ESG 是全球企業界衡量永續發展的關鍵指標,可用來策略性地梳
 - [備審資料技巧:讓教授記住你(IOH)](https://ioh.tw/articles/大學備審資料)
 - [台大管理顧問社面試筆試問題大公開(Medium)](https://blackwinged-kite.medium.com/台大管理顧問社面試-筆試問題及回答-大公開-1def9c4d841e)
 - [HSBC/HKU 商業案例競賽心得(台大管理學院院訊)](https://newsletter.management.ntu.edu.tw/hsbc-hku商業案例競賽心得/)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)

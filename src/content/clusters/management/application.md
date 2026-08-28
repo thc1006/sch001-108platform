@@ -98,5 +98,5 @@ description: 管理學群備審資料與面試怎麼準備?本頁解析備審秒
 - [64 校 115 二階審查資料準備指引(今周刊)](https://www.businesstoday.com.tw/article/category/183035/post/202603310020/)
 - [團體面試 6 大情境完全解密(47 雲端輔導室)](https://www.ajesus1412.com/團體面試6大情境完全解密/)
 - [面試臺大企管,教授竟然問我這個?!(TUN 大學網)](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=349296)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
 - [生成式 AI 備審資料使用規範(聯合新聞網)](https://udn.com/news/story/6925/9428729)

@@ -94,4 +94,4 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 - [清華大學生命科學暨醫學院官網](https://cls.site.nthu.edu.tw/)
 - [〈2026 年生物科技產業關鍵趨勢解析〉，GeneOnline News](https://geneonline.news/)
 - [〈未來的生物科技發展方向—合成生物學〉，PanSci 泛科學](https://pansci.asia/archives/85114)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」原文），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
