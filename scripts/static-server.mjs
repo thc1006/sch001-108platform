@@ -14,6 +14,7 @@
  */
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,6 +22,25 @@ import { fileURLToPath } from 'node:url';
 const REPO = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number(process.argv[2] || process.env.PORT || 8000);
 const ROOT = process.argv[3] ? path.resolve(REPO, process.argv[3]) : REPO;
+// ROOT 的真實路徑，給底下的 symlink 防護比對用。啟動時 ROOT 可能還不存在
+// （.link-root 要 build 完才有），解析不了就退回詞法值——那種情況下本來也沒有
+// 東西可以服務，第一個請求會 404。
+let REAL_ROOT = ROOT;
+try {
+    REAL_ROOT = realpathSync(ROOT);
+} catch {
+    /* ROOT 尚未存在 */
+}
+// 兩個前綴都自帶結尾分隔符。這不只是方便：少了分隔符就是經典的前綴繞法——ROOT 是
+// …/ci-repair 時，…/ci-repair-evil 也會通過 startsWith(ROOT)。實測對照過，naive 版
+// 會外洩、帶分隔符的不會。
+//
+// 自帶分隔符還有第二個作用：守衛可以寫成**單一條件**的 !x.startsWith(前綴)，不必再
+// 補一個 x !== ROOT 的特例。這個形狀是刻意配合 CodeQL 的 js/path-injection——它的
+// StartsWithDirSanitizer 只在「值被標記為 normalized 且 absolute」時才生效，而複合
+// 條件會讓 guard 比對失配。
+const ROOT_PREFIX = ROOT.endsWith(path.sep) ? ROOT : ROOT + path.sep;
+const REAL_ROOT_PREFIX = REAL_ROOT.endsWith(path.sep) ? REAL_ROOT : REAL_ROOT + path.sep;
 
 const TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -53,25 +73,69 @@ const server = createServer(async (req, res) => {
             return;
         }
 
-        // path traversal 防護：解析後必須仍在 ROOT 之內。
-        // （symlink 不在防護範圍內——這支只服務 repo 內的測試資產，不對外。）
-        const resolved = path.resolve(ROOT, '.' + urlPath);
-        if (resolved !== ROOT && !resolved.startsWith(ROOT + path.sep)) {
+        // 要根目錄本身時直接指向 index.html。這一行的目的不只是省一次 stat：
+        // 它保證底下每一條路徑都**嚴格位於** ROOT 之下，於是兩道守衛都可以寫成
+        // 單一條件的 startsWith，不必再補 x !== ROOT 的特例（見上方常數的說明）。
+        let filePath = path.resolve(ROOT, '.' + urlPath);
+        if (filePath === ROOT) filePath = path.join(ROOT, 'index.html');
+
+        // 第一層（詞法）：path.resolve 把 ../ 收乾淨之後，必須落在 ROOT 之下。
+        // 實測 13 種變體（含 win32 的反斜線 traversal 與各種百分比編碼）0 外洩。
+        if (!filePath.startsWith(ROOT_PREFIX)) {
             res.writeHead(403).end('403');
             return;
         }
 
-        let file = resolved;
         try {
-            const info = await stat(file);
-            if (info.isDirectory()) file = path.join(file, 'index.html');
+            const info = await stat(filePath);
+            // 目錄 → index.html。ROOT 之下的目錄再接一段檔名仍在 ROOT 之下。
+            if (info.isDirectory()) filePath = path.join(filePath, 'index.html');
         } catch {
             res.writeHead(404).end('404 ' + urlPath);
             return;
         }
+
+        // 第二層（實際路徑）：詞法比對擋得住 ../，擋不住「ROOT 內有一個 symlink
+        // 指向 ROOT 外」——path.resolve 只做字串正規化，根本不看檔案系統。實測用
+        // 一個指向 ROOT 外的 directory junction：補這一層之前是 200，之後是 403。
+        //
+        // 刻意放在 stat 之後：realpath 對不存在的路徑會丟例外，而那種路徑本來就該
+        // 走上面的 404，不該在這裡變成 403。
+        //
+        // 解析結果覆寫回同一個變數，讓底下 readFile 讀的就是剛剛驗過的那條路徑：
+        // 讀原本那個變數的話，驗的是 A、送的是 B，中間多一次路徑解析的空窗。
+        //
+        // 用同步的 realpathSync 而不是 fs/promises 的 realpath，是為了讓 CodeQL 看得懂。
+        // 它的 ResolvingPathCall 只認三種形狀（見 TaintedPathCustomizations.qll）：
+        //
+        //     path.resolve(...)            output = 呼叫本身
+        //     fs.realpathSync(p)           output = 呼叫本身
+        //     fs.realpath(p, cb)           output = cb 的第二個參數
+        //
+        // **promise 版的 realpath 一種都不是**，所以 await 出來的值不會被標記成
+        // normalized+absolute，底下那道 startsWith 守衛也就無法生效——alert 會留著，
+        // 而它標的其實正是防護本身。這支只綁 localhost、服務的是本機小檔，同步解析
+        // 一條路徑的成本可以忽略（啟動時解析 ROOT 用的也是同一支），換到的是「工具
+        // 認得這是 sanitizer」，日後改動會被持續驗證，而不是靠有人記得某條 dismissal。
         try {
-            const body = await readFile(file);
-            res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
+            filePath = realpathSync(filePath);
+        } catch {
+            res.writeHead(404).end('404 ' + urlPath);
+            return;
+        }
+        if (!filePath.startsWith(REAL_ROOT_PREFIX)) {
+            res.writeHead(403).end('403');
+            return;
+        }
+
+        // 仍然不是原子操作——realpathSync 與 readFile 是兩次獨立的系統呼叫，之間還有
+        // TOCTOU 視窗（CodeQL 的 js/file-system-race 指的就是這件事）。要真的關掉
+        // 得改用 file handle：open 一次之後只對 handle 做 stat/read。這支只綁
+        // localhost、只服務 repo 內的測試資產、不進建置產物，所以停在「讀已驗過的
+        // 路徑」這一層；真的要收，那是另一次改動的範圍。
+        try {
+            const body = await readFile(filePath);
+            res.writeHead(200, { 'Content-Type': TYPES[path.extname(filePath)] || 'application/octet-stream' });
             res.end(body);
         } catch {
             res.writeHead(404).end('404 ' + urlPath);
