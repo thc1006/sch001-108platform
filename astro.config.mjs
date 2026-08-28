@@ -15,6 +15,31 @@ import { CLUSTERS } from './src/data/clusters.ts';
 // Tailwind v4 經由 @tailwindcss/vite 套用。Astro 7 帶的是 Vite 8，它的
 // postcss-import 解析不了 @import "tailwindcss" 這種裸模組名
 // (ENOENT ... open '...\tailwindcss')，所以 PostCSS 那條路在 Astro 7 已經走不通。
+//
+// 機制（升級當時插樁量到的，記在這裡免得日後有人再查一次）：Vite 8 把
+// createIdResolver 換成 rolldown 的 oxc 解析器，而 Astro 的靜態建置跑在
+// `prerender` 環境——不是 client/ssr，吃不到 Vite 的 back-compat 解析路徑。
+// oxc 在此把 `tailwindcss` 判成 external 並原樣回傳（resolveId 得到
+// {"id":"tailwindcss","external":true}），而 postcss-import 的 resolve 只看
+// 回傳值是否為真、不看 external，於是 path.resolve('tailwindcss') 被接到專案
+// 根目錄底下，變成上面那個 ENOENT。
+//
+// ── Markdown 管線也一起換了 ──
+//
+// Astro 7 的具名破壞性變更：Sätteri 取代 remark/rehype，@astrojs/markdown-remark
+// 已不在相依樹內，換成 @astrojs/markdown-satteri。對本站輸出的影響清點為三類，
+// 數字是 2026-08-29 對建置後 94 頁重新核對過的：
+//
+//   1. 表格對齊 align="left" → style="text-align: left"，542 處 / 17 頁
+//      （<td> 445、<th> 97；站上 align="left" 已歸零，也沒有其他 align 值）。
+//      **這一項要留意，因為它是「層疊優先序」的變更**：舊的 align 是
+//      presentational hint，優先序比作者 CSS 低，一條普通選擇器就蓋得掉；
+//      新的行內樣式優先序最高。日後若要用 CSS 改表格對齊，得用行內樣式或
+//      !important 才蓋得掉。
+//   2. 實體編碼 &#x26; → &amp;（站上 &#x26; 已歸零），解碼後同為 &。
+//   3. 一處裸 > 改成 &gt;（全站 &gt; 由 13 處變 14 處）。
+//
+// 三類目前都沒有可見差異，記錄下來是為了「日後版面出問題時知道哪些東西動過」。
 export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
