@@ -2,7 +2,7 @@
 /**
  * 自架前端資產的大小預算
  * ================================================================
- * `public/vendor/` 在 .gitignore 第 95 行，版控裡一個檔案都沒有。那些位元組是
+ * `public/vendor/` 被 .gitignore 排除，版控裡一個檔案都沒有。那些位元組是
  * **每一位訪客實際會下載的東西**，卻在每一次 diff 裡完全隱形。
  *
  * ── 與既有檢查的分工（不要重複做同一件事）──
@@ -36,9 +36,22 @@
  *    我們要的東西。相依更新本來就會被審，讓位元組變動出現在同一個 PR 裡是加分。
  *
  * **2. gzip 只顯示、不比對。**
- *    gzip 的輸出長度取決於 Node 內建的 zlib 版本。本機是 Node 24.13、CI 是 24.19，
- *    把它納入比對會讓這支檢查在不同環境間飄——一個會無故變紅的檢查，最後一定
- *    會被關掉。raw bytes 與檔案數是確定性的，那才是能當契約的東西。
+ *    本檔原本寫「gzip 的輸出長度取決於 Node 內建的 zlib 版本，跨環境會飄」。
+ *    那句話沒有量過，而且實測不成立：同一份 public/vendor/ 在
+ *
+ *      Node v20.19.4（zlib 1.3.0.1-motley-82a5fec）
+ *      Node v24.13.0（zlib 1.3.1-470d3a2）
+ *
+ *    下的 gzipSync(level 9) 長度**每一組都完全相同**
+ *    （feather 20686 / fuse 11166 / ionicons-js 10749 / ionicons-svg 5009）。
+ *    CI 的 .node-version 是 24，與本機同屬 zlib 1.3.1，更不可能有差。
+ *
+ *    真正的理由是別的兩點：
+ *    (a) gzip 長度不帶任何 raw bytes 沒有的訊號——它是 raw bytes 的函數，
+ *        raw bytes 沒變它就不會變，比它等於把同一件事比兩次；
+ *    (b) 它確實**可能**跟著壓縮實作走（Node 若哪天換成 zlib-ng，或改了預設
+ *        strategy），到時候整份預算會為了一個不帶訊號的欄位全面失效。
+ *    以「量過、確定性」為由留在輸出裡供人參考，但不當契約。
  *
  * 執行：  node scripts/check-vendor-size.mjs
  *         node scripts/check-vendor-size.mjs --update   （人工執行，把實測值寫回預算）
@@ -68,8 +81,20 @@ const GROUPS = [
     { name: 'ionicons-js', match: (rel) => rel.startsWith('ionicons/') && rel.endsWith('.js') },
 ];
 
-/** manifest 是 vendor 步驟自己的產出，不是要送給使用者的資產，不計入預算。 */
-const NOT_AN_ASSET = (rel) => /\.(md|txt)$/i.test(rel) || rel === 'vendor-manifest.json';
+/**
+ * manifest 是 vendor 步驟自己的產出（沒有任何頁面 fetch 它），不是要送給使用者的
+ * 資產，不計入預算。
+ *
+ * 排除清單刻意**只有這一個檔名**。原本還排除了所有 .md／.txt，那是一個看不見的洞：
+ * 排除發生在分組之前，所以被排掉的檔案既不計量、也不會落進「不屬於任何分組」那條
+ * 紅線，等於完全隱形。實測在 public/vendor/ 放一個 683 KB 的 HUGE-LICENSE.txt，
+ * 這支檢查照樣印「自架資產大小符合預算 ✅」。而 .txt 完全可能是真的要部署的資產
+ * ——SIL OFL 授權的字型就規定 OFL.txt 必須隨檔散布。
+ *
+ * 現在 .md／.txt 會落進 unmatched 而變紅：真的需要它時就加一條 GROUPS 規則，
+ * 那一行 diff 正是我們要的「有人看過並同意」。
+ */
+const NOT_AN_ASSET = (rel) => rel === 'vendor-manifest.json';
 
 function die(lines) {
     console.error('自架資產的大小預算對不上 ❌\n');
@@ -145,7 +170,8 @@ if (UPDATE) {
             'public/vendor/ 不在版控裡，所以使用者實際下載的位元組在 diff 裡是隱形的。' +
             '這份檔案是它們唯一的版控紀錄。數字變動代表使用者下載的東西變了——' +
             '請在 PR 說明裡交代為什麼，不要當成雜訊順手更新。' +
-            'gzip 刻意不記錄：它的長度取決於 Node 內建的 zlib 版本，跨環境會飄。',
+            'gzip 刻意不記錄：實測 Node 20（zlib 1.3.0.1）與 Node 24（zlib 1.3.1）長度完全相同，' +
+            '它是 raw bytes 的函數、不帶額外訊號，卻會跟著壓縮實作走。',
         generatedBy: 'node scripts/check-vendor-size.mjs --update',
         groups: {},
     };

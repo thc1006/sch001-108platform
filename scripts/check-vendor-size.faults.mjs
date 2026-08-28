@@ -132,6 +132,34 @@ const cases = [
         },
         expect: /不屬於任何分組|沒有被計量/,
     },
+    {
+        // 上面那條測的是「沒有分組規則」的變體。這一條測另一個變體：**有**分組
+        // 規則、但預算檔裡沒有那一組——加了 GROUPS 規則卻忘了跑 --update 就是
+        // 這個形狀。它走的是 check-vendor-size.mjs 裡 `if (!b)` 那條分支，而那條
+        // 分支在原本的十條裡一次都沒被走到：把它整條改成 `continue` 之後，
+        // 十條照樣 10 擋下 / 0 漏掉。
+        name: '預算檔缺了一整組，但實際有產出（加了分組規則卻沒跑 --update）',
+        inject: () => {
+            const b = JSON.parse(readFileSync(WORK_BUDGET, 'utf8'));
+            const gone = Object.keys(b.groups)[0];
+            delete b.groups[gone];
+            writeFileSync(WORK_BUDGET, JSON.stringify(b, null, 2), 'utf8');
+            return `從預算檔刪掉 ${gone} 這一組`;
+        },
+        expect: /預算檔裡沒有這一組/,
+    },
+    {
+        // NOT_AN_ASSET 原本排除所有 .md／.txt，而排除發生在分組之前——被排掉的
+        // 檔案既不計量、也不會落進「不屬於任何分組」，完全隱形。實測 683 KB 的
+        // .txt 放進去，檢查照樣印綠字。SIL OFL 授權的字型規定 OFL.txt 必須隨檔
+        // 散布，那就是一個真的要部署卻量不到的資產。
+        name: '多了一個 .txt 資產（授權檔那類，不得被排除清單吃掉）',
+        inject: () => {
+            writeFileSync(path.join(WORK_VENDOR, 'OFL.txt'), 'x'.repeat(200000), 'utf8');
+            return '新增 OFL.txt（200KB）';
+        },
+        expect: /不屬於任何分組|沒有被計量/,
+    },
 
     // ── C：檢查本身變全盲 ──────────────────────────────────
     {

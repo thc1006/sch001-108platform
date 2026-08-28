@@ -1,5 +1,5 @@
 {
-  "_readme": "public/vendor/ 不在版控裡，所以使用者實際下載的位元組在 diff 裡是隱形的。這份檔案是它們唯一的版控紀錄。數字變動代表使用者下載的東西變了——請在 PR 說明裡交代為什麼，不要當成雜訊順手更新。gzip 刻意不記錄：它的長度取決於 Node 內建的 zlib 版本，跨環境會飄。",
+  "_readme": "public/vendor/ 不在版控裡，所以使用者實際下載的位元組在 diff 裡是隱形的。這份檔案是它們唯一的版控紀錄。數字變動代表使用者下載的東西變了——請在 PR 說明裡交代為什麼，不要當成雜訊順手更新。gzip 刻意不記錄：實測 Node 20（zlib 1.3.0.1）與 Node 24（zlib 1.3.1）長度完全相同，它是 raw bytes 的函數、不帶額外訊號，卻會跟著壓縮實作走。",
   "generatedBy": "node scripts/check-vendor-size.mjs --update",
   "groups": {
     "feather": {
