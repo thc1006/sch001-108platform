@@ -488,13 +488,19 @@ test('data：第二輪逐筆查證的 96 筆都必須留下查證日期（可更
 
 // 兩輪查完之後，整份資料的每一筆都有人開過官網。這個不變式是本輪最值錢的成果：
 // 只要有人新增條目卻沒查證，它就會紅燈——而不是等到學生按著錯的資訊去報名才發現。
-test('data：每一筆競賽都必須有 sourceCheckedAt', () => {
-    const missing = DATA.competitions.filter((c) => !c.sourceCheckedAt).map((c) => c.title);
+test('data：每一筆競賽的 sourceCheckedAt 都必須是可信的查證日期', () => {
+    // 驗的是**值**，不只是欄位在不在。上面兩份清單合計 18 + 96 = 114 筆，資料有
+    // 119 筆，差額那幾筆先前只有「有沒有填」被檢查——填 2099-01-01 或隨手抄一個
+    // 日期都會過。共用驗證器既然抽出來了就套到全體，不要留一個只對子集生效的規則。
+    const bad = DATA.competitions
+        .map((c) => [c.title, sourceCheckedProblem(c.sourceCheckedAt)])
+        .filter(([, why]) => why !== null)
+        .map(([title, why]) => `${title}：${why}`);
     assert.deepEqual(
-        missing,
+        bad,
         [],
-        '新增競賽時請先逐項開官網查證（主辦單位、參賽資格、是否仍在辦理、報名截止日），並填上 sourceCheckedAt：\n  '
-        + missing.join('\n  '),
+        '新增競賽時請先逐項開官網查證（主辦單位、參賽資格、是否仍在辦理、報名截止日），'
+        + '並填上查證當天的日期：\n  ' + bad.join('\n  '),
     );
 });
 
