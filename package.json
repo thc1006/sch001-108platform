@@ -33,7 +33,9 @@
     "check:deps": "node scripts/check-dep-tree.mjs",
     "test:deps-faults": "node scripts/check-dep-tree.faults.mjs",
     "check:vendor-size": "node scripts/check-vendor-size.mjs",
-    "test:vendor-size-faults": "node scripts/check-vendor-size.faults.mjs"
+    "test:vendor-size-faults": "node scripts/check-vendor-size.faults.mjs",
+    "test:quote-audit": "node --test scripts/audit-quote-freshness.test.mjs",
+    "audit:quotes": "node scripts/audit-quote-freshness.mjs"
   },
   "keywords": [],
   "author": "",

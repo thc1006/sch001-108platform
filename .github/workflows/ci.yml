@@ -291,6 +291,14 @@ jobs:
       - name: Run per-entry verified-data regression tests
         run: npm run test:competitions-data
 
+      # 逐字引文稽核工具的比對邏輯。網路那一半是人工的（要連幾百個外站、輸出要人
+      # 判讀），不進 CI；但正規化與比對這一半必須被守著——它已經瞎過一次：
+      # norm() 的空白字元類寫成肉眼看不出來的字面字元，寫檔時 U+00A0／U+2000／
+      # U+202F 被正規化成普通空白，字元類變成 [U+0020-U+200B] 涵蓋全部 ASCII，
+      # 英文引文被壓成空字串，而 "x".includes("") 恆為真——97 條引文全部印「命中」。
+      - name: Test the quote-audit matching logic (network half stays manual)
+        run: npm run test:quote-audit
+
       # 公民科技專案資料的 schema。先前只掛在每週排程的 civic-tech-check.yml 上,
       # 於是改壞 projects.json 的 PR 全綠合併,最快也要等到下週一才會有人知道。
       # 這支不連外網、只驗結構,完全確定性,本來就該在每個 PR 上跑。

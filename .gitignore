@@ -102,3 +102,6 @@ school/
 /perf/fontsrc/
 /perf/fontout/
 /dist-baseline/
+
+# audit-quote-freshness.mjs 抓 PDF 用的暫存目錄（跑完會自己刪，中斷時可能殘留）
+/.quote-audit-tmp/
