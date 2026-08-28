@@ -440,8 +440,21 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
         assert.match(host, /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/, `${host} 不是合法主機名`);
     }
 
-    // 實測基準：44 個候選、41 個真網域。資料變動時這個數字會變，屆時請一併
+    // 實測基準：50 個候選、47 個真網域。資料變動時這個數字會變，屆時請一併
     // 重新查證新增的網域，而不是直接把數字改掉。
-    assert.equal(candidates.length, 44, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
-    assert.equal(accepted.length, 41, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
+    //
+    // 2026-08-28：#124 的逐筆查證讓候選從 44 變成 50。新增的六個逐一實測過：
+    //   www.aksf.org       200（62KB，逐字含「Republic of China (Taiwan) (TW)」）
+    //   firstinspires.org  301 → www.firstinspires.org
+    //   immchallenge.org   200
+    //   maa.org            /amc-international/ 200（apex 根路徑對最小 UA 回 403，
+    //                      帶瀏覽器標頭就是 200——那是機器人阻擋，不是死站）
+    //   www.era.org.tw     302 → /main/
+    //   www.tmo.com.tw     200
+    //
+    // 這次查證同時修掉一個引用錯誤：原本寫的是 apex 的 aksf.org，而那台主機
+    // https 連線會被重設、http 回 404（連測三次一致，DNS 解得到 193.2.68.165）。
+    // 內容在 www.aksf.org 上。不改的話，看門狗每週都會報一次永遠修不好的死連結。
+    assert.equal(candidates.length, 50, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
+    assert.equal(accepted.length, 47, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
 });
