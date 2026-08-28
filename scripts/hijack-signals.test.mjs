@@ -121,6 +121,20 @@ test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
     assert.ok(!/原文：\$\{c\.text\}/.test(src), '報告仍在原樣輸出遠端可控的 c.text');
 });
 
+test('報告：訊號數要無條件寫進報告，不只寫在主控台', () => {
+    // 「這次沒偵測到」與「偵測根本沒接上線」必須在**人真的會讀的那份東西**上
+    // 分得出來。主控台只在 job step 的 log 裡；貼進 issue 的是這份 markdown。
+    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
+    const countLine = src.match(/lines\.push\(`- 自動偵測的可疑訊號：\$\{autoSignals\.length\}[^`]*`\);/);
+    assert.ok(countLine, '報告的摘要沒有無條件列出 autoSignals 的數量');
+    // 那一行不可以被包在 if (autoSignals.length) 裡——包起來就等於沒寫
+    const before = src.slice(0, src.indexOf(countLine[0]));
+    assert.ok(
+        !/if \(autoSignals\.length\) \{[^}]*$/.test(before),
+        '訊號數那一行被包在「有命中才寫」的條件裡了',
+    );
+});
+
 test('contentSquatSignals：ieso-info.org 實測到的標題會被抓到', () => {
     const hits = contentSquatSignals(
         '<title>Best Online Pokies in Australia 2026 - Play For Real Money</title>',

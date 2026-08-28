@@ -306,6 +306,11 @@ lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${
 lines.push(
     `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
 );
+// **無條件寫**，即使是 0——理由與主控台那一行完全相同，而且更重要：主控台只在
+// job step 的 log 裡，這份報告才是貼進 issue／job summary、真的有人讀的東西。
+// 下面那一段只在有命中時才出現，所以少了這個數字的話，「這次沒偵測到」與
+// 「偵測根本沒接上線」在讀者眼裡長得一模一樣。
+lines.push(`- 自動偵測的可疑訊號：${autoSignals.length}（跨站轉址／內容標記／HTTP 層盲區；不改變上面的三態分類）`);
 lines.push('');
 
 if (hijackedHits.length) {
