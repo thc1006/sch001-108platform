@@ -336,10 +336,10 @@
       "deadline": "",
       "eventStartsAt": "2026-05-14",
       "eventEndsAt": "2026-05-17",
-      "registrationNote": "僅受理國家代表團 · 無個人報名",
-      "sourceCheckedAt": "2026-08-28",
+      "registrationNote": "僅受理國家代表團 · 台灣目前無代表團",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://www.philosophy-olympiad.org/",
-      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽，章程逐字寫明「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、年齡上限為競賽年底滿 20 歲。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。注意：官網首頁公布的 IPO 2026 全體參賽代表團名單（逐字「A record 57 national delegations participated」，57 國逐一列名）中未見台灣，How to participate 頁的各國管道清單同樣沒有，目前查無台灣代表團的報名管道。"
+      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽。參賽規則逐字「IPO only accepts national delegations, not independent students, teams or schools」（官網 ?page_id=1706），各國至多 2 人、主辦國至多 10 人；資格逐字「open to high school students from any country」，年齡上限見章程（?page_id=2）逐字「The maximum age of a pupil is 20 by the end of the calendar year in which IPO takes place」。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。更正：先前記載「How to participate 頁的各國管道清單同樣沒有，目前查無台灣代表團的報名管道」有兩處不成立。該頁沒有各國管道清單，它寫的是**沒有代表團的國家該怎麼辦**，逐字「What to do if your country does not have an existing national IPO delegation? Contact IPO Executive Board for assistance : board.ipo@gmail.com . IPO Executive Board can assist in the creation of a new delegation if needed.」，並列出建立代表團的三項要件（合格哲學教師、對全國學生開放的選拔過程、與 FISP 或全國性哲學學會的連結）。台灣的處境是「沒有現成代表團，但不是沒有路」：官網首頁的 Countries 清單連出 57 個國家頁，逐一核對沒有台灣或 Chinese Taipei（首頁另有一段新聞逐字寫 2026 年「A record 57 national delegations participated」，兩個 57 很可能是同一組，但官網沒有明說）。正式選拔管道逐字要求經「a national philosophical society affiliated with the Fédération Internationale des Sociétés de Philosophie (FISP)」辦理，而 FISP 官網的國家學會名單（www.fisp.org/members/national-societies，71 個國家／地區標題、110 個學會）沒有 TAIWAN 標題，唯一提到台灣的是列在 CHINA 標題下的「Chinese Association of Philosophy (CAP) in Taiwan, China」，且該筆未附任何網址。新代表團的加入逐字「Admission of any new delegation is subject to approval by the hosts and the National Organising Committee of that year’s International Philosophy Olympiad」，並取決於主辦方的接待量能。要走這條路須先向 IPO 執行委員會信箱洽詢。"
     },
     {
       "title": "國際地理奧林匹亞 (iGeo)",
@@ -587,9 +587,9 @@
       "mode": "線上",
       "deadline": "",
       "registrationNote": "常年開放 · 每週三 Starters",
-      "sourceCheckedAt": "2026-08-27",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://www.codechef.com/",
-      "description": "印度 CodeChef Inc. 營運的線上程式競賽平台，註冊免費、常年開放。舊制的 Long Challenge、Cook-Off 與 LunchTime 已全部停辦——官方賽程 API 的現在／未來／過去賽事中皆查無這三個系列；現行主軸是每週三舉行的兩小時 Starters（2026 年 9 月為 Starters 254 至 256），另有 Monday Munch DSA Challenge 等系列。官網未刊登年齡或國籍限制條文。"
+      "description": "印度 CodeChef Inc. 營運的線上程式競賽平台，註冊免費、常年開放。現行主軸是每週三舉行的兩小時 Starters：2026-08-29 查官方賽程 API 顯示 9 月場次為 Starters 254（9/2）、255（9/9）、256（9/16），另有 Monday Munch DSA Challenge、Placement Prep Weekends 等系列。舊制的 Long Challenge、Cook-Off 與 LunchTime 已停辦：同一支 API（www.codechef.com/api/list/contests/all，公開、無需登入）回傳 present 1 筆、future 5 筆、past 20 筆，三段合計對這三個系列 0 命中，對 Starters 11 命中。要留意該 API 的 past 只回最近 20 場、是一個視窗而非全部歷史，所以這裡能斷定的是「現在與未來都不再舉辦」，而不是「歷史上從未存在」。官網未刊登年齡或國籍限制條文。"
     },
     {
       "title": "LeetCode Weekly Contest",
@@ -602,9 +602,9 @@
       "mode": "線上",
       "deadline": "",
       "registrationNote": "常年開放 · 每週日週賽",
-      "sourceCheckedAt": "2026-08-27",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://leetcode.com/contest/",
-      "description": "LeetCode 每週日舉行 Weekly Contest、每隔週六舉行 Biweekly Contest，各 90 分鐘 4 題，註冊即可參加，適合高中生練習資料結構與演算法（2026 年 8 月底進行到 Weekly Contest 517）。官網對未登入的自動化存取一律回 403，賽制與資格條文無法從官方頁面取得逐字原文，報名細節請自行登入官網確認。"
+      "description": "LeetCode 每週日舉行 Weekly Contest、每隔週六舉行 Biweekly Contest，各 90 分鐘 4 題，註冊即可參加，適合高中生練習資料結構與演算法。更正：先前記載「官網對未登入的自動化存取一律回 403，賽制與資格條文無法從官方頁面取得逐字原文」不成立——那個 403 是**查詢方法造成的**，不是網站的性質。2026-08-29 實測：帶一般瀏覽器 User-Agent 取 /contest/ 連續三次都是 HTTP 200，單場頁 /contest/weekly-contest-517/ 同樣 200；改用 curl 預設 UA 或完全不帶 UA 才回 403。這與袋鼠數學那一筆「只測了 http:// port 80」是同一種錯誤：把查詢方法的產物記成網站的永久狀態。此外 leetcode.com/graphql 是公開端點、無需登入：`allContests` 回 714 場競賽，含開賽時間與時長。實測 Weekly Contest 517 開賽 2026-08-30 10:30（台北，UTC+8，星期日）、Biweekly Contest 190 開賽 2026-08-29 22:30（台北，星期六），皆 90 分鐘；`contestQuestionList` 查三場已完賽的場次（weekly 515、weekly 516、biweekly 189）都恰為 4 題，而尚未開賽的場次一律回 0 題——題目清單是開賽當下才發布的。題目本身由前端渲染，HTML 原始碼裡看不到，須用該 API 或瀏覽器才取得到。"
     },
     {
       "title": "USACO 美國資訊奧林匹亞競賽",
@@ -790,9 +790,9 @@
       "eventStartsAt": "2027-04-06",
       "eventEndsAt": "2027-04-15",
       "registrationNote": "官網未公布報名截止日",
-      "sourceCheckedAt": "2026-08-28",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://purplecomet.org/",
-      "description": "官網逐字「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、須有成年 supervisor 在官網註冊，高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生參加。台灣可直接參加，不需任何國家代理。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始；官網全站查無報名截止日，切勿自行推定。"
+      "description": "官網逐字「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。學生無法自行報名：規則頁逐字「Each team is required to have an adult supervisor」，且逐字「Any adult aged 21 years or older may serve as a team supervisor」，須由該成年人在官網註冊為 supervisor 後才能建隊——台灣不需任何國家代理，但需要一位 21 歲以上的成年人代為註冊。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。官網查無報名截止日：2026-08-29 對首頁、/information、/rules、/instructions、/start/instructions、/faq、/changes 共 7 頁，逐一比對 deadline／due date／closes／last day／cut-off／cutoff／register by 七個詞，全部 0 命中；官方指引只說「We recommend that this be done well before」。切勿自行推定截止日。"
     },
     {
       "title": "袋鼠數學競賽 (Math Kangaroo)",
@@ -1063,9 +1063,9 @@
       "cycle": {
         "closes": "11"
       },
-      "sourceCheckedAt": "2026-08-28",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://www.esu.org/ipsc/",
-      "description": "英語聯盟（ESU）主辦的國際公眾演說競賽，開放 16–20 歲學生，40 多國代表參加。決賽者須為該國英語聯盟或其他公眾演說賽事的全國冠軍；初選報名表截止約在每年 11 月下旬（2026 屆為 2025-11-24），2026 屆賽程 7 月 13–18 日於倫敦舉行。官網未列出台灣的國內選拔管道：International network 與 IPSC organisers 兩頁全文皆查無 Taiwan／Taipei／Chinese Taipei，所列亞洲分會為日本、韓國、中國、香港、印度、馬來西亞、蒙古、巴基斯坦、菲律賓、斯里蘭卡、孟加拉與泰國。有意參加請先向 ESU 確認。"
+      "description": "英語聯盟（ESU）主辦的國際公眾演說競賽，開放 16–20 歲學生，40 多國代表參加。決賽者須為該國英語聯盟或其他公眾演說賽事的全國冠軍；初選報名表截止約在每年 11 月下旬（2026 屆為 2025-11-24），2026 屆賽程 7 月 13–18 日於倫敦舉行。台灣沒有 ESU 分會，因此沒有國內選拔管道：2026-08-29 逐一列出官網 International network 頁連出的分會目錄，共 48 個分會頁，其中沒有台灣。鄰近地區設有分會的是韓國、中國、香港、澳門、蒙古、馬來西亞、菲律賓、泰國、印度、巴基斯坦、斯里蘭卡與孟加拉——中國、香港、澳門都各有自己的分會頁，台灣沒有。（先前記載把日本列入亞洲分會，但 48 個分會裡沒有日本；頁面上的「ESU Japan」出現在相關文章區塊而非分會目錄。）IPSC 與 International network 兩頁全文亦皆查無 Taiwan／Taipei／Chinese Taipei。註：ESU 站內搜尋 API 查「taipei」為 0 筆，但那支 API 只比對標題與網址、不比對內文（實測搜尋 Mongolia 不會回出內文提到兩次 Mongolia 的 International network 頁），所以承重的證據是上面那份分會目錄，不是搜尋結果。有意參加請先向 ESU 確認。"
     },
     {
       "title": "世界中學生辯論錦標賽 (WSDC)",
@@ -1822,10 +1822,10 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "",
-      "registrationNote": "官網顯示截止日 TBD",
-      "sourceCheckedAt": "2026-08-28",
+      "registrationNote": "官網明示下一屆截止日 TBD",
+      "sourceCheckedAt": "2026-08-29",
       "url": "https://aynrand.org/students/essay-contests",
-      "description": "Ayn Rand Institute 針對其小說舉辦的論文獎學金競賽，含 Anthem、The Fountainhead 與 Atlas Shrugged 三項，獎學金最高 US$25,000。資格逐字「The Anthem contest is open to all middle & high school students worldwide, ages 13 and older. The Fountainhead contest is open to all middle & high school students worldwide, ages 13 and older. The Atlas Shrugged contest is open to all high school, college, and graduate students worldwide」，並明載「International students are welcome to participate」——台灣學生可參加，舊制的年級分帶已取消。截止日查不到：官網競賽區塊於 2026-08-27 顯示「Unable to load contest information. Please check back later.」與「NEXT DEADLINE / TBD」，各子頁亦為空殼，請待官網恢復後再查，切勿沿用舊年度日期。"
+      "description": "Ayn Rand Institute 針對其小說舉辦的論文獎學金競賽，含 Anthem、The Fountainhead 與 Atlas Shrugged 三項，獎學金最高 US$25,000。資格逐字「The Anthem contest is open to all middle & high school students worldwide, ages 13 and older. The Fountainhead contest is open to all middle & high school students worldwide, ages 13 and older. The Atlas Shrugged contest is open to all high school, college, and graduate students worldwide」，並明載「All participants must be enrolled in school during the contest period」與「International students are welcome to participate」——台灣學生可參加。更新：2026-08-27 記載的「官網競賽區塊顯示 Unable to load contest information，各子頁亦為空殼」是暫時性故障，2026-08-29 已恢復——該字串在頁面上 0 命中。目前官網自己標示「Next Deadline TBD」「Coming soon」，而整頁以四種常見日期格式（Month D, YYYY／M/D/YYYY／YYYY-MM-DD／D Month YYYY）掃描皆為 0 命中。所以「查不到截止日」現在是官方說法而非站台故障，切勿沿用舊年度日期自行推定。"
     },
     {
       "title": "國際青年數學挑戰賽 (IYMC)",
