@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
 import { probe } from './link-health.lib.mjs';
 import {
     sameSite,
@@ -15,6 +16,7 @@ import {
     extractHeadText,
     contentSquatSignals,
     detectHijackSignals,
+    inertText,
     SQUAT_PHRASES,
 } from './hijack-signals.lib.mjs';
 
@@ -70,6 +72,53 @@ test('extractHeadText：取不到就回空字串，不猜', () => {
     assert.deepEqual(extractHeadText(''), { title: '', description: '' });
     assert.deepEqual(extractHeadText(null), { title: '', description: '' });
     assert.equal(extractHeadText('<html><body>沒有 head</body></html>').title, '');
+});
+
+test('extractHeadText：description 裡的撇號不得把內容截斷（現成的規避法）', () => {
+    // 用 [^"'] 這種「兩種引號都排除」的字元類別時，取到的只有 "Australia"，
+    // 撇號之後的整段——包含變現詞組——全部看不到。實測全站 93 個含英文
+    // description 的目標中有 3 個被這樣截斷（iymc.info／pmc.ncbi.nlm.nih.gov／
+    // drivendata.org），對接管的頁面則等於一個一個字元就能規避的偵測。
+    const html = `<meta name="description" content="Australia's best online casino bonus and free spins.">`;
+    assert.match(extractHeadText(html).description, /free spins/);
+    assert.ok(contentSquatSignals(html).some((h) => h.phrase === 'online casino'));
+    // 單引號包起來的 content 裡出現雙引號時同理
+    const single = `<meta name='description' content='The "best" online pokies in Australia'>`;
+    assert.match(extractHeadText(single).description, /online pokies/);
+});
+
+test('extractHeadText：過長的 title／description 要截斷，不是整條丟掉', () => {
+    // 量詞寫成 {0,300}? 時，超過上限不是截斷而是**整條比對失敗**回空字串——
+    // 「太長」與「根本沒有 title」在下游長得一模一樣，而蹲域名的頁面標題常常很長。
+    const longTitle = `<title>${'ab '.repeat(150)}Best Online Pokies</title>`;
+    const t = extractHeadText(longTitle).title;
+    assert.ok(t.length > 0, 'title 超過上限時被整條丟掉了');
+    assert.equal(t.length, 300, 'title 應該截斷到上限');
+    const longDesc = `<meta name="description" content="${'cd '.repeat(200)}real money casino">`;
+    const d = extractHeadText(longDesc).description;
+    assert.ok(d.length > 0, 'description 超過上限時被整條丟掉了');
+    assert.equal(d.length, 400, 'description 應該截斷到上限');
+});
+
+test('inertText：遠端可控的文字進不了 issue 的渲染層', () => {
+    // 報告會被 gh issue create --body-file 原樣送進 issue body，而這段文字是
+    // 被偵測的那台主機自己寫的——命中的定義就是「那台主機不可信」。
+    const evil = 'Online Casino @thc1006 see #72 and [Click](https://evil.example/phish)';
+    const out = inertText(evil);
+    assert.ok(out.startsWith('`') && out.endsWith('`'), '必須包成行內程式碼');
+    // 內容自己帶反引號時不可以讓它把 code span 關掉
+    assert.equal(inertText('a`b`c'), "`a'b'c`");
+    assert.equal((inertText('x').match(/`/g) || []).length, 2);
+});
+
+test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
+    // 這一條守的是**接線**，不是函式本身：inertText 寫得再對，報告那邊忘了呼叫
+    // 就一點用都沒有，而那個漏接不會有任何其他訊號。
+    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
+    for (const expr of ['inertText(c.text)', 'inertText(a.shell.title)', 'inertText(h)']) {
+        assert.ok(src.includes(expr), `check-external-links.mjs 的報告樣板少了 ${expr}`);
+    }
+    assert.ok(!/原文：\$\{c\.text\}/.test(src), '報告仍在原樣輸出遠端可控的 c.text');
 });
 
 test('contentSquatSignals：ieso-info.org 實測到的標題會被抓到', () => {

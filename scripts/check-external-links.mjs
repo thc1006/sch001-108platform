@@ -51,7 +51,7 @@ import { fileURLToPath } from 'node:url';
 import { classifyLink, describeResult, isBlockedResult, runProbes } from './link-health.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
-import { detectHijackSignals } from './hijack-signals.lib.mjs';
+import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 
 const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
@@ -355,15 +355,20 @@ if (autoSignals.length) {
         lines.push(`- **${where}**`);
         if (a.cross) {
             lines.push(`  - 🔀 轉址終點跨站：\`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
-            for (const h of a.cross.hops) lines.push(`    - ${h}`);
+            for (const h of a.cross.hops) lines.push(`    - ${inertText(h)}`);
         }
+        // shell.title 與 content.text 是**被偵測的那台主機自己寫的**字串，而這份報告會
+        // 被 gh issue create --body-file 原樣送進 issue。不包成行內程式碼的話，一個
+        // 被接管的網域就能讓看門狗的 issue 去 @ 人、cross-reference 別的 issue、
+        // 或貼出可點的釣魚連結。命中的定義就是「那台主機不可信」，所以這裡沒有
+        // 「應該還好吧」的空間。
         if (a.shell) {
             lines.push(`  - 🫥 HTTP 層看不到內容：回應只有 ${a.shell.bytes} bytes 且內容是轉址構造` +
-                (a.shell.title ? `（<title> 是「${a.shell.title}」）` : '') + '，需要執行 JavaScript 才看得到真正的頁面。');
+                (a.shell.title ? `（<title> 是 ${inertText(a.shell.title)}）` : '') + '，需要執行 JavaScript 才看得到真正的頁面。');
         }
         for (const c of a.content) {
             lines.push(`  - 🎰 內容標記：\`${c.phrase}\`（在 ${c.where}）`);
-            lines.push(`    - 原文：${c.text}`);
+            lines.push(`    - 原文：${inertText(c.text)}`);
         }
         lines.push(...sourceLines(a));
     }

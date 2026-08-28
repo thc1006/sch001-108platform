@@ -99,16 +99,56 @@ export const SQUAT_PHRASES = [
     'payday loan', 'quick cash loan',
 ];
 
-/** 從 HTML 前綴取出 <title> 與 meta description。取不到就回空字串，不猜。 */
+/**
+ * 從 HTML 前綴取出 <title> 與 meta description。取不到就回空字串，不猜。
+ *
+ * ── 兩條規則都是實測逼出來的 ──
+ *
+ * **引號一定要用反向參照鎖住同一個字元**，不可以用 `[^"']` 這種「兩種引號都排除」
+ * 的字元類別。後者會把 content 截在**內容裡的撇號**上：
+ *
+ *   content="Australia's best online pokies"   →  取到的只有 "Australia"
+ *
+ * 實測（2026-08-28，全站 93 個含英文 description 的目標）有 3 個被這樣截斷：
+ * iymc.info（196→244 字）、pmc.ncbi.nlm.nih.gov（124→166）、drivendata.org（143→164）。
+ * 對訊號 B 而言這不只是少幾個字——撇號之後的字全部看不到，等於一個現成的規避法。
+ *
+ * **長度上限要在抽取「之後」才套用，不可以寫進正則的量詞。** `{0,300}?` 這種寫法
+ * 在超過上限時不是截斷，而是**整條比對失敗**、回空字串——「太長」與「沒有 title」
+ * 在下游長得一模一樣。上限的用意是別讓報告爆掉，不是別看長標題。
+ */
+const TITLE_MAX = 300;
+const DESC_MAX = 400;
 export function extractHeadText(html) {
     if (typeof html !== 'string' || !html) return { title: '', description: '' };
-    const t = html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i);
+    const t = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const d =
-        html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']{0,400})["']/i) ||
-        html.match(/<meta[^>]+content=["']([^"']{0,400})["'][^>]*name=["']description["']/i) ||
-        html.match(/<meta[^>]+property=["']og:description["'][^>]*content=["']([^"']{0,400})["']/i);
+        html.match(/<meta[^>]+name=(["'])description\1[^>]*content=(["'])([\s\S]*?)\2/i)?.[3] ??
+        html.match(/<meta[^>]+content=(["'])([\s\S]*?)\1[^>]*name=(["'])description\3/i)?.[2] ??
+        html.match(/<meta[^>]+property=(["'])og:description\1[^>]*content=(["'])([\s\S]*?)\2/i)?.[3] ??
+        '';
     const clean = (s) => (s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    return { title: clean(t && t[1]), description: clean(d && d[1]) };
+    return { title: clean(t && t[1]).slice(0, TITLE_MAX), description: clean(d).slice(0, DESC_MAX) };
+}
+
+/**
+ * 把**遠端可控**的文字變成 markdown 的惰性字串。
+ *
+ * 訊號 B 的 `text` 與訊號 C 的 `title` 是從外部站台的 <title>／description 抓來的，
+ * 而報告會被 `gh issue create --body-file` 原樣送進 issue body——那是一個帶著
+ * `issues: write` 的 job 在貼一段**攻擊者寫的**內容。實測：一個把 <title> 設成
+ *
+ *   Online Casino @thc1006 @github see #72 and [Click to claim](https://evil.example/phish)
+ *
+ * 的被接管網域，可以讓看門狗的 issue 真的 @ 那些人、在 #72 留下 cross-reference、
+ * 並貼出一條看起來像維護者自動化貼的釣魚連結。這正是這三個訊號**唯一保證**會
+ * 命中的場合：命中的定義就是那台主機不可信。
+ *
+ * 包成行內程式碼就夠了：`@`、`#`、`[]()` 在 code span 裡都不會被渲染。反引號本身
+ * 先換成單引號，否則內容可以自己把 code span 關掉。
+ */
+export function inertText(s) {
+    return `\`${String(s ?? '').replace(/`/g, "'")}\``;
 }
 
 /**

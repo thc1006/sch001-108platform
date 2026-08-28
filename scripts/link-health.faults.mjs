@@ -347,6 +347,36 @@ const hijackMutations = [
                 'export function opaqueShell(bodyHead) {\n    return null;',
             ),
     },
+    {
+        // 這一條守的是**漏檢**：description 的引號改用「兩種引號都排除」的字元類別，
+        // 內容裡有撇號就會被截在撇號上，撇號之後的變現詞組全部看不到。
+        name: 'description 的引號退回字元類別（內容裡的撇號會把偵測截斷）',
+        apply: (s) =>
+            s.replace(
+                'html.match(/<meta[^>]+name=(["\'])description\\1[^>]*content=(["\'])([\\s\\S]*?)\\2/i)?.[3] ??',
+                'html.match(/<meta[^>]+name=(["\'])description\\1[^>]*content=(["\'])([^"\']*?)\\2/i)?.[3] ??',
+            ),
+    },
+    {
+        // 長度上限寫進量詞時，超過上限不是截斷而是整條比對失敗——「太長」與
+        // 「沒有 title」在下游長得一模一樣，而蹲域名的頁面標題常常很長。
+        name: '長度上限寫回正則量詞（過長的 title 會被整條丟掉而不是截斷）',
+        apply: (s) =>
+            s.replace(
+                'const t = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);',
+                'const t = html.match(/<title[^>]*>([\\s\\S]{0,300}?)<\\/title>/i);',
+            ),
+    },
+    {
+        // 遠端可控的 <title> 會被原樣送進 issue body（gh issue create --body-file），
+        // 而命中的定義就是「那台主機不可信」。
+        name: 'inertText 退化成原樣輸出（被接管的網域可以直接寫 issue 的 markdown）',
+        apply: (s) =>
+            s.replace(
+                'export function inertText(s) {',
+                "export function inertText(s) {\n    return String(s ?? '');",
+            ),
+    },
 ];
 
 // ── C：裸網域擷取規則的突變測試 ──
@@ -491,7 +521,7 @@ if (base.code !== 0) {
 // 實測：把 extractBareDomainCandidates 改成永遠回 []，初始基準仍顯示綠燈。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
-    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs）');
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs）');
     process.exit(1);
 }
 console.log('  ✅ 基準綠燈（政策檢查 ＋ 單元測試）\n');
