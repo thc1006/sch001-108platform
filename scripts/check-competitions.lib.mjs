@@ -283,6 +283,49 @@ export function validateCycle(cycle, label, errors) {
 }
 
 /**
+ * 「狀態未知、無週期可推、且太久沒回去看」的條目。
+ *
+ * 這一桶是看門狗其他兩段完全沒有覆蓋到的：
+ *   🔴 已過期    只看有 deadline 且已過的
+ *   🔁 下屆將近  第一行就是 `if (!closes) continue`
+ * 2026-08-29 實測，119 筆裡有 **90 筆**兩邊都不屬於，而且沒有一筆帶已過期的
+ * deadline——沒有任何東西會叫人回去看它們。
+ *
+ * 判準刻意用 sourceCheckedAt 而不是推算週期：官網說「尚未公布」時，那句話本身
+ * 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
+ * 對 The Earth Prize／TYPT／John Locke 就是這樣釘的）。這裡不猜任何日期，
+ * 只陳述「我們上次看是 N 天前，當時的答案是未知」。
+ *
+ * @param list 競賽陣列
+ * @param todayUTC 今天（台北日曆日換算成的 UTC 毫秒）
+ * @param minDays 幾天算「太久」
+ * @returns 依陳舊度由大到小排序的 { label, checked, days }
+ */
+export function selectNeedsRecheck(list, todayUTC, minDays) {
+    const out = [];
+    for (const comp of Array.isArray(list) ? list : []) {
+        if (comp === null || typeof comp !== 'object') continue;
+        if (comp.cycle?.closes) continue;
+        const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
+        if (typeof comp.deadline === 'string' && DATE_ONLY_RE.test(comp.deadline)) {
+            // 有確切日期就不屬於這一桶：未來的＝狀態已知，已過的由 🔴 那一段負責
+            continue;
+        }
+        const checked = comp.sourceCheckedAt;
+        if (typeof checked !== 'string' || !DATE_ONLY_RE.test(checked)) {
+            // 既沒有可行動的日期，也沒有查證紀錄——這一筆沒有任何人看過的證據
+            out.push({ label, checked: '（無）', days: Infinity });
+            continue;
+        }
+        const [cy, cmo, cdd] = checked.split('-').map(Number);
+        const days = Math.floor((todayUTC - Date.UTC(cy, cmo - 1, cdd)) / 86_400_000);
+        if (days >= minDays) out.push({ label, checked, days });
+    }
+    out.sort((a, b) => b.days - a.days);
+    return out;
+}
+
+/**
  * 依 cycle.closes 推算「下一次截止日」的 UTC 毫秒值。
  * 只知月份時以該月最後一天為準（保守，不會把還開放的競賽說成已截止）。
  * todayUTC 由呼叫端以 Asia/Taipei 日曆日算出，確保頁面與看門狗一致。

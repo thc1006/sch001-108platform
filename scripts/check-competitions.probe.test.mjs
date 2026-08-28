@@ -10,10 +10,11 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
 
 import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
 import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS, validateInstant, validateDateOnly, validateSchedule } from './check-competitions.lib.mjs';
-import { sourceCheckedProblem } from './check-competitions.lib.mjs';
+import { selectNeedsRecheck, sourceCheckedProblem } from './check-competitions.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
 let base;
@@ -628,4 +629,80 @@ test('cycle：lastEdition 已過一年以上時，持續往後推到未來', () 
     const today = Date.UTC(2026, 7, 27);
     // 本屆停留在 2023 的資料：2024/2025/2026 的週期都已過，應推到 2027
     assert.equal(iso(nextOccurrenceUTC('03', today, Date.UTC(2023, 2, 1))), '2027-03-31');
+});
+
+// ── 狀態未知且太久沒重查 ─────────────────────────────────────
+//
+// 這一桶是看門狗先前完全沒有覆蓋到的：🔴 那一段只看已過期的 deadline，
+// 🔁 那一段第一行就是「沒有 cycle 就跳過」。2026-08-29 實測 119 筆裡有 90 筆
+// 兩邊都不屬於，而且沒有一筆帶已過期的 deadline——沒有任何東西會叫人回去看它們。
+const TODAY = Date.UTC(2026, 7, 29); // 2026-08-29
+const ago = (n) => new Date(TODAY - n * 86400000).toISOString().slice(0, 10);
+
+test('recheck：沒有 deadline 也沒有 cycle、且太久沒查的才會被列出', () => {
+    const list = [
+        { title: '該列出', sourceCheckedAt: ago(120) },
+        { title: '剛查過', sourceCheckedAt: ago(10) },
+    ];
+    const out = selectNeedsRecheck(list, TODAY, 90);
+    assert.deepEqual(out.map((r) => r.title ?? r.label), ['該列出']);
+    assert.equal(out[0].days, 120);
+});
+
+test('recheck：有 cycle.closes 的不在這一桶——它由「下屆將近」那一段負責', () => {
+    const list = [{ title: '有週期', sourceCheckedAt: ago(400), cycle: { closes: '05' } }];
+    assert.deepEqual(selectNeedsRecheck(list, TODAY, 90), []);
+});
+
+test('recheck：有確切 deadline 的不在這一桶（未來＝已知，已過＝由 🔴 負責）', () => {
+    const list = [
+        { title: '未來截止', deadline: '2026-12-01', sourceCheckedAt: ago(400) },
+        { title: '已過截止', deadline: '2026-01-01', sourceCheckedAt: ago(400) },
+    ];
+    assert.deepEqual(selectNeedsRecheck(list, TODAY, 90), []);
+});
+
+test('recheck：完全沒有 sourceCheckedAt 的一律列出，而且排最前面', () => {
+    const list = [
+        { title: '查過但很久', sourceCheckedAt: ago(300) },
+        { title: '從來沒查過' },
+        { title: '格式壞掉', sourceCheckedAt: '2026/01/01' },
+    ];
+    const out = selectNeedsRecheck(list, TODAY, 90);
+    assert.equal(out.length, 3);
+    assert.equal(out[0].days, Infinity, '沒有查證紀錄的必須排最前面');
+    assert.equal(out[0].checked, '（無）');
+    assert.ok(out.some((r) => r.label === '格式壞掉'), '日期格式壞掉也算沒有查證紀錄');
+});
+
+test('recheck：依陳舊度由大到小排序', () => {
+    const list = [
+        { title: 'a', sourceCheckedAt: ago(100) },
+        { title: 'c', sourceCheckedAt: ago(300) },
+        { title: 'b', sourceCheckedAt: ago(200) },
+    ];
+    assert.deepEqual(selectNeedsRecheck(list, TODAY, 90).map((r) => r.days), [300, 200, 100]);
+});
+
+test('recheck：門檻是「大於等於」，剛好到門檻的那天就要被列出', () => {
+    const list = [{ title: '剛好 90 天', sourceCheckedAt: ago(90) }];
+    assert.equal(selectNeedsRecheck(list, TODAY, 90).length, 1);
+    assert.equal(selectNeedsRecheck([{ title: 'x', sourceCheckedAt: ago(89) }], TODAY, 90).length, 0);
+});
+
+test('recheck：壞掉的輸入不得讓看門狗爆掉', () => {
+    assert.deepEqual(selectNeedsRecheck(null, TODAY, 90), []);
+    assert.deepEqual(selectNeedsRecheck([null, undefined, 42, 'x'], TODAY, 90), []);
+    const out = selectNeedsRecheck([{ sourceCheckedAt: ago(999) }], TODAY, 90);
+    assert.equal(out[0].label, '（未命名）', '沒有標題時要有可讀的替代字');
+});
+
+test('recheck：真實資料現在應該一筆都不該列出（全庫三天內查過）', async () => {
+    const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
+    const out = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 90);
+    assert.deepEqual(out, [], `不該有陳舊條目，實際：${JSON.stringify(out.slice(0, 3))}`);
+    // 但這一桶本身必須是有東西的——否則上面那條會空洞地通過
+    const wouldCover = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 0);
+    assert.ok(wouldCover.length >= 60,
+        `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
 });

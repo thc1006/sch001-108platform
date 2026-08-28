@@ -33,6 +33,7 @@ import {
     validateUrl,
     validateCycle,
     nextOccurrenceUTC,
+    selectNeedsRecheck,
     TEXT_FIELDS,
     ALLOWED_COMPETITION_FIELDS,
     validateSchedule,
@@ -47,6 +48,23 @@ import { runProbes, classifyLink, describeResult, isBlockedResult } from './link
 const DATA_PATH = new URL('../public/advanced-resources/competitions.json', import.meta.url);
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
+
+// 「狀態是未知」的條目多久該回去看一次。
+//
+// 這一桶是現行機制完全沒有覆蓋到的：沒有可行動的截止日（deadline 為空或已過），
+// 也沒有 cycle.closes（所以下面那個「下屆將近」的迴圈會直接 continue 跳過）。
+// 2026-08-29 實測，119 筆裡有 **90 筆**落在這裡，而且沒有一筆帶已過期的 deadline
+// ——連 🔴 那一段也抓不到它們。沒有任何東西會叫人回去看旺宏 2027 開了沒。
+//
+// 判準刻意用 sourceCheckedAt 而不是推算的週期：官網說「尚未公布」時，那句話本身
+// 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
+// 對 The Earth Prize／TYPT／John Locke 等就是這樣釘的）。這裡不猜任何日期，
+// 只陳述「我們上次看是 N 天前，答案是未知，該再看一次」。
+//
+// 90 天＝一季，對年度賽事是一個合理的抽樣節奏；180 天＝半年，一個年度賽事的
+// 報名視窗幾乎不可能在半年內完全沒有動靜，那時資料很可能已經是錯的而不只是未驗。
+const RECHECK_DAYS = 90;
+const RECHECK_URGENT_DAYS = 180;
 
 // 除 deadline 外都必須是「非空字串」；deadline 必須是字串（允許空字串＝依官網公告）
 // TEXT_FIELDS 與 ALLOWED_COMPETITION_FIELDS 定義在 lib，讓單元測試測得到。
@@ -237,6 +255,12 @@ for (const comp of list) {
     }
 }
 
+// ---- 狀態未知且太久沒重查 ----
+// 選取邏輯放在 lib 裡（selectNeedsRecheck），這樣它可以被單元測試釘住；
+// 腳本這邊只負責分級與輸出。
+const needsRecheck = selectNeedsRecheck(list, todayUTC, RECHECK_DAYS);
+const recheckUrgent = needsRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
+
 // ---- 連結健檢 ----
 // 競賽頁是資料驅動的（前端 fetch competitions.json 後才渲染卡片），這些 url
 // 不會出現在 astro build 的 HTML 裡，link-checker.yml 的 lychee 掃不到，因此
@@ -303,6 +327,10 @@ const needsAttention =
     deadLinks.length > 0 ||
     blockedLinks.length > 0 ||
     staleCycle.length > 0 ||
+    // 只有逾 RECHECK_URGENT_DAYS 的才觸發通知。90 天那一批放進報告就好——
+    // 90 筆條目每季一起越過門檻，一旦每週開一次 issue，維護者第三週就會學會
+    // 忽略整個看門狗，那是這個 repo 已經記取過的教訓。
+    recheckUrgent.length > 0 ||
     !coverageComplete;
 
 // ---- 主控台摘要 ----
@@ -312,6 +340,10 @@ console.log(`  欄位錯誤：${schemaErrors.length}`);
 console.log(`  已過期　：${expired.length}`);
 console.log(`  週期待查：${staleCycle.length}`);
 console.log(`  即將截止：${expiringSoon.length}`);
+console.log(
+    `  狀態未知且逾 ${RECHECK_DAYS} 天未重查：${needsRecheck.length}`
+    + `（其中逾 ${RECHECK_URGENT_DAYS} 天：${recheckUrgent.length}）`,
+);
 console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
 if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（SSRF 政策擋下，必須處理）`);
@@ -375,6 +407,36 @@ if (unverifiedLinks.length) {
     lines.push('', '</details>', '');
 }
 // 有未檢查的連結時不能報「一切正常」——那只代表沒查完，不代表沒問題。
+if (needsRecheck.length) {
+    const urgent = recheckUrgent.length;
+    lines.push(
+        `### 🕰️ 狀態未知且逾 ${RECHECK_DAYS} 天未重查：${needsRecheck.length} 筆`
+        + (urgent ? `（其中 ${urgent} 筆已逾 ${RECHECK_URGENT_DAYS} 天）` : ''),
+        '',
+    );
+    lines.push(
+        '這一桶是**沒有可行動的截止日、也沒有年度週期**的條目。它們不在上面任何一段的',
+        '覆蓋範圍內：🔴 那一段只看已過期的 deadline，🔁 那一段第一行就是「沒有 cycle 就跳過」。',
+        '',
+        '這裡不推算任何日期——官網說「尚未公布」時，那句話本身就是查證過的事實。',
+        '這一段只陳述一件事：**我們上次去看是幾天前，而當時的答案是「未知」。**',
+        '',
+        `逾 ${RECHECK_URGENT_DAYS} 天的會觸發通知；${RECHECK_DAYS} 至 ${RECHECK_URGENT_DAYS} 天的只列在這裡。`,
+        '一個年度賽事的報名視窗幾乎不可能在半年內完全沒有動靜，屆時資料很可能已經是錯的',
+        '而不只是未驗。',
+        '',
+        '| 競賽 | 上次查證 | 距今 |',
+        '|---|---|---|',
+    );
+    for (const r of needsRecheck.slice(0, 40)) {
+        lines.push(`| ${r.label} | ${r.checked} | ${r.days === Infinity ? '從未' : `${r.days} 天`} |`);
+    }
+    if (needsRecheck.length > 40) {
+        lines.push('', `（只列出最久沒查的 40 筆，其餘 ${needsRecheck.length - 40} 筆同類）`);
+    }
+    lines.push('');
+}
+
 if (!needsAttention && !expiringSoon.length && !skippedLinks) {
     lines.push('✅ 一切正常，沒有過期、欄位錯誤或連結失效。', '');
 }
