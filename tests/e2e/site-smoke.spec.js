@@ -282,6 +282,234 @@ test.describe('自架的第三方函式庫', () => {
 });
 
 /**
+ * 字型契約
+ * --------------------------------------------------------------
+ * 這個檔案要擋的是一種特別陰險的失效：**字型載入失敗時，頁面照樣渲染**。
+ * 瀏覽器會安靜地退回系統字型，畫面看起來「差不多」，Playwright 全綠，
+ * 傳輸位元組還會**變少**——看起來像優化成功，實際上是資產壞掉。
+ * 只驗「有沒有發出請求」或「位元組多少」的檢查，在這種情況下會印綠字。
+ *
+ * 所以這裡不看宣告、也不看位元組，直接用 CDP 的 CSS.getPlatformFontsForNode
+ * 問瀏覽器：「你剛剛實際上是用哪一個字型把這些字畫出來的？」
+ * 回傳的 isCustomFont 會區分「@font-face 載進來的」與「系統既有的」。
+ *
+ * 三條契約：
+ *   1. 拉丁字必須由自架的 Inter（isCustomFont=true）畫出來——證明 woff2 真的載到且生效
+ *   2. 漢字**不得**由任何 webfont 畫出來——這是本次改動的核心：漢字走系統字型，
+ *      不再下載 1.2MB 的 CJK webfont。哪天有人把 CJK webfont 加回來，這條會紅
+ *   3. 全站不得再對 fonts.googleapis.com / fonts.gstatic.com 發出任何請求
+ *
+ * 刻意**不**斷言漢字用的是哪一個具體字型：那取決於執行環境
+ * （Windows=Microsoft JhengHei、macOS=PingFang TC、Linux CI 可能什麼都沒有）。
+ * 斷言「不是 webfont」在每個平台上都成立，而且正是我們要釘住的性質。
+ */
+test.describe('字型契約', () => {
+    /** 取得某個元素實際使用的平台字型（CDP，僅 Chromium）。 */
+    async function platformFontsOf(page, selector) {
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send('DOM.enable');
+        await cdp.send('CSS.enable');
+        const doc = await cdp.send('DOM.getDocument', { depth: -1 });
+        const q = await cdp.send('DOM.querySelector', { nodeId: doc.root.nodeId, selector });
+        expect(q.nodeId, `找不到選擇器 ${selector}`).toBeTruthy();
+        const res = await cdp.send('CSS.getPlatformFontsForNode', { nodeId: q.nodeId });
+        await cdp.detach();
+        return res.fonts;
+    }
+
+    test('拉丁字真的是用自架的 Inter 畫出來的（不是安靜退回系統字型）', async ({ page }) => {
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+        await page.evaluate(() => document.fonts.ready);
+
+        // 先問瀏覽器「Inter 這個 face 有沒有真的可用」
+        expect(await page.evaluate(() => document.fonts.check('16px Inter')), 'document.fonts.check 說 Inter 不可用').toBe(true);
+
+        // 再問「實際畫圖時用了誰」——這才是無法被 fallback 蒙混過去的那一問
+        await page.evaluate(() => {
+            const s = document.createElement('span');
+            s.id = 'font-probe-latin';
+            s.textContent = 'Latin probe ABCdef 12345';
+            document.querySelector('main#main-content').appendChild(s);
+            s.getBoundingClientRect();
+        });
+        await page.waitForTimeout(300);
+        const fonts = await platformFontsOf(page, '#font-probe-latin');
+        const inter = fonts.find((f) => /Inter/i.test(f.familyName) && f.isCustomFont);
+        expect(
+            inter,
+            `拉丁字沒有用自架 Inter 畫出來，實際用了：${JSON.stringify(fonts)}。` +
+                'woff2 沒載到、路徑錯、或 @font-face 沒生效時就會這樣——而頁面看起來完全正常。',
+        ).toBeTruthy();
+        expect(inter.glyphCount, 'Inter 被列出但沒有畫出任何字符').toBeGreaterThan(0);
+    });
+
+    test('漢字走系統字型，不得由任何 webfont 畫出來', async ({ page }) => {
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+        await page.evaluate(() => document.fonts.ready);
+        await page.evaluate(() => {
+            const s = document.createElement('span');
+            s.id = 'font-probe-han';
+            s.textContent = '學習歷程課綱探索';
+            document.querySelector('main#main-content').appendChild(s);
+            s.getBoundingClientRect();
+        });
+        await page.waitForTimeout(300);
+        const fonts = await platformFontsOf(page, '#font-probe-han');
+        const custom = fonts.filter((f) => f.isCustomFont);
+        expect(
+            custom,
+            `漢字被 webfont 畫出來了：${JSON.stringify(custom)}。` +
+                '本站刻意讓漢字使用裝置既有字型——CJK webfont 是每頁 1.2MB 的成本。',
+        ).toEqual([]);
+    });
+
+    test('全站不再對第三方字型主機發出請求', async ({ page }) => {
+        const hits = [];
+        page.on('request', (r) => {
+            if (/fonts\.googleapis\.com|fonts\.gstatic\.com/.test(r.url())) hits.push(r.url());
+        });
+        for (const p of ['/', '/advanced-resources/competitions.html', '/career-exploration/clusters/info/']) {
+            await page.goto(P(p), { waitUntil: 'networkidle' });
+            await page.evaluate(() => document.fonts.ready);
+        }
+        expect(hits, `仍有第三方字型請求：${hits.join(', ')}`).toEqual([]);
+    });
+
+    test('沒有殘留指向字型主機的 preconnect（開了連線卻沒人用）', async ({ page }) => {
+        await page.goto(P('/'), { waitUntil: 'domcontentloaded' });
+        const hints = await page.$$eval('link[rel~="preconnect"], link[rel~="dns-prefetch"]', (els) =>
+            els.map((e) => e.getAttribute('href') || ''),
+        );
+        expect(hints.filter((h) => /fonts\.(googleapis|gstatic)\.com/.test(h))).toEqual([]);
+    });
+
+    test('自架的 woff2 真的取得到（不是 404 之後安靜退回系統字型）', async ({ request }) => {
+        for (const f of ['Inter-subset.woff2', 'SpaceMono-400.woff2', 'SpaceMono-700.woff2']) {
+            const r = await request.get(`${BASE}/sch001-108platform/fonts/${f}`);
+            expect(r.status(), `${f} 取不到`).toBe(200);
+            const buf = await r.body();
+            expect(buf.length, `${f} 太小，可能不是真的字型檔`).toBeGreaterThan(5000);
+            // woff2 的 magic number 是 'wOF2'
+            expect(buf.subarray(0, 4).toString('latin1'), `${f} 不是 woff2`).toBe('wOF2');
+        }
+    });
+
+    test('競賽頁的 Space Mono 真的生效', async ({ page }) => {
+        await page.goto(P('/advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
+        await page.locator('.comp-card').first().waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        const fonts = await platformFontsOf(page, '.stat-num');
+        expect(
+            fonts.find((f) => /Space Mono/i.test(f.familyName) && f.isCustomFont),
+            `.stat-num 沒有用 Space Mono 畫出來，實際用了：${JSON.stringify(fonts)}`,
+        ).toBeTruthy();
+    });
+
+    /**
+     * 漢字改走系統字型之後，「不是 webfont」已經被上面那條釘住了，但那條**擋不住
+     * 品質退化**：把堆疊改成 'Microsoft YaHei', 'PingFang SC'（簡體字形），或是把
+     * 繁中字型整段刪掉只留 sans-serif，上面 6 條會**全部通過**——實際做過故障注入，
+     * 兩種情況都是 6 passed。
+     *
+     * 對台灣讀者來說，簡體字形的繁體字（骨／直／內／過／起 等字的字形差異）是看得
+     * 出來的品質問題。所以這裡改用「靜態檢查算出來的堆疊」而不是「實際命中的字型」：
+     *   - 實際命中哪一個字型取決於執行環境（CI 的 ubuntu runner 沒有任何繁中字型），
+     *     拿它來斷言必然是 flaky 的。
+     *   - 堆疊本身是我們寫的、每個平台都一樣，是可以確定性斷言的東西。
+     *
+     * 順帶釘住第二件事：body 的字型堆疊在 global.css 之外還被 20 個頁面各自
+     * 重複宣告一次。改了 global.css 卻漏改那 20 份，頁面會安靜地留在舊堆疊——
+     * 所以下面刻意挑幾個「有覆寫」的頁面一起驗，讓漂移會紅。
+     */
+    test('漢字堆疊必須偏好繁體字形，且 20 份重複宣告不得與 global.css 漂移', async ({ page }) => {
+        // 繁中字形：台灣讀者預期看到的
+        const TC = [
+            'PingFang TC',
+            'Microsoft JhengHei UI',
+            'Microsoft JhengHei',
+            'Noto Sans TC',
+            'Noto Sans CJK TC',
+            'Source Han Sans TC',
+            'Source Han Sans TW',
+        ];
+        // 簡中字形：出現在繁中字型「之前」就會讓台灣讀者看到簡體字形
+        const SC = [
+            'PingFang SC',
+            'Microsoft YaHei',
+            'Microsoft YaHei UI',
+            'Noto Sans SC',
+            'Noto Sans CJK SC',
+            'Source Han Sans SC',
+            'Source Han Sans CN',
+            'SimHei',
+            'SimSun',
+            'Heiti SC',
+            'STHeiti',
+        ];
+
+        // '/' 走 global.css；其餘三頁各自有一份重複的 body { font-family }
+        const PAGES = ['/', '/about.html', '/civic-tech-map/index.html', '/sitemap.html'];
+        const seen = new Map();
+
+        for (const p of PAGES) {
+            await page.goto(P(p), { waitUntil: 'domcontentloaded' });
+
+            // lang 在這個改動之後才變成「排版正確性」的相依項：以前漢字一律由
+            // Noto Sans TC webfont 畫，繁簡字形與 lang 無關；現在漢字交給系統字型，
+            // 一旦堆疊裡的繁中字型在該裝置上都不存在，落到通用 sans-serif 時是繁是簡
+            // 就完全由瀏覽器的 Han script 推斷決定。Blink 的 ComputeScriptForHan()
+            // 在推斷不出來時**預設簡體**，於是 lang 少一個或被改成 "zh"，
+            // 台灣讀者就會看到簡體字形。
+            const lang = await page.evaluate(() => document.documentElement.lang);
+            expect(
+                lang,
+                `${p} 的 <html lang> 是「${lang}」。漢字改用系統字型後，lang 是繁簡字形的最後一道` +
+                    '防線（Blink 推斷不出 Han script 時預設簡體），必須是 zh-Hant。',
+            ).toBe('zh-Hant');
+
+            const families = await page.evaluate(() =>
+                getComputedStyle(document.body)
+                    .fontFamily.split(',')
+                    .map((s) => s.trim().replace(/^['"]|['"]$/g, '')),
+            );
+            seen.set(p, families.join(', '));
+
+            const firstTC = families.findIndex((f) => TC.includes(f));
+            const firstSC = families.findIndex((f) => SC.includes(f));
+
+            expect(
+                firstTC,
+                `${p} 的 body 字型堆疊裡沒有任何繁體中文字型，漢字會落到瀏覽器的通用 ` +
+                    `fallback，字形正確與否完全看使用者的作業系統。實際堆疊：${families.join(', ')}`,
+            ).toBeGreaterThanOrEqual(0);
+
+            if (firstSC >= 0) {
+                expect(
+                    firstSC,
+                    `${p} 的堆疊把簡體中文字型「${families[firstSC]}」排在繁體字型 ` +
+                        `「${families[firstTC]}」之前，台灣讀者會看到簡體字形的繁體字` +
+                        `（骨／直／內／過／起 等字的字形差異）。實際堆疊：${families.join(', ')}`,
+                ).toBeGreaterThan(firstTC);
+            }
+
+            expect(
+                families[families.length - 1],
+                `${p} 的堆疊結尾不是通用 sans-serif —— 全部落空時沒有最後的保底。` +
+                    `實際堆疊：${families.join(', ')}`,
+            ).toBe('sans-serif');
+        }
+
+        // 四頁算出來的堆疊必須完全一致；不一致代表 global.css 與頁內覆寫已經漂移
+        const distinct = [...new Set(seen.values())];
+        expect(
+            distinct.length,
+            '不同頁面算出來的 body 字型堆疊不一致，代表 global.css 與頁內重複宣告已經漂移：\n' +
+                [...seen].map(([p, v]) => `  ${p}\n    ${v}`).join('\n'),
+        ).toBe(1);
+    });
+});
+
+/**
  * 搜尋框的無障礙契約（WCAG 4.1.2 A 級 / 4.1.3 AA 級）
  * --------------------------------------------------------------
  * 這兩條都是實測抓到的既有失敗，不是假想情境：

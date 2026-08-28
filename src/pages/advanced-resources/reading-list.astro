@@ -82,8 +82,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="440" viewBox="0 0 300 440">`
                 + `<rect width="300" height="440" fill="#ede9fe"/>`
                 + `<rect x="12" y="12" width="276" height="416" fill="none" stroke="#c4b5fd" stroke-width="2"/>`
-                + `<text x="150" y="64" font-family="'Noto Sans TC',sans-serif" font-size="13" fill="#a78bfa" text-anchor="middle">書封準備中</text>`
-                + `<text font-family="'Noto Sans TC',sans-serif" font-size="22" font-weight="bold" fill="#6d28d9" text-anchor="middle">${tspans}</text>`
+                + `<text x="150" y="64" font-family="'PingFang TC','Microsoft JhengHei UI','Microsoft JhengHei','Noto Sans TC','Noto Sans CJK TC','Source Han Sans TC',sans-serif" font-size="13" fill="#a78bfa" text-anchor="middle">書封準備中</text>`
+                + `<text font-family="'PingFang TC','Microsoft JhengHei UI','Microsoft JhengHei','Noto Sans TC','Noto Sans CJK TC','Source Han Sans TC',sans-serif" font-size="22" font-weight="bold" fill="#6d28d9" text-anchor="middle">${tspans}</text>`
                 + `</svg>`;
             return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }
@@ -210,7 +210,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <style is:global>
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', 'Source Han Sans TC', sans-serif;
         }
         .gradient-text {
             background: -webkit-linear-gradient(45deg, #6366f1, #a78bfa);

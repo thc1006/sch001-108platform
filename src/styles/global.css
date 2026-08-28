@@ -10,13 +10,26 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
+/* 拉丁字：自架的 Inter 子集（見 perf/fonts.md）。
+   保留 wght 可變軸 400–900 —— 原本從 Google Fonts 只取 400;500;700;900 四個離散
+   字重，CSS 字型比對會把 font-weight:600 往上吃到 700（實測 CDP 回報 Inter-Bold），
+   全站 224 處 font-semibold 都比設計意圖更粗。可變軸讓 600/800 是真的 600/800。
+   漢字不在這個子集裡，由下面 body 堆疊中的系統字型負責。 */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('/sch001-108platform/fonts/Inter-subset.woff2') format('woff2');
+}
+
 /* ──────────────────────────────────────────────────────────────
    全站共用樣式
    取代先前散落在各頁 <head> 內、彼此重複又不一致的 inline <style>。
    ────────────────────────────────────────────────────────────── */
 
 body {
-  font-family: 'Inter', 'Noto Sans TC', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', 'Source Han Sans TC', sans-serif;
 }
 
 /* 漸層標題字 —— cool:首頁等;warm:競賽等頁面 */
