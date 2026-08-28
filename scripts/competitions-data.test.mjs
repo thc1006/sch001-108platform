@@ -59,14 +59,41 @@ const VERIFIED_2026_08_27 = [
     '育秀盃',
 ];
 
-test('data：這一輪逐筆查證的 18 筆都必須留下查證日期', () => {
-    for (const needle of VERIFIED_2026_08_27) {
-        assert.equal(
-            find(needle).sourceCheckedAt,
-            '2026-08-27',
-            `${needle} 的 sourceCheckedAt 不得被清掉——它是「這一筆真的開過官網」的唯一憑證`,
-        );
-    }
+/**
+ * sourceCheckedAt 的不變式是**「這一筆真的有人開過官網」**，不是「查證發生在某一天」。
+ *
+ * 原本兩處都寫成 assert.equal(..., '2026-08-27')，而訊息說的是「不得被清掉」——
+ * 實作比訊息嚴格得多：清掉會紅（對），**更新成新日期也會紅**（錯）。
+ * 一個叫「最後查證日」的欄位被凍結成常數，任何人再次查證都無法記錄。
+ *
+ * 這不是假設性的問題：2026-08-28 的複查實際改正了 8 筆資料（袋鼠數學的台灣官網
+ * 只是沒測 https、WRO／FRC 的台灣承辦單位其實在官方 API 裡、小論文的主辦單位
+ * 標錯機關），卻不能把查證日改成當天，否則測試會紅。
+ *
+ * 改成「格式合法且不早於基準日」：清掉、亂填、往回改都會紅，往前更新則允許。
+ */
+const VERIFIED_NOT_BEFORE = '2026-08-27';
+
+function assertVerified(needle) {
+    const v = find(needle).sourceCheckedAt;
+    assert.match(
+        String(v),
+        /^\d{4}-\d{2}-\d{2}$/,
+        `${needle} 的 sourceCheckedAt 不是 YYYY-MM-DD——它是「這一筆真的開過官網」的唯一憑證`,
+    );
+    assert.ok(
+        Number.isFinite(Date.parse(`${v}T00:00:00Z`)),
+        `${needle} 的 sourceCheckedAt「${v}」不是有效日期`,
+    );
+    // ISO 日期字串可以直接字典序比較
+    assert.ok(
+        v >= VERIFIED_NOT_BEFORE,
+        `${needle} 的 sourceCheckedAt 是 ${v}，早於基準日 ${VERIFIED_NOT_BEFORE}——查證日期只能往前走，不能倒退`,
+    );
+}
+
+test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
+    for (const needle of VERIFIED_2026_08_27) assertVerified(needle);
 });
 
 // ── 賽事日期不得被當成報名截止 ──
@@ -463,15 +490,9 @@ const VERIFIED_ROUND2 = [
     'GENIUS Olympiad 環境主題競賽', '丘成桐中學科學獎', 'Earth Science Week',
 ];
 
-test('data：第二輪逐筆查證的 96 筆都必須留下查證日期', () => {
+test('data：第二輪逐筆查證的 96 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
     assert.equal(VERIFIED_ROUND2.length, 96, '清單長度變動代表有人動了查證範圍，請一併更新註解與 PR 說明');
-    for (const needle of VERIFIED_ROUND2) {
-        assert.equal(
-            find(needle).sourceCheckedAt,
-            '2026-08-27',
-            `${needle} 的 sourceCheckedAt 不得被清掉——它是「這一筆真的開過官網」的唯一憑證`,
-        );
-    }
+    for (const needle of VERIFIED_ROUND2) assertVerified(needle);
 });
 
 // 兩輪查完之後，整份資料的每一筆都有人開過官網。這個不變式是本輪最值錢的成果：
