@@ -10,7 +10,7 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
-/* 拉丁字：自架的 Inter 子集（見 public/fonts/README.md）。
+/* 拉丁字：自架的 Inter 子集（見 perf/fonts.md）。
    保留 wght 可變軸 400–900 —— 原本從 Google Fonts 只取 400;500;700;900 四個離散
    字重，CSS 字型比對會把 font-weight:600 往上吃到 700（實測 CDP 回報 Inter-Bold），
    全站 224 處 font-semibold 都比設計意圖更粗。可變軸讓 600/800 是真的 600/800。

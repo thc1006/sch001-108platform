@@ -7,7 +7,7 @@ import '../styles/global.css';
 //   拉丁字＝自架的 Inter 子集，以 @font-face 寫在 global.css，隨頁面 CSS 一起送達，
 //   不多一次往返；漢字＝使用者裝置上既有的系統字型（見 global.css 的 body 堆疊）。
 //   原本的 Google Fonts 樣式表是阻塞渲染的第三方請求，實測首頁要下載 1,240KB 字型、
-//   佔整頁傳輸量 73.5%，而且其中幾乎全部是漢字。改法與重現方式見 public/fonts/README.md。
+//   佔整頁傳輸量 73.5%，而且其中幾乎全部是漢字。改法與重現方式見 perf/fonts.md。
 //   也刻意不加 rel=preload —— 實測 preload 會跟阻塞渲染的 CSS 搶頻寬，FCP 反而變差。
 //   這段說明放在 frontmatter 而不是 HTML 註解：Astro 會把 <!-- --> 原樣輸出到 94 個頁面。
 

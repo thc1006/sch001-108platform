@@ -18,6 +18,8 @@
 
 | 檔案 | 做什麼 |
 |---|---|
+| `fonts.md` | 已上線字型資產的來源與重現步驟（**不是量測工具，移除 perf/ 時要留下**） |
+| `latin-range.txt` | 子集化的 unicode-range 輸入，`fonts.md` 的重現指令會用到 |
 | `apply-variant.mjs` | 把某個候選方案就地套用到 `src/`。**會改工作樹**，量完要 `git checkout -- src/` 還原 |
 | `build-all.sh` | 依序套用／建置／收集每個變體到 `perf/roots/<變體>/`，每次都先還原 |
 | `measure.mjs` | 冷快取＋固定節流下重複載入，收集傳輸位元組、FCP、LCP、CLS、`document.fonts.ready` |

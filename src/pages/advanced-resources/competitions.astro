@@ -547,7 +547,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   <style is:global>
     /* Space Mono 只有這一頁用到（.comp-eyebrow / .stat-num / .comp-updated 等），
        所以 @font-face 放在本頁的 <style> 裡，只會進到這一頁的 CSS bundle，
-       其餘 92 頁完全不會碰到。字型檔見 public/fonts/README.md。 */
+       其餘 92 頁完全不會碰到。字型檔見 perf/fonts.md。 */
     @font-face {
       font-family: 'Space Mono';
       font-style: normal; font-weight: 400; font-display: swap;
