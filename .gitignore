@@ -93,3 +93,11 @@ school/
 # 完全由 package-lock.json 推導得出，入版控只會造成「lockfile 更新了但 vendor
 # 忘了重跑」的漂移；缺檔時 check:site 會在 CI 擋下。
 /public/vendor/
+
+# perf/ 是一次性的字型量測工具（見 perf/README.md）。
+# 腳本入版控，產物與大型二進位不入。
+/perf/roots/
+/perf/out/
+/perf/fontsrc/
+/perf/fontout/
+/dist-baseline/

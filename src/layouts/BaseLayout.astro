@@ -3,6 +3,14 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
+// 字型策略（<head> 裡刻意沒有任何字型 <link>）：
+//   拉丁字＝自架的 Inter 子集，以 @font-face 寫在 global.css，隨頁面 CSS 一起送達，
+//   不多一次往返；漢字＝使用者裝置上既有的系統字型（見 global.css 的 body 堆疊）。
+//   原本的 Google Fonts 樣式表是阻塞渲染的第三方請求，實測首頁要下載 1,240KB 字型、
+//   佔整頁傳輸量 73.5%，而且其中幾乎全部是漢字。改法與重現方式見 public/fonts/README.md。
+//   也刻意不加 rel=preload —— 實測 preload 會跟阻塞渲染的 CSS 搶頻寬，FCP 反而變差。
+//   這段說明放在 frontmatter 而不是 HTML 註解：Astro 會把 <!-- --> 原樣輸出到 94 個頁面。
+
 // 全站統一版型。每頁只需提供 metadata,<head> 樣板、導覽列、頁尾、
 // 分析碼一律由此集中宣告 —— 取代先前每頁各自重複又不一致的 <head>/nav/footer。
 interface Props {
@@ -79,14 +87,6 @@ const canonical = new URL(canonicalPath, Astro.site).href;
     <meta name="twitter:title" content={ogTitle} />
     <meta name="twitter:description" content={ogDescription} />
     <meta name="twitter:image" content={ogImage} />
-
-    <!-- 字體 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
-    />
 
     <!-- 結構化資料 (JSON-LD) -->
     <script
