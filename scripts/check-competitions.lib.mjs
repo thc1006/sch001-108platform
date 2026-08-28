@@ -326,3 +326,30 @@ export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
     while (candidate < todayUTC) candidate = build(++year);
     return candidate;
 }
+
+/**
+ * sourceCheckedAt 的不變式是**「這一筆真的有人開過官網」**，不是「查證發生在某一天」。
+ *
+ * 兩個測試檔原本各自寫成 assert.equal(..., '2026-08-27')，而訊息說的是「不得被清掉」
+ * 與「應記錄逐筆查證日期」——實作都比訊息嚴格得多：清掉會紅（對），
+ * **更新成新日期也會紅**（錯）。一個叫「最後查證日」的欄位被凍結成常數。
+ *
+ * 那不是假設性的問題：2026-08-28 的複查實際改正了 13 筆資料，卻不能把日期改成當天。
+ *
+ * 修第一處（competitions-data.test.mjs）時漏了第二處
+ * （check-competitions.probe.test.mjs）——同一個 bug 存在兩份實作，正是它會被
+ * 漏掉的原因。所以判定抽到這裡，兩邊共用，不留會漂移的第二份。
+ *
+ * @returns {string|null} 有問題時回傳原因，沒問題回 null
+ */
+export const SOURCE_CHECKED_NOT_BEFORE = '2026-08-27';
+
+export function sourceCheckedProblem(value, notBefore = SOURCE_CHECKED_NOT_BEFORE) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return `不是 YYYY-MM-DD 格式（實際：${JSON.stringify(value)}）——它是「這一筆真的開過官網」的唯一憑證`;
+    }
+    if (!Number.isFinite(Date.parse(`${value}T00:00:00Z`))) return `「${value}」不是有效日期`;
+    // ISO 日期字串可以直接字典序比較
+    if (value < notBefore) return `是 ${value}，早於基準日 ${notBefore}——查證日期只能往前走，不能倒退`;
+    return null;
+}

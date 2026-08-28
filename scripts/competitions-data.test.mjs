@@ -24,6 +24,7 @@
  * 每一項下面都附了官網逐字原文。要改這裡的值，請先開官網確認並更新引文。
  */
 import test from 'node:test';
+import { sourceCheckedProblem } from './check-competitions.lib.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -72,24 +73,9 @@ const VERIFIED_2026_08_27 = [
  *
  * 改成「格式合法且不早於基準日」：清掉、亂填、往回改都會紅，往前更新則允許。
  */
-const VERIFIED_NOT_BEFORE = '2026-08-27';
-
 function assertVerified(needle) {
-    const v = find(needle).sourceCheckedAt;
-    assert.match(
-        String(v),
-        /^\d{4}-\d{2}-\d{2}$/,
-        `${needle} 的 sourceCheckedAt 不是 YYYY-MM-DD——它是「這一筆真的開過官網」的唯一憑證`,
-    );
-    assert.ok(
-        Number.isFinite(Date.parse(`${v}T00:00:00Z`)),
-        `${needle} 的 sourceCheckedAt「${v}」不是有效日期`,
-    );
-    // ISO 日期字串可以直接字典序比較
-    assert.ok(
-        v >= VERIFIED_NOT_BEFORE,
-        `${needle} 的 sourceCheckedAt 是 ${v}，早於基準日 ${VERIFIED_NOT_BEFORE}——查證日期只能往前走，不能倒退`,
-    );
+    const why = sourceCheckedProblem(find(needle).sourceCheckedAt);
+    assert.equal(why, null, `${needle} 的 sourceCheckedAt ${why}`);
 }
 
 test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
