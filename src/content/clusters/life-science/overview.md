@@ -83,15 +83,15 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 
 ## 一個小提醒
 
-招聯會的備審核心原則是「**三重二不**」——重視校內學習表現、重視資料真實性、重視學習過程；不以量取勝、不看高大上名號。教育部更已明令大學營隊不得發給可作為學習歷程的證明文件。**一個你親手做、講得出動機與反思的探究專題，勝過十張罐頭證書。**
+招聯會的備審核心原則是「**三重二不**」——重視基本素養所展現的核心能力、重視校內的學習活動、重視資料真實性及學生自主準備；不是學系所列的所有項次都要具備、不是以量取勝。另依教育部函示，大學辦理的營隊如涉及學習歷程檔案之準備或充實，不得收費亦不可授予參與證明。**一個你親手做、講得出動機與反思的探究專題，勝過十張罐頭證書。**
 
 ## 參考來源
 
-- [ColleGo! 選才育才輔助系統—生命科學學群（大學招生委員會聯合會 / 大考中心）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
+- [ColleGo! 選才育才輔助系統—生命科學學群（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
 - [ColleGo! 選才育才輔助系統—生命科學學類](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=49)
 - [國立臺灣大學「生命科學系」大學申請入學第二階段甄試書面資料準備指引（國立臺灣大學教務處）](https://www.aca.ntu.edu.tw/)
 - [國立成功大學跨領域學群查詢—生命科學學群](https://campus4.ncku.edu.tw/uac/cross_search/class_info/5.html)
 - [清華大學生命科學暨醫學院官網](https://cls.site.nthu.edu.tw/)
 - [〈2026 年生物科技產業關鍵趨勢解析〉，GeneOnline News](https://geneonline.news/)
 - [〈未來的生物科技發展方向—合成生物學〉，PanSci 泛科學](https://pansci.asia/archives/85114)
-- [學習歷程「三重二不」原則說明，大學招生委員會聯合會](https://www.cac.edu.tw/)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)

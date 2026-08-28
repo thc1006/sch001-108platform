@@ -69,7 +69,7 @@ description: 逐一查證生命科學學群六大升學迷思，釐清「四大�
 
 **錯誤。**
 
-招聯會的審查核心是「**三重二不**」——重視真實、重視過程、重視校內表現；不以量取勝、不看高大上名號。教育部更已明令大學營隊不得發給可作學習歷程的證明文件。
+招聯會的審查核心是「**三重二不**」——重視基本素養所展現的核心能力、重視校內的學習活動、重視資料真實性及學生自主準備；不是學系所列的所有項次都要具備、不是以量取勝。另依教育部函示，大學辦理的營隊如涉及學習歷程檔案之準備或充實，不得收費亦不可授予參與證明。
 
 真相是：
 
@@ -105,7 +105,7 @@ description: 逐一查證生命科學學群六大升學迷思，釐清「四大�
 
 ## 參考來源
 
-- [ColleGo! 選才育才輔助系統—生命科學學群（學群定義、重要學科、未來發展，大學招生委員會聯合會 / 大考中心）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
+- [ColleGo! 選才育才輔助系統—生命科學學群（學群定義、重要學科、未來發展；主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=5)
 - [〈如何選科系？生科系 vs 生醫系 vs 醫科系〉，IOH 開放個人經驗平台](https://ioh.tw/programs/How-to-Choose-College-Major-%20生科生醫類)
 - [國立陽明交通大學生命科學系暨基因體科學研究所—常見問答](https://dls.nycu.edu.tw/dls/ch/app/artwebsite/view?module=artwebsite&id=35338&serno=40a4e171-9ad8-4cb3-9e95-21e7c33c70aa)
 - [清華大學生命科學暨醫學院 / 醫學科學系—常見問答（不提供臨床訓練之說明）](https://dms.site.nthu.edu.tw/)
