@@ -13,9 +13,13 @@
  *
  * 執行：  npm run test:site-faults    （需先 npm run build:deployable）
  */
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync, cpSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, readdirSync, existsSync, mkdirSync, rmSync, cpSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+
+// 注入點盡量從產物自己推導。用共用的掃描器（與 check-built-site.mjs、
+// vendor-assets.mjs 同一份），才不會在「防寫死」的檢查裡自己寫死上游檔名。
+import { staticImportSpecifiers } from './site-contract.lib.mjs';
 
 // 故障注入一律在 dist/ 的副本上進行——被破壞的那份絕不能是要部署的那份。
 //
@@ -148,6 +152,92 @@ const cases = [
     expect: /main#main-content/,
     file: `${DIST}/about.html`,
     mutate: (t) => t.replace('<main id="main-content"', '<main id="other"'),
+  },
+  // ── 自架函式庫的 ES module import 圖（#94 後續）──
+  //
+  // 這三項對應兩個實際發生過、而且 checker 當時完全沒反應的失效：把 vendor 的
+  // ES module 進入點所 import 的檔刪掉，站台功能全死而 check:site 全綠。
+  // 原因是 checker 只認 HTML 屬性，追不到 import 圖。有了這三項，那一層退化
+  // 就不可能再悄悄發生——這正是本檔存在的理由。
+  {
+    // fuse-global.js 只有 7 行，真正的搜尋引擎在它 import 的 fuse.esm.js 裡。
+    // 刪掉引擎 → 首頁搜尋框永遠停在載入中。
+    name: 'vendor：搜尋引擎（shim 所 import 的檔）被刪掉',
+    expect: /靜態 import 了「\.\/fuse\.esm\.js」/,
+    apply: () => renameSync(`${DIST}/vendor/fuse.esm.js`, `${DIST}/vendor/fuse.esm.js.bak`),
+    undo: () => renameSync(`${DIST}/vendor/fuse.esm.js.bak`, `${DIST}/vendor/fuse.esm.js`),
+  },
+  {
+    // ionicons 的 chunk 檔名帶 hash，寫不進 .astro，所以只可能靠 import 圖驗。
+    // 刪掉之後實測：17 個 ion-icon 全部沒有 shadowRoot，一個圖示都不顯示。
+    //
+    // 要刪哪一個 chunk 是從 loader 自己的 import 推導的，不是寫死檔名。
+    // 第一版寫死了 ionicons 7.1.0 的 p-d15ec307.js，在 ionicons 8（chunk 叫
+    // p-BdioGpgU.js）直接注入失敗——把「寫死上游檔名」的毛病原封不動搬進了
+    // 這個用來防它的檢查裡。
+    name: 'vendor：ionicons 的 lazy-load chunk 被刪掉',
+    expect: /靜態 import 了「[^」]+」，但 vendor\/ionicons\//,
+    apply() {
+      const dir = `${DIST}/vendor/ionicons`;
+      const loader = `${dir}/ionicons.esm.js`;
+      const spec = staticImportSpecifiers(readFileSync(loader, 'utf8')).find((s) => s.startsWith('./'));
+      if (!spec) throw new Error('ionicons loader 沒有任何相對的靜態 import，這個注入的前提不成立');
+      this.chunk = path.join(dir, spec);
+      renameSync(this.chunk, `${this.chunk}.bak`);
+    },
+    undo() {
+      renameSync(`${this.chunk}.bak`, this.chunk);
+    },
+  },
+  {
+    // bare specifier 在瀏覽器沒有 import map 時解析不了。這是「manifest 指到
+    // node 專用 build」會留下的痕跡，症狀同樣是靜默失效。
+    name: 'vendor：ES module 靜態 import 了 bare specifier',
+    expect: /不是相對路徑，瀏覽器沒有 import map 解析不了/,
+    file: `${DIST}/vendor/fuse-global.js`,
+    mutate: (t) => `import x from "node:fs";\n${t}`,
+  },
+  {
+    // import 圖走訪看不到 SVG——它根本不在圖上。清單看得到。
+    name: 'vendor 清單：非 JS 產出（ionicon SVG）不見了',
+    expect: /vendor 步驟產出過 ionicons\/svg\/[\w-]+\.svg，但它不在建置產物裡/,
+    apply() {
+      const dir = `${DIST}/vendor/ionicons/svg`;
+      const first = readdirSync(dir).find((f) => f.endsWith('.svg'));
+      if (!first) throw new Error('vendor 沒有任何 ionicon SVG，這個注入的前提不成立');
+      this.svg = `${dir}/${first}`;
+      renameSync(this.svg, `${this.svg}.bak`);
+    },
+    undo() {
+      renameSync(`${this.svg}.bak`, this.svg);
+    },
+  },
+  {
+    // 只驗「存在」的話，被截斷的檔案照樣全綠——實測把 fuse.esm.js 截成 0 位元組，
+    // check:site「錯誤：0 ✅ 全部通過」而全站搜尋已死。這是 artifact 上傳不完整／
+    // 解壓被截斷的形狀，而本 repo 的 CI 前提就是「驗過的位元組＝被部署的位元組」。
+    // 要截哪個檔從清單推導，不寫死檔名。
+    name: 'vendor 清單：產出被截斷成 0 位元組（存在但內容沒了）',
+    expect: /的大小與 vendor 步驟產出時不符：預期 \d+ 位元組，實際 0 位元組/,
+    apply() {
+      const manifest = JSON.parse(readFileSync(`${DIST}/vendor/vendor-manifest.json`, 'utf8'));
+      const target = manifest.files.find((f) => f.bytes > 0 && f.path.endsWith('.js'));
+      if (!target) throw new Error('清單裡沒有任何非空的 JS 產出，這個注入的前提不成立');
+      this.file = `${DIST}/vendor/${target.path}`;
+      this.body = readFileSync(this.file);
+      writeFileSync(this.file, '');
+    },
+    undo() {
+      writeFileSync(this.file, this.body);
+    },
+  },
+  {
+    // 清單自己不見也要紅。否則「刪掉清單」就等於把上面那一關關掉——這一系列
+    // issue 反覆出現的正是這種「保護可以被一個編輯動作繞過」。
+    name: 'vendor 清單：清單檔本身被刪掉',
+    expect: /找不到這份清單/,
+    apply: () => renameSync(`${DIST}/vendor/vendor-manifest.json`, `${DIST}/vendor/vendor-manifest.json.bak`),
+    undo: () => renameSync(`${DIST}/vendor/vendor-manifest.json.bak`, `${DIST}/vendor/vendor-manifest.json`),
   },
 ];
 

@@ -200,3 +200,130 @@ export function walkJsonStrings(node, pointer = '', out = []) {
     }
     return out;
 }
+
+/**
+ * 把 JS 原始碼裡的註解與字串字面值抹成等長空白。
+ * ================================================================
+ * 存在的理由是一次實際的誤診。靜態 import 掃描原本直接對整份檔案跑正則，於是
+ * 這三種**一個 import 語句都沒有**的檔案全都被判定成「靜態 import 了某某」並
+ * 讓 CI 變紅：
+ *
+ *     1. minifier 保留的 banner 註解，內容是一行使用範例
+ *     2. 字串字面值：const tpl = "import helper from './x.js'"
+ *     3. 行註解：// legacy: import old from './removed.js'
+ *
+ * 以驚嘆號開頭的 block 註解（授權 banner）是所有 minifier 都刻意保留的，而
+ * banner 裡附使用範例很常見。fuse.js 7.5.0 今天的 banner 剛好沒有範例，所以
+ * 還沒踩到；但那是運氣，而「訊息斬釘截鐵地說錯一件事」正是這一整組修改要
+ * 消滅的東西——誤診比沒有訊息更糟。
+ *
+ * 抹成等長空白而不是刪除：長度、行號與 UTF-16 位移都不變（切割方式見下面
+ * 迴圈開頭的註解），所以掃描結果還能拿位移回原始碼取出真正的 specifier 內容。
+ *
+ * 除法與正則字面值的分辨用業界通用的啟發式——`/` 前一個有意義的字元若是識別字／
+ * 數字／`)`／`]` 就是除法，否則是正則的開頭。這不是完整的 parser，但失敗方向
+ * 是安全的：判錯只會讓某段程式碼被多抹或少抹，而 import 宣告一定在頂層、不會
+ * 藏在正則裡。
+ */
+export function stripJsCommentsAndStrings(src) {
+    // src.split('') 而不是 Array.from(src)：後者切的是**碼位**，但下面整個掃描
+    // 迴圈用的是 UTF-16 索引（src[i]、src.indexOf）。只要檔案裡出現一個星狀
+    // 平面字元（emoji、CJK 擴充 B、𝄞…），兩套索引就從那裡開始各差一格，抹白
+    // 落在錯誤的位置。實測兩個方向都會發生：一種是憑空報出
+    // 「靜態 import 了「」——不是相對路徑」這種內容是空字串的假錯誤，另一種更糟，
+    // 是真的 ./real.js 被漏掉、悄悄退出檢查範圍。目前八個 vendor 產出都沒有星狀
+    // 平面字元所以還沒踩到，但 minifier 保留的 banner 放個 emoji 是很平常的事。
+    const out = src.split('');
+    const blank = (from, to) => {
+        for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' ';
+    };
+    let i = 0;
+    let prevToken = ''; // 最近一個非空白、非註解的字元
+    while (i < src.length) {
+        const c = src[i];
+        const c2 = src[i + 1];
+        if (c === '/' && c2 === '/') {
+            let j = i + 2;
+            while (j < src.length && src[j] !== '\n') j++;
+            blank(i, j);
+            i = j;
+            continue;
+        }
+        if (c === '/' && c2 === '*') {
+            let j = i + 2;
+            while (j < src.length && !(src[j] === '*' && src[j + 1] === '/')) j++;
+            j = Math.min(j + 2, src.length);
+            blank(i, j);
+            i = j;
+            continue;
+        }
+        if (c === '"' || c === "'" || c === '`') {
+            let j = i + 1;
+            while (j < src.length) {
+                if (src[j] === '\\') {
+                    j += 2;
+                    continue;
+                }
+                if (src[j] === c) break;
+                j++;
+            }
+            j = Math.min(j + 1, src.length);
+            // 引號本身留著：`import "x"` 的形狀還要看得出來，只有內容被抹掉
+            blank(i + 1, j - 1);
+            prevToken = c;
+            i = j;
+            continue;
+        }
+        if (c === '/' && !/[\w$)\]]/.test(prevToken)) {
+            let j = i + 1;
+            let inClass = false;
+            while (j < src.length) {
+                if (src[j] === '\\') {
+                    j += 2;
+                    continue;
+                }
+                if (src[j] === '[') inClass = true;
+                else if (src[j] === ']') inClass = false;
+                else if (src[j] === '/' && !inClass) break;
+                else if (src[j] === '\n') break; // 沒閉合，當它不是正則
+                j++;
+            }
+            if (src[j] === '/') {
+                blank(i, j + 1);
+                i = j + 1;
+                prevToken = ')'; // 正則的結果是個值，後面的 / 是除法
+                continue;
+            }
+        }
+        if (!/\s/.test(c)) prevToken = c;
+        i++;
+    }
+    return out.join('');
+}
+
+/**
+ * 抓出一個 JS 檔的**靜態** import／export-from specifier。
+ *
+ * 先抹掉註解與字串再比對，比對到的位置再回原始碼取 specifier 內容。
+ *
+ * 只抓靜態形式。`import(變數)` 這種動態載入靜態分析不到——stencil 的 loader
+ * 正是那樣 lazy-load 它的 p-*.js chunk。所以 ionicons 必須整個目錄搬過來，
+ * 不能「照 import 圖挑檔案」；這個限制也是 check-built-site.mjs 那一關只驗
+ * 「靜態 import 的目標存在」、而不宣稱「所有會被載入的檔都驗過」的原因。
+ */
+export function staticImportSpecifiers(src) {
+    const clean = stripJsCommentsAndStrings(src);
+    const specs = new Set();
+    const fromRe =
+        /(?:^|[^\w$.])(?:import|export)\s*(?:\{[^}]*\}|\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|[A-Za-z_$][\w$]*(?:\s*,\s*(?:\{[^}]*\}|\*\s+as\s+[A-Za-z_$][\w$]*))?)?\s*from\s*(["'])/g;
+    const bareRe = /(?:^|[^\w$.])import\s*(["'])/g;
+    for (const re of [fromRe, bareRe]) {
+        for (const m of clean.matchAll(re)) {
+            const quote = m[1];
+            const openIdx = m.index + m[0].length - 1; // 開引號在原始碼裡的位置
+            const closeIdx = src.indexOf(quote, openIdx + 1);
+            if (closeIdx > openIdx) specs.add(src.slice(openIdx + 1, closeIdx));
+        }
+    }
+    return [...specs];
+}

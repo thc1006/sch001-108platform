@@ -20,6 +20,8 @@ import {
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
+    stripJsCommentsAndStrings,
+    staticImportSpecifiers,
 } from './site-contract.lib.mjs';
 
 const BASE = '/sch001-108platform';
@@ -209,4 +211,50 @@ test('回歸：href="#" 是 no-op，不得當成 anchor 參照', () => {
     assert.equal(classifyReference('#', `${BASE}/about.html`, CTX).kind, 'ignored');
     // 但非空 fragment 仍要檢查
     assert.equal(classifyReference('#real', `${BASE}/about.html`, CTX).fragment, 'real');
+});
+
+// ── 靜態 import 掃描（vendor 產物的 import 圖檢查所依賴的那一層）──
+//
+// 這一組全部是「檔案裡一個 import 語句都沒有，卻被判定成有」的誤診案例。
+// 誤診比沒有訊息更糟：CI 紅了，訊息還斬釘截鐵地說錯一件事。
+
+test('註解裡的 import 範例不得被當成真的 import', () => {
+    // minifier 一律保留驚嘆號開頭的 banner，而 banner 附使用範例很常見
+    assert.deepEqual(staticImportSpecifiers('/*! usage: import Fuse from "fuse.js"; */\nexport default 1;\n'), []);
+    assert.deepEqual(staticImportSpecifiers("// legacy: import old from './removed.js'\nexport const x = 1;\n"), []);
+    assert.deepEqual(staticImportSpecifiers('/* import a from "./fake.js" */\nimport b from "./true.js";\n'), ['./true.js']);
+});
+
+test('字串字面值裡的 import 不得被當成真的 import', () => {
+    assert.deepEqual(staticImportSpecifiers(`const tpl = "import helper from './nope.js'";\n`), []);
+    assert.deepEqual(staticImportSpecifiers('const t = `import z from "./nope.js"`;\n'), []);
+});
+
+test('壓縮過的真 import 要抓得到（含 export-from 與副作用 import）', () => {
+    assert.deepEqual(staticImportSpecifiers('import{p as i,b as o}from"./p-d15ec307.js";'), ['./p-d15ec307.js']);
+    assert.deepEqual(staticImportSpecifiers('export{a as addIcons}from"./p-40.js";import"./p-d1.js";'), ['./p-40.js', './p-d1.js']);
+    assert.deepEqual(staticImportSpecifiers("import Fuse from './fuse.esm.js';\nwindow.Fuse = Fuse;\n"), ['./fuse.esm.js']);
+});
+
+test('正則字面值裡的斜線不得讓掃描失去同步', () => {
+    // 沒有分辨正則的話，/\/\// 裡的 // 會被當成行註解開頭，把後面整行吃掉
+    assert.deepEqual(staticImportSpecifiers('const re = /\\/\\//g;\nimport x from "./real.js";\n'), ['./real.js']);
+    assert.deepEqual(staticImportSpecifiers('const re = /\\/\\*/;\nimport x from "./real2.js";\n'), ['./real2.js']);
+    assert.deepEqual(staticImportSpecifiers('const a = b / c, d = e / f;\nimport x from "./real3.js";\n'), ['./real3.js']);
+});
+
+test('動態 import 不算靜態 import（stencil 的 lazy chunk 就是這樣載的）', () => {
+    assert.deepEqual(staticImportSpecifiers('const m = await import("./" + n + ".js");\n'), []);
+});
+
+test('bare specifier 要照樣回報，由呼叫端決定它合不合法', () => {
+    // 瀏覽器沒有 import map 時解析不了——那是呼叫端要判斷的事，掃描器只負責抓出來
+    assert.deepEqual(staticImportSpecifiers('import fs from "node:fs";\nexport default fs;\n'), ['node:fs']);
+});
+
+test('抹白必須保留長度與行數，錯誤位置才對得回原檔', () => {
+    const src = '/* x */ const a = "yyy";\n// z\nimport q from "./k.js";\n';
+    const stripped = stripJsCommentsAndStrings(src);
+    assert.equal(stripped.length, src.length);
+    assert.equal(stripped.split('\n').length, src.split('\n').length);
 });
