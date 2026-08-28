@@ -807,7 +807,7 @@
       "registrationNote": "台灣由學校統一報名 · 該校須滿 20 人",
       "sourceCheckedAt": "2026-08-28",
       "url": "https://www.tmo.com.tw/",
-      "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、各會員國各自辦理的中小學數學競賽，全為選擇題、強調圖像推理與數學樂趣。AKSF 官方會員國頁（aksf.org/countries.xhtml）逐字列有「Republic of China (Taiwan) (TW)」，承辦單位 Chinese Mathematics Association、網站 www.tmo.com.tw。更正：先前記載「台灣承辦網站已失效」是只測了 http:// 造成的誤判——port 80 確實只回 9 bytes 的「Welcome!!」，但 https://www.tmo.com.tw/ 回的是完整的「中華數學協會」站台（45KB），台灣賽事一直在辦。台灣賽名為「MKT 袋鼠數學能力測驗」（站內專頁 www.tmo.com.tw/main/page/83d48be0-f6b0-11ec-8671-c3637dfe7247），官網逐字「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」，高中生可參加。參加對象逐字「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」；舉辦資格逐字「該校須滿 20 位參加學生，由校方統一報名」——不受理個人報名，須由就讀學校辦理。2026 年活動期間逐字「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」已結束，2027 年時程尚未公告。台灣承辦方為商業機構（奧林匹克文化事業股份有限公司），費用與名額請先向學校確認。"
+      "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、各會員國各自辦理的中小學數學競賽，全為選擇題、強調圖像推理與數學樂趣。AKSF 官方會員國頁（www.aksf.org/countries.xhtml）逐字列有「Republic of China (Taiwan) (TW)」，承辦單位 Chinese Mathematics Association、網站 www.tmo.com.tw。更正：先前記載「台灣承辦網站已失效」是只測了 http:// 造成的誤判——port 80 確實只回 9 bytes 的「Welcome!!」，但 https://www.tmo.com.tw/ 回的是完整的「中華數學協會」站台（45KB），台灣賽事一直在辦。台灣賽名為「MKT 袋鼠數學能力測驗」（站內專頁 www.tmo.com.tw/main/page/83d48be0-f6b0-11ec-8671-c3637dfe7247），官網逐字「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」，高中生可參加。參加對象逐字「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」；舉辦資格逐字「該校須滿 20 位參加學生，由校方統一報名」——不受理個人報名，須由就讀學校辦理。2026 年活動期間逐字「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」已結束，2027 年時程尚未公告。台灣承辦方為商業機構（奧林匹克文化事業股份有限公司），費用與名額請先向學校確認。"
     },
     {
       "title": "高中數學建模競賽 (HiMCM)",
