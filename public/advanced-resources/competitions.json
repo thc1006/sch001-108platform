@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐盟」「東亞」「全球線上」「其他」七選一；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「已查到確切日期」才填；cycle=年度固定週期（選填物件，{opens,closes,note}，opens/closes 為 MM 或 MM-DD）。截止日過了不要清空 deadline——只要補上 cycle，頁面就會顯示「本屆已截止・下次約 YYYY-MM-DD」，比一律顯示「依官網」有用，看門狗也不會再重複警告（改為下屆逼近時才提醒查確切日期）。兩者皆無才留空字串（頁面顯示「依官網」）；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。deadlineAt=帶時區位移的精確報名截止時刻（選填，例 2026-09-15T23:59:00-07:00）；opensAt=精確報名開放時刻（選填，同格式）；eventStartsAt/eventEndsAt=賽事日期（選填 YYYY-MM-DD，與報名截止是兩回事，不可混填）；registrationNote=沒有固定截止日時的報名規則（選填短句，例如 NASA Space Apps 依所在地活動時間）；sourceCheckedAt=本筆最後逐項查證官網的日期（選填 YYYY-MM-DD）。時刻欄位一律必須帶時區位移，省略時區會被 CI 擋下——沒有時區的時刻在不同使用者眼中是不同的時刻。頂層 lastUpdated 是「這個檔案最後被修改的日期」，不代表 133 筆都在那天查證過；逐筆的查證日期看 sourceCheckedAt。",
-  "lastUpdated": "2026-08-27",
+  "lastUpdated": "2026-08-28",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -339,7 +339,7 @@
       "registrationNote": "僅受理國家代表團 · 無個人報名",
       "sourceCheckedAt": "2026-08-27",
       "url": "https://www.philosophy-olympiad.org/",
-      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽，章程逐字寫明「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、年齡上限為競賽年底滿 20 歲。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。注意：官網 How to participate 頁列出的約 70 個參加國名單中未見台灣，目前查無台灣代表團的報名管道。"
+      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽，章程逐字寫明「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、年齡上限為競賽年底滿 20 歲。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。注意：官網首頁公布的 IPO 2026 全體參賽代表團名單（逐字「A record 57 national delegations participated」，57 國逐一列名）中未見台灣，How to participate 頁的各國管道清單同樣沒有，目前查無台灣代表團的報名管道。"
     },
     {
       "title": "國際地理奧林匹亞 (iGeo)",
@@ -527,7 +527,7 @@
       "registrationNote": "由各國賽區選拔 · 無個人報名",
       "sourceCheckedAt": "2026-08-27",
       "url": "https://www.immchallenge.org/",
-      "description": "由 COMAP (the Consortium for Mathematics and Its Applications) 與 NeoUnion ESC Organization 主辦的中學生數學建模競賽，自述為「the world's premier international mathematical modeling competition for secondary school students」，各國／區至多 2 隊晉級國際賽。2026 屆於 2 至 4 月間的五日窗口進行、8 月 5 至 9 日於美國波士頓頒獎；2027 屆自 2 月 1 日開始。官網未列出參賽國名單，2026 年得獎名單中亦未見 Chinese Taipei，台灣賽區的報名管道請逕洽主辦單位（info@immchallenge.org）確認。"
+      "description": "由 COMAP (the Consortium for Mathematics and Its Applications) 與 NeoUnion ESC Organization 主辦的中學生數學建模競賽，自述為「the world's premier international mathematical modeling competition for secondary school students」，各國／區至多 2 隊晉級國際賽。2026 屆於 2 至 4 月間的五日窗口進行、8 月 5 至 9 日於美國波士頓頒獎；2027 屆自 2 月 1 日開始。更正：官網其實有 Countries & Regions 頁（immchallenge.org/countries-regions/）逐一列出各賽區承辦單位，台灣被併在「China (Mainland, Hong Kong, Macau, Taiwan)」這一個賽區底下，承辦單位逐字為 NeoUnion ESC Organization（info@neounion.net）——台灣沒有獨立賽區，須向該單位報名，投入前請一併評估這個歸類。2026 年得獎名單中未見 Chinese Taipei。"
     },
     {
       "title": "國際青年物理學家辯論賽 (IYPT)",
@@ -796,7 +796,7 @@
     },
     {
       "title": "袋鼠數學競賽 (Math Kangaroo)",
-      "organizer": "Association Kangourou sans Frontières",
+      "organizer": "Association Kangourou sans Frontières（台灣由中華數學協會承辦）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
@@ -804,10 +804,10 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "registrationNote": "台灣承辦網站已失效",
+      "registrationNote": "台灣由學校統一報名 · 該校須滿 20 人",
       "sourceCheckedAt": "2026-08-27",
-      "url": "https://www.aksf.org/",
-      "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、174 個會員國各自辦理的中小學數學競賽。官方會員國頁列有「Republic of China (Taiwan) (TW)」，承辦單位為 Chinese Mathematics Association、網站 http://www.tmo.com.tw/。但該台灣網站已失效：HTTP 回 200、body 卻只有 9 bytes 的「Welcome!!」，HTTPS 回 404，是典型「200 不等於有內容」的斷鏈。國際官網本身沒有任何競賽日期或報名功能，台灣學生目前查無可用的官方報名入口，請逕洽承辦單位（olpcssec@olpcs.com）。"
+      "url": "https://www.tmo.com.tw/",
+      "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、各會員國各自辦理的中小學數學競賽，全為選擇題、強調圖像推理與數學樂趣。AKSF 官方會員國頁（aksf.org/countries.xhtml）逐字列有「Republic of China (Taiwan) (TW)」，承辦單位 Chinese Mathematics Association、網站 www.tmo.com.tw。更正：先前記載「台灣承辦網站已失效」是只測了 http:// 造成的誤判——port 80 確實只回 9 bytes 的「Welcome!!」，但 https://www.tmo.com.tw/ 回的是完整的「中華數學協會」站台（45KB），台灣賽事一直在辦。台灣賽名為「MKT 袋鼠數學能力測驗」（站內專頁 www.tmo.com.tw/main/page/83d48be0-f6b0-11ec-8671-c3637dfe7247），官網逐字「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」，高中生可參加。參加對象逐字「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」；舉辦資格逐字「該校須滿 20 位參加學生，由校方統一報名」——不受理個人報名，須由就讀學校辦理。2026 年活動期間逐字「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」已結束，2027 年時程尚未公告。台灣承辦方為商業機構（奧林匹克文化事業股份有限公司），費用與名額請先向學校確認。"
     },
     {
       "title": "高中數學建模競賽 (HiMCM)",
@@ -826,7 +826,7 @@
         "closes": "11"
       },
       "sourceCheckedAt": "2026-08-27",
-      "url": "https://www.comap.com/contests/himcm-midmcm",
+      "url": "https://comap.org/contests/himcm-midmcm",
       "description": "美國 COMAP 主辦的高中數學建模競賽，4 人一隊、作品線上提交，須有指導老師（advisor）帶隊報名。台灣學生可參加；2026 年第 29 屆賽期為 11 月 4–17 日，報名時程依官網公告。"
     },
     {
@@ -1273,7 +1273,7 @@
       "registrationNote": "官網日期欄位全為 N/A",
       "sourceCheckedAt": "2026-08-27",
       "url": "https://www.seamo-official.org/",
-      "description": "商業營運的中小學數學競賽，官網未具名任何主辦法人（僅標示新加坡地址與版權），並連向多家補習與教材業者，費用不公開、由各國代理開發票。網站是活的，2016 至 2026 各屆成績頁俱在（2026 年成績 11 月 1 日公布），但首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A，查不到任何日期。官網 contact 頁的 19 個具名地區中沒有 Taiwan 或 Chinese Taipei，台灣無公告的報名管道，報名前請務必先確認承辦方與收費。"
+      "description": "商業營運的中小學數學競賽，官網未具名任何主辦法人（僅標示新加坡地址與版權），並連向多家補習與教材業者，費用不公開、由各國代理開發票。網站是活的，2016 至 2026 各屆成績頁俱在（2026 年成績 11 月 1 日公布），但首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A，查不到任何日期。官網 contact 頁的國家下拉選單只有 19 個地區、確實不含 Taiwan，但同一頁內嵌的 partners 資料共 34 筆，其中一筆是台灣代理（partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」、聯絡信箱 taiwan@seamo-official.org），官網並未把它列進可選地區。台灣學生若要報名須自行去信該代理，報名前請務必先確認承辦方與收費。"
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
@@ -1309,7 +1309,7 @@
     },
     {
       "title": "全國高級中等學校小論文寫作比賽",
-      "organizer": "國立公共資訊圖書館",
+      "organizer": "教育部國民及學前教育署（執行單位：全國高級中等學校圖書館輔導團）",
       "category": "跨領域",
       "level": "全國",
       "form": "個人/團體",
@@ -1325,7 +1325,7 @@
     },
     {
       "title": "全國高中職閱讀心得寫作比賽",
-      "organizer": "國立公共資訊圖書館",
+      "organizer": "教育部國民及學前教育署（執行單位：全國高級中等學校圖書館輔導團）",
       "category": "語文人文",
       "level": "全國",
       "form": "個人",
@@ -1449,7 +1449,7 @@
       "eventEndsAt": "2027-05-01",
       "sourceCheckedAt": "2026-08-27",
       "url": "https://www.firstinspires.org/programs/frc/",
-      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網逐字對象為「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00 開放，官方逐字「The season registration due date is November 17, 2026」（2026 年起已簡化流程，不再有早鳥／一般兩段期限）；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。台灣隊伍的參賽管道官網未載明。"
+      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網逐字對象為「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00 開放，官方逐字「The season registration due date is November 17, 2026」（2026 年起已簡化流程，不再有早鳥／一般兩段期限）；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。更正：台灣管道官網其實查得到——firstinspires.org/find-local-support 這一頁自己查詢的 first-search API，在 region「Chinese Taipei」下列出 FRC 的 Regional Director 為 Rene Cheng（rcheng@firstpartners.org），FTC 亦由同一人掛 Partner；對應的在地組織是台灣玉山機器人協會（www.era.org.tw），站上設有 FRC／FTC／FLL 專區。"
     },
     {
       "title": "VEX 機器人世界錦標賽",
@@ -1478,10 +1478,10 @@
       "deadline": "",
       "eventStartsAt": "2026-12-08",
       "eventEndsAt": "2026-12-10",
-      "registrationNote": "須經各國承辦單位報名",
+      "registrationNote": "台灣由玉山機器人協會辦理選拔",
       "sourceCheckedAt": "2026-08-27",
       "url": "https://wro-association.org/",
-      "description": "由 World Robot Olympiad Association（新加坡登記的非營利組織）主辦，2026 年主題「Robots Meet Culture」，分 RoboMission（Elementary／Junior／Senior）、RoboSports、Future Innovators 與 Future Engineers 等組，涵蓋 8 至 19 歲（Future Engineers 可至 22 歲），以競賽當年的年齡計。官網逐字「Teams can only qualify for the International Final through the WRO competition in their country」，沒有全球統一報名截止日。2026 國際決賽 12 月 8 至 10 日於波多黎各聖胡安舉行。官方會員國名單列有 Chinese Taipei，但台灣承辦單位名稱與網址藏在互動地圖彈窗中無法取出，請逕洽 WRO 官網查詢。"
+      "description": "由 World Robot Olympiad Association（新加坡登記的非營利組織）主辦，2026 年主題「Robots Meet Culture」，分 RoboMission（Elementary／Junior／Senior）、RoboSports、Future Innovators 與 Future Engineers 等組，涵蓋 8 至 19 歲（Future Engineers 可至 22 歲），以競賽當年的年齡計。官網逐字「Teams can only qualify for the International Final through the WRO competition in their country」，沒有全球統一報名截止日。2026 國際決賽 12 月 8 至 10 日於波多黎各聖胡安舉行。更正：先前記載「台灣承辦單位藏在互動地圖彈窗中無法取出」並不成立——官方會員國頁自己載入的資料來源 https://www.wro.events/countries/json 逐字列出 Chinese Taipei 的 national organizer 是「ESUN Robot Association in Taiwan」、聯絡人 René Cheng（rene@era.org.tw）。該協會中文名為台灣玉山機器人協會（www.era.org.tw），站上設有「WRO（World Robot Olympiad）全國中小學機器人大賽暨國際奧林匹亞機器人總決賽」的不分區線上賽、北中南分區賽與各縣市校際盃。台灣學生須先參加該協會辦理的國內賽，不能直接向國際主辦報名。"
     },
     {
       "title": "國際化學競賽 (IChC)",
