@@ -404,6 +404,109 @@ test.describe('字型契約', () => {
             `.stat-num 沒有用 Space Mono 畫出來，實際用了：${JSON.stringify(fonts)}`,
         ).toBeTruthy();
     });
+
+    /**
+     * 漢字改走系統字型之後，「不是 webfont」已經被上面那條釘住了，但那條**擋不住
+     * 品質退化**：把堆疊改成 'Microsoft YaHei', 'PingFang SC'（簡體字形），或是把
+     * 繁中字型整段刪掉只留 sans-serif，上面 6 條會**全部通過**——實際做過故障注入，
+     * 兩種情況都是 6 passed。
+     *
+     * 對台灣讀者來說，簡體字形的繁體字（骨／直／內／過／起 等字的字形差異）是看得
+     * 出來的品質問題。所以這裡改用「靜態檢查算出來的堆疊」而不是「實際命中的字型」：
+     *   - 實際命中哪一個字型取決於執行環境（CI 的 ubuntu runner 沒有任何繁中字型），
+     *     拿它來斷言必然是 flaky 的。
+     *   - 堆疊本身是我們寫的、每個平台都一樣，是可以確定性斷言的東西。
+     *
+     * 順帶釘住第二件事：body 的字型堆疊在 global.css 之外還被 20 個頁面各自
+     * 重複宣告一次。改了 global.css 卻漏改那 20 份，頁面會安靜地留在舊堆疊——
+     * 所以下面刻意挑幾個「有覆寫」的頁面一起驗，讓漂移會紅。
+     */
+    test('漢字堆疊必須偏好繁體字形，且 20 份重複宣告不得與 global.css 漂移', async ({ page }) => {
+        // 繁中字形：台灣讀者預期看到的
+        const TC = [
+            'PingFang TC',
+            'Microsoft JhengHei UI',
+            'Microsoft JhengHei',
+            'Noto Sans TC',
+            'Noto Sans CJK TC',
+            'Source Han Sans TC',
+            'Source Han Sans TW',
+        ];
+        // 簡中字形：出現在繁中字型「之前」就會讓台灣讀者看到簡體字形
+        const SC = [
+            'PingFang SC',
+            'Microsoft YaHei',
+            'Microsoft YaHei UI',
+            'Noto Sans SC',
+            'Noto Sans CJK SC',
+            'Source Han Sans SC',
+            'Source Han Sans CN',
+            'SimHei',
+            'SimSun',
+            'Heiti SC',
+            'STHeiti',
+        ];
+
+        // '/' 走 global.css；其餘三頁各自有一份重複的 body { font-family }
+        const PAGES = ['/', '/about.html', '/civic-tech-map/index.html', '/sitemap.html'];
+        const seen = new Map();
+
+        for (const p of PAGES) {
+            await page.goto(P(p), { waitUntil: 'domcontentloaded' });
+
+            // lang 在這個改動之後才變成「排版正確性」的相依項：以前漢字一律由
+            // Noto Sans TC webfont 畫，繁簡字形與 lang 無關；現在漢字交給系統字型，
+            // 一旦堆疊裡的繁中字型在該裝置上都不存在，落到通用 sans-serif 時是繁是簡
+            // 就完全由瀏覽器的 Han script 推斷決定。Blink 的 ComputeScriptForHan()
+            // 在推斷不出來時**預設簡體**，於是 lang 少一個或被改成 "zh"，
+            // 台灣讀者就會看到簡體字形。
+            const lang = await page.evaluate(() => document.documentElement.lang);
+            expect(
+                lang,
+                `${p} 的 <html lang> 是「${lang}」。漢字改用系統字型後，lang 是繁簡字形的最後一道` +
+                    '防線（Blink 推斷不出 Han script 時預設簡體），必須是 zh-Hant。',
+            ).toBe('zh-Hant');
+
+            const families = await page.evaluate(() =>
+                getComputedStyle(document.body)
+                    .fontFamily.split(',')
+                    .map((s) => s.trim().replace(/^['"]|['"]$/g, '')),
+            );
+            seen.set(p, families.join(', '));
+
+            const firstTC = families.findIndex((f) => TC.includes(f));
+            const firstSC = families.findIndex((f) => SC.includes(f));
+
+            expect(
+                firstTC,
+                `${p} 的 body 字型堆疊裡沒有任何繁體中文字型，漢字會落到瀏覽器的通用 ` +
+                    `fallback，字形正確與否完全看使用者的作業系統。實際堆疊：${families.join(', ')}`,
+            ).toBeGreaterThanOrEqual(0);
+
+            if (firstSC >= 0) {
+                expect(
+                    firstSC,
+                    `${p} 的堆疊把簡體中文字型「${families[firstSC]}」排在繁體字型 ` +
+                        `「${families[firstTC]}」之前，台灣讀者會看到簡體字形的繁體字` +
+                        `（骨／直／內／過／起 等字的字形差異）。實際堆疊：${families.join(', ')}`,
+                ).toBeGreaterThan(firstTC);
+            }
+
+            expect(
+                families[families.length - 1],
+                `${p} 的堆疊結尾不是通用 sans-serif —— 全部落空時沒有最後的保底。` +
+                    `實際堆疊：${families.join(', ')}`,
+            ).toBe('sans-serif');
+        }
+
+        // 四頁算出來的堆疊必須完全一致；不一致代表 global.css 與頁內覆寫已經漂移
+        const distinct = [...new Set(seen.values())];
+        expect(
+            distinct.length,
+            '不同頁面算出來的 body 字型堆疊不一致，代表 global.css 與頁內重複宣告已經漂移：\n' +
+                [...seen].map(([p, v]) => `  ${p}\n    ${v}`).join('\n'),
+        ).toBe(1);
+    });
 });
 
 /**
