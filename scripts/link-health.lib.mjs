@@ -327,7 +327,14 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
  * 只讀 status 與 location，body 立刻丟棄：Node 不像瀏覽器會積極回收未消耗的
  * response body，在這種一次上百站的批次工作下會占住連線甚至卡死。
  */
-function requestOnce(url, addresses, signal) {
+/**
+ * @param wantBody 要讀多少位元組的回應主體（0 ＝ 不讀，維持原本立刻丟棄的行為）。
+ *
+ * 只有「最終回應」才讀——轉址回應的 body 沒有內容價值，讀它只是浪費頻寬與時間。
+ * 讀滿上限就 destroy，不等 end：接管的頁面常常是無限捲動或很大的廣告頁，
+ * 讀完整份會把一次上百站的批次工作卡住（這正是原本立刻丟棄 body 的理由）。
+ */
+function requestOnce(url, addresses, signal, wantBody = 0) {
     return new Promise((resolve) => {
         const mod = url.protocol === 'https:' ? https : http;
         let settled = false;
@@ -358,16 +365,42 @@ function requestOnce(url, addresses, signal) {
                         'User-Agent': UA,
                         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8',
-                        'Accept-Encoding': 'gzip, deflate, br',
+                        // 要讀 body 時改要未壓縮：只讀 16KB 前綴的話壓縮沒有意義，
+                        // 而壓縮串流被 destroy 截斷之後根本解不開，硬解只會拿到亂碼
+                        // 然後拿亂碼去比對詞組——那比不檢查更糟。
+                        'Accept-Encoding': wantBody ? 'identity' : 'gzip, deflate, br',
                         Connection: 'close',
                     },
                 },
                 (res) => {
                     const status = res.statusCode;
                     const location = res.headers?.location;
-                    // 先取值再丟棄；destroy 之後才 resolve，避免殘留的 socket 事件
-                    res.destroy();
-                    done({ status, location });
+                    const isRedirect = REDIRECT_STATUSES.has(status) && location;
+                    if (!wantBody || isRedirect) {
+                        // 先取值再丟棄；destroy 之後才 resolve，避免殘留的 socket 事件
+                        res.destroy();
+                        return done({ status, location });
+                    }
+                    // 伺服器無視 identity 仍然壓縮時，**不要**嘗試解析——截斷的壓縮
+                    // 串流解不開，而拿解不開的位元組去比對是假訊號。照實記錄原因。
+                    const enc = String(res.headers?.['content-encoding'] || '').toLowerCase();
+                    if (enc && enc !== 'identity') {
+                        res.destroy();
+                        return done({ status, location, bodySkipped: `content-encoding: ${enc}` });
+                    }
+                    let bodyHead = '';
+                    let read = 0;
+                    res.setEncoding('utf8');
+                    res.on('data', (chunk) => {
+                        read += Buffer.byteLength(chunk, 'utf8');
+                        bodyHead += chunk;
+                        if (read >= wantBody) res.destroy();
+                    });
+                    // destroy 之後 end 不一定會觸發，close 一定會；done 本身有防重入。
+                    const finish = () => done({ status, location, bodyHead: bodyHead.slice(0, wantBody) });
+                    res.on('end', finish);
+                    res.on('close', finish);
+                    res.on('error', finish);
                 },
             );
         } catch (err) {
@@ -421,7 +454,9 @@ export async function probe(rawUrl, signal, opts = {}) {
             return { ...blockedResult(resolved.reason, url.href), redirects: chain, hop };
         }
 
-        const r = await requestOnce(url, resolved.addresses, abort);
+        // opts.readBodyBytes > 0 時，最終回應會多帶一段有上限的 body 前綴，
+        // 供 hijack-signals.lib.mjs 取 <title> 與 meta description（#117 的訊號 B）。
+        const r = await requestOnce(url, resolved.addresses, abort, opts.readBodyBytes ?? 0);
         if (r.status === 0) {
             return { ...r, finalUrl: url.href, redirects: chain, addresses: resolved.addresses.map((a) => a.address) };
         }
@@ -431,6 +466,8 @@ export async function probe(rawUrl, signal, opts = {}) {
                 finalUrl: url.href,
                 redirects: chain,
                 addresses: resolved.addresses.map((a) => a.address),
+                ...(r.bodyHead !== undefined ? { bodyHead: r.bodyHead } : {}),
+                ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
             };
         }
         if (hop === maxRedirects) {
@@ -491,7 +528,12 @@ export async function runProbes(urls, opts = {}) {
     const budgetMs = opts.budgetMs ?? 8 * 60_000;
     const timeoutMs = opts.timeoutMs ?? LINK_TIMEOUT_MS;
     const probeFn = opts.probeFn ?? probe;
-    const probeOpts = { allowLoopback: opts.allowLoopback === true };
+    // readBodyBytes 明確列在這裡而不是把整個 opts 攤下去：probe 的選項會影響
+    // SSRF 防護（allowLoopback），逐項列出才看得出「哪些東西可以被呼叫端調整」。
+    const probeOpts = {
+        allowLoopback: opts.allowLoopback === true,
+        readBodyBytes: opts.readBodyBytes ?? 0,
+    };
 
     const results = new Array(urls.length).fill(null);
     if (urls.length === 0) return { results, skipped: 0 };
