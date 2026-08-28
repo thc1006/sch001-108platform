@@ -5,7 +5,7 @@
   "main": "build-search-index.js",
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && astro build",
+    "build": "node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && node scripts/check-vendor-size.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "test": "playwright test",
@@ -20,7 +20,7 @@
     "serve": "node scripts/static-server.mjs 8000",
     "audit:consistency": "node scripts/audit-competition-consistency.mjs",
     "vendor": "node scripts/vendor-assets.mjs",
-    "build:deployable": "node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && astro build && node build-search-index.js && node scripts/build-info.mjs",
+    "build:deployable": "node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && node scripts/check-vendor-size.mjs && astro build && node build-search-index.js && node scripts/build-info.mjs",
     "verify:deploy": "node scripts/verify-deploy.mjs",
     "check:site": "node scripts/check-built-site.mjs",
     "check:link-policy": "node scripts/check-link-policy.mjs",
@@ -31,7 +31,9 @@
     "test:link-faults": "node scripts/link-health.faults.mjs",
     "verify:site": "npm run build:deployable && npm run check:site",
     "check:deps": "node scripts/check-dep-tree.mjs",
-    "test:deps-faults": "node scripts/check-dep-tree.faults.mjs"
+    "test:deps-faults": "node scripts/check-dep-tree.faults.mjs",
+    "check:vendor-size": "node scripts/check-vendor-size.mjs",
+    "test:vendor-size-faults": "node scripts/check-vendor-size.faults.mjs"
   },
   "keywords": [],
   "author": "",

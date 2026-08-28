@@ -119,6 +119,10 @@ jobs:
       # 那支 PR 必須先合併，否則這一步會找不到 script。
       - name: Prove the dependency-tree guard actually blocks (fault injection)
         run: npm run test:deps-faults
+      # public/vendor/ 在 .gitignore 裡，使用者實際下載的位元組在 diff 中是隱形的。
+      # 這一關證明「大小預算對不上時真的會擋」——含「檢查自己變全盲」那一類。
+      - name: Prove the vendor size budget actually blocks (fault injection)
+        run: npm run test:vendor-size-faults
 
       # astro.config.mjs 設 base: '/sch001-108platform'，站內連結都是根相對路徑。
       # lychee 對本機檔案的根相對連結會在「解析」階段就失敗，而 --exclude 與

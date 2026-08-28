@@ -69,6 +69,7 @@ dist/
 /dist-faultcheck/
 /.taxonomy-faultcheck/
 /.deptree-faultcheck/
+/.vendorsize-faultcheck/
 
 # 工作過程文件與本地研究資料：保留於本地、不納入版控
 # （docs/ 為一次性工作文件、school/ 為本地研究資料,均不入版控）
