@@ -89,6 +89,12 @@ jobs:
           node-version-file: '.node-version'
           cache: 'npm'
 
+      # 與 ci.yml 的三個安裝點一致：閘門必須在 npm ci 之前。這支 workflow 只在
+      # 排程／手動於 default branch 上跑，風險比 PR 低，但「只有這裡沒有」正是
+      # 規則開始爛掉的樣子——而且它同樣擋得住「runner 的 npm 退回不支援的版本」。
+      - name: Verify the install-script gate is in effect (before installing)
+        run: node scripts/check-install-gate.mjs
+
       - name: Install dependencies
         run: npm ci
 
