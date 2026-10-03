@@ -34,7 +34,24 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
 倉庫預設是 `read`。部署的位元組與通過測試的位元組是同一份（artifact 一路傳遞，
 `download-artifact` 的雜湊不符會直接失敗），並在部署後回頭比對線上的 commit。
 
-**3. 內容正確性。** 這一項不是傳統資安，但對這個站是最實際的傷害來源：
+**3. npm 相依的安裝期執行。** 攻擊者奪取一個相依套件的發布權限後，最短的路徑是
+在 `postinstall` 裡執行程式——那會在 CI 與每一台開發機上跑起來。兩道閘門：
+
+- `.npmrc` 的 `min-release-age=7` **搭配 `dependabot.yml` 的 `cooldown.default-days: 7`**：
+  都是拒絕採用發布未滿七天的版本。2025–2026 的投毒事件多半在數小時到數日內被揪出，
+  七天跨過一個週末。兩邊缺一不可——`min-release-age` 只擋本機的 install/update，
+  而相依更新的主要路徑是 Dependabot，它自己算 lockfile、`npm ci` 不重新解析，
+  不設 cooldown 就整個繞過去。cooldown 不套用在 security update 上，
+  所以安全性修正不會因此延後。
+- `package.json` 的 `allowScripts` 搭配 `strict-allow-scripts=true`：
+  只有列在清單裡的套件能跑安裝腳本，其餘一律 fail-closed。目前只核准
+  `esbuild`（需要它連結平台二進位），`core-js` 與 `fsevents` 都拒絕。
+  核准是**釘版本**的，所以 esbuild 一升版 `npm ci` 就會紅——那是刻意的：
+  唯一會在安裝期執行程式碼的套件換版本時，要有人看一眼。復原指令就印在錯誤
+  訊息裡（`npm install-scripts approve esbuild`）。需要 npm 11.7+ 才生效，
+  更舊的 npm 會忽略並印 unknown-config 警告。
+
+**4. 內容正確性。** 這一項不是傳統資安，但對這個站是最實際的傷害來源：
 本站提供升學政策資訊，**寫錯會影響學生的升學決策**。如果你發現任何政策敘述
 與官方文件不符，那和漏洞一樣重要 —— 那個請直接開公開 issue，附上一手來源網址。
 
@@ -44,5 +61,8 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   Playwright 測試與本機預覽時執行、不進建置產物。
 - **`public/vendor/` 的第三方前端函式庫**：從 npm 相依複製而來，
   版本由 Dependabot 追蹤。回報上游套件的漏洞請到上游。
-- **缺少 CSP 等安全 header**：GitHub Pages 不支援自訂 response header，
-  這是平台限制不是疏漏。
+- **缺少安全性 response header**：GitHub Pages 不支援自訂 response header，
+  這是平台限制。但 CSP 不受此限——Astro 7 可以把政策寫成
+  `<meta http-equiv="content-security-policy">`。所以**站上沒有 CSP 是還沒做，
+  不是平台擋住**。這個站載入 js.puter.com、Google Fonts、placehold.co、
+  api.dicebear.com、images.pexels.com 等外部來源，allowlist 要先盤清楚再動。
