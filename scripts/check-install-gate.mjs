@@ -261,8 +261,12 @@ const ver = npmVersion();
 if (!ver) {
     problems.push('問不到 npm 版本，無法判斷 strict-allow-scripts 會不會被強制執行。');
 } else if (cmp(ver, MIN_NPM) < 0) {
+    // npm@latest 會被 Node 的 engines 擋下來（npm 12 要 Node ^22.22.2 || ^24.15.0 || >=26），
+    // 所以不能只叫人裝 latest——實測在 Node 24.13.0 上回 ENOTSUP 而使用者原地卡住。
     problems.push(`npm ${ver} 不支援 strict-allow-scripts（下限 ${MIN_NPM}，實測 11.15.0 只警告不擋）。`
-        + '在這個版本上整道閘門是靜默無效的。修法：npm i -g npm@latest');
+        + '在這個版本上整道閘門是靜默無效的。'
+        + '修法：npm i -g npm@latest；若回 ENOTSUP 代表 Node 太舊，改裝相容的最新 11.x '
+        + '（npm view npm@11 version）或先升 Node。');
 }
 
 const unknown = npmUnknownKeys(['strict-allow-scripts', 'min-release-age']);
