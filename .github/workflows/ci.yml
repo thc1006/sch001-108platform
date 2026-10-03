@@ -399,7 +399,7 @@ jobs:
       - name: Deploy the verified artifact
         id: deployment
         continue-on-error: true
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
 
       # Pages 後端偶發會讓部署卡到平台的 10 分鐘上限（actions/deploy-pages#406，
       # 2026-01 開至今未修；#418 同類）。第一次卡到 action 自己的 MAX_TIMEOUT 時，
@@ -417,7 +417,7 @@ jobs:
         if: ${{ steps.deployment.outcome == 'failure' }}
         id: deployment-retry
         continue-on-error: true
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
 
       # continue-on-error 會讓失敗的 step 不影響 job 結論，所以兩次都失敗時要自己喊。
       - name: Fail when neither attempt landed
