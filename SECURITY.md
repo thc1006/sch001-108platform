@@ -48,8 +48,38 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   `esbuild`（需要它連結平台二進位），`core-js` 與 `fsevents` 都拒絕。
   核准是**釘版本**的，所以 esbuild 一升版 `npm ci` 就會紅——那是刻意的：
   唯一會在安裝期執行程式碼的套件換版本時，要有人看一眼。復原指令就印在錯誤
-  訊息裡（`npm install-scripts approve esbuild`）。需要 npm 11.7+ 才生效，
-  更舊的 npm 會忽略並印 unknown-config 警告。
+  訊息裡（`npm install-scripts approve esbuild`）。
+
+  **這道閘門會靜默失效，所以它自己也要被把關。** 實測下限是 **npm 11.16.0**：
+  11.15.0 把 `strict-allow-scripts` 當成未知設定，只印一行警告，缺核准的
+  esbuild 照裝、`npm ci` exit 0；11.16.0 才回 `ESTRICTALLOWSCRIPTS`。
+  環境變數或使用者層 `.npmrc` 也能把它蓋成 false，而專案檔原封不動。
+  `scripts/check-install-gate.mjs` 因此在每次建置時驗這些：
+
+  - **能力探測**：從沒有專案 `.npmrc` 的目錄問 npm 的內建預設，確認它真的認得
+    這兩個設定。只比版本號擋不住「未來某版把設定改名或移除」——那時版本照樣夠新，
+    功能卻沒了。
+  - **npm 自己回報的**設定值（不是 `.npmrc` 寫了什麼），因為環境變數與使用者層
+    設定都蓋得掉。
+  - lock 裡每個 `hasInstallScript` 的套件是否都被核准或拒絕過。這一項與 npm 版本
+    無關，是舊 npm 上唯一還有效的防線。核准清單裡的孤兒條目也會被擋，避免規則
+    活得比前提久。
+  - **根 `package.json` 自己的安裝期 script**（見下）。
+
+  故障注入矩陣見 `check-install-gate.faults.mjs`（22 格，含「檢查自己變全盲」
+  與「不該擋的要放行」兩類反例）；每一條規則都做過突變測試，拿掉任何一條都會
+  讓矩陣翻紅。
+
+- **根 `package.json` 的安裝期 script 不受 allowScripts 管。** 這是實測出來的：
+  `strict-allow-scripts=true` 之下，在根 `package.json` 加一行 `postinstall`，
+  `npm ci` 照樣執行它、exit 0、閘門完全不出聲。也就是一個惡意 PR 只要加一行，
+  就能在 CI 與每台開發機上執行程式，繞過整道閘門。本專案目前沒有任何
+  `preinstall`／`install`／`postinstall`／`prepare`，而上面那支檢查會確保
+  它維持如此——真的需要時必須連同理由明示放行。
+
+  `package.json` 的 `engines.npm` 另外在**安裝期**就先警告。沒有設
+  `engine-strict`——那會讓舊 npm 連裝都裝不了，而要防的是「以為有保護其實沒有」，
+  不是阻止別人碰這個 repo。
 
 **4. 內容正確性。** 這一項不是傳統資安，但對這個站是最實際的傷害來源：
 本站提供升學政策資訊，**寫錯會影響學生的升學決策**。如果你發現任何政策敘述

@@ -119,6 +119,13 @@ jobs:
       # 那支 PR 必須先合併，否則這一步會找不到 script。
       - name: Prove the dependency-tree guard actually blocks (fault injection)
         run: npm run test:deps-faults
+
+      # 安裝期腳本閘門的故障注入。.npmrc 的 strict-allow-scripts 在 npm < 11.16.0 上
+      # 是未知設定——只印一行警告然後照裝（實測 11.15.0 缺核准仍 exit 0）。設定被
+      # 環境變數蓋掉、或新相依帶進 postinstall 沒人核准，同樣不會有任何徵兆。
+      # 這一關證明那些情況真的會被擋，含「檢查自己變全盲」那一類。
+      - name: Prove the install-script gate actually blocks (fault injection)
+        run: npm run test:install-gate-faults
       # public/vendor/ 在 .gitignore 裡，使用者實際下載的位元組在 diff 中是隱形的。
       # 這一關證明「大小預算對不上時真的會擋」——含「檢查自己變全盲」那一類。
       - name: Prove the vendor size budget actually blocks (fault injection)

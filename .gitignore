@@ -105,3 +105,7 @@ school/
 /public/vendor/
 # audit-quote-freshness.mjs 的 PDF 暫存目錄（跑完自刪，中斷時可能殘留）
 /.quote-audit-tmp/
+
+# 故障注入矩陣的工作副本。腳本結束時會自己刪掉，這裡是為了中途失敗的情況。
+.deptree-faultcheck/
+.installgate-faultcheck/
