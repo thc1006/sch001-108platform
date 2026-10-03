@@ -223,7 +223,28 @@ for (const k of Object.keys(allow)) {
     }
 }
 
-// ── 3. 根專案自己的安裝期 script ──
+// ── 3. 相依一律來自官方 registry ──
+// hasInstallScript 只涵蓋 install／preinstall／postinstall——npm 自己的判定就寫在
+// arborist 的 isolated-classes.js：`hasInstallScript || install || preinstall || postinstall`。
+// **prepare 不在裡面**，而 npm 對 git 相依會跑 prepare。也就是 git 相依能在安裝期
+// 執行程式卻不帶旗標，於是上面的覆蓋率清單看不到它。
+// 一併擋掉任意 tarball 與被掉包的 registry：那兩者也繞過 npm audit signatures。
+const REGISTRY = 'https://registry.npmjs.org/';
+for (const [p, e] of Object.entries(packages)) {
+    if (p === '' || !e) continue;
+    if (typeof e.resolved !== 'string') {
+        problems.push(`${p} 在 lock 裡沒有 resolved（link／file／workspace 相依）。`
+            + '它不經過 registry，簽章與安裝腳本的帳都對不上，請改成一般相依或在此明示放行。');
+    } else if (!e.resolved.startsWith(REGISTRY)) {
+        problems.push(e.resolved.startsWith('git+')
+            ? `${p} 是 git 相依（${e.resolved.split('#')[0]}）。npm 會對它執行 prepare，`
+              + '而 prepare 不會被標上 hasInstallScript——等於在安裝期執行程式卻不進核准清單。'
+            : `${p} 不是從 ${REGISTRY} 解析的，而是 ${e.resolved.split('/').slice(0, 3).join('/')}。`
+              + 'npm audit signatures 驗不到它。');
+    }
+}
+
+// ── 4. 根專案自己的安裝期 script ──
 // allowScripts 只管相依，管不到本專案。實測：strict-allow-scripts=true 之下，
 // 在根 package.json 加一行 postinstall，npm ci 照樣執行它、exit 0、閘門一聲不吭。
 // 也就是一個惡意 PR 加一行就能在 CI 與每台開發機上執行程式，完全繞過這道閘門。
@@ -235,7 +256,7 @@ if (hooks.length) {
         + '確實需要的話，請連同理由一起在這支檢查裡明示放行，不要讓它悄悄通過。');
 }
 
-// ── 4. npm 版本、能力、與實際生效的設定 ──
+// ── 5. npm 版本、能力、與實際生效的設定 ──
 const ver = npmVersion();
 if (!ver) {
     problems.push('問不到 npm 版本，無法判斷 strict-allow-scripts 會不會被強制執行。');
