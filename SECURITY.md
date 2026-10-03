@@ -61,6 +61,18 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   Playwright 測試與本機預覽時執行、不進建置產物。
 - **`public/vendor/` 的第三方前端函式庫**：從 npm 相依複製而來，
   版本由 Dependabot 追蹤。回報上游套件的漏洞請到上游。
+- **`http-cache-semantics` 的 GHSA-ch52-4w7c-c8xp（Dependabot alert #36）**：
+  已關閉為 `not_used`。上游沒有修正版（patched: None），所以不能用升版處理；
+  判定依據是**觸及不到**，不是「風險可接受」。該套件只被
+  `astro/dist/assets/build/remote.js` 使用，而那個檔只由 `generate.js` 的
+  `loadRemoteImage` 呼叫。本站用不到那條路徑：`src/` 內 `astro:assets`／
+  `<Image>`／`<Picture>`／`getImage` 共 0 處、`astro.config.mjs` 沒有 `image` 設定、
+  `dist/_astro` 沒有任何點陣圖產物，外部圖片全部是裸 `<img src="https://…">`，
+  由瀏覽器直接抓取。再者漏洞成立的前提是「多使用者共用的 HTTP 快取洩漏他人
+  `Set-Cookie`」，而本站是建置在單租戶 CI 的純靜態站，沒有多使用者也沒有 cookie，
+  該套件只存在於建置期相依、不隨站台發布。
+  **上游釋出修正版時 Dependabot 會重新開啟，屆時照常升版即可。**
+
 - **缺少安全性 response header**：GitHub Pages 不支援自訂 response header，
   這是平台限制。但 CSP 不受此限——Astro 7 可以把政策寫成
   `<meta http-equiv="content-security-policy">`。所以**站上沒有 CSP 是還沒做，
