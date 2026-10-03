@@ -43,7 +43,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.3.1",
+    "astro": "^7.3.5",
     "cheerio": "^1.2.0",
     "feather-icons": "^4.29.2",
     "fuse.js": "^7.5.0",
@@ -51,7 +51,12 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.20"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "core-js": false,
+    "fsevents": false
   }
 }
