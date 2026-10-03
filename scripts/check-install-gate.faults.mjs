@@ -208,7 +208,10 @@ const cases = [
             return 'lock 新增外部 tarball';
         },
         blocked: true,
-        expect: /evil\.example\.com/,
+        // 斷在套件路徑與語意片語上，不要寫成主機名的正規式：那會被 CodeQL 的
+        // js/incomplete-url-substring-sanitization 判成沒有錨點的網址比對，
+        // 而且「回聲自己注入的字串」本來就比「訊息說對了原因」弱。
+        expect: /node_modules\/elsewhere[\s\S]*驗不到/,
     },
     {
         name: 'lock 條目沒有 resolved（link／file 相依）——必須擋',
