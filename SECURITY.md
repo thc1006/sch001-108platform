@@ -64,9 +64,15 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   - lock 裡每個 `hasInstallScript` 的套件是否都被核准或拒絕過。這一項與 npm 版本
     無關，是舊 npm 上唯一還有效的防線。核准清單裡的孤兒條目也會被擋，避免規則
     活得比前提久。
+  - **每一筆相依都解析自 `registry.npmjs.org`。** 這條不只是潔癖：`hasInstallScript`
+    只涵蓋 `install`／`preinstall`／`postinstall`——npm 的判定就寫在 arborist 的
+    `isolated-classes.js`，`prepare` **不在裡面**。而 npm 對 git 相依會執行
+    `prepare`，於是一個 git 相依可以在安裝期跑程式卻不帶旗標，核准清單完全看不到它。
+    同一條規則一併擋掉任意 tarball 與被掉包的 registry，那兩者也讓
+    `npm audit signatures` 驗不到。目前 367 筆相依全部來自官方 registry。
   - **根 `package.json` 自己的安裝期 script**（見下）。
 
-  故障注入矩陣見 `check-install-gate.faults.mjs`（22 格，含「檢查自己變全盲」
+  故障注入矩陣見 `check-install-gate.faults.mjs`（25 格，含「檢查自己變全盲」
   與「不該擋的要放行」兩類反例）；每一條規則都做過突變測試，拿掉任何一條都會
   讓矩陣翻紅。
 

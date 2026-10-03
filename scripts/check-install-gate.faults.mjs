@@ -79,10 +79,20 @@ function reset() {
 const lockOf = () => JSON.parse(readFileSync(WORK_LOCK, 'utf8'));
 const manifestOf = () => JSON.parse(readFileSync(WORK_MANIFEST, 'utf8'));
 
-/** 在 lock 裡塞一個會跑安裝腳本的套件。 */
+/**
+ * 在 lock 裡塞一個會跑安裝腳本的套件。
+ * resolved 一定要給：真實的 lock 條目都有，少了會讓「相依來源」那條規則一起開火，
+ * 於是這一格就同時測了兩件事、失去鑑別力（加 registry 規則時實際踩到過）。
+ */
 function addScripted(name, version, extra = {}) {
     const lock = lockOf();
-    lock.packages[`node_modules/${name}`] = { version, hasInstallScript: true, ...extra };
+    const base = name.includes('/') ? name.split('/').pop() : name;
+    lock.packages[`node_modules/${name}`] = {
+        version,
+        resolved: `https://registry.npmjs.org/${name}/-/${base}-${version}.tgz`,
+        hasInstallScript: true,
+        ...extra,
+    };
     const written = write(WORK_LOCK, lock);
     if (written.packages[`node_modules/${name}`]?.hasInstallScript !== true) {
         throw new Error('注入未生效（副本裡找不到注入的套件）');
@@ -167,6 +177,56 @@ const cases = [
         run: { known: 'min-release-age' },
         blocked: true,
         expect: /不認得/,
+    },
+    {
+        // npm 的 hasInstallScript 只看 install/preinstall/postinstall（arborist 的
+        // isolated-classes.js）。git 相依靠 prepare 執行程式，不帶旗標，覆蓋率清單
+        // 看不到它——只有這條 registry 來源的規則擋得住。
+        name: 'git 相依（prepare 會執行但不帶 hasInstallScript）——必須擋',
+        inject: () => {
+            const lock = lockOf();
+            lock.packages['node_modules/sneaky'] = {
+                version: '1.0.0',
+                resolved: 'git+ssh://git@github.com/attacker/sneaky.git#deadbeef',
+            };
+            const written = write(WORK_LOCK, lock);
+            if (!written.packages['node_modules/sneaky']) throw new Error('注入未生效');
+            return 'lock 新增 git+ssh 相依';
+        },
+        blocked: true,
+        expect: /prepare/,
+    },
+    {
+        name: '非官方 registry 的 tarball——必須擋（簽章驗不到）',
+        inject: () => {
+            const lock = lockOf();
+            lock.packages['node_modules/elsewhere'] = {
+                version: '1.0.0',
+                resolved: 'https://evil.example.com/elsewhere-1.0.0.tgz',
+            };
+            write(WORK_LOCK, lock);
+            return 'lock 新增外部 tarball';
+        },
+        blocked: true,
+        // 斷在套件路徑與語意片語上，不要寫成主機名的正規式：那會被 CodeQL 的
+        // js/incomplete-url-substring-sanitization 判成沒有錨點的網址比對，
+        // 而且「回聲自己注入的字串」本來就比「訊息說對了原因」弱。
+        expect: /node_modules\/elsewhere[\s\S]*驗不到/,
+    },
+    {
+        name: 'lock 條目沒有 resolved（link／file 相依）——必須擋',
+        inject: () => {
+            const lock = lockOf();
+            lock.packages['node_modules/local-thing'] = { version: '1.0.0', link: true };
+            write(WORK_LOCK, lock);
+            return 'lock 新增無 resolved 的條目';
+        },
+        blocked: true,
+        expect: /resolved/,
+        // 少了這一行，這一格會被「崩潰」冒充成「擋下來」：拿掉缺 resolved 的判斷之後，
+        // 下一個 else if 會對 undefined 呼叫 .startsWith 丟 TypeError，exit 照樣非 0。
+        // 實測突變時正是因此顯示成 0 格翻紅，看起來像那條規則多餘。
+        forbid: /TypeError|at ModuleJob|node:internal/,
     },
     {
         name: '根 package.json 自己有 postinstall——必須擋（allowScripts 管不到本專案）',
