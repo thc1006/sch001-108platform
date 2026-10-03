@@ -10,50 +10,13 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
-/* 拉丁字：自架的 Inter 子集（見 perf/fonts.md）。
-   保留 wght 可變軸 400–900 —— 原本從 Google Fonts 只取 400;500;700;900 四個離散
-   字重，CSS 字型比對會把 font-weight:600 往上吃到 700（實測 CDP 回報 Inter-Bold），
-   全站 224 處 font-semibold 都比設計意圖更粗。可變軸讓 600/800 是真的 600/800。
-   漢字不在這個子集裡，由下面 body 堆疊中的系統字型負責。 */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 900;
-  font-display: swap;
-  src: url('/sch001-108platform/fonts/Inter-subset.woff2') format('woff2');
-}
+/* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數——Tailwind 會把
+   :root 自訂屬性剪掉，top 退回 auto、sticky 靜默失效。把關見 layout-budget.spec.js。 */
 
-/* sticky 面板的偏移量：一律用 top-16（4rem ＝ 64px）
-   ──────────────────────────────────────────────────────────────
-   站台 header 黏在最上方（Header.astro：sticky top-0 z-50）。所有「黏在它底下」的
-   面板都要以它的高度為起點。那個值先前被寫死在十個地方，而且是三個不同的數字
-   （68px ×7、76px ×2、原始 CSS 68px ×1），沒有一個等於 header 的實際高度。
-
-   實測（線上正式站，320 / 375 / 414 / 640 / 768 / 1024 / 1280 七個寬度）：
-   header 一律 **64px**（py-4 的 32px ＋ 內容 32px），不隨寬度變化。
-
-   後果是每個面板與 header 之間都留著 4px 或 12px 的縫。兩層都是半透明
-   （背景色帶 /80 透明度 ＋ backdrop-blur），但縫裡的內容是**全不透明**的——捲動時會出現一條
-   （註：上一行刻意不寫成 Tailwind 的萬用字元寫法。那個寫法裡的星號加斜線會**提前終止
-   CSS 註解**，後面的內容變成垃圾 CSS，整條 body 規則會被丟掉——我就是這樣把
-   自架 Inter 與漢字堆疊整個弄不見的，兩條字型契約測試當場變紅才發現。）
-   對比明顯的文字帶夾在兩條模糊的 bar 之間，看起來像渲染破綻。
-
-   **為什麼不用 CSS 變數**：試過 :root { --header-h: 4rem } ＋ top-[var(--header-h)]，
-   Tailwind 會把那個自訂屬性從產出裡剪掉（utility 有生成、變數宣告沒有），於是
-   var() 未定義、top 退回 auto，**sticky 整個靜默失效**。用一個會無聲失敗的機制去修
-   一個無聲的 bug，方向是錯的。top-16 是內建 utility，不存在這個失敗模式。
-
-   防漂移交給測試：tests/e2e/layout-budget.spec.js 斷言 header 的實際高度等於每個
-   sticky 面板的 top。哪天 header 的 padding 或字級改了，那條會紅並指出新的高度。 */
-
-/* ──────────────────────────────────────────────────────────────
-   全站共用樣式
-   取代先前散落在各頁 <head> 內、彼此重複又不一致的 inline <style>。
-   ────────────────────────────────────────────────────────────── */
+/* 全站共用樣式。取代先前散落在各頁 <head>、彼此重複又不一致的 inline <style>。 */
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', 'Source Han Sans TC', sans-serif;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
 
 /* 漸層標題字 —— cool:首頁等;warm:競賽等頁面 */
