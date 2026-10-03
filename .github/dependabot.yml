@@ -30,6 +30,14 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(deps)'
+    # 與 .npmrc 的 min-release-age=7 對齊。沒有這一段的話那道閘門形同虛設：
+    # Dependabot 自己算 lockfile，而 npm ci 不重新解析，min-release-age 只擋得到
+    # 本機的 install/update，擋不到這條路徑。預設是 3 天，不是沒有。
+    # cooldown 不套用在 security update 上，安全性修正不會被延後。
+    # github-actions 那組沒有這段：該 ecosystem 不支援 cooldown，寫了會被靜默忽略。
+    cooldown:
+      default-days: 7
+
     groups:
       # tailwindcss 與 @tailwindcss/* 分在同一組。
       #

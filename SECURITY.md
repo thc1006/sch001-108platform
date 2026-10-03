@@ -37,9 +37,12 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
 **3. npm 相依的安裝期執行。** 攻擊者奪取一個相依套件的發布權限後，最短的路徑是
 在 `postinstall` 裡執行程式——那會在 CI 與每一台開發機上跑起來。兩道閘門：
 
-- `.npmrc` 的 `min-release-age=7`：拒絕解析發布未滿七天的版本。2025–2026 的
-  投毒事件多半在數小時到數日內被揪出，七天跨過一個週末。只影響「解析新版本」，
-  `npm ci` 依 lock 安裝既有版本不受限。
+- `.npmrc` 的 `min-release-age=7` **搭配 `dependabot.yml` 的 `cooldown.default-days: 7`**：
+  都是拒絕採用發布未滿七天的版本。2025–2026 的投毒事件多半在數小時到數日內被揪出，
+  七天跨過一個週末。兩邊缺一不可——`min-release-age` 只擋本機的 install/update，
+  而相依更新的主要路徑是 Dependabot，它自己算 lockfile、`npm ci` 不重新解析，
+  不設 cooldown 就整個繞過去。cooldown 不套用在 security update 上，
+  所以安全性修正不會因此延後。
 - `package.json` 的 `allowScripts` 搭配 `strict-allow-scripts=true`：
   只有列在清單裡的套件能跑安裝腳本，其餘一律 fail-closed。目前只核准
   `esbuild`（需要它連結平台二進位），`core-js` 與 `fsevents` 都拒絕。
