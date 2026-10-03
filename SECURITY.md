@@ -70,6 +70,11 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   與「不該擋的要放行」兩類反例）；每一條規則都做過突變測試，拿掉任何一條都會
   讓矩陣翻紅。
 
+  **它在 CI 裡跑在 `npm ci` 之前**，三個安裝點都是。這不是風格問題：閘門擋的是
+  安裝期執行的程式，等 `npm ci` 跑完才驗，該跑的早就跑完了。這支檢查只用 node
+  內建模組、不需要 `node_modules`，才放得進那個位置。建置鏈裡也留了一份，
+  讓本機與任何不經過 CI 的路徑同樣會被擋。
+
 - **根 `package.json` 的安裝期 script 不受 allowScripts 管。** 這是實測出來的：
   `strict-allow-scripts=true` 之下，在根 `package.json` 加一行 `postinstall`，
   `npm ci` 照樣執行它、exit 0、閘門完全不出聲。也就是一個惡意 PR 只要加一行，

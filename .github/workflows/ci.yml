@@ -76,6 +76,13 @@ jobs:
           node-version-file: '.node-version'
           cache: 'npm'
 
+      # 這一關必須在 npm ci **之前**。閘門擋的是「安裝期執行的程式」，等 npm ci
+      # 跑完再驗，該跑的早就跑完了——尤其是根 package.json 自己的 postinstall，
+      # 那個連 strict-allow-scripts 都管不到（實測 npm ci 照樣執行它且 exit 0）。
+      # 這支檢查只用 node 內建模組、不需要 node_modules，所以放得進來。
+      - name: Verify the install-script gate is in effect (before installing)
+        run: node scripts/check-install-gate.mjs
+
       - name: Install dependencies
         run: npm ci
 
@@ -210,6 +217,13 @@ jobs:
           node-version-file: '.node-version'
           cache: 'npm'
 
+      # 這一關必須在 npm ci **之前**。閘門擋的是「安裝期執行的程式」，等 npm ci
+      # 跑完再驗，該跑的早就跑完了——尤其是根 package.json 自己的 postinstall，
+      # 那個連 strict-allow-scripts 都管不到（實測 npm ci 照樣執行它且 exit 0）。
+      # 這支檢查只用 node 內建模組、不需要 node_modules，所以放得進來。
+      - name: Verify the install-script gate is in effect (before installing)
+        run: node scripts/check-install-gate.mjs
+
       - name: Install dependencies
         run: npm ci
 
@@ -280,6 +294,13 @@ jobs:
         with:
           node-version-file: '.node-version'
           cache: 'npm'
+
+      # 這一關必須在 npm ci **之前**。閘門擋的是「安裝期執行的程式」，等 npm ci
+      # 跑完再驗，該跑的早就跑完了——尤其是根 package.json 自己的 postinstall，
+      # 那個連 strict-allow-scripts 都管不到（實測 npm ci 照樣執行它且 exit 0）。
+      # 這支檢查只用 node 內建模組、不需要 node_modules，所以放得進來。
+      - name: Verify the install-script gate is in effect (before installing)
+        run: node scripts/check-install-gate.mjs
 
       - name: Install dependencies
         run: npm ci

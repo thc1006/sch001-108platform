@@ -61,8 +61,12 @@ function readJson(file, label) {
  */
 function npm(args, cwd = ROOT) {
     const opts = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd };
+    // 只有確定是 npm 的 CLI 才直接餵給 node——pnpm 與 yarn 也會設 npm_execpath，
+    // 拿它們去問 npm 的設定會得到不同語意的答案（或根本不是這些鍵）。
     const cli = process.env.npm_execpath;
-    if (cli && cli.endsWith('.js')) return execFileSync(process.execPath, [cli, ...args], opts);
+    if (cli && /^npm(-cli)?\.c?js$/.test(path.basename(cli))) {
+        return execFileSync(process.execPath, [cli, ...args], opts);
+    }
     if (process.platform === 'win32') return execSync(['npm', ...args].join(' '), opts);
     return execFileSync('npm', args, opts);
 }
