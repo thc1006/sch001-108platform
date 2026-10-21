@@ -62,7 +62,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </div>
 
     <script is:inline src="https://js.puter.com/v2/"></script>
-    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- Static Data ---
         const staticTemplates = [
@@ -332,7 +332,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             try {
                 // 使用 Puter.js 呼叫 AI（含模型 fallback 與逾時保護）
-                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                const response = await PlatformAI.callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
 
@@ -358,7 +358,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", PuterAI.formatPuterError(error), error);
+                console.error("Error calling Puter.js or parsing JSON:", PlatformAI.formatError(error), error);
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {
                     planResult.innerHTML = `<p class="text-red-500 text-center">請求超時，請檢查網路連線後重試。</p>`;
                 } else {
@@ -371,12 +371,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         function displayAIPlan(data) {
             // 以下欄位皆為 AI 回應內容，可能含 markdown（如 **粗體**）。
-            // 改用 PuterAI.renderMarkdown()：它內部「先 HTML escape、後套 markdown」，
+            // 改用 PlatformAI.renderMarkdown()：它內部「先 HTML escape、後套 markdown」，
             // 故不可再額外呼叫 escapeHtml，否則會雙重跳脫（看到字面的 &amp; 等）。
-            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${PuterAI.renderMarkdown(obj)}</li>`).join('');
-            const methodsHtml = (data.execution_methods || []).map(met => `<li>${PuterAI.renderMarkdown(met)}</li>`).join('');
-            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${PuterAI.renderMarkdown(week.week)}:</b> ${PuterAI.renderMarkdown(week.tasks)}</li>`).join('');
-            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${PuterAI.renderMarkdown(out)}</li>`).join('');
+            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${PlatformAI.renderMarkdown(obj)}</li>`).join('');
+            const methodsHtml = (data.execution_methods || []).map(met => `<li>${PlatformAI.renderMarkdown(met)}</li>`).join('');
+            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${PlatformAI.renderMarkdown(week.week)}:</b> ${PlatformAI.renderMarkdown(week.tasks)}</li>`).join('');
+            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${PlatformAI.renderMarkdown(out)}</li>`).join('');
 
             planResult.innerHTML = `
                 <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">

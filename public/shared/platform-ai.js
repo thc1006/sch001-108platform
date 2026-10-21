@@ -1,19 +1,22 @@
 /**
- * Puter.js AI 共用 helper
+ * 網站 AI 功能的共用 helper（原 puter-ai.js／PuterAI）
  *
- * 暴露為 window.PuterAI = {
- *   MODELS, formatPuterError, callGeminiWithFallback,
+ * 暴露為 window.PlatformAI = {
+ *   MODELS, formatError, callGeminiWithFallback,
  *   log, getLogs, clearLogs, mountDebugPanel
  * }
  *
+ * 目前 AI 呼叫仍走 Puter.js（callGeminiWithFallback）；各頁逐一改用本地 LLM 閘道之後，
+ * Puter 相關的部分會整段移除。
+ *
  * 使用：
  *   <script src="https://js.puter.com/v2/"></script>
- *   <script src="/path/to/shared/puter-ai.js"></script>
- *   const resp = await PuterAI.callGeminiWithFallback(prompt, { signal: ... });
+ *   <script src="/path/to/shared/platform-ai.js"></script>
+ *   const resp = await PlatformAI.callGeminiWithFallback(prompt, { signal: ... });
  *
  * 前端 debug panel（使用者不用開 DevTools 也能看錯誤）：
  *   - URL 加 `?debug=1` 自動啟用
- *   - 或 localStorage.setItem('PUTER_DEBUG', '1') 持久啟用
+ *   - 或 localStorage.setItem('AI_DEBUG', '1') 持久啟用
  *   - panel 固定右下、可收合、可複製全部事件、可清空
  */
 (function (global) {
@@ -26,7 +29,7 @@
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
     // 自己的，於是不返回、把新版整個覆蓋掉——安靜降級成舊版行為。
-    if (global.PuterAI && global.PuterAI.__version >= VERSION) {
+    if (global.PlatformAI && global.PlatformAI.__version >= VERSION) {
         return; // 同版或更新的版本已經載入了
     }
 
@@ -73,7 +76,7 @@
     // ------------------------------------------------------------
     // 錯誤格式化：處理 Error / DOMException / Puter 純物件
     // ------------------------------------------------------------
-    function formatPuterError(err) {
+    function formatError(err) {
         if (err === null || err === undefined) return 'unknown';
 
         // Error、DOMException、或其他具 name/message 的物件
@@ -137,8 +140,8 @@
         // 時 console 多印一個 "null" 載荷
         var consoleFn = console[level] || console.log;
         try {
-            if (meta != null) consoleFn.call(console, '[PuterAI]', message, meta);
-            else consoleFn.call(console, '[PuterAI]', message);
+            if (meta != null) consoleFn.call(console, '[PlatformAI]', message, meta);
+            else consoleFn.call(console, '[PlatformAI]', message);
         } catch (_) {}
 
         // 若 panel 已掛載，追加顯示
@@ -160,7 +163,7 @@
             if (typeof window === 'undefined' || !window.location) return false;
             var qs = window.location.search || '';
             if (/[?&]debug=1(?:&|$)/.test(qs)) return true;
-            if (window.localStorage && window.localStorage.getItem('PUTER_DEBUG') === '1') return true;
+            if (window.localStorage && window.localStorage.getItem('AI_DEBUG') === '1') return true;
         } catch (_) {}
         return false;
     }
@@ -204,9 +207,9 @@
         }
 
         panelEl = document.createElement('div');
-        panelEl.id = 'puter-ai-debug-panel';
+        panelEl.id = 'ai-debug-panel';
         panelEl.setAttribute('role', 'region');
-        panelEl.setAttribute('aria-label', 'Puter AI Debug Log');
+        panelEl.setAttribute('aria-label', 'AI Debug Log');
         panelEl.style.cssText = [
             'position:fixed',
             'right:12px',
@@ -230,7 +233,7 @@
         header.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#1f2937;border-bottom:1px solid #374151;cursor:move;user-select:none';
 
         var title = document.createElement('strong');
-        title.textContent = '🔧 Puter AI Log';
+        title.textContent = '🔧 AI Log';
         title.style.flex = '1';
         title.style.fontSize = '12px';
         header.appendChild(title);
@@ -285,16 +288,16 @@
             if (bodyEl.style.display === 'none') {
                 bodyEl.style.display = 'block';
                 toggleBtn.textContent = '–';
-                toggleBtn.setAttribute('aria-label', 'Collapse Puter AI log');
+                toggleBtn.setAttribute('aria-label', 'Collapse AI log');
                 toggleBtn.setAttribute('aria-expanded', 'true');
             } else {
                 bodyEl.style.display = 'none';
                 toggleBtn.textContent = '+';
-                toggleBtn.setAttribute('aria-label', 'Expand Puter AI log');
+                toggleBtn.setAttribute('aria-label', 'Expand AI log');
                 toggleBtn.setAttribute('aria-expanded', 'false');
             }
         });
-        toggleBtn.setAttribute('aria-label', 'Collapse Puter AI log');
+        toggleBtn.setAttribute('aria-label', 'Collapse AI log');
         toggleBtn.setAttribute('aria-expanded', 'true');
 
         // dragCtrl 會在下方 addDrag 建立；closeBtn 關閉時透過 abort() 移除所有
@@ -308,7 +311,7 @@
             panelEl = null;
             bodyEl = null;
         });
-        closeBtn.setAttribute('aria-label', 'Close Puter AI log panel');
+        closeBtn.setAttribute('aria-label', 'Close AI log panel');
 
         header.appendChild(copyBtn);
         header.appendChild(clearBtn);
@@ -401,7 +404,7 @@
             return info;
         } catch (err) {
             // 已登入但拿不到使用者資訊：不阻斷後續 AI 呼叫
-            log('warn', '取得 Puter 使用者資訊失敗：' + formatPuterError(err));
+            log('warn', '取得 Puter 使用者資訊失敗：' + formatError(err));
             return null;
         }
     }
@@ -419,7 +422,7 @@
         try {
             signedIn = puter.auth.isSignedIn();
         } catch (err) {
-            log('warn', 'isSignedIn() 失敗，視為未登入：' + formatPuterError(err));
+            log('warn', 'isSignedIn() 失敗，視為未登入：' + formatError(err));
         }
         if (signedIn) return describeCurrentUser();
 
@@ -434,7 +437,7 @@
             } catch (err) {
                 // 使用者關閉 popup、popup 被擋、或轉向一般登入後放棄，都會走到這裡。
                 // 不 throw：讓後續 puter.ai.chat() 產生真正的錯誤，行為不比改動前差。
-                log('error', 'Puter 登入未完成：' + formatPuterError(err));
+                log('error', 'Puter 登入未完成：' + formatError(err));
                 return null;
             } finally {
                 signInPromise = null;
@@ -471,7 +474,7 @@
                 return result;
             } catch (err) {
                 lastErr = err;
-                var detail = formatPuterError(err);
+                var detail = formatError(err);
                 log('warn', '模型 ' + model + ' 失敗：' + detail, { name: err && err.name });
                 if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
                     log('error', '使用者取消或逾時，不再 fallback');
@@ -479,7 +482,7 @@
                 }
             }
         }
-        log('error', '所有模型皆失敗', { lastError: formatPuterError(lastErr) });
+        log('error', '所有模型皆失敗', { lastError: formatError(lastErr) });
         throw lastErr;
     }
 
@@ -575,10 +578,10 @@
     // ------------------------------------------------------------
     // 匯出
     // ------------------------------------------------------------
-    global.PuterAI = {
+    global.PlatformAI = {
         __version: VERSION,
         MODELS: MODELS,
-        formatPuterError: formatPuterError,
+        formatError: formatError,
         ensureSignedIn: ensureSignedIn,
         callGeminiWithFallback: callGeminiWithFallback,
         renderMarkdown: renderMarkdown,

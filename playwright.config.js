@@ -2,7 +2,7 @@
 const { defineConfig, devices } = require('@playwright/test');
 
 /**
- * 先前沒有這個設定檔，於是 tests/e2e/puter-ai.spec.js 的說明要求人工另開一個
+ * 先前沒有這個設定檔，於是 tests/e2e/platform-ai.spec.js（當時叫 puter-ai.spec.js）的說明要求人工另開一個
  * terminal 跑 `npm run serve`。結果是：測試從來沒有真的被跑過，也進不了 CI。
  *
  * webServer 讓 Playwright 自己把伺服器帶起來。用自寫的 Node 靜態伺服器而不是
@@ -31,7 +31,7 @@ module.exports = defineConfig({
         // 8000：repo 根目錄，給 tests/fixtures 用
         {
             command: 'node scripts/static-server.mjs 8000',
-            url: 'http://localhost:8000/tests/fixtures/puter-ai.html',
+            url: 'http://localhost:8000/tests/fixtures/platform-ai.html',
             reuseExistingServer: !process.env.CI,
             timeout: 30_000,
         },

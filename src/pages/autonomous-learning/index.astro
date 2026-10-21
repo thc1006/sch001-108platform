@@ -91,7 +91,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <script is:inline src="https://js.puter.com/v2/"></script>
-    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- AI Coach Logic ---
         const generateCoachBtn = document.getElementById('generateCoachBtn');
@@ -141,7 +141,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 請確保回應是有效的 JSON 格式。`;
 
             try {
-                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                const response = await PlatformAI.callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
 
@@ -182,7 +182,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 displayAIStarterPack(parsedJson);
 
             } catch (error) {
-                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
+                console.error("Error calling Puter.js:", PlatformAI.formatError(error), error);
                 coachResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
@@ -210,11 +210,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             container.className = 'bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg prose max-w-none';
 
             // 建議主題方向（AI 純文字，可能含 markdown）
-            // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
+            // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
             const topicTitle = document.createElement('h4');
             topicTitle.textContent = '建議主題方向';
             const topicText = document.createElement('p');
-            topicText.innerHTML = PuterAI.renderMarkdown(data.suggested_topic);
+            topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic);
 
             // 探索問題標題
             const questionsTitle = document.createElement('h4');
@@ -226,7 +226,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 探索問題為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
             data.research_questions.forEach(q => {
                 const li = document.createElement('li');
-                li.innerHTML = PuterAI.renderMarkdown(q);
+                li.innerHTML = PlatformAI.renderMarkdown(q);
                 questionsList.appendChild(li);
             });
 
