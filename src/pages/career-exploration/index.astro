@@ -145,7 +145,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
     <script is:inline src="https://js.puter.com/v2/"></script>
 
-    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -394,13 +394,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
 
                 // 使用流式輸出來獲取回應（串流輸出建議較長逾時）
-                const responseStream = await PuterAI.callGeminiWithFallback(prompt, {
+                const responseStream = await PlatformAI.callGeminiWithFallback(prompt, {
                     stream: true,
                     signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
                 });
 
                 // 逐字將 AI 回應安全地填入文字容器
-                // 累積文本後,每次以 PuterAI.renderMarkdown() 重新渲染整段。
+                // 累積文本後,每次以 PlatformAI.renderMarkdown() 重新渲染整段。
                 // renderMarkdown 內部「先 HTML escape、後套 markdown」,
                 // 故 innerHTML 注入是安全的,AI 無法插入可執行 HTML。
                 // 串流期間若 ** 尚未閉合,該段暫時維持字面,閉合後即正確。
@@ -408,13 +408,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 for await (const part of responseStream) {
                     if (part?.text) {
                         accumulatedText += part.text;
-                        aiTextElement.innerHTML = PuterAI.renderMarkdown(accumulatedText);
+                        aiTextElement.innerHTML = PlatformAI.renderMarkdown(accumulatedText);
                         chatWindow.scrollTop = chatWindow.scrollHeight; // 持續滾動到底部
                     }
                 }
 
             } catch (error) {
-                console.error("Error calling Puter.js AI:", PuterAI.formatPuterError(error), error);
+                console.error("Error calling Puter.js AI:", PlatformAI.formatError(error), error);
 
                 // 區分逾時錯誤和其他錯誤
                 if (error.name === 'TimeoutError' || error.name === 'AbortError') {

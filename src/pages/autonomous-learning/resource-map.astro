@@ -89,7 +89,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <script is:inline src="https://js.puter.com/v2/"></script>
-    <script is:inline src="../shared/puter-ai.js"></script>
+    <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- Static Data ---
         const resources = [
@@ -238,7 +238,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 請確保回應是有效的 JSON 格式。`;
 
             try {
-                const response = await PuterAI.callGeminiWithFallback(prompt, {
+                const response = await PlatformAI.callGeminiWithFallback(prompt, {
                     signal: AbortSignal.timeout(30000)
                 });
 
@@ -302,7 +302,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 displayAIPath(parsedJson.learning_path);
 
             } catch (error) {
-                console.error("Error calling Puter.js:", PuterAI.formatPuterError(error), error);
+                console.error("Error calling Puter.js:", PlatformAI.formatError(error), error);
                 pathResult.textContent = '';
                 const errorP = document.createElement('p');
                 errorP.className = 'text-red-500 text-center';
@@ -336,17 +336,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 badge.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold mr-2';
                 badge.textContent = step.step;
                 // 標題與描述為 AI 回應內容，可能含 markdown（如 **粗體**）。
-                // PuterAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
+                // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
                 const title = document.createElement('h4');
                 title.className = 'font-bold text-lg text-indigo-800';
-                title.innerHTML = PuterAI.renderMarkdown(step.title);
+                title.innerHTML = PlatformAI.renderMarkdown(step.title);
                 stepNum.appendChild(badge);
                 stepNum.appendChild(title);
 
                 // 描述（AI 純文字，可能含 markdown）
                 const desc = document.createElement('p');
                 desc.className = 'text-gray-700 mt-2 mb-3';
-                desc.innerHTML = PuterAI.renderMarkdown(step.description);
+                desc.innerHTML = PlatformAI.renderMarkdown(step.description);
 
                 // 資源類型標籤
                 const resourceContainer = document.createElement('div');
@@ -369,7 +369,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // 行動建議為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 const actionText = document.createElement('p');
                 actionText.className = 'text-sm text-gray-800';
-                actionText.innerHTML = PuterAI.renderMarkdown(step.actionable_suggestion);
+                actionText.innerHTML = PlatformAI.renderMarkdown(step.actionable_suggestion);
                 actionContainer.appendChild(actionLabel);
                 actionContainer.appendChild(actionText);
 

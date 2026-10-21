@@ -1,12 +1,12 @@
 /**
- * PuterAI helper 單元測試（以 Playwright 執行）
+ * PlatformAI helper 單元測試（以 Playwright 執行）
  *
  * 前置：
  *   npm ci
  *   npx playwright install chromium
  *
  * 執行：
- *   npx playwright test tests/e2e/puter-ai.spec.js
+ *   npx playwright test tests/e2e/platform-ai.spec.js
  *
  * 伺服器由 playwright.config.js 的 webServer 自動啟動，不需要另開 terminal。
  * 先前沒有那個設定檔（而且 .gitignore 還把它擋掉了），說明文件要求人工跑
@@ -17,31 +17,31 @@ const { test, expect } = require('@playwright/test');
 
 // 允許透過 BASE_URL 環境變數覆寫測試伺服器位置，方便 port 8000 被占用時切換
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8000';
-const FIXTURE_URL = BASE_URL + '/tests/fixtures/puter-ai.html';
+const FIXTURE_URL = BASE_URL + '/tests/fixtures/platform-ai.html';
 
 async function gotoFixture(page, queryString = '') {
     await page.goto(FIXTURE_URL + queryString);
-    // 等待 shared/puter-ai.js 載入完成
-    await page.waitForFunction(() => window.__READY__ === true && typeof window.PuterAI === 'object');
+    // 等待 shared/platform-ai.js 載入完成
+    await page.waitForFunction(() => window.__READY__ === true && typeof window.PlatformAI === 'object');
 }
 
-test.describe('PuterAI 共用 module', () => {
+test.describe('PlatformAI 共用 module', () => {
 
     test.describe('全域物件', () => {
-        // 這一頁有九個 .astro 頁面各自寫一行 <script src=".../puter-ai.js">，而使用者
+        // 這一頁有九個 .astro 頁面各自寫一行 <script src=".../platform-ai.js">，而使用者
         // 在站內移動時瀏覽器快取、bfcache、以及日後可能出現的第三方嵌入都會讓同一份
         // 腳本被載入不只一次。守衛原本寫的是 __version === 3：一旦有一份**比較舊**的
         // 副本在新版之後跑起來，它會發現版號不等於自己的，於是不返回、把新版整個
         // 覆蓋掉——安靜降級，而且沒有任何地方會出聲。
         test('已載入的新版不得被後來跑起來的舊版覆蓋', async ({ page }) => {
             await page.addInitScript(() => {
-                window.PuterAI = { __version: 99, __sentinel: 'newer' };
+                window.PlatformAI = { __version: 99, __sentinel: 'newer' };
             });
             await page.goto(FIXTURE_URL);
             await page.waitForFunction(() => window.__READY__ === true);
             const after = await page.evaluate(() => ({
-                version: window.PuterAI.__version,
-                sentinel: window.PuterAI.__sentinel,
+                version: window.PlatformAI.__version,
+                sentinel: window.PlatformAI.__sentinel,
             }));
             expect(after.version).toBe(99);
             expect(after.sentinel).toBe('newer');
@@ -50,29 +50,29 @@ test.describe('PuterAI 共用 module', () => {
         // 反向：舊版或沒版號的殘留不得擋住這一份真的載入。
         test('版號較舊的殘留不得擋住新版載入', async ({ page }) => {
             await page.addInitScript(() => {
-                window.PuterAI = { __version: 1, __sentinel: 'older' };
+                window.PlatformAI = { __version: 1, __sentinel: 'older' };
             });
             await gotoFixture(page);
             const after = await page.evaluate(() => ({
-                version: window.PuterAI.__version,
-                sentinel: window.PuterAI.__sentinel,
-                hasCall: typeof window.PuterAI.callGeminiWithFallback === 'function',
+                version: window.PlatformAI.__version,
+                sentinel: window.PlatformAI.__sentinel,
+                hasCall: typeof window.PlatformAI.callGeminiWithFallback === 'function',
             }));
             expect(after.version).toBeGreaterThan(1);
             expect(after.sentinel).toBeUndefined();
             expect(after.hasCall).toBe(true);
         });
 
-        test('PuterAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
+        test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
-                defined: typeof window.PuterAI === 'object',
-                version: window.PuterAI.__version,
-                hasFormat: typeof window.PuterAI.formatPuterError === 'function',
-                hasCall: typeof window.PuterAI.callGeminiWithFallback === 'function',
-                hasLog: typeof window.PuterAI.log === 'function',
-                hasMount: typeof window.PuterAI.mountDebugPanel === 'function',
-                models: window.PuterAI.MODELS,
+                defined: typeof window.PlatformAI === 'object',
+                version: window.PlatformAI.__version,
+                hasFormat: typeof window.PlatformAI.formatError === 'function',
+                hasCall: typeof window.PlatformAI.callGeminiWithFallback === 'function',
+                hasLog: typeof window.PlatformAI.log === 'function',
+                hasMount: typeof window.PlatformAI.mountDebugPanel === 'function',
+                models: window.PlatformAI.MODELS,
             }));
             expect(info.defined).toBe(true);
             // 這一支驗的是「共用 module 載進來了、介面完整」，版號是附帶資訊。
@@ -93,22 +93,22 @@ test.describe('PuterAI 共用 module', () => {
         });
     });
 
-    test.describe('formatPuterError', () => {
+    test.describe('formatError', () => {
         test.beforeEach(async ({ page }) => { await gotoFixture(page); });
 
         test('null / undefined → "unknown"', async ({ page }) => {
-            expect(await page.evaluate(() => PuterAI.formatPuterError(null))).toBe('unknown');
-            expect(await page.evaluate(() => PuterAI.formatPuterError(undefined))).toBe('unknown');
+            expect(await page.evaluate(() => PlatformAI.formatError(null))).toBe('unknown');
+            expect(await page.evaluate(() => PlatformAI.formatError(undefined))).toBe('unknown');
         });
 
         test('Error instance', async ({ page }) => {
-            const r = await page.evaluate(() => PuterAI.formatPuterError(new TypeError('bad input')));
+            const r = await page.evaluate(() => PlatformAI.formatError(new TypeError('bad input')));
             expect(r).toBe('TypeError: bad input');
         });
 
         test('DOMException (AbortError) — 關鍵：舊版不 instanceof Error', async ({ page }) => {
             const r = await page.evaluate(() =>
-                PuterAI.formatPuterError(new DOMException('aborted by user', 'AbortError'))
+                PlatformAI.formatError(new DOMException('aborted by user', 'AbortError'))
             );
             expect(r).toContain('AbortError');
             expect(r).toContain('aborted by user');
@@ -116,14 +116,14 @@ test.describe('PuterAI 共用 module', () => {
 
         test('DOMException (TimeoutError)', async ({ page }) => {
             const r = await page.evaluate(() =>
-                PuterAI.formatPuterError(new DOMException('timed out', 'TimeoutError'))
+                PlatformAI.formatError(new DOMException('timed out', 'TimeoutError'))
             );
             expect(r).toContain('TimeoutError');
             expect(r).toContain('timed out');
         });
 
         test('Puter 巢狀物件 {error:{code,message}}', async ({ page }) => {
-            const r = await page.evaluate(() => PuterAI.formatPuterError({
+            const r = await page.evaluate(() => PlatformAI.formatError({
                 success: false,
                 error: { code: 'rate_limit_exceeded', message: 'quota hit' }
             }));
@@ -131,7 +131,7 @@ test.describe('PuterAI 共用 module', () => {
         });
 
         test('Puter 字串型 {error:"..."}', async ({ page }) => {
-            const r = await page.evaluate(() => PuterAI.formatPuterError({ error: 'simple string' }));
+            const r = await page.evaluate(() => PlatformAI.formatError({ error: 'simple string' }));
             expect(r).toBe('simple string');
         });
 
@@ -139,19 +139,19 @@ test.describe('PuterAI 共用 module', () => {
             const r = await page.evaluate(() => {
                 const a = { x: 1 };
                 a.self = a;
-                return PuterAI.formatPuterError(a);
+                return PlatformAI.formatError(a);
             });
             // a 沒 name/message/error，會落到 safeStringify
             expect(r).toContain('[Circular]');
         });
 
         test('BigInt 不會讓 stringify 炸掉', async ({ page }) => {
-            const r = await page.evaluate(() => PuterAI.formatPuterError({ value: 12345678901234567890n }));
+            const r = await page.evaluate(() => PlatformAI.formatError({ value: 12345678901234567890n }));
             expect(r).toContain('12345678901234567890');
         });
 
         test('具 name+message 的物件但附帶 error.code → 顯示 code + name + message', async ({ page }) => {
-            const r = await page.evaluate(() => PuterAI.formatPuterError({
+            const r = await page.evaluate(() => PlatformAI.formatError({
                 name: 'APIError',
                 message: 'server refused',
                 error: { code: 'forbidden' }
@@ -160,17 +160,17 @@ test.describe('PuterAI 共用 module', () => {
         });
 
         test('string 型 error 不加多餘引號（回歸：Copilot review 指出）', async ({ page }) => {
-            // formatPuterError("oops") 應回傳 "oops" 而非 '"oops"'
-            const r = await page.evaluate(() => PuterAI.formatPuterError('oops'));
+            // formatError("oops") 應回傳 "oops" 而非 '"oops"'
+            const r = await page.evaluate(() => PlatformAI.formatError('oops'));
             expect(r).toBe('oops');
         });
 
         test('function / symbol 型 error 不會讓回傳變 undefined（回歸：Copilot review 指出）', async ({ page }) => {
             const results = await page.evaluate(() => ({
-                fn: PuterAI.formatPuterError(function badInput() {}),
-                sym: PuterAI.formatPuterError(Symbol('x')),
-                num: PuterAI.formatPuterError(42),
-                bool: PuterAI.formatPuterError(true),
+                fn: PlatformAI.formatError(function badInput() {}),
+                sym: PlatformAI.formatError(Symbol('x')),
+                num: PlatformAI.formatError(42),
+                bool: PlatformAI.formatError(true),
             }));
             // 全部應為非空字串，契約「回傳 string」不破損
             expect(typeof results.fn).toBe('string');
@@ -200,7 +200,7 @@ test.describe('PuterAI 共用 module', () => {
                         }
                     }
                 };
-                const r = await PuterAI.callGeminiWithFallback('hi');
+                const r = await PlatformAI.callGeminiWithFallback('hi');
                 return { calls, content: r.message.content };
             });
             expect(result.calls).toEqual(['gemini-3.1-pro-preview', 'gemini-2.5-pro']);
@@ -217,7 +217,7 @@ test.describe('PuterAI 共用 module', () => {
                     }
                 };
                 try {
-                    await PuterAI.callGeminiWithFallback('hi');
+                    await PlatformAI.callGeminiWithFallback('hi');
                     return { thrown: false };
                 } catch (e) {
                     return { thrown: true, code: e && e.error && e.error.code };
@@ -239,7 +239,7 @@ test.describe('PuterAI 共用 module', () => {
                     }
                 };
                 try {
-                    await PuterAI.callGeminiWithFallback('hi');
+                    await PlatformAI.callGeminiWithFallback('hi');
                     return { thrown: false };
                 } catch (e) {
                     return { thrown: true, name: e.name, calls };
@@ -262,7 +262,7 @@ test.describe('PuterAI 共用 module', () => {
                     }
                 };
                 try {
-                    await PuterAI.callGeminiWithFallback('hi');
+                    await PlatformAI.callGeminiWithFallback('hi');
                     return { thrown: false };
                 } catch (e) {
                     return { thrown: true, name: e.name, calls };
@@ -277,7 +277,7 @@ test.describe('PuterAI 共用 module', () => {
             const result = await page.evaluate(async () => {
                 delete window.puter;
                 try {
-                    await PuterAI.callGeminiWithFallback('hi');
+                    await PlatformAI.callGeminiWithFallback('hi');
                     return { thrown: false };
                 } catch (e) {
                     return { thrown: true, message: e.message };
@@ -299,7 +299,7 @@ test.describe('PuterAI 共用 module', () => {
                     }
                 };
                 const ctrl = new AbortController();
-                await PuterAI.callGeminiWithFallback('hi', {
+                await PlatformAI.callGeminiWithFallback('hi', {
                     signal: ctrl.signal,
                     stream: true,
                     temperature: 0.7,
@@ -323,10 +323,10 @@ test.describe('PuterAI 共用 module', () => {
 
         test('log 事件會被收集', async ({ page }) => {
             const logs = await page.evaluate(() => {
-                PuterAI.clearLogs();
-                PuterAI.log('info', 'hello');
-                PuterAI.log('warn', 'yikes', { detail: 42 });
-                return PuterAI.getLogs();
+                PlatformAI.clearLogs();
+                PlatformAI.log('info', 'hello');
+                PlatformAI.log('warn', 'yikes', { detail: 42 });
+                return PlatformAI.getLogs();
             });
             expect(logs.length).toBe(2);
             expect(logs[0].level).toBe('info');
@@ -337,9 +337,9 @@ test.describe('PuterAI 共用 module', () => {
 
         test('clearLogs 清空', async ({ page }) => {
             const count = await page.evaluate(() => {
-                PuterAI.log('info', 'a');
-                PuterAI.clearLogs();
-                return PuterAI.getLogs().length;
+                PlatformAI.log('info', 'a');
+                PlatformAI.clearLogs();
+                return PlatformAI.getLogs().length;
             });
             expect(count).toBe(0);
         });
@@ -348,11 +348,11 @@ test.describe('PuterAI 共用 module', () => {
             await gotoFixture(page, '?debug=1');
             // 只保留我們要驗的兩筆，方便斷言
             const { noMetaLine, withMetaLine } = await page.evaluate(() => {
-                PuterAI.clearLogs();
-                PuterAI.log('info', 'NO_META_MARKER', null);
-                PuterAI.log('info', 'WITH_META_MARKER', { foo: 'bar' });
+                PlatformAI.clearLogs();
+                PlatformAI.log('info', 'NO_META_MARKER', null);
+                PlatformAI.log('info', 'WITH_META_MARKER', { foo: 'bar' });
                 // 取出 panel 內每一行的 textContent（panel > body > 每行是一個 div）
-                const body = document.querySelector('#puter-ai-debug-panel > div:nth-of-type(2)');
+                const body = document.querySelector('#ai-debug-panel > div:nth-of-type(2)');
                 const lines = Array.from(body.querySelectorAll(':scope > div'))
                     .map(div => div.textContent);
                 return {
@@ -370,7 +370,7 @@ test.describe('PuterAI 共用 module', () => {
 
         test('callGeminiWithFallback 會寫入 log', async ({ page }) => {
             const logs = await page.evaluate(async () => {
-                PuterAI.clearLogs();
+                PlatformAI.clearLogs();
                 window.puter = {
                     ai: {
                         chat: async (prompt, opts) => {
@@ -381,8 +381,8 @@ test.describe('PuterAI 共用 module', () => {
                         }
                     }
                 };
-                await PuterAI.callGeminiWithFallback('hi');
-                return PuterAI.getLogs();
+                await PlatformAI.callGeminiWithFallback('hi');
+                return PlatformAI.getLogs();
             });
             // 至少應有：開始、模型 1 失敗、模型 2 成功
             expect(logs.length).toBeGreaterThanOrEqual(3);
@@ -395,36 +395,36 @@ test.describe('PuterAI 共用 module', () => {
     test.describe('Debug panel', () => {
         test('手動 mountDebugPanel 會插入 DOM 元素', async ({ page }) => {
             await gotoFixture(page);
-            await page.evaluate(() => PuterAI.mountDebugPanel());
-            await expect(page.locator('#puter-ai-debug-panel')).toBeVisible();
+            await page.evaluate(() => PlatformAI.mountDebugPanel());
+            await expect(page.locator('#ai-debug-panel')).toBeVisible();
         });
 
         test('?debug=1 會自動掛載 panel', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
-            await expect(page.locator('#puter-ai-debug-panel')).toBeVisible();
+            await expect(page.locator('#ai-debug-panel')).toBeVisible();
         });
 
-        test('localStorage.PUTER_DEBUG 會自動掛載 panel', async ({ page, context }) => {
+        test('localStorage.AI_DEBUG 會自動掛載 panel', async ({ page, context }) => {
             // 先拜訪 fixture 以便設定 localStorage（同源）
             await page.goto(FIXTURE_URL);
-            await page.evaluate(() => localStorage.setItem('PUTER_DEBUG', '1'));
-            // 重新載入，此時 shared/puter-ai.js 執行時會讀到 flag
+            await page.evaluate(() => localStorage.setItem('AI_DEBUG', '1'));
+            // 重新載入，此時 shared/platform-ai.js 執行時會讀到 flag
             await page.reload();
             await page.waitForFunction(() => window.__READY__ === true);
-            await expect(page.locator('#puter-ai-debug-panel')).toBeVisible();
+            await expect(page.locator('#ai-debug-panel')).toBeVisible();
             // 清掉避免影響下一個測試
-            await page.evaluate(() => localStorage.removeItem('PUTER_DEBUG'));
+            await page.evaluate(() => localStorage.removeItem('AI_DEBUG'));
         });
 
         test('未啟用時不掛載 panel', async ({ page }) => {
             await gotoFixture(page);
-            const count = await page.locator('#puter-ai-debug-panel').count();
+            const count = await page.locator('#ai-debug-panel').count();
             expect(count).toBe(0);
         });
 
         test('header mousedown 落在按鈕上不觸發拖曳（回歸：Copilot review 指出）', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
-            const panel = page.locator('#puter-ai-debug-panel');
+            const panel = page.locator('#ai-debug-panel');
             await expect(panel).toBeVisible();
             const initialPos = await panel.evaluate(el => {
                 const r = el.getBoundingClientRect();
@@ -448,7 +448,7 @@ test.describe('PuterAI 共用 module', () => {
 
         test('close + remount 後拖曳仍正常且無 listener 洩漏（回歸：Copilot review 指出）', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
-            const panel = page.locator('#puter-ai-debug-panel');
+            const panel = page.locator('#ai-debug-panel');
             await expect(panel).toBeVisible();
 
             // 關閉 panel，應觸發 dragCtrl.abort() 移除 document-level listeners
@@ -466,7 +466,7 @@ test.describe('PuterAI 共用 module', () => {
             expect(errors).toHaveLength(0);
 
             // 重新 mount 新 panel，拖曳應在新 panel 上生效（不是被舊 listener 干擾）
-            await page.evaluate(() => PuterAI.mountDebugPanel());
+            await page.evaluate(() => PlatformAI.mountDebugPanel());
             await expect(panel).toBeVisible();
 
             const before = await panel.evaluate(el => {
@@ -493,12 +493,12 @@ test.describe('PuterAI 共用 module', () => {
         test('log 超過 MAX_LOGS 時 panel DOM 同步限長（回歸：Copilot review 指出）', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
             const { logCount, domCount } = await page.evaluate(() => {
-                PuterAI.clearLogs();
+                PlatformAI.clearLogs();
                 // 推 210 筆超過預設 MAX_LOGS=200
-                for (let i = 0; i < 210; i++) PuterAI.log('info', 'msg-' + i);
-                const body = document.querySelector('#puter-ai-debug-panel > div:nth-of-type(2)');
+                for (let i = 0; i < 210; i++) PlatformAI.log('info', 'msg-' + i);
+                const body = document.querySelector('#ai-debug-panel > div:nth-of-type(2)');
                 return {
-                    logCount: PuterAI.getLogs().length,
+                    logCount: PlatformAI.getLogs().length,
                     domCount: body.children.length,
                 };
             });
@@ -512,7 +512,7 @@ test.describe('PuterAI 共用 module', () => {
 
         test('toggle / close 按鈕具有可訪問的 aria-label（回歸：Copilot A11Y）', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
-            const panel = page.locator('#puter-ai-debug-panel');
+            const panel = page.locator('#ai-debug-panel');
             await expect(panel).toBeVisible();
 
             const closeBtn = panel.locator('button', { hasText: /^×$/ });
@@ -532,15 +532,15 @@ test.describe('PuterAI 共用 module', () => {
         test('panel 內 Clear 按鈕會清空 log 顯示', async ({ page }) => {
             await gotoFixture(page, '?debug=1');
             await page.evaluate(() => {
-                PuterAI.log('info', 'first');
-                PuterAI.log('warn', 'second');
+                PlatformAI.log('info', 'first');
+                PlatformAI.log('warn', 'second');
             });
             // 預期 panel body 內有 2 行
-            const panel = page.locator('#puter-ai-debug-panel');
+            const panel = page.locator('#ai-debug-panel');
             await expect(panel).toBeVisible();
             // 點 Clear
             await panel.getByRole('button', { name: 'Clear' }).click();
-            const logsLeft = await page.evaluate(() => PuterAI.getLogs().length);
+            const logsLeft = await page.evaluate(() => PlatformAI.getLogs().length);
             expect(logsLeft).toBe(0);
         });
     });
@@ -559,7 +559,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => ({ message: { content: 'ok' } }) }
                 };
-                const info = await PuterAI.ensureSignedIn();
+                const info = await PlatformAI.ensureSignedIn();
                 return { calls, info };
             });
             expect(result.calls).toHaveLength(1);
@@ -578,7 +578,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => ({ message: { content: 'ok' } }) }
                 };
-                const info = await PuterAI.ensureSignedIn();
+                const info = await PlatformAI.ensureSignedIn();
                 return { signInCount, info };
             });
             expect(result.signInCount).toBe(0);
@@ -597,7 +597,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => ({ message: { content: 'ok' } }) }
                 };
-                return PuterAI.ensureSignedIn();
+                return PlatformAI.ensureSignedIn();
             });
             expect(info).toEqual({ username: 'existing_person', temporary: false });
         });
@@ -619,9 +619,9 @@ test.describe('PuterAI 共用 module', () => {
                     ai: { chat: async () => ({ message: { content: 'ok' } }) }
                 };
                 await Promise.all([
-                    PuterAI.ensureSignedIn(),
-                    PuterAI.ensureSignedIn(),
-                    PuterAI.ensureSignedIn()
+                    PlatformAI.ensureSignedIn(),
+                    PlatformAI.ensureSignedIn(),
+                    PlatformAI.ensureSignedIn()
                 ]);
                 return signInCount;
             });
@@ -638,7 +638,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => ({ message: { content: 'still works' } }) }
                 };
-                const r = await PuterAI.callGeminiWithFallback('hi');
+                const r = await PlatformAI.callGeminiWithFallback('hi');
                 return r.message.content;
             });
             expect(result).toBe('still works');
@@ -647,8 +647,8 @@ test.describe('PuterAI 共用 module', () => {
         test('puter.auth 不存在時優雅降級（相容既有 mock）', async ({ page }) => {
             const result = await page.evaluate(async () => {
                 window.puter = { ai: { chat: async () => ({ message: { content: 'no auth api' } }) } };
-                const info = await PuterAI.ensureSignedIn();
-                const r = await PuterAI.callGeminiWithFallback('hi');
+                const info = await PlatformAI.ensureSignedIn();
+                const r = await PlatformAI.callGeminiWithFallback('hi');
                 return { info, content: r.message.content };
             });
             expect(result.info).toBeNull();
@@ -668,7 +668,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => { seq.push('chat'); return { message: { content: 'ok' } }; } }
                 };
-                await PuterAI.callGeminiWithFallback('hi');
+                await PlatformAI.callGeminiWithFallback('hi');
                 return seq;
             });
             expect(order.indexOf('signIn')).toBeLessThan(order.indexOf('chat'));
@@ -686,7 +686,7 @@ test.describe('PuterAI 共用 module', () => {
                     },
                     ai: { chat: async () => ({ message: { content: 'ok' } }) }
                 };
-                const info = await PuterAI.ensureSignedIn();
+                const info = await PlatformAI.ensureSignedIn();
                 return { calls, info };
             });
             expect(result.calls).toHaveLength(1);
