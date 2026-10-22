@@ -643,6 +643,27 @@ test('文字任務：delta 只供即時顯示，done.result 是去掉頭尾空�
     }
 });
 
+test('文字任務：簡體字在片段與結果裡都轉成台灣繁體；切在兩段之間的字（拮据、emoji）也一致', async () => {
+    // 第三段切在 emoji 的兩個 UTF-16 單位中間
+    const pieces = ['先做数', '据收集，经济拮', '据也没问题 \u{1F600}'.slice(0, 7), '据也没问题 \u{1F600}'.slice(7), '。'];
+    const raw = pieces.join('');
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            for (const piece of pieces) hooks.onContent(piece);
+            return { content: raw, rounds: 1, continuations: [], usage: { promptTokens: 1, completionTokens: 3, reasoningTokens: 0 } };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼開始？' }));
+        const text = events.filter((e) => e.event === 'delta').map((e) => e.data.text).join('');
+        const done = events.find((e) => e.event === 'done');
+        assert.equal(text, '先做數據收集，經濟拮据也沒問題 \u{1F600}。');
+        assert.equal(done.data.result, text);
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('進度事件會節流：同一階段的大量更新最多每 500ms 一次，但階段改變立刻送', async () => {
     const gw = await startGateway({
         generate: async (request, hooks) => {

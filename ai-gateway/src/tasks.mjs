@@ -24,6 +24,7 @@ import { randomBytes } from 'node:crypto';
 
 import { neutralizeControlTokens } from './control-tokens.mjs';
 import { assertSupportedSchema, validate, toResponseFormat, extractJson, SchemaMismatch } from './schema.mjs';
+import { toTraditional } from './s2t.mjs';
 
 export const SYSTEM_PROMPT = [
     '你是「台灣教育處方籤」平台的 AI 學習顧問，服務對象是台灣的高中生。',
@@ -223,18 +224,38 @@ function describeParseFailure(err, content) {
     return `${err?.name || 'Error'}（正文 ${String(content).length} 字）`;
 }
 
-/** 把模型的正文轉成前端拿到的結果：JSON 任務是驗證過的物件，文字任務是去掉前後空白的字串 */
+// 把物件與陣列裡所有的字串值轉成台灣繁體（遞迴）。鍵不動：鍵是規格裡的屬性名稱，驗證時已經比對過
+function traditionalizeStrings(value) {
+    if (typeof value === 'string') return toTraditional(value);
+    if (Array.isArray(value)) return value.map((item) => traditionalizeStrings(item));
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, traditionalizeStrings(item)]));
+    }
+    return value;
+}
+
+/**
+ * 把模型的正文轉成前端拿到的結果：JSON 任務是驗證過的物件，文字任務是去掉前後空白的字串。
+ * 零星冒出的簡體字先轉成台灣繁體（s2t.mjs）。JSON 在解析之前轉：只換中文字，碰不到 JSON 的
+ * 結構字元；而且重寫過的輪次不受 response_format 約束，enum 的值要轉過才比對得上。
+ * 解析之後再把字串值轉一次：模型若把字寫成 \uXXXX 跳脫序列，原文裡看不到簡體字，解析前的
+ * 轉換碰不到，解碼之後才冒出來（實測 数据 寫成跳脫序列，解析後仍是簡體）。轉換是冪等的，
+ * 轉兩次不會改壞
+ */
 export function finalizeOutput(task, content) {
+    const traditional = toTraditional(content);
     if (task.output.type === 'markdown') {
-        const text = String(content).trim();
+        const text = traditional.trim();
         if (!text) throw new TaskError('empty', 'AI 沒有產生內容');
         return text;
     }
+    let parsed;
     try {
-        return extractJson(content, task.output.schema);
+        parsed = extractJson(traditional, task.output.schema);
     } catch (err) {
         // 驗證錯誤的描述只有路徑與規格（見 schema.mjs 的 validate），可以進 log
         if (err instanceof SchemaMismatch) throw new TaskError('format', 'AI 回覆的內容不符合格式', { detail: err.problem });
         throw new TaskError('format', 'AI 回覆的格式無法解析', { detail: describeParseFailure(err, content) });
     }
+    return traditionalizeStrings(parsed);
 }

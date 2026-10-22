@@ -36,6 +36,7 @@ import { generate, GenerationError } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
 import { SlotGate, ClientLimiter, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, TaskError } from './tasks.mjs';
+import { createTraditionalStream } from './s2t.mjs';
 
 // 進度事件最多每 500ms 一次；階段改變時立刻送
 const PROGRESS_INTERVAL_MS = 500;
@@ -645,6 +646,13 @@ export function createGateway({
                 }
             };
 
+            // 文字任務的片段同樣先轉成台灣繁體（跟 finalizeOutput 用同一張表），送出去的片段接起來
+            // 才會等於 done 的結果。轉換器記得上一段的最後一個字，切在兩段之間的字也轉得對
+            const traditional = createTraditionalStream();
+            const sendDelta = (text) => {
+                const converted = traditional(text);
+                if (converted) send('delta', { text: converted });
+            };
             generationStarted = true;
             // 任務自己的時限比較短時用它（tasks.mjs 的 timeoutMs）
             const taskLlm = task.timeoutMs < llm.taskTimeoutMs ? { ...llm, taskTimeoutMs: task.timeoutMs } : llm;
@@ -656,10 +664,14 @@ export function createGateway({
             }, {
                 signal: abort.signal,
                 onProgress,
-                onContent: task.output.type === 'markdown' ? (text) => send('delta', { text }) : undefined,
+                onContent: task.output.type === 'markdown' ? sendDelta : undefined,
             });
             clearTimeout(progressTimer);
             result = generated;
+            if (task.output.type === 'markdown') {
+                const rest = traditional.flush();
+                if (rest) send('delta', { text: rest });
+            }
             const output = finalizeOutput(task, generated.content);
             send('done', {
                 result: output,
