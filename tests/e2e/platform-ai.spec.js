@@ -188,11 +188,11 @@ test.describe('PlatformAI 共用 module', () => {
             const after = await page.evaluate(() => ({
                 version: window.PlatformAI.__version,
                 sentinel: window.PlatformAI.__sentinel,
-                hasCall: typeof window.PlatformAI.callGeminiWithFallback === 'function',
+                hasRunTask: typeof window.PlatformAI.runTask === 'function',
             }));
             expect(after.version).toBeGreaterThan(1);
             expect(after.sentinel).toBeUndefined();
-            expect(after.hasCall).toBe(true);
+            expect(after.hasRunTask).toBe(true);
         });
 
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
@@ -201,14 +201,13 @@ test.describe('PlatformAI 共用 module', () => {
                 defined: typeof window.PlatformAI === 'object',
                 version: window.PlatformAI.__version,
                 hasFormat: typeof window.PlatformAI.formatError === 'function',
-                hasCall: typeof window.PlatformAI.callGeminiWithFallback === 'function',
                 hasLog: typeof window.PlatformAI.log === 'function',
                 hasMount: typeof window.PlatformAI.mountDebugPanel === 'function',
                 hasRunTask: typeof window.PlatformAI.runTask === 'function',
                 hasDescribe: typeof window.PlatformAI.describeError === 'function',
                 hasProgress: typeof window.PlatformAI.mountProgress === 'function',
                 hasGatewayUrl: typeof window.PlatformAI.getGatewayUrl === 'function',
-                models: window.PlatformAI.MODELS,
+                puterApi: ['callGeminiWithFallback', 'ensureSignedIn', 'MODELS'].filter((key) => key in window.PlatformAI),
             }));
             expect(info.defined).toBe(true);
             // 這一支驗的是「共用 module 載進來了、介面完整」，版號是附帶資訊。
@@ -218,18 +217,13 @@ test.describe('PlatformAI 共用 module', () => {
             expect(Number.isInteger(info.version)).toBe(true);
             expect(info.version).toBeGreaterThan(0);
             expect(info.hasFormat).toBe(true);
-            expect(info.hasCall).toBe(true);
             expect(info.hasLog).toBe(true);
             expect(info.hasMount).toBe(true);
             expect(info.hasRunTask).toBe(true);
             expect(info.hasDescribe).toBe(true);
             expect(info.hasProgress).toBe(true);
             expect(info.hasGatewayUrl).toBe(true);
-            expect(info.models).toEqual([
-                'gemini-3.1-pro-preview',
-                'gemini-2.5-pro',
-                'gemini-3-flash-preview',
-            ]);
+            expect(info.puterApi).toEqual([]);
         });
     });
 
@@ -262,41 +256,19 @@ test.describe('PlatformAI 共用 module', () => {
             expect(r).toContain('timed out');
         });
 
-        test('Puter 巢狀物件 {error:{code,message}}', async ({ page }) => {
-            const r = await page.evaluate(() => PlatformAI.formatError({
-                success: false,
-                error: { code: 'rate_limit_exceeded', message: 'quota hit' }
-            }));
-            expect(r).toBe('[rate_limit_exceeded] quota hit');
-        });
-
-        test('Puter 字串型 {error:"..."}', async ({ page }) => {
-            const r = await page.evaluate(() => PlatformAI.formatError({ error: 'simple string' }));
-            expect(r).toBe('simple string');
-        });
-
         test('循環引用不會拋錯（safeStringify）', async ({ page }) => {
             const r = await page.evaluate(() => {
                 const a = { x: 1 };
                 a.self = a;
                 return PlatformAI.formatError(a);
             });
-            // a 沒 name/message/error，會落到 safeStringify
+            // a 沒有 name 與 message，會落到 safeStringify
             expect(r).toContain('[Circular]');
         });
 
         test('BigInt 不會讓 stringify 炸掉', async ({ page }) => {
             const r = await page.evaluate(() => PlatformAI.formatError({ value: 12345678901234567890n }));
             expect(r).toContain('12345678901234567890');
-        });
-
-        test('具 name+message 的物件但附帶 error.code → 顯示 code + name + message', async ({ page }) => {
-            const r = await page.evaluate(() => PlatformAI.formatError({
-                name: 'APIError',
-                message: 'server refused',
-                error: { code: 'forbidden' }
-            }));
-            expect(r).toBe('[forbidden] APIError: server refused');
         });
 
         test('string 型 error 不加多餘引號（回歸：Copilot review 指出）', async ({ page }) => {
@@ -320,141 +292,6 @@ test.describe('PlatformAI 共用 module', () => {
             expect(results.sym).toContain('Symbol');
             expect(results.num).toBe('42');
             expect(results.bool).toBe('true');
-        });
-    });
-
-    test.describe('callGeminiWithFallback', () => {
-        test.beforeEach(async ({ page }) => { await gotoFixture(page); });
-
-        test('第一個模型失敗 → 自動試第二個', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                const calls = [];
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            calls.push(opts.model);
-                            if (opts.model === 'gemini-3.1-pro-preview') {
-                                throw { success: false, error: { code: 'quota_exceeded', message: 'no quota' } };
-                            }
-                            return { message: { content: 'hello from ' + opts.model } };
-                        }
-                    }
-                };
-                const r = await PlatformAI.callGeminiWithFallback('hi');
-                return { calls, content: r.message.content };
-            });
-            expect(result.calls).toEqual(['gemini-3.1-pro-preview', 'gemini-2.5-pro']);
-            expect(result.content).toBe('hello from gemini-2.5-pro');
-        });
-
-        test('全部模型失敗 → throw 最後一個 error', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            throw { success: false, error: { code: 'fail_' + opts.model, message: 'x' } };
-                        }
-                    }
-                };
-                try {
-                    await PlatformAI.callGeminiWithFallback('hi');
-                    return { thrown: false };
-                } catch (e) {
-                    return { thrown: true, code: e && e.error && e.error.code };
-                }
-            });
-            expect(result.thrown).toBe(true);
-            expect(result.code).toBe('fail_gemini-3-flash-preview');
-        });
-
-        test('AbortError 只試 1 個模型後立即 throw', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                const calls = [];
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            calls.push(opts.model);
-                            throw new DOMException('aborted', 'AbortError');
-                        }
-                    }
-                };
-                try {
-                    await PlatformAI.callGeminiWithFallback('hi');
-                    return { thrown: false };
-                } catch (e) {
-                    return { thrown: true, name: e.name, calls };
-                }
-            });
-            expect(result.thrown).toBe(true);
-            expect(result.name).toBe('AbortError');
-            expect(result.calls).toEqual(['gemini-3.1-pro-preview']);
-        });
-
-        test('TimeoutError 只試 1 個模型後立即 throw', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                const calls = [];
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            calls.push(opts.model);
-                            throw new DOMException('timeout', 'TimeoutError');
-                        }
-                    }
-                };
-                try {
-                    await PlatformAI.callGeminiWithFallback('hi');
-                    return { thrown: false };
-                } catch (e) {
-                    return { thrown: true, name: e.name, calls };
-                }
-            });
-            expect(result.thrown).toBe(true);
-            expect(result.name).toBe('TimeoutError');
-            expect(result.calls).toEqual(['gemini-3.1-pro-preview']);
-        });
-
-        test('Puter.js 未載入 → 友善錯誤訊息', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                delete window.puter;
-                try {
-                    await PlatformAI.callGeminiWithFallback('hi');
-                    return { thrown: false };
-                } catch (e) {
-                    return { thrown: true, message: e.message };
-                }
-            });
-            expect(result.thrown).toBe(true);
-            expect(result.message).toContain('尚未載入');
-        });
-
-        test('options 中的 signal / stream / temperature 會透傳', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                let received = null;
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            received = opts;
-                            return 'ok';
-                        }
-                    }
-                };
-                const ctrl = new AbortController();
-                await PlatformAI.callGeminiWithFallback('hi', {
-                    signal: ctrl.signal,
-                    stream: true,
-                    temperature: 0.7,
-                });
-                return {
-                    hasSignal: received.signal instanceof AbortSignal,
-                    stream: received.stream,
-                    temperature: received.temperature,
-                    model: received.model,
-                };
-            });
-            expect(result.hasSignal).toBe(true);
-            expect(result.stream).toBe(true);
-            expect(result.temperature).toBe(0.7);
-            expect(result.model).toBe('gemini-3.1-pro-preview');
         });
     });
 
@@ -506,29 +343,6 @@ test.describe('PlatformAI 共用 module', () => {
             // 有 meta 的那一行應有 JSON 附加
             expect(withMetaLine).toContain('WITH_META_MARKER');
             expect(withMetaLine).toContain('"foo"');
-        });
-
-        test('callGeminiWithFallback 會寫入 log', async ({ page }) => {
-            const logs = await page.evaluate(async () => {
-                PlatformAI.clearLogs();
-                window.puter = {
-                    ai: {
-                        chat: async (prompt, opts) => {
-                            if (opts.model === 'gemini-3.1-pro-preview') {
-                                throw { success: false, error: { code: 'bad', message: 'err' } };
-                            }
-                            return 'ok';
-                        }
-                    }
-                };
-                await PlatformAI.callGeminiWithFallback('hi');
-                return PlatformAI.getLogs();
-            });
-            // 至少應有：開始、模型 1 失敗、模型 2 成功
-            expect(logs.length).toBeGreaterThanOrEqual(3);
-            expect(logs.some(l => l.message.includes('開始'))).toBe(true);
-            expect(logs.some(l => l.level === 'warn' && l.message.includes('gemini-3.1-pro-preview'))).toBe(true);
-            expect(logs.some(l => l.message.includes('gemini-2.5-pro') && l.message.includes('成功'))).toBe(true);
         });
     });
 
@@ -682,155 +496,6 @@ test.describe('PlatformAI 共用 module', () => {
             await panel.getByRole('button', { name: 'Clear' }).click();
             const logsLeft = await page.evaluate(() => PlatformAI.getLogs().length);
             expect(logsLeft).toBe(0);
-        });
-    });
-
-    test.describe('ensureSignedIn（明確要求建立臨時帳號）', () => {
-        test.beforeEach(async ({ page }) => { await gotoFixture(page); });
-
-        test('未登入時呼叫 signIn，並帶上 attempt_temp_user_creation', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                const calls = [];
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => false,
-                        signIn: async (opts) => { calls.push(opts); },
-                        getUser: async () => ({ username: 'temp_abc', is_temp: true })
-                    },
-                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
-                };
-                const info = await PlatformAI.ensureSignedIn();
-                return { calls, info };
-            });
-            expect(result.calls).toHaveLength(1);
-            expect(result.calls[0]).toEqual({ attempt_temp_user_creation: true });
-            expect(result.info).toEqual({ username: 'temp_abc', temporary: true });
-        });
-
-        test('已登入時不重複呼叫 signIn', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                let signInCount = 0;
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => true,
-                        signIn: async () => { signInCount++; },
-                        getUser: async () => ({ username: 'real_user', is_temp: false })
-                    },
-                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
-                };
-                const info = await PlatformAI.ensureSignedIn();
-                return { signInCount, info };
-            });
-            expect(result.signInCount).toBe(0);
-            expect(result.info).toEqual({ username: 'real_user', temporary: false });
-        });
-
-        test('轉向一般登入時，temporary 必須誠實回報 false', async ({ page }) => {
-            // 限制二：瀏覽器已有 Puter 使用紀錄時，Puter 可能不建立臨時帳號而
-            // 轉向一般登入／註冊。此時不可假設一定是臨時帳號。
-            const info = await page.evaluate(async () => {
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => false,
-                        signIn: async () => {},
-                        getUser: async () => ({ username: 'existing_person', is_temp: false })
-                    },
-                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
-                };
-                return PlatformAI.ensureSignedIn();
-            });
-            expect(info).toEqual({ username: 'existing_person', temporary: false });
-        });
-
-        test('併發呼叫只彈一次 signIn', async ({ page }) => {
-            const count = await page.evaluate(async () => {
-                let signInCount = 0;
-                let signedIn = false;
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => signedIn,
-                        signIn: async () => {
-                            signInCount++;
-                            await new Promise((r) => setTimeout(r, 30));
-                            signedIn = true;
-                        },
-                        getUser: async () => ({ username: 't', is_temp: true })
-                    },
-                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
-                };
-                await Promise.all([
-                    PlatformAI.ensureSignedIn(),
-                    PlatformAI.ensureSignedIn(),
-                    PlatformAI.ensureSignedIn()
-                ]);
-                return signInCount;
-            });
-            expect(count).toBe(1);
-        });
-
-        test('signIn 失敗（popup 被擋／使用者取消）不得阻斷 AI 呼叫', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => false,
-                        signIn: async () => { throw { error: { code: 'popup_blocked', message: 'blocked' } }; },
-                        getUser: async () => { throw new Error('never'); }
-                    },
-                    ai: { chat: async () => ({ message: { content: 'still works' } }) }
-                };
-                const r = await PlatformAI.callGeminiWithFallback('hi');
-                return r.message.content;
-            });
-            expect(result).toBe('still works');
-        });
-
-        test('puter.auth 不存在時優雅降級（相容既有 mock）', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                window.puter = { ai: { chat: async () => ({ message: { content: 'no auth api' } }) } };
-                const info = await PlatformAI.ensureSignedIn();
-                const r = await PlatformAI.callGeminiWithFallback('hi');
-                return { info, content: r.message.content };
-            });
-            expect(result.info).toBeNull();
-            expect(result.content).toBe('no auth api');
-        });
-
-        test('callGeminiWithFallback 會在呼叫 ai.chat 前先完成登入', async ({ page }) => {
-            // 限制一：signIn() 必須在 user activation 內，所以它必須是第一個 await。
-            // 這裡驗證順序：signIn 一定早於 chat。
-            const order = await page.evaluate(async () => {
-                const seq = [];
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => false,
-                        signIn: async () => { seq.push('signIn'); },
-                        getUser: async () => { seq.push('getUser'); return { username: 't', is_temp: true }; }
-                    },
-                    ai: { chat: async () => { seq.push('chat'); return { message: { content: 'ok' } }; } }
-                };
-                await PlatformAI.callGeminiWithFallback('hi');
-                return seq;
-            });
-            expect(order.indexOf('signIn')).toBeLessThan(order.indexOf('chat'));
-            expect(order).toEqual(['signIn', 'getUser', 'chat']);
-        });
-
-        test('isSignedIn 拋錯時視為未登入而非崩潰', async ({ page }) => {
-            const result = await page.evaluate(async () => {
-                const calls = [];
-                window.puter = {
-                    auth: {
-                        isSignedIn: () => { throw new Error('boom'); },
-                        signIn: async (o) => { calls.push(o); },
-                        getUser: async () => ({ username: 't', is_temp: true })
-                    },
-                    ai: { chat: async () => ({ message: { content: 'ok' } }) }
-                };
-                const info = await PlatformAI.ensureSignedIn();
-                return { calls, info };
-            });
-            expect(result.calls).toHaveLength(1);
-            expect(result.info.temporary).toBe(true);
         });
     });
 
