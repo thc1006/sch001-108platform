@@ -15,7 +15,7 @@
 //
 // 相對路徑以執行的目錄為準。npm run 一律在 repo 根目錄執行腳本，打指令的目錄由 npm 放在 INIT_CWD。
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { closeSync, constants, existsSync, fstatSync, openSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { languageOf, scan, countLines, firstDifference, ScanError } from './check-comments.lib.mjs';
 
@@ -54,6 +54,27 @@ function repoPath(p) {
     return rel || '.';
 }
 
+/**
+ * readRegularFile 讀出 abs 的內容，不存在或不是一般檔案時回傳 null；read 為 false 時只判斷，回傳空字串。
+ * 判斷和讀取用同一個 fd，先 stat 路徑再讀的話，兩次碰到的可能不是同一個檔案。加 O_NONBLOCK，FIFO 才不會卡在 open。
+ * @param {string} abs @param {boolean} read @returns {string|null}
+ */
+function readRegularFile(abs, read) {
+    let fd;
+    try {
+        fd = openSync(abs, constants.O_RDONLY | constants.O_NONBLOCK);
+    } catch (err) {
+        if (['ENOENT', 'ENOTDIR', 'ELOOP', 'EISDIR'].includes(err.code)) return null;
+        throw err;
+    }
+    try {
+        if (!fstatSync(fd).isFile()) return null;
+        return read ? readFileSync(fd, 'utf8') : '';
+    } finally {
+        closeSync(fd);
+    }
+}
+
 function lengthCheck(report, args) {
     const files = new Set();
     if (args.length === 0) gitList(['ls-files']).forEach((f) => files.add(f));
@@ -70,19 +91,18 @@ function lengthCheck(report, args) {
     const errors = [];
     for (const file of [...files].sort()) {
         const lang = languageOf(file);
-        const abs = path.join(root, file);
-        if (!existsSync(abs) || !statSync(abs).isFile()) continue;
+        const rule = lang && EXCLUDED.find(([re]) => re.test(file));
+        const src = readRegularFile(path.join(root, file), Boolean(lang && !rule));
+        if (src === null) continue;
         if (!lang) {
             const kind = path.posix.extname(file) || path.posix.basename(file);
             unknown.set(kind, (unknown.get(kind) ?? 0) + 1);
             continue;
         }
-        const rule = EXCLUDED.find(([re]) => re.test(file));
         if (rule) {
             skipped.push(`${file}（${rule[1]}）`);
             continue;
         }
-        const src = readFileSync(abs, 'utf8');
         try {
             rows.push({ file, ...countLines(src, scan(src, lang)) });
         } catch (err) {

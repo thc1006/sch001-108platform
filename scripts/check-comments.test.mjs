@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -855,6 +855,32 @@ test('CLI 行數檢查：給目錄時連還沒 git add 的檔案一起檢查，�
         r = repo.run('sub');
         assert.equal(r.status, 1);
         assert.match(r.stderr, /無法分析 sub\/new\.mjs:1：字串沒有結束/);
+    } finally {
+        repo.done();
+    }
+});
+
+test('CLI 行數檢查：工作區已刪掉或路徑變成檔案的 index 項目、symlink 迴圈、指向目錄的 symlink 和 FIFO 都略過', () => {
+    const repo = tempRepo({ 'ok.mjs': 'export {};\n', 'gone.mjs': 'export {};\n', 'a/b.mjs': 'export {};\n', 'd/x.mjs': 'export {};\n' });
+    try {
+        symlinkSync('loop.mjs', path.join(repo.dir, 'loop.mjs'));
+        symlinkSync('d', path.join(repo.dir, 'dir.mjs'));
+        repo.git('add', '-A');
+        repo.git('commit', '-qm', 'links');
+        rmSync(path.join(repo.dir, 'gone.mjs'));
+        rmSync(path.join(repo.dir, 'a'), { recursive: true });
+        writeFileSync(path.join(repo.dir, 'a'), 'x\n');
+        let r = repo.run('--report');
+        assert.equal(r.status, 0, r.stderr);
+        assert.match(r.stdout, /\n2 個檔案，/);
+        assert.doesNotMatch(r.stdout, /gone|loop|dir\.mjs|a\/b/);
+
+        if (spawnSync('mkfifo', [path.join(repo.dir, 'p.mjs')]).status === 0) {
+            r = spawnSync(process.execPath, [CLI, 'p.mjs'], { cwd: repo.dir, env, encoding: 'utf8', timeout: 10_000 });
+            assert.equal(r.error, undefined);
+            assert.equal(r.status, 1);
+            assert.match(r.stderr, /^沒有可以檢查的檔案。\n$/);
+        }
     } finally {
         repo.done();
     }
