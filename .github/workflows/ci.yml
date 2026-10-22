@@ -34,6 +34,8 @@ jobs:
     # artifact 的上傳與下載走 runtime token，不需要 actions 權限。
     permissions:
       contents: read
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -111,6 +113,13 @@ jobs:
             --no-progress
             './.link-root/sch001-108platform/**/*.html'
 
+      # 名稱帶 run_attempt：重跑這個 job 時，前一次上傳的 artifact 還在，
+      # deploy-pages 找到同名的多份就失敗（actions/deploy-pages#338）。只重跑 deploy
+      # 時 run_attempt 會變，所以 deploy 從 job output 拿名稱，不自己組。
+      - name: Name this artifact
+        id: artifact
+        run: echo "name=github-pages-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
       # 上傳的是通過靜態檢查的那份，瀏覽器測試還沒跑。測試失敗時它仍留在 run 裡，
       # 但 CI Required 不通過就不會部署。PR 也上傳，打包失敗才會在合併前出現。
       # upload-pages-artifact 預設只保留 1 天，過期後只重跑 deploy 會拿不到它。
@@ -118,6 +127,7 @@ jobs:
         id: pages
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
+          name: ${{ steps.artifact.outputs.name }}
           path: dist
 
       # 只裝 headless shell，改用 channel 或 headed 時拿掉 --only-shell。
@@ -234,13 +244,13 @@ jobs:
           test "$SITE_RESULT" = "success"
           test "$DATA_RESULT" = "success"
 
-  # CI Required 通過才部署。deploy-pages 照預設名稱 github-pages 取 site 在這個 run
-  # 上傳的 artifact。它每次的逾時是 10 分鐘，25 分鐘容得下重試一次，不會先被 job
-  # 逾時砍掉；job 逾時在 UI 只顯示 cancelled，不是 failure（#92）。
+  # CI Required 通過才部署。deploy-pages 依 site 輸出的名稱取 artifact，needs 要列
+  # site 才讀得到 outputs。它每次的逾時是 10 分鐘，25 分鐘容得下重試一次，不會先被
+  # job 逾時砍掉；job 逾時在 UI 只顯示 cancelled，不是 failure（#92）。
   deploy:
     name: Deploy to GitHub Pages
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    needs: [required]
+    needs: [required, site]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -265,6 +275,8 @@ jobs:
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+        with:
+          artifact_name: ${{ needs.site.outputs.artifact_name }}
 
       # Pages 部署偶爾逾時或失敗（actions/deploy-pages#406、#418）。逾時時 action 會
       # 取消那次部署，重試是重新開始。這一步也要 continue-on-error，下一步才跑得到。
@@ -273,6 +285,8 @@ jobs:
         id: deployment-retry
         continue-on-error: true
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+        with:
+          artifact_name: ${{ needs.site.outputs.artifact_name }}
 
       - name: Fail when neither attempt landed
         if: ${{ steps.deployment.outcome == 'failure' && steps.deployment-retry.outcome != 'success' }}
