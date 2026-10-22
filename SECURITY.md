@@ -39,10 +39,11 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
 
 - `.npmrc` 的 `min-release-age=7` **搭配 `dependabot.yml` 的 `cooldown.default-days: 7`**：
   都是拒絕採用發布未滿七天的版本。2025–2026 的投毒事件多半在數小時到數日內被揪出，
-  七天跨過一個週末。兩邊缺一不可——`min-release-age` 只擋本機的 install/update，
-  而相依更新的主要路徑是 Dependabot，它自己算 lockfile、`npm ci` 不重新解析，
-  不設 cooldown 就整個繞過去。cooldown 不套用在 security update 上，
-  所以安全性修正不會因此延後。
+  七天跨過一個週末。兩個值要一起改：Dependabot 取兩者較大的天數當 cooldown
+  （dependabot-core#15132），它更新 lockfile 時也沿用 `.npmrc`，npm 只會選滿七天的
+  版本，間接相依也一樣。security update 不套用 cooldown，Dependabot 偵測得到 npm
+  版本時還會帶 `--min-release-age=0` 略過 `.npmrc`。偵測不到時 `.npmrc` 照樣生效，
+  發布未滿七天的修正要等滿七天，或手動帶 `--min-release-age=0` 升級。
 - `package.json` 的 `allowScripts` 搭配 `strict-allow-scripts=true`：
   只有列在清單裡的套件能跑安裝腳本，其餘一律 fail-closed。目前只核准
   `esbuild`（需要它連結平台二進位），`core-js` 與 `fsevents` 都拒絕。
