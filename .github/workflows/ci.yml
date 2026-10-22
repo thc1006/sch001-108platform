@@ -250,7 +250,7 @@ jobs:
       # 參數，預設 'error'）。整個 CI 的論點是「被驗證的位元組 == 被部署的位元組」，
       # 而 v7 遇到雜湊不符只會印一行警告然後繼續——那等於這個論點沒有被檢查。
       - name: Download the artifact that passed the static checks
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: github-pages
 
