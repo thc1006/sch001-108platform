@@ -25,7 +25,7 @@ function watchForErrors(page) {
         if (m.type() === 'error') errors.push(`console.error: ${m.text()}`);
     });
     page.on('requestfailed', (r) => {
-        // 只在乎本站資源；外部第三方（Puter CDN、字型）在離線的 CI 上失敗是預期的
+        // 只在乎本站資源；外部第三方（例如字型）在離線的 CI 上失敗是預期的
         if (r.url().startsWith(BASE)) errors.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`);
     });
     page.on('response', (r) => {

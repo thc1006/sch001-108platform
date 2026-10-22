@@ -99,7 +99,7 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
 
 ## AI 閘道
 
-網站的 AI 功能正逐頁從 Puter.js 改走自架的閘道（`ai-gateway/`）。它跑在實驗室主機的 k3s 上，
+網站的 AI 功能都走自架的閘道（`ai-gateway/`）。它跑在實驗室主機的 k3s 上，
 經 Tailscale Funnel 對外公開 `POST /v1/tasks/<任務>`，手上有 WinLab 的 API key，背後是有限的
 GPU。架構、限流與部署方式見 `ai-gateway/README.md`。
 
@@ -145,5 +145,5 @@ GPU；讓任務做指令以外的事（prompt injection），或讓它對任意 
 - **缺少安全性 response header**：GitHub Pages 不支援自訂 response header，
   這是平台限制。但 CSP 不受此限——Astro 7 可以把政策寫成
   `<meta http-equiv="content-security-policy">`。所以**站上沒有 CSP 是還沒做，
-  不是平台擋住**。這個站載入 js.puter.com、Google Fonts、placehold.co、
+  不是平台擋住**。這個站載入 Google Fonts、placehold.co、
   api.dicebear.com、images.pexels.com 等外部來源，allowlist 要先盤清楚再動。

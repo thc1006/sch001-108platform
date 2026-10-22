@@ -1,23 +1,15 @@
 /**
- * 網站 AI 功能的共用 helper（原 puter-ai.js／PuterAI）
+ * 網站 AI 功能的共用 helper：呼叫自架的 AI 閘道、顯示進度、把 AI 的答案轉成安全的 HTML。
  *
  * 暴露為 window.PlatformAI = {
  *   runTask, describeError, mountProgress, getGatewayUrl,
- *   MODELS, formatError, callGeminiWithFallback, renderMarkdown,
+ *   formatError, renderMarkdown,
  *   log, getLogs, clearLogs, mountDebugPanel
  * }
  *
- * AI 呼叫正從 Puter.js（callGeminiWithFallback）逐頁改走本地 LLM 閘道（runTask）；
- * 全部改完之後，Puter 相關的部分會整段移除。
- *
- * 使用（本地 LLM 閘道）：
+ * 使用：
  *   <script src="/path/to/shared/platform-ai.js"></script>
  *   const { result } = await PlatformAI.runTask('starter-pack', { topic }, { onProgress });
- *
- * 使用（Puter.js，舊）：
- *   <script src="https://js.puter.com/v2/"></script>
- *   <script src="/path/to/shared/platform-ai.js"></script>
- *   const resp = await PlatformAI.callGeminiWithFallback(prompt, { signal: ... });
  *
  * 前端 debug panel（使用者不用開 DevTools 也能看錯誤）：
  *   - URL 加 `?debug=1` 自動啟用
@@ -29,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，有人把匯出改成 4 卻沒動守衛，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件——而那正是它想避免的事。
-    var VERSION = 4;
+    var VERSION = 5;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -38,7 +30,6 @@
         return; // 同版或更新的版本已經載入了
     }
 
-    var MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-3-flash-preview'];
     var MAX_LOGS = 200;
     var logs = [];
     var panelEl = null;
@@ -78,36 +69,19 @@
         }
     }
 
-    // ------------------------------------------------------------
-    // 錯誤格式化：處理 Error / DOMException / Puter 純物件
-    // ------------------------------------------------------------
+    /**
+     * formatError 把錯誤轉成一行文字給 log 用，null 與 undefined 回傳 'unknown'。
+     * DOMException 在舊瀏覽器 instanceof Error 為 false，所以看 name 與 message 屬性。
+     * @param {unknown} err @returns {string}
+     */
     function formatError(err) {
         if (err === null || err === undefined) return 'unknown';
-
-        // Error、DOMException、或其他具 name/message 的物件
-        // 注意：DOMException 在舊瀏覽器 `instanceof Error` 為 false，
-        // 所以不能只用 instanceof，改查 name/message 屬性
         if (typeof err === 'object' &&
             (typeof err.name === 'string' || typeof err.message === 'string')) {
             var name = err.name || 'Error';
             var message = err.message || '';
-            if (err.error && typeof err.error === 'object' && err.error.code) {
-                return '[' + err.error.code + '] ' + name + (message ? ': ' + message : '');
-            }
             return name + (message ? ': ' + message : '');
         }
-
-        // Puter 純物件 shape：{success:false, error:{code, message}} 或 {error:"string"}
-        if (typeof err === 'object' && err.error !== undefined) {
-            var inner = err.error;
-            if (typeof inner === 'string') return inner;
-            if (typeof inner === 'object' && inner !== null) {
-                var code = inner.code || inner.status || '?';
-                var msg = inner.message || inner.name || safeStringify(inner);
-                return '[' + code + '] ' + msg;
-            }
-        }
-
         return safeStringify(err);
     }
 
@@ -372,123 +346,6 @@
             renderLogEntry(logs[i]);
         }
         return panelEl;
-    }
-
-    // ------------------------------------------------------------
-    // 驗證：明確要求建立 temporary user
-    // ------------------------------------------------------------
-    //
-    // 為什麼要顯式做這件事：先前完全不碰 puter.auth，直接呼叫 puter.ai.chat()，
-    // 由 Puter.js 自行決定何時、以什麼方式要求使用者驗證。改為明確呼叫
-    // signIn({ attempt_temp_user_creation: true })，讓首次造訪的學生能以臨時帳號
-    // 直接試用，不必先註冊。
-    //
-    // 兩個限制務必理解，否則會寫出看似正常、實際被瀏覽器擋掉的程式碼：
-    //
-    //   1. signIn() 必須在 user gesture（click／tap）的 transient activation
-    //      期間內呼叫，否則 popup 會被瀏覽器封鎖。因此 ensureSignedIn() 必須是
-    //      callGeminiWithFallback() 的「第一個 await」——呼叫端都是在 click
-    //      handler 內同步呼叫本函式，中間不得插入其他 await。
-    //      （已稽核 9 個呼叫點，全部符合。）
-    //
-    //   2. attempt_temp_user_creation 主要服務首次造訪者。若瀏覽器已有 Puter
-    //      使用紀錄、舊 session、登出狀態，或被判定不適合建立臨時帳號，Puter
-    //      仍可能轉向一般登入／註冊流程。因此登入後一律以 getUser() 回報實際
-    //      的 is_temp，不可假設一定是臨時帳號。
-    //
-    var signInPromise = null; // 同頁併發呼叫共用，避免同時彈出多個 popup
-
-    async function describeCurrentUser() {
-        try {
-            var user = await puter.auth.getUser();
-            var info = {
-                username: user && user.username,
-                temporary: Boolean(user && user.is_temp)
-            };
-            log('info', 'Puter 已登入', info);
-            return info;
-        } catch (err) {
-            // 已登入但拿不到使用者資訊：不阻斷後續 AI 呼叫
-            log('warn', '取得 Puter 使用者資訊失敗：' + formatError(err));
-            return null;
-        }
-    }
-
-    async function ensureSignedIn() {
-        // puter.auth 不存在（舊版 Puter.js、或測試只 mock 了 ai）→ 不阻斷，
-        // 交由 puter.ai.chat() 沿用既有行為。
-        if (typeof puter === 'undefined' || !puter || !puter.auth ||
-            typeof puter.auth.signIn !== 'function') {
-            log('debug', 'puter.auth 不可用，略過顯式登入');
-            return null;
-        }
-
-        var signedIn = false;
-        try {
-            signedIn = puter.auth.isSignedIn();
-        } catch (err) {
-            log('warn', 'isSignedIn() 失敗，視為未登入：' + formatError(err));
-        }
-        if (signedIn) return describeCurrentUser();
-
-        // 併發時共用同一個登入流程，否則多個 AI 呼叫會各彈一個 popup
-        if (signInPromise) return signInPromise;
-
-        signInPromise = (async function () {
-            try {
-                log('info', '要求 Puter 登入（嘗試建立臨時帳號）');
-                await puter.auth.signIn({ attempt_temp_user_creation: true });
-                return await describeCurrentUser();
-            } catch (err) {
-                // 使用者關閉 popup、popup 被擋、或轉向一般登入後放棄，都會走到這裡。
-                // 不 throw：讓後續 puter.ai.chat() 產生真正的錯誤，行為不比改動前差。
-                log('error', 'Puter 登入未完成：' + formatError(err));
-                return null;
-            } finally {
-                signInPromise = null;
-            }
-        })();
-        return signInPromise;
-    }
-
-
-    // ------------------------------------------------------------
-    // callGeminiWithFallback（加入 logger）
-    // ------------------------------------------------------------
-    async function callGeminiWithFallback(prompt, options) {
-        options = options || {};
-        if (typeof puter === 'undefined' || !puter || !puter.ai || typeof puter.ai.chat !== 'function') {
-            var e = new Error('Puter.js 尚未載入完成，請重新整理頁面。');
-            log('error', 'Puter.js 未就緒', { hasPuter: typeof puter !== 'undefined' });
-            throw e;
-        }
-
-        // 必須是本函式的第一個 await：呼叫端在 click handler 內同步呼叫本函式，
-        // 這樣 signIn() 仍在 transient user activation 期間內，popup 不會被擋。
-        await ensureSignedIn();
-
-        log('info', 'AI 呼叫開始', { promptLength: prompt ? prompt.length : 0, options: { stream: !!options.stream, hasSignal: !!options.signal } });
-
-        var lastErr;
-        for (var i = 0; i < MODELS.length; i++) {
-            var model = MODELS[i];
-            try {
-                var callOpts = Object.assign({}, options, { model: model });
-                var result = await puter.ai.chat(prompt, callOpts);
-                log('info', '模型 ' + model + ' 成功');
-                return result;
-            } catch (err) {
-                lastErr = err;
-                var detail = formatError(err);
-                log('warn', '模型 ' + model + ' 失敗：' + detail, { name: err && err.name });
-                if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
-                    log('error', '使用者取消或逾時，不再 fallback');
-                    throw err;
-                }
-            }
-        }
-        log('error', '所有模型皆失敗', { lastError: formatError(lastErr) });
-        throw lastErr;
     }
 
     // ------------------------------------------------------------
@@ -1213,10 +1070,7 @@
     // ------------------------------------------------------------
     global.PlatformAI = {
         __version: VERSION,
-        MODELS: MODELS,
         formatError: formatError,
-        ensureSignedIn: ensureSignedIn,
-        callGeminiWithFallback: callGeminiWithFallback,
         getGatewayUrl: getGatewayUrl,
         runTask: runTask,
         describeError: describeError,
