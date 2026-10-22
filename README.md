@@ -194,7 +194,7 @@ node build-search-index.js
 | 學長姐真心話 | `public/career-exploration/senior-interviews.json` |
 | 優質範例藝廊 | `public/learning-portfolio/portfolio-gallery.json` |
 | 線上製作工具箱 | `public/learning-portfolio/tools.json` |
-| 公民科技專案地圖 | `public/civic-tech-map/projects.json`（頁面內容寫在 `.astro` 內，此檔是同一份資料的結構化副本，供看門狗與搜尋索引使用，兩處需同步更新） |
+| 公民科技專案地圖 | `public/civic-tech-map/projects.json`（頁面內容寫在 `.astro` 內，此檔是同一份資料的結構化副本，供看門狗與搜尋索引使用，兩處需同步更新；AI 閘道的 `civic-tech-suggestion` 任務也抄了專案名稱與狀態，`npm run test:ai-gateway` 會比對） |
 
 十大學群的內容則以 Markdown 維護於 `src/content/clusters/<學群>/<主題>.md`，學群與主題的清單（slug、名稱）集中定義於 `src/data/clusters.ts`。
 

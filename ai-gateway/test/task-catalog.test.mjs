@@ -230,3 +230,43 @@ test('study-plan：指令寫明每一項的數量與長度，和 schema 一致�
     }
     assert.ok(instructions.includes(properties.weekly_plan.items.properties.week.enum.join('、')));
 });
+
+test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的輸入框同樣限制 300）；文字任務、不設溫度', () => {
+    const task = catalog.get('civic-tech-suggestion');
+    assert.equal(validateInput(task, { interest: '海'.repeat(300) }).interest.length, 300);
+    assert.throws(() => validateInput(task, { interest: '海'.repeat(301) }), { code: 'invalid_input', field: 'interest' });
+    assert.equal(task.output.type, 'markdown');
+    assert.equal(task.temperature, undefined);
+    // 文字任務沒有 schema：答案去掉前後空白就交給頁面，空的才算失敗。
+    assert.equal(finalizeOutput(task, '\n**Cofacts 真的假的**：適合你。\n'), '**Cofacts 真的假的**：適合你。');
+    assert.throws(() => finalizeOutput(task, ' \n '), { code: 'empty' });
+});
+
+// 文字任務沒有 maxLength 可以當保險，長度全靠指令。
+test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句、建議 1～2 句、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦', () => {
+    const { instructions } = catalog.get('civic-tech-suggestion');
+    assert.match(instructions, /推薦 1 至 3 個/);
+    assert.match(instructions, /推薦原因（2～3 句）/);
+    assert.match(instructions, /探索建議（1～2 句/);
+    assert.match(instructions, /不要超過 400 字/);
+    assert.match(instructions, /推薦 3 個專案時，每個推薦都要寫得更精簡/);
+    assert.match(instructions, /不太相關，也請誠實說明/);
+    assert.match(instructions, /寧可少推薦幾個/);
+});
+
+// 專案名稱與狀態以 public/civic-tech-map/projects.json 為準（地圖上的專案卡片標題也與它相同）。
+// 閘道的映像檔裡沒有那個檔案，指令只能自己抄一份，靠這個測試防止兩邊漂移。
+test('civic-tech-suggestion：指令列出的專案與 projects.json 一一對應，不是 active 的專案註明了狀態', () => {
+    const { instructions } = catalog.get('civic-tech-suggestion');
+    const { projects } = JSON.parse(readFileSync(new URL('../../public/civic-tech-map/projects.json', import.meta.url), 'utf8'));
+    // 每個專案一行：「編號. 名稱：簡介……」。
+    const lines = new Map(instructions.split('\n').filter((line) => /^\d+\. /.test(line))
+        .map((line) => [line.replace(/^\d+\. /, '').split('：')[0], line]));
+    assert.deepEqual([...lines.keys()].sort(), projects.map(({ name }) => name).sort());
+    const STATUS_NOTES = { maintenance: '維護中', dormant: '近期幾無活動' };
+    for (const { name, status } of projects) {
+        for (const [key, note] of Object.entries(STATUS_NOTES)) {
+            assert.equal(lines.get(name).includes(note), status === key, `${name} 是 ${status}，指令${status === key ? '要' : '不要'}寫「${note}」`);
+        }
+    }
+});
