@@ -94,6 +94,8 @@ node build-search-index.js
 > GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 瀏覽器測試 → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
 >
 > 檢查與部署放在同一個 workflow，部署的是通過檢查的那一份 artifact，不另外建置。`Site and Browser Integrity` 建置並上傳 artifact 後，再下載同一份跑瀏覽器測試；`deploy` job 等 `CI Required` 通過才部署這一份。瀏覽器測試失敗時，run 裡仍留著這份 artifact，但不會部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
+>
+> AI 功能呼叫的本地 LLM 閘道（`ai-gateway/`）網址不寫進 repo，而是由 repository variable `AI_GATEWAY_URL`（Settings → Secrets and variables → Actions → Variables）在建置時寫進每頁的 `<meta name="ai-gateway-url">`；本機建置時用環境變數 `PUBLIC_AI_GATEWAY_URL`。沒有設定時，改走閘道的 AI 功能會顯示「尚未設定」。網址必須是 https，而且不能指向本機或內部網路（前端為了本機開發接受的 `http://localhost` 也會被擋）；站台契約檢查會擋下不合格、只出現在部分頁面、或與建置時的設定不一致的值。改了 variable 之後要照上一段的方式手動重新部署才會生效；這時 commit 沒變，部署驗證改比 `build-info.json` 的 run 編號與閘道網址，等到這次建的那一份上線才算數；同一個 commit 較新的 run 建的那一份先上線，也算數。Re-run failed jobs 只重跑失敗的 job，`Site and Browser Integrity` 原本成功的話，部署的仍是它當時建好的那一份，網址不會更新。不要把網址寫進 `.env.production` 之類的檔案：建置會讀它，但它不該進 repo（已列入 `.gitignore`）。
 
 ---
 

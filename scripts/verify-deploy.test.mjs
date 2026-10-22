@@ -13,14 +13,16 @@ const OLDER = 'b'.repeat(40); // 祖先，或分岔的另一條歷史
 const EXACT_RECHECK = '再確認：線上仍是本 commit。';
 
 const live = (commit, age = 0) => ({ body: JSON.stringify({ commit }), age });
+// build 是本 commit 的某一次部署，fields 照 build-info.mjs 寫的 runNumber、aiGatewayUrl。
+const build = (fields, age = 0) => ({ body: JSON.stringify({ commit: SHA, ...fields }), age });
 const relation = (status) => ({ body: JSON.stringify({ status }) });
 
 /**
  * verify 起假伺服器，執行一次 verify-deploy.mjs。info 與 compare 依序回應，用完後重複最後一筆。
  * repo 為 false 時不設 GITHUB_REPOSITORY，腳本就不查 compare。budget 是 VERIFY_TIMEOUT 的秒數。
- * actions 為 true 時設 GITHUB_ACTIONS=true。
+ * actions 為 true 時設 GITHUB_ACTIONS=true。env 最後蓋上去，例如 GITHUB_RUN_NUMBER。
  */
-async function verify({ info, compare = [relation('ahead')], repo = true, budget = 1, actions = false }) {
+async function verify({ info, compare = [relation('ahead')], repo = true, budget = 1, actions = false, env: extra = {} }) {
     const requests = { info: 0, compare: 0, comparePaths: [] };
     const server = http.createServer((request, response) => {
         const isInfo = request.url === '/build-info.json';
@@ -66,8 +68,13 @@ async function verify({ info, compare = [relation('ahead')], repo = true, budget
         delete env.GITHUB_REPOSITORY;
         delete env.GITHUB_ACTIONS;
         delete env.NODE_USE_ENV_PROXY;
+        // Actions 的每個 job 都有 GITHUB_RUN_NUMBER。繼承到的話，只寫了 commit 的 build-info 會被當成較早的 run。
+        delete env.GITHUB_RUN_NUMBER;
+        delete env.GITHUB_RUN_ATTEMPT;
+        delete env.PUBLIC_AI_GATEWAY_URL;
         if (repo) env.GITHUB_REPOSITORY = 'owner/repo';
         if (actions) env.GITHUB_ACTIONS = 'true';
+        Object.assign(env, extra);
         const child = spawn(process.execPath, [SCRIPT], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: (budget + 4) * 1000 });
         let stdout = '';
         let stderr = '';
@@ -236,5 +243,140 @@ for (const [label, actions, info, expected] of [
         const result = await verify({ info, actions });
         assert.equal(result.code, 0, result.stderr);
         assert.deepEqual(result.stdout.split('\n').filter((line) => line.startsWith('::')), expected);
+    });
+}
+
+// 只改 repository variable 就重新部署時 commit 不變，產物卻不同，要靠 runNumber 分辨。
+// 「還沒落地」的案例都確認只請求一次 build-info：主迴圈誤判命中時，再確認會再請求一次。
+const RUN = { GITHUB_RUN_NUMBER: '42' };
+
+test('線上是本 commit、但來自較早的 run：還沒落地', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [build({ runNumber: '41' })], env: RUN });
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(result.requests.info, 1);
+    assert.match(result.stderr, /線上站台是 aaaaaaaaaaaa，但不是這次 run 建的那一份（最後看到：aaaaaaaaaaaa 的較早部署（run #41，本 run 是 #42））/);
+    assert.doesNotMatch(result.stderr, /也不是它的後代/);
+    assert.equal(result.requests.compare, 0);
+});
+
+test('線上是較早 run 的快取副本（Age=300）：還沒落地', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [build({ runNumber: '41' }, 300)], env: RUN });
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(result.requests.info, 1);
+});
+
+test('線上的 build-info 沒有 runNumber：本 commit 也算較早的部署', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [matching], env: RUN });
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(result.requests.info, 1);
+    assert.match(result.stderr, /較早部署（run #\?，本 run 是 #42）/);
+});
+
+for (const [runNumber, shown] of [
+    ['42', /線上已是 aaaaaaaaaaaa/],
+    ['43', /線上是 aaaaaaaaaaaa 較新的部署（run #43，本 run 是 #42）/],
+]) {
+    test(`線上是本 commit、run #${runNumber}：算落地`, { timeout: 8000 }, async () => {
+        const result = await verify({ info: [build({ runNumber })], env: RUN });
+        assert.equal(result.code, 0, result.stderr);
+        assert.match(result.stdout, shown);
+        assert.ok(result.stdout.includes(EXACT_RECHECK), result.stdout);
+    });
+}
+
+test('沒有 GITHUB_RUN_NUMBER 與 PUBLIC_AI_GATEWAY_URL 時只比 commit', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [build({ runNumber: '41', aiGatewayUrl: 'https://gateway.example' })] });
+    assert.equal(result.code, 0, result.stderr);
+});
+
+// harness 漏擋 Actions 的變數時，在本機就會失敗，不必等到 CI。
+test('測試程序帶著 Actions 的變數時，子行程仍然看不到', { timeout: 8000 }, async () => {
+    const names = ['GITHUB_RUN_NUMBER', 'GITHUB_RUN_ATTEMPT', 'PUBLIC_AI_GATEWAY_URL'];
+    const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+    Object.assign(process.env, { GITHUB_RUN_NUMBER: '42', GITHUB_RUN_ATTEMPT: '2', PUBLIC_AI_GATEWAY_URL: 'https://gateway.example' });
+    try {
+        const result = await verify({ info: [matching] });
+        assert.equal(result.code, 0, result.stdout + result.stderr);
+    } finally {
+        for (const name of names) {
+            if (saved[name] === undefined) delete process.env[name];
+            else process.env[name] = saved[name];
+        }
+    }
+});
+
+// Re-run all jobs 會重新建置，run 編號卻不變。
+test('改了 variable 之後按 Re-run：run 編號相同、閘道網址不是這次建置用的，還沒落地', { timeout: 8000 }, async () => {
+    const result = await verify({
+        info: [build({ runNumber: '42', aiGatewayUrl: 'https://gateway-old.example' })],
+        env: { ...RUN, GITHUB_RUN_ATTEMPT: '2', PUBLIC_AI_GATEWAY_URL: 'https://gateway-new.example' },
+    });
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(result.requests.info, 1);
+    assert.match(result.stderr, /AI 閘道網址不是這次建置用的/);
+    assert.doesNotMatch(result.stdout + result.stderr, /gateway-old|gateway-new/);
+});
+
+test('沒有 GITHUB_RUN_NUMBER、只帶了閘道網址：網址不同就還沒落地', { timeout: 8000 }, async () => {
+    const result = await verify({
+        info: [build({ runNumber: '41', aiGatewayUrl: 'https://gateway-old.example' })],
+        env: { PUBLIC_AI_GATEWAY_URL: 'https://gateway-new.example' },
+    });
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(result.requests.info, 1);
+    assert.match(result.stderr, /AI 閘道網址不是這次建置用的/);
+});
+
+// Re-run failed jobs 不重跑成功過的建置，部署的是先前 attempt 的產物，所以不比 run_attempt。
+for (const [label, aiGatewayUrl, configured] of [
+    ['網址相同', 'https://gateway.example', 'https://gateway.example'],
+    ['沒設 variable', null, ''],
+]) {
+    test(`Re-run failed jobs、run 編號相同、${label}：算落地`, { timeout: 8000 }, async () => {
+        const result = await verify({
+            info: [build({ runNumber: '42', aiGatewayUrl })],
+            env: { ...RUN, GITHUB_RUN_ATTEMPT: '2', PUBLIC_AI_GATEWAY_URL: configured },
+        });
+        assert.equal(result.code, 0, result.stderr);
+        assert.ok(result.stdout.includes(EXACT_RECHECK), result.stdout);
+    });
+}
+
+// 同一個 commit 的兩個 run 重疊，例如 push 觸發的還在跑，又改了 variable 按 Run workflow。
+const OURS = build({ runNumber: '42', aiGatewayUrl: 'https://gateway-old.example' });
+const NEWER_RUN = build({ runNumber: '43', aiGatewayUrl: 'https://gateway-new.example' });
+const OLD_GATEWAY = { ...RUN, PUBLIC_AI_GATEWAY_URL: 'https://gateway-old.example' };
+
+test('輪詢時看到本 commit 較新的 run 換了閘道網址：跟後代一樣算落地', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [NEWER_RUN], env: OLD_GATEWAY });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /線上是 aaaaaaaaaaaa 較新的部署（run #43，本 run 是 #42）/);
+});
+
+test('再確認時看到本 commit 較新的 run 換了閘道網址：不算退版', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [OURS, NEWER_RUN], env: OLD_GATEWAY });
+    assert.equal(result.code, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /信心較低/);
+});
+
+test('再確認時線上變成本 commit 較早的 run：判定退版而失敗', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [build({ runNumber: '42' }), build({ runNumber: '41' })], env: RUN });
+    assert.equal(result.code, 1, result.stdout);
+    assert.match(result.stderr, /線上已變成 aaaaaaaaaaaa 的較早部署（run #41，本 run 是 #42）——部署順序被倒過來了/);
+    assert.match(result.stderr, /失敗發生在命中後的再確認/);
+    assert.doesNotMatch(result.stderr, /也不是它的後代/);
+});
+
+// 和不同 commit 的退版用同一個標準：Age 超過門檻的副本不採信。
+for (const [label, info, env] of [
+    ['較早的 run', [build({ runNumber: '42' }), build({ runNumber: '41' }, 500)], RUN],
+    ['閘道網址不同', [OURS, build({ runNumber: '42', aiGatewayUrl: 'https://gateway-new.example' }, 500)], OLD_GATEWAY],
+]) {
+    test(`再確認拿到本 commit 另一份部署（${label}）的舊快取副本：不採信，維持成功但扣信心`, { timeout: 8000 }, async () => {
+        const result = await verify({ info, env });
+        assert.equal(result.code, 0, result.stderr);
+        assert.match(result.stdout, /拿到 Age=500s 的快取副本/);
+        assert.match(result.stdout, /有 1 次因為快取副本太舊而未採信/);
+        assert.ok(!result.stdout.includes(EXACT_RECHECK), result.stdout);
     });
 }

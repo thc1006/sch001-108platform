@@ -55,9 +55,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
+# Vite／Astro 建置時會讀 .env.[mode]（例如 .env.production）；閘道網址這類設定一律走環境變數
+# 或 repository variable，不進 repo
 .env
-.env.local
-.env.*.local
+.env.*
 
 # Temporary files
 *.tmp

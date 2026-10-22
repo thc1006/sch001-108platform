@@ -36,9 +36,42 @@ rmSync(DIST, { recursive: true, force: true });
 cpSync(SOURCE, DIST, { recursive: true });
 console.log(`故障注入在副本 ${DIST}/ 上進行，${SOURCE}/ 不會被更動。\n`);
 
-const run = () => {
+// AI 閘道的 case 要與「建置時有沒有設 PUBLIC_AI_GATEWAY_URL」無關：設了的話每頁本來就有一個
+// 合格的 meta，再插一個只會得到「最多 1 個」，每個 case 的預期訊息都對不上。所以先把副本裡的
+// 閘道 meta 全部拿掉，讓這些 case 都從「沒設定」出發；檢查時也不帶這個環境變數（見 run）
+const GATEWAY_META = /<meta name="ai-gateway-url"[^>]*>/g;
+const htmlFiles = (dir) => readdirSync(dir, { recursive: true })
+  .map(String)
+  .filter((f) => f.endsWith('.html'))
+  .map((f) => path.join(dir, f));
+for (const file of htmlFiles(DIST)) {
+  const html = readFileSync(file, 'utf8');
+  const stripped = html.replace(GATEWAY_META, '');
+  if (stripped !== html) writeFileSync(file, stripped);
+}
+
+// 每頁都插一個閘道 meta（about.html 可以給不同的值）；undo 用的是同一個 pattern
+const injectGatewayEverywhere = (value, aboutValue = value) => {
+  for (const file of htmlFiles(DIST)) {
+    const html = readFileSync(file, 'utf8');
+    if (!html.includes('</head>')) continue;
+    const v = file.endsWith(`${path.sep}about.html`) ? aboutValue : value;
+    writeFileSync(file, html.replace('</head>', `<meta name="ai-gateway-url" content="${v}"></head>`));
+  }
+};
+const removeGatewayEverywhere = () => {
+  for (const file of htmlFiles(DIST)) {
+    const html = readFileSync(file, 'utf8');
+    const stripped = html.replace(GATEWAY_META, '');
+    if (stripped !== html) writeFileSync(file, stripped);
+  }
+};
+
+const run = (extraEnv = {}) => {
+  const env = { ...process.env, SITE_DIST: DIST, ...extraEnv };
+  if (!('PUBLIC_AI_GATEWAY_URL' in extraEnv)) delete env.PUBLIC_AI_GATEWAY_URL;
   try {
-    execSync('node scripts/check-built-site.mjs', { stdio: 'pipe', env: { ...process.env, SITE_DIST: DIST } });
+    execSync('node scripts/check-built-site.mjs', { stdio: 'pipe', env });
     return { code: 0, out: '' };
   } catch (e) {
     return { code: e.status ?? 1, out: String(e.stdout || '') + String(e.stderr || '') };
@@ -232,6 +265,65 @@ const cases = [
     },
   },
   {
+    name: 'AI 閘道網址不是 https',
+    expect: /AI 閘道網址必須是 https/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</head>', '<meta name="ai-gateway-url" content="http://gateway.example"></head>'),
+  },
+  {
+    name: 'AI 閘道網址帶了查詢字串',
+    expect: /AI 閘道網址不能帶查詢字串或 #/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</head>', '<meta name="ai-gateway-url" content="https://gateway.example/?model=x"></head>'),
+  },
+  {
+    name: 'AI 閘道網址一頁出現兩次',
+    expect: /最多 1 個，實際 2 個/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</head>', '<meta name="ai-gateway-url" content="https://a.example"><meta name="ai-gateway-url" content="https://a.example"></head>'),
+  },
+  {
+    // 只有一頁有、其他頁沒有：那些頁面的 AI 功能會一律回報「尚未設定」
+    name: 'AI 閘道網址只出現在部分頁面',
+    expect: /部分頁面缺少 AI 閘道網址/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</head>', '<meta name="ai-gateway-url" content="https://gateway.example"></head>'),
+  },
+  {
+    name: 'AI 閘道網址指向內部網路（Tailscale 的 CGNAT 位址）',
+    expect: /AI 閘道網址不能指向本機或內部網路/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</head>', '<meta name="ai-gateway-url" content="https://100.64.0.1"></head>'),
+  },
+  {
+    name: 'AI 閘道網址各頁不一致',
+    expect: /各頁的 AI 閘道網址不一致/,
+    apply: () => injectGatewayEverywhere('https://a.example', 'https://b.example'),
+    undo: removeGatewayEverywhere,
+  },
+  {
+    // BaseLayout 讀的變數名稱被改掉或打錯：產物整批沒有 meta，前後依然一致
+    name: 'AI 閘道：建置時有設定，產物卻沒有',
+    expect: /建置時設定了 PUBLIC_AI_GATEWAY_URL，產物卻沒有任何頁面帶著 AI 閘道網址/,
+    env: { PUBLIC_AI_GATEWAY_URL: 'https://gateway.example' },
+    apply: () => {},
+    undo: () => {},
+  },
+  {
+    name: 'AI 閘道：產物的網址和建置時的設定不同',
+    expect: /產物的 AI 閘道網址和建置時的設定不同/,
+    env: { PUBLIC_AI_GATEWAY_URL: 'https://b.example' },
+    apply: () => injectGatewayEverywhere('https://a.example'),
+    undo: removeGatewayEverywhere,
+  },
+  {
+    name: 'AI 閘道：建置時沒有設定（空字串），產物卻有',
+    expect: /建置時沒有設定 PUBLIC_AI_GATEWAY_URL，產物卻帶著 AI 閘道網址/,
+    env: { PUBLIC_AI_GATEWAY_URL: '' },
+    apply: () => injectGatewayEverywhere('https://a.example'),
+    undo: removeGatewayEverywhere,
+  },
+  {
     // 清單自己不見也要紅。否則「刪掉清單」就等於把上面那一關關掉——這一系列
     // issue 反覆出現的正是這種「保護可以被一個編輯動作繞過」。
     name: 'vendor 清單：清單檔本身被刪掉',
@@ -259,7 +351,7 @@ for (const c of cases) {
     } else {
       c.apply();
     }
-    const r = run();
+    const r = run(c.env);
     const caught = r.code !== 0 && c.expect.test(r.out);
     if (caught) {
       pass++;

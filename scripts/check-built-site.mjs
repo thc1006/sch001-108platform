@@ -33,6 +33,7 @@ import {
     parseCssUrls,
     walkJsonStrings,
     staticImportSpecifiers,
+    gatewayUrlProblem,
 } from './site-contract.lib.mjs';
 import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
 import { collectBareDomains, makeSkipFieldFilter } from './bare-domains.lib.mjs';
@@ -119,6 +120,12 @@ const record = (ref, fromUrl, file, location) => {
 // ── HTML ──
 const anchorCache = new Map(); // dist 相對路徑 → Set<id>
 const htmlFiles = distFiles.filter((f) => f.endsWith('.html'));
+// AI 閘道網址：網址 → 出現在哪些頁；沒有的版面頁另外記
+const gatewayUrls = new Map();
+const pagesWithoutGateway = [];
+// 建置時的設定。CI 檢查這一步拿到的值與建置那一步相同（同一個 repository variable）；
+// 本機直接跑、沒有這個環境變數時不比對，只檢查產物本身前後一致
+const expectedGateway = process.env.PUBLIC_AI_GATEWAY_URL === undefined ? undefined : process.env.PUBLIC_AI_GATEWAY_URL.trim();
 
 for (const rel of htmlFiles) {
     const html = await readFile(path.join(DIST, rel), 'utf8');
@@ -143,6 +150,22 @@ for (const rel of htmlFiles) {
     if (isLayoutPage) {
         const mains = $('main#main-content').length;
         if (mains !== 1) addError(rel, 'main#main-content', `應恰好有 1 個，實際 ${mains} 個`);
+    }
+
+    // AI 閘道網址（BaseLayout 依 PUBLIC_AI_GATEWAY_URL 輸出）：最多一個，有的話必須合格、
+    // 全站一致。不合格時前端會直接回報「尚未設定」——在部署前擋下，而不是等學生按下按鈕才發現
+    if (isLayoutPage) {
+        const metas = $('meta[name="ai-gateway-url"]');
+        if (metas.length > 1) addError(rel, 'meta[name=ai-gateway-url]', `最多 1 個，實際 ${metas.length} 個`);
+        if (metas.length === 0) {
+            pagesWithoutGateway.push(rel);
+        } else {
+            const value = String(metas.first().attr('content') ?? '').trim();
+            const problem = gatewayUrlProblem(value);
+            if (problem) addError(rel, 'meta[name=ai-gateway-url]', `AI 閘道網址${problem}`);
+            if (!gatewayUrls.has(value)) gatewayUrls.set(value, []);
+            gatewayUrls.get(value).push(rel);
+        }
     }
 
     for (const [sel, attr] of [
@@ -208,6 +231,28 @@ for (const rel of htmlFiles) {
         else if (c.path !== fromUrl) addError(rel, 'canonical', `canonical 指向 ${c.path}，但本頁的部署網址是 ${fromUrl}`);
         const ogUrl = $('meta[property="og:url"]').attr('content');
         if (ogUrl && ogUrl !== canon.attr('href')) addError(rel, 'og:url', `og:url 與 canonical 不一致：${ogUrl}`);
+    }
+}
+
+// 閘道網址要嘛每個版面頁都有、而且都一樣，要嘛全部沒有（沒設 PUBLIC_AI_GATEWAY_URL）
+if (gatewayUrls.size > 1) {
+    addError('（全站）', 'meta[name=ai-gateway-url]', `各頁的 AI 閘道網址不一致：${[...gatewayUrls.keys()].join('、')}`);
+}
+if (gatewayUrls.size > 0 && pagesWithoutGateway.length > 0) {
+    addError('（全站）', 'meta[name=ai-gateway-url]', `部分頁面缺少 AI 閘道網址（${pagesWithoutGateway.length} 頁，例：${pagesWithoutGateway[0]}）`);
+}
+// 產物要反映建置時的設定：BaseLayout 讀的變數名稱被改掉或打錯時，產物會整批沒有 meta，
+// 前後依然一致，上面的檢查抓不到
+if (expectedGateway === '' && gatewayUrls.size > 0) {
+    addError('（全站）', 'meta[name=ai-gateway-url]', '建置時沒有設定 PUBLIC_AI_GATEWAY_URL，產物卻帶著 AI 閘道網址');
+}
+if (expectedGateway) {
+    if (gatewayUrls.size === 0) {
+        addError('（全站）', 'meta[name=ai-gateway-url]', '建置時設定了 PUBLIC_AI_GATEWAY_URL，產物卻沒有任何頁面帶著 AI 閘道網址');
+    }
+    const different = [...gatewayUrls.keys()].filter((value) => value !== expectedGateway);
+    if (different.length > 0) {
+        addError('（全站）', 'meta[name=ai-gateway-url]', `產物的 AI 閘道網址和建置時的設定不同：${different.join('、')}`);
     }
 }
 
