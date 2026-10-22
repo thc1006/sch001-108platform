@@ -8,14 +8,14 @@
  *
  * ── 網址從哪來 ──
  * 一律讀 .reports/url-inventory.json，由 check-built-site.mjs 在 npm run check:site
- * 時產生（實測 501 個去重網址／1459 處引用，含每一處的出處檔案）。
+ * 時產生，記有每一處引用的出處檔案。
  * 刻意「不」自己再掃一次 dist/ 與 public/：同一件事有兩份擷取邏輯就會漂移，
  * 而 #78 出事的原因正是「對應表被手抄成第二份」。要多一個欄位就去改
  * check-built-site.mjs，不要在這裡長出第二套擷取。
  *
  * ── 與 PR gate 的分工 ──
- *   ci.yml 的 Site Integrity → 站內連結與靜態位址政策，確定性，擋 PR
- *   本檢查                   → 外部站台可用性，非確定性，只開 issue／寫 summary
+ *   ci.yml 的 Site and Browser Integrity → 站內連結與靜態位址政策，確定性，擋 PR
+ *   本檢查                               → 外部站台可用性，非確定性，只開 issue／寫 summary
  *
  * ── 內文裸網域（#nnn 新增）──
  * 在此之前，只有「寫成 href／url 欄位」的網址會被檢查。但競賽資料的 description

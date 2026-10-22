@@ -10,7 +10,7 @@
  * console error、pageerror 或失敗的網路請求。
  *
  * 前置：dist/ 已 build 並 stage 到 .link-root/sch001-108platform/
- *      （見 ci.yml 的 Stage GitHub Pages path namespace）
+ *      （CI 由 ci.yml 解開下載的 artifact 放進去）
  */
 const { test, expect } = require('@playwright/test');
 

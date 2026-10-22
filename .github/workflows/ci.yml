@@ -25,11 +25,13 @@ permissions:
   contents: read
 
 jobs:
+  # 相依只裝一次：建置、靜態檢查、上傳 artifact，再下載同一份跑瀏覽器測試。
+  # 瀏覽器測試失敗而重跑時，建置與靜態檢查也會重跑。
   site:
-    name: Site Integrity
+    name: Site and Browser Integrity
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # 上傳 artifact 走 runtime token，不需要 actions 權限。
+    timeout-minutes: 25
+    # artifact 的上傳與下載走 runtime token，不需要 actions 權限。
     permissions:
       contents: read
     steps:
@@ -107,66 +109,45 @@ jobs:
             --no-progress
             './.link-root/sch001-108platform/**/*.html'
 
-      # 上傳時瀏覽器測試還沒跑。測試失敗時 artifact 仍留在 run 裡，但 CI Required
-      # 不通過就不會部署。PR 也上傳，打包失敗才會在合併前出現。
-      # upload-pages-artifact 預設只保留 1 天，過期後只重跑 Browser Tests 或 deploy
-      # 會拿不到這份 artifact。
-      - name: Upload the artifact that passed every check
+      # 上傳的是通過靜態檢查的那份，瀏覽器測試還沒跑。測試失敗時它仍留在 run 裡，
+      # 但 CI Required 不通過就不會部署。PR 也上傳，打包失敗才會在合併前出現。
+      # upload-pages-artifact 預設只保留 1 天，過期後只重跑 deploy 會拿不到它。
+      - name: Upload the candidate artifact
+        id: pages
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: dist
-
-  browser:
-    name: Browser Tests
-    needs: [site]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # 下載同一個 run 的 artifact 也走 runtime token，不需要 actions 權限。
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version-file: '.node-version'
-          cache: 'npm'
-
-      - name: Verify the install-script gate is in effect (before installing)
-        run: node scripts/check-install-gate.mjs
-
-      - name: Install dependencies
-        run: npm ci
 
       # 只裝 headless shell，改用 channel 或 headed 時拿掉 --only-shell。
       # 版面預算要靠 --with-deps 裝的中文字型。瀏覽器不快取，Playwright 也不建議。
       - name: Install Chromium headless shell
         run: npx playwright install --with-deps --only-shell chromium
 
-      # 下載 site 上傳的那份，不重新建置：測的就是會被部署的位元組，包含 Pages 的
-      # 打包。digest 不符時 download-artifact 預設就會失敗。
-      - name: Download the artifact that passed the static checks
+      # 依 ID 下載剛上傳的那份並驗 digest：測的就是會被部署的位元組，
+      # 連 Pages 的打包也在內。
+      - name: Download the exact candidate artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: github-pages
+          artifact-ids: ${{ steps.pages.outputs.artifact_id }}
+          path: ${{ runner.temp }}/pages-download
+          digest-mismatch: error
 
+      # 先清空 .link-root，測到的只會是下載的 artifact，
+      # 不會是前面為 lychee 放進去的 dist。
       - name: Unpack into the GitHub Pages path namespace
         run: |
           rm -rf "$GITHUB_WORKSPACE/.link-root"
           mkdir -p "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
-          tar -xf artifact.tar -C "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
+          tar -xf "$RUNNER_TEMP/pages-download/artifact.tar" -C "$GITHUB_WORKSPACE/.link-root/sch001-108platform"
           test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/index.html"
           test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/search-index.json"
 
       - name: Run browser tests
+        id: browser
         run: npx playwright test
 
       - name: Upload Playwright report on failure
-        if: failure()
+        if: ${{ failure() && steps.browser.outcome == 'failure' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-report
@@ -230,13 +211,13 @@ jobs:
       - name: Run comment-checker unit tests
         run: npm run test:comments
 
-  # ruleset 只認 CI Required 這個名稱，其他 job 增減時改這裡的 needs 與下面的檢查。
-  # 上游失敗時，沒有 always() 的 job 會被跳過，而被跳過的 job 算通過；所以這裡用
-  # always() 執行，再逐一確認上游是 success。
+  # ruleset 只認 CI Required 這個名稱，其他 job 改名或增減時，改這裡的 needs 與
+  # 下面的檢查。上游失敗時，沒有 always() 的 job 會被跳過，而被跳過的 job 算通過；
+  # 所以這裡用 always() 執行，再逐一確認上游是 success。
   required:
     name: CI Required
     if: ${{ always() }}
-    needs: [site, data, browser]
+    needs: [site, data]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -245,14 +226,11 @@ jobs:
         env:
           SITE_RESULT: ${{ needs.site.result }}
           DATA_RESULT: ${{ needs.data.result }}
-          BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
-          echo "Site Integrity : $SITE_RESULT"
-          echo "Validate Data  : $DATA_RESULT"
-          echo "Browser Tests  : $BROWSER_RESULT"
+          echo "Site and Browser Integrity : $SITE_RESULT"
+          echo "Validate Data              : $DATA_RESULT"
           test "$SITE_RESULT" = "success"
           test "$DATA_RESULT" = "success"
-          test "$BROWSER_RESULT" = "success"
 
   # CI Required 通過才部署。deploy-pages 照預設名稱 github-pages 取 site 在這個 run
   # 上傳的 artifact。它每次的逾時是 10 分鐘，25 分鐘容得下重試一次，不會先被 job
