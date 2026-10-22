@@ -1,5 +1,5 @@
 {
-  "_readme": "108 課綱核心素養與聯合國 SDGs 的代碼對照表，是本 repo 唯一的一份。build-search-index.js（CommonJS）用它把來源資料的代碼展開成可搜尋的中文標籤；scripts/*.mjs（ESM）用它驗證來源資料與建置產物裡的代碼是否合法。兩邊共用同一個 JSON，是因為 CJS 與 ESM 沒辦法共用模組——先前 check-civic-tech.mjs 把素養代碼寫成自己的一條正規表示式，那種各自維護一份的作法必然漂移。中文標籤刻意與 src/pages/civic-tech-map/index.astro、src/pages/career-exploration/competency-map.astro 頁面上顯示的字串一致，使用者在頁面看到什麼字，搜尋就搜得到什麼字。",
+  "_readme": "108 課綱核心素養與聯合國 SDGs 的代碼對照表，是本 repo 代碼與中文標籤的唯一來源。build-search-index.js（CommonJS）用它把來源資料的代碼展開成可搜尋的中文標籤；scripts/*.mjs（ESM）用它驗證來源資料與建置產物裡的代碼是否合法。兩邊共用同一個 JSON，是因為 CJS 與 ESM 沒辦法共用模組——先前 check-civic-tech.mjs 把素養代碼寫成自己的一條正規表示式，那種各自維護一份的作法必然漂移。中文標籤刻意與 src/pages/civic-tech-map/index.astro、src/pages/career-exploration/competency-map.astro 頁面上顯示的字串一致，使用者在頁面看到什麼字，搜尋就搜得到什麼字。AI 閘道的 competency-analysis 任務指令另外抄了一份素養名稱（閘道的映像檔裡沒有這個檔案），由 ai-gateway/test/task-catalog.test.mjs 比對兩邊是否一致。",
   "competencies": {
     "A1": { "label": "身心素質與自我精進", "domain": "自主行動" },
     "A2": { "label": "系統思考與解決問題", "domain": "自主行動" },
