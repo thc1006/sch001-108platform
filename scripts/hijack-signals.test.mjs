@@ -1,7 +1,6 @@
 /**
- * 自動偵測「狀態碼健康、內容已經換人」的單元與端對端測試（#117）
- * ================================================================
- * 這兩個訊號的價值完全取決於**誤判率**：報得太兇就會被當成雜訊關掉，而關掉之後
+ * 自動偵測「狀態碼健康、內容已經換人」的單元與端對端測試（#117）。
+ * 這三個訊號的價值完全取決於誤判率：報得太兇就會被當成雜訊關掉，而關掉之後
  * 就回到「只能堵已知主機」的狀態。所以反例（正常網站不得被標記）和正例一樣多。
  */
 import test from 'node:test';
@@ -23,7 +22,7 @@ import {
 
 const LOOPBACK = { allowLoopback: true };
 
-// ── 訊號 A：同站判定 ────────────────────────────────────────────
+// 訊號 A：同站判定。
 test('sameSite：www 轉址、子網域都算同站', () => {
     assert.equal(sameSite('ieso-info.org', 'www.ieso-info.org'), true);
     assert.equal(sameSite('www.cac.edu.tw', 'cac.edu.tw'), true);
@@ -50,7 +49,7 @@ test('crossSiteRedirect：三個真實案例的判定與實測一致', () => {
     // 實測過的接管：終點是完全不同的網域
     assert.ok(crossSiteRedirect('https://www.sasmo.sg/', 'https://arcade.now/lp1/play'));
     assert.ok(crossSiteRedirect('https://hmun.org/', 'https://t.tenlets.com/x'));
-    // ieso-info.org 是 301 → www.ieso-info.org，**同站**，所以訊號 A 看不到它。
+    // ieso-info.org 是 301 → www.ieso-info.org，同站，所以訊號 A 看不到它。
     // 這不是缺陷，是分工：它由訊號 B（內容標記）負責。
     assert.equal(crossSiteRedirect('https://ieso-info.org/', 'https://www.ieso-info.org/'), null);
 });
@@ -59,7 +58,7 @@ test('crossSiteRedirect：沒有轉址時回 null', () => {
     assert.equal(crossSiteRedirect('https://example.org/a', 'https://example.org/a'), null);
 });
 
-// ── 訊號 B：內容標記 ───────────────────────────────────────────
+// 訊號 B：內容標記。
 test('extractHeadText：取得 title 與 meta description', () => {
     const html = `<!doctype html><html><head><title>  Best Online Pokies in Australia 2026  </title>
         <meta name="description" content="Enjoy the best real money pokies at trusted casinos.">
@@ -77,7 +76,7 @@ test('extractHeadText：取不到就回空字串，不猜', () => {
 
 test('extractHeadText：description 裡的撇號不得把內容截斷（現成的規避法）', () => {
     // 用 [^"'] 這種「兩種引號都排除」的字元類別時，取到的只有 "Australia"，
-    // 撇號之後的整段——包含變現詞組——全部看不到。實測全站 93 個含英文
+    // 撇號之後的整段，包括變現詞組，全部看不到。實測全站 93 個含英文
     // description 的目標中有 3 個被這樣截斷（iymc.info／pmc.ncbi.nlm.nih.gov／
     // drivendata.org），對接管的頁面則等於一個一個字元就能規避的偵測。
     const html = `<meta name="description" content="Australia's best online casino bonus and free spins.">`;
@@ -89,7 +88,7 @@ test('extractHeadText：description 裡的撇號不得把內容截斷（現成�
 });
 
 test('extractHeadText：過長的 title／description 要截斷，不是整條丟掉', () => {
-    // 量詞寫成 {0,300}? 時，超過上限不是截斷而是**整條比對失敗**回空字串——
+    // 量詞寫成 {0,300}? 時，超過上限不是截斷，而是整條比對失敗、回空字串：
     // 「太長」與「根本沒有 title」在下游長得一模一樣，而蹲域名的頁面標題常常很長。
     const longTitle = `<title>${'ab '.repeat(150)}Best Online Pokies</title>`;
     const t = extractHeadText(longTitle).title;
@@ -103,7 +102,7 @@ test('extractHeadText：過長的 title／description 要截斷，不是整條�
 
 test('inertText：遠端可控的文字進不了 issue 的渲染層', () => {
     // 報告會被 gh issue create --body-file 原樣送進 issue body，而這段文字是
-    // 被偵測的那台主機自己寫的——命中的定義就是「那台主機不可信」。
+    // 被偵測的那台主機自己寫的；命中的定義就是「那台主機不可信」。
     const evil = 'Online Casino @thc1006 see #72 and [Click](https://evil.example/phish)';
     const out = inertText(evil);
     assert.ok(out.startsWith('`') && out.endsWith('`'), '必須包成行內程式碼');
@@ -113,7 +112,7 @@ test('inertText：遠端可控的文字進不了 issue 的渲染層', () => {
 });
 
 test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
-    // 這一條守的是**接線**，不是函式本身：inertText 寫得再對，報告那邊忘了呼叫
+    // 這一條守的是接線，不是函式本身：inertText 寫得再對，報告那邊忘了呼叫
     // 就一點用都沒有，而那個漏接不會有任何其他訊號。
     const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
     for (const expr of ['inertText(c.text)', 'inertText(a.shell.title)', 'inertText(h)']) {
@@ -123,7 +122,7 @@ test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
 });
 
 test('報告：訊號數要無條件寫進報告，不只寫在主控台', () => {
-    // 「這次沒偵測到」與「偵測根本沒接上線」必須在**人真的會讀的那份東西**上
+    // 「這次沒偵測到」與「偵測根本沒接上線」必須在人真的會讀的那份東西上
     // 分得出來。主控台只在 job step 的 log 裡；貼進 issue 的是這份 markdown。
     const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
     // 兩個等級都要有數字。只報 actionable 的話，「跨站轉址那一段今天是 0」與
@@ -133,15 +132,15 @@ test('報告：訊號數要無條件寫進報告，不只寫在主控台', () =>
         const summary = src.slice(src.indexOf('const lines = '));
         assert.ok(re.test(summary), `報告的摘要沒有列出 ${bucket} 的數量`);
     }
-    // 摘要那一段不可以被包在「有命中才寫」的條件裡——包起來就等於沒寫。
+    // 摘要那一段不可以被包在「有命中才寫」的條件裡，包起來就等於沒寫。
     //
-    // 這裡比對的是**源碼形狀**，不是行為：check-external-links.mjs 的報告產生器是
+    // 這裡比對的是源碼形狀，不是行為：check-external-links.mjs 的報告產生器是
     // 第 324–610 行的一整段頂層語句，要真的跑起來得先連 508 個目標，沒辦法做成
-    // 單元測試。所以改用一個在這個檔案裡成立、而且繞不過去的不變量——
-    // **那個 lines.push( 必須是第 0 欄的頂層語句**。
+    // 單元測試。所以驗的是一個在這個檔案裡成立、而且繞不開的不變量：
+    // 那個 lines.push( 必須是第 0 欄的頂層語句。
     //
-    // 之所以不比對「有沒有被包在 if 裡」：第一版是找 `if (x) {`，結果無大括號的
-    // `if (x) lines.push(` 直接繞過去，故障注入當場證實了（突變沒被抓到）。
+    // 之所以不比對「有沒有被包在 if 裡」：只找 `if (x) {` 的話，無大括號的
+    // `if (x) lines.push(` 就直接繞開了。
     // 縮排這條線兩種寫法都擋得住，因為任何一種包裹都會讓它離開第 0 欄。
     const srcLines = src.split(/\r?\n/);
     const at = srcLines.findIndex((l) => l.includes('- 自動偵測：需處理'));
@@ -161,7 +160,7 @@ test('報告：訊號數要無條件寫進報告，不只寫在主控台', () =>
 
 test('報告：跨站轉址不進 needsAttention，內容標記與 HTTP 盲區才進', () => {
     // 這是這份檢查最重要的一條線。實測全站 508 個目標，跨站轉址命中 11 筆、
-    // **全部誤判**（4 筆兄弟子網域、7 筆機構改名或短網址）。把它接上通知，
+    // 全部誤判（4 筆兄弟子網域、7 筆機構改名或短網址）。把它接上通知，
     // 維護者會在第三週學會忽略整個看門狗。
     const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
     const cond = src.match(/const needsAttention =[\s\S]*?;/);
@@ -177,7 +176,7 @@ test('報告：跨站轉址不進 needsAttention，內容標記與 HTTP 盲區�
 });
 
 test('contentSquatSignals：ieso-info.org 實測到的 head 會被抓到', () => {
-    // 2026-08-28 實測的原文。**必須連 description 一起餵**——門檻是「至少兩個
+    // 2026-08-28 實測的原文。必須連 description 一起餵：門檻是「至少兩個
     // 相異詞組」，只有標題的話 online pokies 一個詞組不夠，那是刻意的。
     const hits = contentSquatSignals(
         '<title>Best Online Pokies in Australia 2026 - Play For Real Money</title>' +
@@ -190,7 +189,7 @@ test('contentSquatSignals：ieso-info.org 實測到的 head 會被抓到', () =>
 });
 
 test('contentSquatSignals：停放待售的網域會被抓到（過期學術網域最常見的下場）', () => {
-    // 真實的停放頁不會只提一次。單一詞組的版本刻意**不**命中——那正是
+    // 真實的停放頁不會只提一次。單一詞組的版本刻意不命中，那正是
     // 「至少兩個相異詞組」要擋掉的形態（教育內容常常只會提到一次）。
     assert.ok(
         contentSquatSignals(
@@ -213,12 +212,12 @@ test('contentSquatSignals：門檻是「相異」詞組，同一個詞出現兩�
     assert.deepEqual(hits, [], '同一個詞組重複出現不該通過門檻');
 });
 
-// 反例——這一組比正例更重要。誤判會讓維護者把整個偵測關掉。
+// 反例：這一組比正例更重要。誤判會讓維護者把整個偵測關掉。
 test('visibleText：結束標籤帶空白或屬性一樣要剝掉（CodeQL js/bad-tag-filter）', () => {
-    // HTML 解析器接受 `</script >`、`</script foo>`，瀏覽器照樣收工。原本的
-    // `<\/script>` 對不上它們，於是整段 JS 原始碼被算成「可見文字」——實測洩漏
-    // 56 個字元，門檻是 4，opaqueShell 直接回 null。偵測對象是被接管的網域，
-    // 對方只要在結束標籤裡多打一個空格就繞過去了。
+    // HTML 解析器接受 `</script >`、`</script foo>`，瀏覽器照樣收工。配對規則只認
+    // `<\/script>`、未閉合時也不吃到檔尾的話，整段 JS 原始碼會被算成「可見文字」，
+    // 下面的 body 有 56 個字元，門檻是 4，opaqueShell 直接回 null。偵測對象是被接管的網域，
+    // 對方只要在結束標籤裡多打一個空格就繞開了。
     const body = 'window.location.replace("https://parked.example/?ref=1")';
     for (const close of ['</script>', '</script >', '</script foo>', '</SCRIPT >']) {
         assert.equal(
@@ -231,16 +230,15 @@ test('visibleText：結束標籤帶空白或屬性一樣要剝掉（CodeQL js/ba
     assert.equal(visibleText(`<body><script>${body}`), '');
     assert.equal(visibleText('<body><style>.a{color:red}</style ></body>'), '');
 
-    // ── 這一段釘的是**配對規則本身**，不是「有沒有被剝掉」 ──
+    // 這一段釘的是配對規則本身，不是「有沒有被剝掉」。
     //
     // 上面那條「未閉合就吃到檔尾」的規則會順手蓋掉漏檢：`</script >` 對不上
     // 配對規則時，未閉合規則會從 <script> 一路吃到檔尾，結果照樣是空字串。
-    // 所以只驗「腳本內容不見了」的話，把配對規則改回不容許空白也測不出來
-    //（故障注入當場證實：58 擋下 / 1 漏掉）。
+    // 所以只驗「腳本內容不見了」的話，把配對規則換成不容許空白也測不出來。
     //
-    // 兩條規則真正的差別在**結束標籤後面還有內容**的時候：配對規則正確時，
-    // 後面那段真實文字留得下來；退回舊寫法就會被未閉合規則連同吃掉，一個
-    // 有實質內容的正常頁面於是被判成「可見文字為零」的空殼——誤判，而且是
+    // 兩條規則真正的差別在結束標籤後面還有內容的時候：配對規則正確時，
+    // 後面那段真實文字留得下來；配對規則不容許空白的話，就會被未閉合規則連同吃掉，
+    // 一個有實質內容的正常頁面於是被判成「可見文字為零」的空殼。這是誤判，而且是
     // 訊號 C 最不能犯的那一種錯。
     assert.equal(
         visibleText('<body><script>var a=1</script >歡迎光臨中華數學協會</body>'),
@@ -270,11 +268,9 @@ test('opaqueShell：noscript 的結束標籤帶空白時，排除條件仍然要
 });
 
 test('contentSquatSignals：詞界在「至少兩個相異詞組」的門檻下仍然承重', () => {
-    // 這一格是被 CI 逼出來的。原本驗詞界的反例都只放**一個**近似命中，門檻拉到
-    // 兩個相異詞組之後，那些反例不論詞界對不對都回空——故障注入把詞界比對整條
-    // 換成純子字串，測試竟然還是綠的（56 擋下 / 2 漏掉）。
-    //
-    // 所以反例要放**兩個**近似命中在同一份文件裡：詞界正確時仍然是 0 個相異詞組，
+    // 門檻是兩個相異詞組，反例只放一個近似命中的話，不論詞界對不對都回空，
+    // 把詞界比對整條換成純子字串也測不出來。
+    // 所以反例要放兩個近似命中在同一份文件裡：詞界正確時仍然是 0 個相異詞組，
     // 退化成純子字串時就會湊到 2 個而突破門檻。
     const html =
         '<title>Sign up for the free spins-off workshop</title>'
@@ -325,7 +321,7 @@ test('SQUAT_PHRASES：一律是多字詞組，不得有單字', () => {
     assert.deepEqual(singles, [], `以下是單字，會製造誤判：${singles.join('、')}`);
 });
 
-// ── 端對端：body 讀取的管線真的通嗎 ─────────────────────────────
+// 端對端：本機伺服器扮演各種站台，確認 probe 讀 body 的管線接得上訊號。
 let server;
 let base;
 let localhostBase;
@@ -353,7 +349,7 @@ test.before(async () => {
             res.write('A'.repeat(500_000)); // 遠大於上限，證明會被截斷而不是讀完
             // 刻意不 end：讀滿上限就 destroy 才是對的行為
         } else if (url.pathname === '/gzip') {
-            // 宣稱壓縮但送的是明文——模擬伺服器無視 identity 的情況
+            // 宣稱壓縮但送的是明文，模擬伺服器無視 identity 的情況。
             res.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' });
             res.end('<title>Best Online Pokies in Australia</title>');
         } else {
@@ -420,7 +416,7 @@ test('端對端：伺服器無視 identity 仍回壓縮時，放棄解析而不�
     assert.equal(r.status, 200);
     assert.equal(r.bodyHead, undefined, '不該保留無法解析的位元組');
     assert.match(r.bodySkipped || '', /content-encoding/);
-    // 那一頁的標題其實含 'online pokies'，但因為解不開，**不得**產生訊號——
+    // 那一頁的標題其實含 'online pokies'，但因為解不開，不得產生訊號：
     // 拿解不開的位元組去比對是假訊號，比不檢查更糟。
     assert.equal(detectHijackSignals(`${base}/gzip`, r), null);
 });
@@ -431,9 +427,9 @@ test('detectHijackSignals：dead／blocked 的結果不重複標記', () => {
     assert.equal(detectHijackSignals('https://x.test/', { status: 0, code: 'ENOTFOUND' }), null);
 });
 
-// ── 訊號 C：HTTP 層看不到內容 ──────────────────────────────────
+// 訊號 C：HTTP 層看不到內容。
 test('opaqueShell：hmun.org 實測到的 JS 挑戰殼會被標出來', () => {
-    // 2026-08-28 實測的原文（470 bytes）。轉址目標是**同一台主機**帶 JWT，
+    // 2026-08-28 實測的原文（470 bytes）。轉址目標是同一台主機帶 JWT，
     // 所以訊號 A 看不到；沒有任何變現詞彙，所以訊號 B 也看不到。
     const real =
         "<html><head><title>Loading...</title></head><body><script type='text/javascript'>" +
@@ -446,8 +442,8 @@ test('opaqueShell：hmun.org 實測到的 JS 挑戰殼會被標出來', () => {
 });
 
 test('opaqueShell：有 meta refresh 的小殼**不算**盲區（不需要 JS 就走得下去）', () => {
-    // 這兩份是對照組實測到的原文。第一版的判準（小 body ＋ 任何轉址構造）把它們
-    // 都標成可疑——2/6 的誤判率，會讓整個偵測被當成雜訊關掉。
+    // 這兩份是對照組實測到的原文。只看「小 body ＋ 任何轉址構造」的判準會把它們
+    // 都標成可疑，2/6 的誤判率會讓整個偵測被當成雜訊關掉。
     const cac =
         '<html>\n<head>\n<meta http-equiv="refresh" content="0;url=https://www.cac.edu.tw/cacportal/index.php">\n' +
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n<title>大學甄選入學委員會</title>\n</head>\n<body></body>\n</html>';
@@ -456,14 +452,14 @@ test('opaqueShell：有 meta refresh 的小殼**不算**盲區（不需要 JS �
         '<title>Welcome to Taiwan Olympiad Portal</title>\n</head>\n' +
         '<body onload="parent.location=\' https://tpmso.k12ea.gov.tw/home/\' ">\n</body>\n</html>';
     assert.equal(opaqueShell(cac), null, '大學甄選入學委員會的舊式轉址頁不是盲區');
-    // tpmso 同時有 meta refresh 與 parent.location——meta refresh 存在就走得下去
+    // tpmso 同時有 meta refresh 與 parent.location，meta refresh 存在就走得下去。
     assert.equal(opaqueShell(tpmso), null, '有 meta refresh 就不算盲區，即使同時有 JS');
 });
 
 test('opaqueShell：正常頁面不得被標記', () => {
-    // 小但沒有轉址構造——正常的極簡頁面
+    // 小但沒有轉址構造：正常的極簡頁面
     assert.equal(opaqueShell('<html><head><title>IMO 2026</title></head><body><h1>報名</h1></body></html>'), null);
-    // 有 location 指派但頁面很大——正常的 JS 網站
+    // 有 location 指派但頁面很大：正常的 JS 網站
     const big = '<html><head><title>臺灣國際科學展覽會</title></head><body>' + '內容'.repeat(900) +
         '<script>document.querySelector("a").onclick=()=>{location.href="/apply"}</script></body></html>';
     assert.ok(Buffer.byteLength(big, 'utf8') > 2048);
