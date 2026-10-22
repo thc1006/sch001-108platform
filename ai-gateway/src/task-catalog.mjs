@@ -244,4 +244,45 @@ export const TASK_DEFINITIONS = [
         ].join('\n'),
         output: { type: 'markdown' },
     },
+    {
+        // 自主學習 › 學習資源地圖的「AI 學習路徑規劃師」（src/pages/autonomous-learning/resource-map.astro）。
+        // 步驟編號由頁面依陣列順序給，不讓模型寫：schema 管不住編號是否連續。
+        id: 'learning-path',
+        input: {
+            topic: { label: '學習主題', maxLength: 100 },
+        },
+        instructions: [
+            '你是一位專業的學習顧問，請為一位想自主學習的台灣高中生，依他的「學習主題」規劃一份剛好 4 個步驟的學習路徑（learning_path），步驟依學習的先後順序排列。每個步驟包含：',
+            '- title：步驟標題，約 4～15 字',
+            '- description：步驟描述，說明這一步要學什麼，一到兩句，約 30～80 字',
+            '- resource_type：建議的資源類型，只寫簡短的類型名稱（約 2～10 字），不要加說明，例如：線上課程、知識型影片、閱讀材料、互動模擬實驗',
+            '- actionable_suggestion：一個具體的行動建議，並附上相關的搜尋關鍵字，一到兩句，約 30～100 字',
+        ].join('\n'),
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: {
+                    learning_path: {
+                        type: 'array',
+                        minItems: 4,
+                        maxItems: 4,
+                        items: {
+                            type: 'object',
+                            properties: {
+                                title: { type: 'string', minLength: 1, maxLength: 50 },
+                                description: { type: 'string', minLength: 1, maxLength: 300 },
+                                resource_type: { type: 'string', minLength: 1, maxLength: 30 },
+                                actionable_suggestion: { type: 'string', minLength: 1, maxLength: 300 },
+                            },
+                            required: ['title', 'description', 'resource_type', 'actionable_suggestion'],
+                            additionalProperties: false,
+                        },
+                    },
+                },
+                required: ['learning_path'],
+                additionalProperties: false,
+            },
+        },
+    },
 ];
