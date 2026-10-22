@@ -14,6 +14,8 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http, { createServer } from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
 import dns from 'node:dns';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +41,27 @@ import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_A
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
 const PRIVATE_DNS_HOST = 'private-dns.example';
+
+/**
+ * onlyLoopbackNetwork 讓測試 t 的 http、https 請求只能送到 127.0.0.1，主機名一律查無此名，不查外部 DNS。
+ * link-health.faults.mjs 拿掉防護之後，呼叫它的測試會真的連向目的地，其中有雲端 metadata 位址。
+ * 名稱不能解析成被封鎖的位址，否則拿掉帳密檢查時，相容 probe 那條會被位址政策擋下而照樣通過。
+ * @param {import('node:test').TestContext} t
+ */
+function onlyLoopbackNetwork(t) {
+    for (const mod of [http, https]) {
+        const send = mod.request;
+        t.mock.method(mod, 'request', function (options, ...rest) {
+            if (options?.hostname === '127.0.0.1') return send.call(this, options, ...rest);
+            throw Object.assign(new Error(`測試攔下：不得連到 ${options?.hostname}`), { code: 'ETEST_TRANSPORT' });
+        });
+    }
+    t.mock.method(dns.promises, 'lookup', async (host) => {
+        const family = net.isIP(host);
+        if (family) return [{ address: host, family }];
+        throw Object.assign(new Error(`測試攔下：不查外部 DNS ${host}`), { code: 'ENOTFOUND' });
+    });
+}
 
 let base;
 let server;
@@ -295,7 +318,8 @@ test('SSRF：預設（嚴格）模式下連本機 http server 會被擋，且沒
     assert.match(describeResult(r), /位址政策封鎖/);
 });
 
-test('SSRF：轉址的每一跳都要重新驗證——第二跳指向 metadata 必須被擋', async () => {
+test('SSRF：轉址的每一跳都要重新驗證——第二跳指向 metadata 必須被擋', async (t) => {
+    onlyLoopbackNetwork(t);
     for (const [path, pattern] of [
         ['/to-metadata', /169\.254\.0\.0\/16/],
         ['/to-private', /10\.0\.0\.0\/8/],
@@ -367,14 +391,16 @@ test('SSRF：轉址到「解析成私網的公開網域」同樣要擋', async (
     );
 });
 
-test('SSRF：被擋下的網址分類成 unverified，絕不可被說成 healthy 或 dead', async () => {
+test('SSRF：被擋下的網址分類成 unverified，絕不可被說成 healthy 或 dead', async (t) => {
+    onlyLoopbackNetwork(t);
     const r = await probe('http://169.254.169.254/latest/meta-data/');
     assert.equal(isBlockedResult(r), true);
     assert.equal(classifyLink(r), 'unverified');
     assert.equal(isDeadResult(r), false, '沒驗到就說它壞了是編造');
 });
 
-test('SSRF：競賽看門狗的相容 probe 只放寬 loopback，metadata 仍然擋得死', async () => {
+test('SSRF：競賽看門狗的相容 probe 只放寬 loopback，metadata 仍然擋得死', async (t) => {
+    onlyLoopbackNetwork(t);
     // check-competitions.lib.mjs 的 probe 是為了讓看門狗的連線測試打得到本機 server
     // 而保留的別名，只放寬 loopback。這裡把「沒有放寬別的」釘住。
     const ok = await competitionsProbe(`${base}/ok`);
