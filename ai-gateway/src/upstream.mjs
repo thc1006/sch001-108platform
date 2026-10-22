@@ -11,7 +11,7 @@
  * 錯誤一律轉成 UpstreamError，code 是給上層判斷用的穩定代號。上游回來的錯誤內容
  * 會夾帶 key 的雜湊與內網位址，遮罩後才放進 detail（不可列舉，JSON.stringify 帶不出去）
  * 給 log，絕不往外送；額度之類的數字留著，除錯時用得到。呼叫端的回呼丟出的例外原樣丟回，
- * 不翻譯成網路錯誤——否則上層會依 retryable 替已經離開的使用者再燒一次 GPU。
+ * 不翻譯成網路錯誤，否則上層會依 retryable 替已經離開的使用者再燒一次 GPU。
  */
 
 export class UpstreamError extends Error {
@@ -159,7 +159,7 @@ function secretForms(secret) {
 
 /**
  * key 在一大段 base64 裡的樣子：key 前面的位元組數除以 3 的餘數不同，編出來的字元就不同，
- * 三種對齊都要算（例如 Basic 認證的 base64(":" + key)）。只取完全由 key 決定的中段——
+ * 三種對齊都要算（例如 Basic 認證的 base64(":" + key)）。只取完全由 key 決定的中段：
  * 開頭幾個字元混著前面的位元組、結尾不滿一組的會被後面的位元組影響。base64url 也一併算進來
  */
 function base64Forms(secret) {

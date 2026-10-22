@@ -1,7 +1,4 @@
-// 正式上線的任務清單。每個網站 AI 功能遷移過來時，在同一個 commit 裡把 prompt 從
-// 頁面搬到這裡——diff 上看得到「從頁面刪掉、在這裡加上」，確認是搬移而不是改寫。
-//
-// 格式見 tasks.mjs 的 defineTask。
+// 正式上線的任務清單，格式見 tasks.mjs 的 defineTask。
 
 /**
  * CAREER_CLUSTERS 是 career-chat 的參考資料：職涯探索首頁 majorData 裡的四個欄位，抄自頁面
@@ -34,11 +31,9 @@ const STAR_ITEM = {
 export const TASK_DEFINITIONS = [
     {
         // 自主學習 › AI 自主學習教練（src/pages/autonomous-learning/index.astro）的「學習啟動包」。
-        // 原本頁面要模型「以 JSON 格式回應」再自己找大括號解析、失敗時套假資料；現在由 schema
-        // 約束輸出，閘道驗證過才交給頁面。
-        // 指令比頁面原本的 prompt 多了兩處長度要求（探索問題一句話、資源類型只寫簡短名稱）：
-        // schema 的 maxLength 是硬截斷，沒說長度時模型把資源類型寫成長篇說明，被切在 50 字
-        // （WinLab 實測），學生看到半句話；maxLength 只當保險
+        // 指令寫明長度（探索問題一句話、資源類型只寫簡短名稱）：schema 的 maxLength 是硬截斷，
+        // 沒說長度時模型把資源類型寫成長篇說明，被切在 50 字（WinLab 實測），學生看到半句話；
+        // maxLength 只當保險。
         id: 'starter-pack',
         input: {
             topic: { label: '初步想法', maxLength: 200 },

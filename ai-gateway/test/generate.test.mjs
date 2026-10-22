@@ -136,8 +136,6 @@ const promptOnly = (promptTokens) => ({ prompt_tokens: promptTokens });
 // usage 會被當成沒給）
 const bigTask = (prompt) => ({ messages: [{ role: 'user', content: '題'.repeat(22_000) }], probe: probeStep(prompt) });
 
-// ---------------------------------------------------------------- token 估算
-
 test('estimateTokens：依字元類別取上界（ASCII 字母 0.5、空白 0.3、其他 ASCII 1、漢字與全形 1.2、擴展區與 emoji 4、其他 3）', () => {
     const cases = [
         ['', 0], ['abc', 2], ['AbC12', 4], [' ', 1], ['    ', 2], ['\n', 1], ['中文', 3],
@@ -152,8 +150,6 @@ test('parseContextOverflow：認得 vLLM 經 LiteLLM 的 context 長度錯誤；
     assert.equal(parseContextOverflow(new UpstreamError('unavailable', 'x', { status: 502, detail: overflowError(1).detail })), null);
     assert.equal(parseContextOverflow(new Error('x')), null);
 });
-
-// ---------------------------------------------------------------- trimOverlap
 
 test('trimOverlap：中文斷在詞中間、下一輪從整個詞重寫', () => {
     assert.equal(trimOverlap('理由：掌握程式思', '程式思維，能讓學生'), '維，能讓學生');
@@ -239,8 +235,6 @@ test('每一種接續提示詞都再提醒台灣繁體中文（活體測試中�
     }
 });
 
-// ---------------------------------------------------------------- 單輪
-
 test('一輪寫完：回傳正文、輪數 1、用量，串流文字與結果相同', async () => {
     const { result, calls, streamed } = await run([{ thinking: ['想'], content: ['你好', '！'], finish: 'stop' }]);
     assert.equal(result.content, '你好！');
@@ -274,8 +268,6 @@ test('只有 json_object／json_schema 才算 JSON 模式；{type:"text"} 與 nu
         assert.equal(result.content, '文字');
     }
 });
-
-// ---------------------------------------------------------------- 文字任務斷在正文
 
 test('文字斷在正文：下一輪帶已寫的正文與接續指示，思考強度改用 continuationEffort', async () => {
     const { result, calls, streamed } = await run([
@@ -435,8 +427,6 @@ test('提早送出的窗口以去掉開頭空白後的長度計：剛好 2000 �
     assert.equal(result.content, `開頭${block}之後的新內容。`);
     assert.equal(streamed, result.content);
 });
-
-// ---------------------------------------------------------------- JSON 任務
 
 test('JSON 斷在正文：不拼接，帶草稿與思考筆記整份重寫，保留 response_format 與 temperature', async () => {
     const format = { type: 'json_schema', json_schema: { name: 'x', strict: true, schema: { type: 'object' } } };
@@ -621,8 +611,6 @@ test('重寫 JSON 時預算先給草稿、再給思考筆記：筆記被裁、�
     assert.equal(calls[1].maxTokens, 8192);
 });
 
-// ---------------------------------------------------------------- 斷在思考
-
 test('斷在思考：下一輪帶思考筆記、維持 xhigh、response_format 與 temperature', async () => {
     const format = { type: 'json_object' };
     const { result, calls } = await run([
@@ -696,8 +684,6 @@ test('接續正文的那一輪想完只吐了一大串空白：維持接續正�
     assert.deepEqual(calls[2].messages[2], { role: 'assistant', content: '答案開頭' });
     assert.match(calls[2].messages[3].content, /^你上一則回覆寫到一半/);
 });
-
-// ---------------------------------------------------------------- context 預算
 
 test('第一輪估算放得下完整的輸出額度：直接送，不探測', async () => {
     const prompt = '題'.repeat(1_000);
@@ -949,8 +935,6 @@ test('題目本身就超過 WinLab 的輸入上限、接續輪怎麼縮都送不
     assert.equal(calls.length, 1);
 });
 
-// ---------------------------------------------------------------- 估算失準時：探出精確大小後重送
-
 test('vLLM 以 context 長度拒絕：先用 max_tokens=1 探出精確輸入大小，再以剛好放得下的 max_tokens 重送同樣的內容', async () => {
     const { result, calls } = await run([
         { content: ['第一段'], finish: 'length' },
@@ -1178,8 +1162,6 @@ test('換了接法（思考接續輪斷線前寫出了正文）：依舊內容�
     assert.equal(calls[4].maxTokens, 8192);
 });
 
-// ---------------------------------------------------------------- 接續輪的重試
-
 test('接續輪遇到 429：退避後重試成功，並發出 retrying 進度', async () => {
     const busy = new UpstreamError('busy', 'HTTP 429', { status: 429, retryable: true });
     const { result, calls, progress } = await run([
@@ -1373,8 +1355,6 @@ test('退避開始前使用者剛好取消：馬上以 aborted 結束，不會�
     assert.ok(Date.now() - started < 2_000);
 });
 
-// ---------------------------------------------------------------- 失敗情況
-
 test('用完輪數仍未寫完：incomplete，附上已寫的部分、輪數與接續紀錄', async () => {
     await assert.rejects(
         run([{ content: ['一'], finish: 'length' }, { content: ['二'], finish: 'length' }], { cfg: { maxRounds: 2 } }),
@@ -1496,8 +1476,6 @@ test('失敗時錯誤帶著已經用掉的 tokens（呼叫端記 log 用）：Ge
         return true;
     });
 });
-
-// ---------------------------------------------------------------- hook
 
 test('呼叫端的 hook 丟例外：原樣丟出（包括 undefined 這種假值），不被翻成網路錯誤', async () => {
     const boom = new TypeError('寫入已關閉的回應');
@@ -1645,8 +1623,6 @@ test('進度事件：thinking → writing → continuing（附截斷原因），
     assert.equal(progress.at(-1).thinkingTokens, 1);
     assert.equal(progress.at(-1).writingTokens, 3);
 });
-
-// ---------------------------------------------------------------- 突變測試找到的缺口
 
 test('GenerationError 的 name 是 GenerationError', async () => {
     await assert.rejects(run([{ content: ['一'], finish: 'length' }], { cfg: { maxRounds: 1 } }), (err) => {
@@ -2111,8 +2087,6 @@ test('探測拿不到 usage 之後同一輪又被拒：不再探測，直接再�
     assert.ok(halved < first * 0.6, `第一次減半後 ${halved}／${first}`);
     assert.ok(again < halved * 0.6, `第二次減半後 ${again}／${halved}`);
 });
-
-// ---------------------------------------------------------------- 第四輪審查的回歸測試
 
 test('trimOverlap：下一輪以空白開頭、新詞剛好以前文最後一個英文詞開頭，不是重複（「the」接「 theory」）', () => {
     const cases = [
@@ -2616,8 +2590,6 @@ test('帶回 prompt 的正文、思考筆記、JSON 草稿與引用的結尾都�
     assert.ok(!raw(json.calls).includes('<|im_start|>'), raw(json.calls));
 });
 
-// ---- 突變測試找到的缺口（第四輪）
-
 test('校正比例只給同一種接法用：思考筆記量到的比例不套到接續正文', async () => {
     const notes = '筆記'.repeat(3_000); // 估 7200
     const written = '內容'.repeat(10_000); // 估 24000
@@ -2823,8 +2795,6 @@ test('那一輪的正文中間壓過退化的空白：usage 也算了那些空�
     assert.match(calls[1].messages[2].content, /^……（前文省略）\n/);
 });
 
-// ---------------------------------------------------------------- 完整 HTTP 路徑
-
 test('經過真的 HTTP：斷在思考 → 斷在正文 → 完成，假 WinLab 收到的三個請求都正確', async () => {
     const up = await startFakeUpstream([
         { thinking: ['規劃', '中'], finish: 'length' },
@@ -2863,8 +2833,6 @@ test('經過真的 HTTP：JSON 任務被截斷後整份重寫', async () => {
         await up.close();
     }
 });
-
-// ---------------------------------------------------------------- 第五輪審查（R5-A）補上的情境
 
 test('trimOverlap：模型把斷掉的長詞連同前面的空白重寫、或從換行開始把最後一行整行重寫，都是重複', () => {
     const cases = [

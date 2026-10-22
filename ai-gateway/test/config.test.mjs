@@ -169,8 +169,6 @@ test('只有空白的數值與思考強度設定跟空字串一樣：視同沒�
     assert.equal(config.reasoningEffort, 'xhigh');
 });
 
-// ---------------------------------------------------------------- key
-
 test('key 從檔案讀優先，並清掉換行、BOM 與零寬字元（在哪個位置都清）', () => {
     withKeyFile('\uFEFFsk-a\u200Cbc\u200B12\u200D3\u2060\n', (file) => {
         const { config, warnings } = load({ LLM_API_KEY_FILE: file, LLM_API_KEY: 'sk-from-env' });
@@ -261,8 +259,6 @@ test('key 含不可見或非 ASCII 字元（例如存成 UTF-16）：視為沒�
     }
 });
 
-// ---------------------------------------------------------------- 上游網址
-
 test('LLM_UPSTREAM 只取 origin；路徑、參數或 # 片段會被忽略並警告', () => {
     for (const raw of ['https://llm.example.edu/v1?x=1', 'https://llm.example.edu/?model=x', 'https://llm.example.edu/#frag', 'https://llm.example.edu/v1']) {
         const { config, warnings } = load({ LLM_UPSTREAM: raw });
@@ -328,8 +324,6 @@ test('configProblems：缺 key、上游網址不合法都要列出；設定齊�
     assert.deepEqual(configProblems(load({ LLM_API_KEY: 'sk-x', LLM_UPSTREAM: 'not a url' }).config), ['invalid-upstream']);
     assert.deepEqual(configProblems(load({ LLM_UPSTREAM: 'http://llm.example.edu' }).config), ['missing-api-key', 'invalid-upstream']);
 });
-
-// ---------------------------------------------------------------- 整合
 
 test('解析出來的設定真的被用在請求上：origin、Bearer key、model 都對', async () => {
     const up = await startFakeUpstream([{ content: ['ok'] }]);

@@ -788,7 +788,7 @@ export function createGateway({
                 h.done.then(() => server.closeIdleConnections());
             }
             // server.close() 本身會先關掉閒置的 keep-alive 連線（Node 19 起），也會停掉 Node 自己的
-            // headersTimeout／requestTimeout 檢查——所以 body 的期限由 readBody 自己計時
+            // headersTimeout／requestTimeout 檢查，所以 body 的期限由 readBody 自己計時。
             const closed = new Promise((resolve) => server.close(resolve));
             if (active.size) await settle([...active].map((h) => h.done), graceMs);
             if (active.size) {
@@ -796,7 +796,7 @@ export function createGateway({
                 await settle([...active].map((h) => h.done), SHUTDOWN_FLUSH_MS);
             }
             // 已經收到、還沒回應的請求（多半還在上傳 body）：限時讓它們走到 draining 的 503，
-            // 不要直接切斷——經過代理，被切斷的請求只會變成看不懂的 502
+            // 不要直接切斷。經過代理時，被切斷的請求只會變成看不懂的 502。
             if (unanswered.size) await settle([...unanswered], requestWaitMs);
             server.closeAllConnections();
             await closed;

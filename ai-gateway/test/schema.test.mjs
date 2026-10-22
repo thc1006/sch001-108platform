@@ -18,8 +18,6 @@ const listSchema = {
     additionalProperties: false,
 };
 
-// ---------------------------------------------------------------- assertSupportedSchema
-
 test('assertSupportedSchema：寫對的 schema 通過（含巢狀、enum、錨定的 pattern）', () => {
     assert.doesNotThrow(() => assertSupportedSchema(listSchema));
     assert.doesNotThrow(() => assertSupportedSchema({
@@ -144,8 +142,6 @@ test('assertSupportedSchema：enum 必須是非空陣列，而且每個值都符
     for (const [schema, pattern] of cases) assert.throws(() => assertSupportedSchema(schema), pattern, JSON.stringify(schema));
 });
 
-// ---------------------------------------------------------------- validate
-
 test('validate：型別、缺少與多出的屬性，並指出路徑', () => {
     assert.equal(validate(listSchema, { title: 't', items: ['a', 'b'] }), null);
     assert.match(validate(listSchema, { title: 1, items: ['a', 'b'] }), /\$\.title 應為 string，實際是 integer/);
@@ -206,8 +202,6 @@ test('validate：Infinity（JSON 的 1e400）與超出安全範圍的整數都�
     assert.match(validate({ type: 'integer' }, JSON.parse('12345678901234567890')), /超出安全整數範圍/);
     assert.equal(validate({ type: 'integer' }, Number.MAX_SAFE_INTEGER), null);
 });
-
-// ---------------------------------------------------------------- extractJson
 
 test('extractJson：純 JSON、包在 ``` 裡、前後夾說明文字都取得出來', () => {
     assert.deepEqual(extractJson(' {"a":1} '), { a: 1 });

@@ -5,7 +5,7 @@
  *
  * 為什麼不用 vLLM 原生的 continue_final_message：WinLab 前面的閘道有欄位白名單，
  * continue_final_message、add_generation_prompt、extra_body 一律 400（2026-10-21
- * 實測）。所以只能在「對話層」接續——把已經產出的東西放回對話，再請模型接著做。
+ * 實測）。所以只能在「對話層」接續：把已經產出的東西放回對話，再請模型接著做。
  *
  * 每一輪結束後，依「這一輪」產出了什麼決定下一輪怎麼接（不看累計的內容）：
  *
@@ -18,29 +18,28 @@
  *        "音樂結構分析，下一輪卻另開 "巴赫"），去重疊也救不了。改把未完成的草稿與思考筆記
  *        放回對話，用 LLM_CONTINUATION_EFFORT 加上原本的 response_format 重寫：不思考時
  *        額度全給正文，json_schema 的 guided decoding 又保證結構合法。也因此 JSON 模式不
- *        逐段送出正文——送出去的片段可能整份作廢。正文其實已經合格（之後只是一直吐空白到
+ *        逐段送出正文，送出去的片段可能整份作廢。正文其實已經合格（之後只是一直吐空白到
  *        上限、或收完才斷線）就直接收下。寫完了卻不合格的同樣整份重寫，提示詞改說它不符合
  *        格式，不說被截斷。
  *
  *   2. 這輪只有思考（還沒開始寫答案）
  *      - 把思考當成「思考筆記」放回對話，請模型接著想再作答，強度維持設定值（預設 xhigh）。
- *        連續第二次又斷在思考，就請它不要再想、直接作答（強度 none）——否則可能每一輪都
+ *        連續第二次又斷在思考，就請它不要再想、直接作答（強度 none），否則可能每一輪都
  *        從頭想、永遠寫不出答案。思考完已經開始輸出（只吐了幾個換行）才被截斷的，代表思考
  *        其實已經結束、只是額度用完，同樣直接作答。
  *      - 已經在接續正文或重寫 JSON（接續輪的強度被設成會思考時才會發生）：維持原本的
  *        接法、保留已寫的內容，下一輪強制 none。
  *
  *   3. 吐了一大串空白（guided decoding 與長輸出已知的退化）：連續 8 個以上的換行，或 256 字元
- *      以上的一串空白才算。程式碼的縮排、對齊用的空格（舊的門檻是 32 字元，第 8 層的縮排就會
- *      被誤判）都照常保留。
+ *      以上的一串空白才算。程式碼的縮排、對齊用的空格都在門檻之下，照常保留。
  *      - 整輪只有空白：重做；JSON 任務改成不帶 response_format，最後由閘道自己解析與驗證，
  *        之後每一輪都附上格式要求（jsonFormatPrompt）。
  *      - 正文中間的一大串空白壓成最多兩個換行；寫到一半退化成空白直到被截斷的，空白丟掉、
  *        從最後的文字接著寫（JSON 同時拿掉 response_format）。空白不會送給使用者，也不會
  *        留在結果或帶回下一輪。
  *
- *   不論哪一種，下一輪的請求（不算提醒）若會跟這一輪一模一樣——整輪只有空白、只重複了已經
- *   寫過的內容、重寫出同一份草稿——這一輪就算「沒有淨進展」：下一輪加一句提醒（temperature 0
+ *   不論哪一種，下一輪的請求（不算提醒）若會跟這一輪一模一樣，例如整輪只有空白、只重複了已經
+ *   寫過的內容、重寫出同一份草稿，這一輪就算「沒有淨進展」：下一輪加一句提醒（temperature 0
  *   時同樣的請求只會得到同樣的結果），連續兩輪沒有淨進展就提前結束，不把剩下的輪數燒完。
  *
  * 每一輪都要放得進模型的 context：WinLab 這個模型只有 32768 tokens，而且「輸入 + max_tokens」
@@ -124,8 +123,7 @@ const TAIL_HINT = 60;
 const DEGENERATE_NEWLINES = 8;
 const DEGENERATE_WHITESPACE = 256;
 
-// ---- context 預算（tokens）----
-// 估算的保留：固定一段，再加上帶回內容的一個比例（帶得越多，估算的絕對誤差越大）
+// context 預算裡留給估算誤差的餘裕：固定一段，再加上帶回內容的一個比例（帶得越多，估算的絕對誤差越大）。
 const SAFETY_TOKENS = 256;
 const SAFETY_RATIO = 0.05;
 // 每則訊息的 template 額外開銷（保守；Qwen 實際約 5）
@@ -157,7 +155,7 @@ const BLIND_RATIO_STEP = 1.2;
 // 一段正文的估計值至少要這麼大，才用它自己的 token 比例：太短時一兩個 token 的進位就讓比例失真
 const MIN_SEGMENT_ESTIMATE = 64;
 
-// ---- 接續輪的重試（這三個值另外開放給測試覆寫，不經過環境變數）----
+// 接續輪重試的次數與退避時間。測試可以從 config 覆寫這三個值，環境變數設定不了。
 const CONTINUATION_RETRIES = 2;
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
@@ -315,9 +313,9 @@ function followsLineMarker(previous, k) {
 /**
  * 去掉 next 開頭與 previous 結尾重疊的部分。
  * 例：previous 結尾「…程式思」、next「程式思維，能讓…」→「維，能讓…」。
- * next 若先多了空白才開始重複，重疊要夠長，而且不能只是「前文最後一行去掉 Markdown 標記
- * 或編號後的文字」——「## 學習歷程」之後換行寫「學習歷程是指…」是新段落，不是重複——也不能
- * 停在 next 的英文詞中間。
+ * next 若先多了空白才開始重複，重疊要夠長，不能只是「前文最後一行去掉 Markdown 標記或編號後的
+ * 文字」，也不能停在 next 的英文詞中間。「## 學習歷程」之後換行寫「學習歷程是指…」是新段落，
+ * 不是重複。
  */
 export function trimOverlap(previous, next, { maxWindow = OVERLAP_WINDOW } = {}) {
     const attempt = (candidate, minWords, guardLine) => {
@@ -795,7 +793,7 @@ export async function generate(config, request, hooks = {}) {
         if (forceNoThinking) effort = 'none';
         return { instruction, parts, effort, format };
     };
-    // 「這一輪會送出什麼」的指紋：不含提醒、不含裁切與 max_tokens——那些只是同一個請求的不同
+    // 「這一輪會送出什麼」的指紋，不含提醒。裁切與 max_tokens 也不算：那只是同一個請求的不同
     // 切法，temperature 0 時照樣得到同樣的開頭。跟上一輪一樣就代表上一輪沒有淨進展
     const shapeKey = (shape) => JSON.stringify([mode, shape.instruction, shape.parts.map((p) => p.text), shape.effort, shape.format ?? null]);
 
@@ -958,7 +956,8 @@ export async function generate(config, request, hooks = {}) {
 
             // 沒有精確值可用時被拒：還在用樂觀比例規劃（題目大小不明）就調高比例（至少到 vLLM
             // 下界推得出的值），之後幾輪沿用；比例已到上限、或題目大小已知（是帶回的內容估低了）
-            // 就直接減半——先減前文保住輸出額度，第二次起連輸出一起減
+            // 就直接減半。接續輪先減前文、保住輸出額度，第二次起連輸出一起減；不帶前文的 fresh 輪
+            // 直接減輸出。
             const shrinkWithoutExact = (failedPlan, atLeast) => {
                 if (baseTokens === null && blindRatio < MAX_RATIO) {
                     const floorRatio = atLeast ? (atLeast / failedPlan.plannedPrompt) * 1.05 : 0;
