@@ -156,4 +156,62 @@ export const TASK_DEFINITIONS = [
             },
         },
     },
+    {
+        // 自主學習 › 計畫範本庫的「AI 計畫草擬工具」（src/pages/autonomous-learning/plan-templates.astro）。
+        // 頁面只送主題，計畫固定 8 週，和頁面上的範本相同。week 只能是四個標籤之一，模型寫不出
+        // Week 3-5 這種週次；標籤依序、不重複只靠指令要求，items 只能是單一 schema，表達不了。
+        id: 'study-plan',
+        input: {
+            topic: { label: '自主學習主題', maxLength: 100 },
+        },
+        instructions: [
+            '你是一位專業的台灣高中教育顧問，請依學生的「自主學習主題」，設計一份為期 8 週的自主學習計畫大綱：',
+            '- learning_objectives：3 個學習目標，每個目標一句話，約 15～40 字',
+            '- execution_methods：2～3 個執行方法，每個方法一句話，寫出具體要做什麼，約 15～50 字',
+            '- weekly_plan：把 8 週分成 4 個階段，每個階段兩週，week 依序寫 Week 1-2、Week 3-4、Week 5-6、Week 7-8；tasks 寫這兩週要完成的具體任務，一到兩句，約 20～60 字',
+            '- expected_outcome：2～3 個預期產出，每個寫出具體的成品或成果，約 10～40 字',
+        ].join('\n'),
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: {
+                    learning_objectives: {
+                        type: 'array',
+                        minItems: 3,
+                        maxItems: 3,
+                        items: { type: 'string', minLength: 1, maxLength: 120 },
+                    },
+                    execution_methods: {
+                        type: 'array',
+                        minItems: 2,
+                        maxItems: 3,
+                        items: { type: 'string', minLength: 1, maxLength: 150 },
+                    },
+                    weekly_plan: {
+                        type: 'array',
+                        minItems: 4,
+                        maxItems: 4,
+                        items: {
+                            type: 'object',
+                            properties: {
+                                week: { type: 'string', enum: ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'] },
+                                tasks: { type: 'string', minLength: 1, maxLength: 200 },
+                            },
+                            required: ['week', 'tasks'],
+                            additionalProperties: false,
+                        },
+                    },
+                    expected_outcome: {
+                        type: 'array',
+                        minItems: 2,
+                        maxItems: 3,
+                        items: { type: 'string', minLength: 1, maxLength: 120 },
+                    },
+                },
+                required: ['learning_objectives', 'execution_methods', 'weekly_plan', 'expected_outcome'],
+                additionalProperties: false,
+            },
+        },
+    },
 ];

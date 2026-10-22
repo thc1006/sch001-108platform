@@ -1,0 +1,216 @@
+// 計畫範本庫的「AI 計畫草擬工具」（AI 閘道的 study-plan 任務）：用假閘道驗證頁面怎麼送出、
+// 顯示進度與結果、處理錯誤與取消。假閘道見 fake-gateway.js。
+//
+// 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
+const { test, expect } = require('@playwright/test');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+
+const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
+const PAGE = `${BASE}/sch001-108platform/autonomous-learning/plan-templates.html`;
+
+const ACCEPTED = sse('accepted', { requestId: 'req-1', task: 'study-plan' });
+const THINKING = sse('progress', { phase: 'thinking', round: 1 });
+const done = (result) => sse('done', { result, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 });
+
+// 有 aria-live 或隱含 live region 角色的元素；<output> 的隱含角色是 status，WebKit 把 alertdialog 也當成 live region。
+const LIVE_REGION = '[aria-live], [role~="status"], [role~="log"], [role~="alert"], [role~="alertdialog"], output';
+
+const RESULT = {
+    learning_objectives: ['能說明手搖飲店常用的行銷策略。', '能用問卷與訪談蒐集顧客意見。', '能提出改善建議並上台報告。'],
+    execution_methods: ['每週觀察兩家店的價格、菜單與促銷活動。', '設計問卷並訪談三位同學。'],
+    weekly_plan: [
+        { week: 'Week 1-2', tasks: '選定觀察的店家，設計訪察表。' },
+        { week: 'Week 3-4', tasks: '發放問卷、訪談店員。' },
+        { week: 'Week 5-6', tasks: '用 SWOT 整理資料，製作比較表。' },
+        { week: 'Week 7-8', tasks: '撰寫報告並準備簡報。' },
+    ],
+    expected_outcome: ['一份行銷策略分析報告。', '一份五分鐘的簡報。'],
+};
+
+// 每個欄位都夾了會執行的標籤，包括 schema 只允許固定值的 week：頁面不能依賴閘道擋下它們。
+const XSS_RESULT = {
+    learning_objectives: [`目標一 ${XSS_IMG}`, `目標二 ${XSS_SCRIPT}`, `${XSS_IMG}${XSS_SCRIPT} 目標三`],
+    execution_methods: [`方法一 ${XSS_IMG}`, `方法二 ${XSS_SCRIPT}`],
+    weekly_plan: [
+        { week: `Week 1-2 ${XSS_IMG}`, tasks: `任務一 ${XSS_SCRIPT}` },
+        { week: `Week 3-4 ${XSS_SCRIPT}`, tasks: `任務二 ${XSS_IMG}` },
+        { week: 'Week 5-6', tasks: `${XSS_IMG}${XSS_SCRIPT}` },
+        { week: 'Week 7-8', tasks: '任務四' },
+    ],
+    expected_outcome: [`產出一 ${XSS_IMG}`, `產出二 ${XSS_SCRIPT}`],
+};
+
+async function expectPlan(page, plan) {
+    const result = page.locator('#planResult');
+    await expect(result.locator('h4')).toHaveText(['學習目標', '執行方法', '週次進度', '預期產出']);
+    await expect(result.locator('h4:has-text("學習目標") + ul > li')).toHaveText(plan.learning_objectives);
+    await expect(result.locator('h4:has-text("執行方法") + ul > li')).toHaveText(plan.execution_methods);
+    await expect(result.locator('h4:has-text("週次進度") + ol > li')).toHaveText(plan.weekly_plan.map(({ week, tasks }) => `${week}: ${tasks}`));
+    await expect(result.locator('h4:has-text("預期產出") + ul > li')).toHaveText(plan.expected_outcome);
+}
+
+test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(PAGE);
+        await stubBuiltInGateway(page);
+    });
+
+    test('送出主題 → 顯示學習目標、執行方法、四段週次進度與預期產出；按鈕恢復原狀', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, THINKING, done(RESULT)] });
+        await page.fill('#planInput', '  分析手搖飲店的行銷策略  ');
+        await page.click('#generatePlanBtn');
+
+        await expectPlan(page, RESULT);
+        await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
+
+        const calls = await page.evaluate(() => window.__calls);
+        expect(calls).toHaveLength(1);
+        expect(calls[0].url).toBe('https://gateway.example/v1/tasks/study-plan');
+        expect(JSON.parse(calls[0].body)).toEqual({ input: { topic: '分析手搖飲店的行銷策略' } });
+
+        const button = page.locator('#generatePlanBtn');
+        await expect(button).toBeEnabled();
+        await expect(button).toHaveText('產生計畫草案');
+        await expect(button.locator('svg')).toHaveCount(1);
+    });
+
+    test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(XSS_RESULT)] });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+
+        await expectPlan(page, XSS_RESULT);
+        await expect(page.locator('#planResult').locator('img, script, [onerror]')).toHaveCount(0);
+
+        // img 的 onerror 要等圖片載入失敗才會跑，多等一下才看得出它有沒有被執行。
+        await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 300)));
+        expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+    });
+
+    test('閘道網址沒有設定 → 顯示「尚未設定」，不送出請求', async ({ page }) => {
+        await installFakeGateway(page, { withMeta: false });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await expect(page.locator('#planResult')).toHaveText('AI 服務尚未設定完成，暫時無法使用。');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+    });
+
+    test('沒有輸入（或只有空白）就按 → 以紅字提示先輸入，不送出請求', async ({ page }) => {
+        await installFakeGateway(page);
+        for (const value of ['', ' \t ']) {
+            await page.fill('#planInput', value);
+            await page.click('#generatePlanBtn');
+            await expect(page.locator('#planResult')).toHaveText('請先輸入你的自主學習主題！');
+            await expect(page.locator('#planResult p')).toHaveClass(/text-red-500/);
+        }
+        expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+    });
+
+    test('進行中用鍵盤按「取消」→ 進度區塊移除，以一般語氣顯示「已取消。」，按鈕恢復，焦點回到按鈕', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+
+        // 進行中只換按鈕的文字，圖示留著。
+        const button = page.locator('#generatePlanBtn');
+        await expect(button).toBeDisabled();
+        await expect(button).toHaveText('產生中…');
+        await expect(button.locator('svg')).toHaveCount(1);
+
+        await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).focus();
+        await page.keyboard.press('Enter');
+        const message = page.locator('#planResult p');
+        await expect(page.locator('#planResult')).toHaveText('已取消。');
+        await expect(message).toHaveClass(/text-gray-600/);
+        await expect(message).not.toHaveClass(/text-red-500/);
+        await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
+        await expect(button).toBeEnabled();
+        await expect(button).toHaveText('產生計畫草案');
+        // 取消鈕跟著進度區塊移除了，焦點不能停在清空的工作區。
+        await expect(button).toBeFocused();
+    });
+
+    test('焦點停在「取消」上時結果送達 → 顯示計畫，焦點回到按鈕', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).focus();
+
+        await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
+        await expectPlan(page, RESULT);
+        await expect(page.locator('#generatePlanBtn')).toBeFocused();
+    });
+
+    test('等待時焦點移到輸入框 → 結果送達後焦點留在輸入框', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await expect(page.locator('#planWorkspace').getByRole('button', { name: '取消' })).toBeVisible();
+        await page.focus('#planInput');
+
+        await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
+        await expectPlan(page, RESULT);
+        await expect(page.locator('#planInput')).toBeFocused();
+    });
+
+    test('串流在 done 之前就斷了 → 進度區塊移除，顯示連線中斷的錯誤訊息', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, THINKING] });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await expect(page.locator('#planResult')).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
+        await expect(page.locator('#planResult p')).toHaveClass(/text-red-500/);
+        await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
+        await expect(page.locator('#generatePlanBtn')).toBeEnabled();
+    });
+
+    test('輸入框最多 100 字（與閘道的任務規格相同），有無障礙名稱', async ({ page }) => {
+        const input = page.locator('#planInput');
+        await expect(input).toHaveAttribute('maxlength', '100');
+        await expect(input).toHaveAccessibleName('你的自主學習主題');
+    });
+
+    // 進度區塊放在 live region 裡的話，WebKit 會連計時器每秒的變化都通報（見頁面的註解）。
+    test('結果區是 aria-live="polite"，工作區不在任何 live region 裡；再送一次時舊結果先清掉，進度只出現在工作區', async ({ page }) => {
+        const result = page.locator('#planResult');
+        const workspace = page.locator('#planWorkspace');
+        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await workspace.evaluate((el, selector) => el.closest(selector) === null, LIVE_REGION)).toBe(true);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await expect(result).toContainText(RESULT.learning_objectives[0]);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, THINKING], hang: true });
+        await page.click('#generatePlanBtn');
+        await expect(workspace.getByRole('status')).toHaveText('AI 正在思考…');
+        await expect(result).toBeEmpty();
+        await expect(result.locator('.platform-ai-progress')).toHaveCount(0);
+        expect(await workspace.evaluate((el, selector) => el.closest(selector) === null, LIVE_REGION)).toBe(true);
+    });
+});
+
+// platform-ai.js 沒載入成功時 PlatformAI 不存在，404 與連線中斷都要顯示錯誤、恢復按鈕。
+test.describe('計畫範本庫：共用腳本 platform-ai.js 沒載入成功', () => {
+    const FAILURES = [
+        ['回 404', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })],
+        ['連線中斷', (route) => route.abort()],
+    ];
+
+    for (const [name, failScript] of FAILURES) {
+        test(`${name} → 按下按鈕顯示錯誤訊息，按鈕恢復可按`, async ({ page }) => {
+            await page.route('**/shared/platform-ai.js', failScript);
+            await page.goto(PAGE);
+            expect(await page.evaluate(() => typeof window.PlatformAI)).toBe('undefined');
+
+            await page.fill('#planInput', '手搖飲');
+            await page.click('#generatePlanBtn');
+
+            await expect(page.locator('#planResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            const button = page.locator('#generatePlanBtn');
+            await expect(button).toBeEnabled();
+            await expect(button).toHaveText('產生計畫草案');
+            await expect(button.locator('svg')).toHaveCount(1);
+        });
+    }
+});
