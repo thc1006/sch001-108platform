@@ -282,6 +282,32 @@ const guardMutations = [
         name: 'DNS 解析結果不再逐一檢查（只看 hostname）',
         apply: (s) => s.replace('        const why = blockedAddressReason(a.address, opts);\n        if (why) return { ok: false, reason: `${host} 解析到被封鎖的位址：${why}` };', '        void a;'),
     },
+    {
+        // 公網答案排在前面、私網答案藏在後面時，只看第一個答案就會放行。
+        name: 'DNS 答案只檢查第一個（後面的私網答案被放行）',
+        apply: (s) => s.replace('    for (const a of addresses) {', '    for (const a of addresses.slice(0, 1)) {'),
+    },
+    {
+        // 和「轉址只驗第一跳」不同，靜態政策還在，只拿掉轉址那一跳的 DNS 答案檢查。
+        // IP 字面值的轉址測試抓不到這一種，要靠轉址到解析成私網的網域那個測試。
+        // node:dns 用 import() 取得：lib 的匯入改名時，測試才不會只因 ReferenceError 而紅。
+        name: '轉址那一跳的 DNS 答案不再檢查（靜態政策仍在）',
+        apply: (s) =>
+            s.replace(
+                'const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts);',
+                "const resolved = hop === 0 ? await resolveAndVerify(canonicalHost(url.hostname), opts) : await (await import('node:dns')).promises.lookup(canonicalHost(url.hostname), { all: true, verbatim: true }).then((addresses) => ({ ok: true, addresses }), (err) => ({ ok: false, code: err?.code || 'EDNS', reason: String(err?.message || err) }));",
+            ),
+    },
+    {
+        // 這一條不是 SSRF，但同在 link-health.lib.mjs。resolver 暫時失敗被當成網域不存在的話，
+        // runner 的 DNS 一抖就會把整批連結判成 dead 並開 issue。
+        name: 'EAI_AGAIN 被正規化成 ENOTFOUND（暫時失敗誤判成失效）',
+        apply: (s) =>
+            s.replace(
+                "const code = err?.code === 'ENOENT' ? 'ENOTFOUND' : err?.code || 'EDNS';",
+                "const code = err?.code === 'ENOENT' || err?.code === 'EAI_AGAIN' ? 'ENOTFOUND' : err?.code || 'EDNS';",
+            ),
+    },
 ];
 
 const runMutantTests = (testFile = 'link-health.test.mjs') => {
