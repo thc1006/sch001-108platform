@@ -28,6 +28,7 @@
  *   VERIFY_TIMEOUT     輪詢逾時秒數（預設 660，必須大於線上的 max-age=600）
  *   VERIFY_RECHECK     命中後再確認一次的間隔秒數（預設 45；設 0 停用）
  *   GITHUB_REPOSITORY  owner/repo，用來查祖先／後代關係；沒有就退回精確相等
+ *   GITHUB_API_URL     GitHub REST API 的根網址（Actions 會自動提供，沒有就用 https://api.github.com）
  *   GITHUB_TOKEN       查詢用（公開 repo 不給也能查，只是配額低很多）
  */
 import { execFileSync } from 'node:child_process';
@@ -36,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SITE = (process.env.SITE_URL || 'https://thc1006.github.io/sch001-108platform').replace(/\/+$/, '');
+const API = (process.env.GITHUB_API_URL || 'https://api.github.com').replace(/\/+$/, '');
 // 線上的 Cache-Control 是 max-age=600。輪詢預算必須大於它，否則「CDN 還沒過期」
 // 本身就足以讓這一關誤報失敗——部署其實成功了，卻被判定沒落地。
 /**
@@ -143,7 +145,7 @@ async function fetchInfo() {
         if (res.status !== 200) return { commit: '', label: `HTTP ${res.status}`, age };
         const info = await res.json();
         const commit = String(info.commit || '');
-        // 這個字串來自「被驗證的對象自己」，不可以直接塞進 api.github.com 的網址。
+        // 這個字串來自「被驗證的對象自己」，不可以直接塞進 compare API 的網址。
         // WHATWG 的 URL 正規化會先把 ../ 收掉，所以一個精心構造的 commit 值可以把
         // compare 請求導向**另一組**比較、讓它回 ahead——正好偽造出一個綠燈，而這支
         // 腳本存在的理由本來就是「不要相信部署出來的東西」。
@@ -173,7 +175,7 @@ async function compareWithLive(live) {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 15_000);
     try {
-        const res = await fetch(`https://api.github.com/repos/${repo}/compare/${want}...${live}`, {
+        const res = await fetch(`${API}/repos/${repo}/compare/${want}...${live}`, {
             headers,
             signal: ac.signal,
         });
