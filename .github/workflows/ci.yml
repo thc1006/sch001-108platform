@@ -154,9 +154,12 @@ jobs:
           test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/index.html"
           test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/search-index.json"
 
+      # Playwright 的整體逾時 10 分鐘短於 step 的 12 分鐘，逾時時由 Playwright
+      # 收尾，照常印出摘要。
       - name: Run browser tests
         id: browser
-        run: npx playwright test
+        timeout-minutes: 12
+        run: npx playwright test --global-timeout=600000
 
       - name: Upload Playwright report on failure
         if: ${{ failure() && steps.browser.outcome == 'failure' }}
