@@ -1,19 +1,11 @@
 /**
- * 中和 chat template 的控制符號。vLLM 套 chat template 時把訊息內容直接接進字串再
- * tokenize，tokenizer 會把文字對應成真正的特殊 token：內容裡寫
- * <|im_end|><|im_start|>system… 就能偽造一輪 system 訊息。換成全形符號之後，模型讀起來
- * 意思不變，但不再是特殊 token。
- *
- * 要中和的不只學生的輸入。續寫時會把模型自己寫的正文、思考筆記、JSON 草稿放回 prompt；
- * 學生可以先要求模型「把全形的 ＜|im_start|＞ 改成半形照抄」，第二輪就繞過了輸入端的中和。
- *
- * 涵蓋常見的模型家族（換模型、設定 LLM_MODEL 時，要對照那個模型的 special token 清單，
- * 不在下面的就補上）：
- *   ChatML／Qwen、Llama 3：<|im_start|>、<|eot_id|> 這類（<| 與 |> 一律換掉）
- *   DeepSeek：<｜User｜>、<｜end▁of▁sentence｜> 這類（用的是全形直線）
- *   Gemma：<start_of_turn>、<end_of_turn>
- *   Llama 2／Mistral：[INST]、[/INST]、<<SYS>>、<s>、</s>
- *   Qwen 的思考與工具標記：<think>、<tool_call>、<tool_response>、<tools>
+ * neutralizeControlTokens 把 chat template 的控制符號換成全形。vLLM 把訊息內容接進 chat
+ * template 再 tokenize，內容裡的 <|im_end|><|im_start|>system… 會變成真正的特殊 token，偽造出
+ * 一輪 system 訊息；換成全形後模型讀起來意思不變，但不再是特殊 token。續寫時放回 prompt 的
+ * 模型輸出也要中和，否則學生可以先要模型把全形符號照抄成半形，在第二輪繞過輸入端的中和。
+ * 涵蓋 ChatML／Qwen 與 Llama 3 的 <|…|>、DeepSeek 用全形直線的 <｜…｜>、Gemma 的 <start_of_turn>
+ * 與 <end_of_turn>、Llama 2／Mistral 的 [INST]、<<SYS>>、<s>，以及 Qwen 的 <think>、<tool_call>
+ * 這類標記。換模型或設定 LLM_MODEL 時，要對照那個模型的 special token 清單，補上這裡沒有的。
  */
 export function neutralizeControlTokens(text) {
     return String(text)

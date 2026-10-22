@@ -41,8 +41,6 @@ const markdownTask = defineTask({
 
 const base = { id: 'ok', input: { a: { label: 'A', maxLength: 5 } }, output: { type: 'markdown' }, instructions: '做事' };
 
-// ---------------------------------------------------------------- defineTask
-
 test('defineTask：JSON 任務自動產生 strict 的 response_format；定義凍結', () => {
     assert.deepEqual(jsonTask.responseFormat, {
         type: 'json_schema',
@@ -83,8 +81,6 @@ test('createCatalog：id 重複時失敗', () => {
     assert.throws(() => createCatalog([base, base]), /重複/);
     assert.equal(createCatalog([base]).get('ok').id, 'ok');
 });
-
-// ---------------------------------------------------------------- validateInput
 
 test('validateInput：統一換行；垂直定位、換頁、NEL、行段分隔符轉成換行（貼上的文字不會黏字）', () => {
     const input = validateInput(markdownTask, {
@@ -161,7 +157,7 @@ test('validateInput：一個字疊上大量組合符號（Zalgo）另外擋下',
     assert.doesNotThrow(() => validateInput(jsonTask, { topic: `a${'\u0301'.repeat(39)}` }));
 });
 
-// 上一版逐一列舉，漏了 U+206A–206F、U+FFF9–FFFB 這些；改用 Unicode 屬性之後不必再記
+// hidden 放了 U+206A–206F、U+FFF9–FFFB、U+1D173–1D17A 各段的頭尾兩個字元，逐一列舉時容易漏掉這幾段。
 test('validateInput：其餘的格式字元與 Default_Ignorable 字元也清掉，不必逐一列舉', () => {
     const hidden = cp(
         0x034F, 0x17B4, 0x17B5, 0x180B, 0x180F, 0x0600, 0x06DD, 0x2065, 0x206A, 0x206F, 0xFFF0, 0xFFF9, 0xFFFB,
@@ -235,8 +231,6 @@ test('inputByteLimit：依欄位上限換算（整欄最多 maxLength × 4 個 c
     assert.equal(inputByteLimit(markdownTask), 100 * 4 * 12 + 1024);
 });
 
-// ---------------------------------------------------------------- buildMessages
-
 test('buildMessages：任務指令在 system；學生資料在 user，用這次專屬的標記逐欄包起來', () => {
     const messages = buildMessages(markdownTask, { question: '怎麼開始？', context: '高一' }, { boundary: 'abc123' });
     assert.equal(messages.length, 2);
@@ -261,8 +255,6 @@ test('buildMessages：沒指定時每次的標記都不同，學生猜不到就�
     assert.ok(tagA && tagB);
     assert.notEqual(tagA, tagB);
 });
-
-// ---------------------------------------------------------------- finalizeOutput
 
 test('finalizeOutput：文字任務去掉前後空白；空的算 empty', () => {
     assert.equal(finalizeOutput(markdownTask, '\n\n**答案**\n'), '**答案**');
@@ -304,7 +296,7 @@ const escapeNonAscii = (text) => text.replace(
 );
 
 // 跳脫序列的簡體字在原文裡看不見，解析之前的轉換碰不到，解碼之後才冒出來；
-// 所以解析之後要把每個字串值再轉一次（審查實測：数据 解析後仍是簡體）
+// 所以解析之後要把每個字串值再轉一次，否則跳脫序列寫的「数据」解析後仍是簡體。
 test('finalizeOutput：JSON 字串值用跳脫序列寫的簡體字，解析後也轉成台灣繁體（陣列與巢狀物件都走過，非字串不動）', () => {
     const nestedTask = defineTask({
         id: 'demo-nested',

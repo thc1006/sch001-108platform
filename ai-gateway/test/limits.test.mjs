@@ -10,8 +10,6 @@ import { SlotGate, ClientLimiter, LimitError, clientKey, createProxyMatcher } fr
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
-// ---------------------------------------------------------------- SlotGate
-
 test('SlotGate：名額內立刻放行，用完歸還', async () => {
     const gate = new SlotGate({ concurrency: 2, maxQueue: 0, queueTimeoutMs: 1000 });
     const a = gate.tryEnter();
@@ -195,8 +193,6 @@ test('SlotGate：呼叫端晚一點才接 ready 的拒絕，也不會變成 unha
     }
 });
 
-// ---------------------------------------------------------------- ClientLimiter
-
 test('ClientLimiter：窗口內超過次數就擋，並給出幾秒後可再試（無條件進位）', () => {
     let now = 1_000_000;
     const limiter = new ClientLimiter({ windowMs: 60_000, max: 2, maxInflight: 10, now: () => now });
@@ -330,8 +326,6 @@ test('ClientLimiter：最近又出現的來源排到最後，不會先被清', (
     assert.deepEqual([...limiter.clients.keys()], ['a', 'c']);
 });
 
-// ---------------------------------------------------------------- clientKey
-
 test('clientKey：IPv4 原樣；各種寫法的 IPv4 對應位址都還原成 IPv4', () => {
     assert.equal(clientKey('203.0.113.5'), '203.0.113.5');
     assert.equal(clientKey('  203.0.113.5 '), '203.0.113.5');
@@ -360,8 +354,6 @@ test('clientKey：帶埠、方括號、zone id 的寫法先剝掉；不是 IP �
         assert.equal(clientKey(junk), 'invalid', String(junk).slice(0, 30));
     }
 });
-
-// ---------------------------------------------------------------- createProxyMatcher
 
 test('createProxyMatcher：CIDR 比對，IPv4 對應的 IPv6 也算；IPv6 一律不信任', () => {
     const trusted = createProxyMatcher(['10.42.0.0/16', '127.0.0.1/32']);

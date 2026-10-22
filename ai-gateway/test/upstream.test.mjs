@@ -49,8 +49,6 @@ async function withServer(handler, fn) {
 const sleepMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const finishChunk = 'data: {"choices":[{"index":0,"delta":{"content":"ok"},"finish_reason":"stop"}]}\n\n';
 
-// ---------------------------------------------------------------- 正常流程與送出的請求
-
 test('正常串流：分開收集思考與正文，回傳結束原因與用量', async () => {
     await withUpstream([{ thinking: ['先想', '一下'], content: ['你', '好！'], finish: 'stop' }], async (up) => {
         const thoughts = [];
@@ -114,8 +112,6 @@ test('訊息裡的孤立代理項整理成 U+FFFD 再送（上游 Python 端轉 
     });
 });
 
-// ---------------------------------------------------------------- 設定錯誤：不發請求
-
 test('key 含 NUL 或非 ASCII（例如存成 UTF-16）：misconfigured、不發請求、錯誤不帶出 key', async () => {
     await withUpstream([{ content: ['不該被呼叫'] }], async (up) => {
         for (const apiKey of ['sk-real\u0000', 's\u0000k\u0000-\u0000x', 'sk-中文']) {
@@ -137,8 +133,6 @@ test('沒有 key：auth；LLM_UPSTREAM 不是網址：misconfigured；都不發�
         assert.equal(up.requests.length, 0);
     });
 });
-
-// ---------------------------------------------------------------- HTTP 錯誤
 
 test('429：忙線、可重試、帶 Retry-After；上游原文遮罩後只放在不可列舉的 detail', async () => {
     await withUpstream([{
@@ -235,8 +229,6 @@ test('讀錯誤內容時呼叫端取消：仍回報 aborted', async () => {
     });
 });
 
-// ---------------------------------------------------------------- 回應不是預期的串流
-
 test('200 但不是 SSE：protocol；content-type 是上游的文字，遮罩並截短後放 detail，不進訊息；內容只記長度與開頭', async () => {
     const body = '{"choices":[{"message":{"content":"王小明的讀書計畫"}}]}';
     await withUpstream([{ rawChunks: [body], contentType: `application/json; x=sk-${'z'.repeat(200)}` }], async (up) => {
@@ -320,8 +312,6 @@ test('只有 reasoning 欄位（部分 vLLM 版本）也收得到思考', async 
     });
 });
 
-// ---------------------------------------------------------------- 串流途中的錯誤
-
 test('串流途中的 error 物件：依 code 分類；LiteLLM 接著送的 [DONE] 不能讓它被當成正常結束', async () => {
     const cases = [
         [{ message: 'upstream exploded sk-SECRET9', code: 500 }, 'unavailable', true],
@@ -383,8 +373,6 @@ test('連線在途中被切斷（已經收到部分正文）：可重試的 unav
     });
 });
 
-// ---------------------------------------------------------------- SSE 解析（WHATWG 規格）
-
 test('SSE：CRLF、CR、LF 混用，註解、BOM，事件被切在任意位置，中文字被切成兩半', async () => {
     const event = JSON.stringify({ choices: [{ index: 0, delta: { content: '中文' } }] });
     const whole = `\uFEFF: keep-alive\r\ndata: ${event}\r\n\r\ndata: x\rdata: y\r\rdata: [DONE]\n\n`;
@@ -444,8 +432,6 @@ test('真實串流經過 HTTP 被切成很多塊時也能正確組回（並確�
         assert.equal(r.finishReason, 'stop');
     });
 });
-
-// ---------------------------------------------------------------- 逾時、取消、回呼
 
 test('連標頭都沒送：閒置逾時', async () => {
     await withUpstream([{ hangBeforeHeaders: true }], async (up) => {
@@ -560,8 +546,6 @@ test('[DONE] 之後把串流讀到結束：連線放回連線池，之後的輪�
     });
 });
 
-// ---------------------------------------------------------------- 遮罩
-
 test('redact：key 本身、JSON 跳脫、被控制字元切開的 key、Bearer、雜湊、內網位址、格式字元', () => {
     const key = 'sk-REALKEY-abc';
     assert.equal(redact(`token ${key} end`, { secrets: [key] }), 'token *** end');
@@ -574,8 +558,6 @@ test('redact：key 本身、JSON 跳脫、被控制字元切開的 key、Bearer�
     assert.equal(redact('x'.repeat(600)).length, 500);
     assert.equal(redact(undefined), '');
 });
-
-// ---------------------------------------------------------------- 第二輪審查補上的情境
 
 test('錯誤內容是無止盡的串流：只讀一小段就放手', async () => {
     let sent = 0;
@@ -790,8 +772,6 @@ test('Retry-After：格式對但日期不存在時當成沒給', () => {
     assert.equal(parseRetryAfter('Wed, 99 Oct 2026 00:00:30 GMT'), undefined);
 });
 
-// ---------------------------------------------------------------- 第三輪審查補上的情境
-
 test('redact：會讓正規表示式回溯的長輸入也在線性時間內完成（不會卡住事件迴圈）', () => {
     const inputs = [
         'a.'.repeat(512 * 1024), 'a-'.repeat(512 * 1024), '1.'.repeat(512 * 1024), 'fc00:'.repeat(200_000),
@@ -868,7 +848,7 @@ test('redact：內部位址（k8s 短名、Tailscale、家用網域、localhost�
         ['127.0.0.1 and 127.255.255.254', '<internal> and <internal>'],
         ['100.64.0.1 100.127.255.255', '<internal> <internal>'],
         ['172.16.0.1 172.31.255.255', '<internal> <internal>'],
-        // 句尾的句點不是名稱的一部分（R4 前曾因此整段不遮）
+        // 句尾的句點不是名稱的一部分：名稱照樣遮掉，句點留著。
         ['failed to reach api.corp.internal.', 'failed to reach <internal>.'],
         ['refused by localhost. retrying', 'refused by <internal>. retrying'],
         ['x.svc.cluster.local:4000.', '<internal>.'],
@@ -1092,8 +1072,6 @@ test('UpstreamError 的 name 是 UpstreamError；沒說能不能重試就是不�
     assert.equal(new UpstreamError('protocol', 'x').retryable, false);
 });
 
-// ---------------------------------------------------------------- 第四輪審查（突變測試）補上的情境
-
 test('redact：base64 裡的 key 只留下混著前後位元組的字元（三種對齊、key 後面還有資料、base64url）', () => {
     const key = 'Ab>>>Cd???Ef>>>Gh???Ij'; // 編出來的中段有 + 與 /，base64url 的寫法才不一樣
     // [前綴, 混著前綴的字元數, key 的中段結束的位置]：22 個位元組的 key
@@ -1178,8 +1156,6 @@ test('SSE：一行與一個事件的上限都剛好是 1 MiB 字元（等於上�
     assert.equal((await collect(event(MAX)))[0].length, MAX);
     await assert.rejects(collect(event(MAX + 1)), (err) => err.code === 'protocol' && /事件/.test(err.message));
 });
-
-// ---------------------------------------------------------------- 第四輪審查（R4-B）補上的情境
 
 test('錯誤內容只讀前 8 KiB 時，切在 key 中間的殘段不會進 log（截斷時丟掉尾端）', async () => {
     const key = 'WlKeyZ9yX8wV7uT6sR5qP4oN'; // 不是 sk- 開頭，沒有通用規則兜底

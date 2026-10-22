@@ -3,7 +3,7 @@
  * 從源頭保證結構），也在這裡再驗一次。只實作任務用得到的子集，不引入相依套件。
  *
  * 為什麼送了 json_schema 還要自己驗：
- *   - 被截斷而走「整份重寫」之外的路徑時（例如設定改成不帶 response_format），
+ *   - 輸出退化（例如吐了一大串空白）之後，generate.mjs 接下來的輪次都不帶 response_format，
  *     沒有 guided decoding 的保證；
  *   - 前端拿到的是可以直接 render 的物件，型別錯一個就是一個白畫面，閘道是最後一道關。
  *
@@ -33,7 +33,7 @@ const isCount = (value) => Number.isInteger(value) && value >= 0;
 
 /**
  * 包成整串比對的 pattern。作者自己寫的最外層 ^ 與（沒有跳脫的）$ 先拿掉再包，送出去的
- * 規格裡不會出現 ^(?:^…$)$ 這種巢狀的錨點——guided decoding 的 regex 引擎不一定接受。
+ * 規格裡不會出現 ^(?:^…$)$ 這種巢狀的錨點，guided decoding 的 regex 引擎不一定接受。
  */
 export function anchorPattern(pattern) {
     let inner = pattern.startsWith('^') ? pattern.slice(1) : pattern;
@@ -229,7 +229,7 @@ function matchingEnd(text, start) {
  * 整段吞進一個壞掉的候選；反過來，壞掉的物件裡的片段（例如其中一個陣列）也不會被當成
  * 答案，因為它不符合 schema。沒給 schema 時回傳第一個解析得了的候選（只給測試與除錯用）。
  *
- * 都不行時，丟出「最前面那個候選」的錯誤——它最可能就是模型想寫的答案：解析不了是
+ * 都不行時，丟出「最前面那個候選」的錯誤，它最可能就是模型想寫的答案。解析不了是
  * SyntaxError（訊息可能含有正文片段，呼叫端只能拿它的種類去記 log），解析得了卻不符合
  * schema 是 SchemaMismatch。
  */

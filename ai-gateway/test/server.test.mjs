@@ -215,8 +215,8 @@ async function within(promise, ms) {
 }
 
 /**
- * 追蹤由 src/ 底下的程式建立的計時器（包括 unref 的——process.getActiveResourcesInfo() 看不到
- * 那些）。到期或被清掉就移除；restore() 換回原本的函式。
+ * 追蹤由 src/ 底下的程式建立的計時器，包括 process.getActiveResourcesInfo() 看不到的 unref
+ * 計時器。到期或被清掉就移除；restore() 換回原本的函式。
  */
 function trackTimers() {
     const original = { setTimeout, clearTimeout, setInterval, clearInterval };
@@ -313,8 +313,6 @@ async function waitFor(fn, timeoutMs = 2000) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// ---------------------------------------------------------------- 健康檢查與路由
-
 test('healthz／readyz：有 key 才 ready；公開的 readyz 只說狀態；HEAD 也可以', async () => {
     const gw = await startGateway();
     const noKey = await startGateway({ llm: { apiKey: '' } });
@@ -363,8 +361,6 @@ test('未知路徑 404；任務路徑用 GET 回 405 並列出允許的方法', 
     }
 });
 
-// ---------------------------------------------------------------- CORS
-
 test('預檢：允許的網站拿到 204 與完整的 CORS 標頭；其他網站 403 且沒有 CORS 標頭', async () => {
     const gw = await startGateway();
     try {
@@ -411,8 +407,6 @@ test('POST 沒有 Origin 或不在名單內：403，而且不會呼叫模型', a
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 開始串流前的拒絕
 
 test('拒絕路徑都回 JSON，帶 request id、CORS 與防快取標頭（前端才讀得到錯誤）', async () => {
     const gw = await startGateway();
@@ -583,8 +577,6 @@ test('沒有 key：503 not_ready，不會呼叫模型', async () => {
     }
 });
 
-// ---------------------------------------------------------------- 成功的串流
-
 test('JSON 任務：accepted → progress → done；SSE 標頭正確；任務指令在 system、學生資料在 user', async () => {
     const gw = await startGateway({
         generate: async (request, hooks) => {
@@ -701,8 +693,6 @@ test('進度節流：被壓住的最後一筆更新，會在 500ms 後由計時�
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 串流中的錯誤
 
 test('模型輸出不符格式：error 事件 format；log 的細節不含模型寫的內容', async () => {
     const gw = await startGateway({
@@ -830,8 +820,6 @@ test('開始串流之前就出錯（不該發生）：回 JSON 500 並帶 CORS�
     }
 });
 
-// ---------------------------------------------------------------- 斷線
-
 test('使用者中途離開：上游被取消、兩種名額都歸還、log 記 499', async () => {
     const hang = hangingGenerate();
     const gw = await startGateway({
@@ -889,8 +877,6 @@ test('排隊中離開：讓出位置（後面的人名次往前）、不會呼�
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 排隊與限流
 
 test('排隊：名額滿時排隊並收到名次與後續的名次變動；排隊也滿就 503', async () => {
     const gate = deferred();
@@ -1065,8 +1051,6 @@ test('CLIENT_IP_HEADER：值不是合法的 IP（或超長）時改看連線來�
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 心跳、關機、log
 
 test('心跳：等待期間定期送 SSE 註解，代理才不會因閒置切斷', async () => {
     const gate = deferred();
@@ -1456,8 +1440,6 @@ test('直接執行：第一次 SIGTERM 讓進行中的任務送出可重試的�
     }
 });
 
-// ---------------------------------------------------------------- 讀 body 之前的檢查（CPU 放大）
-
 // 驗證失敗的請求不計入任務次數；收 body、解析、驗證都要花主執行緒的時間
 test('已經被限流的來源：讀 body 之前就回 429 並關掉連線，不替它收 body', async () => {
     const gw = await startGateway({ server: { rateLimitMax: 1 } });
@@ -1541,8 +1523,6 @@ test('巢狀超過 3 層的 body 直接 400，不交給 JSON.parse；字串裡�
     }
 });
 
-// ---------------------------------------------------------------- 次數：沒開始生成的不算
-
 test('排隊等到逾時的請求不計入次數（同樣完全沒拿到服務）', async () => {
     const gate = deferred();
     const gw = await startGateway({
@@ -1598,8 +1578,6 @@ test('排隊中用戶端離開、或排隊中遇上關機：都不計入次數',
     await closing;
 });
 
-// ---------------------------------------------------------------- 信任的代理與用戶端 IP
-
 test('信任的代理沒送用戶端 IP（或送了解析不了的值）：退回代理的位址，並記一筆有頻率限制的警告（附次數）', async () => {
     let clock = 0;
     const gw = await startGateway({ server: { clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'] }, now: () => clock });
@@ -1639,8 +1617,6 @@ test('CLIENT_IP_HEADER：ip:port、[v6]:port、IPv6（取 /64）、多行標頭�
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 逾時
 
 test('逾時設定：標頭 20 秒、Node 每 5 秒檢查一次；requestTimeout 長於「標頭 + body」期限，只是最後防線', async () => {
     const gw = await startGateway({ server: { bodyTimeoutMs: 30_000 } });
@@ -1710,8 +1686,6 @@ test('body 的期限在開始關機之後仍然有效', async () => {
     assert.equal((await reading.rest()).at(-1).data.code, 'unavailable');
 });
 
-// ---------------------------------------------------------------- Expect: 100-continue
-
 test('Expect: 100-continue：提早的檢查沒過就直接回最終結果，不先請對方送 body', async () => {
     const gw = await startGateway({ server: { rateLimitMax: 1 } });
     try {
@@ -1751,8 +1725,6 @@ test('Expect: 100-continue：檢查都過了才回 100 Continue，送完 body �
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 連線與計時器
 
 test('同一條連線 pipeline 多個任務、之後斷線：全部中止，名額與 active 都歸零', async () => {
     const gw = await startGateway({
@@ -1823,8 +1795,6 @@ test('不論任務怎麼結束，src 建立的計時器（含 unref 的）都會
         await gw.stop();
     }
 });
-
-// ---------------------------------------------------------------- 名額的公平、計次與資源上限
 
 test('名額空出來先給進行中任務最少的來源：佔著名額的來源後來排的請求，不會比別人先輪到', async () => {
     const holds = [];

@@ -20,7 +20,7 @@
  *
  * 可信與不可信的內容分開放：system 訊息是共用規則加任務指令；user 訊息只有學生的資料，
  * 每個欄位用「這次請求才有的隨機標記」包起來。學生的輸入裡就算寫了「忽略以上指示」、
- * 或想用引號、標記把資料「關起來」再接一段指令，都還在資料標記裡面——標記每次都不同，
+ * 或想用引號、標記把資料「關起來」再接一段指令，都還在資料標記裡面：標記每次都不同，
  * 猜不到就關不掉。
  */
 import { randomBytes } from 'node:crypto';
@@ -52,9 +52,9 @@ export class TaskError extends Error {
 // 轉成換行：垂直定位、換頁、NEL、行分隔、段分隔（從簡報或 Word 貼上的文字常有，刪掉會黏字）
 const TO_NEWLINE = /[\u000B\u000C\u0085\u{2028}\u{2029}]/gu;
 // 刪掉：控制字元（保留 \t \n；其他換行類的字元上面已經轉成 \n）、所有格式字元（Cf）與
-// Default_Ignorable 的字元——零寬空白、雙向嵌入與覆寫、BOM、韓文填充字、Tags 區塊（可以把
-// 一整段 ASCII 指令藏成看不見的字）、組合字素連接符、已停用的格式控制等等。逐一列舉總會漏
-// （上一版就漏了 U+206A–206F、U+FFF9–FFFB、U+1D173–1D17A），所以改用 Unicode 屬性。
+// Default_Ignorable 的字元，例如零寬空白、雙向嵌入與覆寫、BOM、韓文填充字、Tags 區塊（可以把
+// 一整段 ASCII 指令藏成看不見的字）、組合字素連接符、已停用的格式控制。逐一列舉總會漏掉一些，
+// 像 U+206A–206F、U+FFF9–FFFB、U+1D173–1D17A，所以用 Unicode 屬性。
 // 例外：ZWNJ／ZWJ（表情符號組合要用）、LRM／RLM（夾雜阿拉伯文、希伯來文時的方向）、
 // 異體字選擇符（下一道另外處理）
 const INVISIBLE = /(?![\t\n\u200C-\u200F\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}]/gu;
@@ -67,7 +67,7 @@ const EXTRA_VARIATION_SELECTORS = /(^|[\s\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\uFE
 const MEANINGFUL = /(?![\u2800\uFFFC])[\p{L}\p{N}\p{P}\p{S}]/u;
 // code point 的平均預算：整個欄位最多 maxLength × 4 個 code point（不是每個字各自的上限）。
 // 正常的字是 1 個，表情符號組合也很少超過 4 個；一個基底字後面疊上千個組合符號（Zalgo）
-// 仍算一個字，這一道擋的是那種輸入——它的 token 數遠多於字數
+// 仍算一個字，這一道擋的是那種輸入，它的 token 數遠多於字數。
 const MAX_CODE_POINTS_PER_CHAR = 4;
 
 const segmenter = new Intl.Segmenter('zh-TW', { granularity: 'grapheme' });

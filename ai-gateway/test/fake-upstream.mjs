@@ -1,6 +1,6 @@
 /**
  * 假的 WinLab：照劇本一輪一輪回應 Chat Completions，並記下收到的每個請求。
- * 測試全部打本機，不依賴外網——真的 WinLab 回應時間與內容都會飄，而且要 key。
+ * 測試全部打本機，不依賴外網：真的 WinLab 回應時間與內容都會飄，而且要 key。
  *
  * 劇本是陣列（第 n 個請求用第 n 步）或函式 (request, index) => step。每一步：
  *   { status, body, headers }      非 200 的回應（body 是字串或物件）

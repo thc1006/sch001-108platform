@@ -46,12 +46,12 @@ export const MAX_IDLE_TIMEOUT_MS = 300_000;
 // 在哪裡都清掉。一律寫成跳脫序列：直接寫字元本體的話畫面上看不見，被編輯器正規化掉也沒人發現
 const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
 // 清掉雜訊後只能剩可見的 ASCII。key 檔存成 UTF-16 時會夾 NUL，帶進 HTTP 標頭時
-// undici 的錯誤訊息會印出整個標頭值——也就是 key
+// undici 的錯誤訊息會印出整個標頭值，也就是 key。
 const PRINTABLE_ASCII = /^[\x21-\x7E]+$/;
 
 // 警告裡顯示設定值：只有短、而且明顯不是 key 的值（英數與 . + - _，最多 12 字）才原樣顯示，
-// 其他只說有幾個字元。key 被貼錯變數時（例如貼進 LLM_MAX_TOKENS），警告不能把它印出來——
-// LiteLLM 的 key 只有 25 字元，截短也擋不住；只顯示這種字元也順便擋掉換行造成的 log 偽造
+// 其他只說有幾個字元。key 被貼錯變數時（例如貼進 LLM_MAX_TOKENS），警告不能把它印出來。
+// LiteLLM 的 key 只有 25 字元，截短也擋不住；只顯示這種字元也順便擋掉換行造成的 log 偽造。
 function shown(raw) {
     const text = String(raw).trim();
     if (text.length <= 12 && /^[\w.+-]*$/.test(text) && !/^sk-/i.test(text)) return JSON.stringify(text);
@@ -86,7 +86,7 @@ function toEffort(env, name, fallback, warn) {
 }
 
 // k3s 把 Secret 掛成檔案（LLM_API_KEY_FILE）：比放環境變數不容易從當機傾印或 log 外流。
-// 讀不到、是空的、或含不合法字元時不讓程序起不來——configProblems() 會回報，流量就不會導過來。
+// 讀不到、是空的、或含不合法字元時程序照樣啟動，由 configProblems() 回報，流量就不會導過來。
 // 警告訊息一律不印 key 的內容。
 function readApiKey(env, warn) {
     let key = env.LLM_API_KEY || '';
@@ -172,8 +172,8 @@ function toUpstream(env, warn) {
 }
 
 /**
- * 這份設定還缺什麼才能接任務。空陣列代表可以；HTTP 服務的 readiness 檢查要用它決定回不回報
- * 就緒——key 或上游網址設錯時不退回預設值，就是靠這裡讓 k3s 不把流量導進來。
+ * 這份設定還缺什麼才能接任務。空陣列代表可以；HTTP 服務的 readiness 檢查用它決定回不回報
+ * 就緒。key 或上游網址設錯時不退回預設值，就是靠這裡讓 k3s 不把流量導進來。
  */
 export function configProblems(config) {
     const problems = [];
@@ -212,7 +212,7 @@ function shownOrigin(raw, url) {
 }
 const shownAddress = (raw) => (/^[0-9a-fA-F.:/]{1,43}$/.test(raw) ? JSON.stringify(raw) : shown(raw));
 
-// origin 必須是 scheme://host[:port]，不能有路徑——瀏覽器送的 Origin 標頭就是這個格式，
+// origin 必須是 scheme://host[:port]，不能有路徑：瀏覽器送的 Origin 標頭就是這個格式，
 // 多寫了 /sch001-108platform 的話永遠比對不到（GitHub Pages 專案路徑不屬於 origin）。
 // 比對前一律正規化成 new URL(v).origin：大寫的主機名稱、寫明的預設埠（:443）、中文網域
 // 都會變成瀏覽器實際送出的樣子。只收 https（本機開發可用 http://localhost）；萬用字元與
@@ -268,7 +268,7 @@ function toCidrs(env, name, warn) {
  *   CLIENT_IP_HEADER      由哪個標頭取得用戶端 IP（預設不用，看連線來源）。Tailscale Funnel
  *                         用 x-forwarded-for：它會把這個標頭覆寫成真實來源
  *   TRUSTED_PROXIES       只有連線來自這些 IPv4 位址／CIDR 時才採用上面的標頭（逗號分隔）；
- *                         沒設的話標頭一律不採用——直接連進來的人自己填的值不能信。
+ *                         沒設的話標頭一律不採用，因為直接連進來的人自己填的值不能信。
  *                         信任的是位址：同一個位址連進來的其他程式（k3s 上的主機與 hostNetwork
  *                         pod）送的標頭也會被採信
  *   LLM_CONCURRENCY       同時進行的任務數（預設 4，上限 8 = key 的並行上限）
