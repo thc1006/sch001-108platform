@@ -208,7 +208,7 @@ node build-search-index.js
 * **開發者 / 設計師** — 透過 GitHub 提交 Pull Request 或 Issue。
 * **教育工作者** — 與我們交流，提供更多元的觀點。
 
-請先到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 看看有沒有可以協助的地方。提交程式碼前，建議先在本機執行 `npm run build` 確認站台可正常建置。
+請先到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 看看有沒有可以協助的地方。提交程式碼前，建議先在本機執行 `npm run build` 確認站台可正常建置。程式碼註解的寫法見 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
