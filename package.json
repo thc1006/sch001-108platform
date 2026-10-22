@@ -22,6 +22,7 @@
     "vendor": "node scripts/vendor-assets.mjs",
     "build:deployable": "node scripts/check-install-gate.mjs && node scripts/check-dep-tree.mjs && node scripts/vendor-assets.mjs && node scripts/check-vendor-size.mjs && astro build && node build-search-index.js && node scripts/build-info.mjs",
     "verify:deploy": "node scripts/verify-deploy.mjs",
+    "test:verify-deploy": "node --test scripts/verify-deploy.test.mjs",
     "check:site": "node scripts/check-built-site.mjs",
     "check:link-policy": "node scripts/check-link-policy.mjs",
     "check:external-links": "node scripts/check-external-links.mjs",
