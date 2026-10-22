@@ -10,8 +10,8 @@ const XSS_IMG = '<img src=x onerror="window.__xss=1">';
 const XSS_SCRIPT = '<script>window.__xss=2</script>';
 
 /**
- * stubBuiltInGateway 把頁面的閘道網址換成 built-in.example，fetch 也換成一律失敗的版本。CI 的建置
- * 帶著正式閘道的網址（PUBLIC_AI_GATEWAY_URL 從 repository variable 帶入）；忘了呼叫
+ * stubBuiltInGateway 把頁面的閘道網址換成 built-in.example，送到那裡的請求一律失敗，其他請求照常
+ * 送出。CI 的建置帶著正式閘道的網址（PUBLIC_AI_GATEWAY_URL 從 repository variable 帶入）；忘了呼叫
  * installFakeGateway 的測試會馬上失敗，不會從 CI 對正式的閘道送出請求。
  * @param {import('@playwright/test').Page} page
  */
@@ -22,13 +22,16 @@ async function stubBuiltInGateway(page) {
         meta.name = 'ai-gateway-url';
         meta.content = 'https://built-in.example';
         document.head.appendChild(meta);
-        window.fetch = () => Promise.reject(new Error('測試沒有呼叫 installFakeGateway'));
+        const realFetch = window.fetch;
+        window.fetch = (url, init) => (String(url).startsWith('https://built-in.example/')
+            ? Promise.reject(new Error('測試沒有呼叫 installFakeGateway'))
+            : realFetch(url, init));
     });
 }
 
 /**
- * installFakeGateway 把 fetch 換成照劇本回 SSE 的假閘道，收到的請求記在 window.__calls。
- * 既有的閘道 meta 先全部移除，因為 getGatewayUrl() 只看第一個。
+ * installFakeGateway 換上假閘道：送到 https://gateway.example/ 的請求照劇本回 SSE，記在
+ * window.__calls，其他請求照常送出。既有的閘道 meta 先全部移除，因為 getGatewayUrl() 只看第一個。
  *
  * @param {import('@playwright/test').Page} page
  * @param {object} [options]
@@ -48,7 +51,10 @@ async function installFakeGateway(page, { chunks = [], hang = false, withMeta = 
             document.head.appendChild(meta);
         }
         window.__calls = [];
+        const realFetch = window.fetch;
         window.fetch = (url, init) => {
+            // 動態加進來的 ion-icon 也用 fetch 抓 SVG，不能記進 __calls，也不能蓋掉 __stream。
+            if (!String(url).startsWith('https://gateway.example/')) return realFetch(url, init);
             window.__calls.push({ url: String(url), body: init && init.body });
             const encoder = new TextEncoder();
             const signal = init && init.signal;
