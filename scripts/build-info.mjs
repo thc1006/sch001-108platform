@@ -1,15 +1,11 @@
 #!/usr/bin/env node
 /**
  * 在建置產物裡蓋一個「這份產物是哪一個 commit 建的」的戳記。
- * ================================================================
- * 存在的理由是一次實際發生的失效：#89 合併後，main 的 CI 五個 job 有四個成功，
- * 只有 Deploy 被取消——而 `CI Required` 不包含 deploy（deploy 只在 push 到 main
- * 時才跑，不可能當 PR 的 required check）。結果是：
  *
- *   - main 看起來是綠的
- *   - GitHub 的 deployments API 甚至有一筆該 commit 的紀錄
- *   - 但線上服務的仍然是舊版本（vendor/fuse.min.js 回 404）
- *   - 沒有任何訊號
+ * 只看 CI 的狀態證明不了線上是哪一版：deploy 只在 push 到 main 時才跑，不可能當
+ * PR 的 required check，所以 `CI Required` 不包含 deploy。Deploy 被取消時，即使 main
+ * 看起來是綠的、GitHub 的 deployments API 也有一筆該 commit 的紀錄，線上仍可能在
+ * 服務上一次部署的內容，沒有任何訊號（#89）。
  *
  * 而且 `actions/deploy-pages` 成功只代表 Pages API 回報部署完成，不代表 CDN 已經在
  * 服務新內容。要證明的唯一方法是去線上把它抓下來比對。
@@ -31,7 +27,7 @@ if (!existsSync(DIST)) {
 
 /**
  * CI 上用 GITHUB_SHA（push 到 main 時就是該 commit）；本機退回 git rev-parse。
- * 兩者都拿不到時寫 'unknown' 而不是中止——本機建置不該因為沒有 git 就失敗，
+ * 兩者都拿不到時寫 'unknown' 而不是中止：本機建置不該因為沒有 git 就失敗，
  * 但 verify-deploy 看到 unknown 會拒絕比對（見該檔）。
  */
 function currentCommit() {

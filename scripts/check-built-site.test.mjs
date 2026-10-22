@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * 站台契約核心的確定性測試
- * --------------------------------------------------------------
- * 全部用假的檔案清單與字串，不跑真實 build、不連外網——這樣測試才會在
+ * 站台契約核心的確定性測試。
+ *
+ * 全部用假的檔案清單與字串，不跑真實 build、不連外網，測試才會在
  * 「契約壞掉」時失敗，而不是在「今天網路不好」時失敗。
  *
  * 執行：  npm run test:site-integrity
@@ -41,7 +41,7 @@ const FILES = [
 ];
 const MAP = buildRouteMap(FILES, BASE);
 
-// ── route map：GitHub Pages 的目錄語意 ──
+// route map 要符合 GitHub Pages 的目錄語意。
 
 test('route map：三種 artifact 各自對應正確的部署 URL', () => {
     assert.equal(MAP.routes.get(`${BASE}/`), 'index.html');
@@ -67,7 +67,7 @@ test('路徑含 .. 一律拒絕', () => {
     assert.equal(resolveInternalPath(`${BASE}/../etc/passwd`, MAP).ok, false);
 });
 
-// ── 同源絕對網址：scheme ≠ origin ──
+// 同源絕對網址看的是 origin，不是 scheme。
 
 test('同源絕對網址必須視為站內（--scheme file 會整批漏掉這一類）', () => {
     const r = classifyReference(
@@ -91,8 +91,6 @@ test('不同 origin 才是外部', () => {
     assert.equal(r.kind, 'external');
 });
 
-// ── 相對路徑要相對「來源頁」解析 ──
-
 test('相對路徑以來源頁為 base 解析', () => {
     const r = classifyReference('competitions.html', `${BASE}/advanced-resources/`, CTX);
     assert.equal(r.kind, 'internal');
@@ -111,8 +109,6 @@ test('root-relative 保持在 base namespace 內', () => {
     assert.equal(r.kind, 'internal');
     assert.equal(r.path, `${BASE}/about.html`);
 });
-
-// ── fragment ──
 
 test('純 fragment 指向來源頁自己', () => {
     const r = classifyReference('#main-content', `${BASE}/about.html`, CTX);
@@ -140,8 +136,6 @@ test('anchor 收集涵蓋 id 與 legacy a[name]', () => {
     assert.ok(!ids.has('missing'));
 });
 
-// ── 安全 ──
-
 test('javascript: 與 vbscript: 一律視為錯誤', () => {
     assert.equal(classifyReference('javascript:alert(1)', `${BASE}/`, CTX).kind, 'invalid');
     assert.equal(classifyReference('VBScript:x', `${BASE}/`, CTX).kind, 'invalid');
@@ -157,8 +151,6 @@ test('mailto / tel / data 忽略而非報錯', () => {
     }
 });
 
-// ── 擷取工具 ──
-
 test('srcset 只取網址部分', () => {
     assert.deepEqual(parseSrcset('a.png 1x, b.png 2x'), ['a.png', 'b.png']);
 });
@@ -173,18 +165,15 @@ test('JSON 走訪保留 RFC6901 pointer，錯誤能定位到確切欄位', () =>
     assert.deepEqual(found, [{ pointer: '/tools/0/logo', value: 'img/a.svg' }]);
 });
 
-// ── adversarial review 找到的四個漏洞的回歸測試 ──
-// 這四項都是初版實作實際犯的錯，不是假想情境。
-
 test('回歸：協定相對且同源的網址必須當成站內檢查', () => {
-    // 初版把 // 開頭一律當外部，於是 //thc1006.github.io/... 這種寫法會跳過檢查
+    // 把 // 開頭一律當外部的話，//thc1006.github.io/... 這種寫法會跳過檢查。
     const r = classifyReference(`//thc1006.github.io${BASE}/nope.html`, `${BASE}/`, CTX);
     assert.equal(r.kind, 'internal');
     assert.equal(r.path, `${BASE}/nope.html`);
 });
 
 test('回歸：畸形 percent-encoding 不得讓 checker 崩潰', () => {
-    // 初版直接呼叫 decodeURIComponent，遇到 %ZZ 會 throw，整支 checker 掛掉
+    // 直接呼叫 decodeURIComponent 的話，遇到 %ZZ 會 throw，整支 checker 掛掉。
     for (const bad of ['#%ZZ', `${BASE}/a.html#%E0%A4%A`, `${BASE}/%ZZ.html`]) {
         assert.doesNotThrow(() => classifyReference(bad, `${BASE}/about.html`, CTX), bad);
     }
@@ -193,7 +182,7 @@ test('回歸：畸形 percent-encoding 不得讓 checker 崩潰', () => {
 
 test('回歸：scheme 判定必須看解析後的 protocol，不能只比字串前綴', () => {
     // WHATWG URL parser 會剝除 URL 中的換行與 tab，java\nscript: 會被正規化成
-    // javascript:。初版先做字串前綴比對，於是這個值落到「非 http(s) 故忽略」，
+    // javascript:。先做字串前綴比對的話，這個值會落到「非 http(s) 故忽略」，
     // 等於靜默接受可執行內容。
     for (const evil of ['java\nscript:alert(1)', '\tjavascript:alert(1)', 'java\tscript:alert(1)']) {
         const r = classifyReference(evil, `${BASE}/`, CTX);
@@ -214,7 +203,7 @@ test('回歸：href="#" 是 no-op，不得當成 anchor 參照', () => {
     assert.equal(classifyReference('#real', `${BASE}/about.html`, CTX).fragment, 'real');
 });
 
-// ── 靜態 import 掃描（vendor 產物的 import 圖檢查所依賴的那一層）──
+// 靜態 import 掃描，vendor 產物的 import 圖檢查靠的就是這一層。
 //
 // 這一組全部是「檔案裡一個 import 語句都沒有，卻被判定成有」的誤診案例。
 // 誤診比沒有訊息更糟：CI 紅了，訊息還斬釘截鐵地說錯一件事。
@@ -249,7 +238,7 @@ test('動態 import 不算靜態 import（stencil 的 lazy chunk 就是這樣載
 });
 
 test('bare specifier 要照樣回報，由呼叫端決定它合不合法', () => {
-    // 瀏覽器沒有 import map 時解析不了——那是呼叫端要判斷的事，掃描器只負責抓出來
+    // 瀏覽器沒有 import map 時解析不了，那是呼叫端要判斷的事，掃描器只負責抓出來。
     assert.deepEqual(staticImportSpecifiers('import fs from "node:fs";\nexport default fs;\n'), ['node:fs']);
 });
 

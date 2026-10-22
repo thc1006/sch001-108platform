@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 /**
  * 部署之後，去線上把站台抓下來，確認它真的在服務這一個 commit。
- * ================================================================
+ *
  * `actions/deploy-pages` 成功只代表 Pages API 回報部署完成，不代表 CDN 已經在服務新內容。
- * #89 合併後實際發生過：CI 五個 job 有四個成功、GitHub 的 deployments API 有該
- * commit 的紀錄，但線上服務的仍是舊版本（vendor/fuse.min.js 回 404），而且完全
- * 沒有訊號——因為 deploy 只在 push 到 main 時跑，不可能列入 PR 的 required check。
+ * Deploy 被取消時，即使 CI 其他 job 都成功、GitHub 的 deployments API 也有該 commit 的
+ * 紀錄，線上仍可能在服務上一次部署的內容，而且沒有任何訊號（#89）：deploy 只在 push
+ * 到 main 時跑，不可能列入 PR 的 required check。
  *
  * 這支把「部署成功」變成可驗證的事實：輪詢線上的 build-info.json，直到它服務的
- * commit 是這次要部署的那個、或是它的**後代**為止；逾時就以非零退出讓 run 變紅。
+ * commit 是這次要部署的那個、或是它的後代為止；逾時就以非零退出讓 run 變紅。
  *
  * 為什麼是「或它的後代」而不是「精確相等」：main 連續合併時，較新的那次部署可能在
- * 本 run 還在輪詢時就先上線了。那時線上是我們的後代，站台其實完全正常——但精確相等
+ * 本 run 還在輪詢時就先上線了。那時線上是我們的後代，站台其實完全正常，但精確相等
  * 的判定會把它誤報成「本 commit 沒有部署」。兩次合併只要間隔夠近，兩個 run 就會
  * 重疊，這個誤報真的會發生。
  *
- * 反過來，線上如果是我們的**祖先**，那才是真正的問題：部署順序被倒過來了（Actions
+ * 反過來，線上如果是我們的祖先，那才是真正的問題：部署順序被倒過來了（Actions
  * 的 concurrency 佇列是依「開始等待的時間」FIFO，不是依 commit 順序，而各 run 的 CI
- * 耗時本來就有落差），站台正在服務比 main 更舊的東西。舊版的精確相等判定會一直等到
- * 逾時才紅，訊息還說錯原因；現在會明講是順序倒置。
+ * 耗時本來就有落差），站台正在服務比 main 更舊的東西。精確相等的判定會一直等到
+ * 逾時才紅，訊息也會把原因說錯；這裡會明講是順序倒置。
  *
  * 用法：
  *   node scripts/verify-deploy.mjs                 # 用 GITHUB_SHA 或 git HEAD
@@ -52,11 +52,11 @@ const API = (process.env.GITHUB_API_URL || 'https://api.github.com').replace(/\/
 /**
  * 從環境變數讀秒數。空白、空字串與非數字一律退回預設值，而且每一種都會印出來。
  *
- * 不寫成 Number(env ?? 預設)：?? 只擋 undefined，空字串會變成 0——而
+ * 不寫成 Number(env ?? 預設)：?? 只擋 undefined，空字串會變成 0，而
  * `env: VERIFY_RECHECK: ${{ vars.X }}` 在 X 沒設定時給的正好是空字串。那會讓底下的
  * 再確認被靜默停用，保護等於不存在。
  *
- * 也必須先 trim：一個空白既不是 undefined 也不是 ''，而 Number(' ') 是 0——finite
+ * 也必須先 trim：一個空白既不是 undefined 也不是 ''，而 Number(' ') 是 0，finite
  * 又非負，會被當成合法值直接生效，跟空字串是一模一樣的洞。YAML 很容易產生尾隨空白
  * （"${{ vars.X }} "、block scalar），所以這不是理論問題。
  */
@@ -112,7 +112,7 @@ let attempt = 0;
 let last = '（尚未取得）';
 let landed = false;
 // 同一個線上 commit 只查一次祖先關係，免得每 10 秒打一次 GitHub API。
-// 只有「查得出結果」的那次才記進來——理由見迴圈裡 rel === null 的說明。
+// 只有「查得出結果」的那次才記進來，理由見迴圈裡 rel === null 的說明。
 let probed = '';
 let behindNote = '';
 let apiFailures = 0;
@@ -126,11 +126,11 @@ let staleBuild = false;
 const RECHECK_S = secondsFromEnv('VERIFY_RECHECK', 45);
 const RECHECK_MS = RECHECK_S * 1000;
 // 再確認時，多舊的快取副本就不採信。真的退版會清掉邊緣快取，所以退版之後那份物件的
-// Age 會很小；Age 很大的那份是在我們部署**之前**就從來源取回的，不構成退版的證據。
+// Age 會很小；Age 很大的那份是在我們部署之前就從來源取回的，不構成退版的證據。
 //
 // 上限夾在 120 秒：這個界線該跟著 CDN 的 max-age 走，不是跟著輪詢節奏走。沒有夾的話，
 // VERIFY_RECHECK 一旦設到 570 以上，門檻就會超過線上的 max-age=600，於是每一份陳舊
-// 副本都會被當成退版採信——R3-1 修掉的誤報會無聲地回來。
+// 副本都會被當成退版採信，健康的部署會被判成紅燈。
 const FRESH_MAX_AGE_S = Math.min(RECHECK_S + 30, 120);
 
 /** SHA 就縮短；其他（像「格式不合法」那種說明文字）原樣印出，不要攔腰切斷。 */
@@ -155,17 +155,17 @@ console.log(`  ${url}`);
 /**
  * 逾時用明確的 AbortController ＋ clearTimeout，而不是 AbortSignal.timeout()。
  *
- * AbortSignal.timeout() 會留下一個到期前無法取消的 timer handle。搭配結尾的
- * process.exit() 時，Node 在 Windows 上會直接崩在 libuv 的斷言
- * （`!(handle->flags & UV_HANDLE_CLOSING)`，src/win/async.c:76），退出碼變成 127
- * ——訊息印對了，退出碼卻誤導成「找不到指令」。實測踩到：只跑成功路徑不會發現。
+ * AbortSignal.timeout() 會留下一個到期前無法取消的 timer handle。這時呼叫
+ * process.exit()，Node 在 Windows 上會直接崩在 libuv 的斷言
+ * （`!(handle->flags & UV_HANDLE_CLOSING)`，src/win/async.c:76），退出碼變成 127：
+ * 訊息印對了，退出碼卻誤導成「找不到指令」。實測只跑成功路徑不會發現。
  */
 async function fetchInfo() {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 15_000);
     try {
-        // 刻意不加 cache-buster query string：實測 GitHub Pages 的 Fastly 邊緣**不把
-        // query string 放進 cache key**。對照實驗（線上站台，5 個從未用過的 nonce）：
+        // 刻意不加 cache-buster query string：實測 GitHub Pages 的 Fastly 邊緣不把
+        // query string 放進 cache key。對照實驗（線上站台，5 個從未用過的 nonce）：
         //
         //   無 query（第一次）   X-Cache=MISS
         //   無 query（第二次）   X-Cache=HIT
@@ -181,7 +181,7 @@ async function fetchInfo() {
         const commit = String(info.commit || '');
         // 這個字串來自「被驗證的對象自己」，不可以直接塞進 compare API 的網址。
         // WHATWG 的 URL 正規化會先把 ../ 收掉，所以一個精心構造的 commit 值可以把
-        // compare 請求導向**另一組**比較、讓它回 ahead——正好偽造出一個綠燈，而這支
+        // compare 請求導向另一組比較、讓它回 ahead，正好偽造出一個綠燈，而這支
         // 腳本存在的理由本來就是「不要相信部署出來的東西」。
         if (commit && !/^[0-9a-f]{40}$/.test(commit)) {
             return { commit: '', label: '(commit 欄位不是 40 位十六進位，已拒絕)', age };
@@ -246,11 +246,11 @@ while (Date.now() < deadline) {
             // 線上不是我們，但可能是「更新的那一版已經先上線」。
             const rel = await compareWithLive(r.commit);
             if (rel === null) {
-                // 判不出來就**不要**記進 probed。記下去的話，一次暫時性的 API 失誤
-                // （403 配額、502、逾時、JSON 壞掉——全都回 null）會讓這個 commit 的
+                // 判不出來就不要記進 probed。記下去的話，一次暫時性的 API 失誤
+                // （403 配額、502、逾時、JSON 壞掉，全都回 null）會讓這個 commit 的
                 // 祖先判定永遠不再重試：之後每一輪都直接跳過，白等到逾時再誤報部署
                 // 失敗。實測過：第一次 502 之後，接下來四輪一次 compare 都沒有再打。
-                // 而 main 忙碌、run 互相重疊的時候，正好也是 API 最容易抖的時候——
+                // 而 main 忙碌、run 互相重疊的時候，正好也是 API 最容易抖的時候，
                 // 也就是這個判定最需要派上用場的時候。
                 apiFailures++;
                 console.log(`  第 ${attempt} 次：compare API 沒有回應，稍後再判定祖先關係`);
@@ -272,7 +272,7 @@ while (Date.now() < deadline) {
             }
         }
         // Age 說明這份回應是幾秒前回源取得的。Age 很大時，這個「不符」只代表
-        // 我們拿到一份陳舊的快取副本，不代表部署失敗——所以只是繼續等，
+        // 我們拿到一份陳舊的快取副本，不代表部署失敗，所以只是繼續等，
         // 而總預算（預設 660 秒）本來就設得比 max-age=600 長。
         console.log(
             `  第 ${attempt} 次：線上仍是 ${short(last)}（Age=${r.age}s${r.age > 0 ? '，快取副本' : ''}），繼續等`,
@@ -295,10 +295,9 @@ exhausted = !landed;
 // 較舊的 commit 完全可能排在後面。那種情形下站台真的退版了，而每個 run 各自都只看到
 // 自己、全部是綠的。
 //
-// **不論是精確命中還是後代命中都要再確認。** 一度只在精確命中後做，理由寫的是「命中
-// 後代時線上本來就比我們新」——那是把「現在比較新」當成「之後也會比較新」。看到 ahead
-// 恰恰代表別人的部署已經超車、pages 佇列正在排空，也就是順序倒置最可能發生的時刻；
-// 那條路徑反而最需要再確認。
+// 精確命中和後代命中都要再確認。命中後代只代表線上現在比我們新，不代表之後也是：
+// 看到 ahead 恰恰代表別人的部署已經超車、pages 佇列正在排空，也就是順序倒置最可能
+// 發生的時刻，那條路徑反而最需要再確認。
 //
 // 成本是每次 main 部署多等 RECHECK_MS。
 if (landed && RECHECK_MS > 0) {

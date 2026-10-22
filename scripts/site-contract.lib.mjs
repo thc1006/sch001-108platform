@@ -1,20 +1,20 @@
 /**
- * 站台契約檢查的純函式核心
- * --------------------------------------------------------------
+ * 站台契約檢查的純函式核心。
+ *
  * 為什麼需要自己寫，而不是把更多 glob 丟給 lychee：
  *
  * lychee 是「連結檢查器」，它回答的是「這個 URL 解析得到東西嗎」。但本站有幾類
  * 契約它在語意上表達不了：
  *
- *   1. GitHub Pages 的目錄語意——`/foo/` 必須有 `foo/index.html`，不是目錄存在
+ *   1. GitHub Pages 的目錄語意：`/foo/` 必須有 `foo/index.html`，不是目錄存在
  *      就算數。lychee 未給 --index-files 時只檢查目錄是否存在。
- *   2. 同源絕對網址——canonical、og:url、og:image、JSON-LD 都是
+ *   2. 同源絕對網址：canonical、og:url、og:image、JSON-LD 都是
  *      `https://thc1006.github.io/sch001-108platform/...`，語意上是站內，但 scheme
  *      是 https，會被 --scheme file 整批排除。scheme ≠ origin。
- *   3. Runtime JSON reference——頁面在瀏覽器 fetch JSON 後才產生 <img>/<a>，那些
+ *   3. Runtime JSON reference：頁面在瀏覽器 fetch JSON 後才產生 <img>/<a>，那些
  *      相對路徑要相對「消費它的頁面」解析，而不是 JSON 自己的位置。plain-text
  *      擷取無法保留這個 base。
- *   4. 自我一致性——canonical 必須指向自己、每頁只能有一個 main#main-content。
+ *   4. 自我一致性：canonical 必須指向自己、每頁只能有一個 main#main-content。
  *      這根本不是連結檢查。
  *
  * 因此本檔負責站台契約，lychee 留作第二層 defense-in-depth。
@@ -69,7 +69,7 @@ function safeDecode(value) {
  *
  * scheme 的判定一律以「解析後的 protocol」為準，不能只比對原始字串前綴。
  * WHATWG URL parser 會剝除 URL 中的換行與 tab，因此 `java\nscript:alert(1)`
- * 會被正規化成 `javascript:`——若只做字串前綴比對，這個值會漏過檢查而被當成
+ * 會被正規化成 `javascript:`。若只做字串前綴比對，這個值會漏過檢查而被當成
  * 「非 http(s) 故忽略」，等於靜默接受可執行內容。
  *
  * @param {string} ref 原始 href/src 值
@@ -93,7 +93,7 @@ export function classifyReference(ref, fromUrl, ctx) {
     let u;
     try {
         // 以來源頁的絕對 URL 為 base 解析。relative、root-relative 與協定相對
-        // （//host/path）都由 URL 解析處理——協定相對若指向本站，仍必須當成站內
+        // （//host/path）都由 URL 解析處理。協定相對若指向本站，仍必須當成站內
         // 檢查，不能因為寫法不同就跳過。
         u = new URL(rawRef, `${ctx.site}${fromUrl}`);
     } catch {
@@ -106,7 +106,7 @@ export function classifyReference(ref, fromUrl, ctx) {
     }
     if (IGNORED_SCHEMES.has(u.protocol)) return { kind: 'ignored', reason: u.protocol };
     if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-        // 未知 scheme 不靜默忽略——寧可報出來人工判斷，也不要再開一個繞過孔
+        // 未知 scheme 不靜默忽略：寧可報出來人工判斷，也不要再開一個繞過孔。
         return { kind: 'invalid', reason: `未預期的 scheme：${u.protocol}` };
     }
     if (u.username || u.password) return { kind: 'invalid', reason: '網址不得內嵌帳號密碼' };
@@ -130,7 +130,7 @@ export function classifyReference(ref, fromUrl, ctx) {
 
 /**
  * 檢查站內 URL path 是否真的對應到一份部署得出來的檔案。
- * 目錄式 URL（結尾為 /）必須有 index.html——這正是 lychee 未給 --index-files
+ * 目錄式 URL（結尾為 /）必須有 index.html，這正是 lychee 未給 --index-files
  * 時會漏掉的那一類。
  *
  * @returns {{ok:true, file:string}|{ok:false, reason:string}}
@@ -205,36 +205,33 @@ export function walkJsonStrings(node, pointer = '', out = []) {
 
 /**
  * 把 JS 原始碼裡的註解與字串字面值抹成等長空白。
- * ================================================================
- * 存在的理由是一次實際的誤診。靜態 import 掃描原本直接對整份檔案跑正則，於是
- * 這三種**一個 import 語句都沒有**的檔案全都被判定成「靜態 import 了某某」並
- * 讓 CI 變紅：
+ *
+ * 靜態 import 掃描直接對整份檔案跑正則的話，下面三種一個 import 語句都沒有的
+ * 檔案都會被判定成「靜態 import 了某某」並讓 CI 變紅：
  *
  *     1. minifier 保留的 banner 註解，內容是一行使用範例
  *     2. 字串字面值：const tpl = "import helper from './x.js'"
  *     3. 行註解：// legacy: import old from './removed.js'
  *
  * 以驚嘆號開頭的 block 註解（授權 banner）是所有 minifier 都刻意保留的，而
- * banner 裡附使用範例很常見。fuse.js 7.5.0 今天的 banner 剛好沒有範例，所以
- * 還沒踩到；但那是運氣，而「訊息斬釘截鐵地說錯一件事」正是這一整組修改要
- * 消滅的東西——誤診比沒有訊息更糟。
+ * banner 裡附使用範例很常見。fuse.js 7.5.0 的 banner 剛好沒有範例，但不能靠運氣：
+ * 訊息斬釘截鐵地說錯一件事，比沒有訊息更糟。
  *
  * 抹成等長空白而不是刪除：長度、行號與 UTF-16 位移都不變（切割方式見下面
  * 迴圈開頭的註解），所以掃描結果還能拿位移回原始碼取出真正的 specifier 內容。
  *
- * 除法與正則字面值的分辨用業界通用的啟發式——`/` 前一個有意義的字元若是識別字／
+ * 除法與正則字面值的分辨用業界通用的啟發式：`/` 前一個有意義的字元若是識別字／
  * 數字／`)`／`]` 就是除法，否則是正則的開頭。這不是完整的 parser，但失敗方向
  * 是安全的：判錯只會讓某段程式碼被多抹或少抹，而 import 宣告一定在頂層、不會
  * 藏在正則裡。
  */
 export function stripJsCommentsAndStrings(src) {
-    // src.split('') 而不是 Array.from(src)：後者切的是**碼位**，但下面整個掃描
+    // src.split('') 而不是 Array.from(src)：後者切的是碼位，但下面整個掃描
     // 迴圈用的是 UTF-16 索引（src[i]、src.indexOf）。只要檔案裡出現一個星狀
     // 平面字元（emoji、CJK 擴充 B、𝄞…），兩套索引就從那裡開始各差一格，抹白
-    // 落在錯誤的位置。實測兩個方向都會發生：一種是憑空報出
-    // 「靜態 import 了「」——不是相對路徑」這種內容是空字串的假錯誤，另一種更糟，
-    // 是真的 ./real.js 被漏掉、悄悄退出檢查範圍。目前八個 vendor 產出都沒有星狀
-    // 平面字元所以還沒踩到，但 minifier 保留的 banner 放個 emoji 是很平常的事。
+    // 落在錯誤的位置。實測兩個方向都會發生：一種是憑空報出 specifier 為空字串
+    // 的假錯誤，另一種更糟，是真的 ./real.js 被漏掉、悄悄退出檢查範圍。目前的
+    // vendor 產出都沒有星狀平面字元，但 minifier 保留的 banner 放個 emoji 是很平常的事。
     const out = src.split('');
     const blank = (from, to) => {
         for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' ';
@@ -304,11 +301,11 @@ export function stripJsCommentsAndStrings(src) {
 }
 
 /**
- * 抓出一個 JS 檔的**靜態** import／export-from specifier。
+ * 抓出一個 JS 檔的靜態 import／export-from specifier。
  *
  * 先抹掉註解與字串再比對，比對到的位置再回原始碼取 specifier 內容。
  *
- * 只抓靜態形式。`import(變數)` 這種動態載入靜態分析不到——stencil 的 loader
+ * 只抓靜態形式。`import(變數)` 這種動態載入靜態分析不到，stencil 的 loader
  * 正是那樣 lazy-load 它的 p-*.js chunk。所以 ionicons 必須整個目錄搬過來，
  * 不能「照 import 圖挑檔案」；這個限制也是 check-built-site.mjs 那一關只驗
  * 「靜態 import 的目標存在」、而不宣稱「所有會被載入的檔都驗過」的原因。
@@ -335,7 +332,7 @@ export function staticImportSpecifiers(src) {
  * 哪裡不合格；合格回傳 null。要部署的產物只收 https：前端（public/shared/platform-ai.js 的
  * getGatewayUrl）為了本機開發另外接受 http://localhost，但那種網址進了正式站，每個學生都連不上。
  * 同理，https 的本機、私有網段、CGNAT（Tailscale 的位址就在這段）、link-local 也不收，判斷規則
- * 與外部網址的 link-policy 相同（staticUrlPolicy）。帳密、查詢字串、# 一律不收——前端讀到這種
+ * 與外部網址的 link-policy 相同（staticUrlPolicy）。帳密、查詢字串、# 一律不收，前端讀到這種
  * 網址會直接回報「尚未設定」。
  */
 export function gatewayUrlProblem(raw) {
