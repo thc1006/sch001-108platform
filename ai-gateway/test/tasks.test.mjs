@@ -274,6 +274,93 @@ test('finalizeOutput：JSON 任務回傳驗證過的物件', () => {
     assert.deepEqual(finalizeOutput(jsonTask, '```json\n{"title":"t","items":["a","b"]}\n```'), { title: 't', items: ['a', 'b'] });
 });
 
+test('finalizeOutput：零星的簡體字轉成台灣繁體（文字任務與 JSON 的字串值都是；enum 轉過才比對）', () => {
+    assert.equal(finalizeOutput(markdownTask, '先做数据收集，再进入下一个阶段。'), '先做數據收集，再進入下一個階段。');
+    assert.deepEqual(finalizeOutput(jsonTask, '{"title":"学习目标","items":["阶段一","阶段二"]}'), { title: '學習目標', items: ['階段一', '階段二'] });
+    // 一對多的字不轉（划船、系統在台灣本來就這樣寫）
+    assert.equal(finalizeOutput(markdownTask, '划船社是系統化的訓練'), '划船社是系統化的訓練');
+    const enumTask = defineTask({
+        id: 'enum-task',
+        input: { topic: { label: '主題', maxLength: 20 } },
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: { level: { type: 'string', enum: ['適合', '不適合'] } },
+                required: ['level'],
+                additionalProperties: false,
+            },
+        },
+        instructions: '判斷。',
+    });
+    assert.deepEqual(finalizeOutput(enumTask, '{"level":"适合"}'), { level: '適合' });
+});
+
+// 非 ASCII 的字全部寫成 \uXXXX 跳脫序列（星號平面的字是兩個代理），模型有時就是這樣輸出。
+// 用程式產生：原始碼裡不必寫跳脫序列，也不怕編輯工具把它轉成實際字元
+const escapeNonAscii = (text) => text.replace(
+    /[^\x00-\x7F]/g,
+    (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`,
+);
+
+// 跳脫序列的簡體字在原文裡看不見，解析之前的轉換碰不到，解碼之後才冒出來；
+// 所以解析之後要把每個字串值再轉一次（審查實測：数据 解析後仍是簡體）
+test('finalizeOutput：JSON 字串值用跳脫序列寫的簡體字，解析後也轉成台灣繁體（陣列與巢狀物件都走過，非字串不動）', () => {
+    const nestedTask = defineTask({
+        id: 'demo-nested',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: {
+                    title: { type: 'string', minLength: 1 },
+                    steps: {
+                        type: 'array',
+                        minItems: 1,
+                        items: {
+                            type: 'object',
+                            properties: {
+                                name: { type: 'string', minLength: 1 },
+                                tips: { type: 'array', items: { type: 'string', minLength: 1 } },
+                                hours: { type: 'integer' },
+                                optional: { type: 'boolean' },
+                            },
+                            required: ['name', 'tips', 'hours', 'optional'],
+                            additionalProperties: false,
+                        },
+                    },
+                },
+                required: ['title', 'steps'],
+                additionalProperties: false,
+            },
+        },
+        instructions: '依主題規劃步驟。',
+    });
+    const answer = {
+        title: '数据收集',
+        steps: [
+            { name: '选取资料', tips: ['手头拮据也能做', '什么都可以先记下来'], hours: 3, optional: false },
+            { name: '整理成报告', tips: ['家中老么也要学习'], hours: 2, optional: true },
+        ],
+    };
+    const escaped = escapeNonAscii(JSON.stringify(answer));
+    // 整份正文是純 ASCII：解析前的轉換什麼都沒做，轉換全靠解析之後那一次
+    assert.doesNotMatch(escaped, /[^\x00-\x7F]/);
+    // 前一個字決定的字（拮据的据不轉、什么的么轉成麼、老么的么不轉）在解碼後的字串上同樣成立
+    assert.deepEqual(finalizeOutput(nestedTask, escaped), {
+        title: '數據收集',
+        steps: [
+            { name: '選取資料', tips: ['手頭拮据也能做', '什麼都可以先記下來'], hours: 3, optional: false },
+            { name: '整理成報告', tips: ['家中老么也要學習'], hours: 2, optional: true },
+        ],
+    });
+
+    // 同一個字串一半是原文、一半是跳脫序列：原文的部分解析前就轉了，其餘的解析後轉
+    const mixed = `{"title":"数${escapeNonAscii('据')}","items":["${escapeNonAscii('阶段')}一","阶段二"]}`;
+    assert.deepEqual(finalizeOutput(jsonTask, mixed), { title: '數據', items: ['階段一', '階段二'] });
+});
+
 test('finalizeOutput：解析失敗或不符規格都是 format；detail 不含模型寫的內容', () => {
     assert.throws(() => finalizeOutput(jsonTask, '{"title": 我的病史是憂鬱症, "items": []}'), (err) => {
         assert.equal(err.code, 'format');
