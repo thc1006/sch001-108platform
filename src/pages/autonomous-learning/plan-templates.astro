@@ -25,14 +25,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <h2 class="text-2xl font-bold mb-2">✨ AI 計畫草擬工具</h2>
             <p class="text-gray-600 mb-6">輸入你的自主學習主題，AI 將為你草擬一份包含目標、方法、週次進度與產出規劃的完整計畫草案。</p>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="planInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="例如：分析手搖飲店的行銷策略">
+                <input type="text" id="planInput" maxlength="100" aria-label="你的自主學習主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="例如：分析手搖飲店的行銷策略">
                 <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-600 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>產生計畫草案</span>
                 </button>
             </div>
-            <div id="planResult" class="mt-6 space-y-4">
-                <!-- AI generated content will be injected here -->
+            {/* 進度區塊放在 live region 外面。WebKit 不理會子樹的 aria-live="off"，計時器每秒的變化
+                也會通報給螢幕閱讀器，見 WebKit 的 AXObjectCache::handleTextChanged。 */}
+            <div class="mt-6">
+                <div id="planWorkspace"></div>
+                <div id="planResult" class="space-y-4" aria-live="polite"></div>
             </div>
         </section>
 
@@ -61,7 +64,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
     </div>
 
-    <script is:inline src="https://js.puter.com/v2/"></script>
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- Static Data ---
@@ -293,79 +295,56 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         });
 
-        // --- AI Plan Generator Logic (Powered by Puter.js) ---
+        // 計畫草案由 AI 閘道的 study-plan 任務產生，prompt 與輸出格式在 ai-gateway/src/task-catalog.mjs。
         const generatePlanBtn = document.getElementById('generatePlanBtn');
         const planInput = document.getElementById('planInput');
+        const planWorkspace = document.getElementById('planWorkspace');
         const planResult = document.getElementById('planResult');
+        const planBtnLabel = generatePlanBtn.querySelector('span');
+        // platform-ai.js 沒載入成功時沒有 describeError 可用，改顯示這句，和它對未知錯誤的說法相同。
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-        function showLoader(element) {
-            element.innerHTML = '<div class="flex justify-center items-center py-4"><div class="loader"></div></div>';
+        function showMessage(text, tone = 'error') {
+            planResult.textContent = '';
+            const p = document.createElement('p');
+            p.className = (tone === 'error' ? 'text-red-500' : 'text-gray-600') + ' text-center';
+            p.textContent = text;
+            planResult.appendChild(p);
         }
 
         generatePlanBtn.addEventListener('click', async () => {
             const topic = planInput.value.trim();
             if (!topic) {
-                planResult.innerHTML = '<p class="text-red-500 text-center">請先輸入你的自主學習主題！</p>';
+                showMessage('請先輸入你的自主學習主題！');
                 return;
             }
-            showLoader(planResult);
+
+            // 進行中停用按鈕，免得重複送出；要中途停止就按進度區塊裡的「取消」。
+            const originalLabel = planBtnLabel.textContent;
             generatePlanBtn.disabled = true;
+            planBtnLabel.textContent = '產生中…';
+            planResult.textContent = '';
 
-            const prompt = `
-            你是一位專業的台灣高中教育顧問。請為一個自主學習主題：「${topic}」，設計一份計畫大綱。
-
-            請**嚴格地**、**只**回傳一個符合以下結構的 JSON 物件，不要包含任何 "json" 字樣的 markdown 標籤或前後的說明文字。
-
-            JSON 結構範例:
-            {
-              "learning_objectives": ["目標一", "目標二", "目標三"],
-              "execution_methods": ["方法一", "方法二"],
-              "weekly_plan": [
-                {"week": "Week 1-2", "tasks": "任務說明一"},
-                {"week": "Week 3-4", "tasks": "任務說明二"},
-                {"week": "Week 5-6", "tasks": "任務說明三"},
-                {"week": "Week 7-8", "tasks": "任務說明四"}
-              ],
-              "expected_outcome": ["預期產出一", "預期產出二"]
-            }
-            `;
-
+            const controller = new AbortController();
+            // mountProgress 也放在 try 裡：PlatformAI 不存在時它會丟錯，按鈕仍要在 finally 恢復。
+            let progress = null;
             try {
-                // 使用 Puter.js 呼叫 AI（含模型 fallback 與逾時保護）
-                const response = await PlatformAI.callGeminiWithFallback(prompt, {
-                    signal: AbortSignal.timeout(30000)
+                progress = PlatformAI.mountProgress(planWorkspace, { onCancel: () => controller.abort() });
+                const { result } = await PlatformAI.runTask('study-plan', { topic }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
                 });
-
-                // 嘗試解析 AI 回傳的純文字內容為 JSON
-                let responseText = '';
-                if (response && response.message && response.message.content) {
-                    responseText = response.message.content;
-                } else if (typeof response === 'string') {
-                    responseText = response;
-                } else {
-                    responseText = JSON.stringify(response);
-                }
-                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error("AI 回應中找不到 JSON。");
-                }
-                const parsedJson = JSON.parse(jsonMatch[0]);
-
-                if (parsedJson && parsedJson.weekly_plan) {
-                    displayAIPlan(parsedJson);
-                } else {
-                    throw new Error("AI 回應的 JSON 結構不符合預期。");
-                }
-
+                progress.finish();
+                displayAIPlan(result);
             } catch (error) {
-                console.error("Error calling Puter.js or parsing JSON:", PlatformAI.formatError(error), error);
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    planResult.innerHTML = `<p class="text-red-500 text-center">請求超時，請檢查網路連線後重試。</p>`;
-                } else {
-                    planResult.innerHTML = `<p class="text-red-500 text-center">抱歉，產生計畫時發生錯誤。請檢查主題是否清晰或稍後再試。</p>`;
-                }
+                if (progress) progress.finish();
+                const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 generatePlanBtn.disabled = false;
+                planBtnLabel.textContent = originalLabel;
+                // finish() 把進度區塊裡的焦點交給工作區，但工作區已經清空，改交回按鈕。
+                if (document.activeElement === planWorkspace) generatePlanBtn.focus();
             }
         });
 
@@ -404,18 +383,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             background: -webkit-linear-gradient(45deg, #10b981, #3b82f6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #10b981;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.6);

@@ -169,3 +169,64 @@ test('star-analysis：指令寫明總評、各項評論與建議、修改範例�
     assert.match(instructions, /analysis：[^\n]*各一到兩句/);
     assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
 });
+
+test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
+    const task = catalog.get('study-plan');
+    assert.equal(validateInput(task, { topic: '飲'.repeat(100) }).topic.length, 100);
+    assert.throws(() => validateInput(task, { topic: '飲'.repeat(101) }), { code: 'invalid_input', field: 'topic' });
+});
+
+test('study-plan：3 個目標、2～3 個方法與產出、四段週次進度；缺項、多項、空字串、陌生的週次標籤都不收', () => {
+    const task = catalog.get('study-plan');
+    const ok = {
+        learning_objectives: ['能說明手搖飲店的行銷策略。', '能設計問卷蒐集顧客意見。', '能提出改善建議並上台報告。'],
+        execution_methods: ['每週觀察兩家店的促銷活動。', '設計問卷並訪談三位同學。'],
+        weekly_plan: ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'].map((week) => ({ week, tasks: '完成這兩週的任務。' })),
+        expected_outcome: ['一份行銷策略分析報告。', '一份五分鐘的簡報。'],
+    };
+    const three = { ...ok, execution_methods: [...ok.execution_methods, '整理資料並製作比較表。'], expected_outcome: [...ok.expected_outcome, '一張比較表。'] };
+    for (const good of [ok, three]) assert.deepEqual(finalizeOutput(task, JSON.stringify(good)), good);
+
+    const withWeek = (i, item) => ok.weekly_plan.map((w, j) => (j === i ? item : w));
+    const { expected_outcome, ...withoutOutcome } = ok;
+    for (const bad of [
+        { ...ok, learning_objectives: ok.learning_objectives.slice(0, 2) },
+        { ...ok, learning_objectives: [...ok.learning_objectives, '多一個目標。'] },
+        { ...ok, execution_methods: ok.execution_methods.slice(0, 1) },
+        { ...three, execution_methods: [...three.execution_methods, '多一個方法。'] },
+        { ...ok, expected_outcome: ok.expected_outcome.slice(0, 1) },
+        { ...three, expected_outcome: [...three.expected_outcome, '多一項產出。'] },
+        { ...ok, weekly_plan: ok.weekly_plan.slice(0, 3) },
+        { ...ok, weekly_plan: [...ok.weekly_plan, { week: 'Week 7-8', tasks: '多一段。' }] },
+        { ...ok, weekly_plan: withWeek(3, { week: 'Week 9-10', tasks: '完成。' }) },
+        { ...ok, weekly_plan: withWeek(0, { week: '第 1-2 週', tasks: '完成。' }) },
+        { ...ok, weekly_plan: withWeek(0, { week: 'Week 1-2' }) },
+        { ...ok, weekly_plan: withWeek(0, { week: 'Week 1-2', tasks: ' ' }) },
+        { ...ok, weekly_plan: withWeek(0, { week: 'Week 1-2', tasks: '完成。', note: 'x' }) },
+        { ...ok, learning_objectives: ['', ...ok.learning_objectives.slice(1)] },
+        { ...ok, execution_methods: ['', ok.execution_methods[1]] },
+        { ...ok, expected_outcome: [ok.expected_outcome[0], ' '] },
+        withoutOutcome,
+        { ...ok, extra: 'x' },
+    ]) {
+        assert.throws(() => finalizeOutput(task, JSON.stringify(bad)), { code: 'format' });
+    }
+});
+
+// 數量、長度與週次在 schema 和指令各寫一次：guided decoding 照 schema，模型照指令寫內容，兩邊要一致。
+// maxLength 是硬截斷，留到指令長度上限的兩倍以上，模型稍微寫長也不會被切成半句。
+test('study-plan：指令寫明每一項的數量與長度，和 schema 一致；maxLength 至少是指令長度上限的兩倍', () => {
+    const { instructions, output } = catalog.get('study-plan');
+    const { properties } = output.schema;
+    const lines = instructions.split('\n');
+    for (const [name, { minItems, maxItems, items }] of Object.entries(properties)) {
+        const line = lines.find((l) => l.startsWith(`- ${name}：`)) ?? '';
+        const count = minItems === maxItems ? `${minItems} 個` : `${minItems}～${maxItems} 個`;
+        assert.ok(line.includes(count), `${name} 的數量`);
+        const limit = /約 \d+～(\d+) 字/.exec(line);
+        assert.ok(limit, `${name} 的長度`);
+        const { maxLength } = name === 'weekly_plan' ? items.properties.tasks : items;
+        assert.ok(maxLength >= 2 * Number(limit[1]), `${name}：maxLength ${maxLength}，指令上限 ${limit[1]} 字`);
+    }
+    assert.ok(instructions.includes(properties.weekly_plan.items.properties.week.enum.join('、')));
+});
