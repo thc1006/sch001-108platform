@@ -315,6 +315,15 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Fail fast when the deploy job did not succeed
+        if: ${{ needs.deploy.result != 'success' }}
+        env:
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          echo "Deploy job 的結果是「$DEPLOY_RESULT」，站台不會更新。" >&2
+          echo "常見原因：CI Required 沒過時 deploy 是 skipped；其他是部署被取消、GitHub Pages 服務異常、Pages 來源設定不是 GitHub Actions。" >&2
+          exit 1
+
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -325,13 +334,6 @@ jobs:
         with:
           node-version-file: '.node-version'
           package-manager-cache: false
-
-      - name: Fail fast when the deploy job did not succeed
-        if: ${{ needs.deploy.result != 'success' }}
-        run: |
-          echo "Deploy job 的結果是「${{ needs.deploy.result }}」，站台不會更新。" >&2
-          echo "常見原因：被較新的 run 取消、GitHub Pages 服務異常、Pages 來源設定不是 GitHub Actions。" >&2
-          exit 1
 
       - name: Verify the live site serves this commit
         timeout-minutes: 14
