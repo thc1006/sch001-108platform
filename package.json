@@ -41,7 +41,7 @@
     "test:install-gate-faults": "node scripts/check-install-gate.faults.mjs",
     "check:comments": "node scripts/check-comments.mjs",
     "test:comments": "node --test scripts/check-comments.test.mjs",
-    "test:ai-gateway": "node --test --test-timeout=30000 ai-gateway/test/config.test.mjs ai-gateway/test/upstream.test.mjs ai-gateway/test/source-hygiene.test.mjs"
+    "test:ai-gateway": "node --test --test-timeout=30000 ai-gateway/test/config.test.mjs ai-gateway/test/control-tokens.test.mjs ai-gateway/test/upstream.test.mjs ai-gateway/test/generate.test.mjs ai-gateway/test/source-hygiene.test.mjs"
   },
   "keywords": [],
   "author": "",
