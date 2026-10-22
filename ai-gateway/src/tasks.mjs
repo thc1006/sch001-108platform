@@ -9,6 +9,9 @@
  *   id            網址上的名稱（/v1/tasks/<id>），小寫英數與連字號
  *   input         { 欄位: { label, maxLength } }，全部是字串、全部必填；maxLength 以「字」計
  *   output        { type: 'json', schema } 或 { type: 'markdown' }
+ *                 JSON 任務的 schema 會整份送給 WinLab 當 response_format（strict）。字串的
+ *                 maxLength 在 guided decoding 裡是硬上限：模型寫到上限就被切斷，結果卻仍通過驗證，
+ *                 學生看到的是半句話。所以要在 instructions 裡明確告訴模型長度，maxLength 只當保險
  *   instructions  任務指令（可信），放進 system 訊息；用欄位的 label 指稱學生提供的資料
  *   temperature   選填
  *   timeoutMs     選填：這個任務的總時限（毫秒），比 LLM_TASK_TIMEOUT_MS 短才有作用。一個來源趁

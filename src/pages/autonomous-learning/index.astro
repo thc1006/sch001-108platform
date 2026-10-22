@@ -25,14 +25,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
              <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
              <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓它為你生成一份個人化的「學習啟動包」！</p>
              <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="coachInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
+                <input type="text" id="coachInput" maxlength="200" aria-label="你的初步想法" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：我想研究跟「貓咪」有關的主題...">
                 <button id="generateCoachBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>請求指導</span>
                 </button>
             </div>
-            <div id="coachResult" class="mt-6">
-                <!-- AI generated starter pack will be injected here -->
+            {/* 進度不放進 #coachResult 這個 live region，否則取消按鈕與每秒更新的秒數都可能被唸出來。
+                Safari 用的 WebKit 會把計時器 aria-live="off" 裡的變化照樣算給外層。 */}
+            <div class="mt-6">
+                <div id="coachProgress"></div>
+                <div id="coachResult" aria-live="polite"></div>
             </div>
         </section>
 
@@ -90,115 +93,70 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
     </main>
 
-    <script is:inline src="https://js.puter.com/v2/"></script>
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- AI Coach Logic ---
+        // 「學習啟動包」由 AI 閘道的 starter-pack 任務產生：prompt 與輸出格式都在閘道
+        // （ai-gateway/src/task-catalog.mjs），驗證過才交給這裡。頁面只送學生的初步想法、
+        // 顯示進度與結果
         const generateCoachBtn = document.getElementById('generateCoachBtn');
         const coachInput = document.getElementById('coachInput');
+        const coachProgress = document.getElementById('coachProgress');
         const coachResult = document.getElementById('coachResult');
+        const coachBtnLabel = generateCoachBtn.querySelector('span');
+        // platform-ai.js 沒載入成功（404、被擋）時，PlatformAI 不存在，連 describeError 都沒有，
+        // 就退回這一句；字句與 describeError 對未知錯誤的說法相同
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-        function showLoader(element) {
-            // 清空並創建 loader（XSS 安全）
-            element.textContent = '';
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex justify-center items-center py-4';
-            const loader = document.createElement('div');
-            loader.className = 'loader';
-            wrapper.appendChild(loader);
-            element.appendChild(wrapper);
+        function showMessage(text, tone = 'error') {
+            coachResult.textContent = '';
+            const p = document.createElement('p');
+            // red-500 對白底只有 3.8:1，不到 WCAG 對一般文字要求的 4.5:1
+            p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
+            p.textContent = text;
+            coachResult.appendChild(p);
         }
 
         generateCoachBtn.addEventListener('click', async () => {
+            if (generateCoachBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = coachInput.value.trim();
             if (!topic) {
-                coachResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-                errorP.textContent = '請先輸入你的初步想法！';
-                coachResult.appendChild(errorP);
+                showMessage('請先輸入你的初步想法！');
                 return;
             }
 
-            // 雙擊防護
-            const button = generateCoachBtn;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.textContent = '載入中...';
+            // 雙擊防護：進行中停用按鈕；要中途停止用進度區塊裡的「取消」。
+            // 停用靠 aria-disabled：disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
+            // 只換按鈕裡的文字，圖示留著。
+            const originalLabel = coachBtnLabel.textContent;
+            generateCoachBtn.setAttribute('aria-disabled', 'true');
+            generateCoachBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            coachBtnLabel.textContent = '產生中…';
+            coachResult.textContent = '';
 
-            showLoader(coachResult);
-
-            const prompt = `你是一位專業的台灣高中教育顧問，請為一位想自主學習「${topic}」的學生，生成一份「學習啟動包」。
-
-請以 JSON 格式回應，包含以下欄位：
-{
-  "suggested_topic": "將學生的模糊想法，聚焦為一個更具體的研究主題",
-  "research_questions": ["提供3個可以引導初步探索的開放式問題"],
-  "resource_types": ["建議3種適合這個主題的學習資源類型，例如：知識型影片、線上課程、學術論文、訪談專家等"]
-}
-
-請確保回應是有效的 JSON 格式。`;
-
+            const controller = new AbortController();
+            // mountProgress 也要在 try 裡面：PlatformAI 不存在時它會丟 ReferenceError，放在 try 外面
+            // 就走不到 finally，按鈕會永遠卡在「產生中…」。所以 catch 裡的 progress 可能還是 null
+            let progress = null;
             try {
-                const response = await PlatformAI.callGeminiWithFallback(prompt, {
-                    signal: AbortSignal.timeout(30000)
+                progress = PlatformAI.mountProgress(coachProgress, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: generateCoachBtn,
                 });
-
-                // Extract content from response
-                let responseText = '';
-                if (response.message && response.message.content) {
-                    responseText = response.message.content;
-                } else if (typeof response === 'string') {
-                    responseText = response;
-                } else {
-                    responseText = JSON.stringify(response);
-                }
-
-                // Try to parse JSON from the response
-                let parsedJson;
-                try {
-                    // Look for JSON in the response
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        parsedJson = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error("No JSON found in response");
-                    }
-                } catch (parseError) {
-                    // If JSON parsing fails, create a fallback structure
-                    console.log("JSON parsing failed, creating fallback structure");
-                    parsedJson = {
-                        suggested_topic: `關於「${topic}」的深入研究`,
-                        research_questions: [
-                            `${topic}的基本概念和重要性是什麼？`,
-                            `${topic}在台灣的現況與發展如何？`,
-                            `${topic}對社會或個人有什麼影響？`
-                        ],
-                        resource_types: ["線上課程", "學術論文", "專家訪談"]
-                    };
-                }
-
-                displayAIStarterPack(parsedJson);
-
+                const { result } = await PlatformAI.runTask('starter-pack', { topic }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
+                });
+                progress.finish();
+                displayAIStarterPack(result);
             } catch (error) {
-                console.error("Error calling Puter.js:", PlatformAI.formatError(error), error);
-                coachResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
-                } else {
-                    errorP.textContent = '抱歉，規劃時發生錯誤。請稍後再試。';
-                }
-
-                coachResult.appendChild(errorP);
+                if (progress) progress.finish();
+                const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                // 恢復按鈕狀態
-                button.disabled = false;
-                button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.textContent = originalText;
+                generateCoachBtn.removeAttribute('aria-disabled');
+                generateCoachBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                coachBtnLabel.textContent = originalLabel;
             }
         });
 
@@ -282,18 +240,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #14b8a6;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         .step-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
