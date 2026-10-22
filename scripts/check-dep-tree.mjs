@@ -1,7 +1,6 @@
-// 相依樹一致性檢查（不連網、純讀 package-lock.json）
-// ================================================================
-// npm 允許同一個套件在樹裡存在多份不同版本——那是巢狀解析的正常行為，絕大多數
-// 情況下無害。但有少數套件一旦分裂，建置**照樣成功、沒有任何警告**，只是產出
+// 相依樹一致性檢查，不連網，只讀 package-lock.json。
+// npm 允許同一個套件在樹裡存在多份不同版本，那是巢狀解析的正常行為，絕大多數
+// 情況下無害。但有少數套件一旦分裂，建置照樣成功、沒有任何警告，只是產出
 // 悄悄變了。這支檢查只盯那幾個。
 //
 // 成立條件（本 repo 2026-08-28 逐項量測過）：
@@ -20,19 +19,19 @@
 //   - dist/_astro/BaseLayout.*.css 從 76,092 bytes 變成 75,938 bytes，
 //     內容雜湊由 B5KU3mIi 變成 6YEeJfmH
 //   - 差異是 --font-sans：4.3.3 的「-apple-system, BlinkMacSystemFont, Segoe UI, …」
-//     被換成 4.3.2 的「ui-sans-serif, system-ui, …」——全站 93 頁的預設字體都會變
-//   - 而且產出是**混血**：CSS 內容與純 4.3.2 建置逐位元組相同，但檔頭 banner 寫的是
+//     被換成 4.3.2 的「ui-sans-serif, system-ui, …」，全站 93 頁的預設字體都會變
+//   - 而且產出是混血：CSS 內容與純 4.3.2 建置逐位元組相同，但檔頭 banner 寫的是
 //     「tailwindcss v4.3.3」。原因是 JS 編譯器由 @tailwindcss/node 解析（拿到巢狀的
 //     4.3.3），而 global.css 的 @import "tailwindcss" 是從樣式檔所在目錄往上找
 //     （拿到根的 4.3.2）。banner 會騙人，事後追查會被帶去錯的地方。
 //
-// 修法有兩層，本 repo 兩層都做，但它們的效力**不對等**：
-//   1. .github/dependabot.yml 的 tailwind 分組——它只是把「當下剛好都有新版」的
-//      更新併成一個 PR，**擋不住**單一套件先出新版。dependabot-core 的
+// 修法有兩層，本 repo 兩層都做，但它們的效力不對等：
+//   1. .github/dependabot.yml 的 tailwind 分組。它只是把「當下剛好都有新版」的
+//      更新併成一個 PR，擋不住單一套件先出新版。dependabot-core 的
 //      message_builder.rb 對 dependencies.one? 有專屬分支（PR 標題會變成
 //      「bump X … in the tailwind group」），也就是「一個群組、只有一筆更新」的 PR
 //      是官方預期行為。分組是為了讓相關變更一起被審，不是預防機制。
-//   2. 這支檢查——實際會擋下來的只有這一層。
+//   2. 這支檢查。實際會擋下來的只有這一層。
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -42,8 +41,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // 只列「分裂會靜默改變產出」的套件。一般套件重複版本是正常的，不要加進來。
 //
 // tailwindcss 是目前唯一「已經具備分裂條件」的（根 caret vs 上游精確 pin，三個
-// 相依方）。其餘三個在目前的樹裡各自只有一個相依方，還分裂不了——列進來是前瞻性的：
-// 只要再出現第二個相依方（例如把 @tailwindcss/postcss 加回來，它同樣精確 pin
+// 相依方）。其餘三個在目前的樹裡各自只有一個相依方，還分裂不了，列進來是前瞻性的：
+// 只要再出現第二個相依方（例如加入 @tailwindcss/postcss，它同樣精確 pin
 // tailwindcss / @tailwindcss/node / @tailwindcss/oxide 三者），條件就成立了。
 // @tailwindcss/node 與 @tailwindcss/oxide 的風險完全對稱，不該只列其中一個。
 const MUST_BE_SINGLE_VERSION = [
@@ -73,7 +72,7 @@ const MUST_BE_SINGLE_VERSION = [
 const LOCK_PATH = process.env.DEP_TREE_LOCK || path.join(ROOT, 'package-lock.json');
 const LOCK_LABEL = path.relative(ROOT, LOCK_PATH) || LOCK_PATH;
 
-/** 讀不到、讀不懂就要說人話並擋下來——絕不能因為「沒東西可檢查」而印綠字。 */
+/** 讀不到、讀不懂就要說人話並擋下來，不能因為「沒東西可檢查」而印綠字。 */
 function die(lines) {
     console.error('相依樹檢查無法進行 ❌\n');
     for (const line of lines) console.error(`  ${line}`);
@@ -117,7 +116,7 @@ if (!packages || typeof packages !== 'object' || Object.keys(packages).length ==
 /**
  * 樹裡某個套件的所有副本。
  * 除了 node_modules/<name> 與 .../node_modules/<name> 這種路徑相符的，
- * 也比對 entry.name——npm 別名（"foo": "npm:tailwindcss@4.3.3"）的 key 會是
+ * 也比對 entry.name：npm 別名（"foo": "npm:tailwindcss@4.3.3"）的 key 會是
  * node_modules/foo，只有 entry.name 才看得出它其實是誰。
  * 刻意排除根專案那筆 key ""（它也有 name／version，但不是樹裡的副本）。
  */
@@ -131,9 +130,9 @@ function copiesOf(name) {
         })
         .map(([key, entry]) => ({
             path: key,
-            // link:true 的 workspace／本機連結沒有 version 欄位。以前這裡會在列印時
-            // 對 undefined 呼叫 padEnd 而丟 TypeError——擋是擋下來了，但訊息是一坨
-            // 堆疊而不是原因。連結進來的是完全不同的一份程式碼，仍算一個相異版本。
+            // link:true 的 workspace／本機連結沒有 version 欄位，直接拿來列印會對
+            // undefined 呼叫 padEnd 而丟 TypeError。連結進來的是完全不同的一份程式碼，
+            // 仍算一個相異版本。
             version: typeof entry?.version === 'string'
                 ? entry.version
                 : `link:${entry?.resolved ?? '?'}`,
@@ -149,7 +148,7 @@ const results = MUST_BE_SINGLE_VERSION.map(({ name, why }) => {
 const problems = results.filter((r) => r.split);
 const found = results.filter((r) => r.copies.length > 0);
 
-// 清單裡一個都找不到時，這支檢查其實什麼都沒看——那和「通過」不是同一件事。
+// 清單裡一個都找不到時，這支檢查其實什麼都沒看，那和「通過」不是同一件事。
 if (found.length === 0) {
     die([
         `${LOCK_LABEL} 裡找不到清單上的任何套件`,
@@ -162,7 +161,7 @@ if (found.length === 0) {
 if (problems.length === 0) {
     console.log('相依樹一致 ✅');
     // 逐項印出「檢查了什麼」。只印一行總結的話，「全部通過」與「根本沒檢查到」
-    // 在 CI log 上長得一模一樣——本 repo 的看門狗不接受那種綠燈。
+    // 在 CI log 上長得一模一樣，本 repo 的看門狗不接受那種綠燈。
     for (const r of results) {
         if (r.copies.length === 0) {
             console.log(`  ${r.name.padEnd(20)} 不在樹裡（沒有東西可檢查）`);

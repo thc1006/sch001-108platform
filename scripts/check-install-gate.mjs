@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /**
- * 安裝期腳本閘門的有效性檢查（不連網、純讀 lock 與 package.json）
- * ================================================================
+ * 安裝期腳本閘門的有效性檢查。不連網，讀 lock、package.json 和 npm 回報的設定。
  * .npmrc 的 strict-allow-scripts 讓 npm 擋下未核准的安裝腳本，核准清單放在
- * package.json 的 allowScripts。這整套會**靜默失效**，而且有三種失效方式：
+ * package.json 的 allowScripts。這整套會靜默失效，而且有三種失效方式：
  *
  *   1. npm 太舊。實測：11.15.0 把 strict-allow-scripts 當成未知設定，只印一行
  *      警告，缺核准的 esbuild 照裝、exit 0；11.16.0 才回 ESTRICTALLOWSCRIPTS。
@@ -28,7 +27,7 @@ const MANIFEST_PATH = process.env.INSTALL_GATE_MANIFEST || path.join(ROOT, 'pack
 const MIN_NPM = '11.16.0'; // 實測下限：11.15.0 不擋，11.16.0 擋
 const MIN_AGE = 7; // 與 .npmrc 及 dependabot.yml 的 cooldown 一致
 
-/** 讀不到、讀不懂就擋下來並說人話——「沒東西可檢查」不等於「檢查通過」。 */
+/** 讀不到、讀不懂就擋下來並說人話：「沒東西可檢查」不等於「檢查通過」。 */
 function die(lines) {
     console.error('安裝期腳本閘門檢查無法進行 ❌\n');
     for (const line of lines) console.error(`  ${line}`);
@@ -57,11 +56,11 @@ function readJson(file, label) {
  * 跑 npm 並取回 stdout。
  * 優先用 npm_execpath（npm 執行 script 時放進來的 CLI 路徑）直接餵給 node：
  * 既避開 Windows 上 execFileSync 拒絕執行 .cmd 的限制（CVE-2024-27980 的修補），
- * 也不必開 shell——shell 搭配 args 陣列會觸發 Node 的 DEP0190。
+ * 也不必開 shell，shell 搭配 args 陣列會觸發 Node 的 DEP0190。
  */
 function npm(args, cwd = ROOT) {
     const opts = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd };
-    // 只有確定是 npm 的 CLI 才直接餵給 node——pnpm 與 yarn 也會設 npm_execpath，
+    // 只有確定是 npm 的 CLI 才直接餵給 node：pnpm 與 yarn 也會設 npm_execpath，
     // 拿它們去問 npm 的設定會得到不同語意的答案（或根本不是這些鍵）。
     const cli = process.env.npm_execpath;
     if (cli && /^npm(-cli)?\.c?js$/.test(path.basename(cli))) {
@@ -72,7 +71,7 @@ function npm(args, cwd = ROOT) {
 }
 
 /**
- * 這個 npm 認不認得這些設定——能力探測，不是版本比對。
+ * 這個 npm 認不認得這些設定：能力探測，不是版本比對。
  * 版本下限擋不住「未來某版把設定改名或移除」：那時版本比對照樣過，功能卻沒了。
  * 從沒有專案 .npmrc 的目錄、並把 user／global 設定指到不存在的檔案，問 npm 的
  * 內建預設；不認得的鍵根本不會出現在輸出裡（實測 11.15.0 沒有
@@ -160,7 +159,7 @@ if (!packages || typeof packages !== 'object' || Object.keys(packages).length ==
 }
 
 // lock 裡所有會在安裝期執行程式的套件。用 lock 而不是走訪 node_modules，是為了
-// 涵蓋其他平台才會安裝的套件——fsevents 只裝在 macOS，但 npm 11.17 會把它算進
+// 涵蓋其他平台才會安裝的套件：fsevents 只裝在 macOS，但 npm 11.17 會把它算進
 // 核准範圍而 11.19 不會，漏列就會在不同 npm 版本下行為不一致。
 const scripted = [];
 for (const [p, e] of Object.entries(packages)) {
@@ -193,7 +192,7 @@ if (!allow || typeof allow !== 'object' || Array.isArray(allow)) {
 
 const problems = [];
 
-// ── 1. 覆蓋率：每個會跑安裝腳本的套件都要被核准或拒絕過 ──
+// 1. 覆蓋率：每個會跑安裝腳本的套件都要被核准或拒絕過。
 const rows = [];
 for (const s of scripted) {
     const pinned = `${s.name}@${s.version}`;
@@ -214,7 +213,7 @@ for (const s of scripted) {
     rows.push({ ...s, decision: allow[key] ? '核准' : '拒絕', pinned: splitKey(key).pin !== null });
 }
 
-// ── 2. 孤兒：核准清單裡已經沒有對應套件的條目 ──
+// 2. 孤兒：核准清單裡已經沒有對應套件的條目。
 // 留著不會立刻出事，但規則活得比前提久正是這個 repo 反覆踩到的坑。
 const names = new Set(scripted.map((s) => s.name));
 for (const k of Object.keys(allow)) {
@@ -223,10 +222,10 @@ for (const k of Object.keys(allow)) {
     }
 }
 
-// ── 3. 相依一律來自官方 registry ──
-// hasInstallScript 只涵蓋 install／preinstall／postinstall——npm 自己的判定就寫在
+// 3. 相依一律來自官方 registry。
+// hasInstallScript 只涵蓋 install／preinstall／postinstall，npm 自己的判定就寫在
 // arborist 的 isolated-classes.js：`hasInstallScript || install || preinstall || postinstall`。
-// **prepare 不在裡面**，而 npm 對 git 相依會跑 prepare。也就是 git 相依能在安裝期
+// prepare 不在裡面，而 npm 對 git 相依會跑 prepare。也就是 git 相依能在安裝期
 // 執行程式卻不帶旗標，於是上面的覆蓋率清單看不到它。
 // 一併擋掉任意 tarball 與被掉包的 registry：那兩者也繞過 npm audit signatures。
 const REGISTRY = 'https://registry.npmjs.org/';
@@ -244,7 +243,7 @@ for (const [p, e] of Object.entries(packages)) {
     }
 }
 
-// ── 4. 根專案自己的安裝期 script ──
+// 4. 根專案自己的安裝期 script。
 // allowScripts 只管相依，管不到本專案。實測：strict-allow-scripts=true 之下，
 // 在根 package.json 加一行 postinstall，npm ci 照樣執行它、exit 0、閘門一聲不吭。
 // 也就是一個惡意 PR 加一行就能在 CI 與每台開發機上執行程式，完全繞過這道閘門。
@@ -256,13 +255,13 @@ if (hooks.length) {
         + '確實需要的話，請連同理由一起在這支檢查裡明示放行，不要讓它悄悄通過。');
 }
 
-// ── 5. npm 版本、能力、與實際生效的設定 ──
+// 5. npm 版本、能力、與實際生效的設定。
 const ver = npmVersion();
 if (!ver) {
     problems.push('問不到 npm 版本，無法判斷 strict-allow-scripts 會不會被強制執行。');
 } else if (cmp(ver, MIN_NPM) < 0) {
     // npm@latest 會被 Node 的 engines 擋下來（npm 12 要 Node ^22.22.2 || ^24.15.0 || >=26），
-    // 所以不能只叫人裝 latest——實測在 Node 24.13.0 上回 ENOTSUP 而使用者原地卡住。
+    // 所以不能只叫人裝 latest，實測在 Node 24.13.0 上回 ENOTSUP 而使用者原地卡住。
     problems.push(`npm ${ver} 不支援 strict-allow-scripts（下限 ${MIN_NPM}，實測 11.15.0 只警告不擋）。`
         + '在這個版本上整道閘門是靜默無效的。'
         + '修法：npm i -g npm@latest；若回 ENOTSUP 代表 Node 太舊，改裝相容的最新 11.x '

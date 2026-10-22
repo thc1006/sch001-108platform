@@ -1,16 +1,15 @@
 /**
- * competitions.json 的「逐筆查證結果」回歸測試
- * --------------------------------------------------------------
- * check-competitions.probe.test.mjs 測的是**規則**（schema、探測、狀態機）。
- * 這一支測的是**事實**：每一筆逐項開過官網查證的競賽，其報名時程與賽事日期
+ * competitions.json 逐筆查證結果的測試。
+ * check-competitions.probe.test.mjs 測的是規則（schema、探測、狀態機）。
+ * 這一支測的是事實：每一筆逐項開過官網查證的競賽，其報名時程與賽事日期
  * 不得被改回錯的值。
  *
  * 為什麼需要它：#63 → #66 → #68 是同一批過期資料反覆觸發的三個 PR，而 #70
  * 記載「大量條目只做過 HTTP status check，沒有逐頁驗證」。schema 綠燈證明不了
- * 值是對的——2026-08-27 這一輪逐筆查證發現的錯誤，全部都是「格式完全合法、
+ * 值是對的。2026-08-27 這一輪逐筆查證發現的錯誤，全部都是「格式完全合法、
  * 內容卻是錯的」：
  *
- *   - My First CTF 的 cycle.closes 是「05」，但 5 月是**比賽日期**，
+ *   - My First CTF 的 cycle.closes 是「05」，但 5 月是比賽日期，
  *     報名其實 4/19 就截止了（官網：報名「自 115 年 4 月 1 日上午 10 點至
  *     115 年 4 月 19 日下午 5 點止」、競賽「115 年 5 月 16 日(六)」）。
  *   - iBridge 的 cycle.closes 是「12」，同樣是比賽月份；報名 11/28 就截止。
@@ -61,17 +60,10 @@ const VERIFIED_2026_08_27 = [
 ];
 
 /**
- * sourceCheckedAt 的不變式是**「這一筆真的有人開過官網」**，不是「查證發生在某一天」。
- *
- * 原本兩處都寫成 assert.equal(..., '2026-08-27')，而訊息說的是「不得被清掉」——
- * 實作比訊息嚴格得多：清掉會紅（對），**更新成新日期也會紅**（錯）。
- * 一個叫「最後查證日」的欄位被凍結成常數，任何人再次查證都無法記錄。
- *
- * 這不是假設性的問題：2026-08-28 的複查實際改正了 8 筆資料（袋鼠數學的台灣官網
- * 只是沒測 https、WRO／FRC 的台灣承辦單位其實在官方 API 裡、小論文的主辦單位
- * 標錯機關），卻不能把查證日改成當天，否則測試會紅。
- *
- * 改成「格式合法且不早於基準日」：清掉、亂填、往回改都會紅，往前更新則允許。
+ * sourceCheckedAt 的不變式是「這一筆真的有人開過官網」，不是「查證發生在某一天」。
+ * 所以只要求它是存在的 YYYY-MM-DD 日期，而且落在基準日和以 UTC 計的明天之間：
+ * 清掉、亂填、早於基準日或晚於明天都會紅，重新查證後填當天的日期可以。
+ * 寫死成某一天的話，再次查證之後就無法記錄新的日期。
  */
 function assertVerified(needle) {
     const why = sourceCheckedProblem(find(needle).sourceCheckedAt);
@@ -80,14 +72,12 @@ function assertVerified(needle) {
 
 test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
     // 沒有這一行的話，把 VERIFIED_2026_08_27 清成 [] 之後，這一支以及底下另外兩支
-    // 也在跑同一份清單的測試會一起印綠字，而其實一筆都沒比——測試名稱說「18 筆」，
-    // 實作卻連清單長度都不看。底下的 VERIFIED_ROUND2／REMOVED_ROUND2 都有釘長度，
-    // 只有第一輪這一份漏了。
+    // 也在跑同一份清單的測試會一起印綠字，而其實一筆都沒比。底下的
+    // VERIFIED_ROUND2／REMOVED_ROUND2 也一樣釘了長度。
     assert.equal(VERIFIED_2026_08_27.length, 18, '清單長度變動代表有人動了查證範圍，請一併更新測試名稱與 PR 說明');
     for (const needle of VERIFIED_2026_08_27) assertVerified(needle);
 });
 
-// ── 賽事日期不得被當成報名截止 ──
 // 這是本輪查證抓到最多次的錯誤類型，也是 #82 修 OPhO 時處理過的同一個錯誤。
 test('data：比賽日期不得再被寫成報名截止（My First CTF／iBridge／育秀盃）', () => {
     // 官網：報名「自 115 年 4 月 1 日上午 10 點至 115 年 4 月 19 日下午 5 點止」
@@ -115,12 +105,12 @@ test('data：比賽日期不得再被寫成報名截止（My First CTF／iBridge
     assert.equal(ysed.cycle.closes, '12-30');
 });
 
-// ── 沒有公開報名的競賽不得顯示「每年約 X 月截止」 ──
+// 沒有公開報名的競賽不得顯示「每年約 X 月截止」。
 test('data：國家隊選拔類競賽不得憑賽事月份捏造報名截止', () => {
     // APMO 官網 Regulations：「The APMO is held in the afternoon of the second Monday of March
     // for participating countries in the North and South Americas, and in the morning of the
     // second Tuesday of March for participating countries on the Western Pacific and in Asia.」
-    // 「Country representatives organize the competition locally.」——沒有任何公開報名截止日。
+    // 「Country representatives organize the competition locally.」沒有任何公開報名截止日。
     const apmo = find('亞太數學奧林匹亞');
     assert.equal(apmo.deadline, '');
     assert.ok(!apmo.cycle?.closes, 'APMO 的 3 月是比賽月份，不得放進 cycle.closes');
@@ -134,7 +124,7 @@ test('data：國家隊選拔類競賽不得憑賽事月份捏造報名截止', (
     assert.ok(apio.registrationNote?.includes('無公開報名'));
 });
 
-// ── 官網網址必須指向「有內容」的現行站台 ──
+// 官網網址必須指向「有內容」的現行站台。
 test('data：本輪查證修掉的失效／停放網址不得被改回去', () => {
     // https://tpmso.org/toi/ 現在只回一個 meta refresh 轉址頁：
     //   <meta http-equiv="refresh" content="0;url=https://tpmso.k12ea.gov.tw/toi/" />
@@ -158,7 +148,6 @@ test('data：本輪查證修掉的失效／停放網址不得被改回去', () =
     }
 });
 
-// ── 帶時區的精確截止時刻 ──
 test('data：查到確切時刻的競賽必須保留時區位移', () => {
     // TISDC 官網時程：「Submission deadline: July 6, 2026, 11:59 PM Taipei Time」
     //                「Extended deadline: July 15, 2026, 11:59 PM Taipei Time」
@@ -185,7 +174,7 @@ test('data：查到確切時刻的競賽必須保留時區位移', () => {
     assert.equal(lt.deadlineAt, '2026-03-30T17:00:00+08:00');
     assert.equal(lt.eventStartsAt, '2026-05-19');
 
-    // 每個時刻欄位都必須帶時區位移——沒有時區的時刻在不同時區的人眼中是不同的時刻
+    // 每個時刻欄位都必須帶時區位移，沒有時區的時刻在不同時區的人眼中是不同的時刻。
     for (const needle of VERIFIED_2026_08_27) {
         const c = find(needle);
         for (const f of ['deadlineAt', 'opensAt']) {
@@ -195,7 +184,6 @@ test('data：查到確切時刻的競賽必須保留時區位移', () => {
     }
 });
 
-// ── 查不到就不要猜 ──
 test('data：官網未公布截止日的競賽不得被補上一個猜出來的日期', () => {
     // 官網獎項頁逐字：「Deadline for submissions: The deadline for 2027 will be announced in September.」
     // 舊資料的「每年 5 月 1 日截止」只存在於已下線的 archive.thewha.org 與第三方轉述。
@@ -227,7 +215,6 @@ test('data：官網未公布截止日的競賽不得被補上一個猜出來的�
     assert.equal(foyle.cycle.closes, '07-31');
 });
 
-// ── 其餘已查證欄位 ──
 test('data：本輪查證到的賽事日期與週期', () => {
     // 科教館官網日程表：「2027 年臺灣國際科學展覽會日程表(暫定) 1/25 (一) ~1/30 (六)」
     // 實施要點：送件「每年十至十一月間臺灣國際科展送件期限內」
@@ -261,7 +248,6 @@ test('data：本輪查證到的賽事日期與週期', () => {
     assert.equal(bee.cycle.closes, '05-09');
 });
 
-// ── 顯示層：查證過的值在卡片上要長成正確的樣子 ──
 // 資料對了不等於畫面對了。#82 修掉的正是「資料是賽事日期、卡片寫成報名截止」，
 // 那個錯誤只在顯示層看得見。這裡把真正的前端函式從 .astro 抽出來跑，
 // 把 2026-08-27 當天的卡片文字釘住。
@@ -302,7 +288,7 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
         return { status: f.statusText(s), field: d.label, label: d.value };
     };
 
-    // 報名 4/19 截止、5/16 比賽——狀態列講報名，日期欄兩者都講清楚
+    // 報名 4/19 截止、5/16 比賽：狀態列講報名，日期欄兩者都講清楚。
     assert.deepEqual(card('My First CTF'), {
         status: '本屆已截止 · 下次約 2027-04-19',
         field: '報名截止',
@@ -353,16 +339,14 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
     }
 });
 
-// ── 顯示層的通用不變式 ──
 // 上面那個測試釘的是「這 18 筆現在長什麼樣」，逐筆列舉；這一個釘的是「任何一筆
 // 都不可以出現的形狀」，涵蓋日後新增的資料。
 //
-// 兩個實際踩到的缺陷：
-//   1. 已辦完的賽事被寫成「2025-12-13 舉行」，讀起來像即將舉行——比不顯示還糟。
-//      逐筆查證之後資料裡才第一次出現「上一屆」的賽事日期，所以先前沒人發現。
-//   2. 欄位標題與內容各算各的：標題看 c.eventStartsAt、內容看 s.key。ESU 沒有
-//      deadline 但有 cycle 與賽事日期，於是標題寫「賽事日期」、內容卻是「每年約
-//      11 月截止 · …」。現在兩者由 deadlineField() 同時決定。
+// 兩種形狀：
+//   1. 已辦完的賽事寫成「2025-12-13 舉行」，讀起來像即將舉行，比不顯示還糟。
+//   2. 欄位標題與內容各說各話：ESU 沒有 deadline 但有 cycle 與賽事日期，標題若只看
+//      c.eventStartsAt 就會寫「賽事日期」，內容卻是「每年約 11 月截止 · …」。
+//      所以標題與內容都由 deadlineField() 決定。
 test('display：已辦完的賽事必須標示為已結束，且欄位標題與內容一致', () => {
     // readFileSync 已在檔案頂端 import（本檔是 ESM，不能用 require）
     const src = readFileSync(
@@ -407,15 +391,13 @@ test('display：已辦完的賽事必須標示為已結束，且欄位標題與�
     assert.deepEqual(offenders, [], '卡片顯示與事實不符：\n  ' + offenders.join('\n  '));
 });
 
-// ════════════════════════════════════════════════════════════════════════
-// 2026-08-27 第二輪：把剩下的 110 筆「只做過連結存活檢查」的資料逐筆查完
-// ════════════════════════════════════════════════════════════════════════
+// 2026-08-27 第二輪把剩下的 110 筆「只做過連結存活檢查」的資料逐筆查完。
 //
 // 上面那一批釘的是第一輪 18 筆。#70 記載當時仍有大量條目從未有人開過官網確認
 // 主辦單位、參賽資格與是否仍在辦理。這一輪把它們查完，發現的錯誤同樣全部是
 // 「HTTP 200、schema 綠燈、內容卻是錯的」：
 //
-//   - apho.org 回 114 bytes 的 GoDaddy 待售停放殼——與先前 conradchallenge.org
+//   - apho.org 回 114 bytes 的 GoDaddy 待售停放殼，和 conradchallenge.org
 //     一模一樣的手法。
 //   - www.ijso-official.org 的網域註冊已過期，HTTP 回 Namecheap 停放頁
 //     「Domain registration has expired.」，HTTPS 直接交握失敗。
@@ -431,7 +413,7 @@ test('display：已辦完的賽事必須標示為已結束，且欄位標題與�
 
 /** 第二輪逐筆查證涵蓋的競賽（不含第一輪已釘住的那批）。 */
 const VERIFIED_ROUND2 = [
-    // ── 台灣全國賽 ──
+    // 台灣全國賽
     '全國中小學科學展覽會', '旺宏科學獎', 'TRML 台灣區高中數學競賽', '全國學生美術比賽',
     'AIS3 新型態資安暑期課程', 'APCS 大學程式設計先修檢測', '全國語文競賽',
     '全國高級中等學校小論文寫作比賽', '全國高中職閱讀心得寫作比賽',
@@ -440,43 +422,43 @@ const VERIFIED_ROUND2 = [
     '普通型高級中等學校數理及資訊學科能力競賽', '臺灣數學奧林匹亞競賽 (TMO)',
     '全國資訊奧林匹亞—台灣選拔賽 (TOI)', '國際科學奧林匹亞—臺灣代表隊選訓',
     'IOAI 臺灣代表隊選拔 (TOAI)',
-    // ── 國際科學奧林匹亞（各科）──
+    // 國際科學奧林匹亞（各科）
     '國際數學奧林匹亞 (IMO)', '國際資訊奧林匹亞 (IOI)', '國際物理奧林匹亞 (IPhO)',
     '國際化學奧林匹亞 (IChO)', '國際生物奧林匹亞 (IBO)',
     '國際天文與天文物理奧林匹亞 (IOAA)', '國際初級天文奧林匹亞 (IOAA-jr)',
     '國際地球科學奧林匹亞 (IESO)',
-    // ── 國際奧林匹亞與國家隊選拔 ──
+    // 國際奧林匹亞與國家隊選拔
     'Regeneron ISEF 國際科技展覽會', '國際語言學奧林匹亞 (IOL)', '國際哲學奧林匹亞 (IPO)',
     '國際地理奧林匹亞 (iGeo)', '國際國中科學奧林匹亞 (IJSO)', '亞洲物理奧林匹亞 (APhO)',
     '歐洲女子數學奧林匹亞 (EGMO)', '歐洲女子資訊奧林匹亞 (EGOI)',
     '倫敦國際青年科學論壇 (LIYSF)', '國際數學建模挑戰賽 (IMMC)',
     '國際青年物理學家辯論賽 (IYPT)', '國際經濟學奧林匹亞 (IEO)',
     '世界中學生辯論錦標賽 (WSDC)', '國際人工智慧奧林匹亞 (IOAI)',
-    // ── 程式與資安 ──
+    // 程式與資安
     'Codeforces 程式競賽', 'AtCoder 程式競賽', 'CodeChef 程式競賽',
     'LeetCode Weekly Contest', 'USACO 美國資訊奧林匹亞競賽', '加拿大計算機競賽 (CCC)',
     'Project Euler', 'Advent of Code', 'picoCTF', 'HITCON CTF',
-    // ── 資料科學與機器人 ──
+    // 資料科學與機器人
     'Kaggle Competitions', 'DrivenData 社會公益資料競賽', 'Zindi 資料科學競賽',
     'AIcrowd 機器學習挑戰賽', 'Technovation Girls', 'FIRST 機器人競賽 (FRC)',
     'VEX 機器人世界錦標賽', 'WRO 世界機器人奧林匹亞', 'iGEM 國際基因工程機器競賽',
-    // ── 數學競賽 ──
+    // 數學競賽
     'Purple Comet! Math Meet', '袋鼠數學競賽 (Math Kangaroo)',
     '新加坡與亞洲數學奧林匹亞 (SASMO)', '東南亞數學奧林匹亞 (SEAMO)',
     '國際青少年數學奧林匹亞 (IJMO)', '美國數學競賽 (AMC 10/12)',
     '美國高中生數學邀請賽 (AIME)', '滑鐵盧數學競賽 (Waterloo Math Contests)',
     '美國電腦科學聯盟程式競賽 (ACSL)', '國際數學競賽—澳洲數學競賽 (AMC, Australia)',
     '國際青年數學挑戰賽 (IYMC)', '國際天文與天文物理競賽 (IAAC)',
-    // ── 論文與人文 ──
+    // 論文與人文
     'John Locke 論文競賽', 'Cambridge Re:Think 論文競賽', '紐約時報學生寫作競賽',
     'The Concord Review', '哈佛克里姆森全球論文競賽 (HCGEC)', 'Ayn Rand Institute 論文競賽',
     '永續生活信託論文與辯論競賽', 'Bow Seat 海洋意識競賽', 'The Earth Prize 永續創新競賽',
-    // ── 商業、模聯與綜合 ──
+    // 商業、模聯與綜合
     '華頓全球高中投資競賽', 'THIMUN 新加坡模擬聯合國會議', '哈佛模擬聯合國 (HMUN)',
     '哈佛模擬聯合國—中國會議 (HMUN China)', "World Scholar's Cup 世界學者盃",
     '國際歷史競賽—亞洲盃 (IHBB Asia)', 'Blue Ocean 學生創業競賽',
     'USAII 全球 AI 黑客松', 'Major League Hacking (MLH)',
-    // ── 藝術與科學推廣 ──
+    // 藝術與科學推廣
     'Sony 世界攝影獎—青年組', '全美高中生影展 (AAHSFF)', 'Embracing Our Differences',
     'GENIUS Olympiad 環境主題競賽', '丘成桐中學科學獎', 'Earth Science Week',
 ];
@@ -486,12 +468,12 @@ test('data：第二輪逐筆查證的 96 筆都必須留下查證日期（可更
     for (const needle of VERIFIED_ROUND2) assertVerified(needle);
 });
 
-// 兩輪查完之後，整份資料的每一筆都有人開過官網。這個不變式是本輪最值錢的成果：
-// 只要有人新增條目卻沒查證，它就會紅燈——而不是等到學生按著錯的資訊去報名才發現。
+// 兩輪查完之後，整份資料的每一筆都有人開過官網。只要有人新增條目卻沒查證，
+// 這個測試就會紅燈，不必等到學生按著錯的資訊去報名才發現。
 test('data：每一筆競賽的 sourceCheckedAt 都必須是可信的查證日期', () => {
-    // 驗的是**值**，不只是欄位在不在。上面兩份清單合計 18 + 96 = 114 筆，資料有
-    // 119 筆，差額那幾筆先前只有「有沒有填」被檢查——填 2099-01-01 或隨手抄一個
-    // 日期都會過。共用驗證器既然抽出來了就套到全體，不要留一個只對子集生效的規則。
+    // 驗的是值，不只是欄位在不在。上面兩份清單合計 18 + 96 = 114 筆，資料有
+    // 119 筆，只檢查「有沒有填」的話，差額那幾筆填 2099-01-01 或隨手抄一個日期都會過。
+    // 共用驗證器套到全體，不留一個只對子集生效的規則。
     const bad = DATA.competitions
         .map((c) => [c.title, sourceCheckedProblem(c.sourceCheckedAt)])
         .filter(([, why]) => why !== null)
@@ -504,10 +486,9 @@ test('data：每一筆競賽的 sourceCheckedAt 都必須是可信的查證日�
     );
 });
 
-// ── 移除的條目不得被加回來 ──
-// 這個 repo 先前已移除過 6 筆捏造的條目；本輪再移除 14 筆。移除的理由分兩類：
-// (a) 台灣學生依官網明文條款結構性無法參加——這正是 iF Design（只收大學生）
-//     那個坑的同一類錯誤；(b) 競賽根本不存在、已停辦，或官方入口已無法使用。
+// 移除的條目不得被加回來。移除的理由分兩類：
+// (a) 台灣學生依官網明文條款結構性無法參加，和 iF Design（只收大學生）是同一類錯誤；
+// (b) 競賽根本不存在、已停辦，或官方入口已無法使用。
 // 每一筆都附官網逐字原文，要加回來請先推翻下面的引文。
 const REMOVED_ROUND2 = [
     // (a) 台灣學生不符資格
@@ -573,7 +554,6 @@ test('data：本輪移除的 14 筆不得被加回來', () => {
     }
 });
 
-// ── 停放／過期／空殼網址不得被改回去 ──
 test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     // tpmso.org 底下全部是 233–235 bytes 的 meta refresh 空殼：
     //   <meta http-equiv="refresh" content="0;url=https://tpmso.k12ea.gov.tw/tmo/" />
@@ -583,7 +563,7 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     assert.equal(find('國際科學奧林匹亞—臺灣代表隊選訓').url, 'https://tpmso.k12ea.gov.tw/ipho/');
 
     // apho.org 回 114 bytes：<script>window.onload=function(){window.location.href="/lander"}</script>
-    // 與 conradchallenge.org 同一個停放手法。APhO 無常設官網，改指臺灣選訓辦公室。
+    // 與 conradchallenge.org 同一個停放手法。APhO 無常設官網，所以指向臺灣選訓辦公室。
     assert.equal(find('亞洲物理奧林匹亞').url, 'https://tpmso.k12ea.gov.tw/ipho/');
 
     // www.ijso-official.org：HTTPS 交握失敗；HTTP 回 Namecheap 停放頁「Domain registration has expired.」
@@ -602,20 +582,20 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     // 除中國內地外，中國港澳台地區及亞洲其他國家的中學生」，台灣學生必須走亞洲賽區。
     assert.equal(find('丘成桐').url, 'https://yauaward-asia.hk');
 
-    // 小論文與閱讀心得先前共用 shs.edu.tw 首頁，但兩者承辦學校與截止日都不同，必須各指子頁
+    // 小論文與閱讀心得的承辦學校與截止日都不同，不能共用 shs.edu.tw 首頁，必須各指子頁。
     assert.notEqual(
         find('小論文寫作比賽').url,
         find('閱讀心得寫作比賽').url,
         '兩者截止日差一週、承辦學校也不同，不可共用同一個 URL',
     );
 
-    // 鄉土歌謠先前只指到藝教館首頁；115 學年度起更名，專網為 /country/
+    // 鄉土歌謠比賽 115 學年度起更名，專網是 /country/，不是藝教館首頁。
     assert.equal(find('本土語及新住民語歌謠比賽').url, 'https://web.arte.gov.tw/country/');
 
     // 本輪最嚴重的一筆：ieso-info.org 已被轉作澳洲線上博弈網站，
     // 頁面標題逐字「Best Online Pokies in Australia 2026 - Play For Real Money」，
     // 內文推銷 Royal Reels、The Pokies 等賭場並附「$500 + $10 NO DEPOSIT」入金優惠。
-    // 連結健檢只看狀態碼會回報 200 健康——等於把高中生導去線上賭場。
+    // 連結健檢只看狀態碼會回報 200 健康，等於把高中生導去線上賭場。
     assert.ok(
         !/ieso-info\.org/.test(find('國際地球科學奧林匹亞').url),
         'ieso-info.org 已成線上博弈網站，絕不可再指向該網域',
@@ -641,7 +621,6 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     assert.deepEqual(offenders, [], '這些網域已確認為停放、過期、空殼或不存在：\n  ' + offenders.join('\n  '));
 });
 
-// ── 賽事日期不得被寫成報名截止（第二輪） ──
 // 這是本專案重複踩過的錯誤（OPhO、My First CTF、iBridge、育秀盃）。
 test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     // CEMC 官網把兩者分列：「Thursday, February 11, 2027」是學校訂購截止，
@@ -682,7 +661,6 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     assert.ok(twsf.registrationNote?.includes('個人'), '應說明不受理個人報名，而不是留白');
 });
 
-// ── 查不到就不要猜（第二輪） ──
 test('data：官網明講「尚未公布」的競賽不得被補上猜測日期', () => {
     // 官網逐字「Keep an eye out for the 2027 Contest theme, which will be announced in September!」
     const bowSeat = find('Bow Seat');
@@ -730,10 +708,9 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
 
     // TYPT：第 18 屆已辦完、第 19 屆只公告了題目。報名截止 2026-01-19 已過且無
     // 多年證據可推週期，因此 deadline 留空、以 registrationNote 說明，賽事日期照填。
-    //（查證過程的教訓：最初誤以為官網自相矛盾——成績頁顯示 2026-02-24 早於競賽日
-    //  2026-03-06。那一欄的表頭是 Joomla 的「建立日期」而不是發布日，是賽前先建好的
-    //  占位頁。報名規則頁的文字本身沒有任何矛盾，且 3/6=週五、3/9=週一與 2026 年
-    //  曆法逐日吻合。「看起來矛盾」不等於矛盾，要先確認自己讀的是哪個欄位。）
+    // 官網成績頁的 2026-02-24 早於競賽日 2026-03-06，但那一欄的表頭是 Joomla 的
+    // 「建立日期」而不是發布日，是賽前先建好的占位頁，官網並沒有自相矛盾。
+    // 報名規則頁的 3/6=週五、3/9=週一也和 2026 年的曆法吻合。
     const typt = find('臺灣青年學生物理辯論競賽');
     assert.equal(typt.deadline, '', '第 18 屆報名已於 2026-01-19 截止、第 19 屆未公告，不得填舊日期');
     assert.equal(typt.eventStartsAt, '2026-03-06');
@@ -742,7 +719,6 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.match(typt.description, /115\. 03\. 06 ~ 115\. 03\. 09/, '請保留官網逐字原文');
 });
 
-// ── 帶時區的精確截止時刻（第二輪） ──
 test('data：第二輪查到確切時刻的競賽必須保留時區位移', () => {
     // 小論文：「第一學期自115年9月1日（星期二）起至10月15日（星期四）中午12時止」
     const essay = find('小論文寫作比賽');
@@ -782,10 +758,9 @@ test('data：第二輪查到確切時刻的競賽必須保留時區位移', () =
     }
 });
 
-// ── 本輪查到的事實（名稱、資格與制度變動） ──
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // 官網頁尾逐字：「Cambridge Centre for International Research, Ltd is not affiliated to
-    // the University of Cambridge or its constituent colleges.」——標題不得再暗示是劍橋大學主辦。
+    // the University of Cambridge or its constituent colleges.」標題不得再暗示是劍橋大學主辦。
     const rethink = find('Cambridge Re:Think');
     assert.match(rethink.title, /非劍橋大學主辦/);
     assert.match(rethink.organizer, /Cambridge Centre for International Research/);
@@ -825,7 +800,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.ok(!/德國/.test(ijso.description), '2026 屆在索菲亞，德國是錯的');
 
     // LIYSF 官網逐字「Participation is open to students of science aged between 16 and 21 years old」，
-    // 且「The participation fee/charge is £3,450.00 GBP per student.」——是公開申請不是邀請制
+    // 且「The participation fee/charge is £3,450.00 GBP per student.」，是公開申請不是邀請制。
     const liysf = find('倫敦國際青年科學論壇');
     assert.equal(liysf.eligibility, '公開報名');
     assert.match(liysf.description, /3,450/);
@@ -834,7 +809,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(find('歐洲女子數學奧林匹亞').description, /Taiwan/);
     assert.match(find('歐洲女子資訊奧林匹亞').description, /Taiwan|台灣/);
 
-    // 官網 How to participate 的參加國名單中沒有台灣——據實寫出，不得暗示台灣有選拔管道
+    // 官網 How to participate 的參加國名單中沒有台灣，要據實寫出，不得暗示台灣有選拔管道。
     assert.match(find('國際哲學奧林匹亞').description, /未見台灣|查無台灣/);
 
     // 年齡門檻警語：留在清單裡但必須標明，否則就是下一個 iF Design
@@ -889,7 +864,6 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(ieso.description, /博弈|Pokies/, '必須留下「原網域已成博弈站」的警告，否則下次又會被改回去');
 });
 
-// ── 顯示層：第二輪查證的卡片文字 ──
 test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日期欄', () => {
     const src = readFileSync(
         new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),

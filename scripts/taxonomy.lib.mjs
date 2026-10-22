@@ -1,12 +1,11 @@
 /**
- * 108 課綱核心素養與 SDGs 的共用驗證（ESM 側）
- * --------------------------------------------------------------
+ * 108 課綱核心素養與 SDGs 的共用驗證（ESM 側）。
  * 代碼與中文標籤的唯一來源是 scripts/taxonomy.json；本檔只負責「怎麼驗」。
  * build-search-index.js 是 CommonJS，沒辦法 import 這支，因此它自己讀同一份
- * JSON——共用的是資料而不是程式碼，這是 CJS／ESM 並存下唯一不會漂移的作法。
+ * JSON。共用的是資料而不是程式碼，這是 CJS／ESM 並存下唯一不會漂移的作法。
  *
  * 驗證政策（沿用 #82 validateSchedule 立下的先例）：
- *   選填，但填了就必須合法且自洽。非法值一律在 CI 擋下，不做「靜默略過」——
+ *   選填，但填了就必須合法且自洽。非法值一律在 CI 擋下，不做「靜默略過」：
  *   一個被靜默丟掉的 SDG 標籤，症狀是「搜尋找不到東西」而不是「建置失敗」，
  *   而那種症狀沒有人會回報。
  */
@@ -45,7 +44,7 @@ export const sdgLabel = (n) => (TAXONOMY.sdgs[String(n)] ? `SDG ${n} ${TAXONOMY.
 export function validateTaxonomyFields(item, label, errors, opts = {}) {
     const { requireCompetencies = false, requireSdgs = false } = opts;
 
-    // ── competencies：字串陣列，每項須為 A1-A3 / B1-B3 / C1-C3，且不得重複 ──
+    // competencies：字串陣列，每項須為 A1-A3 / B1-B3 / C1-C3，且不得重複。
     if (item.competencies === undefined) {
         if (requireCompetencies) errors.push(`「${label}」缺少欄位：competencies`);
     } else if (!Array.isArray(item.competencies)) {
@@ -67,7 +66,7 @@ export function validateTaxonomyFields(item, label, errors, opts = {}) {
         }
     }
 
-    // ── sdgs：整數陣列，每項須為 1-17，且不得重複（允許空陣列＝無對應 SDG）──
+    // sdgs：整數陣列，每項須為 1-17，且不得重複（允許空陣列＝無對應 SDG）。
     if (item.sdgs === undefined) {
         if (requireSdgs) errors.push(`「${label}」缺少欄位：sdgs`);
     } else if (!Array.isArray(item.sdgs)) {
@@ -84,8 +83,8 @@ export function validateTaxonomyFields(item, label, errors, opts = {}) {
         }
     }
 
-    // ── tags：議題關鍵字（如「環保」「假訊息」）。選填，但填了就必須是非空字串陣列。
-    //    這是使用者實際會打進搜尋框的字，空字串或非字串進到索引只會變成一顆空白標籤。
+    // tags：議題關鍵字（如「環保」「假訊息」）。選填，但填了就必須是非空字串陣列。
+    // 這是使用者實際會打進搜尋框的字，空字串或非字串進到索引只會變成一顆空白標籤。
     if (item.tags !== undefined) {
         if (!Array.isArray(item.tags)) {
             errors.push(`「${label}」的 tags 必須是陣列`);
@@ -137,8 +136,8 @@ export function validateIndexedTaxonomy(item, label, errors) {
         }
     }
 
-    // 代碼有、中文標籤卻沒有＝使用者打「系統思考」「永續城鄉」會搜不到。這是本次
-    // 改動要提供的能力本身，所以它必須是建置產物上「可被檢查的契約」，而不是
+    // 代碼有、中文標籤卻沒有＝使用者打「系統思考」「永續城鄉」會搜不到。中文標籤
+    // 是索引要提供的能力本身，所以它必須是建置產物上「可被檢查的契約」，而不是
     // 「相信 build-search-index.js 有做」。少了標籤時建置產物照樣長得很正常，
     // 沒有這一條就完全看不出來。
     const taxonomy = Array.isArray(item.taxonomy) ? item.taxonomy : [];

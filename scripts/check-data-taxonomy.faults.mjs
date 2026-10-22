@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
- * 分類欄位（素養／SDGs／議題標籤）的故障注入矩陣
- * --------------------------------------------------------------
+ * 分類欄位（素養／SDGs／議題標籤）的故障注入矩陣。
  * check-built-site.faults.mjs 證明的是「建置產物裡的分類欄位壞掉會被擋下」。
- * 但那道關卡在流程的最後——在它之前還有兩道，而那兩道在正常狀態下同樣看不出
+ * 但那道關卡在流程的最後，在它之前還有兩道，而那兩道在正常狀態下同樣看不出
  * 有沒有在把關：
  *
  *   1. scripts/check-civic-tech.mjs  來源 JSON 的 schema（代碼合法性、重複、型別）
  *   2. build-search-index.js         建置期的 fail closed：非法代碼、以及
  *                                    「逐項錨點不存在於頁面」時直接讓建置失敗
  *
- * 這兩者出錯的症狀都是「搜尋找不到某個標籤」或「點了搜尋結果停在頁首」——頁面
+ * 這兩者出錯的症狀都是「搜尋找不到某個標籤」或「點了搜尋結果停在頁首」，頁面
  * 看起來一切正常，CI 全綠，沒有人會回報。所以「弄壞它會不會紅」必須是常駐測試，
  * 而不是實作當下手動確認一次。
  *
@@ -62,7 +61,7 @@ function run(script, extraEnv) {
  * 來源 schema 看門狗：讀副本 JSON、報告也寫到副本目錄。
  *
  * 逐項錯誤訊息只寫在報告檔裡（主控台只印摘要，因為 workflow 是拿報告去開 issue），
- * 所以比對訊息時必須把報告一起讀進來——只看 stdout 會變成「只驗得到有沒有紅，
+ * 所以比對訊息時必須把報告一起讀進來：只看 stdout 會變成「只驗得到有沒有紅，
  * 驗不到紅的理由對不對」，而錯誤訊息本身就是這支看門狗的產出。
  */
 function runWatchdog() {
@@ -75,7 +74,7 @@ function runWatchdog() {
 const runIndexer = () => run('build-search-index.js', { SEARCH_INDEX_DIST: WORK_DIST });
 
 const cases = [
-    // ── 來源 JSON 的 schema（check-civic-tech.mjs）──
+    // 來源 JSON 的 schema（check-civic-tech.mjs）
     {
         name: '來源資料出現非法的核心素養代碼',
         target: WORK_JSON,
@@ -111,10 +110,10 @@ const cases = [
         expect: /tags 必須是陣列/,
         mutate: (t) => t.replace('"tags": ["假訊息"', '"tags": "假訊息", "_x": ["假訊息"'),
     },
-    // ── 建置期的 fail closed（build-search-index.js）──
+    // 建置期的 fail closed（build-search-index.js）
     {
-        // 這一項是 #78 的核心教訓：錨點不存在卻照樣寫進索引，點了只會停在頁首，
-        // 而且全程沒有任何訊號。現在它會讓建置直接失敗。
+        // 錨點不存在卻照樣寫進索引的話，點了只會停在頁首，而且沒有任何訊號，
+        // 所以建置要直接失敗（#78）。
         name: '專案 id 與頁面錨點對不上時，建置必須失敗',
         target: WORK_DIST_JSON,
         run: runIndexer,
@@ -136,9 +135,9 @@ const cases = [
         mutate: (t) => t.replace('"competencies": ["A2", "C1"]', '"competencies": ["A2", "Z9"]'),
     },
     {
-        // 頁面內嵌資料（career-exploration 的學群卡片）走的是另一條索引路徑，
-        // 那條路徑原本把整個項目迴圈包在 try/catch 裡——一個素養值打錯，整頁
-        // 9 筆項目會靜默消失、只留一行 warning 而建置照樣成功。實際踩過。
+        // 頁面內嵌資料（career-exploration 的學群卡片）走的是另一條索引路徑。
+        // 那條路徑若把整個項目迴圈包在 try/catch 裡，一個素養值打錯，整頁
+        // 9 筆項目會靜默消失、只留一行 warning 而建置照樣成功。
         name: '頁面內嵌資料的素養值打錯時，建置必須失敗而不是只印警告',
         target: path.join(WORK_DIST, 'career-exploration', 'index.html'),
         run: runIndexer,

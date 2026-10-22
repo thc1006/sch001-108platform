@@ -1,13 +1,12 @@
 /**
- * 競賽資料看門狗的可測試核心
- * --------------------------------------------------------------
+ * 競賽資料看門狗的可測試核心。
  * 連結探測與欄位驗證的邏輯抽到這裡，讓 check-competitions.probe.test.mjs
  * 能以本機 http server 做確定性測試，不必依賴外網。
  */
 
 import { probe as guardedProbe } from './link-health.lib.mjs';
 
-// ── 欄位允許值（與 competitions.json 的 _readme 一致）──
+// 欄位允許值，與 competitions.json 的 _readme 一致。
 export const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計', '社會永續', '跨領域'];
 export const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
 export const ALLOWED_REGIONS = ['台灣', '美國', '英國', '歐盟', '東亞', '全球線上', '其他'];
@@ -15,7 +14,7 @@ export const ALLOWED_ELIGIBILITY = ['公開報名', '國家隊選拔', '邀請�
 export const ALLOWED_MODES = ['線上', '實體', '混合'];
 export const ALLOWED_FORMS = ['個人', '團體', '個人/團體'];
 
-/** 必填的文字欄位——頁面會直接當字串用（例如 comp.form.includes()）。 */
+/** 必填的文字欄位。頁面會直接當字串用，例如 comp.form.includes()。 */
 export const TEXT_FIELDS = [
     'title',
     'organizer',
@@ -32,9 +31,8 @@ export const TEXT_FIELDS = [
 /**
  * 競賽物件允許出現的全部欄位。
  *
- * cycle 內部本來就有同類的白名單，但物件本身先前沒有——於是
- * "cyle": { "closes": "09" }（少一個 c）這種錯字只要必填欄位都在就會通過驗證，
- * 前端則靜默忽略它。該筆競賽的週期資訊等於憑空消失，且沒有任何訊號。
+ * 沒有這份白名單，"cyle": { "closes": "09" }（少一個 c）這種錯字只要必填欄位都在
+ * 就會通過驗證，前端則靜默忽略它。該筆競賽的週期資訊等於憑空消失，且沒有任何訊號。
  */
 export const ALLOWED_COMPETITION_FIELDS = new Set([
     ...TEXT_FIELDS,
@@ -49,34 +47,29 @@ export const ALLOWED_COMPETITION_FIELDS = new Set([
     'sourceCheckedAt',
 ]);
 
-// ── 連結健檢（實作已移到 link-health.lib.mjs）──
-//
-// 為什麼要搬：競賽看門狗與全站外部連結健檢都會在 runner 上、帶著寫入權限的
-// token 去連我們資料檔裡寫的任意網址。那是一條 SSRF 路徑，而防護只寫在其中
-// 一邊等於沒寫——所以探測與分類只能有一份實作。
-//
-// 這裡保留原本的 export 名稱，讓既有的呼叫端與 check-competitions.probe.test.mjs
-// 不必改動。
+// 連結健檢的實作在 link-health.lib.mjs。競賽看門狗與全站外部連結健檢都會在 runner 上、
+// 帶著寫入權限的 token 去連資料檔裡寫的任意網址，那是一條 SSRF 路徑，防護只寫在其中
+// 一邊等於沒寫，所以探測與分類只有一份實作。check-competitions.probe.test.mjs 從這裡 import。
 export { DEAD_STATUSES, LINK_TIMEOUT_MS, UA, isDeadResult, classifyLink } from './link-health.lib.mjs';
 
 /**
- * ⚠ 這個 probe 是**單元測試專用**的相容別名，唯一的放寬是允許 loopback
- * （127.0.0.0/8 與 ::1）——check-competitions.probe.test.mjs 的每一個連線測試都
- * 打本機 http server，嚴格模式下會全部被擋。
+ * probe 是單元測試專用的相容別名，唯一的放寬是允許 loopback（127.0.0.0/8 與 ::1）：
+ * check-competitions.probe.test.mjs 的每一個連線測試都打本機 http server，
+ * 嚴格模式下會全部被擋。
  *
  * 除了 loopback 之外沒有任何放寬：private、link-local、雲端 metadata、
  * credential、非 http(s) scheme 在這裡一樣擋得死死的（link-health.test.mjs
  * 有對應測試把這件事釘住）。
  *
- * 真正的看門狗 runner（check-competitions.mjs）不用這個別名，它直接 import
- * link-health.lib.mjs 的嚴格版 probe——所以競賽資料裡若出現指向本機服務的
- * 網址，實際執行時仍然會被擋下。
+ * 真正的看門狗 runner（check-competitions.mjs）不用這個別名，它呼叫 link-health.lib.mjs
+ * 的 runProbes 而且不傳 allowLoopback，走的是嚴格版 probe，所以競賽資料裡若出現指向
+ * 本機服務的網址，實際執行時仍然會被擋下。
  */
 export const probe = (url, signal) => guardedProbe(url, signal, { allowLoopback: true });
 
 /**
- * url 必須解析得出、且為 https。先前只檢查「非空字串」，像 htps://… 這種拼錯
- * 協定的值會通過 schema，再被連結健檢的正規表示式靜默濾掉——兩關都不報錯。
+ * url 必須解析得出、且為 https。只檢查「非空字串」的話，像 htps://… 這種拼錯
+ * 協定的值會通過 schema，再被連結健檢的正規表示式靜默濾掉，兩關都不報錯。
  */
 export function validateUrl(value, label, errors) {
     let parsed = null;
@@ -103,27 +96,25 @@ export function validateUrl(value, label, errors) {
 }
 
 
-// ── 報名時程與賽事日期 ──
+// 報名時程與賽事日期。只有一個 deadline（YYYY-MM-DD）的話，報名截止、賽事開始和
+// 「大概那個時候」這三件事會混在一起，產生實際的錯誤：
 //
-// 原本只有一個 deadline（YYYY-MM-DD），它同時被拿來表達三件不同的事：報名截止、
-// 賽事開始、以及「大概那個時候」。混在一起會產生實際的錯誤：
-//
-//   - OPhO 的 8/21 是「比賽日期」，卻被顯示成「報名截止」；
+//   - OPhO 的 8/21 是「比賽日期」，填進 deadline 就會顯示成「報名截止」；
 //   - Breakthrough 官方截止是 9/15 23:59 PDT，換算台灣是 9/16 14:59。只存日期的話，
 //     台灣時間 9/15 凌晨就顯示「今日截止」（實際還有 39 小時），9/16 00:00 起就
 //     顯示「已截止」（實際還有近 15 小時）。
 //
-// 下面這幾個欄位都是選填、可加可不加，不需要一次遷移全部資料。
+// 下面這幾個欄位都是選填，可以逐筆補上。
 
 /** YYYY-MM-DD（純日期，無時刻概念）。 */
 export const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * ISO 8601 時刻，**必須**帶明確的時區位移（Z 或 ±HH:MM）。
+ * ISO 8601 時刻，必須帶明確的時區位移（Z 或 ±HH:MM）。
  *
  * 不接受省略時區的寫法（"2026-09-15T23:59:00"）：那會被瀏覽器當成使用者的本地
- * 時間解析，同一筆資料在不同時區的人眼中是不同的時刻——正是這一組欄位要修掉的
- * 問題本身。與其容忍它再猜一個時區，不如在 CI 就擋下來。
+ * 時間解析，同一筆資料在不同時區的人眼中是不同的時刻，這正是這一組欄位要修掉的
+ * 問題。與其容忍它再猜一個時區，不如在 CI 就擋下來。
  */
 export const INSTANT_RE =
     /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?(Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
@@ -174,7 +165,7 @@ export function validateInstant(value, field, label, errors) {
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
  *
- * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對——那需要假設一個
+ * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對：那需要假設一個
  * 時區，而假設時區正是這組欄位要消滅的東西。
  */
 export function validateSchedule(comp, label, errors) {
@@ -216,14 +207,14 @@ export function validateSchedule(comp, label, errors) {
     }
 
     // deadlineAt 存在時必須同時有 deadline。頁面的狀態列用 deadlineAt（精確時刻），
-    // 但卡片底部那一欄讀的是 deadline——只填其中一個會出現「報名中 · 剩 70 天」
+    // 但卡片底部那一欄讀的是 deadline，只填 deadlineAt 會出現「報名中 · 剩 70 天」
     // 配上「依官網公告」這種自相矛盾的卡片。
     if (typeof comp.deadlineAt === 'string' && comp.deadlineAt && !comp.deadline) {
         errors.push(`「${label}」有 deadlineAt 卻沒有 deadline，兩者必須並存`);
     }
 
-    // 兩者並存時日期部分必須一致——不一致代表其中一個沒跟著更新，而頁面只會採用
-    // deadlineAt，另一個會靜默地變成錯的。
+    // 兩者並存時日期部分必須一致。不一致代表其中一個沒跟著更新，卡片上的狀態和日期
+    // 會對不起來：狀態列只看 deadlineAt，卡片底部顯示的是 deadline。
     if (
         typeof comp.deadlineAt === 'string' &&
         INSTANT_RE.test(comp.deadlineAt) &&
@@ -237,11 +228,10 @@ export function validateSchedule(comp, label, errors) {
     }
 }
 
-// ── 年度週期（cycle）──
-// 許多競賽每年固定時節舉辦（Foyle 每年 7/31 截止、APMO 每年 3 月）。先前這類
-// 資訊只寫在 description 裡，程式算不出來，於是「本屆已截止」的處理方式變成把
-// deadline 清空、顯示「依官網公告」——資訊反而被丟掉，而且下一輪看門狗又會
-// 重新警告。cycle 把這個週期結構化，讓「已截止但知道下次何時」成為有效狀態。
+// 年度週期（cycle）。許多競賽每年固定時節舉辦（Foyle 每年 7/31 截止、APMO 每年 3 月）。
+// 這類資訊只寫在 description 裡的話程式算不出來：本屆截止後留著已過的 deadline，
+// 看門狗每一輪都會警告；清空成「依官網公告」，資訊又被丟掉。cycle 把這個週期結構化，
+// 讓「已截止但知道下次何時」成為有效狀態。
 export const CYCLE_MMDD_RE = /^(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/;
 
 /** 驗證 cycle 欄位；錯誤推入 errors。cycle 為選填。 */
@@ -288,8 +278,8 @@ export function validateCycle(cycle, label, errors) {
  * 這一桶是看門狗其他兩段完全沒有覆蓋到的：
  *   🔴 已過期    只看有 deadline 且已過的
  *   🔁 下屆將近  第一行就是 `if (!closes) continue`
- * 2026-08-29 實測，119 筆裡有 **90 筆**兩邊都不屬於，而且沒有一筆帶已過期的
- * deadline——沒有任何東西會叫人回去看它們。
+ * 2026-08-29 實測，119 筆裡有 90 筆兩邊都不屬於，而且沒有一筆帶已過期的
+ * deadline。除了這一桶，沒有任何東西會叫人回去看它們。
  *
  * 判準刻意用 sourceCheckedAt 而不是推算週期：官網說「尚未公布」時，那句話本身
  * 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
@@ -313,7 +303,7 @@ export function selectNeedsRecheck(list, todayUTC, minDays) {
         }
         const checked = comp.sourceCheckedAt;
         if (typeof checked !== 'string' || !DATE_ONLY_RE.test(checked)) {
-            // 既沒有可行動的日期，也沒有查證紀錄——這一筆沒有任何人看過的證據
+            // 既沒有可行動的日期，也沒有查證紀錄，這一筆沒有任何人看過的證據。
             out.push({ label, checked: '（無）', days: Infinity });
             continue;
         }
@@ -345,7 +335,7 @@ export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
     // 8/31，誤報成「下屆剩 4 天」。
     //
     // 但也不能直接用「本屆年份 + 1」：跨年季會整整漏掉一輪。截止日 2026-01-15、
-    // 週期記 12 月時，那個截止日屬於 2025-12 那一輪，下一輪是 2026-12——用 +1 會
+    // 週期記 12 月時，那個截止日屬於 2025-12 那一輪，下一輪是 2026-12，用 +1 會
     // 算成 2027-12，把學生還能報名的整整一年吃掉。所以要先問「本屆對應到週期的
     // 哪一個實例」：取離本屆截止日最近的那一年當錨點，再往後推一輪。
     let year;
@@ -371,23 +361,17 @@ export function nextOccurrenceUTC(closes, todayUTC, lastEditionUTC = null) {
 }
 
 /**
- * sourceCheckedAt 的不變式是**「這一筆真的有人開過官網」**，不是「查證發生在某一天」。
- *
- * 兩個測試檔原本各自寫成 assert.equal(..., '2026-08-27')，而訊息說的是「不得被清掉」
- * 與「應記錄逐筆查證日期」——實作都比訊息嚴格得多：清掉會紅（對），
- * **更新成新日期也會紅**（錯）。一個叫「最後查證日」的欄位被凍結成常數。
- *
- * 那不是假設性的問題：2026-08-28 的複查實際改正了 13 筆資料，卻不能把日期改成當天。
- *
- * 修第一處（competitions-data.test.mjs）時漏了第二處
- * （check-competitions.probe.test.mjs）——同一個 bug 存在兩份實作，正是它會被
- * 漏掉的原因。所以判定抽到這裡，兩邊共用，不留會漂移的第二份。
+ * sourceCheckedAt 的不變式是「這一筆真的有人開過官網」，不是「查證發生在某一天」。
+ * 所以只要求它是存在的 YYYY-MM-DD 日期，而且落在這個基準日和以 UTC 計的明天之間：
+ * 清掉、亂填、早於基準日或晚於明天都不行，重新查證後填當天的日期可以。寫死成某一天的話，
+ * 再次查證之後就無法記錄新的日期。判定放在這裡給 competitions-data.test.mjs 和
+ * check-competitions.probe.test.mjs 共用，不留會漂移的第二份。
  */
 export const SOURCE_CHECKED_NOT_BEFORE = '2026-08-27';
 
 /**
- * 未來端的一天餘裕：查證的人可能在 UTC+14，寫下的當地日期會比 UTC 日期早一天。
- * 再往後就不是時區問題——那一天還沒發生過，不可能有人在那天開過官網。
+ * 未來端的一天餘裕：查證的人可能在 UTC+14，寫下的當地日期會比 UTC 日期晚一天。
+ * 再往後就不是時區問題，那一天還沒發生過，不可能有人在那天開過官網。
  */
 const SOURCE_CHECKED_FUTURE_SLACK_MS = 24 * 60 * 60 * 1000;
 
@@ -408,7 +392,7 @@ export function sourceCheckedProblem(
         return `不是 YYYY-MM-DD 格式（實際：${JSON.stringify(value)}）——它是「這一筆真的開過官網」的唯一憑證`;
     }
     // Date.parse('2026-09-31T00:00:00Z') 會靜靜捲成 10/01 而不是 NaN，所以不能拿它
-    // 判日期是否存在——本檔上面的 isRealDate 就是為了這件事存在的，直接沿用。
+    // 判日期是否存在，這裡沿用本檔上面的 isRealDate。
     const [y, mo, d] = value.split('-').map(Number);
     if (!isRealDate(y, mo, d)) return `「${value}」不是實際存在的日期`;
     // ISO 日期字串可以直接字典序比較

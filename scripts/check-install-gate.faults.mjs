@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
- * 安裝期腳本閘門檢查的故障注入矩陣
- * --------------------------------------------------------------
+ * 安裝期腳本閘門檢查的故障注入矩陣。
  * check-install-gate.mjs 擋的是「閘門自己悄悄失效」。這種把關在正常狀態下
  * 只印幾行綠字，跟根本沒在檢查長得一模一樣，所以要有常駐測試證明它會擋。
  *
  * 三類故障缺一不可：
  *   A. 該擋的有沒有擋（未核准、釘版本過期、孤兒條目、npm 太舊、設定被蓋掉）
  *   B. 不該擋的有沒有放行（否則第一次無關更新就會被當雜訊關掉）
- *   C. 「讀不到東西」時會不會誤印綠字——這一類才是最危險的
+ *   C. 「讀不到東西」時會不會誤印綠字，這一類才是最危險的
  *
  * 一律在副本上注入，版控裡的 package-lock.json 與 package.json 不會被更動。
  *
@@ -40,7 +39,7 @@ console.log(`故障注入在副本 ${path.relative(ROOT, WORK)}/ 上進行，版
 const originalLock = readFileSync(SOURCE_LOCK, 'utf8');
 const originalManifest = readFileSync(SOURCE_MANIFEST, 'utf8');
 
-// npm 版本、能力與實際設定都要能注入，否則這個矩陣只在某一台機器上成立——
+// npm 版本、能力與實際設定都要能注入，否則這個矩陣只在某一台機器上成立。
 // 實測：少了 INSTALL_GATE_KNOWN，在 npm 11.6.2 上每一格都會被能力探測擋下，
 // 連「不該擋」的反例也會翻紅，整個矩陣失去鑑別力。
 const GOOD_NPM = '11.19.0';
@@ -64,7 +63,7 @@ function runCheck({ npmVersion = GOOD_NPM, config = GOOD_CONFIG, known = GOOD_KN
     }
 }
 
-/** 寫檔後讀回來確認落地——本 repo 多次踩到注入靜默無效的坑。 */
+/** 寫檔後讀回來，讓呼叫端確認注入真的落地。 */
 function write(file, obj) {
     writeFileSync(file, JSON.stringify(obj, null, 2), 'utf8');
     return JSON.parse(readFileSync(file, 'utf8'));
@@ -82,7 +81,7 @@ const manifestOf = () => JSON.parse(readFileSync(WORK_MANIFEST, 'utf8'));
 /**
  * 在 lock 裡塞一個會跑安裝腳本的套件。
  * resolved 一定要給：真實的 lock 條目都有，少了會讓「相依來源」那條規則一起開火，
- * 於是這一格就同時測了兩件事、失去鑑別力（加 registry 規則時實際踩到過）。
+ * 於是這一格就同時測了兩件事、失去鑑別力。
  */
 function addScripted(name, version, extra = {}) {
     const lock = lockOf();
@@ -111,7 +110,7 @@ function setAllow(value) {
 }
 
 const cases = [
-    // ── A. 該擋的 ──────────────────────────────────────────────
+    // A. 該擋的
     {
         name: '新相依帶進 postinstall 卻沒人核准——必須擋',
         inject: () => addScripted('evil-postinstall', '1.0.0'),
@@ -181,7 +180,7 @@ const cases = [
     {
         // npm 的 hasInstallScript 只看 install/preinstall/postinstall（arborist 的
         // isolated-classes.js）。git 相依靠 prepare 執行程式，不帶旗標，覆蓋率清單
-        // 看不到它——只有這條 registry 來源的規則擋得住。
+        // 看不到它，只有這條 registry 來源的規則擋得住。
         name: 'git 相依（prepare 會執行但不帶 hasInstallScript）——必須擋',
         inject: () => {
             const lock = lockOf();
@@ -252,7 +251,7 @@ const cases = [
         expect: /prepare/,
     },
 
-    // ── B. 不該擋的（反例：證明這不是粗暴檢查）────────────────────
+    // B. 不該擋的（反例：證明這不是粗暴檢查）
     {
         name: '核准不釘版本（esbuild: true）——必須**不**擋',
         inject: () => setAllow({ esbuild: true, 'core-js': false, fsevents: false }),
@@ -287,7 +286,7 @@ const cases = [
         blocked: false,
     },
 
-    // ── C. 全盲時必須紅 ────────────────────────────────────────
+    // C. 全盲時必須紅
     {
         name: 'lock 裡一個 hasInstallScript 都沒有——是全盲不是安全，必須擋',
         inject: () => {

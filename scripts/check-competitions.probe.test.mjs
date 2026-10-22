@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * 看門狗連結健檢的狀態機測試
- * --------------------------------------------------------------
- * 全部打本機 http server，DNS 結果在測試裡注入，不連外網也不查真的 DNS。外網會因防爬與
+ * 競賽資料看門狗的測試：連結探測、欄位驗證、週期與報名時程、issue 認領。
+ * 連線全部打本機 http server，DNS 結果在測試裡注入，不連外網也不查真的 DNS。外網會因防爬與
  * 站台狀態而飄，DNS 則要看執行的機器上 resolver 通不通。
  *
  * 執行：  npm run test:watchdog
@@ -60,8 +59,6 @@ before(async () => {
 
 after(() => server.close());
 
-// ── probe 的方法選擇 ──
-
 test('HEAD 200 但 GET 404 → 必須判定為失效（不可只信 HEAD）', async () => {
     const r = await probe(`${base}/head-ok-get-gone`);
     assert.equal(r.status, 404);
@@ -74,8 +71,6 @@ test('HEAD 404 但 GET 200 → 必須判定為健康（不可只信 HEAD）', as
     assert.equal(r.status, 200);
     assert.equal(isDeadResult(r), false);
 });
-
-// ── 狀態碼分類 ──
 
 test('404 / 410 → dead', async () => {
     for (const p of ['/404', '/410']) {
@@ -137,7 +132,7 @@ test('第一次 404、重試 200 → 最終視為健康', async () => {
 
 test('GET 的 response body 一定要被釋放（不可依賴 GC）', async () => {
     // probe 內部在 finally cancel；若漏掉，重複呼叫會逐漸卡住連線池。
-    // 這裡以「連續多次仍能在合理時間內完成」作為回歸偵測。
+    // 這裡用「連續多次仍能在合理時間內完成」來檢查有沒有漏掉。
     const started = Date.now();
     for (let i = 0; i < 30; i++) {
         const r = await probe(`${base}/ok`);
@@ -145,8 +140,6 @@ test('GET 的 response body 一定要被釋放（不可依賴 GC）', async () =
     }
     assert.ok(Date.now() - started < 10_000, '連續 30 次 GET 不應變慢或卡住');
 });
-
-// ── schema 驗證 ──
 
 test('拼錯協定 / 非 https / 內嵌帳密的 url 必須被 schema 攔下', () => {
     for (const bad of ['htps://example.com', ' https://example.com', 'https://', 'javascript:alert(1)', 'http://example.com', 'https://u:p@example.com']) {
@@ -166,8 +159,6 @@ test('form 只接受三種值', () => {
     assert.deepEqual(ALLOWED_FORMS, ['個人', '團體', '個人/團體']);
     assert.ok(!ALLOWED_FORMS.includes('個人與團隊'));
 });
-
-// ── 年度週期（cycle）──
 
 test('cycle：只知月份時取該月最後一天（保守，不會誤判成已截止）', () => {
     const today = Date.UTC(2026, 7, 2); // 2026-08-02
@@ -240,7 +231,6 @@ test('cycle：02-29 在平年退回 2/28，不可靜默跨月到 3/1', () => {
 
 
 
-// ── 報名時程欄位 ──
 const errsOf = (fn) => {
     const e = [];
     fn(e);
@@ -249,7 +239,7 @@ const errsOf = (fn) => {
 
 test('schedule：時刻必須帶明確時區位移', () => {
     // 省略時區的時刻會被瀏覽器當成使用者的本地時間解析，同一筆資料在不同時區的人
-    // 眼中是不同的時刻——正是這組欄位要修掉的問題本身，不能容忍再猜一個時區。
+    // 眼中是不同的時刻。這正是這組欄位要修掉的問題，不能容忍再猜一個時區。
     for (const good of ['2026-09-15T23:59:00-07:00', '2026-11-04T14:00:00-05:00', '2026-05-18T23:59:00+08:00', '2026-01-01T00:00Z']) {
         assert.deepEqual(errsOf((e) => validateInstant(good, 'deadlineAt', 'X', e)), [], `${good} 應被接受`);
     }
@@ -278,7 +268,7 @@ test('schedule：欄位之間的先後關係', () => {
     assert.ok(
         bad({ opensAt: '2026-09-16T00:00:00Z', deadlineAt: '2026-09-15T00:00:00Z' }).some((m) => m.includes('不早於')),
     );
-    // deadline 與 deadlineAt 的日期部分不一致——頁面只採用 deadlineAt，另一個會靜默變錯
+    // deadline 與 deadlineAt 的日期部分不一致：狀態列看 deadlineAt，卡片底部顯示 deadline，兩邊會對不上。
     assert.ok(
         bad({ deadline: '2026-09-14', deadlineAt: '2026-09-15T23:59:00-07:00' }).some((m) => m.includes('不一致')),
     );
@@ -303,8 +293,7 @@ test('schedule：registrationNote 有長度上限', () => {
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
 });
 
-// ── 前端狀態：時區行為 ──
-// 這是本次要修的實際錯誤。Breakthrough 官方截止 2026-09-15 23:59 PDT ＝ 台灣
+// 前端狀態的時區行為。Breakthrough 官方截止 2026-09-15 23:59 PDT ＝ 台灣
 // 9/16 14:59。只存日期的話，台灣 9/15 凌晨就顯示「今日截止」（實際還有 39 小時），
 // 9/16 00:00 起顯示「已截止」（實際還有近 15 小時）。
 test('status：帶時區的截止時刻在跨日邊界上不得算錯', async () => {
@@ -364,8 +353,8 @@ test('status：報名尚未開放時不得顯示「報名中」', async () => {
     }
     const f = new Function('Date', `${bundle}; return { getStatus, statusText };`)(FixedDate);
 
-    // 報名 2/23 才開放、5/18 截止。先前只要 deadline 在未來就一律「報名中」，
-    // 即使報名根本還沒開始——學生點進去只會看到「敬請期待」。
+    // 報名 2/23 才開放、5/18 截止。只看 deadline 的話，截止日在未來就一律顯示「報名中」，
+    // 但報名根本還沒開始，學生點進去只會看到「敬請期待」。
     const s = f.getStatus({
         deadline: '2026-05-18',
         deadlineAt: '2026-05-18T23:59:00+08:00',
@@ -377,8 +366,7 @@ test('status：報名尚未開放時不得顯示「報名中」', async () => {
 
 
 // 篩選 chip 是寫死在 HTML 裡的，而狀態 key 是 JS 算出來的。新增一個狀態卻忘了加
-// chip，那些競賽在使用者點任一篩選時就會整批消失——實作這次改動時我就先犯了一次。
-// 這個測試把兩邊綁在一起。
+// chip，那些競賽在使用者點任一篩選時就會整批消失。這個測試把兩邊綁在一起。
 test('status：每個狀態 key 都要有對應的篩選 chip 與樣式', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
@@ -407,7 +395,6 @@ test('status：每個狀態 key 都要有對應的篩選 chip 與樣式', async 
     }
 });
 
-// ── 已查證的五筆資料 ──
 // 這五筆是逐一開官網查證過的。寫成測試是為了讓「改回錯的值」變成紅燈，而不是
 // 靠人記得。若官方日期真的變了，改測試與改資料要一起做。
 test('data：五筆已查證競賽的報名時程不得被改回錯的值', async () => {
@@ -447,19 +434,16 @@ test('data：五筆已查證競賽的報名時程不得被改回錯的值', asyn
     // Breakthrough：9/15 23:59 PDT
     assert.equal(find('Breakthrough').deadlineAt, '2026-09-15T23:59:00-07:00');
 
-    // 用共用的驗證器，不要再寫死日期。這裡原本是 assert.equal(..., '2026-08-27')——
-    // 訊息說「應記錄逐筆查證日期」，實作卻要求等於某一天，於是任何人重新查證都
-    // 無法更新它。HiMCM 在 2026-08-28 確實重查過（comap.com → 301 → comap.org）。
+    // 用共用的驗證器，不寫死日期：要求等於某一天的話，任何人重新查證都無法更新它。
+    // HiMCM 就是在 2026-08-28 重查的（comap.com → 301 → comap.org）。
     for (const t of ['OPhO', 'Solve for Tomorrow', 'HiMCM', 'Space Apps', 'Breakthrough']) {
         const why = sourceCheckedProblem(find(t).sourceCheckedAt);
         assert.equal(why, null, `${t} 應記錄逐筆查證日期，但它 ${why}`);
     }
 });
 
-// ── 競賽物件的欄位白名單 ──
-// cycle 內部本來就有同類的白名單，但物件本身先前沒有。"cyle"（少一個 c）這種錯字
-// 只要必填欄位都在就會通過驗證，前端則靜默忽略它——該筆競賽的週期資訊等於憑空
-// 消失且沒有任何訊號。
+// 競賽物件的欄位白名單。沒有它的話，"cyle"（少一個 c）這種錯字只要必填欄位都在
+// 就會通過驗證，前端則靜默忽略它，該筆競賽的週期資訊等於憑空消失且沒有任何訊號。
 test('schema：實際資料不得出現白名單以外的欄位', async () => {
     const { readFileSync } = await import('node:fs');
     const data = JSON.parse(
@@ -487,10 +471,8 @@ test('schema：常見錯字不在白名單內', () => {
     }
 });
 
-// ── 看門狗的 issue 認領 ──
-// 這五個情境先前只用人工假造的 gh 驗過一次，沒有留下回歸測試——而認領邏輯正是
-// 出過事的那一段：#70（人工開立）用了同一個標籤，連續四週的週報全貼到那裡。
-// 判斷邏輯移到 watchdog-issue.lib.mjs 之後，這裡把五個情境固定下來。
+// 看門狗的 issue 認領。只看標籤會接管人工開的 issue（#70），
+// 下面把認領的各種情境固定下來。
 const bot = (number, body) => ({ number, author: { login: ACTIONS_APP_LOGIN }, body });
 const human = (number, body) => ({ number, author: { login: 'thc1006' }, body });
 
@@ -517,7 +499,7 @@ test('watchdog：完全沒有候選時新開 issue', () => {
 });
 
 test('watchdog：出現多個 canonical issue 時必須大聲失敗，不可安靜取第一個', () => {
-    // 取第一個會讓另一個永遠收不到報告，而且沒有任何訊號——正是本 issue 在修的失效模式。
+    // 取第一個會讓另一個永遠收不到報告，而且沒有任何訊號。
     const r = selectCanonicalIssue([bot(91, WATCHDOG_MARKER), bot(90, WATCHDOG_MARKER)]);
     assert.equal(r.action, 'fail');
     assert.deepEqual(r.numbers, [90, 91], '應列出全部重複的 issue 供人工處理');
@@ -527,7 +509,7 @@ test('watchdog：畸形輸入不得被當成可接管', () => {
     const bad = [null, undefined, 'x', 42, {}, { number: 1 }, { author: { login: ACTIONS_APP_LOGIN } }];
     assert.deepEqual(selectCanonicalIssue(bad), { action: 'create' });
     assert.deepEqual(selectCanonicalIssue(null), { action: 'create' });
-    // number 不是整數時不可接管——後續會被當成 issue 編號傳給 gh
+    // number 不是整數時不可接管，後續會被當成 issue 編號傳給 gh。
     assert.deepEqual(
         selectCanonicalIssue([{ number: '81', author: { login: ACTIONS_APP_LOGIN }, body: WATCHDOG_MARKER }]),
         { action: 'create' },
@@ -535,7 +517,7 @@ test('watchdog：畸形輸入不得被當成可接管', () => {
 });
 
 // workflow 實際呼叫的是 CLI，不是函式本身。只測函式會漏掉 stdin 解析、輸出格式與
-// 退出碼這層接線——而 workflow 正是靠退出碼決定要不要中止。
+// 退出碼這層接線，而 workflow 正是靠退出碼決定要不要中止。
 test('watchdog：CLI 的輸出格式與退出碼', async () => {
     const { execFileSync } = await import('node:child_process');
     const { fileURLToPath } = await import('node:url');
@@ -566,9 +548,8 @@ test('watchdog：CLI 的輸出格式與退出碼', async () => {
     assert.match(stderr, /#91/);
 });
 
-// ── 前後端邏輯防漂移 ──
 // nextOccurrenceUTC 在 lib（Node）與 competitions.astro（瀏覽器 is:inline）各有
-// 一份實作——後者無法 import Node 模組。兩份若漂移，頁面與看門狗就會對同一筆
+// 一份實作，因為後者無法 import Node 模組。兩份若漂移，頁面與看門狗就會對同一筆
 // 競賽給出不同的「下次截止日」。這個測試把 .astro 裡那份抽出來實際比對。
 test('cycle：頁面與看門狗的推算結果必須完全一致', async () => {
     const { readFileSync } = await import('node:fs');
@@ -607,8 +588,8 @@ test('cycle：已知本屆截止日時，下屆須在隔年——不可算成同
 });
 
 // 「本屆年份 + 1」在跨年季會整整漏掉一輪：截止日 2026-01-15、週期記 12 月時，
-// 那個截止日屬於 2025-12 那一輪，下一輪是 2026-12 而非 2027-12。實際發生時，頁面
-// 會把還能報名的一整年說成「下次約 2027」。現在改為先把本屆對應回最近的週期實例。
+// 那個截止日屬於 2025-12 那一輪，下一輪是 2026-12 而非 2027-12，用 +1 的話頁面
+// 會把還能報名的一整年說成「下次約 2027」。nextOccurrenceUTC 先把本屆對應回最近的週期實例。
 test('cycle：跨年季不可漏掉一整輪', () => {
     const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
     const today = Date.UTC(2026, 7, 27);
@@ -652,11 +633,9 @@ test('cycle：lastEdition 已過一年以上時，持續往後推到未來', () 
     assert.equal(iso(nextOccurrenceUTC('03', today, Date.UTC(2023, 2, 1))), '2027-03-31');
 });
 
-// ── 狀態未知且太久沒重查 ─────────────────────────────────────
-//
-// 這一桶是看門狗先前完全沒有覆蓋到的：🔴 那一段只看已過期的 deadline，
+// 狀態未知且太久沒重查的條目。🔴 那一段只看已過期的 deadline，
 // 🔁 那一段第一行就是「沒有 cycle 就跳過」。2026-08-29 實測 119 筆裡有 90 筆
-// 兩邊都不屬於，而且沒有一筆帶已過期的 deadline——沒有任何東西會叫人回去看它們。
+// 兩邊都不屬於，而且沒有一筆帶已過期的 deadline，只有這一桶會叫人回去看它們。
 const TODAY = Date.UTC(2026, 7, 29); // 2026-08-29
 const ago = (n) => new Date(TODAY - n * 86400000).toISOString().slice(0, 10);
 
@@ -722,7 +701,7 @@ test('recheck：真實資料現在應該一筆都不該列出（全庫三天內�
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const out = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 90);
     assert.deepEqual(out, [], `不該有陳舊條目，實際：${JSON.stringify(out.slice(0, 3))}`);
-    // 但這一桶本身必須是有東西的——否則上面那條會空洞地通過
+    // 但這一桶本身必須是有東西的，否則上面那條會空洞地通過。
     const wouldCover = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 0);
     assert.ok(wouldCover.length >= 60,
         `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
