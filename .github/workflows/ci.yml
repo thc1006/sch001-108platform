@@ -235,6 +235,9 @@ jobs:
       - name: Run comment-checker unit tests
         run: npm run test:comments
 
+      - name: Check comment length
+        run: npm run check:comments
+
   # 測試只打本機的假 WinLab，不需要 key；WinLab 的 key 只接受校內的來源 IP，
   # runner 本來就連不上。閘道只用 Node 內建模組，所以不跑 npm ci，也不需要
   # 安裝期腳本閘門。不用 sparse checkout：blob 會改在 git checkout 時才下載，
