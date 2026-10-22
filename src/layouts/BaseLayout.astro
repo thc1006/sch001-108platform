@@ -41,6 +41,12 @@ const {
 // og:url 逐字比對 0 差異。
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+
+// 網站的 AI 功能呼叫的本地 LLM 閘道（public/shared/platform-ai.js 從這個 meta 讀）。
+// 由建置環境的 PUBLIC_AI_GATEWAY_URL 決定——CI 從 repository variable AI_GATEWAY_URL 帶入，
+// 網址不寫進 repo。沒設定時不輸出，改走閘道的 AI 功能（PlatformAI.runTask）會回報「尚未設定」。
+// 網址合不合格、是否與建置時的設定一致由 check:site 把關
+const aiGatewayUrl = (import.meta.env.PUBLIC_AI_GATEWAY_URL ?? '').trim();
 ---
 
 <!doctype html>
@@ -65,6 +71,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     {keywords && <meta name="keywords" content={keywords} />}
     <meta name="author" content="台灣教育處方籤團隊" />
     <link rel="canonical" href={canonical} />
+    {aiGatewayUrl && <meta name="ai-gateway-url" content={aiGatewayUrl} />}
 
     <!-- 社群分享 (Open Graph) -->
     <meta property="og:site_name" content="高中生 108 課綱教育資源整合平台" />

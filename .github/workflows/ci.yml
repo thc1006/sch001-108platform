@@ -64,9 +64,17 @@ jobs:
         run: npm run test:site-integrity
 
       - name: Build the deployable artifact
+        # 閘道網址來自 repository variable，不寫進 repo。BaseLayout.astro 把它寫進
+        # 每頁的 meta，沒設定時不寫，改走閘道的 AI 功能會回報尚未設定。
+        env:
+          PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
         run: npm run build:deployable
 
       - name: Verify built-site contracts
+        # 和建置那一步同一個值，check:site 才比對得出產物有沒有反映設定。BaseLayout
+        # 讀的變數名稱被改掉時，產物整批沒有閘道網址，只看產物前後一致抓不到。
+        env:
+          PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
         run: npm run check:site
 
       # link-policy 讀 check:site 寫出的 .reports/url-inventory.json，下面的
@@ -343,7 +351,8 @@ jobs:
 
   # deploy-pages 會等到 Pages API 回報部署完成，但 CDN 可能還在給舊版，所以輪詢期限
   # 要長於線上快取的 max-age，數字在 verify-deploy.mjs。不放進 pages 鎖：要看站台
-  # 此刻實際服務的版本，包括之後別的 run 部署的，所以接受本 commit 或它的後代。
+  # 此刻實際服務的版本，包括之後別的 run 部署的，所以接受本 commit 或它的後代；
+  # 同一個 commit 還要是這次或之後的 run 建的。
   # 腳本最壞要 765 秒：輪詢 660 秒，最後一輪的 build-info 與 compare 請求各 15 秒，
   # 再等 45 秒，再確認的兩個請求又各 15 秒。step 給 14 分鐘，job 給 18 分鐘，
   # step 要先逾時：step 逾時是 failure，job 逾時是 cancelled（#92）。
@@ -382,6 +391,8 @@ jobs:
         timeout-minutes: 14
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          # 和建置那一步同一個值。Re-run 時 run 編號不變，要再比閘道網址。
+          PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
         run: npm run verify:deploy
 
   # 部署或驗證被取消、跳過也算失敗：取消的 job 不會顯示成 failure，部署沒落地時

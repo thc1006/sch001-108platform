@@ -251,6 +251,9 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
    ClusterIP 時來源被 masquerade 成 `10.42.0.1`，也就是 `TRUSTED_PROXIES`，閘道才會採信 Funnel
    覆寫的 `X-Forwarded-For`。從別的地方轉進來的話，所有人都落到同一個限流桶，log 會出現
    `CLIENT-IP-UNTRUSTED`。
+5. 接上網站：把對外網址填進 repository variable `AI_GATEWAY_URL`，再到 Actions 對 `CI` 按
+   Run workflow 重新部署網站，建置時才會寫進每頁的 `<meta name="ai-gateway-url">`（細節見根目錄的
+   README）。網站的 origin 要在 `ALLOWED_ORIGINS` 裡，否則瀏覽器的預檢會被擋下。
 
 下架時先關掉 Funnel（`sudo tailscale funnel --https=443 off`），再刪 Service 或整個命名空間。
 `--bg` 的設定會一直留著，原本的位址之後可能配給別的 Service，公網的流量就轉進那裡。

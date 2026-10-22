@@ -22,6 +22,7 @@ import {
     walkJsonStrings,
     stripJsCommentsAndStrings,
     staticImportSpecifiers,
+    gatewayUrlProblem,
 } from './site-contract.lib.mjs';
 
 const BASE = '/sch001-108platform';
@@ -257,4 +258,33 @@ test('抹白必須保留長度與行數，錯誤位置才對得回原檔', () =>
     const stripped = stripJsCommentsAndStrings(src);
     assert.equal(stripped.length, src.length);
     assert.equal(stripped.split('\n').length, src.split('\n').length);
+});
+
+test('AI 閘道網址：要部署的產物只收 https，不能帶帳密、查詢字串或 #，不能指向本機或內部網路', () => {
+    assert.equal(gatewayUrlProblem('https://gateway.example'), null);
+    assert.equal(gatewayUrlProblem(' https://gateway.example/ai/ '), null);
+    // Tailscale Funnel 的主機名稱是公開的 *.ts.net
+    assert.equal(gatewayUrlProblem('https://gateway.tail1234.ts.net'), null);
+    for (const [raw, pattern] of [
+        ['', /是空的/],
+        ['   ', /是空的/],
+        ['not a url', /不是合法的網址/],
+        ['http://gateway.example', /必須是 https/],
+        ['http://localhost:8787', /必須是 https/],
+        ['javascript:alert(1)', /必須是 https/],
+        ['https://user:pw@gateway.example', /不能帶帳號密碼/],
+        ['https://:pw@gateway.example', /不能帶帳號密碼/],
+        ['https://localhost', /不能指向本機或內部網路/],
+        ['https://127.0.0.1:8787', /不能指向本機或內部網路/],
+        ['https://0x7f.1', /不能指向本機或內部網路/],
+        ['https://[::1]', /不能指向本機或內部網路/],
+        ['https://10.0.0.1', /不能指向本機或內部網路/],
+        ['https://192.168.1.10', /不能指向本機或內部網路/],
+        ['https://100.64.0.1', /不能指向本機或內部網路/],
+        ['https://169.254.169.254', /不能指向本機或內部網路/],
+        ['https://gateway.example/?model=x', /不能帶查詢字串或 #/],
+        ['https://gateway.example/#x', /不能帶查詢字串或 #/],
+    ]) {
+        assert.match(gatewayUrlProblem(raw) ?? '', pattern, raw);
+    }
 });

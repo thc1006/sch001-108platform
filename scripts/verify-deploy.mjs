@@ -23,6 +23,14 @@
  * 用法：
  *   node scripts/verify-deploy.mjs                 # 用 GITHUB_SHA 或 git HEAD
  *   node scripts/verify-deploy.mjs <commit-sha>
+ *
+ * commit 相同時還要比 run 編號與閘道網址：只改了 repository variable（AI_GATEWAY_URL）就重新部署時，
+ * commit 不變、產物卻不同，線上那份舊的不能算數。build-info.json 的 runNumber 比本 run 小或沒有
+ * 這個欄位，就是較早的部署；比本 run 大是較新的部署，跟後代一樣算落地，不管它用的是哪個網址。
+ * run 編號相同是同一個 run 按了 Re-run，這時再比 aiGatewayUrl 是不是這次建置用的
+ * PUBLIC_AI_GATEWAY_URL。不比 run_attempt：Re-run failed jobs 不重跑成功過的建置，部署的是先前
+ * attempt 建好的產物。GITHUB_RUN_NUMBER 與 PUBLIC_AI_GATEWAY_URL 都沒有時（例如本機執行）只比 commit。
+ *
  * 環境變數：
  *   SITE_URL           站台根網址（預設正式站）
  *   VERIFY_TIMEOUT     輪詢逾時秒數（預設 660，必須大於線上的 max-age=600，見 TIMEOUT_MS 的說明）
@@ -30,6 +38,8 @@
  *   GITHUB_REPOSITORY  owner/repo，用來查祖先／後代關係；沒有就退回精確相等
  *   GITHUB_API_URL     GitHub REST API 的根網址（Actions 會自動提供，沒有就用 https://api.github.com）
  *   GITHUB_TOKEN       查詢用（公開 repo 不給也能查，只是配額低很多）
+ *   GITHUB_RUN_NUMBER  本 run 的編號（Actions 會自動提供），commit 相同時用來分辨新舊部署
+ *   PUBLIC_AI_GATEWAY_URL  這次建置用的閘道網址（CI 從 vars.AI_GATEWAY_URL 帶入，沒設時是空字串）
  */
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -70,6 +80,13 @@ function secondsFromEnv(name, fallback) {
 // 2026-10-22 以 curl -sI 查得 build-info.json 是 max-age=600。預算比它短，CDN 還沒過期就可能誤報沒有落地。
 const TIMEOUT_MS = secondsFromEnv('VERIFY_TIMEOUT', 660) * 1000;
 const POLL_MS = 10_000;
+const RUN_NUMBER = /^\d+$/.test(process.env.GITHUB_RUN_NUMBER || '') ? Number(process.env.GITHUB_RUN_NUMBER) : null;
+const GATEWAY = process.env.PUBLIC_AI_GATEWAY_URL === undefined ? null : process.env.PUBLIC_AI_GATEWAY_URL.trim();
+// 同一個 commit、但是較早的 run 建的，沒有 runNumber 的也算。
+const olderRun = (info) => RUN_NUMBER !== null && !(Number(info.runNumber) >= RUN_NUMBER);
+const newerRun = (info) => RUN_NUMBER !== null && Number(info.runNumber) > RUN_NUMBER;
+// 同一個 commit、但不是這次 run 建的那一份：較早的 run，或同一個 run 建的、閘道網址卻不是這次建置用的。
+const notThisBuild = (info) => olderRun(info) || (!newerRun(info) && GATEWAY !== null && info.aiGatewayUrl !== GATEWAY);
 
 function expectedCommit() {
     const fromArg = process.argv[2];
@@ -103,6 +120,8 @@ let recheckApiFailures = 0;
 let recheckFailures = 0;
 let discounted = 0;
 let exhausted = false;
+// 最後看到的是本 commit，但不是這次 run 建的那一份。失敗訊息不能說線上沒有服務本 commit。
+let staleBuild = false;
 // 命中之後再看一次的間隔（見檔案末端的再確認）。設 0 停用。
 const RECHECK_S = secondsFromEnv('VERIFY_RECHECK', 45);
 const RECHECK_MS = RECHECK_S * 1000;
@@ -116,6 +135,10 @@ const FRESH_MAX_AGE_S = Math.min(RECHECK_S + 30, 120);
 
 /** SHA 就縮短；其他（像「格式不合法」那種說明文字）原樣印出，不要攔腰切斷。 */
 const short = (s) => (/^[0-9a-f]{40}$/.test(s) ? s.slice(0, 12) : s);
+// 線上是本 commit、卻不是這次 run 建的那一份時，說明是哪一種。
+const staleLabel = (info) => (olderRun(info)
+    ? `${short(want)} 的較早部署（run #${info.runNumber || '?'}，本 run 是 #${RUN_NUMBER}）`
+    : `${short(want)} 的另一份部署（AI 閘道網址不是這次建置用的）`);
 
 /**
  * parseAge 照 RFC 9111 第 5.1 節讀 Age：清單只取第一個值，不合法就當成 0，不讓 NaN 把退版當成舊快取放過。
@@ -163,7 +186,9 @@ async function fetchInfo() {
         if (commit && !/^[0-9a-f]{40}$/.test(commit)) {
             return { commit: '', label: '(commit 欄位不是 40 位十六進位，已拒絕)', age };
         }
-        return { commit, label: commit || '(無 commit 欄位)', age };
+        const runNumber = /^\d+$/.test(String(info.runNumber ?? '')) ? String(info.runNumber) : '';
+        const aiGatewayUrl = typeof info.aiGatewayUrl === 'string' ? info.aiGatewayUrl.trim() : '';
+        return { commit, runNumber, aiGatewayUrl, label: commit || '(無 commit 欄位)', age };
     } finally {
         clearTimeout(timer);
     }
@@ -206,13 +231,19 @@ while (Date.now() < deadline) {
     try {
         const r = await fetchInfo();
         last = r.label;
-        if (r.commit && r.commit === want) {
-            console.log(`✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}（Age=${r.age}s）`);
+        staleBuild = false;
+        if (r.commit && r.commit === want && !notThisBuild(r)) {
+            console.log(newerRun(r)
+                ? `✅ 第 ${attempt} 次嘗試：線上是 ${want.slice(0, 12)} 較新的部署（run #${r.runNumber}，本 run 是 #${RUN_NUMBER}），站台服務的內容不會比本 run 舊。`
+                : `✅ 第 ${attempt} 次嘗試：線上已是 ${want.slice(0, 12)}（Age=${r.age}s）`);
             landed = true;
             break;
         }
-        // 線上不是我們，但可能是「更新的那一版已經先上線」。
-        if (r.commit && r.commit !== probed) {
+        if (r.commit === want) {
+            last = staleLabel(r);
+            staleBuild = true;
+        } else if (r.commit && r.commit !== probed) {
+            // 線上不是我們，但可能是「更新的那一版已經先上線」。
             const rel = await compareWithLive(r.commit);
             if (rel === null) {
                 // 判不出來就**不要**記進 probed。記下去的話，一次暫時性的 API 失誤
@@ -248,6 +279,7 @@ while (Date.now() < deadline) {
         );
     } catch (err) {
         last = String(err?.cause?.code || err?.message || err).slice(0, 60);
+        staleBuild = false;
         console.log(`  第 ${attempt} 次：${last}，繼續等`);
     }
     if (Date.now() + POLL_MS >= deadline) break;
@@ -297,7 +329,7 @@ if (landed && RECHECK_MS > 0) {
                     landed = false;
                 } else {
                     // 再確認刻意不推翻初次成功的情況有四種：compare 查不出關係、取不到線上資料、
-                    // 線上資料無效，以及這裡的快取副本太舊。每一種都記一筆，綠燈才不會和毫無疑問
+                    // 線上資料無效，以及快取副本太舊。每一種都記一筆，綠燈才不會和毫無疑問
                     // 的通過長得一樣。這裡若改成失敗，命中後拿到舊快取的每一次部署都會誤報，而那
                     // 是精確命中的常態路徑。
                     discounted++;
@@ -308,6 +340,20 @@ if (landed && RECHECK_MS > 0) {
                 }
             } else {
                 console.log(`  再確認：線上是 ${short(again.commit)}（${rel}），沒有退版。`);
+            }
+        } else if (notThisBuild(again)) {
+            // 同一個 commit、卻不是這次 run 建的那一份，也照 Age 判斷：太舊的副本不採信，同樣記一筆。
+            if (again.age <= FRESH_MAX_AGE_S) {
+                last = staleLabel(again);
+                staleBuild = true;
+                behindNote = `線上已變成 ${last}`;
+                landed = false;
+            } else {
+                discounted++;
+                console.log(
+                    `  再確認：拿到 Age=${again.age}s 的快取副本（超過 ${FRESH_MAX_AGE_S}s），內容是 ${staleLabel(again)}，` +
+                        '那是我們部署之前就取回的舊副本，不採信，維持成功結論。',
+                );
             }
         } else {
             console.log('  再確認：線上仍是本 commit。');
@@ -339,7 +385,9 @@ if (landed && (recheckApiFailures || recheckFailures || discounted)) {
 
 if (!landed) {
     console.error(
-        `\n❌ 線上站台沒有服務 ${short(want)}，也不是它的後代（最後看到：${last}）。\n` +
+        (staleBuild
+            ? `\n❌ 線上站台是 ${short(want)}，但不是這次 run 建的那一份（最後看到：${last}）。\n`
+            : `\n❌ 線上站台沒有服務 ${short(want)}，也不是它的後代（最後看到：${last}）。\n`) +
             (behindNote ? `  ${behindNote}——部署順序被倒過來了。\n` : '') +
             (apiFailures
                 ? `  注意：compare API 有 ${apiFailures} 次沒有回應，祖先判定可能因此不完整。\n`

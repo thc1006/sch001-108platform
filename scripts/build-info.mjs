@@ -49,6 +49,10 @@ const info = {
     // 而那個比對是 #81 用來證明「部署的就是被驗證的那一份」的方法。
     ref: process.env.GITHUB_REF || null,
     runId: process.env.GITHUB_RUN_ID || null,
+    // 只改 repository variable 就重新部署時 commit 不變，verify-deploy 靠遞增的 run_number 分辨新舊。
+    runNumber: process.env.GITHUB_RUN_NUMBER || null,
+    // Re-run 時 run_number 不變，verify-deploy 再比這個；BaseLayout 寫進 meta 的也是這個變數。
+    aiGatewayUrl: (process.env.PUBLIC_AI_GATEWAY_URL ?? '').trim() || null,
 };
 
 const out = path.join(DIST, 'build-info.json');

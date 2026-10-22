@@ -20,6 +20,8 @@
  * 因此本檔負責站台契約，lychee 留作第二層 defense-in-depth。
  */
 
+import { staticUrlPolicy } from './link-health.lib.mjs';
+
 /** 允許但不需要檢查存在性的 scheme。 */
 const IGNORED_SCHEMES = new Set(['mailto:', 'tel:', 'data:', 'blob:', 'about:']);
 /** 一律視為錯誤的 scheme（可執行內容）。 */
@@ -326,4 +328,29 @@ export function staticImportSpecifiers(src) {
         }
     }
     return [...specs];
+}
+
+/**
+ * AI 閘道網址（BaseLayout 依建置時的 PUBLIC_AI_GATEWAY_URL 輸出的 <meta name="ai-gateway-url">）
+ * 哪裡不合格；合格回傳 null。要部署的產物只收 https：前端（public/shared/platform-ai.js 的
+ * getGatewayUrl）為了本機開發另外接受 http://localhost，但那種網址進了正式站，每個學生都連不上。
+ * 同理，https 的本機、私有網段、CGNAT（Tailscale 的位址就在這段）、link-local 也不收，判斷規則
+ * 與外部網址的 link-policy 相同（staticUrlPolicy）。帳密、查詢字串、# 一律不收——前端讀到這種
+ * 網址會直接回報「尚未設定」。
+ */
+export function gatewayUrlProblem(raw) {
+    const text = String(raw ?? '').trim();
+    if (!text) return '是空的';
+    let url;
+    try {
+        url = new URL(text);
+    } catch {
+        return '不是合法的網址';
+    }
+    if (url.protocol !== 'https:') return '必須是 https';
+    if (url.username || url.password) return '不能帶帳號密碼';
+    if (url.search || url.hash) return '不能帶查詢字串或 #';
+    const policy = staticUrlPolicy(text);
+    if (!policy.ok) return `不能指向本機或內部網路（${policy.reason}）`;
+    return null;
 }
