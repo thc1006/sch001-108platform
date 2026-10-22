@@ -2,11 +2,8 @@
 const { defineConfig, devices } = require('@playwright/test');
 
 /**
- * 先前沒有這個設定檔，於是 tests/e2e/platform-ai.spec.js（當時叫 puter-ai.spec.js）的說明要求人工另開一個
- * terminal 跑 `npm run serve`。結果是：測試從來沒有真的被跑過，也進不了 CI。
- *
- * webServer 讓 Playwright 自己把伺服器帶起來。用自寫的 Node 靜態伺服器而不是
- * 原本的 `python -m http.server`：CI runner 不保證有 python。
+ * webServer 讓 Playwright 自己把伺服器帶起來，測試不必先手動開伺服器，CI 也能直接跑。
+ * 用自寫的 Node 靜態伺服器而不是 `python -m http.server`：CI runner 不保證有 python。
  */
 module.exports = defineConfig({
     testDir: './tests/e2e',
@@ -17,9 +14,9 @@ module.exports = defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
     // retry 的用途是拿到 flaky 的診斷（trace、report），不是讓 flaky 過關。
-    // 沒有這一行的話，重試後通過的 test 仍然算綠燈——間歇性失敗被當成成功，
-    // 而那正是最需要被看見的訊號。加上之後，本來就穩定的 run 不會變慢也不會變紅，
-    // 只有原本會被 retry 蓋掉的 flake 變成明確失敗。
+    // 沒有這一行的話，重試後通過的 test 仍然算綠燈，間歇性失敗被當成成功，
+    // 而那正是最需要被看見的訊號。有這一行，本來就穩定的 run 不會變慢也不會變紅，
+    // 只有會被 retry 蓋掉的 flake 變成明確失敗。
     failOnFlakyTests: !!process.env.CI,
     reporter: process.env.CI ? [['list'], ['github']] : 'list',
     use: {

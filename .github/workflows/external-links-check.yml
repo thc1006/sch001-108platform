@@ -2,9 +2,8 @@ name: External Links Health Check
 
 # 全站外部連結的排程健檢（#72 的最後一塊）。
 #
-# 在這支落地之前，全站外部連結沒有任何東西在把關：ci.yml 的 lychee 只驗
-# build 產物裡可靜態解析的站內路徑，競賽看門狗只涵蓋 competitions.json 的
-# 133 個網址——其餘 300 多個去重網址是完全沒人看的。
+# ci.yml 的 lychee 只驗 build 產物裡可靜態解析的站內路徑，競賽看門狗只涵蓋
+# competitions.json 的網址，全站其他外部連結只有這支會連線檢查。
 #
 # 網址來源是 check-built-site.mjs 產出的 .reports/url-inventory.json（實測 499
 # 個去重網址／1273 處引用，含每一處的出處檔案）。刻意不自己再掃一次：同一件事
@@ -27,7 +26,7 @@ concurrency:
   cancel-in-progress: false
 
 # issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
-# **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
+# 每一個 job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
 # job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
 # 新 job 就只會拿到下面這個 contents: read 的地板，要開 issue 必須自己寫出來。
 permissions:
@@ -50,9 +49,9 @@ jobs:
     # 而且帶著 issues: write。如果它能被任意分支觸發，任何人只要推一個分支再
     # 手動 dispatch，就能讓我們的 runner 去連他指定的位址、並把回應寫進 issue。
     #
-    # 同理，本檔**刻意不使用** pull_request 或 pull_request_target：
-    # pull_request_target 會用 base 的 workflow 定義搭配 head 的程式碼與資料，
-    # 並且帶著可寫入的 token——用它去探測 PR 提供的網址，等於把 SSRF 與 token
+    # 同理，本檔刻意不使用 pull_request 或 pull_request_target：
+    # pull_request_target 以 base 的 workflow 定義執行，並且帶著可寫入的 token，
+    # 在這種 workflow 裡拿 PR 的資料去探測其中的網址，等於把 SSRF 與 token
     # 外洩做成一個現成的入口。外部連結的可用性本來就不該擋 PR。
     if: github.ref == 'refs/heads/main'
     steps:
@@ -106,7 +105,7 @@ jobs:
         run: npm run check:site
 
       # 例外政策先驗一次再開始探測。政策過期（或被寫壞）時不可「當作沒有例外」
-      # 繼續跑——那會讓每週報告突然多出一堆早就審過的雜訊，維護者只會學會忽略。
+      # 繼續跑，那會讓每週報告突然多出一堆早就審過的雜訊，維護者只會學會忽略。
       # 這一步在 ci.yml 也會跑，所以正常情況下不會在這裡才第一次紅。
       - name: Validate the exception policy
         run: npm run check:link-policy
@@ -116,7 +115,7 @@ jobs:
         timeout-minutes: 20
         run: npm run check:external-links
 
-      # 沒有待辦項目時不會開 issue，報告內容原本無處可見（連「無法判定」清單也看不到）。
+      # 沒有待辦項目時不會開 issue，報告內容就無處可見（連「無法判定」清單也看不到）。
       # 一律貼到 job summary，讓每週的檢查結果在 Actions 頁面直接可讀。
       - name: Publish report to job summary
         if: always()

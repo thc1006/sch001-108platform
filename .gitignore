@@ -1,66 +1,63 @@
-# Only ignore these files in root directory (not in docs/)
+# 開頭的 / 讓這幾條只比對根目錄的檔案。
 /IMPLEMENTATION_SUMMARY.md
 /gemini-api.md
 /GEMINI_API_FIX_PLAN.md
 /TESTING_GUIDE.md
 
-# CLAUDE.md should always stay in root
+# CLAUDE.md 只留在本機，不進版控。
 CLAUDE.md
 
-# Ignore agent files
+# Claude Code 的 agent 定義檔
 .claude/agents/*
 
-# Claude Code 在 repo 內開的 git worktree。它們是完整的 checkout（本次清理時
-# 累積到 10 個、2.6 GB），git 會把它們當成未追蹤目錄列出來，淹掉真正該看的
-# git status。worktree 的存在本身由 .git/worktrees 追蹤，不需要也不應該入版控。
+# Claude Code 在 repo 內開的 git worktree。每個都是整份 repo 的 checkout，git 會把它們
+# 當成未追蹤目錄列出來，淹掉真正該看的 git status。worktree 的存在本身由
+# .git/worktrees 追蹤，不需要也不應該入版控。
 .claude/worktrees/
 
-# Playwright MCP 的頁面快照。除錯時每次操作都會落一個 .yml（本次清理時 181 個），
-# 是過程產物不是資產。
+# Playwright MCP 的頁面快照。除錯時每次操作都會落一個 .yml，是過程產物不是資產。
 .playwright-mcp/
 
-# Node.js dependencies
+# Node.js 相依套件
 node_modules/
 .npm/
 .node_repl_history
 
-# Playwright test results and reports
+# Playwright 測試結果與報告
 test-results/
 playwright-report/
 playwright/.cache/
 # playwright.config.js 必須入版控：CI 靠它啟動 webServer 與指定 testDir。
-# 先前被 ignore，導致設定檔只存在於本地——測試因此從來沒進過 CI，說明文件
-# 也只好要求人工另開 npm run serve。
 
 # Playwright MCP 瀏覽器工作階段的暫存輸出
 /.playwright-mcp/
 
-# OS files
+# 作業系統和編輯器自動產生的檔案
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
 *~
 
-# Editor files
+# 編輯器的專案設定
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 
-# Logs
+# 記錄檔
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
+# 環境變數檔
 # Vite／Astro 建置時會讀 .env.[mode]（例如 .env.production）；閘道網址這類設定一律走環境變數
 # 或 repository variable，不進 repo
 .env
 .env.*
 
-# Temporary files
+# 暫存檔
 *.tmp
 *.temp
 .cache/

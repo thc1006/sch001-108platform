@@ -1,7 +1,4 @@
 /*
- * ==================================================================
- * 自動化搜尋索引建立腳本
- * ==================================================================
  * 功能：
  * 1. 掃描 dist/ 內的所有 .html 檔案。
  * 2. 使用 cheerio 解析 HTML，智慧擷取頁面標題、描述、關鍵字與內文。
@@ -11,29 +8,27 @@
  * 5. 將所有擷取到的資料整合成一個 JSON 檔案 (search-index.json)。
  *
  * 如何使用：
- * 本腳本掃描的是 `astro build` 的產物 dist/，因此「務必」先執行 astro build，
+ * 本腳本掃描的是 `astro build` 的產物 dist/，因此要先執行 astro build，
  * 再執行本腳本：
  *   npx astro build && node build-search-index.js
- * （遷移到 Astro 後，實際頁面與資產 JSON 都會被 Astro 複製到 dist/，
- *   不再放在 repo 根目錄。）輸出的 search-index.json 也寫在 dist/ 根，
- *   這樣會跟著 dist/ 一起被部署到 GitHub Pages。
- * ==================================================================
+ * 頁面與資產 JSON 都由 Astro 輸出到 dist/，search-index.json 也寫在 dist/ 根，
+ * 這樣會跟著 dist/ 一起被部署到 GitHub Pages。
  */
 
 const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
 
-// 掃描起點改為 astro build 的輸出目錄 dist/（遷移前是 repo 根目錄 __dirname）。
-// 頁面與資產 JSON 都在 dist/ 下，JSON_DATA_PAGES 的相對路徑於 dist/ 內維持不變。
+// 掃描起點是 astro build 的輸出目錄 dist/，頁面與資產 JSON 都在這裡，
+// JSON_DATA_PAGES 的相對路徑也以它為準。
 // SEARCH_INDEX_DIST 可指向另一份建置產物。故障注入需要一份可以隨意破壞的副本，
 // 不能動到真正要部署的那一份（與 check-built-site.mjs 的 SITE_DIST 同一個道理）。
 const projectRoot = path.resolve(__dirname, process.env.SEARCH_INDEX_DIST || 'dist');
 const searchData = [];
 let idCounter = 1;
 
-// 要掃描的資料夾列表。只需根目錄：scanDirectory 會遞迴進入所有未排除的子目錄。
-// （先前同時列出 '' 與各子目錄，導致子目錄被掃描兩次、索引項目整批重複。）
+// 要掃描的資料夾列表。只需根目錄：scanDirectory 會遞迴進入所有未排除的子目錄，
+// 再列出子目錄的話，那些子目錄會被掃描兩次，索引項目整批重複。
 const directoriesToScan = [''];
 
 console.log('🚀 開始建立搜尋索引...');
@@ -81,7 +76,6 @@ function processHtmlFile(filePath, fileUrl) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const $ = cheerio.load(fileContent);
 
-    // --- 智慧擷取規則 ---
     const pageTitle = $('title').text().split(' - ')[0].trim() || path.basename(fileUrl, '.html');
     const description = $('meta[name="description"]').attr('content') || $('h1').first().text().trim();
     const keywords = $('meta[name="keywords"]').attr('content') || '';
@@ -102,7 +96,7 @@ function processHtmlFile(filePath, fileUrl) {
     $('[id]').each((_, el) => { const v = $(el).attr('id'); if (v) pageAnchorIds.add(v); });
     $('a[name]').each((_, el) => { const v = $(el).attr('name'); if (v) pageAnchorIds.add(v); });
 
-    // --- 特殊處理：抓取頁面內嵌的 JavaScript 資料 ---
+    // 抓取頁面內嵌在 <script> 裡的資料陣列。
     $('script').each((i, el) => {
         const scriptContent = $(el).html();
         if (!scriptContent) return;
@@ -115,9 +109,8 @@ function processHtmlFile(filePath, fileUrl) {
             // 資料」，警告後略過是對的。
             //
             // 但底下的項目迴圈不一樣：那裡失敗代表資料本身有問題（例如素養代碼
-            // 打錯），先前整段都在 try 裡，一個錯字會讓整頁的項目靜默消失、只留
-            // 一行 warning 而 CI 全綠。實際踩過：career-exploration 的學群卡片一
-            // 出現不認得的素養值，索引就從 405 筆掉到 396 筆。
+            // 打錯）。迴圈也包進 try 的話，一個錯字會讓整頁的項目靜默消失、只留
+            // 一行 warning 而 CI 全綠（#85）。
             let dataArray;
             try {
                 // 使用 Function 建構函式來安全地執行並取得陣列內容
@@ -127,7 +120,7 @@ function processHtmlFile(filePath, fileUrl) {
                 return;
             }
             if (Array.isArray(dataArray)) {
-                const dataType = match[1].replace('Data', ''); // e.g., 'interview'
+                const dataType = match[1].replace('Data', ''); // 例如 'major'
 
                 dataArray.forEach(item => {
                     if (!item || typeof item !== 'object') return;
@@ -143,14 +136,12 @@ function processHtmlFile(filePath, fileUrl) {
                             title: `${pageTitle} - ${itemTitle}`,
                             content: cheerio.load(itemContent).text(), // 去除 HTML 標籤
                             tags: [dataType, pageTitle, ...(item.tags || [])],
-                            // 內嵌資料目前都沒有分類欄位，但仍走同一個展開函式：
-                            // 兩條路徑各自實作，第二條遲早會忘記加，而症狀是
-                            // 「標籤靜默消失」——那正是本檔一路在防的東西。
+                            // 內嵌資料也走同一個展開函式，學群卡片的 competencies 在這裡展開。
+                            // 兩條路徑各自實作的話，第二條遲早會忘記加，症狀是標籤靜默消失。
                             ...taxonomyFor(item, itemTitle),
-                            // 錨點必須真的存在於建置產物中才加上。先前無條件產生
-                            // `#${dataType}-${item.id}`，但頁面是把項目 client-render 進
-                            // 容器（如 #sdg-grid），根本沒有逐項的 id——結果 17 筆搜尋結果
-                            // 指向不存在的錨點，點了只會停在頁面頂端。
+                            // 錨點必須真的存在於建置產物中才加上。頁面是把項目 client-render
+                            // 進容器（如 #sdg-grid），沒有逐項的 id，`#${dataType}-${item.id}`
+                            // 這種錨點並不存在，點了只會停在頁面頂端（#78）。
                             url: buildItemUrl(fileUrl, `${dataType}-${item.id || ''}`, pageAnchorIds)
                         });
                         console.log(`  ➡️ 已索引項目: ${itemTitle}`);
@@ -160,30 +151,28 @@ function processHtmlFile(filePath, fileUrl) {
         }
     });
 
-    // --- 已外移到 JSON 的資料驅動頁面：資料不再內嵌於 HTML，上方的
-    //     const ...Data 陣列擷取規則抓不到，改由此處讀對應 JSON 索引 ---
+    // data-pages.json 列出的頁面沒有 const ...Data 陣列可抓，項目從對應的 JSON 讀。
     const jsonPageCfg = JSON_DATA_PAGES[fileUrl];
     if (jsonPageCfg) {
         indexJsonDataPage(pageTitle, fileUrl, jsonPageCfg, pageAnchorIds);
     }
 }
 
-// 已將資料外移到 JSON 的頁面設定：HTML 路徑 → 該頁索引設定。
-// 之後若有更多頁面改為資料驅動，只要在此新增一筆即可。
-// 註：鍵（HTML 頁面相對路徑）與 json 路徑皆相對於掃描起點 projectRoot，
-//     遷移後即 dist/；資產 JSON 由 astro build 複製進 dist/ 後路徑不變。
+// 資料驅動頁面的設定：HTML 路徑 → 該頁索引設定。新增資料驅動頁面時，在
+// scripts/data-pages.json 加一筆。
+// 鍵（HTML 頁面相對路徑）與 json 路徑皆相對於掃描起點 projectRoot，也就是 dist/；
+// 資產 JSON 由 astro build 從 public/ 複製進 dist/，相對路徑相同。
 //   json      ：資料 JSON 路徑（相對 dist/）
 //   arrayKey  ：JSON 中存放項目陣列的鍵名
-//   nestedKey ：（可選）若 JSON 為巢狀結構——arrayKey 取出的是「分組陣列」，
-//               每個分組底下才有真正的項目陣列——則填入該項目陣列的鍵名，
+//   nestedKey ：（可選）JSON 為巢狀結構時填。這時 arrayKey 取出的是「分組陣列」，
+//               每個分組底下才有真正的項目陣列，nestedKey 就是該項目陣列的鍵名，
 //               索引時會以 groups.flatMap(g => g[nestedKey]) 攤平成單層清單。
 //               扁平結構（arrayKey 直接就是項目陣列）不需填此欄位。
 //   idPrefix  ：搜尋索引 id 前綴（與 arrayKey 解耦，避免不同頁鍵名相同時難追溯來源）
 //   tag       ：給使用者看的中文分類標籤（不用內部英文鍵名兼差）
 //   anchor    ：頁內錨點 id
-// 資料驅動頁面的設定改由 scripts/data-pages.json 提供，與 check-built-site.mjs 共用。
-// 先前這份對應表只存在於本檔，站台契約檢查若要知道「JSON 的相對路徑該相對哪個
-// 頁面解析」就得手抄第二份——手抄必然漂移，那正是 #72 一路在修的失效模式。
+// 這份設定與 check-built-site.mjs 共用：站台契約檢查也要知道「JSON 的相對路徑該相對
+// 哪個頁面解析」，手抄第二份必然漂移，那正是 #72 一路在修的失效模式。
 const dataPagesConfig = require('./scripts/data-pages.json');
 const JSON_DATA_PAGES = dataPagesConfig.pages;
 
@@ -192,7 +181,7 @@ const JSON_DATA_PAGES = dataPagesConfig.pages;
 const TAXONOMY = require('./scripts/taxonomy.json');
 // 同一個 competencies 欄位在既有資料裡有兩種寫法：公民科技專案存代碼（"A2"），
 // 生涯學群卡片（career-exploration/index.astro 的內嵌資料）存中文名
-// （"系統思考與解決問題"）。兩者指的是同一件事，索引時一律正規化成代碼——
+// （"系統思考與解決問題"）。兩者指的是同一件事，索引時一律正規化成代碼。
 // 否則使用者打「A2」只會找到其中一半，而另一半沒有任何跡象顯示它被漏掉了。
 const COMPETENCY_BY_LABEL = new Map(
     Object.entries(TAXONOMY.competencies).map(([code, v]) => [v.label, code]),
@@ -213,9 +202,9 @@ const ITEM_TAG_ARRAY_FIELDS = ['tags', 'subjects'];
  * 見 issue #14 的 schema 提案）、taxonomy（中文標籤，讓使用者打「系統思考」
  * 「永續城鄉」「社會參與」也命中）。
  *
- * fail closed：代碼不合法就直接 throw 讓建置紅燈。這裡若改成「跳過不認得的值」，
- * 症狀會是「搜尋找不到那個標籤」而不是「建置失敗」——沒有人會回報那種症狀，
- * 而 CI 會一路全綠。這正是 #78 修掉的那類假象。
+ * fail closed：代碼不合法就直接 throw 讓建置紅燈。跳過不認得的值的話，症狀會是
+ * 「搜尋找不到那個標籤」而不是「建置失敗」，沒有人會回報那種症狀，CI 也會一路
+ * 全綠。這正是 #78 修掉的那類假象。
  *
  * 沒有任何分類欄位的項目回傳空物件，索引項目維持原樣（不塞空陣列進去）。
  */
@@ -271,7 +260,7 @@ function taxonomyFor(item, label) {
 
 // 搜尋結果的 URL：錨點存在才加，否則只回頁面路徑。
 // 指向不存在的錨點不會讓連結壞掉（頁面仍載入），但會讓「跳到該項目」這個承諾
-// 失效，且靜默——這正是 scripts/check-built-site.mjs 現在會擋下的那一類。
+// 靜默失效，scripts/check-built-site.mjs 會擋下這類錨點。
 function buildItemUrl(fileUrl, anchor, anchorIds) {
     return anchorIds && anchorIds.has(anchor) ? `${fileUrl}#${anchor}` : fileUrl;
 }
@@ -280,20 +269,16 @@ function buildItemUrl(fileUrl, anchor, anchorIds) {
 function indexJsonDataPage(pageTitle, fileUrl, cfg, pageAnchorIds) {
     const jsonPath = path.join(projectRoot, cfg.json);
     // fail closed：這些 JSON 是 JSON_DATA_PAGES 明確設定的必要資料來源，不是
-    // 選配。先前缺檔時只 warn 後略過，整個資料頁的搜尋項目會靜默消失而 CI 全綠
-    // ——「少了一整頁的搜尋結果」不該是一個警告，而該是建置失敗。
+    // 選配。缺檔只 warn 後略過的話，整個資料頁的搜尋項目會靜默消失而 CI 全綠；
+    // 「少了一整頁的搜尋結果」不該是一個警告，而該是建置失敗。
     if (!fs.existsSync(jsonPath)) {
         throw new Error(`必要的資料來源不存在：${cfg.json}（供 ${fileUrl} 使用）`);
     }
     let parsed;
+    // 後面的迴圈不放進 try，它丟出的錯誤才不會被標成「解析失敗」。
     try {
         parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
     } catch (e) {
-        // 同上：設定過的資料來源解析不了，代表搜尋功能已經殘缺，應直接讓建置與
-        // 部署失敗，而不是產出一份「看起來成功、實際少了東西」的索引。
-        //
-        // try 只包住 JSON.parse。先前整個項目迴圈都在 try 裡，任何 schema 錯誤
-        // 都會被改寫成「資料來源解析失敗」，訊息把讀的人指向錯的地方。
         throw new Error(`必要的資料來源解析失敗：${cfg.json}：${e.message}`);
     }
     const topLevel = Array.isArray(parsed[cfg.arrayKey]) ? parsed[cfg.arrayKey] : [];
@@ -343,7 +328,7 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg, pageAnchorIds) {
  *                   自己的 id 時使用（公民科技專案地圖）。
  *
  * 兩者都 fail closed：對不上就讓建置失敗。這裡刻意不沿用 buildItemUrl 的「錨點
- * 不存在就退回頁面路徑」——那條路適用於「本來就不保證有錨點」的內嵌資料；而這裡
+ * 不存在就退回頁面路徑」。那條路適用於「本來就不保證有錨點」的內嵌資料；而這裡
  * 的錨點是 data-pages.json 明講的契約，靜默退回只會讓整批結果指向頁首而沒有任何
  * 訊號。#78 修掉的 17 筆壞錨點正是那樣產生的。
  */
