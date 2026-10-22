@@ -257,17 +257,10 @@ jobs:
           node-version-file: '.node-version'
           package-manager-cache: false
 
-      # node --test 會略過清單裡找不到的檔案，有一個找得到就以 0 結束。source-hygiene
-      # 比對清單與測試目錄，它自己改名時也會被略過，所以先確認清單裡的檔案都在。
+      # source-hygiene 被移出清單時，它對清單的比對也跟著消失。這裡不經清單直接執行，
+      # 檔案被刪或改名時 node --test 找不到它，以 1 結束。
       - name: Check the gateway test list
-        run: |
-          node -e '
-            const script = require("./package.json").scripts["test:ai-gateway"];
-            const files = script.split(/\s+/).filter((arg) => arg.startsWith("ai-gateway/test/"));
-            if (files.length < 3) throw new Error(`test:ai-gateway 只列了 ${files.length} 個測試檔`);
-            for (const file of files) require("node:fs").accessSync(file);
-            console.log(`${files.length} 個測試檔都在`);
-          '
+        run: node --test ai-gateway/test/source-hygiene.test.mjs
 
       # 單一測試卡住由 --test-timeout 判失敗。測試檔留下沒關的 handle 時子程序不會
       # 結束，由這一步的上限判 failure，不會拖到 job 逾時變成 cancelled（#92）。

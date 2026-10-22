@@ -340,9 +340,9 @@ npm run test:ai-gateway
 「AI Gateway Tests」job 跑的就是這一條。`test/source-hygiene.test.mjs` 另外檢查：
 原始碼裡不能有看不見的字元（控制、格式與預設可忽略的字元、特殊空白，寫在正規表示式裡時
 畫面上完全看不出來），以及 `test:ai-gateway` 明列的測試檔要剛好等於 `test/` 底下（含子目錄）
-扣掉輔助檔的所有 JS／TS 檔（新增測試檔時忘了加進清單會被擋下）。反過來，清單裡的檔案不存在時
-`node --test` 不會報錯（參數被當成 glob，沒比對到就略過），所以 CI 在跑測試之前另外檢查清單
-裡的每個檔案都在。
+扣掉輔助檔的所有 JS／TS 檔（新增測試檔時忘了加進清單會被擋下）。`node --test` 會略過清單裡
+找不到的檔案，source-hygiene 被移出清單時這項比對也跟著消失，所以 CI 在跑測試之前先不經清單
+直接執行它；檔案被刪或改名時 `node --test` 找不到它，以 1 結束。
 
 `test:ai-gateway` 不加 `--test-force-exit`。這個旗標讓每個測試檔的子程序跑完就呼叫
 `process.exit()`，而 POSIX 上寫進 pipe 是非同步的，還沒送到主程序的測試結果會被丟掉。
