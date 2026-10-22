@@ -19,13 +19,13 @@
 (function (global) {
     'use strict';
 
-    // 版號只寫這一個地方。守衛與匯出各寫一次的話，有人把匯出改成 4 卻沒動守衛，
-    // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件——而那正是它想避免的事。
+    // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
+    // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
     var VERSION = 5;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
-    // 自己的，於是不返回、把新版整個覆蓋掉——安靜降級成舊版行為。
+    // 自己的，於是不返回、把新版整個覆蓋掉，悄悄降級成舊的那份。
     if (global.PlatformAI && global.PlatformAI.__version >= VERSION) {
         return; // 同版或更新的版本已經載入了
     }
@@ -35,9 +35,7 @@
     var panelEl = null;
     var bodyEl = null;
 
-    // ------------------------------------------------------------
-    // Safe stringify（處理循環引用、BigInt、不可序列化值、primitive）
-    // ------------------------------------------------------------
+    // safeStringify 把任何值轉成字串，循環引用、BigInt 和無法序列化的值都不會讓它丟錯。
     function safeStringify(value) {
         // Primitive 分支：避免 JSON.stringify 產生帶引號的 string（"oops"），
         // 或對 function / symbol / undefined 回傳 undefined 導致契約破損
@@ -85,9 +83,6 @@
         return safeStringify(err);
     }
 
-    // ------------------------------------------------------------
-    // Logger
-    // ------------------------------------------------------------
     function nowString() {
         var d = new Date();
         var hh = String(d.getHours()).padStart(2, '0');
@@ -134,9 +129,6 @@
         if (bodyEl) bodyEl.textContent = '';
     }
 
-    // ------------------------------------------------------------
-    // Debug panel（浮動 UI，使用者端可見）
-    // ------------------------------------------------------------
     function shouldAutoMountPanel() {
         try {
             if (typeof window === 'undefined' || !window.location) return false;
@@ -348,9 +340,7 @@
         return panelEl;
     }
 
-    // ------------------------------------------------------------
-    // runTask：呼叫本地 LLM 閘道
-    // ------------------------------------------------------------
+    // runTask 呼叫本地 LLM 閘道。
     //
     // 網站是 GitHub Pages 上的靜態頁面，AI 由我們架在 k3s 上的閘道提供。瀏覽器只說
     // 「要做哪個任務、輸入是什麼」（POST <閘道>/v1/tasks/<任務>，body {"input": {...}}），
@@ -373,7 +363,8 @@
     // 兩者加起來再長一點，否則閘道還在正常工作，瀏覽器就先放棄了
     var DEFAULT_TASK_TIMEOUT_MS = 20 * 60 * 1000;
     // setTimeout 能接受的最長延遲（32 位元有號整數）。超過的值，包括 Infinity，瀏覽器會
-    // 當成 0 立刻觸發——timeoutMs: Infinity 本意是「不另設時限」，結果卻是馬上逾時
+    // 當成 0 立刻觸發，所以 timeoutMs 要夾在這個值以內；不夾的話，想表示「不另設時限」的
+    // timeoutMs: Infinity 會馬上逾時。
     var MAX_TIMER_MS = 2147483647;
     // 閘道每 15 秒送一次心跳；連續一分鐘什麼都沒收到，就當作連線斷了。閘道的心跳間隔
     // （HEARTBEAT_MS）上限是 30 秒，這裡留了一倍的餘裕；兩邊要一起改，否則閘道的心跳
@@ -609,9 +600,9 @@
      *   其餘一律是 AIError（見 makeAIError）
      * 要顯示的文字交給 describeError()。
      *
-     * signal 不要拿來設時限。頁面原本的 signal: AbortSignal.timeout(30000) 遷移時必須拿掉：
-     * 閘道排隊和生成都可能超過 30 秒，各自的時限見 DEFAULT_TASK_TIMEOUT_MS 的說明。照抄的話，
-     * 長一點的任務一律失敗，排隊中的學生也永遠輪不到。要比預設更短的時限，用 timeoutMs。
+     * signal 不要拿來設時限，例如 signal: AbortSignal.timeout(30000)：閘道排隊和生成都可能
+     * 超過 30 秒，各自的時限見 DEFAULT_TASK_TIMEOUT_MS 的說明。這樣設的話，長一點的任務
+     * 一律失敗，排隊中的學生也永遠輪不到。要比預設更短的時限，用 timeoutMs。
      */
     async function runTask(taskId, input, options) {
         options = options || {};
@@ -782,10 +773,10 @@
             if (signal) signal.removeEventListener('abort', onAbort);
             // 一律中止這個請求，連線才會釋放；串流已經正常結束的話，abort 沒有任何作用。
             // 提早離開（收到 done、出錯、取消）時連線一關，閘道那端就會停止上游。
-            // 不能只靠 reader.cancel()：Content-Type 不對、或不是閘道給的錯誤回應，body 根本
-            // 不讀，原本也就不關——同一個主機的 HTTP/1.1 連線只有 6 條，連續 6 次之後所有請求
-            // 都會卡住；而且 Firefox 的 reader.cancel() 不會關掉 HTTP/1.1 連線，abort() 兩個
-            // 瀏覽器都會關
+            // 不能只靠 reader.cancel()：Content-Type 不對、或不是閘道給的錯誤回應時，body 根本
+            // 不讀，也就沒有 reader 可以 cancel。同一個主機的 HTTP/1.1 連線只有 6 條，連續 6 次
+            // 之後所有請求都會卡住；而且 Firefox 的 reader.cancel() 不會關掉 HTTP/1.1 連線，
+            // abort() 兩個瀏覽器都會關。
             controller.abort();
         }
     }
@@ -811,9 +802,7 @@
         return '抱歉，AI 服務發生錯誤，請稍後再試。';
     }
 
-    // ------------------------------------------------------------
-    // mountProgress：任務進行中的進度顯示
-    // ------------------------------------------------------------
+    // mountProgress 在任務進行中顯示進度，用法：
     //
     //   var ctrl = new AbortController();
     //   var progress = PlatformAI.mountProgress(progressEl, {
@@ -976,13 +965,11 @@
         };
     }
 
-    // ------------------------------------------------------------
-    // renderMarkdown：把 AI 回應的 markdown 子集安全地轉成 HTML
-    // ------------------------------------------------------------
+    // renderMarkdown 把 AI 回應的 markdown 子集安全地轉成 HTML。
     //
-    // 安全模型（務必理解，順序不可顛倒）：
+    // 安全模型（順序不可顛倒）：
     //
-    //   AI 的輸出是「不可信來源」——模型可能（被誘導）回傳含
+    //   AI 的輸出是「不可信來源」，模型可能（被誘導）回傳含
     //   `<script>`、`<img onerror=...>`、`onclick=...` 等可執行 HTML
     //   的字串。若直接 innerHTML 注入會造成 XSS。
     //
@@ -997,8 +984,8 @@
     //   自己插入的 <strong> 也一起 escape 掉（功能壞掉）；如果只渲染
     //   不 escape，AI 注入的 HTML 就會原樣執行（安全壞掉）。
     //
-    //   另外刻意「不」支援連結 [](...)、圖片 ![]()、原始 HTML
-    //   ——它們都是注入面（javascript: URL、onerror 事件等），
+    //   另外刻意「不」支援連結 [](...)、圖片 ![]()、原始 HTML，
+    //   它們都是注入面（javascript: URL、onerror 事件等），
     //   排除後本函式產生的 HTML 標籤集合是固定且封閉的。
     //
     function escapeHtml(text) {
@@ -1013,7 +1000,7 @@
     }
 
     function renderMarkdown(text) {
-        // 步驟 1：HTML escape——在套用任何 markdown 之前先做。
+        // 步驟 1：在套用任何 markdown 之前先做 HTML escape。
         // 經過這一步後，字串裡不可能再有可被瀏覽器解析的標籤 / 屬性。
         var safe = escapeHtml(text);
 
@@ -1048,7 +1035,7 @@
 
         // 行內語法（在整段文字上套用）：
         // 粗體 **text** → <strong>，斜體 *text* → <em>，行內碼 `code` → <code>
-        // 注意先處理 ** 再處理 *，否則 ** 會被 * 規則先吃掉。
+        // 先處理 ** 再處理 *，否則 ** 會被 * 規則先吃掉。
 
         // 行內碼：`...`（escape 後反引號仍是反引號）
         result = result.replace(/`([^`\n]+)`/g, '<code>$1</code>');
@@ -1065,9 +1052,6 @@
         return result;
     }
 
-    // ------------------------------------------------------------
-    // 匯出
-    // ------------------------------------------------------------
     global.PlatformAI = {
         __version: VERSION,
         formatError: formatError,

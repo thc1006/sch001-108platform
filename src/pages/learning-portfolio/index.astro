@@ -8,9 +8,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="learning-portfolio"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 學習歷程<span class="gradient-text">煉金室</span>
@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- AI Portfolio Health Check -->
+        <!-- AI 學習歷程健檢工具 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
              <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
              <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
@@ -42,11 +42,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
              </div>
         </section>
 
-        <!-- Core Features Navigation -->
+        <!-- 四大核心工房導覽 -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">煉金室四大核心工房</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Feature 1: Portfolio Gallery -->
+                <!-- 工房 1：優質範例藝廊 -->
                 <a href="portfolio-gallery.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
@@ -55,7 +55,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-gray-600 text-sm">觀摩最好的作品，建立你的標竿。</p>
                 </a>
 
-                <!-- Feature 2: Reflection Guide -->
+                <!-- 工房 2：反思引導提問集 -->
                 <a href="reflection-guide.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-cyan-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -64,7 +64,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-gray-600 text-sm">問對問題，讓你的心得更有深度。</p>
                 </a>
 
-                <!-- Feature 3: Activity Database -->
+                <!-- 工房 3：多元表現資料庫 -->
                 <a href="activity-database.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-sky-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.586-.586a2 2 0 012.828 0l.586.586M11 11a1 1 0 11-2 0 1 1 0 012 0zM13 11a1 1 0 11-2 0 1 1 0 012 0zM16.293 4.293l.586.586a2 2 0 010 2.828l-.586.586"></path></svg>
@@ -73,7 +73,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-gray-600 text-sm">尋找能豐富你履歷的課外活動。</p>
                 </a>
 
-                <!-- Feature 4: Tools -->
+                <!-- 工房 4：線上製作工具箱 -->
                 <a href="tools.html" class="block bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 text-center">
                     <div class="flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-4 mx-auto">
                         <svg class="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
@@ -87,8 +87,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   <script is:inline src="../shared/platform-ai.js"></script>
   <script is:inline>
-        // --- AI Health Check Logic ---
-        // prompt 與輸出格式在閘道的 star-analysis 任務（ai-gateway/src/task-catalog.mjs）。
+        // AI 學習歷程健檢的 prompt 與輸出格式在閘道的 star-analysis 任務（ai-gateway/src/task-catalog.mjs）。
         const analyzeBtn = document.getElementById('analyzeBtn');
         const reflectionInput = document.getElementById('reflectionInput');
         const analysisWork = document.getElementById('analysisWork');

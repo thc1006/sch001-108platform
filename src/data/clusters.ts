@@ -1,4 +1,4 @@
-// 十大學群的中繼資料 —— 學群探索頁、學群中心頁、主題子頁共用。
+// 十大學群的中繼資料，學群探索頁、學群中心頁、主題子頁和 astro.config.mjs 的 sitemap 設定共用。
 // slug 對應 src/content/clusters/<slug>/ 內容目錄與 /career-exploration/clusters/<slug>/ 路由。
 
 export interface ClusterMeta {

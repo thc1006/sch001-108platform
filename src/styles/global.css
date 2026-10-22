@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* @tailwindcss/typography —— 提供 `prose` 類別,
-   用於渲染學群指南等 Markdown 內容(src/content/clusters/**)。 */
+/* @tailwindcss/typography 提供 `prose` 類別，
+   用於渲染學群指南等 Markdown 內容（src/content/clusters/**）。 */
 @plugin "@tailwindcss/typography";
 
 /* competency-map 頁以 JS 字串插值動態組出圖示色彩類別
@@ -10,16 +10,16 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
-/* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數——Tailwind 會把
+/* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數：Tailwind 會把
    :root 自訂屬性剪掉，top 退回 auto、sticky 靜默失效。把關見 layout-budget.spec.js。 */
 
-/* 全站共用樣式。取代先前散落在各頁 <head>、彼此重複又不一致的 inline <style>。 */
+/* 全站共用樣式。 */
 
 body {
   font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
 
-/* 漸層標題字 —— cool:首頁等;warm:競賽等頁面 */
+/* 漸層標題字。gradient-text 用在首頁等頁面；gradient-text-warm 目前沒有頁面使用。 */
 .gradient-text {
   background: -webkit-linear-gradient(45deg, #4f46e5, #14b8a6);
   -webkit-background-clip: text;

@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { getCluster, TOPICS } from '../../../../data/clusters';
 
-// 60 個學群主題子頁 —— 10 學群 × 6 主題,內容來自 clusters 集合。
+// 60 個學群主題子頁，10 學群 × 6 主題，內容來自 clusters 集合。
 export async function getStaticPaths() {
   const entries = await getCollection('clusters');
   return entries.map((entry) => {
@@ -17,8 +17,8 @@ const { cluster: clusterSlug, topic: topicSlug } = Astro.params;
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const cluster = getCluster(clusterSlug);
 if (!cluster) {
-  // 內容目錄存在但未在 src/data/clusters.ts 的 CLUSTERS 註冊 ——
-  // 建置期即顯式失敗,避免靜默產出麵包屑空白、死連結的壞頁。
+  // 內容目錄存在但未在 src/data/clusters.ts 的 CLUSTERS 註冊時，建置期就明確失敗，
+  // 免得安靜地產出麵包屑空白、連結失效的壞頁。
   throw new Error(`[topic].astro:未知學群 "${clusterSlug}",請在 src/data/clusters.ts 的 CLUSTERS 註冊`);
 }
 const { Content } = await render(entry);
@@ -116,7 +116,7 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
     /* Markdown 表格在窄視窗會把整頁撐寬（實測 360px 視窗下溢出 27px，手機上會
        左右晃）。內容來自 src/content/clusters 底下的 Markdown，作者無法逐一控制欄寬，
        所以在渲染層讓表格自己橫向捲動，而不是讓它撐破版面。
-       包一層 block 容器才有捲動軸——直接對 table 設 overflow 在多數瀏覽器無效。 */
+       表格要設成 display: block 才有捲動軸，直接對 table 設 overflow 在多數瀏覽器無效。 */
     .md-content > table,
     .md-content table {
       display: block;

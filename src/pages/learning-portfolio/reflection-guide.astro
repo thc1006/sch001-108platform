@@ -8,9 +8,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="learning-portfolio"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 反思引導<span class="gradient-text">提問集</span>
@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- STAR Method Explanation -->
+        <!-- STAR 敘事法說明 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">反思第一步：學習 STAR 敘事法</h2>
             <p class="text-gray-600 mb-6">不知道如何組織你的故事？試試看 STAR 原則，這是一個能讓你的反思更有結構、更具說服力的強大框架！</p>
@@ -48,21 +48,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Reflection Tools Section -->
+        <!-- 反思工具 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Left: Static Question Generator -->
+            <!-- 左欄：情境式提問 -->
             <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">工具一：情境式提問</h2>
                 <p class="text-gray-600 mb-6">選擇你參與的活動情境，讓我們為你點亮思考的火花。</p>
                 <div id="reflection-category-btns" class="flex flex-wrap gap-3 mb-6">
-                    <!-- Category buttons will be injected here -->
+                    <!-- 情境按鈕由 renderCategoryButtons() 填入 -->
                 </div>
                 <div id="reflection-question-output" class="bg-gray-50 p-6 rounded-lg flex-grow flex items-center justify-center transition-all duration-300 min-h-[120px]">
                     <p class="text-gray-500 text-center">請選擇一個情境，開始你的深度反思之旅。</p>
                 </div>
             </div>
 
-            <!-- Right: AI Health Check -->
+            <!-- 右欄：AI 學習歷程健檢 -->
             <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">✨ 工具二：AI 學習歷程健檢</h2>
                 <p class="text-gray-600 mb-6">將你寫好的心得反思文字貼入下方，AI 教練將根據 STAR 原則分析你的內容，並提供具體的修改建議！</p>
@@ -83,7 +83,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
-        // --- Static Question Generator Logic ---
         const reflectionData = {
             '專題研究': [
                 '這個研究主題最初吸引你的地方是什麼？',
@@ -147,9 +146,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
         }
 
-        // --- AI Health Check Logic ---
-        // prompt 與輸出格式在閘道的 star-analysis 任務（ai-gateway/src/task-catalog.mjs），
-        // 與學習歷程首頁共用。
+        // AI 學習歷程健檢的 prompt 與輸出格式在閘道的 star-analysis 任務
+        // （ai-gateway/src/task-catalog.mjs），與學習歷程首頁共用。
         const analyzeBtn = document.getElementById('analyzeBtn');
         const reflectionInput = document.getElementById('reflectionInput');
         const analysisWork = document.getElementById('analysisWork');
@@ -301,7 +299,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             analysisResult.appendChild(container);
         }
 
-        // Initial Render
         renderCategoryButtons();
     </script>
 

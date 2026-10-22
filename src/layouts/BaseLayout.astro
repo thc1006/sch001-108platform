@@ -3,8 +3,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
-// 全站統一版型。每頁只需提供 metadata,<head> 樣板、導覽列、頁尾、
-// 分析碼一律由此集中宣告 —— 取代先前每頁各自重複又不一致的 <head>/nav/footer。
+// 全站統一版型。每頁只需提供 metadata，<head> 樣板、導覽列、頁尾、
+// 分析碼一律在這裡集中宣告。
 interface Props {
   title: string;
   description: string;
@@ -26,26 +26,16 @@ const {
   bodyClass = 'bg-gray-50 text-gray-800',
 } = Astro.props;
 
-// canonical / og:url —— 直接用 Astro.url.pathname,不再自己補 .html。
-//
-// Astro 6 時期 build.format:'preserve' 下 pathname 給的是「路由路徑」
-// (/…/competitions/),指到 GitHub Pages 上不存在的網址,所以這裡曾有一段把非
-// .html 結尾的路徑補上 .html 的修補,並用 isSectionIndex 這個 prop 把區段首頁
-// (foo/index.astro,要維持目錄式網址)排除在外。
-//
-// Astro 7.2.0 起上游已修正,pathname 就是實際輸出的檔案路徑。實測方式:在這裡把
-// 每一頁的 pathname 與轉換結果印出來建一次,93 頁裡 76 頁本來就以 .html 結尾、
-// 16 頁是區段首頁、1 頁是站台首頁,那段 if 一次都沒進去,轉換次數 0。既然分支永遠
-// 走不到,連同只為它存在的 isSectionIndex prop(及 7 個呼叫端)一併移除,免得留下
-// 一段不會執行、註解還跟現況相反的程式碼。移除前後全站 94 頁的 canonical 與
-// og:url 逐字比對 0 差異。
+// canonical 與 og:url 直接用 Astro.url.pathname。build.format 是 'preserve'，Astro 7.2.0 起
+// pathname 已經對應實際輸出的檔案：一般頁面以 .html 結尾，區段首頁（foo/index.astro）與
+// 站台首頁是目錄式網址，不必自己補 .html（#133）。
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 
 // 網站的 AI 功能呼叫的本地 LLM 閘道（public/shared/platform-ai.js 從這個 meta 讀）。
-// 由建置環境的 PUBLIC_AI_GATEWAY_URL 決定——CI 從 repository variable AI_GATEWAY_URL 帶入，
-// 網址不寫進 repo。沒設定時不輸出，改走閘道的 AI 功能（PlatformAI.runTask）會回報「尚未設定」。
-// 網址合不合格、是否與建置時的設定一致由 check:site 把關
+// 由建置環境的 PUBLIC_AI_GATEWAY_URL 決定，CI 從 repository variable AI_GATEWAY_URL 帶入，
+// 網址不寫進 repo。沒設定時不輸出，AI 功能（PlatformAI.runTask）會回報「尚未設定」。
+// 網址合不合格、是否與建置時的設定一致由 check:site 把關。
 const aiGatewayUrl = (import.meta.env.PUBLIC_AI_GATEWAY_URL ?? '').trim();
 ---
 
@@ -83,7 +73,7 @@ const aiGatewayUrl = (import.meta.env.PUBLIC_AI_GATEWAY_URL ?? '').trim();
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter 分享卡片 -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={ogTitle} />
     <meta name="twitter:description" content={ogDescription} />

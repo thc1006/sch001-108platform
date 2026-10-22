@@ -53,7 +53,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         expect(calls[0].url).toBe('https://gateway.example/v1/tasks/starter-pack');
         expect(JSON.parse(calls[0].body)).toEqual({ input: { topic: '我想研究貓咪' } });
 
-        // 按鈕恢復可按，文字與圖示都還在（以前會被整個換成純文字）
+        // 按鈕恢復可按，文字與圖示都還在（頁面只換按鈕裡 span 的文字，不能把整個按鈕換成純文字）。
         const button = page.locator('#generateCoachBtn');
         await expect(button).toBeEnabled();
         await expect(button).toHaveText('請求指導');

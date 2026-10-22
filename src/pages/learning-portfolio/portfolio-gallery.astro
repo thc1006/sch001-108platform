@@ -8,9 +8,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="learning-portfolio"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 優質範例<span class="gradient-text">藝廊</span>
@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- Featured Exhibit -->
+        <!-- 焦點範例 -->
         <section class="mb-16">
             <h2 class="text-3xl font-bold mb-6 text-center">焦點範例</h2>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
@@ -38,7 +38,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Filters -->
+        <!-- 篩選器 -->
         <section class="mb-12 sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-4" data-autohide-filters>
             <div class="bg-white p-4 rounded-xl shadow-md">
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -64,10 +64,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Portfolio Grid -->
+        <!-- 作品卡片網格 -->
         <section>
             <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Portfolio cards will be injected here -->
+                <!-- 作品卡片由 renderPortfolioGrid() 填入 -->
             </div>
             <div id="no-results" class="hidden text-center py-16">
                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -79,16 +79,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
     </main>
 
-    <!-- Portfolio Detail Modal -->
+    <!-- 作品詳情對話框 -->
     <div id="portfolioModal" class="fixed inset-0 z-50 items-center justify-center hidden">
         <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
         <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-4xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            <!-- Modal content will be injected here -->
+            <!-- 對話框內容由 showModal() 填入 -->
         </div>
     </div>
 
     <script is:inline>
-        // 資料改由同目錄的 portfolio-gallery.json 載入（見下方 loadData）。
+        // 資料從同目錄的 portfolio-gallery.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 portfolio-gallery.json，不需要動這支 HTML。
         let portfolioData = [];
 
@@ -198,7 +198,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             appendOptions(tagFilter, tags);
         }
 
-        // --- Filter Logic ---
         categoryFilter.addEventListener('change', renderPortfolioGrid);
         typeFilter.addEventListener('change', renderPortfolioGrid);
         tagFilter.addEventListener('change', renderPortfolioGrid);
