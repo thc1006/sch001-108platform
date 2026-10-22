@@ -11,7 +11,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
   ogDescription="我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感。"
 >
   <main id="main-content">
-    <!-- Hero Section -->
+    <!-- 主視覺區塊 -->
     <section class="bg-white">
       <div class="container mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -27,7 +27,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             </a>
           </div>
           <div class="flex items-center justify-center p-4">
-            <!-- Inline SVG Illustration -->
+            <!-- 內嵌 SVG 插圖 -->
             <svg viewBox="0 0 200 200" class="w-full max-w-md">
               <defs>
                 <filter id="glow">
@@ -81,7 +81,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       </div>
     </section>
 
-    <!-- Exploration Paths Section -->
+    <!-- 探索路徑區塊 -->
     <section id="paths" class="py-20">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
@@ -114,7 +114,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       </div>
     </section>
 
-    <!-- Latest Resources Section -->
+    <!-- 精選資源區塊 -->
     <section id="showcase" class="py-20 bg-gray-200/50">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
@@ -141,7 +141,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       </div>
     </section>
 
-    <!-- About Us Teaser -->
+    <!-- 關於我們簡介 -->
     <section class="py-20">
       <div class="container mx-auto px-6 text-center">
         <h2 class="text-3xl md:text-4xl font-bold">我們是誰？</h2>
@@ -159,39 +159,34 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
   </main>
 
   <!-- 1. 引入 Fuse.js 函式庫 -->
-  <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
+  {/* 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
          從 node_modules 複製。
 
-         type="module" 而不是原本的 classic script（#94）：fuse.js 7 起 dist/
-         底下只剩 .cjs 與 .mjs，UMD／IIFE build 一個都沒有了——也就是說「載進來
-         就有 window.Fuse」這條路徑在 7 以後不存在。ESM 則是 6（dist/fuse.esm.js）
-         與 7（dist/fuse.min.mjs）都有，所以改走 ESM 才是同時吃得下兩個大版的
-         那一條。上游檔名的差異由 vendor-assets.mjs 吸收：它一律輸出成
+         用 type="module" 載入（#94）：fuse.js 7 起 dist/ 底下只剩 .cjs 與 .mjs，
+         沒有 UMD／IIFE build，「載進來就有 window.Fuse」的 classic script 在 7 以後
+         不存在。ESM 則是 6（dist/fuse.esm.js）與 7（dist/fuse.min.mjs）都有，走 ESM
+         才同時吃得下兩個大版。上游檔名的差異由 vendor-assets.mjs 吸收：它一律輸出成
          vendor/fuse.esm.js，並產生這裡載的 fuse-global.js（7 行：5 行說明 ＋
          import 與 window.Fuse = Fuse 各一行），所以這個網址不隨相依升級改變。
 
-         下面那行 modulepreload 是**純粹的效能提示**，不要拿它當保護。
-         shim 這個間接層會多一趟序列化往返——瀏覽器要先抓完 fuse-global.js、
+         下面那行 modulepreload 只是效能提示，不要拿它當保護。
+         shim 這個間接層會多一趟序列化往返：瀏覽器要先抓完 fuse-global.js、
          剖析完，才「發現」還要去抓 fuse.esm.js。modulepreload 讓兩個請求同時
-         出發（實測 performance entries：25ms／26ms 起跑，原本是等前者回來才開始）。
+         出發（實測 performance entries：25ms／26ms 起跑；沒有它就要等前者回來才開始）。
 
-         這一行曾經被當成 CI 保護寫在這裡，那是錯的，記在這裡免得有人再走一次：
-         當時的理由是「check:site 只驗 HTML 屬性，把 fuse.esm.js 用 link[href]
-         寫進 HTML 就能重新被驗到」。它對 fuse 有效，但保護寄託在一行可以被順手
-         刪掉的樣板上——刪掉之後 CI 立刻悄悄退回原狀；而且 ionicons 的 chunk 檔名
-         帶 hash，這招對它根本用不了（實測刪掉那兩個 chunk，17 個 ion-icon 全部
-         不渲染而 check:site 全綠）。現在 scripts/check-built-site.mjs 直接從產物
-         走 ES module 的 import 圖，那是刪不掉的：只要頁面還載 fuse-global.js，
-         它 import 的 fuse.esm.js 就會被一起驗。
+         保護 fuse.esm.js 的是 scripts/check-built-site.mjs：它直接從產物走 ES module
+         的 import 圖，只要頁面還載 fuse-global.js，它 import 的 fuse.esm.js 就會被一起驗。
+         不要靠 link[href] 讓 check:site 驗到它：那行樣板一被順手刪掉，保護就悄悄
+         不見；ionicons 的 chunk 檔名帶 hash，這招對它也用不了（實測刪掉那兩個 chunk，
+         17 個 ion-icon 全部不渲染）。
 
          載入順序是有保證的，不是碰運氣：module script 沒有 async 時一律 defer，
          規格要求它在文件解析完之後、DOMContentLoaded 之前執行完；下面那段
          classic script 是在 DOMContentLoaded 裡才第一次碰到 Fuse。
 
-         失效行為與改動前相同：這個檔載不到時 Fuse 是 undefined，
-         initializeFuse() 內的 new Fuse(...) 會丟例外，而它兩個呼叫點都在
-         try/catch 或 .catch() 裡，使用者看到的仍是同一個紅色錯誤框。 -->
+         這個檔載不到時 Fuse 是 undefined，initializeFuse() 內的 new Fuse(...) 會丟
+         例外，而它兩個呼叫點都在 try/catch 或 .catch() 裡，使用者看到的是紅色錯誤框。 */}
   <link rel="modulepreload" href={`${vendorBase}/vendor/fuse.esm.js`} />
   <script is:inline type="module" src={`${vendorBase}/vendor/fuse-global.js`}></script>
 
@@ -208,13 +203,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       let resultElements = [];
 
       // 鍵值必須依部署路徑隔離。GitHub Pages 把同一帳號下的所有專案頁放在同一個
-      // origin（thc1006.github.io），而 localStorage 是 per-origin 不是 per-path——
+      // origin（thc1006.github.io），而 localStorage 是 per-origin 不是 per-path。
       // 固定字串鍵會讓同帳號的其他專案頁互相覆蓋彼此的搜尋快取，症狀是搜尋結果
       // 指向另一個站台的頁面，而且清快取才會好。
       const CACHE_KEY = 'search-index-cache:' + window.location.pathname.replace(/[^/]*$/, '');
       // 索引結構一改就必須跟著跳版，否則舊快取（有效期 24 小時）會讓使用者拿著
       // 沒有 competencies／sdgs／taxonomy 的舊索引，搜「A2」照樣找不到東西，
-      // 而且只有清快取才會好——那種症狀使用者無從自救，也不會回報。
+      // 而且只有清快取才會好。這種症狀使用者無從自救，也不會回報。
       // 2.0：新增 competencies／sdgs／taxonomy 三個分類欄位（#14）。
       const CACHE_VERSION = '2.0';
       const CACHE_DURATION = 24 * 60 * 60 * 1000;
@@ -223,10 +218,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       // 所以 'search-index.json' 會解析成 /sch001-108platform/search-index.json；本機
       // 從 / 開時則解析成 /search-index.json。兩邊都對，而且不必知道 base 是什麼。
       //
-      // 先前是用 window.location.hostname.endsWith('github.io') 分支硬寫兩條路徑。
-      // 那在正式站上剛好會成立，但只要不是 *.github.io——自訂網域、本機預覽、PR
-      // preview——就會 fetch 到不存在的 /search-index.json，搜尋整個失效且只有
-      // console 裡有訊息。瀏覽器 smoke test 第一次跑就是抓到這個。
+      // 不要依 hostname 分支寫死路徑：例如只認 *.github.io 的話，自訂網域、本機預覽、
+      // PR preview 都會 fetch 到不存在的 /search-index.json，搜尋整個失效且只有
+      // console 裡有訊息。
       const searchPath = 'search-index.json';
 
       const cached = localStorage.getItem(CACHE_KEY);
@@ -317,13 +311,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           // competencies（A1-C3 代碼）與 sdgs（SDG11…）給的權重比 title 還高：
           // 會打「A2」或「SDG11」進搜尋框的人要的就是那個分類，不是標題裡剛好
           // 有這兩個字的東西。Fuse 會把 keys 的 weight 正規化，所以這裡調的是
-          // 相對關係；實測（405 筆索引，改動前這四個查詢分別是 0／0／3／11 筆）：
+          // 相對關係；實測（405 筆索引；用 #14 之前的索引與 keys，這四個查詢分別是
+          // 0／0／3／11 筆）：
           //   A2       → 9 筆，每一筆都真的標了 A2（5 個學群 + 4 個公民科技專案）
           //   系統思考 → 同上 9 筆
           //   環保     → 3 筆公民科技專案，score 0.000
           //   SDG      → 18 筆，公民科技專案排第 1（權重 0.6 時排第 9）
-          // 並以 20 個既有查詢（競賽／Python／學長姐／書單…）比對過 top-10，
-          // 排序完全沒有變動。
+          // 並以 20 個一般查詢（競賽／Python／學長姐／書單…）比對過 #14 前後的
+          // top-10，排序沒有變。
           keys: [
             { name: 'title', weight: 0.7 },
             { name: 'competencies', weight: 1.0 },
@@ -375,12 +370,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
       });
 
-      // WCAG 4.1.2（A 級）：這是 combobox 的 focus-stays-on-input 模式——焦點不會移到
-      // 選項上，所以「目前選到哪一筆」只能靠 aria-activedescendant 傳達。
-      //
-      // 先前只改了 class 與 aria-selected。實測（正式站、按 ArrowDown 之後）：
-      //   aria-activedescendant = null，且 9 個選項全部沒有 id
-      // 也就是螢幕閱讀器使用者用方向鍵瀏覽時，完全聽不到任何回饋。
+      // WCAG 4.1.2（A 級）：這是 combobox 的 focus-stays-on-input 模式，焦點不會移到
+      // 選項上，所以「目前選到哪一筆」只能靠 aria-activedescendant 傳達。只改 class 與
+      // aria-selected 的話，螢幕閱讀器使用者用方向鍵瀏覽時完全聽不到任何回饋。
       function updateSelection() {
         resultElements.forEach((el, idx) => {
           if (idx === selectedIndex) {
@@ -403,15 +395,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
       }
 
       // WCAG 4.1.3「狀態訊息」（AA 級）：結果數量的變化是狀態訊息，必須在不移動
-      // 焦點的情況下被播報。實測本頁原本**完全沒有任何 live region**，看不到畫面的
-      // 使用者打完字之後不會知道有沒有結果、有幾筆。
+      // 焦點的情況下被播報。沒有 live region 的話，看不到畫面的使用者打完字之後
+      // 不會知道有沒有結果、有幾筆。
       //
-      // 競賽頁已經做對了（#result-count 帶 aria-live="polite"），這裡照同樣的形狀補。
+      // 競賽頁的 #result-count 帶 aria-live="polite"，這裡照同樣的形狀做。
       // 用 role="status"，它隱含 aria-live="polite" 與 aria-atomic="true"。
-      // live region 必須在內容第一次變動「之前」就存在於無障礙樹中。第一版是在
-      // 第一次播報時才建立元素、同一個 task 內就設文字——那是已知的反模式，多數
-      // 螢幕閱讀器會漏掉那一次播報（也就是使用者的第一次搜尋，最需要回饋的那次）。
-      // 改成頁面載入時就建立，之後只更新文字。
+      // live region 必須在內容第一次變動「之前」就存在於無障礙樹中，所以頁面載入時就
+      // 建立，之後只更新文字。第一次播報時才建立元素、同一個 task 內就設文字是已知的
+      // 反模式，多數螢幕閱讀器會漏掉那一次播報（也就是使用者的第一次搜尋，最需要回饋的那次）。
       const searchStatusEl = document.createElement('div');
       searchStatusEl.setAttribute('role', 'status');
       searchStatusEl.className = 'sr-only';
@@ -445,7 +436,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           emptyDiv.textContent = `找不到與「${query}」相關的結果`;
           resultsContainer.appendChild(emptyDiv);
           // 空結果也要播報。這條路徑會提早 return，不補的話「查無結果」對螢幕
-          // 閱讀器使用者是完全無聲的——那正是最需要回饋的情況。
+          // 閱讀器使用者是完全無聲的，而那正是最需要回饋的情況。
           selectedIndex = -1;
           searchInput.removeAttribute('aria-activedescendant');
           resultElements = [];

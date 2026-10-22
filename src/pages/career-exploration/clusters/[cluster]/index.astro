@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { CLUSTERS, TOPICS } from '../../../../data/clusters';
 
-// 學群中心頁 —— 每頁列出該學群的 6 個主題。
+// 學群中心頁，每頁列出該學群的 6 個主題。
 export async function getStaticPaths() {
   return CLUSTERS.map((c) => ({ params: { cluster: c.slug }, props: { cluster: c } }));
 }
@@ -37,7 +37,7 @@ if (entries.length !== TOPICS.length) {
       <span class="text-gray-700">{cluster.name}</span>
     </nav>
 
-    <!-- Hero -->
+    <!-- 主視覺 -->
     <section class="text-center mb-12">
       <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
         {cluster.name}<span class="gradient-text">升學指南</span>

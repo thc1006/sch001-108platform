@@ -112,10 +112,10 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
     </main>
 
-    <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
+    {/* 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
          從 node_modules 複製。這個檔被 script[src] 指名，check:site 會驗它，
-         而且會從它遞移走 ES module 的 import 圖——所以它靜態 import 的
+         而且會從它遞移走 ES module 的 import 圖，所以它靜態 import 的
          p-*.js chunk 同樣在守備範圍內（chunk 檔名帶 hash，寫不進這裡的樣板，
          只可能靠 import 圖驗；實測刪掉那個 chunk，17 個 ion-icon 全部不渲染）。
 
@@ -123,35 +123,21 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          lazy-load ion-icon 的 entry chunk 的，那種靜態分析看不到。那一層靠
          vendor 步驟整個目錄搬過來，以及 tests/e2e 的 shadow DOM 檢查。
 
-         原本這裡還有一行 nomodule 的 ES5 後備（vendor/ionicons/ionicons.js），
-         已經移除（#94）。三個理由，每一個都是量出來的：
+         這裡不放 nomodule 的 ES5 後備（#94）。ionicons 8 沒有 ES5 loader；而且
+         nomodule 只在不支援 ES module 的瀏覽器（IE11／Edge ≤18／Safari ≤10）執行，
+         那些瀏覽器本來就跑不了本頁的 inline script：箭頭函式在 IE11 是 SyntaxError，
+         整段不會執行，左側學群清單根本不會渲染。首頁的搜尋腳本也一樣（用了
+         firstItem?.title 這種 ES2020 語法）。
 
-         1. ionicons 8 不再提供這一半。7.1.0 有 dist/ionicons/ionicons.js
-            （ES5 loader，119,689 B）與五個 p-*.system*.js（合計 22,742 B）；
-            8.1.0 一個都沒有。升級後這一行會 404，而 check:site 驗
-            script[src]——CI 會直接紅，但紅的理由跟真正的原因（上游刪了 ES5
-            build）看不出關係。
-         2. nomodule 只在「不支援 ES module」的瀏覽器執行，也就是 IE11／
-            Edge ≤18／Safari ≤10。那些瀏覽器跑不了本頁自己那段
-            <script is:inline>（它不是文件裡的第一段腳本——前面還有 BaseLayout
-            的 gtag 與 JSON-LD，那兩段是 ES5，剖析得過），它的第一行是
-            `document.addEventListener('DOMContentLoaded', () => {`，箭頭函式在
-            IE11 是 SyntaxError，整段不會執行，左側學群清單根本不會渲染。
-            首頁的搜尋腳本也一樣（用了 `firstItem?.title`，ES2020）。
-            也就是說這個後備保護的是一群本來就打不開本站的瀏覽器。
-         3. 少了 142,431 B（ES5 loader ＋ 五個 system chunk）從來沒有被請求過的
-            檔案進建置產物。
-
-         現代瀏覽器的行為完全不變：ion-icon 仍由下面這個 module loader 註冊，
-         tests/e2e/site-smoke.spec.js 會檢查每個 ion-icon 的 shadow DOM 裡真的
-         有 <svg>（找不到 SVG 時 ion-icon 不報錯只是不顯示，所以必須這樣驗）。 -->
+         ion-icon 由下面這個 module loader 註冊，tests/e2e/site-smoke.spec.js 會檢查
+         每個 ion-icon 的 shadow DOM 裡真的有 svg 元素（找不到 SVG 時 ion-icon 不報錯
+         只是不顯示，所以必須這樣驗）。 */}
     <script is:inline type="module" src={`${vendorBase}/vendor/ionicons/ionicons.esm.js`}></script>
 
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // --- 資料庫 (Data) ---
         // 名稱、簡介、核心素養與未來出路另外抄在 AI 閘道 career-chat 任務的指令裡
         // （ai-gateway/src/task-catalog.mjs），ai-gateway/test/task-catalog.test.mjs 會比對兩邊。
         const majorData = [
@@ -166,15 +152,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             { id: 'medicine', name: '醫藥衛生學群', icon: 'medkit-outline', description: '致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。', competencies: ['道德實踐與公民意識', '身心素質與自我精進'], majors: ['醫學', '牙醫學', '藥學', '護理'], subjects: ['生物', '化學', '英文'], careers: ['醫師', '藥師', '護理師', '物理治療師'], portfolio_tips: '除了在校成績，更要展現強烈的服務熱忱與抗壓性。參加醫療相關營隊、志工服務的經驗與反思非常重要。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=16', guide: 'medicine' },
         ];
 
-        // --- DOM 元素選擇 ---
         const clusterListContainer = document.getElementById('cluster-list');
         const clusterDetailsContainer = document.getElementById('cluster-details');
         const searchBar = document.getElementById('search-bar');
         const chatInput = document.getElementById('chat-input');
         const chatSubmit = document.getElementById('chat-submit');
         const chatWindow = document.getElementById('chat-window');
-
-        // --- 大學科系羅盤 (Major Explorer) 相關函式 ---
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, (c) => (
@@ -243,7 +226,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
             addTabEventListeners();
             clusterDetailsContainer.classList.remove('fade-in');
-            void clusterDetailsContainer.offsetWidth; // Trigger reflow
+            void clusterDetailsContainer.offsetWidth; // 強制重排，fade-in 動畫才會重播
             clusterDetailsContainer.classList.add('fade-in');
         }
 
@@ -425,7 +408,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             }
         }
 
-        // --- 事件監聽器綁定 ---
         chatSubmit.addEventListener('click', handleChatSubmit);
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { // 按下 Enter 但非 Shift+Enter
@@ -434,7 +416,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             }
         });
 
-        // --- 程式進入點 ---
         initializeExplorer();
     });
     </script>

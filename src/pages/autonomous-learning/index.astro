@@ -8,9 +8,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="autonomous-learning"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 自主學習<span class="gradient-text">啟航站</span>
@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- AI Learning Coach -->
+        <!-- AI 自主學習教練 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
              <h2 class="text-2xl font-bold mb-2">✨ AI 自主學習教練</h2>
              <p class="text-gray-600 mb-6">有一個模糊的想法，卻不知道如何開始？把它告訴 AI 教練，讓它為你生成一份個人化的「學習啟動包」！</p>
@@ -39,11 +39,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Step-by-step Guide -->
+        <!-- 自主學習四步驟 -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">自主學習四步驟</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Step 1 -->
+                <!-- 步驟 1 -->
                 <a href="topic-ideas.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">1</span>
@@ -51,7 +51,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     </div>
                     <p class="text-gray-600 text-sm">透過 AI 發想、靈感矩陣與趨勢議題，找到值得你深入研究的主題。</p>
                 </a>
-                <!-- Step 2 -->
+                <!-- 步驟 2 -->
                 <a href="plan-templates.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">2</span>
@@ -59,7 +59,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     </div>
                     <p class="text-gray-600 text-sm">參考優質範本與 AI 草擬工具，將你的靈感化為具體、可執行的計畫。</p>
                 </a>
-                <!-- Step 3 -->
+                <!-- 步驟 3 -->
                 <a href="resource-map.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">3</span>
@@ -67,7 +67,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     </div>
                     <p class="text-gray-600 text-sm">從我們為你精選的資源地圖中，找到最適合你的高品質學習材料。</p>
                 </a>
-                <!-- Step 4 -->
+                <!-- 步驟 4 -->
                 <a href="methodology.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mr-4">4</span>
@@ -78,7 +78,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Embedded Video Resource -->
+        <!-- 嵌入的影片資源 -->
         <section class="mt-16">
              <h2 class="text-2xl font-bold text-center mb-8">聽聽專家怎麼說</h2>
              <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-lg">
@@ -95,7 +95,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
-        // --- AI Coach Logic ---
         // 「學習啟動包」由 AI 閘道的 starter-pack 任務產生：prompt 與輸出格式都在閘道
         // （ai-gateway/src/task-catalog.mjs），驗證過才交給這裡。頁面只送學生的初步想法、
         // 顯示進度與結果

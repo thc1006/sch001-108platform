@@ -8,10 +8,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="civic-tech-map"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
 
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 公民科技專案<span class="gradient-text">地圖</span>
@@ -21,7 +21,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- AI Exploration Suggester -->
+        <!-- AI 探索建議器 -->
         <section class="bg-white rounded-xl shadow-lg p-8 mb-16" aria-label="AI 探索建議器">
             <div class="max-w-2xl mx-auto">
                 <h2 class="text-2xl font-bold mb-2 text-center">找到你的公民科技切入點</h2>
@@ -71,7 +71,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Why Section -->
+        <!-- 為什麼要看這份對照表 -->
         <section class="bg-white rounded-xl shadow-lg p-8 mb-16" aria-label="為什麼要看這份對照表">
             <h2 class="text-2xl font-bold mb-2">為什麼要看這份對照表？</h2>
             <p class="text-gray-600 mb-6">在「探究與實作」或「自主學習」課程中，你可能苦惱於找不到與真實世界連結的題目。公民科技專案處理的是真實存在的社會問題，參與它們不僅能解決問題，更能直接鍛鍊課綱強調的素養能力。</p>
@@ -106,7 +106,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Tag Legend -->
+        <!-- 標籤說明 -->
         <section class="mb-4" aria-label="標籤說明">
             <div class="flex flex-wrap items-center gap-3 justify-center">
                 <span class="text-sm font-semibold text-gray-500">標籤說明：</span>
@@ -125,10 +125,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Quick Navigation (sticky) + Expand/Collapse Controls -->
+        <!-- 專案快速導航（sticky）與展開／收合按鈕 -->
         <nav class="sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-3 mb-8" aria-label="專案快速導航" data-autohide-filters>
             <div class="flex items-center gap-3">
-                <!-- Project links (scrollable) -->
+                <!-- 專案連結，可橫向捲動 -->
                 <div class="flex-1 overflow-x-auto scrollbar-hide">
                     <div class="flex gap-2 min-w-max px-1">
                         <a href="#disfactory" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
@@ -142,7 +142,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <a href="#join-community" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">參與社群</a>
                     </div>
                 </div>
-                <!-- Expand/Collapse controls -->
+                <!-- 展開全部／收合全部 -->
                 <div class="flex-shrink-0 flex gap-1">
                     <button id="expand-all-btn" type="button" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="展開全部詳情">
                         展開全部
@@ -154,10 +154,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </nav>
 
-        <!-- Project Cards -->
+        <!-- 專案卡片 -->
         <section id="project-list" class="space-y-8" aria-label="公民科技專案列表">
 
-            <!-- Project 1: Disfactory -->
+            <!-- 專案 1：Disfactory -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="disfactory">
                 <div class="border-l-4 border-emerald-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -198,7 +198,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 2: Cofacts -->
+            <!-- 專案 2：Cofacts -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="cofacts">
                 <div class="border-l-4 border-sky-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -239,7 +239,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 3: Amis MoeDict -->
+            <!-- 專案 3：阿美語萌典 -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="amis-moedict">
                 <div class="border-l-4 border-violet-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -280,7 +280,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 4: 透明足跡 / 掃了再買 -->
+            <!-- 專案 4：透明足跡／掃了再買 -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="thaubing">
                 <div class="border-l-4 border-lime-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -319,7 +319,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 5: National Treasure -->
+            <!-- 專案 5：國家寶藏 -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="national-treasure">
                 <div class="border-l-4 border-rose-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -364,7 +364,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 6: LawTrace -->
+            <!-- 專案 6：LawTrace -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="lawtrace">
                 <div class="border-l-4 border-indigo-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -404,7 +404,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 7: vTaiwan -->
+            <!-- 專案 7：vTaiwan -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="vtaiwan">
                 <div class="border-l-4 border-cyan-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -446,7 +446,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </article>
 
-            <!-- Project 8: Civil IoT Taiwan -->
+            <!-- 專案 8：民生公共物聯網 -->
             <article class="project-card bg-white rounded-xl shadow-lg overflow-hidden scroll-mt-36" id="civil-iot">
                 <div class="border-l-4 border-orange-500 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
@@ -489,7 +489,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         </section>
 
-        <!-- Join the Community -->
+        <!-- 參與 g0v 社群與年會 -->
         <section id="join-community" class="mt-16 scroll-mt-36" aria-label="參與 g0v 社群與年會">
             <div class="bg-white rounded-xl shadow-lg p-8">
                 <h2 class="text-2xl font-bold mb-2">想更進一步？參與 g0v 社群與年會</h2>
@@ -549,7 +549,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Attribution -->
+        <!-- 出處與授權 -->
         <section class="mt-16 text-center">
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <p class="text-gray-600 text-sm">
@@ -568,16 +568,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     </main>
 
-    <!-- Back to Top Button -->
+    <!-- 回到頂部按鈕 -->
     <button id="back-to-top" type="button" class="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white p-3 rounded-full shadow-lg hover:bg-emerald-700 transition duration-300" aria-label="回到頁面頂部">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
     </button>
 
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
-        // ============================================================
-        // Toggle Details (individual expand/collapse)
-        // ============================================================
         function toggleDetails(button) {
             const content = button.nextElementSibling;
             const isOpen = content.classList.contains('open');
@@ -585,9 +582,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             button.setAttribute('aria-expanded', !isOpen);
         }
 
-        // ============================================================
-        // Expand All / Collapse All
-        // ============================================================
         document.getElementById('expand-all-btn').addEventListener('click', function() {
             document.querySelectorAll('.details-content').forEach(function(el) {
                 el.classList.add('open');
@@ -606,9 +600,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
         });
 
-        // ============================================================
-        // Back to Top
-        // ============================================================
         (function() {
             var backToTop = document.getElementById('back-to-top');
             var threshold = window.innerHeight;
@@ -626,9 +617,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
         })();
 
-        // ============================================================
-        // Mobile Tag Overflow (+N more)
-        // ============================================================
+        // 手機上每個專案的標籤只顯示前 MAX_VISIBLE_MOBILE 個，其餘收進「+N」按鈕。
         (function() {
             var MAX_VISIBLE_MOBILE = 3;
 
@@ -654,7 +643,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 });
             }
 
-            // Expand tags on click
+            // 按「+N」展開這個專案的全部標籤。
             document.querySelectorAll('.tag-more-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     var container = btn.closest('.tag-container');
@@ -663,12 +652,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 });
             });
 
-            // Reset on resize to desktop
+            // 視窗大小改變後重新套用標籤的收合。
             var resizeTimer;
             window.addEventListener('resize', function() {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(function() {
-                    // Reset expanded state when switching to desktop
+                    // 回到桌面寬度時清掉展開狀態，之後縮回手機寬度會重新收合。
                     if (window.innerWidth >= 768) {
                         document.querySelectorAll('.tag-container').forEach(function(c) {
                             c.dataset.expanded = '';
@@ -681,9 +670,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             handleTagOverflow();
         })();
 
-        // ============================================================
-        // AI Exploration Suggester
-        // ============================================================
         // 「AI 探索建議」由 AI 閘道的 civic-tech-suggestion 任務產生，prompt 與專案清單在
         // ai-gateway/src/task-catalog.mjs。頁面只送學生的興趣，答案邊收邊顯示。
         (function() {
@@ -697,7 +683,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // PlatformAI 沒載入成功時連 describeError 都沒有，改用這句，與它對未知錯誤的說法相同。
             var FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-            // Character count
             input.addEventListener('input', function() {
                 charCount.textContent = input.value.length + ' / 300';
             });

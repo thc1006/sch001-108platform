@@ -132,8 +132,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             });
         });
 
-        // --- AI Analyst Logic ---
-        // prompt 在閘道的 competency-analysis 任務（ai-gateway/src/task-catalog.mjs），頁面只送活動經驗。
+        // AI 素養分析師的 prompt 在閘道的 competency-analysis 任務（ai-gateway/src/task-catalog.mjs），頁面只送活動經驗。
         const aiInput = document.getElementById('ai-input');
         const aiGenerateBtn = document.getElementById('ai-generate-btn');
         const aiWorkContainer = document.getElementById('ai-work');
@@ -207,7 +206,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             }
         });
 
-        // Initial Render
         renderCompetencies();
         feather.replace();
     </script>
@@ -224,7 +222,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             background-clip: text;
             text-fill-color: transparent;
         }
-        /* 修正手風琴預設隱藏問題 - 使用高特異性選擇器取代 !important */
         #competency-grid .competency-card .accordion-content {
             max-height: 0;
             overflow: hidden;

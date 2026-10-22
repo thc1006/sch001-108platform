@@ -9,8 +9,6 @@
  *   npx playwright test tests/e2e/platform-ai.spec.js
  *
  * 伺服器由 playwright.config.js 的 webServer 自動啟動，不需要另開 terminal。
- * 先前沒有那個設定檔（而且 .gitignore 還把它擋掉了），說明文件要求人工跑
- * npm run serve——結果這些測試從來沒有真的被跑過，也進不了 CI。
  */
 
 const { test, expect } = require('@playwright/test');
@@ -162,9 +160,9 @@ test.describe('PlatformAI 共用 module', () => {
     test.describe('全域物件', () => {
         // 這一頁有九個 .astro 頁面各自寫一行 <script src=".../platform-ai.js">，而使用者
         // 在站內移動時瀏覽器快取、bfcache、以及日後可能出現的第三方嵌入都會讓同一份
-        // 腳本被載入不只一次。守衛原本寫的是 __version === 3：一旦有一份**比較舊**的
-        // 副本在新版之後跑起來，它會發現版號不等於自己的，於是不返回、把新版整個
-        // 覆蓋掉——安靜降級，而且沒有任何地方會出聲。
+        // 腳本被載入不只一次。守衛若寫成 __version === 3 這種相等比較，一份比較舊的
+        // 副本在新版之後跑起來時，會發現版號不等於自己的，於是不返回、把新版整個
+        // 覆蓋掉，悄悄降級，而且沒有任何地方會出聲。
         test('已載入的新版不得被後來跑起來的舊版覆蓋', async ({ page }) => {
             await page.addInitScript(() => {
                 window.PlatformAI = { __version: 99, __sentinel: 'newer' };
@@ -211,8 +209,8 @@ test.describe('PlatformAI 共用 module', () => {
             }));
             expect(info.defined).toBe(true);
             // 這一支驗的是「共用 module 載進來了、介面完整」，版號是附帶資訊。
-            // 釘成字面值的話，改版時這裡會紅，而它紅的原因跟它想守的東西無關——
-            // 測試名稱還會跟著漂（原本叫「版本為 3」）。改成驗它是個正整數：
+            // 釘成字面值的話，改版時這裡會紅，而它紅的原因跟它想守的東西無關，
+            // 測試名稱也會跟著過時。所以只驗它是個正整數：
             // 缺欄位、被寫成字串、被寫成 0 都會紅，單純改版不會。
             expect(Number.isInteger(info.version)).toBe(true);
             expect(info.version).toBeGreaterThan(0);
@@ -337,7 +335,7 @@ test.describe('PlatformAI 共用 module', () => {
                     withMetaLine: lines.find(t => t.includes('WITH_META_MARKER')) || '',
                 };
             });
-            // 沒 meta 的那一行不能出現獨立的 "null" 字串（Copilot 指出的 bug）
+            // 沒 meta 的那一行不能出現獨立的 "null" 字串。
             expect(noMetaLine).toContain('NO_META_MARKER');
             expect(noMetaLine).not.toMatch(/\bnull\b/);
             // 有 meta 的那一行應有 JSON 附加
@@ -406,7 +404,7 @@ test.describe('PlatformAI 共用 module', () => {
             await expect(panel).toBeVisible();
 
             // 關閉 panel，應觸發 dragCtrl.abort() 移除 document-level listeners
-            // 按鈕現在用 aria-label 作為可訪問名稱（Copilot A11Y 修正後）
+            // 按鈕用 aria-label 作為可訪問名稱。
             await panel.getByRole('button', { name: /close/i }).click();
             await expect(panel).toHaveCount(0);
 
@@ -458,7 +456,7 @@ test.describe('PlatformAI 共用 module', () => {
             });
             // 陣列有 200 上限
             expect(logCount).toBeLessThanOrEqual(200);
-            // 更重要：DOM 也被同步截斷（Copilot 原本指出的洩漏）
+            // 更重要：DOM 也被同步截斷，否則 panel 會一直累積行數。
             expect(domCount).toBeLessThanOrEqual(200);
             // 1:1 對應（panel 內行數 = logs 陣列長度）
             expect(domCount).toBe(logCount);

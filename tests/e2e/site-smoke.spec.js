@@ -1,8 +1,7 @@
 /**
- * 部署產物的瀏覽器 smoke test
- * --------------------------------------------------------------
+ * 部署產物的瀏覽器 smoke test。
  * scripts/check-built-site.mjs 是靜態分析：它能證明「這個 URL 指得到東西」，但
- * 證明不了「頁面在瀏覽器裡真的跑得起來」。競賽頁與資源頁都是資料驅動的——瀏覽器
+ * 證明不了「頁面在瀏覽器裡真的跑得起來」。競賽頁與資源頁都是資料驅動的：瀏覽器
  * 先 fetch() JSON 再渲染卡片。JSON 若壞掉、被改名、或前端 JS 丟例外，靜態檢查
  * 全綠、build 成功，使用者卻只看到一個空白容器或「載入失敗」。
  *
@@ -51,7 +50,7 @@ test.describe('部署產物 smoke test', () => {
         await expect(cards.first()).toBeVisible({ timeout: 10_000 });
         expect(await cards.count()).toBeGreaterThan(50);
 
-        // 每張卡都必須有狀態文字——空字串代表狀態機算出了未預期的 key
+        // 每張卡都必須有狀態文字，空字串代表狀態機算出了未預期的 key。
         const statuses = await page.locator('.comp-card .comp-status').allTextContents();
         expect(statuses.length).toBe(await cards.count());
         for (const s of statuses) expect(s.trim()).not.toBe('');
@@ -101,10 +100,9 @@ test.describe('部署產物 smoke test', () => {
 
 /**
  * #14 的驗收標準：搜尋 A2／系統思考／環保／SDG 要找得到對應的公民科技專案。
- * --------------------------------------------------------------
  * 這幾條刻意在真的瀏覽器裡打字驗證，而不是拿 search-index.json 做字串比對。
  * 索引裡「有那個欄位」和「使用者打進去搜得到」之間隔著 Fuse 的 keys 權重與
- * threshold——只驗前者的話，把 keys 改壞、把 threshold 調到 0.1，測試照樣全綠。
+ * threshold。只驗前者的話，把 keys 改壞、把 threshold 調到 0.1，測試照樣全綠。
  *
  * 同時驗證兩件靜態檢查看不到的事：
  *   1. 搜尋結果的錨點真的能跳到那個專案（#78 的壞錨點就是點了停在頁首）
@@ -130,7 +128,7 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
 
     // 素養類查詢：命中的不只公民科技專案，「未來生涯GPS」的學群卡片也標了同一個
     // 素養（它的來源資料寫的是中文名，建索引時被正規化成代碼）。這裡驗的是
-    // 精確度——整份結果清單都必須真的帶有那個素養標籤，而不是模糊比對撈進來的
+    // 精確度：整份結果清單都必須真的帶有那個素養標籤，而不是模糊比對撈進來的
     // 雜訊；同時公民科技專案必須在其中。只驗「第一筆是誰」擋不住 threshold 被
     // 調鬆之後撈進一堆無關項目。
     for (const { query, why, label } of [
@@ -161,7 +159,7 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
         });
     }
 
-    // 議題關鍵字與 SDGs：這兩個查詢只有公民科技專案帶有對應標籤，所以要求更嚴——
+    // 議題關鍵字與 SDGs：這兩個查詢只有公民科技專案帶有對應標籤，所以要求更嚴，
     // 第一筆就必須是公民科技專案。issue 要的是「權重較高地顯示」，只要「出現在
     // 某個位置」是不夠的。
     for (const { query, why } of [
@@ -215,12 +213,10 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
 });
 
 /**
- * 自架的第三方函式庫（#72 後續）
- * --------------------------------------------------------------
- * 本站原本有四個 runtime CDN 依賴且全都沒有 SRI：fuse.js（搜尋引擎，載不到就整個
- * 搜尋失效）、feather-icons、ionicons。第三方網域的可用性直接決定本站功能能不能用，
- * 而且沒有任何建置期檢查會發現它們掛掉——CDN 壞掉時 build 綠、check:site 綠，
- * 使用者打開才發現搜尋框永遠停在「載入中」。
+ * 自架的第三方函式庫（#72 後續）。
+ * fuse.js（搜尋引擎，載不到就整個搜尋失效）、feather-icons、ionicons 若從 CDN 載入，
+ * 第三方網域的可用性會直接決定本站功能能不能用，而且沒有任何建置期檢查會發現它們
+ * 掛掉：CDN 壞掉時 build 綠、check:site 綠，使用者打開才發現搜尋框永遠停在「載入中」。
  *
  * check:site 已經會擋下「vendor 檔案不見」（script[src] 解析不到就紅）。這裡補的是
  * 靜態檢查看不到的兩件事：函式庫在瀏覽器裡真的能用，以及沒有偷偷留下 CDN 請求。
@@ -240,7 +236,7 @@ test.describe('自架的第三方函式庫', () => {
         const cdn = watchThirdParty(page);
         await page.goto(P('/'), { waitUntil: 'networkidle' });
 
-        // Fuse 真的載進來且可用——搜尋框解除 disabled 就代表索引與 Fuse 都就緒
+        // Fuse 真的載進來且可用：搜尋框解除 disabled 就代表索引與 Fuse 都就緒。
         await expect(page.locator('#search-input')).toBeEnabled({ timeout: 15_000 });
         expect(await page.evaluate(() => typeof window.Fuse)).toBe('function');
 
@@ -253,7 +249,7 @@ test.describe('自架的第三方函式庫', () => {
         await page.goto(P('/career-exploration/index.html'), { waitUntil: 'networkidle' });
 
         // ion-icon 是 web component，載入成功後會在 shadow DOM 裡放一個 <svg>。
-        // 找不到 SVG 時它不會報錯，只是不顯示——所以要直接檢查 shadow DOM。
+        // 找不到 SVG 時它不會報錯，只是不顯示，所以要直接檢查 shadow DOM。
         await page.waitForFunction(
             () => {
                 const els = [...document.querySelectorAll('ion-icon')];
@@ -282,9 +278,8 @@ test.describe('自架的第三方函式庫', () => {
 });
 
 /**
- * 搜尋框的無障礙契約（WCAG 4.1.2 A 級 / 4.1.3 AA 級）
- * --------------------------------------------------------------
- * 這兩條都是實測抓到的既有失敗，不是假想情境：
+ * 搜尋框的無障礙契約（WCAG 4.1.2 A 級 / 4.1.3 AA 級）。
+ * 這兩條守的失敗：
  *
  *   按 ArrowDown 之後 aria-activedescendant = null，9 個選項全部沒有 id
  *     → 焦點留在輸入框的 combobox 模式下，螢幕閱讀器使用者用方向鍵瀏覽時
@@ -293,7 +288,7 @@ test.describe('自架的第三方函式庫', () => {
  *   全頁沒有任何 aria-live / role=status
  *     → 打完字之後不會知道有沒有結果、有幾筆。WCAG 4.1.3（AA 級）失敗。
  *
- * 這兩件事在畫面上完全看不出來——視覺使用者一切正常。只有實際查 DOM 才會發現，
+ * 這兩件事在畫面上完全看不出來，視覺使用者一切正常。只有實際查 DOM 才會發現，
  * 所以必須有測試釘住。
  */
 test.describe('搜尋框的無障礙契約', () => {

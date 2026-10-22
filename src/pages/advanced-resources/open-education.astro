@@ -10,7 +10,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   bodyClass="bg-gray-100 text-gray-800"
 >
   <main id="main-content" class="container mx-auto px-6 py-12">
-    <!-- Hero -->
+    <!-- 主視覺 -->
     <section class="text-center mb-10">
       <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
         開放<span class="gradient-text">教育資源</span>
@@ -23,7 +23,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </p>
     </section>
 
-    <!-- Filters -->
+    <!-- 搜尋與篩選 -->
     <section class="mb-10">
       <div class="flex flex-col items-center gap-4">
         <label for="search-input" class="sr-only">搜尋開放教育資源</label>
@@ -44,7 +44,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <!-- Resource Grid -->
+    <!-- 資源卡片網格 -->
     <section>
       <p id="result-count" class="text-sm text-gray-500 mb-4 text-center"></p>
       <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -64,7 +64,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     // 要新增或修改資源,請編輯 open-education.json,不需要動這支頁面。
     let resourcesData = [];
 
-    // 分類中繼資料 —— badge 類別為完整字面字串,確保 Tailwind 靜態掃描得到。
+    // 分類中繼資料。badge 的類別整串寫成字面字串、不拼接，Tailwind 的靜態掃描才找得到。
     const CATEGORY_META = {
       'ai-labs': { label: 'AI 實驗室', badge: 'bg-indigo-100 text-indigo-800' },
       'open-science': { label: '開放科學', badge: 'bg-emerald-100 text-emerald-800' },

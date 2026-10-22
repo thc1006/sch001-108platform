@@ -1,6 +1,6 @@
-# Allow all crawlers to access all content
+# 允許所有爬蟲抓取全部內容。
 User-agent: *
 Allow: /
 
-# Provide sitemap location
+# sitemap 的位置。
 Sitemap: https://thc1006.github.io/sch001-108platform/sitemap-index.xml

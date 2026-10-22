@@ -8,9 +8,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="autonomous-learning"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 研究方法<span class="gradient-text">工具箱</span>
@@ -20,7 +20,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- Interactive Method Selector -->
+        <!-- 互動式研究方法推薦 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">🤔 我該用哪種方法？</h2>
             <p class="text-gray-600 mb-6">回答幾個問題，讓我們為你推薦最適合的研究方法。</p>
@@ -50,25 +50,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div id="recommendation-result" class="mt-6"></div>
         </section>
 
-        <!-- Methodology Grid -->
+        <!-- 研究方法卡片網格 -->
         <section>
             <h2 class="text-2xl font-bold text-center mb-8">或，從下方直接探索所有方法</h2>
             <div id="methodology-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Method cards will be injected here -->
+                <!-- 方法卡片由 renderMethods() 填入 -->
             </div>
         </section>
     </main>
 
-    <!-- Method Detail Modal -->
+    <!-- 研究方法詳情對話框 -->
     <div id="methodModal" class="fixed inset-0 z-50 items-center justify-center hidden">
         <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
         <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            <!-- Modal content will be injected here -->
+            <!-- 對話框內容由 showModal() 填入 -->
         </div>
     </div>
 
     <script is:inline>
-        // 資料改由同目錄的 methodology.json 載入（見下方 loadData）。
+        // 資料從同目錄的 methodology.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 methodology.json，不需要動這支 HTML。
         let methodsData = [];
 
@@ -78,7 +78,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             ));
         }
 
-        // --- Recommendation Logic ---
         const q2 = document.getElementById('q2');
         const q3 = document.getElementById('q3');
         const recommendationResult = document.getElementById('recommendation-result');
@@ -123,7 +122,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             `;
         }
 
-        // --- Grid & Modal Logic ---
         const grid = document.getElementById('methodology-grid');
         const modal = document.getElementById('methodModal');
         const modalContent = document.getElementById('modal-content');

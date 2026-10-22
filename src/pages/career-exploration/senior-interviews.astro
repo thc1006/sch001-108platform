@@ -10,9 +10,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
   currentSection="career-exploration"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
+    <!-- 主要內容 -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
+        <!-- 主視覺 -->
         <section class="text-center mb-16">
              <div class="w-full h-72 rounded-2xl overflow-hidden mb-8 shadow-lg">
                 <img src="https://images.pexels.com/photos/1595385/pexels-photo-1595385.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" class="w-full h-full object-cover" alt="一群學生在討論">
@@ -28,17 +28,17 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             </p>
         </section>
 
-        <!-- Filters and Search -->
+        <!-- 搜尋與分類篩選 -->
         <section id="interviews" class="mb-12 sticky top-16 z-30 bg-gray-100/80 backdrop-blur-md py-4 rounded-xl" data-autohide-filters>
             <div class="flex flex-col md:flex-row justify-center items-center gap-6">
-                <!-- Search Box -->
+                <!-- 搜尋框 -->
                 <div class="relative w-full md:w-auto">
                     <input type="text" id="search-box" placeholder="搜尋科系、學校或關鍵字..." class="pl-10 pr-4 py-2 w-full md:w-64 border-2 border-gray-200 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i data-feather="search" class="text-gray-400 w-5 h-5"></i>
                     </div>
                 </div>
-                <!-- Category Filters -->
+                <!-- 分類篩選 -->
                 <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
                     <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
                     <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="工程學群">工程</button>
@@ -55,24 +55,24 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             </div>
         </section>
 
-        <!-- Interview Grid -->
+        <!-- 訪談卡片網格 -->
         <section>
             <div id="interview-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Interview cards will be injected here -->
+                <!-- 訪談卡片由 renderInterviews() 填入 -->
             </div>
             <p id="no-results" class="text-center text-gray-500 py-16 hidden">找不到符合條件的訪談，試試看別的關鍵字吧！</p>
         </section>
     </main>
 
-    <!-- Interview Detail Modal -->
+    <!-- 訪談詳情對話框 -->
     <div id="interviewModal" class="modal fixed inset-0 z-50 items-center justify-center hidden">
         <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
         <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
-            <!-- Modal content will be injected here -->
+            <!-- 對話框內容由 showModal() 填入 -->
         </div>
     </div>
 
-    <!-- Copy Notification -->
+    <!-- 複製連結後的提示 -->
     <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
         連結已複製！
     </div>
@@ -83,11 +83,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     <script is:inline src={`${vendorBase}/vendor/feather.min.js`}></script>
 
     <script is:inline>
-        // 資料改由同目錄的 senior-interviews.json 載入（見下方 loadData）。
+        // 資料從同目錄的 senior-interviews.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 senior-interviews.json，不需要動這支 HTML。
         let interviewData = [];
 
-        // 大學常見簡稱 —— 讓使用者搜「台大」「政大」也能命中正式全名。
+        // 大學常見簡稱，讓使用者搜「台大」「政大」也能命中正式全名。
         const UNIVERSITY_ALIASES = {
             '國立臺灣大學': '台大 臺大 ntu',
             '國立政治大學': '政大 nccu',
@@ -107,8 +107,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             '嶺東科技大學': '嶺東 ltu',
         };
 
-        // 將資料欄位安全地嵌入 innerHTML(避免含特殊字元的 JSON 破版或注入)。
-        // 註:content_html 為刻意保留的原始 HTML,不經此函式。
+        // 將資料欄位安全地嵌入 innerHTML（避免含特殊字元的 JSON 破版或注入）。
+        // content_html 是刻意保留的原始 HTML，不經過這個函式。
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, (c) => (
                 { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]

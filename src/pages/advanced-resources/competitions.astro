@@ -16,7 +16,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   </Fragment>
 
   <main id="main-content" class="comp-page">
-    <!-- Hero -->
+    <!-- 主視覺 -->
     <section class="comp-hero">
       <div class="comp-hero__inner">
         <p class="comp-eyebrow">進階資源探索區 · 競賽雷達</p>
@@ -44,7 +44,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <!-- Control bar -->
+    <!-- 篩選控制列 -->
     <section class="comp-controls" aria-label="競賽篩選" data-autohide-filters>
       <div class="comp-controls__inner">
         <div class="comp-searchrow">
@@ -123,7 +123,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <!-- Grid -->
+    <!-- 競賽卡片網格 -->
     <section class="comp-gridwrap">
       <div id="competition-grid" class="comp-grid" aria-busy="true">
         <p class="comp-loading">競賽資料載入中…</p>
@@ -138,7 +138,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   <script is:inline>
     (function () {
-      // ── 領域配色（避免 Tailwind 動態類別掃描問題，改以 CSS 變數注入十六進位色）──
+      // 領域配色。色碼在 cardHtml() 以 CSS 變數 --accent 帶進卡片，因為 Tailwind 掃描不到 JS 動態組出的類別。
       const CATEGORY_ACCENT = {
         '科學': '#0891b2',
         '數理': '#4f46e5',
@@ -233,12 +233,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
       }
 
-      // 狀態判斷。關鍵在 'cycle'：許多競賽每年固定時節舉辦，「本屆已截止」不等於
-      // 資料過時——只要知道週期就能告訴學生下次何時，比一律顯示「依官網公告」有用。
       // 把一個絕對時刻換算成台北的日曆日。
       //
       // 「剩 N 天」用日曆日算（與其他項目的顯示一致），但「是否已截止」用真正的
-      // 時刻——只看日曆日正是 date-only 會算錯的地方：Breakthrough 官方截止是
+      // 時刻。只看日曆日正是 date-only 會算錯的地方：Breakthrough 官方截止是
       // 9/15 23:59 PDT ＝ 台灣 9/16 14:59。只存日期的話，台灣 9/15 凌晨就顯示
       // 「今日截止」（實際還有 39 小時），9/16 00:00 起顯示「已截止」（實際還有
       // 近 15 小時）。
@@ -249,6 +247,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return Date.UTC(tp[0], tp[1] - 1, tp[2]);
       }
 
+      // 狀態判斷。關鍵在 'cycle'：許多競賽每年固定時節舉辦，「本屆已截止」不等於
+      // 資料過時，只要知道週期就能告訴學生下次何時，比一律顯示「依官網公告」有用。
       function getStatus(c) {
         const todayUTC = todayTaipeiUTC();
         const nowMs = Date.now();
@@ -263,14 +263,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           : m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
         const closed = hasExact ? nowMs > exactMs : dlUTC !== null && dlUTC < todayUTC;
 
-        // 已過的本屆截止日要傳進推算：不傳的話，月份精度的週期（如 OPhO 的 08）
-        // 會把同月月底誤算成「下次約 4 天後」。推算方式見 nextOccurrenceUTC——它會
+        // 已過的本屆截止日要傳進推算：不傳的話，只寫月份的週期（cycle.closes 是 MM）
+        // 會把同月月底誤算成下次截止日。推算方式見 nextOccurrenceUTC，它會
         // 先把本屆對應回最近的一個週期實例，而不是直接用「本屆年份 + 1」。
         const lastEditionUTC = dlUTC !== null && closed ? dlUTC : null;
         const nextUTC = nextOccurrenceUTC(closes, todayUTC, lastEditionUTC);
 
-        // 報名還沒開放。先前只要 deadline 在未來就一律顯示「報名中」，即使報名根本
-        // 還沒開始——學生點進去只會看到「敬請期待」。
+        // 報名還沒開放（opensAt 在未來）時先回傳，否則 deadline 在未來就會顯示「報名中」，
+        // 學生點進去只會看到「敬請期待」。
         const opensMs = typeof c.opensAt === 'string' ? Date.parse(c.opensAt) : NaN;
         if (!Number.isNaN(opensMs) && nowMs < opensMs) {
           return {
@@ -311,7 +311,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return { key: 'site', label: '依官網', days: null };
       }
 
-      // 已知下屆時間的排在「依官網公告」之前——那是更有用的資訊
+      // 已知下屆時間的排在「依官網公告」之前，那是更有用的資訊。
       const STATUS_ORDER = { soon: 0, open: 1, upcoming: 2, cycle: 3, site: 4, closed: 5 };
 
       function statusText(s) {
@@ -322,14 +322,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return s.label;
       }
 
-      // 賽事日期。這是「比賽哪天舉行」，與「報名何時截止」是兩回事——先前資料把
-      // OPhO 的比賽首日（8/21）填進 deadline，頁面就把它顯示成「報名截止」。
+      // 賽事日期，也就是「比賽哪天舉行」，與「報名何時截止」是兩回事。比賽日期填進
+      // deadline 的話，頁面會把它顯示成「報名截止」。
       function eventLabel(c) {
         if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
         const short = (d) => Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10));
-        // 已經辦完的賽事必須講清楚。逐筆查證後，資料裡開始出現「上一屆」的賽事
-        // 日期（iBridge 的 2025-12-13、APIO 的 2026-05-09），先前一律顯示成
-        // 「2025-12-13 舉行」，讀起來像是即將舉行——比不顯示還糟。
+        // 已經辦完的賽事必須講清楚。資料裡有「上一屆」的賽事日期（iBridge 的
+        // 2025-12-13、APIO 的 2026-05-09），顯示成「2025-12-13 舉行」會讀起來像是
+        // 即將舉行，比不顯示還糟。
         const last = (typeof c.eventEndsAt === 'string' && c.eventEndsAt) || c.eventStartsAt;
         const past = Date.UTC(
           Number(last.slice(0, 4)), Number(last.slice(5, 7)) - 1, Number(last.slice(8, 10)),
@@ -341,14 +341,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return past ? '上屆 ' + c.eventStartsAt + ' 已結束' : c.eventStartsAt + ' 舉行';
       }
 
-      // 卡片底部那一欄的標題。先前一律寫「報名截止」，但 OPhO／NASA 這類沒有公布
-      // 報名截止日的競賽，欄位裡放的其實是賽事日期——標題寫「報名截止」就等於把
-      // 賽事日期謊稱成報名截止，正是這次要修掉的那個錯誤的顯示層版本。
-      // 欄位標題必須由「內容實際是什麼」決定，不能各算各的。先前標題看
-      // c.eventStartsAt、內容看 s.key，兩者會不一致：ESU 沒有 deadline 但有 cycle
-      // 與賽事日期，於是標題寫「賽事日期」、內容卻是「每年約 11 月截止 · 2026 賽事
-      // 7/13–7/18」——標題在說賽事，內容在說報名。
-      // 回傳一個物件讓兩者不可能漂移。
+      // 卡片底部那一欄的標題與內容。OPhO、NASA 這類沒有公布報名截止日的競賽，欄位裡
+      // 放的是賽事日期，標題寫「報名截止」就等於把賽事日期說成報名截止。標題由內容實際
+      // 是什麼決定，兩者一起算、放在同一個物件回傳，才不會各算各的：ESU 沒有 deadline，
+      // 但有 cycle 與賽事日期，內容同時講報名與賽事，標題是「報名截止」。
       function deadlineField(c, s) {
         const ev = eventLabel(c);
         const value = deadlineLabel(c, s);
@@ -393,8 +389,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const dField = deadlineField(c, s);
         const deadlineText = escapeHtml(dField.value);
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
-        // 「資料更新」會讓人以為 133 筆都在那天查證過——實際上大多數只做過連結
-        // 存活檢查。有逐筆查證日期的就據實顯示，沒有的就不顯示，不要假裝有。
+        // 「資料更新」會讓人以為每一筆都在那天查證過。有逐筆查證日期的就據實顯示，
+        // 沒有的就不顯示，不要假裝有。
         const checkedText =
           typeof c.sourceCheckedAt === 'string' && c.sourceCheckedAt
             ? '<span class="comp-checked">官網查證 ' + escapeHtml(c.sourceCheckedAt) + '</span>'
@@ -490,7 +486,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         document.getElementById('stat-soon').textContent = soon;
       }
 
-      // ── 事件 ──
       let debounce;
       searchInput.addEventListener('input', function () {
         searchClear.hidden = this.value.length === 0;
@@ -529,7 +524,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         render();
       });
 
-      // ── 載入資料 ──
       fetch('competitions.json', { cache: 'no-cache' })
         .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then((data) => {
@@ -552,10 +546,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   </script>
 
   <style is:global>
-    /* ══════════════════════════════════════════════════════════════
-       競賽雷達 — competitions.astro 專屬設計系統（純 CSS，避免 Tailwind
-       動態類別掃描問題；JS 注入的卡片使用以下語意類別）。
-       ══════════════════════════════════════════════════════════════ */
+    /* 競賽頁專屬的樣式，用純 CSS 寫，避開 Tailwind 掃描不到動態類別的問題；
+       JS 產生的卡片使用以下語意類別。 */
     .comp-page {
       --ink: #0f172a;
       --muted: #64748b;
@@ -571,7 +563,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       min-height: 100vh;
     }
 
-    /* ── Hero ── */
     .comp-hero { padding: 4rem 1.5rem 2rem; }
     .comp-hero__inner { max-width: 1120px; margin: 0 auto; }
     .comp-eyebrow {
@@ -615,7 +606,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       font-family: 'Space Mono', ui-monospace, monospace;
     }
 
-    /* ── Control bar ── */
     .comp-controls {
       position: sticky; top: 4rem; z-index: 40; /* 4rem＝64px＝header 高度，見 global.css 的說明 */
       background: rgba(246,247,251,.82); backdrop-filter: blur(12px);
@@ -692,12 +682,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       outline: 2px solid var(--primary); outline-offset: 2px;
     }
 
-    /* ── Grid ── */
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
     .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--faint); padding: 4rem 0; }
 
-    /* ── Card ── */
     .comp-card {
       position: relative; display: flex; flex-direction: column; overflow: hidden;
       background: #fff; border: 1px solid var(--line); border-radius: 1.15rem;
@@ -764,13 +752,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .comp-card.is-closed { opacity: .68; }
     .comp-card:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 
-    /* ── Empty ── */
     .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
     .comp-empty svg { width: 3rem; height: 3rem; color: var(--faint); margin: 0 auto 1rem; }
     .comp-empty__title { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin: 0 0 .35rem; }
     .comp-empty__text { font-size: .9rem; margin: 0; }
 
-    /* ── Responsive ── */
     @media (max-width: 1024px) { .comp-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 860px) { .comp-selects { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 620px) {
@@ -780,13 +766,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       .comp-updated { width: 100%; margin: .25rem 0 0; }
       .comp-grid { grid-template-columns: 1fr; }
       /* 面板本身在手機上也太厚：收緊內距與各列間距，實測省下約 60px。
-         另一半的改善來自 shared/sticky-filters.js——向下捲動時整個讓開。
-         註：曾試過把 .comp-chips 改成單行橫向捲動，實測反而變高（431→462px）：
+         向下捲動時整個讓開的部分在 shared/sticky-filters.js。
+         .comp-chips 維持換行，做成單行橫向捲動的話實測反而變高（431→462px）：
          .comp-chiprow 是 space-between 的 wrap 容器，強制不換行會把計數列擠到
-         下一行，還多出捲軸高度。故不採用。 */
-      /* top 與上面那條保持一致（4rem＝64px＝header 高度）。這裡只改 padding。
-         先前這行寫死 68px，而且因為後面接的是 padding 而不是 z-index，
-         grep 「top: NNpx; z-index」時被漏掉——是齊平測試在 375px 抓到的。 */
+         下一行，還多出捲軸高度。 */
+      /* top 與上面那條保持一致（4rem＝64px＝header 高度），這裡只改 padding。 */
       .comp-controls { top: 4rem; padding: .6rem 1rem; }
       .comp-controls__inner { gap: .5rem; }
       .comp-searchrow { gap: .5rem; }
@@ -795,7 +779,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       .comp-chip { padding: .3rem .6rem; font-size: .78rem; }
     }
 
-    /* ── Motion / a11y ── */
     @media (prefers-reduced-motion: reduce) {
       .comp-card { animation: none; }
       .comp-card:hover { transform: none; }

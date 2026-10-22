@@ -1,6 +1,5 @@
 /**
- * 版面預算：固定 chrome 不得吃掉手機畫面，且不得有水平溢出
- * ================================================================
+ * 版面預算：固定 chrome 不得吃掉手機畫面，且不得有水平溢出。
  * 這個檔案的存在理由跟 #78 的故障注入一樣：問題修好了不代表不會回來。站台 header
  * 是 sticky 64px，好幾頁的篩選面板又 sticky 釘在它下面，兩者疊加後實測：
  *
@@ -11,13 +10,12 @@
  *   competency-map    360px 視窗 28%
  *
  * 在 360px 的視窗（iPhone SE、多數舊 Android）競賽頁只剩 24% 的畫面在顯示內容。
- * 沒有人會發現這件事——它不會讓 build 失敗，也不會讓任何既有檢查變紅。
+ * 沒有人會發現這件事：它不會讓 build 失敗，也不會讓任何既有檢查變紅。
  *
- * 判定方式刻意不看 CSS 的 position 或 top 值。第一版用
- * `position: sticky && rect.top <= 8` 判斷「貼在上緣」，結果把所有堆疊的 sticky
- * 都漏掉了——競賽頁的控制列是 top: 68px（疊在 header 下面），實測 59% 卻完全沒
- * 出現在報告裡。改成行為判定：捲動後位置幾乎沒動的元素，就是被釘住的 chrome。
- * 這對 sticky／fixed／transform 各種實作方式都成立。
+ * 判定方式刻意不看 CSS 的 position 或 top 值，看行為：捲動後位置幾乎沒動的元素，
+ * 就是被釘住的 chrome。這對 sticky／fixed／transform 各種實作方式都成立。用
+ * `position: sticky && rect.top <= 8` 判斷「貼在上緣」的話，疊在 header 下面的
+ * sticky 面板（top 是 header 的高度）會全部漏掉。
  */
 const { test, expect } = require('@playwright/test');
 const { readdirSync } = require('node:fs');
@@ -40,7 +38,7 @@ function walk(dir, prefix = '', out = []) {
 }
 
 // 模組層級走訪一次，底下兩個 describe 共用同一份清單。
-// sort() 讓測試順序（以及報告裡的順序）不受檔案系統回傳順序影響——沒有它的話，
+// sort() 讓測試順序（以及報告裡的順序）不受檔案系統回傳順序影響。沒有它的話，
 // 同一份建置產物在不同機器上會產生順序不同的測試清單。
 // google 開頭的是搜尋引擎的網站驗證檔，不是本站頁面。
 const PAGES = walk(DIST)
@@ -64,8 +62,8 @@ async function measure(page) {
 
     return page.evaluate(async () => {
         // 這段量測依賴 prefers-reduced-motion（見底下 describe 的 test.use）。
-        // 偏好被拿掉的話 sticky-filters.js 會把 transition 設回 .22s，面板在第二個
-        // frame 只移動了一部分，於是不會被判定成「捲動時沒動」的釘住 chrome——量出來
+        // 偏好被拿掉的話 sticky-filters.js 會把 transition 設回 .22s，面板在取樣時
+        // 只移動了一部分，於是不會被判定成「捲動時沒動」的釘住 chrome，量出來
         // 的數字會偏低，而且不會有任何錯誤訊息。寧可在這裡大聲失敗。
         if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
             throw new Error(
@@ -76,27 +74,21 @@ async function measure(page) {
         const vh = window.innerHeight;
         const vw = window.innerWidth;
 
-        // 捲動一律用 behavior:'instant'，並用「兩個 animation frame」取代固定 sleep。
+        // 捲動一律用 behavior:'instant'，取樣前等幾個 animation frame（見 settle），不用固定的 sleep。
+        // 捲動瞬間完成之後，要等的只剩 sticky-filters.js 在 rAF 裡套上的 transform，等 frame 就是
+        // 等它，時機確定也快：#111 實測，每次取樣固定 sleep 320ms 時單頁量測約 1990ms，等兩個
+        // frame 約 220ms。
         //
         // 為什麼不能用 scrollTo(0, y)：BaseLayout 在 <html> 上掛了 Tailwind 的
         // scroll-smooth，而那個兩參數形式等同 behavior:'auto'，會照 CSS 走平滑捲動
         // 動畫。實測（360x640、reduce 偏好）捲到 700：兩個 frame 後只到 2px，就算等滿
-        // 320ms 也才 614px——舊版的固定 sleep 一直是在動畫途中量的。Chromium 不會因為
+        // 320ms 也才 614px，固定的 sleep 會在動畫途中取樣。Chromium 不會因為
         // reduce 偏好就關掉平滑捲動（全站只有 civic-tech-map 自己寫了
         // scroll-behavior:auto，實測也只有它會落定）。真實使用者用手指或滾輪捲動本來
         // 就不走這段動畫，所以 instant 反而更接近實際情形，取樣位置也變成確定值。
-        //
-        // 捲動瞬間完成之後，兩個 frame 就足夠：
-        //   frame 1 —— scroll 事件在這一格派送，sticky-filters.js 的 onScroll 會把
-        //              onFrame 排進同一格的 rAF 佇列並套上 transform（reduce 偏好下
-        //              transition 是 none，所以立即生效）
-        //   frame 2 —— 樣式與 layout 落定，量到的是最終位置
-        //
-        // 實測 10 個有釘住面板的頁面，改前改後的 pct／covered／overflow 完全相同，
-        // 三個取樣點也都仍然有效，單頁量測從約 1990ms 降到約 220ms。
         const jumpTo = (y) => window.scrollTo({ top: y, behavior: 'instant' });
         // 三個 frame，不是兩個。實測（competitions.html、360x640、reduce）捲動之後，
-        // 面板的 transform 是在**第 2 個** frame 才套上去的：
+        // 面板的 transform 是在第 2 個 frame 才套上去的：
         //
         //   scrollTo 當下   transform: none      top=68    ← 面板整片還在畫面上
         //   第 1 個 frame   transform: none      top=68
@@ -106,7 +98,7 @@ async function measure(page) {
         // frame 剛好夠，但餘裕只有「同一個 frame 內 callback 的先後順序」：sticky 的
         // rAF 在 frame 1 的 scroll 事件中註冊，我們的第二個 rAF 在 frame 1 的 callback
         // 中註冊，所以前者排在前面。任何人在那條鏈上多加一層 rAF，兩個 frame 就會在
-        // 面板還在畫面上時取值——而且是**靜默地綠**（遮蔽比例被低估）。第三個 frame
+        // 面板還在畫面上時取值，測試照樣通過而遮蔽比例被低估。第三個 frame
         // 把餘裕變成一整個 frame，代價是每次取樣多約 16ms。
         const settle = () =>
             new Promise((resolve) => {
@@ -133,16 +125,16 @@ async function measure(page) {
         // 在多個位置各量一次取最壞值。只量單一位置會漏掉東西：資料驅動的頁面
         // 在 JS 渲染完成前後 scrollHeight 差很多，用 scrollHeight/3 當唯一取樣點
         // 時，learning-portfolio/activity-database 這類頁面會量到「還沒進入釘住
-        // 狀態」的位置而顯示為正常——實際上它有跟其他頁一樣的問題。
+        // 狀態」的位置而顯示為正常，實際上它有跟其他頁一樣的問題。
         const H = document.body.scrollHeight;
         const maxScroll = Math.max(0, H - vh);
         const STEP = 120;
 
         // 頁面根本捲不動時沒有「捲動中被遮住」這回事，直接回 0。
         // 不這樣做的話會誤判成 100%：scrollTo(target) 與 scrollTo(target + STEP)
-        // 都會被夾在同一個位置，於是「捲了卻沒動」的判定對**每一個**元素都成立，
-        // 連 1964px 高的 <main> 都會被算成釘住的 chrome。實際踩過，而且因為頁面
-        // 高度取決於資料何時渲染完，症狀是時好時壞的 flaky。
+        // 都會被夾在同一個位置，於是「捲了卻沒動」的判定對每一個元素都成立，
+        // 連 1964px 高的 <main> 都會被算成釘住的 chrome。頁面高度取決於資料何時
+        // 渲染完，所以症狀是時好時壞的 flaky。
         if (maxScroll < STEP + 40) {
             return { pct: 0, covered: 0, chrome: [], overflowX: overflowOf(), wide: wideOf() };
         }
@@ -214,29 +206,28 @@ async function measure(page) {
 // 360x640 是最嚴苛的常見尺寸（iPhone SE、多數舊 Android），過得了這關就過得了 390。
 //
 // 每一頁各自是一個 test，而不是一個 test 跑 93 頁的迴圈。Playwright 的平行單位是
-// test，迴圈內部不會被拆給不同 worker——原本這 93 頁全部序列跑在單一 worker 上，
-// 其他 worker 只能空等它跑完。拆開之後另外還有四個好處：
+// test，迴圈內部不會被拆給不同 worker，整個迴圈只能序列跑在單一 worker 上，
+// 其他 worker 只能空等它跑完。每頁一個 test 另外還有四個好處：
 //   1. 失敗的頁面有自己的測試名稱，不必從一整串 aggregate 訊息裡找
 //   2. CI 的 retries: 1 只重試壞掉的那一頁，而不是整批 93 頁重跑
 //   3. report 直接看得出哪一頁最慢
-//   4. 多頁同時壞掉時仍然全部列出——每一頁各自是一個失敗的 test
+//   4. 多頁同時壞掉時仍然全部列出，每一頁各自是一個失敗的 test
 test.describe('版面預算（360x640）', () => {
     // 這一組刻意跑在「減少動態」偏好下：面板在 reduce 下仍然讓開畫面，只是不做動畫
     // （見 public/shared/sticky-filters.js 的 applyTransition，transition 會被設成
     // none）。所以這不放寬被測的行為，只是把那段 .22s 的位移動畫拿掉，量測才能在幾個
     // animation frame 之後就取值。
     //
-    // 必須寫成 contextOptions.reducedMotion，不可以直接寫 reducedMotion。Playwright
-    // 1.56.1 註冊成 test option 的只有 colorScheme／contextOptions／locale／viewport
-    // 這幾個（見 node_modules/playwright/lib/index.js），**沒有 reducedMotion**——直接
-    // 寫會是一個沒人認得的鍵，被安靜丟掉。實測：同一個 test.use 物件裡 viewport 生效、
-    // reducedMotion 不生效，頁面裡的 matchMedia 仍回報 no-preference；改成
-    // contextOptions.reducedMotion 之後就是 true。
+    // 寫成 contextOptions.reducedMotion，不直接寫 reducedMotion。Playwright 1.56.1 的
+    // test option 沒有 reducedMotion，直接寫會被安靜丟掉：在 1.56.1 實測，同一個 test.use
+    // 物件裡 viewport 生效、reducedMotion 不生效，頁面裡的 matchMedia 仍回報 no-preference。
+    // 目前鎖定的 1.64.1 有這個 option，預設值讀的就是 contextOptions.reducedMotion
+    // （見 node_modules/playwright/lib/index.js），所以這個寫法在兩個版本都有效。
     //
-    // 這個坑很深：偏好沒生效的話，面板位移會是一段 .22s 的動畫，量測在最後一個 frame
-    // 只看到它移動了一點點，於是「捲動時位置沒動」不成立，面板**不會**被算成釘住的
-    // chrome——遮蔽比例被低估，而測試全綠。measure() 裡那條 matchMedia 斷言就是在守
-    // 這件事；本次改動第一次跑，正是它把無效設定抓出來的。
+    // 偏好沒生效的話，面板位移會是一段 .22s 的動畫，量測在最後一個 frame
+    // 只看到它移動了一點點，於是「捲動時位置沒動」不成立，面板不會被算成釘住的
+    // chrome，遮蔽比例被低估，而測試全綠。measure() 裡那條 matchMedia 斷言就是在守
+    // 這件事。
     test.use({
         viewport: { width: 360, height: 640 },
         contextOptions: { reducedMotion: 'reduce' },
@@ -246,18 +237,18 @@ test.describe('版面預算（360x640）', () => {
     // GoatCounter（gc.zgo.at）這個外部 script，networkidle 必須等它有結果才算安靜。
     //
     // 90s 不是拍腦袋：本機 4 個 worker 實測單頁中位數約 1.6s、最慢 3.8s，但 worker 互相
-    // 搶 CPU 時，同一頁曾經跑到 20.2s（單獨跑只要 2.2s）。CI 只有 2 個 worker，餘裕要
-    // 留夠。它仍然是真正的上限——卡住的頁面 90s 就失敗，而且只有它自己會被重試，不像
-    // 原本會拖著整批 93 頁。
+    // 搶 CPU 時，同一頁量到過 20.2s（單獨跑只要 2.2s）。CI 只有 2 個 worker，餘裕要
+    // 留夠。它仍然是真正的上限：卡住的頁面 90s 就失敗，而且只有它自己會被重試。
     //
-    // 注意 measure() 裡那個 waitForFunction **不是**「最多 8 秒的渲染穩定等待」：實測
-    // Playwright 只呼叫述詞兩次、相隔約 14ms（polling: 400 不影響次數），所以它實際上
-    // 只是一次很短的抽樣。真正的 readiness 契約是下一階段的事（data-site-ready），
-    // 那時 networkidle 與這個述詞會一起被換掉。
+    // measure() 裡那個 waitForFunction 不是「最多 8 秒的渲染穩定等待」。
+    // { timeout: 8000, polling: 400 } 放在第二個參數，那是傳給述詞的 arg，不是 options，
+    // 兩個設定都沒有生效：Playwright 照預設每個 animation frame 呼叫一次述詞，實測只
+    // 呼叫兩次、相隔約 14ms，所以它只是一次很短的抽樣。真正的 readiness 契約是下一階段
+    // 的事（data-site-ready），那時 networkidle 與這個述詞會一起被換掉。
     test.describe.configure({ timeout: 90_000 });
 
-    // 沒有這一條的話，PAGES 是空陣列時上面的迴圈一個 test 都產生不出來，整個檔案會以
-    // 「全綠」收場——那正是這種測試最該防的假象。
+    // 沒有這一條的話，PAGES 是空陣列時下面的迴圈一個 test 都產生不出來，整個檔案會以
+    // 「全綠」收場，那正是這種測試最該防的假象。
     //
     // 門檻是 85 而不是 50：實測目前有 93 頁，用 50 當底線的話，光是
     // career-exploration/clusters/** 就可以少掉 42 頁（全站約 45%）而測試全綠、沒有
@@ -278,14 +269,13 @@ test.describe('版面預算（360x640）', () => {
             // 一定要驗回應狀態。少了這一條，整批 93 頁對著一個全部回 404 的伺服器也會
             // 全綠：404 頁面捲不動，measure() 的「捲不動就回 0」短路直接給出 pct 0，
             // 而 matchMedia 斷言在錯誤頁上一樣成立。實測把 SITE_BASE_URL 指到不存在的
-            // 路徑，加這條之前是 94 passed、EXIT=0。
+            // 路徑，少了這條時是 94 passed、EXIT=0。
             expect(res, `${rel}：goto 沒有回傳回應`).toBeTruthy();
             expect(res.status(), `${rel}：伺服器回 HTTP ${res.status()}`).toBeLessThan(400);
 
             const m = await measure(page);
 
-            // 用 soft：同一頁兩種問題都發生時要兩條都列出來。原本的 aggregate 版本
-            // 是兩份清單各自 expect，兩種問題都看得到；一般的 expect 會在第一條就
+            // 用 soft：同一頁兩種問題都發生時要兩條都列出來。一般的 expect 會在第一條就
             // 中斷，那會少掉一半診斷。
             expect
                 .soft(m.pct, `${rel}  ${m.pct}%（${m.covered}px）  ${m.chrome.join(' + ')}`)
@@ -298,11 +288,9 @@ test.describe('版面預算（360x640）', () => {
     }
 });
 
-// 量測會漏，結構性不變式不會。
-//
-// 實際發生過：我用量測稽核找出「5 個」有問題的頁面並修好，稽核也全綠了——但用
-// grep 掃原始碼才發現實際上有 9 個。漏掉的 4 個全是資料驅動頁，它們在量測當下還
-// 沒渲染完，捲動目標落在還沒進入釘住狀態的位置。
+// 量測會漏，結構性不變式不會。資料驅動頁在量測當下可能還沒渲染完，捲動目標會落在
+// 還沒進入釘住狀態的位置：實測 9 個有問題的頁面，量測稽核只找出 5 個，漏掉的 4 個
+// 全是資料驅動頁，要用 grep 掃原始碼才找得到。
 //
 // 這條測試直接對建置產物檢查：凡是釘在站台 header 下方的元素，都必須掛上
 // data-autohide-filters。它不依賴渲染時機，新增頁面時也一定會被抓到。
@@ -320,8 +308,7 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
                 // 而桌機垂直空間充足，不是這條規則要管的對象。真的在手機上釘住的話，
                 // 上面那個版面預算測試會抓到。
                 // 兩種寫法都要認：`top-[NNpx]`（任意值）與 `top-16`（內建 scale）。
-                // 原本只認前者——把面板從 top-[68px] 改成 top-16 之後，這條測試會
-                // **一個面板都找不到而空洞地通過**。實際差點發生過。
+                // 只認前者的話，用 top-16 的面板一個都找不到，missing 永遠是空的。
                 const off = tag.match(/(?<![:\w-])top-(?:\[(\d+)px\]|(\d+))(?![\w.-])/);
                 const isPinnedBelowHeader =
                     /(?<![:\w-])sticky\b/.test(tag) && off && Number(off[1] ?? off[2]) > 0;
@@ -346,14 +333,14 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
     });
 });
 
-// 面板釘在 header 底下，但「底下」是多少先前被寫死在十個地方、三個不同的數字
-// （68px ×7、76px ×2、原始 CSS 68px ×1），沒有一個等於 header 的實際高度 64px。
-// 兩層都是半透明的（背景色帶 /80 透明度 ＋ backdrop-blur），縫裡的內容卻是全不透明的，捲動時
-// 會出現一條對比明顯的文字帶夾在兩條模糊的 bar 之間，看起來像渲染破綻。
+// 面板釘在 header 底下，top 必須剛好等於 header 的實際高度 64px，寫錯就會留縫（例如
+// 68px、76px）或重疊。兩層都是半透明的（背景色帶 /80 透明度 ＋ backdrop-blur），縫裡的
+// 內容卻是全不透明的，捲動時會出現一條對比明顯的文字帶夾在兩條模糊的 bar 之間，看起來
+// 像渲染破綻。
 //
-// 既有的檢查一條都抓不到它：版面預算量的是「固定 chrome 佔畫面多少」、溢出檢查看的
-// 是水平方向、幾何比對在 1280x900 做。三套全綠而畫面是壞的——檢查看的不是壞掉的
-// 那個維度。這一條補上那個維度。
+// 其他檢查一條都抓不到它：版面預算量的是「固定 chrome 佔畫面多少」、溢出檢查看的
+// 是水平方向、幾何比對在 1280x900 做，三套都可能全綠而畫面是壞的。這一條檢查面板
+// 頂端是否剛好貼齊 header 底部，留縫或重疊都算錯。
 test.describe('結構：sticky 面板必須與 header 底部齊平', () => {
     test.describe.configure({ timeout: 120_000 });
 
