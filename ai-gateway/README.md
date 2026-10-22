@@ -237,7 +237,20 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
    spec 上，要手動退回上一版：`sudo k3s kubectl -n sch001-ai rollout undo deployment/ai-gateway`，
    並用 `git checkout` 還原 `app.yaml`（腳本只改了 image 那一行）。
 3. 確認：`curl http://10.43.0.87:8787/readyz` 回 200；`sudo k3s kubectl -n sch001-ai logs deployment/ai-gateway`
-   的 START 一行列出設定與任務。
+   的 START 一行列出設定與任務。readyz 只檢查 key 與上游網址有沒有設定、是不是正在關機，key 錯了
+   或連不到 WinLab 時照樣回 200。要確認連得上，送一個學習啟動包的任務，看最後一個事件是不是
+   `done`（會真的用到 GPU，WinLab 忙的時候要等一兩分鐘）：
+
+   ```bash
+   curl -sN -H 'Origin: https://thc1006.github.io' -H 'Content-Type: application/json' \
+     -d '{"input":{"topic":"測試"}}' http://10.43.0.87:8787/v1/tasks/starter-pack | tail -n 3
+   ```
+
+   最後是 `error` 的話，看 log 的 `UPSTREAM-ERR`：`status` 401 代表 key 不對；504 或 408 是
+   WinLab 或它前面的代理逾時，`detail` 是它附的訊息。沒有 `status`、`detail` 寫著「還沒收到任何
+   token」的，是閘道的時限到了 WinLab 都還沒開始回應，多半是它正忙。這兩種逾時發生在第一個
+   token 之前時，學生看到的是忙線。
+   從主機直接送的請求沒有 `X-Forwarded-For`，log 會多一筆 `CLIENT-IP-MISSING`，可以不理。
 4. 對外開放：在主機上用 Tailscale Funnel 把公網的 HTTPS 轉到 Service 的 ClusterIP，再確認設定：
 
    ```bash
