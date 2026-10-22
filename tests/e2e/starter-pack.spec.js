@@ -6,6 +6,7 @@
  * 建置時有沒有設定 PUBLIC_AI_GATEWAY_URL（頁面有沒有帶 <meta name="ai-gateway-url">）都要全數通過。
  */
 const { test, expect } = require('@playwright/test');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/index.html`;
@@ -16,71 +17,17 @@ const RESULT = {
     resource_types: ['知識型影片', '學術論文', '訪談獸醫'],
 };
 
-// AI 的輸出是不可信來源。這組資料每個欄位都夾了會執行的標籤，頁面該把它們當純文字顯示
-const XSS_IMG = '<img src=x onerror="window.__xss=1">';
-const XSS_SCRIPT = '<script>window.__xss=2</script>';
+// 每個欄位都夾了可執行的標籤。
 const XSS_RESULT = {
     suggested_topic: `貓咪的行為 ${XSS_IMG} ${XSS_SCRIPT}`,
     research_questions: [`問題一 ${XSS_IMG}`, `問題二 ${XSS_SCRIPT}`, `${XSS_IMG}${XSS_SCRIPT} 問題三`],
     resource_types: [XSS_IMG, XSS_SCRIPT, `影片 ${XSS_IMG} ${XSS_SCRIPT}`],
 };
 
-const sse = (event, data) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-
-/**
- * 換上假閘道：建置時有沒有設定 PUBLIC_AI_GATEWAY_URL 都要能跑。設了的話頁面本來就帶著一個
- * meta，而 getGatewayUrl() 取第一個，所以一律先把既有的全部移除，再補上假的
- * （withMeta: false 時不補，等於沒設定）；
- * fetch 照劇本回 SSE（hang: true 時送完不結束，之後可以用 window.__push 再送），並記下收到的請求。
- */
-async function installFakeGateway(page, { chunks = [], hang = false, withMeta = true } = {}) {
-    await page.evaluate(({ chunks, hang, withMeta }) => {
-        document.querySelectorAll('meta[name="ai-gateway-url"]').forEach((m) => m.remove());
-        if (withMeta) {
-            const meta = document.createElement('meta');
-            meta.name = 'ai-gateway-url';
-            meta.content = 'https://gateway.example';
-            document.head.appendChild(meta);
-        }
-        window.__calls = [];
-        window.fetch = (url, init) => {
-            window.__calls.push({ url: String(url), body: init && init.body });
-            const encoder = new TextEncoder();
-            const signal = init && init.signal;
-            const body = new ReadableStream({
-                start(controller) {
-                    for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
-                    if (hang) window.__push = (text) => controller.enqueue(encoder.encode(text));
-                    else controller.close();
-                    if (signal) {
-                        signal.addEventListener('abort', () => {
-                            try { controller.error(new DOMException('aborted', 'AbortError')); } catch (_) {}
-                        });
-                    }
-                },
-            });
-            return Promise.resolve(new Response(body, {
-                status: 200,
-                headers: { 'content-type': 'text/event-stream', 'x-request-id': 'req-1' },
-            }));
-        };
-    }, { chunks, hang, withMeta });
-}
-
 test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
-        // 建置時設了 PUBLIC_AI_GATEWAY_URL 的話（CI 從 repository variable 帶入），頁面帶著正式閘道的
-        // meta。這裡把它換成 built-in.example，fetch 也換成一律失敗的版本：忘了 installFakeGateway 的
-        // 測試會立刻失敗，不會從 CI 對正式的閘道送出請求
-        await page.evaluate(() => {
-            document.querySelectorAll('meta[name="ai-gateway-url"]').forEach((m) => m.remove());
-            const meta = document.createElement('meta');
-            meta.name = 'ai-gateway-url';
-            meta.content = 'https://built-in.example';
-            document.head.appendChild(meta);
-            window.fetch = () => Promise.reject(new Error('測試沒有呼叫 installFakeGateway'));
-        });
+        await stubBuiltInGateway(page);
     });
 
     test('送出初步想法 → 顯示 AI 回傳的主題、3 個探索問題與 3 種資源類型；按鈕恢復原狀', async ({ page }) => {
@@ -195,7 +142,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(button).toBeFocused();
         expect(await page.evaluate(() => window.__calls.length)).toBe(1);
 
-        await page.evaluate((text) => window.__push(text), sse('done', { result: RESULT, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 }));
+        await page.evaluate((text) => window.__stream.push(text), sse('done', { result: RESULT, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 }));
         await expect(page.locator('#coachResult')).toContainText(RESULT.suggested_topic);
         await expect(button).toBeEnabled();
         await expect(button).toBeFocused();
