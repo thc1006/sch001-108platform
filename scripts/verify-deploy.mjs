@@ -2,7 +2,7 @@
 /**
  * 部署之後，去線上把站台抓下來，確認它真的在服務這一個 commit。
  * ================================================================
- * `actions/deploy-pages` 成功只證明「部署請求被接受」，證明不了站台在服務新內容。
+ * `actions/deploy-pages` 成功只代表 Pages API 回報部署完成，不代表 CDN 已經在服務新內容。
  * #89 合併後實際發生過：CI 五個 job 有四個成功、GitHub 的 deployments API 有該
  * commit 的紀錄，但線上服務的仍是舊版本（vendor/fuse.min.js 回 404），而且完全
  * 沒有訊號——因為 deploy 只在 push 到 main 時跑，不可能列入 PR 的 required check。
@@ -12,8 +12,8 @@
  *
  * 為什麼是「或它的後代」而不是「精確相等」：main 連續合併時，較新的那次部署可能在
  * 本 run 還在輪詢時就先上線了。那時線上是我們的後代，站台其實完全正常——但精確相等
- * 的判定會把它誤報成「本 commit 沒有部署」。這個誤報是真的會發生的：整條 CI 約 7
- * 分鐘，兩次合併只要間隔夠近就會重疊。
+ * 的判定會把它誤報成「本 commit 沒有部署」。兩次合併只要間隔夠近，兩個 run 就會
+ * 重疊，這個誤報真的會發生。
  *
  * 反過來，線上如果是我們的**祖先**，那才是真正的問題：部署順序被倒過來了（Actions
  * 的 concurrency 佇列是依「開始等待的時間」FIFO，不是依 commit 順序，而各 run 的 CI
@@ -25,7 +25,7 @@
  *   node scripts/verify-deploy.mjs <commit-sha>
  * 環境變數：
  *   SITE_URL           站台根網址（預設正式站）
- *   VERIFY_TIMEOUT     輪詢逾時秒數（預設 660，必須大於線上的 max-age=600）
+ *   VERIFY_TIMEOUT     輪詢逾時秒數（預設 660，必須大於線上的 max-age=600，見 TIMEOUT_MS 的說明）
  *   VERIFY_RECHECK     命中後再確認一次的間隔秒數（預設 45；設 0 停用）
  *   GITHUB_REPOSITORY  owner/repo，用來查祖先／後代關係；沒有就退回精確相等
  *   GITHUB_API_URL     GitHub REST API 的根網址（Actions 會自動提供，沒有就用 https://api.github.com）
@@ -38,8 +38,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SITE = (process.env.SITE_URL || 'https://thc1006.github.io/sch001-108platform').replace(/\/+$/, '');
 const API = (process.env.GITHUB_API_URL || 'https://api.github.com').replace(/\/+$/, '');
-// 線上的 Cache-Control 是 max-age=600。輪詢預算必須大於它，否則「CDN 還沒過期」
-// 本身就足以讓這一關誤報失敗——部署其實成功了，卻被判定沒落地。
+
 /**
  * 從環境變數讀秒數。空白、空字串與非數字一律退回預設值，而且每一種都會印出來。
  *
@@ -68,6 +67,7 @@ function secondsFromEnv(name, fallback) {
     return n;
 }
 
+// 2026-10-22 以 curl -sI 查得 build-info.json 是 max-age=600。預算比它短，CDN 還沒過期就可能誤報沒有落地。
 const TIMEOUT_MS = secondsFromEnv('VERIFY_TIMEOUT', 660) * 1000;
 const POLL_MS = 10_000;
 
@@ -99,6 +99,8 @@ let landed = false;
 let probed = '';
 let behindNote = '';
 let apiFailures = 0;
+let recheckApiFailures = 0;
+let recheckFailures = 0;
 let discounted = 0;
 let exhausted = false;
 // 命中之後再看一次的間隔（見檔案末端的再確認）。設 0 停用。
@@ -159,13 +161,13 @@ async function fetchInfo() {
 }
 
 /**
- * 線上服務的 commit 與這次要驗的 commit 是什麼關係。
+ * compareWithLive 查線上服務的 commit 與這次要驗的 commit 是什麼關係。
  *
  * 回傳 GitHub compare API 的 status：'identical'／'ahead'（線上較新）／
  * 'behind'（線上較舊）／'diverged'，判不出來時回 null。
  *
- * 判不出來一律當成「還沒落地」繼續等——寧可逾時失敗，也不要在關係不明的情況下
- * 宣告部署成功。這條規則就是這支腳本存在的理由本身。
+ * 主迴圈判不出來就當成還沒落地，繼續等：寧可逾時失敗，也不在關係不明時宣告部署成功。
+ * 命中之後的再確認是例外，判不出來時維持成功並記一筆，見檔案末端。
  */
 async function compareWithLive(live) {
     const repo = process.env.GITHUB_REPOSITORY;
@@ -247,9 +249,9 @@ exhausted = !landed;
 // 命中之後的再確認。
 //
 // 第一次看到自己就收工的話，會漏掉「更舊的部署在我們剛確認完之後才落地」：concurrency
-// 佇列是依開始等待的時間 FIFO，不是依 commit 順序，各 run 的 CI 耗時又有落差（實測整條
-// run 331～414 秒），所以較舊的 commit 完全可能排在後面。那種情形下站台真的退版了，
-// 而每個 run 各自都只看到自己、全部是綠的。
+// 佇列是依開始等待的時間 FIFO，不是依 commit 順序，各 run 的 CI 耗時又有落差，所以
+// 較舊的 commit 完全可能排在後面。那種情形下站台真的退版了，而每個 run 各自都只看到
+// 自己、全部是綠的。
 //
 // **不論是精確命中還是後代命中都要再確認。** 一度只在精確命中後做，理由寫的是「命中
 // 後代時線上本來就比我們新」——那是把「現在比較新」當成「之後也會比較新」。看到 ahead
@@ -263,10 +265,13 @@ if (landed && RECHECK_MS > 0) {
     try {
         const again = await fetchInfo();
         last = again.label;
-        if (again.commit && again.commit !== want) {
+        if (!again.commit) {
+            recheckFailures++;
+            console.log(`  再確認：未取得有效的線上 commit，最後看到：${again.label}。維持原本的成功結論。`);
+        } else if (again.commit !== want) {
             const rel = await compareWithLive(again.commit);
             if (rel === null) {
-                apiFailures++;
+                recheckApiFailures++;
                 console.log(`  再確認：線上是 ${short(again.commit)}，但 compare API 沒有回應，關係查不出來，保留原本的成功結論。`);
             } else if (rel === 'behind' || rel === 'diverged') {
                 // Age 是這裡唯一能用的新鮮度資訊。真的退版會清掉邊緣快取，所以退版後
@@ -281,10 +286,10 @@ if (landed && RECHECK_MS > 0) {
                             : `線上已變成 ${short(again.commit)}，與 ${short(want)} 分岔`;
                     landed = false;
                 } else {
-                    // 這是本檔唯一一處刻意違反「關係不明就寧可紅」的地方，所以要記一筆。
-                    // 這裡若改成失敗，命中後拿到舊快取的每一次部署都會誤報——而那是
-                    // exact-match 的常態路徑。開放是對的，但不能讓它跟「毫無疑問通過」
-                    // 長得一模一樣。
+                    // 再確認刻意不推翻初次成功的情況有四種：compare 查不出關係、取不到線上資料、
+                    // 線上資料無效，以及這裡的快取副本太舊。每一種都記一筆，綠燈才不會和毫無疑問
+                    // 的通過長得一樣。這裡若改成失敗，命中後拿到舊快取的每一次部署都會誤報，而那
+                    // 是精確命中的常態路徑。
                     discounted++;
                     console.log(
                         `  再確認：拿到 Age=${again.age}s 的快取副本（超過 ${FRESH_MAX_AGE_S}s），` +
@@ -298,19 +303,22 @@ if (landed && RECHECK_MS > 0) {
             console.log('  再確認：線上仍是本 commit。');
         }
     } catch {
-        // 再確認的取用本身失敗時不推翻已經成立的結論——不要把一次網路抖動變成紅燈。
-        // （compareWithLive 不會 throw，它自己 catch 後回 null，走上面那條分支。）
-        apiFailures++;
+        // 一次網路抖動不該把已經成立的結論變成紅燈。compareWithLive 自己會 catch 並回 null，
+        // 走到這裡的只有 build-info.json 的取用失敗，所以記在 recheckFailures。
+        recheckFailures++;
         console.log('  再確認時取不到線上資料，維持原本的成功結論。');
     }
 }
 
-if (landed && (apiFailures || discounted)) {
+// 主迴圈只在精確命中或 compare 查到後代時成功，先前 compare 沒有回應過幾次都不影響這個結論，
+// 所以這裡只看再確認的計數，apiFailures 只寫進失敗訊息。
+if (landed && (recheckApiFailures || recheckFailures || discounted)) {
     const why = [
-        apiFailures ? `compare API 有 ${apiFailures} 次沒有回應` : '',
+        recheckApiFailures ? `再確認時 compare API 有 ${recheckApiFailures} 次沒有回應` : '',
+        recheckFailures ? `再確認有 ${recheckFailures} 次未取得有效線上資料` : '',
         discounted ? `有 ${discounted} 次因為快取副本太舊而未採信` : '',
     ].filter(Boolean).join('；');
-    console.log(`  ⚠ ${why}——祖先判定不完整，這次的綠燈信心較低。`);
+    console.log(`  ⚠ ${why}。線上驗證的資訊不完整，這次的綠燈信心較低。`);
 }
 
 if (!landed) {

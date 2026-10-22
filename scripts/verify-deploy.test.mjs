@@ -17,9 +17,9 @@ const relation = (status) => ({ body: JSON.stringify({ status }) });
 
 /**
  * verify 起假伺服器，執行一次 verify-deploy.mjs。info 與 compare 依序回應，用完後重複最後一筆。
- * repo 為 false 時不設 GITHUB_REPOSITORY，腳本就不查 compare。
+ * repo 為 false 時不設 GITHUB_REPOSITORY，腳本就不查 compare。budget 是 VERIFY_TIMEOUT 的秒數。
  */
-async function verify({ info, compare = [relation('ahead')], repo = true }) {
+async function verify({ info, compare = [relation('ahead')], repo = true, budget = 1 }) {
     const requests = { info: 0, compare: 0, comparePaths: [] };
     const server = http.createServer((request, response) => {
         const isInfo = request.url === '/build-info.json';
@@ -33,6 +33,10 @@ async function verify({ info, compare = [relation('ahead')], repo = true }) {
         const queue = isInfo ? info : compare;
         const index = isInfo ? requests.info++ : requests.compare++;
         const reply = queue[Math.min(index, queue.length - 1)];
+        if (reply.disconnect) {
+            request.socket.destroy();
+            return;
+        }
         const headers = { 'content-type': 'application/json' };
         if (reply.age !== undefined) headers.age = String(reply.age);
         response.writeHead(reply.status || 200, headers);
@@ -44,7 +48,7 @@ async function verify({ info, compare = [relation('ahead')], repo = true }) {
     });
     try {
         const origin = `http://127.0.0.1:${server.address().port}`;
-        // 預算 1 秒比輪詢間隔 10 秒短，主迴圈只取一次；再確認只等 10 毫秒。
+        // 預設的預算 1 秒比輪詢間隔 10 秒短，主迴圈只取一次；再確認只等 10 毫秒。
         // 開發機以 NODE_USE_ENV_PROXY 或 --use-env-proxy 開啟 proxy 時，fetch 會改走 HTTP_PROXY，
         // 請求到不了假伺服器。no_proxy 與 NO_PROXY 同時存在時以小寫的為準，所以兩個都設。
         const env = {
@@ -52,7 +56,7 @@ async function verify({ info, compare = [relation('ahead')], repo = true }) {
             SITE_URL: origin,
             GITHUB_API_URL: origin,
             GITHUB_SHA: SHA,
-            VERIFY_TIMEOUT: '1',
+            VERIFY_TIMEOUT: String(budget),
             VERIFY_RECHECK: '0.01',
             NO_PROXY: '127.0.0.1',
             no_proxy: '127.0.0.1',
@@ -61,7 +65,7 @@ async function verify({ info, compare = [relation('ahead')], repo = true }) {
         delete env.GITHUB_REPOSITORY;
         delete env.NODE_USE_ENV_PROXY;
         if (repo) env.GITHUB_REPOSITORY = 'owner/repo';
-        const child = spawn(process.execPath, [SCRIPT], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 5000 });
+        const child = spawn(process.execPath, [SCRIPT], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: (budget + 4) * 1000 });
         let stdout = '';
         let stderr = '';
         child.stdout.on('data', (chunk) => { stdout += chunk; });
@@ -86,6 +90,28 @@ test('精確命中、再確認仍是本 commit：成功且沒有警告', { timeo
     assert.ok(result.stdout.includes(EXACT_RECHECK), result.stdout);
     assert.doesNotMatch(result.stdout, /信心較低/);
 });
+
+for (const [label, reply, shown] of [
+    ['HTTP 404', { status: 404, body: 'missing' }, /未取得有效的線上 commit，最後看到：HTTP 404。/],
+    ['HTTP 500', { status: 500, body: 'unavailable' }, /未取得有效的線上 commit，最後看到：HTTP 500。/],
+    ['沒有 commit 欄位', { body: '{}' }, /未取得有效的線上 commit，最後看到：\(無 commit 欄位\)。/],
+    ['commit 格式不合法', { body: JSON.stringify({ commit: '../untrusted' }) }, /未取得有效的線上 commit，最後看到：\(commit 欄位不是 40 位十六進位，已拒絕\)。/],
+    ['JSON 壞掉', { body: '{' }, /再確認時取不到線上資料/],
+    ['連線被重設', { disconnect: true }, /再確認時取不到線上資料/],
+]) {
+    test(`再確認取不到有效資料（${label}）：維持成功，但說明信心較低`, { timeout: 8000 }, async () => {
+        const result = await verify({ info: [matching, reply] });
+        // 初次已經命中，再確認的暫時故障不推翻成功，只扣信心。
+        assert.equal(result.code, 0, result.stderr);
+        assert.ok(result.requests.info >= 2);
+        assert.ok(!result.stdout.includes(EXACT_RECHECK), result.stdout);
+        assert.match(result.stdout, shown);
+        assert.match(result.stdout, /維持原本的成功結論/);
+        assert.match(result.stdout, /再確認有 1 次未取得有效線上資料/);
+        assert.match(result.stdout, /信心較低/);
+        assert.doesNotMatch(result.stdout, /compare API 有/);
+    });
+}
 
 for (const [label, reply, shown] of [
     ['HTTP 404', { status: 404, body: 'missing' }, /最後看到：HTTP 404/],
@@ -137,6 +163,20 @@ test('線上是後代：成功，再確認仍是後代也不扣信心', { timeou
     assert.doesNotMatch(result.stdout, /信心較低/);
 });
 
+// 輪詢間隔固定 10 秒。預算 15 秒時主迴圈取兩次，這一案因此要等 10 秒。
+test('主迴圈的 compare 先沒有回應、下一輪查到後代：成功且不扣信心', { timeout: 25000 }, async () => {
+    const result = await verify({
+        info: [live(NEWER)],
+        compare: [{ status: 502, body: 'bad gateway' }, relation('ahead')],
+        budget: 15,
+    });
+    assert.equal(result.code, 0, result.stderr);
+    // 沒有回應的那次不記進 probed，第二輪會再查；再確認又查一次。
+    assert.equal(result.requests.compare, 3);
+    assert.match(result.stdout, /第 2 次嘗試：線上是 dddddddddddd，為 aaaaaaaaaaaa 的後代/);
+    assert.doesNotMatch(result.stdout, /信心較低/);
+});
+
 for (const [status, note] of [
     ['behind', /線上已變成 bbbbbbbbbbbb，那是 aaaaaaaaaaaa 的祖先/],
     ['diverged', /線上已變成 bbbbbbbbbbbb，與 aaaaaaaaaaaa 分岔/],
@@ -160,5 +200,6 @@ test('再確認時 compare API 失敗：維持成功，警告記在 compare API'
     const result = await verify({ info: [matching, live(OLDER)], compare: [{ status: 502, body: 'bad gateway' }] });
     assert.equal(result.code, 0, result.stderr);
     assert.equal(result.requests.compare, 1);
-    assert.match(result.stdout, /compare API 有 1 次沒有回應/);
+    assert.match(result.stdout, /再確認時 compare API 有 1 次沒有回應/);
+    assert.doesNotMatch(result.stdout, /再確認有/);
 });
