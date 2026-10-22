@@ -319,6 +319,12 @@ if (landed && (recheckApiFailures || recheckFailures || discounted)) {
         discounted ? `有 ${discounted} 次因為快取副本太舊而未採信` : '',
     ].filter(Boolean).join('；');
     console.log(`  ⚠ ${why}。線上驗證的資訊不完整，這次的綠燈信心較低。`);
+    // 這時 job 仍是 success，只看日誌才會發現。在 Actions 上另發 warning annotation，
+    // run 的摘要頁就看得到。跳脫照 @actions/core 的 escapeData。
+    if (process.env.GITHUB_ACTIONS === 'true') {
+        const data = why.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+        console.log(`::warning title=部署驗證信心較低::${data}`);
+    }
 }
 
 if (!landed) {

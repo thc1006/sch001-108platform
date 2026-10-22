@@ -18,8 +18,9 @@ const relation = (status) => ({ body: JSON.stringify({ status }) });
 /**
  * verify 起假伺服器，執行一次 verify-deploy.mjs。info 與 compare 依序回應，用完後重複最後一筆。
  * repo 為 false 時不設 GITHUB_REPOSITORY，腳本就不查 compare。budget 是 VERIFY_TIMEOUT 的秒數。
+ * actions 為 true 時設 GITHUB_ACTIONS=true。
  */
-async function verify({ info, compare = [relation('ahead')], repo = true, budget = 1 }) {
+async function verify({ info, compare = [relation('ahead')], repo = true, budget = 1, actions = false }) {
     const requests = { info: 0, compare: 0, comparePaths: [] };
     const server = http.createServer((request, response) => {
         const isInfo = request.url === '/build-info.json';
@@ -63,8 +64,10 @@ async function verify({ info, compare = [relation('ahead')], repo = true, budget
         };
         delete env.GITHUB_TOKEN;
         delete env.GITHUB_REPOSITORY;
+        delete env.GITHUB_ACTIONS;
         delete env.NODE_USE_ENV_PROXY;
         if (repo) env.GITHUB_REPOSITORY = 'owner/repo';
+        if (actions) env.GITHUB_ACTIONS = 'true';
         const child = spawn(process.execPath, [SCRIPT], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: (budget + 4) * 1000 });
         let stdout = '';
         let stderr = '';
@@ -203,3 +206,15 @@ test('再確認時 compare API 失敗：維持成功，警告記在 compare API'
     assert.match(result.stdout, /再確認時 compare API 有 1 次沒有回應/);
     assert.doesNotMatch(result.stdout, /再確認有/);
 });
+
+for (const [label, actions, info, expected] of [
+    ['在 Actions 上、信心較低', true, [matching, { status: 404, body: 'missing' }], ['::warning title=部署驗證信心較低::再確認有 1 次未取得有效線上資料']],
+    ['不在 Actions 上', false, [matching, { status: 404, body: 'missing' }], []],
+    ['在 Actions 上、沒有疑慮', true, [matching, matching], []],
+]) {
+    test(`Actions 的 warning annotation（${label}）`, { timeout: 8000 }, async () => {
+        const result = await verify({ info, actions });
+        assert.equal(result.code, 0, result.stderr);
+        assert.deepEqual(result.stdout.split('\n').filter((line) => line.startsWith('::')), expected);
+    });
+}
