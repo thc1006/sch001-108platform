@@ -2,15 +2,14 @@
 /**
  * 測試用的最小靜態檔案伺服器。
  *
- * 存在的理由：Playwright 的 webServer 需要一個能自動啟動的伺服器，而原本的
- * `npm run serve` 用的是 `python -m http.server`——CI runner 不保證有 python，
- * 而且它需要人工另開一個 terminal。這支沒有任何相依套件。
+ * 存在的理由：Playwright 的 webServer 需要一個能自動啟動的伺服器，而 CI runner
+ * 不保證有 python，不能用 `python -m http.server`。這支沒有任何相依套件。
  *
  * 用法：node scripts/static-server.mjs [port] [root]
  *
  * root 預設是 repo 根目錄（給 tests/fixtures 用）。site smoke test 則指向
  * .link-root，那裡把 dist/ 放在 /sch001-108platform/ 之下，重現 GitHub Pages
- * 的路徑命名空間——站台的連結都是根相對路徑，路徑對不上就測不出真實行為。
+ * 的路徑命名空間：站台的連結都是根相對路徑，路徑對不上就測不出真實行為。
  */
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -23,7 +22,7 @@ const REPO = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number(process.argv[2] || process.env.PORT || 8000);
 const ROOT = process.argv[3] ? path.resolve(REPO, process.argv[3]) : REPO;
 // ROOT 的真實路徑，給底下的 symlink 防護比對用。啟動時 ROOT 可能還不存在
-// （.link-root 要 build 完才有），解析不了就退回詞法值——那種情況下本來也沒有
+// （.link-root 要 build 完才有），解析不了就退回詞法值，那種情況下本來也沒有
 // 東西可以服務，第一個請求會 404。
 let REAL_ROOT = ROOT;
 try {
@@ -31,12 +30,12 @@ try {
 } catch {
     /* ROOT 尚未存在 */
 }
-// 兩個前綴都自帶結尾分隔符。這不只是方便：少了分隔符就是經典的前綴繞法——ROOT 是
+// 兩個前綴都自帶結尾分隔符。這不只是方便：少了分隔符就是經典的前綴繞法，ROOT 是
 // …/ci-repair 時，…/ci-repair-evil 也會通過 startsWith(ROOT)。實測對照過，naive 版
 // 會外洩、帶分隔符的不會。
 //
-// 自帶分隔符還有第二個作用：守衛可以寫成**單一條件**的 !x.startsWith(前綴)，不必再
-// 補一個 x !== ROOT 的特例。這個形狀是刻意配合 CodeQL 的 js/path-injection——它的
+// 自帶分隔符還有第二個作用：守衛可以寫成單一條件的 !x.startsWith(前綴)，不必再
+// 補一個 x !== ROOT 的特例。這個形狀是刻意配合 CodeQL 的 js/path-injection：它的
 // StartsWithDirSanitizer 只在「值被標記為 normalized 且 absolute」時才生效，而複合
 // 條件會讓 guard 比對失配。
 const ROOT_PREFIX = ROOT.endsWith(path.sep) ? ROOT : ROOT + path.sep;
@@ -57,8 +56,8 @@ const TYPES = {
 
 const server = createServer(async (req, res) => {
     // 整個 handler 包起來。這支只在測試環境跑，但只要有一個未捕捉的例外，整個
-    // 伺服器行程就會死掉——接下來每個測試都會以「連不上」失敗，真正的原因被蓋掉。
-    // 實際踩過：decodeURIComponent('/%ZZ') 會拋 URIError 並帶走整個 server。
+    // 伺服器行程就會死掉，接下來每個測試都會以「連不上」失敗，真正的原因被蓋掉。
+    // 例如 decodeURIComponent('/%ZZ') 會拋 URIError，沒接住就會帶走整個 server。
     try {
         const rawPath = (req.url || '/').split('?')[0];
         let urlPath;
@@ -74,7 +73,7 @@ const server = createServer(async (req, res) => {
         }
 
         // 要根目錄本身時直接指向 index.html。這一行的目的不只是省一次 stat：
-        // 它保證底下每一條路徑都**嚴格位於** ROOT 之下，於是兩道守衛都可以寫成
+        // 它保證底下每一條路徑都嚴格位於 ROOT 之下，於是兩道守衛都可以寫成
         // 單一條件的 startsWith，不必再補 x !== ROOT 的特例（見上方常數的說明）。
         let filePath = path.resolve(ROOT, '.' + urlPath);
         if (filePath === ROOT) filePath = path.join(ROOT, 'index.html');
@@ -96,8 +95,8 @@ const server = createServer(async (req, res) => {
         }
 
         // 第二層（實際路徑）：詞法比對擋得住 ../，擋不住「ROOT 內有一個 symlink
-        // 指向 ROOT 外」——path.resolve 只做字串正規化，根本不看檔案系統。實測用
-        // 一個指向 ROOT 外的 directory junction：補這一層之前是 200，之後是 403。
+        // 指向 ROOT 外」：path.resolve 只做字串正規化，根本不看檔案系統。實測用
+        // 一個指向 ROOT 外的 directory junction：沒有這一層是 200，有這一層是 403。
         //
         // 刻意放在 stat 之後：realpath 對不存在的路徑會丟例外，而那種路徑本來就該
         // 走上面的 404，不該在這裡變成 403。
@@ -112,9 +111,9 @@ const server = createServer(async (req, res) => {
         //     fs.realpathSync(p)           output = 呼叫本身
         //     fs.realpath(p, cb)           output = cb 的第二個參數
         //
-        // **promise 版的 realpath 一種都不是**，所以 await 出來的值不會被標記成
-        // normalized+absolute，底下那道 startsWith 守衛也就無法生效——alert 會留著，
-        // 而它標的其實正是防護本身。這支只綁 localhost、服務的是本機小檔，同步解析
+        // promise 版的 realpath 一種都不是，所以 await 出來的值不會被標記成
+        // normalized+absolute，底下那道 startsWith 守衛也就無法生效，alert 會留著，
+        // 而它標的其實正是防護本身。這支只在本機與 CI 測試時跑、服務的是小檔，同步解析
         // 一條路徑的成本可以忽略（啟動時解析 ROOT 用的也是同一支），換到的是「工具
         // 認得這是 sanitizer」，日後改動會被持續驗證，而不是靠有人記得某條 dismissal。
         try {
@@ -128,10 +127,10 @@ const server = createServer(async (req, res) => {
             return;
         }
 
-        // 仍然不是原子操作——realpathSync 與 readFile 是兩次獨立的系統呼叫，之間還有
+        // 仍然不是原子操作：realpathSync 與 readFile 是兩次獨立的系統呼叫，之間還有
         // TOCTOU 視窗（CodeQL 的 js/file-system-race 指的就是這件事）。要真的關掉
-        // 得改用 file handle：open 一次之後只對 handle 做 stat/read。這支只綁
-        // localhost、只服務 repo 內的測試資產、不進建置產物，所以停在「讀已驗過的
+        // 得改用 file handle：open 一次之後只對 handle 做 stat/read。這支只在本機與
+        // CI 測試時跑、只服務 repo 內的測試資產、不進建置產物，所以停在「讀已驗過的
         // 路徑」這一層；真的要收，那是另一次改動的範圍。
         try {
             const body = await readFile(filePath);

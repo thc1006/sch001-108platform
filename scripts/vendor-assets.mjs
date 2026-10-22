@@ -1,40 +1,29 @@
 #!/usr/bin/env node
 /**
- * 把第三方前端函式庫從 node_modules 複製到 public/vendor/
- * ================================================================
- * 為什麼不直接用 CDN：本站原本有四個 runtime CDN 依賴，全部沒有 SRI——
+ * 把第三方前端函式庫從 node_modules 複製到 public/vendor/。
  *
- *   cdn.jsdelivr.net/npm/fuse.js@6.6.2      搜尋引擎；載不到就整個搜尋失效
- *   unpkg.com/feather-icons@4.29.2          兩頁的圖示
- *   unpkg.com/ionicons@7.1.0（esm ＋ nomodule）  一頁的 16 個圖示
+ * 不用 CDN 的理由：從 CDN 載入時，搜尋和圖示能不能用取決於第三方網域。CDN 掛掉時
+ * build 和 check:site 都是綠的，建置期沒有任何檢查會發現，使用者打開頁面才知道
+ * 搜尋失效。
  *
- * 這是三個第三方網域的可用性直接決定本站功能能不能用，而且沒有任何建置期檢查會
- * 發現它們掛掉——CDN 壞掉時 build 是綠的、check:site 是綠的，使用者打開才發現
- * 搜尋框永遠停在「載入中」。
- *
- * 改成自架之後：
+ * 自架帶來三件事：
  *   - 版本由 package-lock.json 鎖定（比 SRI 更完整：連相依都鎖）
- *   - 檔案缺少時 CI 會擋下，而且**權威在 check:site 而不是在這裡**：
+ *   - 檔案缺少時 CI 會擋下，最後把關的是 check:site，不是這裡：
  *       · scripts/check-built-site.mjs 從建置產物出發，先解析 HTML 屬性
  *         （script[src]、link[href]…），再從解析到的 vendor JS 遞移走它們的
  *         ES module import 圖，要求每個靜態 import 的目標都在 dist/ 裡。
  *         那一關不依賴任何人在 .astro 裡寫對什麼，所以刪不掉。
  *       · 本腳本檔尾也有一份同樣語意的檢查，但它的價值只是「更早失敗、訊息更
- *         具體」（講得出是哪個套件的哪個欄位）。真的漏掉時，check:site 會擋。
+ *         具體」（會列出這一輪的全部產出）。真的漏掉時，check:site 會擋。
  *         兩份共用 site-contract.lib.mjs 的同一個掃描器，不是兩套邏輯。
  *   - 沒有第三方 runtime 請求
  *
  * public/vendor/ 不入版控（見 .gitignore）：它完全由 node_modules 推導得出，
  * commit 進去只會造成「lockfile 更新了但 vendor 忘了重跑」的漂移。
  *
- *
- * 為什麼不寫死 dist 路徑（#94）
- * ----------------------------------------------------------------
- * 第一版把三個檔案的位置直接寫死（fuse.js/dist/fuse.min.js、
- * ionicons/dist/ionicons/），缺檔時印的是「請先執行 npm ci」。dependabot #94
- * （fuse.js ^6.6.2 → ^7.5.0、ionicons ^7.1.0 → ^8.1.0）於是變成一則**誤診**：
- * npm ci 明明跑過而且成功了，真正的原因是 fuse.js 7 把 UMD build 整個刪掉。
- * 把維護者指向一個沒有問題的地方，比沒有訊息更糟。
+ * 不寫死 dist 路徑（#94）：上游換大版時檔案位置會跟著變，寫死的路徑一缺檔就只能
+ * 叫人「先執行 npm ci」，而 npm ci 其實成功了。fuse.js 7 拿掉全部 UMD build 就是
+ * 這種情形。把維護者指向一個沒有問題的地方，比沒有訊息更糟。
  *
  * 量到的事實（npm view ＋ npm pack --dry-run）：
  *
@@ -43,15 +32,15 @@
  *                   dist/ 有 fuse.min.js（UMD，23.5kB）
  *   fuse.js 7.5.0   main=./dist/fuse.cjs        module=./dist/fuse.mjs
  *                   exports['./min'].import=./dist/fuse.min.mjs（26.1kB）
- *                   dist/ 底下只剩 .cjs 與 .mjs——UMD／IIFE build 一個都沒有，
- *                   所以「掛出 window.Fuse 的 classic script」這條路徑不存在了
+ *                   dist/ 底下只剩 .cjs 與 .mjs，UMD／IIFE build 一個都沒有，
+ *                   所以沒有能掛出 window.Fuse 的 classic script
  *
  *   ionicons 7.1.0  unpkg=dist/ionicons.js  ← stencil 的舊版相容 shim（962B），
  *                   它自己 appendChild 出 dist/ionicons/ionicons.esm.js
  *                   與 nomodule 的 dist/ionicons/ionicons.js（ES5，119,689 B）
  *   ionicons 8.1.0  unpkg=dist/ionicons/ionicons.esm.js
- *                   dist/ionicons/ionicons.js 與全部 *.system.js 都不存在了
- *                   ——ES5／SystemJS 那一半整個被移除，nomodule 沒有東西可載
+ *                   沒有 dist/ionicons/ionicons.js，也沒有任何 *.system.js，
+ *                   ES5／SystemJS 那一半整個被移除，nomodule 沒有東西可載
  *
  * 所以：要複製哪一個檔，一律問套件自己的 package.json（exports／module／
  * unpkg／jsdelivr／main），而且解析出來的檔還要再驗一次「它真的是我們要的那種
@@ -65,22 +54,22 @@
  *     模式。缺檔一律中止，一個都不例外。
  *   - 「改用 import.meta.resolve()／require.resolve()」：那兩個只看得到 exports
  *     的 '.' 與明確列出的子路徑，拿不到 unpkg／jsdelivr 這兩個「瀏覽器 build」
- *     專用欄位——ionicons 8 的 loader 位置正是只寫在 unpkg。
+ *     專用欄位，而 ionicons 8 的 loader 位置只寫在這兩個欄位。
  */
 import { mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // 靜態 import 掃描與本檔、與 scripts/check-built-site.mjs 共用同一份實作。
-// 同一件事有兩份擷取邏輯正是這一系列 issue 一路在修的失效模式；而且那份實作
+// 同一件事有兩份擷取邏輯，遲早會各自漂移；而且那份實作
 // 會先剝掉註解與字串，避免把 banner 裡的使用範例誤判成真的 import。
 import { staticImportSpecifiers, stripJsCommentsAndStrings } from './site-contract.lib.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const NM = path.join(ROOT, 'node_modules');
 const OUT = path.join(ROOT, 'public', 'vendor');
-// 產出清單的檔名。scripts/check-built-site.mjs 也認同一個名字——改名要兩邊一起改，
-// 而漏改會被那邊的「有 vendor/ 產出卻找不到清單」擋下，不會靜默失效。
+// 產出清單的檔名。scripts/check-built-site.mjs 也認同一個名字，改名要兩邊一起改；
+// 漏改的話，那邊會以「有 vendor/ 產出卻找不到清單」擋下，不會靜默失效。
 const VENDOR_MANIFEST = 'vendor-manifest.json';
 
 /** 一律中止並印出理由。靜默略過會讓建置產物少一個檔，而那正是要防的失效模式。 */
@@ -103,13 +92,9 @@ function emit(destRel, text) {
     return dest;
 }
 
-// ────────────────────────────────────────────────────────────────
-// 從套件自己的 package.json 推導「瀏覽器要載的是哪一個檔」
-// ────────────────────────────────────────────────────────────────
-
 /**
- * 讀套件的 manifest。這裡才是真正的「沒安裝」——訊息就只講這件事，不要像上一版
- * 那樣把「套件裝好了但檔名變了」也說成「請先執行 npm ci」。
+ * readManifest 讀套件的 package.json。只有這個檔不存在才算套件沒安裝，所以只有這裡
+ * 叫人執行 npm ci；套件裝了但檔名變了，由 resolveEntry 和 resolveStencilLoaderDir 回報。
  */
 function readManifest(name) {
     const p = path.join(NM, name, 'package.json');
@@ -123,22 +108,20 @@ function readManifest(name) {
  * exports 欄位的最小解析器。
  *
  * 只做本腳本需要的那一段：子路徑（'.'／'./min'）＋ 條件（browser／import／
- * module／default）。刻意不支援萬用字元子路徑（'./*'）——目前三個套件都沒用到，
+ * module／default）。刻意不支援萬用字元子路徑（'./*'）：目前三個套件都沒用到，
  * 而且沒解析到只會走到下一個候選欄位，不會靜默拿到錯的檔。
  *
- * **依物件的 key 順序取第一個成立的條件**，不是依我們偏好的順序去挑。這是
- * Node 與所有 bundler／CDN 的規則（條件物件是有序的，先寫的先贏），而第一版
- * 是反過來跑白名單——那會讓同一份 package.json 在這裡解析到 A、在 Node／
- * webpack／unpkg 解析到 B。故意偏好某個條件是一回事，跟整個生態系不一致而且
- * 沒人講是另一回事。實測畸形 manifest
- * `{ default: node 專用 build, browser: 瀏覽器 build }`：Node 會取 default，
- * 舊寫法取 browser。
+ * 依物件的 key 順序取第一個成立的條件，不是依我們偏好的順序去挑。這是
+ * Node 與所有 bundler／CDN 的規則（條件物件是有序的，先寫的先贏）。照偏好順序跑
+ * 白名單的話，同一份 package.json 在這裡解析到 A、在 Node／webpack／unpkg 解析到 B。
+ * 例如畸形的 manifest `{ default: node 專用 build, browser: 瀏覽器 build }`：
+ * Node 取 default，照偏好順序會取 browser。
  *
- * 白名單的作用改成「哪些 key 算數」：不在白名單的 key（types／node／deno…）
+ * 白名單只決定「哪些 key 算數」：不在白名單的 key（types／node／deno…）
  * 直接跳過，不當成成立的條件。fuse.js 7 的
  * exports['./min'].import 是 { types: './dist/fuse.d.ts', default: './dist/fuse.min.mjs' }，
  * types 排第一但被跳過，所以拿到的是 .min.mjs 而不是 .d.ts。
- * （即使如此，.d.ts 仍在 vetCandidate 再擋一次——單靠條件順序防守太薄。）
+ * 單靠條件順序防守太薄，所以 .d.ts 在 vetCandidate 還會再擋一次。
  */
 function pickCondition(node, conditions) {
     if (node == null) return null;
@@ -177,17 +160,9 @@ const ESM_CONDITIONS = ['browser', 'import', 'module', 'default'];
  * 這一格拿到 dist/fuse.min.mjs（26.1kB）而不是 dist/fuse.mjs（50.4kB）。
  * fuse.js 6 沒有 exports 欄位，會一路掉到 module=./dist/fuse.esm.js（41.3kB）。
  *
- * 這裡有一個要講清楚的代價，不要用「差距遠小於此」帶過。首頁實際下載的那個檔
- * 從 fuse.min.js 變成 fuse.esm.js，實測（gzip -9）：
- *
- *     23,539 B → 41,322 B   未壓縮 +75%
- *      7,293 B → 10,814 B   gzip   +48%
- *
- * 也就是說在 #94 真的合併進來之前，每一位造訪首頁的人都要多付這 3.5kB
- * （gzip 後）。6 的 dist/ 其實有一個 fuse.esm.min.js（15,745 B／gzip 5,297 B）
- * 比原本還小，但它沒有被任何 metadata 指名；用「把 X.js 換成 X.min.js 再試試
- * 看」去猜檔名，正是這次要拔掉的那種寫死。換到的是「升級時不會猜錯檔」，而且
- * 這個代價在 #94 落地後自動消失（7 的 exports['./min'] 直接給壓縮版）。
+ * 不用「把 X.js 換成 X.min.js 再試試看」去猜壓縮版的檔名：那又是一種寫死，升級時
+ * 會猜錯檔。代價是沒被 metadata 指名的壓縮版拿不到，例如 fuse.js 6 的
+ * dist/fuse.esm.min.js（15,745 B／gzip 5,297 B）。
  * 頁面另外加了 <link rel="modulepreload">，把 shim 帶來的那一趟序列化往返
  * 補回來（見 src/pages/index.astro）。
  */
@@ -209,27 +184,28 @@ function browserEntryCandidates(m) {
  * 回傳 null 代表可以往下驗語法；回傳字串代表「這個候選被否決，理由是這句」。
  * 位置不合法則直接中止（見下面 ① 的理由）。
  *
- * 每一條都是實際打出來的洞：
+ * 擋下的情況：
  *   ① exports 指到套件外面（`"." : "../../SECRET.js"`）。Node 的規格本來就
- *      禁止逃出套件根目錄，但 path.join 不會擋——舊版會安然 exit 0，把套件
+ *      禁止逃出套件根目錄，但 path.resolve 不會擋，不檢查的話會 exit 0，把套件
  *      外的檔案複製進 public/ 這個會被部署出去的目錄。這不是「上游改了檔名」
  *      那種可以往下試下一個候選的情況，是 manifest 壞掉或有惡意，直接中止。
  *
- *      **字面比對不夠**：套件裡放一個指向外面的 symlink，路徑字串完全乾淨，
- *      舊版照樣 exit 0 把外面的檔案 vendor 出去。而 pnpm 與 yarn workspace 的
+ *      只比對字面不夠：套件裡放一個指向外面的 symlink，路徑字串完全乾淨，
+ *      外面的檔案照樣會被 vendor 出去。而 pnpm 與 yarn workspace 的
  *      node_modules 整棵樹本來就是 symlink 組出來的，這不是理論上的情況。
  *      所以兩邊都先 realpathSync 再比。
  *   ② 欄位指到一個目錄（`"main": "./lib"`，folder-as-module 是合法寫法）。
- *      existsSync 對目錄回 true，舊版會在 readFileSync 噴 EISDIR 的原始
- *      stack trace——那正是這支腳本要消滅的那一類訊息。
- *   ③ 0 位元組。截斷的檔案（下載中斷、磁碟滿）語法檢查一定通過——它什麼特徵
- *      都沒有——然後 vendor 得乾乾淨淨、build 全綠，而圖示全部消失。
+ *      existsSync 對目錄回 true，不檢查的話會在 readFileSync 噴出 EISDIR 的原始
+ *      stack trace，那正是這支腳本要消滅的那一類訊息。
+ *   ③ 0 位元組。截斷的檔案（下載中斷、磁碟滿）什麼特徵都沒有。stencil loader 那條
+ *      路徑不驗語法，不擋的話會照樣 vendor 出去，圖示全部消失；resolveEntry 的
+ *      語法檢查雖然也會否決，訊息卻說不出檔案是空的。
  *   ④ .cjs／.d.ts／.ts：瀏覽器一定載不了。.d.ts 特別要擋，因為型別宣告檔在
- *      語法上是合法的 ES module，光靠下面的語法嗅探會直接放行
- *      （實測 `exports['./min'].browser = './dist/fuse.d.ts'` → 舊版 exit 0
- *      並把 .d.ts 當成搜尋引擎 vendor 出去）。
+ *      語法上是合法的 ES module，光靠下面的語法嗅探會直接放行。例如
+ *      exports['./min'] 的第一個條件指向 './dist/fuse.d.ts' 時，不擋就會 exit 0，
+ *      把 .d.ts 當成搜尋引擎 vendor 出去。
  *
- * 回傳的理由字串不自帶括號——呼叫端會用「（…）」包起來，自帶會變成雙層括號。
+ * 回傳的理由字串不自帶括號：呼叫端會用「（…）」包起來，自帶會變成雙層括號。
  */
 function vetCandidate(pkgRoot, rel, name, field) {
     const abs = path.resolve(pkgRoot, rel);
@@ -278,7 +254,7 @@ function vetCandidate(pkgRoot, rel, name, field) {
  * 這一關是必要的：欄位語意會騙人。ionicons 兩個大版的 module 欄位都指向
  * dist/index.js（那是給 bundler 用的 addIcons API，不是瀏覽器 loader），
  * feather-icons 的 unpkg 指向 UMD。只信欄位名稱就會 vendor 出一個「載進去
- * 什麼都不會發生」的檔——而那在 runtime 是靜默失效。
+ * 什麼都不會發生」的檔，在 runtime 是靜默失效。
  *
  * 是語法嗅探不是 parser，判準刻意收窄：
  *   - export {／export *／export default／export const|let|var|function|class|async
@@ -290,13 +266,13 @@ const ESM_SYNTAX =
     /(?:^|[\s;{}()])export\s*(?:\{|\*|default\b|(?:const|let|var|function|class|async)\b)|(?:^|[\s;{}()])import\s*(?:\{|\*|["'])|(?:^|[\s;{}()])import\s+[A-Za-z_$]/;
 
 /**
- * classic script 這一側改成**要求正面訊號**，不再只是「排除 ESM 與 CJS」。
+ * classic script 這一側要求正面訊號，不只是「排除 ESM 與 CJS」。
  *
- * 為什麼不能只用排除法：那是一個沒有下限的篩子。實測把 feather.min.js 截成
- * 0 位元組——不是 ESM、也沒有 CJS 特徵——舊版直接放行，vendor 乾淨、build 全綠，
- * 而整頁的 feather 圖示消失。純 CJS 也一樣：`module.exports = …` 用
+ * 只用排除法是一個沒有下限的篩子。實測把 feather.min.js 截成 0 位元組，它不是
+ * ESM、也沒有 CJS 特徵，排除法會放行，vendor 步驟照樣成功，整頁的 feather 圖示
+ * 卻消失。純 CJS 也一樣：`module.exports = …` 用
  * <script src> 載進去就是 ReferenceError: module is not defined，圖示同樣
- * 安靜消失。（0 位元組那條現在也在 vetCandidate 提早擋掉，這裡是第二層。）
+ * 安靜消失。（0 位元組那條也在 vetCandidate 提早擋掉，這裡是第二層。）
  *
  * 正面訊號＝這個檔真的會在瀏覽器裡掛出全域：
  *   - UMD banner：有 AMD 分支（`define.amd` 或 `define([…]`）。UMD 就是設計成
@@ -307,12 +283,11 @@ const ESM_SYNTAX =
  *   `…?module.exports=n():"function"==typeof define&&define.amd?define([],n):…e.feather=n()`
  * 命中 UMD_BANNER，通過。
  *
- * 判斷一律對「抹掉註解與字串之後」的內容做。不然一句
- *   // this build no longer does window.feather = ...
- * 就足以冒充正面訊號，而那正是這一系列修改一路在消滅的「用文件製造綠燈」。
+ * 判斷一律對「抹掉註解與字串之後」的內容做。不然註解裡提到一句
+ * `window.feather = ...` 就足以冒充正面訊號，用文件製造出綠燈。
  *
- * 已知的取捨，要說得準確——被否決的不只是「老派」寫法，而是**目前兩大打包器的
- * iife 輸出**。實測會被否決的形狀：
+ * 已知的取捨：被否決的不只是「老派」寫法，還有目前兩大打包器的 iife 輸出。
+ * 實測會被否決的形狀：
  *     esbuild   var feather=(()=>{…})();
  *     rollup    var feather=function(){…}();
  * 兩者都靠「頂層 var 在 classic script 裡就是全域」，檔案裡不會出現任何
@@ -328,8 +303,8 @@ const GLOBAL_ASSIGN =
     /\b(?:window|self|globalThis|global)\s*(?:\.\s*[A-Za-z_$][\w$]*|\[\s*[\"'][^\"']*[\"']\s*\])\s*=(?!=)|\bObject\s*\.\s*defineProperty\s*\(\s*(?:window|self|globalThis|global)\b/;
 // UMD 變體：AMD 分支被拿掉，全域是「把 this／self 當參數傳進工廠函式」再用別名
 // 指派的（`}(this, function(){…})` ＋ 內部的 `g.feather=f()`）。這種檔看得出是
-// UMD 家族，但看不出它把全域掛在哪個名字上——所以仍然否決，但理由要說對：
-// 它不是「純 CommonJS」。第一版把它歸成純 CJS，那是一句錯的診斷。
+// UMD 家族，但看不出它把全域掛在哪個名字上，所以仍然否決；理由另外寫，因為它
+// 不是「純 CommonJS」，歸成純 CJS 會是一句錯的診斷。
 const GLOBAL_FACTORY_ARG = /\}\s*\)?\s*\(\s*(?:this|self|window|globalThis)\s*[,)]|typeof\s+self\s*[?:]/;
 
 function isEsModule(src) {
@@ -410,7 +385,7 @@ function resolveEntry(name, flavor, purpose) {
  * ionicons 不是「複製一個檔」而是「複製一整個目錄」：loader 進入點會去 lazy-load
  * 一堆 p-<hash>.js chunk，檔名帶 hash，挑著複製只會在 runtime 少一塊。
  *
- * 判準是「這個目錄裡同時有 *.esm.js 進入點與 p-*.js chunk」——那是驗證出來的
+ * 判準是「這個目錄裡同時有 *.esm.js 進入點與 p-*.js chunk」，這是驗證出來的
  * 事實，不是猜的。兩個大版都通得過：
  *   ionicons 7：unpkg=dist/ionicons.js 是舊版相容 shim（檔案裡有 stencil 自己
  *               印的 data-stencil-namespace），它轉送到 dist/ionicons/
@@ -428,7 +403,7 @@ function resolveStencilLoaderDir(name, purpose) {
     const tried = [];
     for (const [field, rel] of browserEntryCandidates(m)) {
         if (!rel) continue;
-        // 與 resolveEntry 共用同一組前置檢查——逃出套件根目錄、目錄當進入點、
+        // 與 resolveEntry 共用同一組前置檢查：逃出套件根目錄、目錄當進入點、
         // .d.ts 這幾個洞在這條路徑上一樣會出現（這裡下面也要 readFileSync）。
         const fault = vetCandidate(pkgRoot, rel, name, field);
         if (fault) {
@@ -462,19 +437,13 @@ function resolveStencilLoaderDir(name, purpose) {
     );
 }
 
-// ────────────────────────────────────────────────────────────────
-// 從原始碼推導「要哪些圖示」與「頁面實際引用了哪些 vendor 檔」
-// ────────────────────────────────────────────────────────────────
-
 /**
  * 逐一走訪 src/ 底下可能含有圖示名稱或 vendor 引用的檔案。
  *
- * 副檔名清單原本只有 astro|html|js|mjs|json，而 src/ 實際上是 60 個 .md、
- * 28 個 .astro、2 個 .ts、1 個 .css——也就是**九成的檔案根本沒被掃到**。
- * 下面 collectIconNames 的整套推導都建立在這個 walker 上，所以在
- * src/data/clusters.ts 或任何內容 .md 裡新增一個 <ion-icon name="…">／
- * `icon: '…'`，vendor 步驟不會知道，那個 SVG 就在 runtime 靜默 404——
- * 正是那段註解宣稱要堵住的洞。清單改成涵蓋 src/ 會出現的所有文字型原始碼。
+ * 副檔名不只 .astro，還有 .md、.ts 這些：src/data/clusters.ts 或內容 .md 裡也可能
+ * 出現 <ion-icon name="…">／`icon: '…'`。下面 collectIconNames 的推導都建立在這個
+ * walker 上，漏掃的檔案裡用到的圖示，vendor 步驟不會知道，那個 SVG 會在 runtime
+ * 靜默 404。
  */
 function eachSourceFile(fn) {
     const walk = (dir) => {
@@ -491,11 +460,11 @@ function eachSourceFile(fn) {
  * 各頁用到哪些圖示，一律從原始碼推導而不是寫死。
  *
  * 寫死清單的話，日後有人加一個新圖示，vendor 步驟不會知道，該圖示在 runtime 靜默
- * 404——而 ion-icon 找不到 SVG 時不會報錯，只是不顯示。單一來源就是原始碼本身。
+ * 404，而 ion-icon 找不到 SVG 時不會報錯，只是不顯示。單一來源就是原始碼本身。
  *
  * `icon: 'x'` 這個形狀兩個圖示庫都在用（資料驅動的卡片），所以必須依「這個檔案
- * 載的是哪一個庫」來歸屬。第一版沒有分辨，把 competency-map 的 feather 名稱
- * （user-check／message-circle／users）當成 ionicon 去找，直接讓 vendor 失敗。
+ * 載的是哪一個庫」來歸屬。不分辨的話，competency-map 的 feather 名稱
+ * （user-check／message-circle／users）會被當成 ionicon 去找，vendor 直接失敗。
  */
 function collectIconNames() {
     const ion = new Set();
@@ -511,8 +480,8 @@ function collectIconNames() {
         for (const m of src.matchAll(/\bicon:\s*['"]([a-z0-9-]+)['"]/g)) {
             if (usesIon && !usesFeather) ion.add(m[1]);
             else if (usesFeather && !usesIon) feather.add(m[1]);
-            // 兩個庫都載入的檔案無法歸屬，略過——目前沒有這種檔案，真的出現時
-            // 下面的名稱驗證會因為找不到而報錯，不會靜默通過。
+            // 兩個庫都載入的檔案無法歸屬，略過。目前沒有這種檔案；真的出現時，這些圖示
+            // 的 SVG 不會被複製、名稱也不會被驗證，要先改這裡的歸屬規則。
         }
     });
     return { ion: [...ion].sort(), feather: [...feather].sort() };
@@ -521,23 +490,22 @@ function collectIconNames() {
 /**
  * 頁面實際指名哪些 vendor 檔（<script src>、<link href>…），從原始碼推導。
  *
- * 這一關把「上游改檔名 → vendor 出來的名字跟著變 → 頁面還指著舊名字」擋在
- * 建置期，比 check:site 早、訊息也更具體（講得出是哪個套件改了什麼）。
- * 但**它不是最後一道防線**：真正擋不掉的是 scripts/check-built-site.mjs
+ * 這一關把「上游改檔名 → vendor 出來的名字跟著變 → 頁面還指著舊名字」擋在建置期，
+ * 比 check:site 早，訊息也會列出頁面引用了哪些沒產出的檔，以及這一輪的全部產出。
+ * 但它不是最後一道防線：真正擋不掉的是 scripts/check-built-site.mjs
  * 從建置產物走 import 圖那一關，因為那一關不依賴任何人在樣板裡寫對什麼。
  *
- * 兩個必要的收窄，都是被實際打出來的：
+ * 比對範圍有兩個收窄：
  *
- *   ① 先剝掉 HTML 註解。原本的版本會把**說明文字**當成引用——這個檔案的註解
- *      裡就寫著「實測 `rm dist/vendor/fuse.esm.js`」，於是即使把
- *      <link rel="modulepreload"> 整行刪掉，這一關照樣印出
- *      「頁面引用驗證 … fuse.esm.js」宣稱它被引用了。一個由自己的說明文件
- *      製造出來的綠燈，比沒有這一關更糟。
+ *   ① 先剝掉 HTML 註解。被 <!-- --> 註解掉的 <link href>／<script src> 不算引用；
+ *      不剝掉的話，即使用 <!-- --> 把 <link rel="modulepreload"> 整行註解掉，這一關
+ *      照樣印出「頁面引用驗證 … fuse.esm.js」宣稱它被引用了。由註解製造出來的綠燈，
+ *      比沒有這一關更糟。Astro 模板裡用 {/* 寫的註解不會被剝掉，那一行照樣算引用。
  *   ② 要求前面有 src=／href= 屬性。散文提到路徑不算引用。
  *
- * 剩下的死角要講明白：這是文字比對，只抓得到**字面常數**。
+ * 剩下的死角：這是文字比對，只抓得到字面常數。
  * `src={`${vendorBase}/vendor/${lib}.js`}` 這種把檔名算出來的寫法看不到。
- * 目前三個引用都是字面常數；真要動態組檔名時，這一關就保護不到——但
+ * 目前的引用都是字面常數；真要動態組檔名時，這一關就保護不到，但
  * check:site 那一關仍然會從建置產物把它抓出來。
  */
 function collectVendorRefs() {
@@ -564,19 +532,19 @@ function listEmitted(dir = OUT, prefix = '', out = []) {
  * 產出的自我一致性：vendor 出來的每一個 ES module，它靜態 import 的東西都要
  * 真的在 public/vendor/ 裡，而且必須是瀏覽器解析得出來的相對路徑。
  *
- * 這一關**不是**最後防線，別把它寫成最後防線——真正擋不掉的是
+ * 這一關不是最後防線。真正擋不掉的是
  * scripts/check-built-site.mjs：它從建置產物出發、遞移走同一張 import 圖，
  * 不依賴任何人在 .astro 或在這裡寫對什麼。兩邊共用
  * site-contract.lib.mjs 的同一個掃描器，所以不是兩套會各自腐爛的邏輯。
  *
- * 那為什麼還留著：失敗得更早（不必等 astro build 跑完）而且訊息更具體——
- * 這裡講得出「是 fuse.js@7 的 exports['./min'] 換了檔名」，check:site 只講得出
- * 「dist 裡少了某個檔」。升級相依時，前者才是你想看到的那一句。
+ * 留著它是因為失敗得更早：不必等 astro build 跑完，訊息也會列出這一輪的全部產出，
+ * 升級相依時比較容易看出是哪個套件的檔案對不上。
  *
  * 擋的兩類同上：相對路徑的目標必須存在；bare specifier（`node:fs`、`lodash`）
- * 與絕對網址一律否決——瀏覽器沒有 import map 解析不了，而那正是「manifest 指到
- * node 專用 build」會留下的痕跡。pickCondition 照 Node 的 key 順序走，若某個
- * 套件真把 node build 排在前面，會在這裡被抓住而不是等使用者開頁面才發現。
+ * 與絕對網址一律否決。瀏覽器沒有 import map 時解析不了 bare specifier，而它正是
+ * 「manifest 指到 node 專用 build」會留下的痕跡。pickCondition 照 Node 的 key
+ * 順序走，若某個套件真把 node build 排在前面，會在這裡被抓住而不是等使用者開
+ * 頁面才發現。
  */
 function verifyEmittedImportGraph() {
     const emitted = new Set(listEmitted());
@@ -604,14 +572,10 @@ function verifyEmittedImportGraph() {
     return emitted;
 }
 
-// ════════════════════════════════════════════════════════════════
-// 實際複製
-// ════════════════════════════════════════════════════════════════
 rmSync(OUT, { recursive: true, force: true });
 
-// ── 搜尋引擎（fuse.js）──
-// 載入端改成 ES module，理由見 src/pages/index.astro：fuse.js 7 起不再有任何
-// UMD build，classic script 那條路整個消失了；ESM 則是 6 與 7 都有。
+// fuse.js 的載入端是 ES module，理由見 src/pages/index.astro：fuse.js 7 起沒有任何
+// UMD build，ESM 則是 6 與 7 都有。
 const fuse = resolveEntry('fuse.js', 'esm', '首頁搜尋框的模糊搜尋引擎');
 copy(fuse.abs, 'fuse.esm.js');
 
@@ -621,17 +585,14 @@ copy(fuse.abs, 'fuse.esm.js');
 // 邏輯是一段 classic script（Astro 的 is:inline，拿不到 static import 需要的
 // 字面 specifier，而 base 路徑還是 /sch001-108platform/）。
 //
-// 被否決的做法：把搜尋邏輯整段改成 inline module。inline module 連 src 都沒有，
-// check:site 驗的是 HTML 屬性——那等於把「vendor 檔不見時 CI 會紅」這個保護整個
-// 拆掉，而那正是當初自架取代 CDN 的主要理由。現在頁面只認 vendor/fuse-global.js
+// 被否決的做法：把搜尋邏輯整段寫成 inline module。inline module 連 src 都沒有，
+// 它 import 的 vendor 檔不在 HTML 屬性裡，check:site 和這支腳本都看不到，頁面指著
+// 不存在的檔時 CI 不會紅，自架換來的這個保護就沒了。頁面只認 vendor/fuse-global.js
 // 這一個穩定網址，上游檔名怎麼改都不必動 .astro。
 //
-// shim 這個間接層曾經削弱過 CI 的保護：被 script[src] 指名的只剩這 7 行，
-// 而 check:site 當時只認 HTML 屬性，所以它 import 的 41kB 引擎是隱形的
-// （實測刪掉引擎，check:site 照樣「錯誤：0 ✅ 全部通過」）。
-// 現在 check:site 會從產物遞移走 ES module 的 import 圖，那個洞已經補在
-// checker 本身，不再靠頁面上寫什麼——頁面的 <link rel="modulepreload">
-// 因此退回它本來的身分：純粹的效能提示。
+// 被 script[src] 指名的只有這個 shim，它 import 的引擎由 check:site 從產物遞移走
+// ES module 的 import 圖來驗。頁面的 <link rel="modulepreload"> 只是效能提示，
+// 不是保護。
 emit(
     'fuse-global.js',
     [
@@ -646,33 +607,32 @@ emit(
     ].join('\n'),
 );
 
-// ── feather-icons ──
-// 這個仍然是 classic script：頁面靠 window.feather.replace() 就地換掉
+// feather-icons 用的是 classic script：頁面靠 window.feather.replace() 就地換掉
 // [data-feather] 元素，而 feather 4 只提供 UMD（unpkg=dist/feather.min.js）。
 const feather = resolveEntry('feather-icons', 'classic', '兩個頁面的 data-feather 圖示');
 copy(feather.abs, 'feather.min.js');
 
-// ── ionicons：loader ＋ 只複製真的用到的 SVG ──
+// ionicons 要複製 loader，SVG 只複製真的用到的。
 const ion = resolveStencilLoaderDir('ionicons', '生涯探索頁的 ion-icon web component');
 
 // ESM loader 與它 lazy-load 的 p-*.js chunk 必須整組帶走（檔名帶 hash）。
 // ES5／SystemJS 那一半則刻意不帶：
-//   - 它只會被 <script nomodule src=".../ionicons.js"> 這個進入點載到，而那一行
-//     已經從 career-exploration/index.astro 移除（理由見該檔）。
+//   - 它只會被 <script nomodule src=".../ionicons.js"> 這個進入點載到，而
+//     career-exploration/index.astro 沒有這一行（理由見該檔）。
 //   - ionicons 8 根本不再提供這一半，不帶走等於讓 7 與 8 vendor 出來的檔案集合
 //     語意一致，升級時不會有「7 有 8 沒有」的差異要解釋。
 //   - 實測 ionicons 7.1.0：ionicons.js（119,689 B）＋ 五個 *.system*.js
 //     （合計 22,742 B）＝ 142,431 B，從來沒有任何頁面請求過。
 //     ESM loader（ionicons.esm.js）唯一的靜態 import 是 ./p-d15ec307.js；
 //     ion-icon 的 entry chunk（p-1c0b2c47.entry.js）是 runtime 才 lazy-load 的，
-//     靜態分析看不到——所以這裡不能只複製「靜態 import 得到的」，必須整個目錄搬。
+//     靜態分析看不到，所以這裡不能只複製「靜態 import 得到的」，必須整個目錄搬。
 //     ES5 那一半的入口 ionicons.js 引用的是 p-60d56620.system.js，兩組完全不相交。
 // 用排除法而不是列舉法：不認識的檔一律照樣複製，只有這兩類「確定只屬於 nomodule
-// 進入點」的才跳過——猜錯的方向必須是多複製，不能是少複製。
+// 進入點」的才跳過。猜錯的方向必須是多複製，不能是少複製。
 //
 // ES5 loader 的檔名是「把進入點的 .esm.js 換成 .js」推出來的，所以只有在進入點
 // 真的叫 <ns>.esm.js 時才成立。否則寧可不推：推錯會讓 es5Loader 剛好等於進入點
-// 自己，把唯一要載的那個檔跳過——那是「少複製」，正是上面說不能發生的方向。
+// 自己，把唯一要載的那個檔跳過，那是「少複製」，正是上面說不能發生的方向。
 const es5Loader = ion.entry.endsWith('.esm.js') ? ion.entry.replace(/\.esm\.js$/, '.js') : null;
 const skippedEs5 = [];
 let loaderCount = 0;
@@ -718,8 +678,8 @@ for (const name of wantedIon) {
 // feather 的圖示全部內嵌在 feather.min.js 裡，不需要挑檔；但名稱打錯同樣是
 // 「安靜地不顯示」，所以一併驗證。
 //
-// 名單改成 import 套件本身（走它的 main）而不是讀 dist/icons.json：後者又是一條
-// 寫死的 dist 路徑，套件換個目錄結構就會變成一則誤診訊息，正是這次要拔掉的東西。
+// 名單從 import 套件本身（走它的 main）取得，不讀 dist/icons.json：後者又是一條
+// 寫死的 dist 路徑，套件換個目錄結構就會變成一則誤診訊息。
 let featherIcons;
 try {
     const mod = await import('feather-icons');
@@ -736,7 +696,7 @@ if (!featherIcons || typeof featherIcons !== 'object') {
 const missingFeather = wantedFeather.filter((n) => !(n in featherIcons));
 
 if (missingIon.length || missingFeather.length) {
-    // 名字打錯時兩個庫都只會安靜地不顯示，不會有任何錯誤——在這裡就擋下來。
+    // 名字打錯時兩個庫都只會安靜地不顯示，不會有任何錯誤，所以在這裡就擋下來。
     const lines = [];
     if (missingIon.length) lines.push(`原始碼用到的 ionicon 在 ionicons@${ion.version} 中不存在：${missingIon.join('、')}`);
     if (missingFeather.length) lines.push(`原始碼用到的 feather icon 在 feather-icons@${feather.version} 中不存在：${missingFeather.join('、')}`);
@@ -744,7 +704,6 @@ if (missingIon.length || missingFeather.length) {
     die(...lines);
 }
 
-// ── 最後兩關 ──
 // ① 頁面用 HTML 屬性指名的 vendor 檔，這一輪真的產出來了嗎
 const vendorRefs = collectVendorRefs();
 const missingRefs = vendorRefs.filter((r) => !existsSync(path.join(OUT, r)));
@@ -762,8 +721,7 @@ const emittedJs = [...emittedFiles].filter((f) => /\.[cm]?js$/.test(f));
 // ③ 把「這一輪到底產出了哪些檔」寫成清單，交給 check:site 逐一確認它們真的
 //    進了 dist/。
 //
-// 為什麼需要這個而不是再擴充 import 圖走訪：走訪這件事本身有三個結構性的盲點，
-// 而且每一個都被實測打穿過——
+// 不靠再擴充 import 圖走訪，是因為走訪本身有三個結構性的盲點，每一個都實測過：
 //
 //   · 動態 import 看不到。stencil 用 import(變數) 載 ion-icon 的 entry chunk，
 //     刪掉它 → check:site 全綠，瀏覽器 17 個 ion-icon 全部有 shadowRoot 但
@@ -771,23 +729,22 @@ const emittedJs = [...emittedFiles].filter((f) => /\.[cm]?js$/.test(f));
 //     module。ionicons 8 上走訪只碰得到 9 個產出裡的 2 個。
 //   · 非 JS 的產出根本不在圖上。刪掉 svg/search-outline.svg → 全綠。
 //   · 走訪會被餓死。它的起點來自 HTML 屬性，所以只要哪天頁面改用 inline
-//     import() 載 vendor 程式碼，起點就是空集合——實測印出「走訪 0 個模組」、
+//     import() 載 vendor 程式碼，起點就是空集合。實測印出「走訪 0 個模組」、
 //     「錯誤：0」、「✅ 全部通過」，而引擎跟 chunk 都已經被刪掉。
 //
 // 清單沒有這三個盲點：它不管 HTML 長什麼樣、不管靜態還是動態、也不管副檔名。
-// 這是同一個保護第四次被搬家而不是被關上，到此為止。
 //
 // 清單不包含它自己（它是索引不是被索引者）；check:site 那邊也會在「有 vendor/
 // 產出卻沒有清單」時報錯，否則刪掉清單就等於把這一關關掉。
 //
-// 每一筆連**位元組數**一起記。只記檔名的話，清單驗的仍然只是「存在」——實測把
-// dist/vendor/fuse.esm.js 截成 0 位元組，check:site 照樣「錯誤：0 ✅ 全部通過」
-// 而全站搜尋已經死了：link[href] 與 script[src] 只看存不存在，import 圖走訪
-// 讀到空檔案也就找不到任何 import 可驗。0 位元組在來源端（vetCandidate）早就
-// 擋著，部署端卻一直沒有人看。
+// 每一筆連位元組數一起記。只記檔名的話，清單驗的仍然只是「存在」：把
+// dist/vendor/fuse.esm.js 截成 0 位元組，link[href] 與 script[src] 只看存不存在，
+// import 圖走訪讀到空檔案也找不到任何 import 可驗，實測 check:site 照樣「錯誤：0
+// ✅ 全部通過」，全站搜尋卻已經壞了。vetCandidate 只在來源端擋 0 位元組，部署端
+// 要靠這裡記的位元組數。
 //
 // 這件事對本 repo 特別重要：整套 CI 的前提是「驗過的那些位元組，就是被部署的
-// 那些位元組」，而中間隔著一次 artifact 的打包與解開——上傳不完整、解壓被截斷
+// 那些位元組」，而中間隔著一次 artifact 的打包與解開，上傳不完整、解壓被截斷
 // 正是那一段會發生的事。大小比雜湊便宜，而且足以抓到這一類截斷。
 const manifestEntries = listEmitted()
     .sort()

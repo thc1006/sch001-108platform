@@ -1,33 +1,30 @@
 #!/usr/bin/env node
 /**
- * 全站外部連結健康檢查（排程執行）
- * --------------------------------------------------------------
- * #72 的最後一塊：在此之前，全站外部連結沒有任何東西在把關。lychee 那個 job
- * 看起來在檢查，實際上一個連結都沒驗到；競賽看門狗只涵蓋 competitions.json 的
- * 133 個網址，其餘 400 多個是完全沒人看的。
+ * 全站外部連結的健康檢查，排程執行。
  *
- * ── 網址從哪來 ──
- * 一律讀 .reports/url-inventory.json，由 check-built-site.mjs 在 npm run check:site
+ * ci.yml 的 lychee 只驗站內的 file:// 連結，競賽看門狗只涵蓋 competitions.json 的
+ * 網址，其餘的外部網址只有這支在看（#72）。
+ *
+ * 網址一律讀 .reports/url-inventory.json，由 check-built-site.mjs 在 npm run check:site
  * 時產生，記有每一處引用的出處檔案。
  * 刻意「不」自己再掃一次 dist/ 與 public/：同一件事有兩份擷取邏輯就會漂移，
  * 而 #78 出事的原因正是「對應表被手抄成第二份」。要多一個欄位就去改
  * check-built-site.mjs，不要在這裡長出第二套擷取。
  *
- * ── 與 PR gate 的分工 ──
+ * 與 PR gate 的分工：
  *   ci.yml 的 Site and Browser Integrity → 站內連結與靜態位址政策，確定性，擋 PR
  *   本檢查                               → 外部站台可用性，非確定性，只開 issue／寫 summary
  *
- * ── 內文裸網域（#nnn 新增）──
- * 在此之前，只有「寫成 href／url 欄位」的網址會被檢查。但競賽資料的 description
- * 是大段中文說明，裡面充滿只用文字寫出來的網域：「原 tpmso.org 已轉址至
- * tpmso.k12ea.gov.tw」。實測全站有 45 個這種裸主機名，其中 30 個在任何 url 欄位
- * 都不出現——完全沒有東西在看它們。
+ * 內文裸網域也要檢查，只看 href／url 欄位會漏掉它們。競賽資料的 description
+ * 是大段中文說明，裡面有很多只用文字寫出來的網域，例如「原 tpmso.org 已轉址至
+ * tpmso.k12ea.gov.tw」。實測全站有 45 個這種裸主機名，其中 30 個不出現在任何
+ * url 欄位。
  *
  * 擷取（純字串）在 check-built-site.mjs，結果放在盤點的 bareDomainCandidates；
  * 這裡負責需要網路的那一半：用 DNS 根區篩掉「長得像網域但其實是檔名」的候選，
  * 再走與一般網址完全相同的探測路徑（同一套 SSRF 防護、同一套手動轉址）。
  *
- * ── 三態 ──
+ * 三態：
  *   dead       網域解析不到、404/410      → 觸發 issue
  *   unverified 403/429/5xx/逾時/TLS       → 只記錄（多為防爬，瀏覽器仍可開）
  *   healthy    2xx/3xx                    → 不處理
@@ -36,7 +33,7 @@
  * 狀態碼永遠看不出這件事，所以另外用 link-policy.json 的 hijacked 名單把它們
  * 標出來：命中者不論狀態碼一律單獨大聲列出，且永不計入健康。
  * 另有第四種訊號（不是第四態）：被位址政策擋下。它在分類上算 unverified（我們
- * 確實沒驗到），但必須單獨大聲列出——資料檔裡出現指向 loopback／私網／雲端
+ * 確實沒驗到），但必須單獨大聲列出：資料檔裡出現指向 loopback／私網／雲端
  * metadata 的網址，意義是資料被動了手腳或寫錯，不是站台防爬。
  *
  * 本機執行：  node scripts/check-external-links.mjs
@@ -82,7 +79,6 @@ const die = async (message) => {
     process.exit(1);
 };
 
-// ── 網址盤點 ──
 let inventory;
 try {
     inventory = JSON.parse(await readFile(INVENTORY_PATH, 'utf8'));
@@ -94,8 +90,7 @@ if (!Array.isArray(inventory?.urls) || inventory.urls.length === 0) {
     await die('外部網址盤點是空的。這代表 check-built-site.mjs 的擷取壞了，不是「沒有外部連結」。');
 }
 
-// ── 例外政策 ──
-// 政策壞掉（含過期）時不要「當作沒有例外」繼續跑——那會讓每週報告突然多出一堆
+// 例外政策壞掉（含過期）時不要「當作沒有例外」繼續跑：那會讓每週報告突然多出一堆
 // 早就審過的雜訊，維護者只會學會忽略。確定性 CI 本來就該先擋下來，這裡是第二道。
 const todayISO = new Date().toISOString().slice(0, 10);
 let policyEntries = [];
@@ -121,7 +116,7 @@ const weekIndex = Math.floor((Date.now() - Date.UTC(now.getUTCFullYear(), 0, 1))
 const CONCURRENCY = 6;
 const BUDGET_MS = 12 * 60_000;
 // 最終回應多讀這麼多位元組，供 hijack-signals 取 <title> 與 meta description。
-// 16KB 足以涵蓋幾乎所有頁面的 <head>；讀滿就 destroy，不等 end——被接管的頁面
+// 16KB 足以涵蓋幾乎所有頁面的 <head>；讀滿就 destroy，不等 end，因為被接管的頁面
 // 常常是很大的廣告頁，讀完整份會把一次上百站的批次工作卡住。
 const HEAD_BYTES = 16 * 1024;
 
@@ -137,10 +132,11 @@ const suppressed = [];
 /** 已知被接管的主機。不論狀態碼都要單獨列出，且永不計入健康。 */
 const hijackedHits = [];
 /**
- * 自動偵測到的可疑訊號（#117）。與上面那份名單的差別是它**不需要有人先發現**：
+ * 自動偵測到的可疑訊號（#117）。與上面那份名單的差別是它不需要有人先發現：
  * 訊號 A 看轉址終點有沒有離開起點的網域，訊號 B 看標題／描述有沒有蹲域名的
- * 變現詞組。兩者都**不改變三態分類**——誤判的代價不對稱，把正常網站判成 dead
- * 會讓人去修沒壞的東西，多報一筆可疑只是多看一眼。
+ * 變現詞組，訊號 C 看回應是不是沒有可見文字、只能靠 JavaScript 轉址前進的空殼。
+ * 這些訊號都不改變三態分類，因為誤判的代價不對稱：把正常網站判成 dead 會讓人
+ * 去修沒壞的東西，多報一筆可疑只是多看一眼。
  */
 const autoSignals = [];
 let healthy = 0;
@@ -154,19 +150,19 @@ for (let i = 0; i < targets.length; i++) {
         blocked.push({ ...item, reason: r.reason });
         continue;
     }
-    // 接管的判定必須在三態分類**之前**：被接管的網域回的就是 200，
+    // 接管的判定必須在三態分類之前：被接管的網域回的就是 200，
     // 走到 classifyLink 就會被算進 healthy，等於用檢查器替博弈站背書。
     const hijack = matchHijacked(hijackedEntries, targets[i].url);
     if (hijack) {
         hijackedHits.push({ ...item, policy: hijack, source: 'url' });
         continue;
     }
-    // 自動訊號跑在分類**之外**：它只是多一段報告，不動 dead/unverified/healthy。
+    // 自動訊號跑在分類之外：它只是多一段報告，不動 dead/unverified/healthy。
     const sig = detectHijackSignals(targets[i].url, r);
     if (sig) autoSignals.push({ ...sig, source: 'url', occurrences: item.occurrences });
     const verdict = classifyLink(r);
     if (verdict === 'dead') {
-        // 例外政策**不會**在這裡出現。404/410 與網域解析不到一律照實回報——
+        // 例外政策不會在這裡出現。404/410 與網域解析不到一律照實回報，因為
         // allowlist 只降低 unverified 的噪音，把確定壞掉的連結壓下去等於廢掉整個檢查。
         dead.push(item);
     } else if (verdict === 'unverified') {
@@ -178,20 +174,19 @@ for (let i = 0; i < targets.length; i++) {
     }
 }
 
-// ── 內文裸網域 ──
-// 盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，因此
-// Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
-// 這裡用 DNS 根區把它們篩掉——查 TLD 的 NS 記錄，自我維護、不必養一份 TLD 清單。
+// 內文裸網域在盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，
+// 因此 Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
+// 這裡用 DNS 根區把它們篩掉：查 TLD 的 NS 記錄，自我維護、不必養一份 TLD 清單。
 //
-// 刻意**不**用「這個網域解析得到嗎」當作「它算不算網域」的判準。實測兩頭都錯：
+// 刻意不用「這個網域解析得到嗎」當作「它算不算網域」的判準。實測兩頭都錯：
 // concordreview.org 正是已停用、查不到 A 記錄的網域，而那恰好是要抓的東西；
 // 反過來 readme.md、logo.ai、test.sh 都被蹲域名的人註冊、解析得到。詳見
 // bare-domains.lib.mjs 的檔頭。
 const BARE_BUDGET_MS = 3 * 60_000;
 // 與上面 inventory.urls 同一個道理：「盤點裡沒有這個欄位」和「一個裸網域都沒有」
-// 在報告上長得一模一樣。欄位不存在只可能是盤點檔是舊版的，或 check-built-site.mjs
-// 的擷取被拿掉了，兩種都必須當成錯誤——實測不擋的話會靜靜印出「實際探測：0」、
-// needs_attention=false、coverage_complete=true，然後 CI 全綠。
+// 在報告上長得一模一樣。欄位不存在只可能是盤點檔的格式比這支程式舊，或
+// check-built-site.mjs 的擷取被拿掉了，兩種都必須當成錯誤。當成沒有裸網域的話，
+// 報告會印出「實際探測：0」、needs_attention=false、coverage_complete=true，CI 全綠。
 if (!inventory.bareDomainCandidates || !Array.isArray(inventory.bareDomainCandidates.hosts)) {
     await die('盤點裡沒有 bareDomainCandidates。這代表盤點檔是舊版的，或 check-built-site.mjs 的裸網域擷取壞了，不是「沒有裸網域」。請先執行 npm run build:deployable && npm run check:site。');
 }
@@ -225,10 +220,10 @@ if (bareHosts.length) {
         const host = bareHosts[i];
         const item = { url: probeUrlFor(host), host, occurrences: occurrencesOfHost.get(host) ?? [], reason: describeResult(r) };
         if (isBlockedResult(r)) {
-            // 被位址政策擋下＝這筆資料指向 loopback／私網／雲端 metadata。那是**資料被
-            // 竄改或寫錯**的訊號，不是「網域失效、請改寫內文」。先前它被折進下面那段
-            // 🔤「說明文字裡的網域失效」，訊號當場被稀釋掉；改成與 url 路徑共用同一個
-            // 🛑 桶子，不論從哪條路徑進來都用同樣大聲的措辭。
+            // 被位址政策擋下＝這筆資料指向 loopback／私網／雲端 metadata。那是資料被
+            // 竄改或寫錯的訊號，不是「網域失效、請改寫內文」，所以不放進下面「說明文字
+            // 裡的網域失效」那一段稀釋掉，而是與 url 路徑共用同一個 blocked 桶子，不論
+            // 從哪條路徑進來，報告都用同樣大聲的措辭。
             blocked.push({ ...item, reason: r.reason });
             continue;
         }
@@ -246,13 +241,13 @@ if (bareHosts.length) {
     }
 }
 
-// 問不到 TLD 答案的候選並沒有被探測過，等同「未檢查」——不可以算進完整覆蓋。
-// --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘**完全沒看過**。先前它仍會
-// 回報 coverage_complete=true，等於用一次只驗 3 筆的執行宣稱「全站都查過了」。
+// 問不到 TLD 答案的候選並沒有被探測過，等同「未檢查」，不可以算進完整覆蓋。
+// --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘完全沒看過；算成完整覆蓋的話，
+// 一次只驗 3 筆的執行也會宣稱「全站都查過了」。
 const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
-// 被接管的網域一定要讓人看到——它回 200，不會出現在任何一個「壞掉」的桶子裡。
-// autoSignals 也要讓 needs_attention 變 true。偵測到了卻不開 issue 的話，
-// 報告會躺在 job summary 裡沒人看——那等於沒偵測。
+// 被接管的網域一定要讓人看到：它回 200，不會出現在任何一個「壞掉」的桶子裡。
+// 需處理的自動訊號（actionableSignals）也要讓 needs_attention 變 true。偵測到了卻不開
+// issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。
 const needsAttention =
     dead.length > 0 ||
     blocked.length > 0 ||
@@ -263,7 +258,7 @@ const needsAttention =
 
 // 三個訊號的精確度差很多，混在一起會讓高精確度的那兩個被雜訊淹掉。
 // 實測（全站 508 個目標，2026-08-28）：
-//   訊號 A 跨站轉址   11 個命中、**全部是誤判**
+//   訊號 A 跨站轉址   11 個命中、全部是誤判
 //     4 個是兄弟子網域（www.google.com → workspace.google.com、
 //       premium.parenting.com.tw → www.parenting.com.tw ×2、
 //       sciexplore.colife.org.tw → sciexplore2026.colife.org.tw）
@@ -271,10 +266,10 @@ const needsAttention =
 //       notion.so→notion.com、xmind.app→xmind.com、youtu.be→youtube.com、
 //       roboticseducation.org→recf.org、zindi.africa→zindi.world）
 //   訊號 B 內容標記    0 個（名單已先攔下 ieso-info.org）
-//   訊號 C HTTP 盲區   1 個、**真陽性**（apho.org 已成 GoDaddy 待售停放頁）
+//   訊號 C HTTP 盲區   1 個、真陽性（apho.org 已成 GoDaddy 待售停放頁）
 //
 // 那 4 個兄弟子網域要靠 PSL 才分得掉（www.google.com／workspace.google.com 的
-// 共同後綴是兩段，a.edu.tw／b.edu.tw 也是兩段），另外 7 個**任何規則都解不掉**——
+// 共同後綴是兩段，a.edu.tw／b.edu.tw 也是兩段），另外 7 個任何規則都解不掉，
 // 合法網站確實會轉去另一個註冊網域。所以訊號 A 的精確度上限就是這樣，
 // 它適合放進報告給人瀏覽，不適合每週開一次 issue。
 const actionableSignals = autoSignals.filter((a) => a.confidence === 'actionable');
@@ -292,7 +287,6 @@ const sourceLines = (item) => {
 };
 const coveredElsewhere = (item) => ALSO_COVERED_BY.filter((c) => sourcesOf(item).includes(c.file));
 
-// ── 主控台摘要 ──
 console.log('全站外部連結檢查');
 console.log(`  盤點來源：${INVENTORY_PATH}（${inventory.urls.length} 個去重網址）`);
 console.log(`  本次檢查：${targets.length}`);
@@ -313,14 +307,13 @@ console.log(`  位址封鎖：${blocked.length - urlBlockedCount}`);
 console.log(`  無法判定：${bareOther.length}`);
 if (bareSkipped) console.log(`  未檢查　：${bareSkipped}（逾時間預算）`);
 if (hijackedHits.length) console.log(`🚨 已知不可信任的主機：${hijackedHits.length}`);
-// **無條件印**，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
-// 在 CI log 上長得一模一樣——那正是這個 repo 一路在修的那個病。
+// 無條件印，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
+// 在 CI log 上長得一模一樣。
 console.log(
     `🕵️ 自動偵測：需處理 ${actionableSignals.length}（內容標記／HTTP 盲區）、` +
         `僅供瀏覽 ${browseOnlySignals.length}（跨站轉址，誤判率高）`,
 );
 
-// ── Markdown 報告 ──
 const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
 lines.push(`- 檢查日期：${todayISO}（UTC）`);
 lines.push(`- 盤點：${inventory.urls.length} 個去重外部網址，來自 check-built-site.mjs 的建置產物掃描`);
@@ -328,7 +321,7 @@ lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${
 lines.push(
     `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
 );
-// **無條件寫**，即使是 0——理由與主控台那一行完全相同，而且更重要：主控台只在
+// 無條件寫，即使是 0。理由與主控台那一行相同，而且這裡更重要：主控台只在
 // job step 的 log 裡，這份報告才是貼進 issue／job summary、真的有人讀的東西。
 // 下面那一段只在有命中時才出現，所以少了這個數字的話，「這次沒偵測到」與
 // 「偵測根本沒接上線」在讀者眼裡長得一模一樣。
@@ -359,7 +352,7 @@ if (hijackedHits.length) {
     lines.push('');
 }
 
-// 自動偵測到的訊號（#117）。與上面那份名單並列而不是混在一起——名單是「已經
+// 自動偵測到的訊號（#117）。與上面那份名單並列而不是混在一起：名單是「已經
 // 查證過、確定不可信」，這一段是「機器覺得可疑、還沒有人看過」。兩者的可信度
 // 不同，措辭也要不同，否則讀者會把未經查證的推測當成結論。
 if (actionableSignals.length) {
@@ -387,7 +380,7 @@ if (actionableSignals.length) {
             lines.push(`  - 🔀 轉址終點跨站：\`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
             for (const h of a.cross.hops) lines.push(`    - ${inertText(h)}`);
         }
-        // shell.title 與 content.text 是**被偵測的那台主機自己寫的**字串，而這份報告會
+        // shell.title 與 content.text 是被偵測的那台主機自己寫的字串，而這份報告會
         // 被 gh issue create --body-file 原樣送進 issue。不包成行內程式碼的話，一個
         // 被接管的網域就能讓看門狗的 issue 去 @ 人、cross-reference 別的 issue、
         // 或貼出可點的釣魚連結。命中的定義就是「那台主機不可信」，所以這裡沒有
@@ -405,9 +398,9 @@ if (actionableSignals.length) {
     lines.push('');
 }
 
-// 跨站轉址單獨一段，而且**不觸發通知**。實測（全站 508 個目標）它命中 11 筆、
+// 跨站轉址單獨一段，而且不觸發通知。實測（全站 508 個目標）它命中 11 筆、
 // 全部是誤判：4 筆兄弟子網域（沒有 PSL 分不出 www.google.com／workspace.google.com
-// 與 a.edu.tw／b.edu.tw 的差別）、7 筆機構改名或短網址（**任何規則都解不掉**——
+// 與 a.edu.tw／b.edu.tw 的差別）、7 筆機構改名或短網址（任何規則都解不掉，
 // 合法網站確實會轉去另一個註冊網域）。
 //
 // 保留它是因為真的接管確實會呈現這個形狀（www.sasmo.sg → arcade.now）；
@@ -527,21 +520,21 @@ if (skipped || bareSkipped) {
 }
 
 if (unverified.length) {
-    // 「無法判定」底下其實有兩種完全不同的東西，先前被同一句「多為防爬機制，通常
-    // 瀏覽器仍可開啟，不需處理」蓋過去：
+    // 「無法判定」底下其實有兩種完全不同的東西，不能用同一句「多為防爬機制，通常
+    // 瀏覽器仍可開啟」帶過：
     //
     //   403／429／5xx  → 站台有回應，只是拒絕這個 client。瀏覽器多半打得開。
     //   逾時／連線被拒 → TCP 層完全不通。這種很可能是真的死站，只是我們刻意不把它
-    //                    判成 dead——runner 的網路環境（境外資料中心 IP）常被台灣的
+    //                    判成 dead：runner 的網路環境（境外資料中心 IP）常被台灣的
     //                    政府與學校站台整段封鎖，貿然判死會產生大量誤報。
     //
-    // 實際發生過：sdl.ntl.edu.tw（6 個頁面引用）與 12basic.edu.tw 在台灣本地也是
-    // 連線逾時，等於已經死掉，卻被那句「不需處理」放行。分類規則刻意不改（只有
-    // ENOTFOUND 與 404/410 才開 issue），但報告必須讓人看得出差別。
+    // 例如 sdl.ntl.edu.tw（6 個頁面引用）與 12basic.edu.tw 在台灣本地也是連線逾時，
+    // 等於已經死掉。分類規則刻意維持只有 ENOTFOUND 與 404/410 才開 issue，但報告
+    // 必須讓人看得出差別。
     // 依「結構化的 status / code」分類，不要比對 describeResult 產出的中文字串。
-    // 第一版就是用字串比對，結果「轉址次數超過上限」（ETOOMANYREDIRECTS）被歸進
-    // 「防爬，瀏覽器通常仍可開啟」——但轉址迴圈在瀏覽器裡一樣是壞的。顯示字串是
-    // 給人看的，會被改寫、會有 fallback 直接吐出原始 code，不該拿來當判斷依據。
+    // 顯示字串是給人看的，會被改寫、會有 fallback 直接吐出原始 code，不該拿來當
+    // 判斷依據。轉址迴圈（ETOOMANYREDIRECTS）沒有狀態碼，歸在 other，因為它在
+    // 瀏覽器裡一樣是壞的。
     const bucketOf = (u) => {
         if (u.status) return 'rejected'; // 有 HTTP 狀態碼＝站台有回應（403／429／5xx…）
         const c = String(u.code || '');

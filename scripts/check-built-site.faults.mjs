@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * 站台契約的故障注入矩陣
- * --------------------------------------------------------------
+ * 站台契約的故障注入矩陣。
+ *
  * 逐一破壞一個契約，確認 check-built-site.mjs 真的會擋下來。
  *
  * 為什麼要常駐在 repo 裡，而不是改完跑一次就算：
- * 「正常狀態綠燈」證明不了 checker 有在把關——那正是本 issue 要修的假象本身。
+ * 「正常狀態綠燈」證明不了 checker 有在把關。
  * checker 可能因為 glob 寫錯、選擇器改名、或某個分支被短路而變成裝飾品，而這
  * 種退化在正常狀態下完全看不出來。只有持續地「故意弄壞、確認會紅」才擋得住。
  *
- * 本檔會暫時修改 dist/ 再還原，最後會確認基準狀態仍為綠燈。
+ * 本檔在 dist/ 的副本上逐項破壞再還原，最後確認副本回到綠燈。
  *
  * 執行：  npm run test:site-faults    （需先 npm run build:deployable）
  */
@@ -21,7 +21,7 @@ import path from 'node:path';
 // vendor-assets.mjs 同一份），才不會在「防寫死」的檢查裡自己寫死上游檔名。
 import { staticImportSpecifiers } from './site-contract.lib.mjs';
 
-// 故障注入一律在 dist/ 的副本上進行——被破壞的那份絕不能是要部署的那份。
+// 故障注入一律在 dist/ 的副本上進行，被破壞的那份絕不能是要部署的那份。
 //
 // 還原邏輯本身是寫對的（每個 case 都有 finally，最後也會確認基準回到綠燈才
 // exit 0），但只要有一個 case 在 undo 之前崩潰，dist/ 就會留著壞掉的內容，而
@@ -123,7 +123,7 @@ const cases = [
   },
   {
     // 以下五項對應 #14 新增的搜尋分類層。少了它們，「索引裡的素養／SDG 標籤」
-    // 這件事在建置產物上就完全沒有把關——標籤壞掉的症狀是「搜尋找不到」，
+    // 這件事在建置產物上就完全沒有把關：標籤壞掉的症狀是「搜尋找不到」，
     // 頁面看起來一切正常，沒有人會回報。
     name: 'search-index 出現非法的核心素養代碼',
     expect: /不是合法的核心素養代碼/,
@@ -186,12 +186,11 @@ const cases = [
     file: `${DIST}/about.html`,
     mutate: (t) => t.replace('<main id="main-content"', '<main id="other"'),
   },
-  // ── 自架函式庫的 ES module import 圖（#94 後續）──
+  // 自架函式庫的 ES module import 圖（#94）。
   //
-  // 這三項對應兩個實際發生過、而且 checker 當時完全沒反應的失效：把 vendor 的
-  // ES module 進入點所 import 的檔刪掉，站台功能全死而 check:site 全綠。
-  // 原因是 checker 只認 HTML 屬性，追不到 import 圖。有了這三項，那一層退化
-  // 就不可能再悄悄發生——這正是本檔存在的理由。
+  // 下面三項把 vendor 的 ES module 進入點所 import 的檔刪掉，或讓它 import bare
+  // specifier，確認 check:site 會紅。只認 HTML 屬性的 checker 追不到 import 圖，
+  // 只被 import、沒被屬性指名的檔不見了也看不出來。
   {
     // fuse-global.js 只有 7 行，真正的搜尋引擎在它 import 的 fuse.esm.js 裡。
     // 刪掉引擎 → 首頁搜尋框永遠停在載入中。
@@ -204,10 +203,9 @@ const cases = [
     // ionicons 的 chunk 檔名帶 hash，寫不進 .astro，所以只可能靠 import 圖驗。
     // 刪掉之後實測：17 個 ion-icon 全部沒有 shadowRoot，一個圖示都不顯示。
     //
-    // 要刪哪一個 chunk 是從 loader 自己的 import 推導的，不是寫死檔名。
-    // 第一版寫死了 ionicons 7.1.0 的 p-d15ec307.js，在 ionicons 8（chunk 叫
-    // p-BdioGpgU.js）直接注入失敗——把「寫死上游檔名」的毛病原封不動搬進了
-    // 這個用來防它的檢查裡。
+    // 要刪哪一個 chunk 是從 loader 自己的 import 推導的，不是寫死檔名：chunk 名稱
+    // 每個版本都不同（ionicons 7.1.0 是 p-d15ec307.js，8 是 p-BdioGpgU.js），寫死的話，
+    // 這個用來防「寫死上游檔名」的檢查自己就會在升級後注入失敗。
     name: 'vendor：ionicons 的 lazy-load chunk 被刪掉',
     expect: /靜態 import 了「[^」]+」，但 vendor\/ionicons\//,
     apply() {
@@ -231,7 +229,7 @@ const cases = [
     mutate: (t) => `import x from "node:fs";\n${t}`,
   },
   {
-    // import 圖走訪看不到 SVG——它根本不在圖上。清單看得到。
+    // import 圖走訪看不到 SVG，它根本不在圖上；清單看得到。
     name: 'vendor 清單：非 JS 產出（ionicon SVG）不見了',
     expect: /vendor 步驟產出過 ionicons\/svg\/[\w-]+\.svg，但它不在建置產物裡/,
     apply() {
@@ -246,7 +244,7 @@ const cases = [
     },
   },
   {
-    // 只驗「存在」的話，被截斷的檔案照樣全綠——實測把 fuse.esm.js 截成 0 位元組，
+    // 只驗「存在」的話，被截斷的檔案照樣全綠：實測把 fuse.esm.js 截成 0 位元組，
     // check:site「錯誤：0 ✅ 全部通過」而全站搜尋已死。這是 artifact 上傳不完整／
     // 解壓被截斷的形狀，而本 repo 的 CI 前提就是「驗過的位元組＝被部署的位元組」。
     // 要截哪個檔從清單推導，不寫死檔名。
@@ -324,8 +322,8 @@ const cases = [
     undo: removeGatewayEverywhere,
   },
   {
-    // 清單自己不見也要紅。否則「刪掉清單」就等於把上面那一關關掉——這一系列
-    // issue 反覆出現的正是這種「保護可以被一個編輯動作繞過」。
+    // 清單自己不見也要紅，否則「刪掉清單」就等於把上面那一關關掉，一個編輯動作
+    // 就能繞過保護。
     name: 'vendor 清單：清單檔本身被刪掉',
     expect: /找不到這份清單/,
     apply: () => renameSync(`${DIST}/vendor/vendor-manifest.json`, `${DIST}/vendor/vendor-manifest.json.bak`),
