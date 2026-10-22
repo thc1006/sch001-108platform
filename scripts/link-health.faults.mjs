@@ -550,6 +550,7 @@ const baseInv = write('inventory-base.json', baselineInventory);
 const base = runPolicyCheck(basePolicy, baseInv);
 if (base.code !== 0) {
     console.error(`  ❌ 基準已經是紅的，無法進行故障注入\n${base.out.slice(0, 800)}`);
+    rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
 // 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B／C 兩段的
@@ -559,6 +560,7 @@ if (base.code !== 0) {
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
     console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs）');
+    rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
 console.log('  ✅ 基準綠燈（政策檢查 ＋ 單元測試）\n');
