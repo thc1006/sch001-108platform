@@ -199,6 +199,19 @@ test('再確認拿到很舊的快取副本：不採信，維持成功但扣信�
     assert.match(result.stdout, /信心較低/);
 });
 
+for (const [age, note, code, shown] of [
+    ['abc', '不合法，當成 0，判定退版', 1, /失敗發生在命中後的再確認/],
+    ['500.5', '不是整數，當成 0，判定退版', 1, /失敗發生在命中後的再確認/],
+    ['10, 500', '取第一個值 10，判定退版', 1, /失敗發生在命中後的再確認/],
+    ['500, 10', '取第一個值 500，當成舊快取', 0, /拿到 Age=500s 的快取副本/],
+]) {
+    test(`再確認時 Age 是 ${JSON.stringify(age)}：${note}`, { timeout: 8000 }, async () => {
+        const result = await verify({ info: [matching, live(OLDER, age)], compare: [relation('behind')] });
+        assert.equal(result.code, code, result.stdout + result.stderr);
+        assert.match(result.stdout + result.stderr, shown);
+    });
+}
+
 test('再確認時 compare API 失敗：維持成功，警告記在 compare API', { timeout: 8000 }, async () => {
     const result = await verify({ info: [matching, live(OLDER)], compare: [{ status: 502, body: 'bad gateway' }] });
     assert.equal(result.code, 0, result.stderr);
