@@ -91,9 +91,9 @@ node build-search-index.js
 
 同理，資料頁若用 `anchorField` 指定逐項錨點（見 `scripts/data-pages.json`），該錨點必須真的存在於建置後的頁面，否則建置失敗。指向不存在的錨點不會讓連結壞掉，只會讓「跳到該項目」這個承諾靜默失效。
 
-> GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
+> GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 瀏覽器測試 → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
 >
-> 部署的是**通過全部檢查的那一份 artifact**，不是另外重建的：檢查與部署刻意放在同一個 workflow，`deploy` job 以 `needs: [required]` 等 `CI Required` 通過後才執行。任一檢查紅燈就不會有 artifact 可部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
+> 檢查與部署放在同一個 workflow，部署的是通過檢查的那一份 artifact，不另外建置。`Site and Browser Integrity` 建置並上傳 artifact 後，再下載同一份跑瀏覽器測試；`deploy` job 等 `CI Required` 通過才部署這一份。瀏覽器測試失敗時，run 裡仍留著這份 artifact，但不會部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
 
 ---
 
