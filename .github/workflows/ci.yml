@@ -227,13 +227,53 @@ jobs:
       - name: Run comment-checker unit tests
         run: npm run test:comments
 
+  # 測試只打本機的假 WinLab，不需要 key；WinLab 的 key 只接受校內的來源 IP，
+  # runner 本來就連不上。閘道只用 Node 內建模組，所以不跑 npm ci，也不需要
+  # 安裝期腳本閘門。不用 sparse checkout：blob 會改在 git checkout 時才下載，
+  # 而 actions/checkout 只重試 fetch。
+  gateway:
+    name: AI Gateway Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: '.node-version'
+          package-manager-cache: false
+
+      # node --test 會略過清單裡找不到的檔案，有一個找得到就以 0 結束。source-hygiene
+      # 比對清單與測試目錄，它自己改名時也會被略過，所以先確認清單裡的檔案都在。
+      - name: Check the gateway test list
+        run: |
+          node -e '
+            const script = require("./package.json").scripts["test:ai-gateway"];
+            const files = script.split(/\s+/).filter((arg) => arg.startsWith("ai-gateway/test/"));
+            if (files.length < 3) throw new Error(`test:ai-gateway 只列了 ${files.length} 個測試檔`);
+            for (const file of files) require("node:fs").accessSync(file);
+            console.log(`${files.length} 個測試檔都在`);
+          '
+
+      # 單一測試卡住由 --test-timeout 判失敗。測試檔留下沒關的 handle 時子程序不會
+      # 結束，由這一步的上限判 failure，不會拖到 job 逾時變成 cancelled（#92）。
+      - name: Run AI gateway tests
+        timeout-minutes: 2
+        run: npm run test:ai-gateway
+
   # ruleset 只認 CI Required 這個名稱，其他 job 改名或增減時，改這裡的 needs 與
   # 下面的檢查。上游失敗時，沒有 always() 的 job 會被跳過，而被跳過的 job 算通過；
   # 所以這裡用 always() 執行，再逐一確認上游是 success。
   required:
     name: CI Required
     if: ${{ always() }}
-    needs: [site, data]
+    needs: [site, data, gateway]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -242,11 +282,14 @@ jobs:
         env:
           SITE_RESULT: ${{ needs.site.result }}
           DATA_RESULT: ${{ needs.data.result }}
+          GATEWAY_RESULT: ${{ needs.gateway.result }}
         run: |
           echo "Site and Browser Integrity : $SITE_RESULT"
           echo "Validate Data              : $DATA_RESULT"
+          echo "AI Gateway Tests           : $GATEWAY_RESULT"
           test "$SITE_RESULT" = "success"
           test "$DATA_RESULT" = "success"
+          test "$GATEWAY_RESULT" = "success"
 
   # CI Required 通過才部署。deploy-pages 依 site 輸出的名稱取 artifact，needs 要列
   # site 才讀得到 outputs。它每次的逾時是 10 分鐘，25 分鐘容得下重試一次，不會先被
