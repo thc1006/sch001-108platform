@@ -155,17 +155,18 @@ jobs:
           test -f "$GITHUB_WORKSPACE/.link-root/sch001-108platform/search-index.json"
 
       # Playwright 的整體逾時 10 分鐘短於 step 的 12 分鐘，逾時時由 Playwright
-      # 收尾，照常印出摘要。
+      # 收尾並寫出報告。設定檔在 CI 只用 list 與 github，這裡再加 html，失敗時上傳的
+      # playwright-report/ 才有內容。
       - name: Run browser tests
         id: browser
         timeout-minutes: 12
-        run: npx playwright test --global-timeout=600000
+        run: npx playwright test --global-timeout=600000 --add-reporter=html
 
       - name: Upload Playwright report on failure
         if: ${{ failure() && steps.browser.outcome == 'failure' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ github.run_attempt }}
           path: |
             playwright-report/
             test-results/
