@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# verify.sh —— 建置驗證腳本。
+# verify.sh 跑 npm run build，驗證建置會過。
 # 供 .claude 的 TaskCompleted 品質閘 hook、本機與 CI 共用。
 # 非互動 shell 的 PATH 通常缺 node,這裡補上 fnm 安裝的 node。
 set -e

@@ -11,13 +11,13 @@ on:
 
 # 排程與手動觸發若同時在跑，兩個 run 都會查到「沒有既有 issue」，於是各開一個。
 # cancel-in-progress 必須是 false：後到的那個要排隊等前一個做完才看得到它開的
-# issue；取消掉反而會漏掉一次報告。（與 competitions-check.yml 同理，那支已有。）
+# issue；取消掉反而會漏掉一次報告。（與 competitions-check.yml 同理。）
 concurrency:
   group: civic-tech-watchdog
   cancel-in-progress: false
 
 # issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
-# **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
+# 每一個 job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
 # job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
 # 新 job 就只會拿到下面這個 contents: read 的地板，要開 issue 必須自己寫出來。
 permissions:
@@ -36,8 +36,8 @@ jobs:
       issues: write
     # 只在 default branch 跑。
     #
-    # 這裡的理由和 external-links-check.yml **不同**，不要照抄它的說法：
-    # check-civic-tech.mjs 只解析 URL 驗證協定，**不會發出任何網路請求**
+    # 這裡的理由和 external-links-check.yml 不同，不要照抄它的說法：
+    # check-civic-tech.mjs 只解析 URL 驗證協定，不會發出任何網路請求
     # （對照 check-competitions.mjs，那支 import 了 link-health.lib.mjs 的 runProbes）。
     # 所以這道守衛擋的不是 SSRF，而是「帶著 issues: write 去執行任意分支的程式碼
     # 與資料，並把產出寫進 issue」。同 repo 內有寫入權限的人本來就能推自己的
@@ -76,17 +76,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 只能接管「自己開的」issue。先前用標籤辨認，但標籤是任何人都能貼的共用
-          # 屬性——結果 #70（人工開立的追蹤 issue）用了同一個標籤，連續四週的週報
-          # 全被貼到那裡，而且完全沒有錯誤訊號。改標籤名只降低機率、沒改變機制，
-          # 故改用兩個「人類無法偽造」的條件：
+          # 只能接管「自己開的」issue。標籤是任何人都能貼的共用屬性，只看標籤的話，
+          # 人工開立、用了同一個標籤的 issue 會收走週報，而且沒有任何錯誤訊號（見 #70）。
+          # 改標籤名只降低機率、沒改變機制，所以要同時符合下面兩個條件：
           #
           #   1. author.login == "app/github-actions"
           #      issue 層級的 bot 作者格式（留言層級是 "github-actions"，勿混用）。
-          #      注意：這**不是**來源證明。同 repo 內任何用 GITHUB_TOKEN 的 workflow
+          #      這不是來源證明。同 repo 內任何用 GITHUB_TOKEN 的 workflow
           #      作者都是 Actions App，有寫入權限的人也能把標記貼進自己的 issue。
           #      它的作用是讓標籤不再單獨決定歸屬，不要讀成「無法偽造」。
-          #      （competitions-check.yml 早已更正過這個說法，此處對齊。）
           #   2. body 內含機器標記 <!-- civic-tech-watchdog:v1 -->
           #      證明是本 workflow 寫的，擋掉 repo 內其他自動化開的 issue。
           #
@@ -96,11 +94,10 @@ jobs:
             --color FBCA04 \
             --description "看門狗自動開立，請勿手動使用此標籤" || true
 
-          # 認領邏輯抽到 scripts/watchdog-issue.lib.mjs 由單元測試覆蓋——內嵌在 YAML
-          # 裡的 jq 沒辦法寫測試，改壞了 CI 不會知道。原本那段 jq 的 .[0].number 在
-          # 有多個候選時會**安靜地挑第一個**，另一個 issue 就永遠收不到報告；
+          # 認領邏輯在 scripts/watchdog-issue.lib.mjs，由單元測試覆蓋；內嵌在 YAML
+          # 裡的 jq 沒辦法寫測試，改壞了 CI 不會知道。有多個 issue 同時符合上面兩個
+          # 條件時，安靜地挑第一個會讓另一個 issue 永遠收不到報告，所以
           # find-watchdog-issue.mjs 在那種情況 exit 2，讓整個 job 紅掉。
-          # （competitions-check.yml 早已改成這樣，此處對齊。）
           gh issue list \
             --label civic-tech-watchdog --state open --limit 100 \
             --json number,author,body > watchdog-candidates.json

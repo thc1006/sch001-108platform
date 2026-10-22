@@ -318,7 +318,7 @@ jobs:
       queue: max
     steps:
       # 不傳 timeout：deploy-pages v5.0.1 的單次上限寫死 600000 ms，傳更大的值會被
-      # 夾回，所以失敗時改成重試。
+      # 夾回，所以失敗時由下一步重試。
       - name: Deploy the verified artifact
         id: deployment
         continue-on-error: true

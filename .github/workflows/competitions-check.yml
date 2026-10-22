@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 # issues: write 刻意「不」放在 workflow 層級。workflow 層級的 permissions 是給
-# **每一個** job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
+# 每一個 job 的，現在只有一個 job 看不出差別，但日後任何為了別的目的新增的
 # job（上傳報告、跑額外檢查）都會無聲地一併拿到開 issue 的權限。寫在 job 上，
 # 新 job 就只會拿到下面這個 contents: read 的地板，要開 issue 必須自己寫出來。
 permissions:
@@ -45,8 +45,7 @@ jobs:
     # 而且帶著 issues: write。如果它能被任意分支觸發，任何人只要推一個分支再
     # 手動 dispatch，就能讓我們的 runner 去連他指定的位址、並把回應寫進 issue。
     #
-    # external-links-check.yml 從一開始就有這道守衛，而這支做的是同一件事
-    # 卻一直沒有——三支看門狗應該同一個形狀。
+    # external-links-check.yml 做的是同一件事，也有這道守衛；三支看門狗應該同一個形狀。
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
@@ -75,7 +74,7 @@ jobs:
         timeout-minutes: 15
         run: node scripts/check-competitions.mjs
 
-      # 沒有待辦項目時不會開 issue，報告內容原本無處可見（連「無法判定」清單也看不到）。
+      # 沒有待辦項目時不會開 issue，報告內容就無處可見（連「無法判定」清單也看不到）。
       # 一律貼到 job summary，讓每週的檢查結果在 Actions 頁面直接可讀。
       - name: Publish report to job summary
         if: always()
@@ -93,12 +92,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 只能接管「自己開的」issue。先前用標籤辨認，但標籤是任何人都能貼的共用
-          # 屬性——結果 #70（人工開立的追蹤 issue）用了同一個標籤，連續四週的週報
-          # 全被貼到那裡，而且完全沒有錯誤訊號。改標籤名只降低機率、沒改變機制。
+          # 只能接管「自己開的」issue。標籤是任何人都能貼的共用屬性，只看標籤的話，
+          # 人工開立、用了同一個標籤的 issue 會收走週報，而且沒有任何錯誤訊號（見 #70）。
+          # 改標籤名只降低機率、沒改變機制。
           #
-          # 現在的認領條件是「Actions App 作者 ＋ body 機器標記」，判斷邏輯抽到
-          # scripts/watchdog-issue.lib.mjs 由單元測試覆蓋——內嵌在 YAML 裡的 jq 沒
+          # 認領條件是「Actions App 作者 ＋ body 機器標記」，判斷邏輯在
+          # scripts/watchdog-issue.lib.mjs，由單元測試覆蓋；內嵌在 YAML 裡的 jq 沒
           # 辦法寫測試，改壞了 CI 不會知道。
           #
           # 這組條件擋得住實際發生過的那種意外撞號，但它不是 workflow 層級的來源
