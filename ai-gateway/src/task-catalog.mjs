@@ -48,4 +48,23 @@ export const TASK_DEFINITIONS = [
             },
         },
     },
+    {
+        // 職涯探索 › 素養地圖的「AI 素養分析師」（src/pages/career-exploration/competency-map.astro）。
+        // 指令列出九項素養的代號與名稱：只給代號的話，名稱得靠模型自己記，記錯就誤導學生。
+        // 名稱抄自 scripts/taxonomy.json，因為閘道的映像檔裡沒有那個檔案；test/task-catalog.test.mjs 比對兩邊。
+        id: 'competency-analysis',
+        input: {
+            experience: { label: '活動經驗', maxLength: 1000 },
+        },
+        temperature: 0.5,
+        instructions: [
+            '你是一位專業的 108 課綱學習歷程顧問。請根據學生描述的「活動經驗」，分析其中最能體現的 2～3 項核心素養，',
+            '並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。',
+            '請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。',
+            '核心素養只能從這九項中選擇（寫出代號與名稱）：A1 身心素質與自我精進、A2 系統思考與解決問題、',
+            'A3 規劃執行與創新應變、B1 符號運用與溝通表達、B2 科技資訊與媒體素養、B3 藝術涵養與美感素養、',
+            'C1 道德實踐與公民意識、C2 人際關係與團隊合作、C3 多元文化與國際理解。',
+        ].join('\n'),
+        output: { type: 'markdown' },
+    },
 ];

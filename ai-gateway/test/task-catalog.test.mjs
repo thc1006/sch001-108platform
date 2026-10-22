@@ -6,6 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput } from '../src/tasks.mjs';
@@ -72,4 +73,21 @@ test('starter-pack：指令要求探索問題每個一句話、資源類型只�
     const { instructions } = catalog.get('starter-pack');
     assert.match(instructions, /research_questions：[^\n]*每個問題一句話/);
     assert.match(instructions, /resource_types：[^\n]*簡短[^\n]*不要加說明/);
+});
+
+test('competency-analysis：活動經驗最多 1000 字（頁面的輸入框同樣限制 1000）；文字任務、溫度 0.5', () => {
+    const task = catalog.get('competency-analysis');
+    assert.equal(task.output.type, 'markdown');
+    assert.equal(task.temperature, 0.5);
+    assert.equal(validateInput(task, { experience: '科'.repeat(1000) }).experience.length, 1000);
+    assert.throws(() => validateInput(task, { experience: '科'.repeat(1001) }), { code: 'invalid_input', field: 'experience' });
+});
+
+// 閘道的映像檔裡沒有 scripts/taxonomy.json，指令只能抄一份。
+test('competency-analysis：指令列出的核心素養與 scripts/taxonomy.json 一字不差，不多也不少', () => {
+    const { instructions } = catalog.get('competency-analysis');
+    const taxonomy = JSON.parse(readFileSync(new URL('../../scripts/taxonomy.json', import.meta.url), 'utf8'));
+    const expected = Object.entries(taxonomy.competencies).map(([code, { label }]) => `${code} ${label}`);
+    assert.equal(expected.length, 9);
+    assert.deepEqual(instructions.match(/[A-Z]\d+ [^、。\n]+/g), expected);
 });

@@ -5,7 +5,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <BaseLayout
-  title="核心素養互動對照表 (Puter.js 整合版) - 台灣教育處方籤"
+  title="核心素養互動對照表 - 台灣教育處方籤"
   description="核心素養互動探索"
   currentSection="career-exploration"
   bodyClass="bg-gray-100 text-gray-800"
@@ -42,19 +42,22 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                  </h2>
                  <p class="text-gray-600 mb-6">將你的活動經驗貼在下方，讓 AI 幫你分析其中對應了哪些核心素養，並提供寫作建議！</p>
                  <div class="mb-4">
-                     <textarea id="ai-input" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" rows="4" placeholder="例如：我參加了學校的科展，從找資料、設計實驗到分析數據都自己來。過程中雖然失敗很多次，但也學會了怎麼解決問題，最後有拿到佳作。"></textarea>
+                     <textarea id="ai-input" maxlength="1000" aria-label="你的活動經驗" aria-describedby="ai-input-limit" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" rows="4" placeholder="例如：我參加了學校的科展，從找資料、設計實驗到分析數據都自己來。過程中雖然失敗很多次，但也學會了怎麼解決問題，最後有拿到佳作。"></textarea>
+                     <p id="ai-input-limit" class="mt-1 text-sm text-gray-500">最多 1000 字</p>
                  </div>
                  <button id="ai-generate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2">
                      <i data-feather="zap"></i>
                      <span>開始分析</span>
                  </button>
-                 <div id="ai-result" class="mt-6">
-                     </div>
+                 {/* 進度與草稿放在沒有 aria-live 的 #ai-work，#ai-result 只放最後的答案或訊息：WebKit 會把
+                     live region 裡任何子孫的變化送給 VoiceOver，子孫自己設 aria-live="off" 也擋不住。 */}
+                 <div class="mt-6">
+                     <div id="ai-work"></div>
+                     <div id="ai-result" aria-live="polite"></div>
+                 </div>
             </div>
         </section>
     </main>
-
-    <script is:inline src="https://js.puter.com/v2/"></script>
 
     <!-- 自架而非 CDN：第三方網域掛掉時本站功能會跟著失效，而且沒有任何建置期
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
@@ -130,80 +133,77 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         });
 
         // --- AI Analyst Logic ---
+        // prompt 在閘道的 competency-analysis 任務（ai-gateway/src/task-catalog.mjs），頁面只送活動經驗。
         const aiInput = document.getElementById('ai-input');
         const aiGenerateBtn = document.getElementById('ai-generate-btn');
+        const aiWorkContainer = document.getElementById('ai-work');
         const aiResultContainer = document.getElementById('ai-result');
+        const aiBtnLabel = aiGenerateBtn.querySelector('span');
+        // platform-ai.js 沒載入時沒有 describeError 可用，改顯示這句，與它對未知錯誤的說法相同。
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
+
+        function showMessage(text, tone = 'error') {
+            aiResultContainer.textContent = '';
+            const p = document.createElement('p');
+            p.className = (tone === 'error' ? 'text-red-500' : 'text-gray-600') + ' text-center font-semibold';
+            p.textContent = text;
+            aiResultContainer.appendChild(p);
+        }
+
+        // renderMarkdown 先 escape 再轉換，輸出可以直接放進 innerHTML。
+        function createAnswerBox(markdown) {
+            const box = document.createElement('div');
+            box.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
+            box.innerHTML = PlatformAI.renderMarkdown(markdown);
+            return box;
+        }
 
         aiGenerateBtn.addEventListener('click', async () => {
-            const userInput = aiInput.value.trim();
-            if (!userInput) {
-                aiResultContainer.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center font-semibold';
-                errorP.textContent = '請先輸入你的活動經驗描述！';
-                aiResultContainer.appendChild(errorP);
+            // 停用時只設 aria-disabled，點擊照樣會進來。不用 disabled：按鈕會失去焦點，鍵盤使用者的焦點掉回 <body>。
+            if (aiGenerateBtn.getAttribute('aria-disabled') === 'true') return;
+            const experience = aiInput.value.trim();
+            if (!experience) {
+                showMessage('請先輸入你的活動經驗描述！');
                 return;
             }
 
-            // 雙擊防護
-            const button = aiGenerateBtn;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.textContent = '載入中...';
-
+            // 進行中停用按鈕，要停止就按進度區塊的「取消」。只換 <span> 的文字，圖示才不會被清掉。
+            const originalLabel = aiBtnLabel.textContent;
+            aiGenerateBtn.setAttribute('aria-disabled', 'true');
+            aiGenerateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            aiBtnLabel.textContent = '分析中…';
             aiResultContainer.textContent = '';
-            const loaderWrapper = document.createElement('div');
-            loaderWrapper.className = 'flex justify-center items-center py-4';
-            const loader = document.createElement('div');
-            loader.className = 'loader';
-            loaderWrapper.appendChild(loader);
-            aiResultContainer.appendChild(loaderWrapper);
 
-            // ✅ 步驟 2: 強化 Prompt
-            const prompt = `你是一位專業的108課綱學習歷程顧問。請根據以下學生描述的活動經驗，分析其中最能體現的2-3項核心素養（從A1-C3中選擇），並針對每項素養提供一句精簡的寫作建議，引導學生如何在學習歷程中呈現這個亮點。請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。\n\n學生描述：「${userInput}」`;
-
-            // ✅ 步驟 3: 使用 Puter.js 呼叫 AI
+            const controller = new AbortController();
+            // mountProgress 放在 try 裡：PlatformAI 沒載入時它會丟 ReferenceError，按鈕仍要靠 finally 恢復。
+            let progress = null;
             try {
-                const response = await PlatformAI.callGeminiWithFallback(prompt, {
-                    temperature: 0.5,
-                    signal: AbortSignal.timeout(30000)
+                progress = PlatformAI.mountProgress(aiWorkContainer, { onCancel: () => controller.abort() });
+                let draft = null;
+                const { result } = await PlatformAI.runTask('competency-analysis', { experience }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
+                    onDelta: (_, text) => {
+                        const box = createAnswerBox(text);
+                        if (draft) draft.replaceWith(box);
+                        else aiWorkContainer.appendChild(box);
+                        draft = box;
+                    },
                 });
-
-                const text = response?.message?.content;
-                if (!text) {
-                    throw new Error("AI 未能提供有效的分析結果。");
-                }
-
-                // 安全地渲染 AI 回應的 Markdown。
-                // PlatformAI.renderMarkdown() 內部「先 HTML escape、後套 markdown」,
-                // 故以 innerHTML 注入是安全的,AI 無法插入可執行 HTML。
-                aiResultContainer.textContent = ''; // 清空容器
-
-                const container = document.createElement('div');
-                container.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
-                container.innerHTML = PlatformAI.renderMarkdown(text);
-
-                aiResultContainer.appendChild(container);
-
+                // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它移到 #ai-work，直接清空會掉回 <body>。
+                progress.finish();
+                aiWorkContainer.textContent = '';
+                // 以 done 的 result 為準，片段接起來的只是草稿。
+                aiResultContainer.appendChild(createAnswerBox(result));
             } catch (error) {
-                console.error("Puter.js AI call failed:", PlatformAI.formatError(error), error);
-                aiResultContainer.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center font-semibold';
-
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
-                } else {
-                    errorP.textContent = '抱歉，分析時發生錯誤。請稍後再試。';
-                }
-
-                aiResultContainer.appendChild(errorP);
+                if (progress) progress.finish();
+                aiWorkContainer.textContent = '';
+                const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                // 恢復按鈕狀態
-                button.disabled = false;
-                button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.textContent = originalText;
+                aiGenerateBtn.removeAttribute('aria-disabled');
+                aiGenerateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                aiBtnLabel.textContent = originalLabel;
             }
         });
 
@@ -243,18 +243,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             transform: scale(1.02);
             box-shadow: 0 0 0 3px #8b5cf6, 0 10px 15px -3px rgb(0 0 0 / 0.1);
             border-color: #8b5cf6;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #8b5cf6;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </BaseLayout>
