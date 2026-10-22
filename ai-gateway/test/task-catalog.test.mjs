@@ -7,6 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 
 import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput } from '../src/tasks.mjs';
@@ -90,4 +91,44 @@ test('competency-analysis：指令列出的核心素養與 scripts/taxonomy.json
     const expected = Object.entries(taxonomy.competencies).map(([code, { label }]) => `${code} ${label}`);
     assert.equal(expected.length, 9);
     assert.deepEqual(instructions.match(/[A-Z]\d+ [^、。\n]+/g), expected);
+});
+
+const CAREER_PAGE = readFileSync(new URL('../../src/pages/career-exploration/index.astro', import.meta.url), 'utf8');
+
+test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相同；文字任務、不設溫度（頁面原本沒設）', () => {
+    const task = catalog.get('career-chat');
+    assert.equal(task.output.type, 'markdown');
+    assert.equal(task.temperature, undefined);
+    assert.equal(validateInput(task, { question: '問'.repeat(200) }).question.length, 200);
+    assert.throws(() => validateInput(task, { question: '問'.repeat(201) }), { code: 'invalid_input', field: 'question' });
+    const input = CAREER_PAGE.match(/<input\b[^>]*\bid="chat-input"[^>]*>/)?.[0] ?? '';
+    assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
+});
+
+test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一個下一步建議，200 字內，不約學生下次再談', () => {
+    const { instructions } = catalog.get('career-chat');
+    assert.match(instructions, /推薦 1～2 個最相關的學群/);
+    assert.match(instructions, /說明為什麼推薦/);
+    assert.match(instructions, /具體的下一步探索建議/);
+    assert.match(instructions, /總長度不要超過 200 字/);
+    assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
+    assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
+});
+
+// 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
+// 自己抄一份，靠這個測試防止兩邊漂移。majorData 是 JS 物件字面值而不是 JSON，所以交給 vm 求值。
+test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、適合特質、未來出路）', () => {
+    const { instructions } = catalog.get('career-chat');
+    const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
+    assert.ok(literal, '頁面裡找不到 const majorData = [...];');
+    const majorData = vm.runInThisContext(literal);
+    const blocks = majorData.map((c) => [
+        `學群：${c.name}`,
+        `簡介：${c.description}`,
+        `適合特質：${c.competencies.join('、')}`,
+        `未來出路：${c.careers.join('、')}`,
+    ].join('\n'));
+    // 學群資料夾在兩行 --- 之間，逐塊比對：多一個、少一個、順序不同或欄位多了字都會不一樣。
+    const section = instructions.split('\n---\n')[1] ?? '';
+    assert.deepEqual(section.split('\n\n'), blocks);
 });
