@@ -224,6 +224,9 @@ jobs:
       - name: Prove the guards actually block (fault injection)
         run: npm run test:link-faults
 
+      - name: Test deployment verification
+        run: npm run test:verify-deploy
+
       - name: Run comment-checker unit tests
         run: npm run test:comments
 
