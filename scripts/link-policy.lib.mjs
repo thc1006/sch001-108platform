@@ -1,37 +1,35 @@
 /**
- * 外部連結的例外政策（allowlist）
- * --------------------------------------------------------------
+ * 外部連結的例外政策（allowlist），負責驗證政策檔與比對網址。
  * 有些網址在 GitHub runner 上就是驗不過，但在真實瀏覽器裡開得起來。#72 實測到的
  * 三個就是這種：憑證鏈不完整、連線被拒、PTT 擋資料中心 IP。每週把它們列進報告
- * 只會訓練維護者忽略通知——但直接刪掉檢查又會失去把關。所以需要一份 allowlist。
+ * 只會訓練維護者忽略通知，直接刪掉檢查又會失去把關，所以需要一份 allowlist。
  *
  * allowlist 是安全機制裡最容易腐爛的東西，因此這裡的規則刻意寫死、不可繞過：
  *
- *   1. 只能降低 `unverified` 的通知噪音。**不會**把 404/410 或網域解析不到變成
- *      健康——連結真的壞了就是要被看到，這是 allowlist 存在的前提而不是代價。
- *   2. 只接受「精確網址」或「精確主機名」。不支援萬用字元、不做子字串比對——
+ *   1. 只能降低 `unverified` 的通知噪音，不會把 404/410 或網域解析不到變成
+ *      健康。連結真的壞了就是要被看到，這是 allowlist 存在的前提而不是代價。
+ *   2. 只接受「精確網址」或「精確主機名」。不支援萬用字元，也不做子字串比對：
  *      `ptt.cc` 的字串比對會連 `evil-ptt.cc.example.com` 一起放行。
  *   3. 每一筆都必須有 reason（為什麼）、owner（誰負責）、expires（何時重審）。
- *   4. expires 過期會讓**確定性 CI 失敗**（見 check-link-policy.mjs），強迫重新
+ *   4. expires 過期會讓確定性 CI 失敗（見 check-link-policy.mjs），強迫重新
  *      審查而不是無限延續。同時限制最長有效期，堵住「expires: 2099-12-31」。
- *   5. allowlist 的目標本身必須通過靜態位址政策——不能用它把
+ *   5. allowlist 的目標本身必須通過靜態位址政策，不能用它把
  *      http://169.254.169.254/ 放進來。
  *
- * ── hijacked：方向相反的另一份清單 ──
- * entries（allowlist）壓低訊號，hijacked 放大訊號。會需要它，是因為三態分類
- * 有一個結構性的盲點：網域被接管之後照樣回 HTTP 200，狀態碼完全健康，內容卻
- * 已經換人。ieso-info.org（IESO 舊網域）正是如此——現在是澳洲線上博弈站，回
- * 200，而健檢會很有信心地把它算進「健康」。
+ * hijacked 是方向相反的另一份清單：entries（allowlist）壓低訊號，hijacked 放大訊號。
+ * 會需要它，是因為三態分類有一個結構性的盲點：網域被接管之後照樣回 HTTP 200，
+ * 狀態碼完全健康，內容卻已經換人。ieso-info.org（IESO 舊網域）正是如此，現在是
+ * 澳洲線上博弈站，回 200，而健檢會很有信心地把它算進「健康」。
  *
- * hijacked 的每一筆都會讓對應主機**不論狀態碼**被單獨大聲列出，且永遠不計入
+ * hijacked 的每一筆都會讓對應主機不論狀態碼都被單獨大聲列出，且永遠不計入
  * 健康。規則沿用 allowlist 的同一套紀律（精確主機名、reason／owner／expires、
  * 到期讓確定性 CI 紅），另外多要求一個 evidence：到期時要重新查證的是「它是否
  * 仍被接管」，沒有當初看到什麼的紀錄就無從比對。
- * 同一台主機不可以同時出現在 entries 與 hijacked——那是自相矛盾的宣告。
+ * 同一台主機不可以同時以 host 列在 entries 與 hijacked，那是自相矛盾的宣告。
  *
  * 每一筆還要標 kind：hijacked（這台主機本身易主）或 terminus（接管鏈的終點，本來就
  * 不是教育網域）。少了這個欄位，報告只能一律稱它們「被接管的網域」，而 arcade.now
- * 並沒有被誰接管——它就是接管方。標籤不實的警示，下一個維護者不會相信。
+ * 並沒有被誰接管，它就是接管方。標籤不實的警示，下一個維護者不會相信。
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
@@ -50,11 +48,11 @@ const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'e
 
 /**
  * 這份名單裡有兩種不同的東西，必須分清楚，否則報告會說謊：
- *   hijacked  這台主機**本身**曾經是教育資源的網域，後來易主（ieso-info.org 變博弈站）
- *   terminus  這台主機是接管鏈的**終點**，它從來就不是教育網域，但我們的內文會提到它
- *             （arcade.now 是 www.sasmo.sg 轉過去的聯盟廣告頁）
+ *   hijacked  這台主機本身易主，從教育資源的網域變成別的站（ieso-info.org 變博弈站）
+ *   terminus  這台主機是接管鏈的終點，它從來就不是教育網域，但我們的內文會提到它
+ *             （arcade.now 是 www.sasmo.sg 轉址到的聯盟廣告頁）
  * 兩者都必須「不論狀態碼一律列出、永不計入健康」，但把 terminus 稱作「被接管的網域」
- * 是不實敘述——arcade.now 沒有被誰接管，它就是接管方。
+ * 是不實敘述：arcade.now 沒有被誰接管，它就是接管方。
  */
 const HIJACK_KINDS = new Set(['hijacked', 'terminus']);
 
@@ -73,7 +71,7 @@ const toUTCDay = (text) => {
 };
 
 /**
- * expires 的共用檢查。entries 與 hijacked 都用這一份——兩邊各寫一次，遲早會有
+ * expires 的共用檢查。entries 與 hijacked 都用這一份：兩邊各寫一次的話，遲早會有
  * 一邊被放寬而沒人發現，而「例外悄悄變成無期限」正是整套規則要防的東西。
  */
 function checkExpires(value, at, todayISO, todayMs, push) {
@@ -163,13 +161,12 @@ export function validatePolicy(policy, todayISO) {
     policy.entries.forEach((e, i) => {
         const at = `entries[${i}]`;
         // 這一筆有沒有出過錯，決定它能不能進 entries。過期或寫壞的例外絕不可被
-        // 回傳出去——呼叫端一旦拿它去 matchPolicy()，就等於「過期的例外還在生效」，
+        // 回傳出去：呼叫端一旦拿它去 matchPolicy()，就等於「過期的例外還在生效」，
         // 而那正是這整套規則要防的東西。
         const errorsBefore = errors.length;
         if (!e || typeof e !== 'object' || Array.isArray(e)) return push(`${at} 必須是物件`);
         for (const k of Object.keys(e)) if (!ENTRY_KEYS.has(k)) push(`${at} 含未知欄位「${k}」`);
 
-        // ── match ──
         const m = e.match;
         let key = null;
         if (!m || typeof m !== 'object' || Array.isArray(m)) {
@@ -201,19 +198,16 @@ export function validatePolicy(policy, todayISO) {
             seen.add(key);
         }
 
-        // ── reason / owner ──
         if (typeof e.reason !== 'string' || [...e.reason.trim()].length < MIN_REASON_CHARS) {
             push(`${at}.reason 必須說明「為什麼驗不過」，至少 ${MIN_REASON_CHARS} 字`);
         }
         if (typeof e.owner !== 'string' || !e.owner.trim()) push(`${at}.owner 必須指名負責重審的人`);
 
-        // ── expires ──
         checkExpires(e.expires, at, todayISO, todayMs, push);
 
         if (key && errors.length === errorsBefore) entries.push({ ...e, _key: key });
     });
 
-    // ── hijacked：被接管的網域 ──
     const hijacked = [];
     if (policy.hijacked !== undefined) {
         if (!Array.isArray(policy.hijacked)) {
@@ -269,7 +263,7 @@ export function validatePolicy(policy, todayISO) {
 
 /**
  * 這個網址有沒有對應的有效例外？回傳該筆 entry 或 null。
- * 比對一律是「完全相等」——精確網址或精確主機名，不做前綴／子字串／萬用字元。
+ * 比對一律是「完全相等」：精確網址或精確主機名，不做前綴／子字串／萬用字元。
  */
 export function matchPolicy(entries, url) {
     const normalized = normalizeUrl(url);
@@ -288,7 +282,7 @@ export function matchPolicy(entries, url) {
 
 /**
  * 這個網址的主機有沒有被列為「已知被接管」？回傳該筆或 null。
- * 與 matchPolicy 一樣是完全相等比對——ieso-info.org 不會順帶涵蓋
+ * 與 matchPolicy 一樣是完全相等比對：ieso-info.org 不會順帶涵蓋
  * evil.ieso-info.org，也不會涵蓋 ieso-info.org.tw。
  */
 export function matchHijacked(hijacked, url) {

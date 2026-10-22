@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * 連結健檢的 SSRF 防護與例外政策測試
- * --------------------------------------------------------------
+ * 連結健檢的 SSRF 防護與例外政策測試。
  * 全部打本機 http server 或純函式，DNS 結果在測試裡注入，不連外網也不查真的 DNS。外網會因
  * 防爬與站台狀態而飄，DNS 則要看執行的機器上 resolver 通不通。
  *
@@ -79,7 +78,7 @@ before(async () => {
         if (u === '/429') { res.writeHead(429); return res.end('slow down'); }
         if (u === '/500') { res.writeHead(500); return res.end('boom'); }
         if (u === '/slow') { return; } // 不回應，用來測逾時
-        // ── SSRF 的轉址繞道：起點無害，第二跳才指向內網／metadata ──
+        // SSRF 的轉址繞道：起點無害，第二跳才指向內網／metadata。
         if (u === '/to-metadata') { res.writeHead(302, { Location: 'http://169.254.169.254/latest/meta-data/' }); return res.end(); }
         if (u === '/to-private') { res.writeHead(302, { Location: 'http://10.1.2.3/admin' }); return res.end(); }
         // 用 ULA 與 IPv4-mapped 而不是 ::1：這一組測試跑在「允許 loopback」的單元
@@ -87,7 +86,7 @@ before(async () => {
         if (u === '/to-ipv6-ula') { res.writeHead(302, { Location: 'http://[fd00::1]:9/x' }); return res.end(); }
         if (u === '/to-ipv4-mapped-metadata') { res.writeHead(302, { Location: 'http://[::ffff:169.254.169.254]/' }); return res.end(); }
         if (u === '/to-file') { res.writeHead(302, { Location: 'file:///etc/passwd' }); return res.end(); }
-        // 167772161 是 10.0.0.1 的十進位寫法——混淆寫法 + 轉址繞道的組合
+        // 167772161 是 10.0.0.1 的十進位寫法，這一條是混淆寫法加上轉址繞道。
         if (u === '/to-decimal-private') { res.writeHead(302, { Location: 'http://167772161/x' }); return res.end(); }
         if (u === '/to-creds') { res.writeHead(302, { Location: 'http://user:pass@example.com/' }); return res.end(); }
         if (u === '/to-dns-private') { res.writeHead(302, { Location: `http://${PRIVATE_DNS_HOST}/` }); return res.end(); }
@@ -108,9 +107,7 @@ before(async () => {
 
 after(() => server.close());
 
-// ──────────────────────────────────────────────────────────────
-// 一、三態分類（沿用競賽看門狗的語意，兩邊必須一致）
-// ──────────────────────────────────────────────────────────────
+// 競賽看門狗與外部連結健檢共用這套三態分類。
 
 test('三態：404 / 410 → dead', async () => {
     for (const p of ['/404', '/410']) {
@@ -191,9 +188,7 @@ test('一律用 GET（HEAD 不是使用者實際送的請求）', async () => {
     assert.ok(hits.get('/ok') >= 1, '必須真的送出請求');
 });
 
-// ──────────────────────────────────────────────────────────────
-// 二、SSRF：靜態網址政策（不需 DNS，PR 階段就能確定性地跑）
-// ──────────────────────────────────────────────────────────────
+// 靜態網址政策不需要 DNS，PR 階段就能確定性地跑。
 
 test('SSRF：只允許 http／https', () => {
     for (const u of ['file:///etc/passwd', 'ftp://example.com/x', 'gopher://example.com/', 'data:text/html,x', 'javascript:alert(1)']) {
@@ -237,7 +232,7 @@ test('SSRF：保留名稱空間（.internal／.local／.lan…）一律拒絕', 
     for (const h of ['db.internal', 'printer.local', 'nas.lan', 'gitlab.corp', 'x.home.arpa', 'app.localhost']) {
         assert.equal(staticUrlPolicy(`https://${h}/`).ok, false, `${h} 必須被拒絕`);
     }
-    // 合法的公開網域不可被誤傷——.internal 是後綴比對，不能寫成子字串比對
+    // 合法的公開網域不可被誤傷：.internal 是後綴比對，不能寫成子字串比對。
     for (const h of ['internal.example.com', 'my-local-site.com', 'localhost.example.org']) {
         assert.equal(staticUrlPolicy(`https://${h}/`).ok, true, `${h} 不該被誤擋`);
     }
@@ -248,10 +243,6 @@ test('SSRF：主機名結尾的點不可用來繞過（localhost. ≡ localhost�
     assert.equal(staticUrlPolicy('http://LOCALHOST./').ok, false);
     assert.equal(staticUrlPolicy('http://metadata.google.internal./').ok, false);
 });
-
-// ──────────────────────────────────────────────────────────────
-// 三、SSRF：位址判定（IPv4 與 IPv6）
-// ──────────────────────────────────────────────────────────────
 
 test('SSRF：IPv4 私有／loopback／link-local／保留網段全部封鎖', () => {
     const mustBlock = [
@@ -304,9 +295,7 @@ test('SSRF：allowLoopback 只放寬 loopback，其他一項都不放寬', () =>
     assert.equal(staticUrlPolicy('http://metadata.google.internal/', LOOPBACK_OK).ok, false);
 });
 
-// ──────────────────────────────────────────────────────────────
-// 四、SSRF：實際連線時真的被擋下來（不是只有純函式說會擋）
-// ──────────────────────────────────────────────────────────────
+// 下面到 runProbes 為止的測試走 probe 的實際連線流程，確認真的會擋下來，不只是純函式說會擋。
 
 test('SSRF：預設（嚴格）模式下連本機 http server 會被擋，且沒有送出任何請求', async () => {
     hits.clear();
@@ -423,10 +412,6 @@ test('runProbes：把 allowLoopback 傳給每一次探測，且回報未檢查�
     assert.equal(isBlockedResult(strict.results[0]), true);
 });
 
-// ──────────────────────────────────────────────────────────────
-// 五、例外政策（allowlist）
-// ──────────────────────────────────────────────────────────────
-
 const TODAY = '2026-08-27';
 const validEntry = (over = {}) => ({
     match: { host: 'www.ptt.cc' },
@@ -457,12 +442,12 @@ test('政策：過期的例外必須讓確定性 CI 失敗', () => {
     const { errors, entries } = validatePolicy({ version: 1, entries: [validEntry({ expires: '2026-08-26' })] }, TODAY);
     assert.equal(errors.length, 1);
     assert.match(errors[0], /到期/);
-    // 「今天到期」也算過期——邊界不可偏向繼續放行
+    // 「今天到期」也算過期，邊界不可偏向繼續放行。
     const today = validatePolicy({ version: 1, entries: [validEntry({ expires: TODAY })] }, TODAY);
     assert.match(today.errors[0], /到期/);
 
     // 過期的例外不可被回傳出去。只要它還在 entries 裡，任何呼叫 matchPolicy() 的
-    // 地方就等於「過期的例外還在生效」——CI 紅了但實際行為沒變，是最糟的組合。
+    // 地方就等於「過期的例外還在生效」：CI 紅了但實際行為沒變，是最糟的組合。
     assert.deepEqual(entries, [], '過期的例外不得出現在回傳的 entries 裡');
     assert.equal(matchPolicy(entries, 'https://www.ptt.cc/bbs/'), null);
     assert.deepEqual(today.entries, []);
@@ -556,10 +541,6 @@ test('政策：repo 內的 link-policy.json 現在就是有效的', () => {
     assert.deepEqual(errors, [], `link-policy.json 無效：${errors.join('；')}`);
 });
 
-// ──────────────────────────────────────────────────────────────
-// 六、例外政策在 runner 裡的實際效果
-// ──────────────────────────────────────────────────────────────
-
 test('政策：只降低 unverified 的噪音，404／410 一律不得被壓下去', async () => {
     // 這是 allowlist 最危險的失效模式：為了少幾則通知，把真的壞掉的連結一起藏起來。
     const host = `127.0.0.1`;
@@ -567,7 +548,7 @@ test('政策：只降低 unverified 的噪音，404／410 一律不得被壓下�
         { version: 1, entries: [validEntry({ match: { host }, expires: '2026-10-01' })] },
         TODAY,
     ).entries;
-    // 127.0.0.1 違反位址政策，所以連進不了 entries——這本身就是一道保險
+    // 127.0.0.1 違反位址政策，所以連進不了 entries，這本身就是一道保險。
     assert.equal(entries.length, 0, '指向 loopback 的例外連寫都不該寫得出來');
 
     // 改用純函式驗證「dead 不查政策」這條規則：check-external-links.mjs 的分支順序是
@@ -587,9 +568,7 @@ test('政策：403 這種 unverified 才會被例外壓下去', () => {
 });
 
 
-// ──────────────────────────────────────────────────────────────
-// 六之二、hijacked：被接管的網域（方向與 allowlist 相反）
-// ──────────────────────────────────────────────────────────────
+// hijacked 名單列出不可信任的主機，方向與 allowlist 相反：放大訊號，不是壓低。
 
 const validHijack = (over = {}) => ({
     match: { host: 'ieso-info.org' },
@@ -612,8 +591,8 @@ test('hijacked：合法的一筆通過驗證', () => {
 test('hijacked：kind 必須是 hijacked 或 terminus', () => {
     // 名單裡有兩種不同的東西：hijacked 是「這台主機本身易主」（ieso-info.org），
     // terminus 是「接管鏈的終點，本來就不是教育網域」（arcade.now 是 www.sasmo.sg
-    // 轉過去的廣告漏斗）。兩者處置相同，但把 terminus 稱作「被接管的網域」是不實
-    // 敘述——arcade.now 沒有被誰接管，它就是接管方。標籤不實的警示沒有人會相信。
+    // 轉址到的廣告漏斗）。兩者處置相同，但把 terminus 稱作「被接管的網域」是不實
+    // 敘述：arcade.now 沒有被誰接管，它就是接管方。標籤不實的警示沒有人會相信。
     assert.match(hijackErrors({ kind: undefined }).join('；'), /kind/);
     assert.match(hijackErrors({ kind: 'suspicious' }).join('；'), /kind/);
     assert.match(hijackErrors({ kind: '' }).join('；'), /kind/);
@@ -689,10 +668,10 @@ test('hijacked：比對是完全相等，不得順帶涵蓋子網域或相似網
 
 test('hijacked：判定必須排在三態分類之前，否則 200 會被算成健康', () => {
     // 這是整份機制的重點：被接管的網域回的就是 200，一旦先跑 classifyLink，
-    // 它就會進 healthy 而永遠不會被列出來——等於用檢查器替博弈站背書。
+    // 它就會進 healthy 而永遠不會被列出來，等於用檢查器替博弈站背書。
     // 註解裡提到 classifyLink 不算「呼叫」。比對前先把註解拿掉，否則這一條會被
-    // 自己的說明文字騙過去——第一版就是這樣紅的：解釋順序的那句註解裡有
-    // 「classifyLink」，位置比真正的 matchHijacked 還前面。
+    // 說明文字誤導：check-external-links.mjs 解釋順序的那句註解裡有「classifyLink」，
+    // 位置比真正的 matchHijacked 還前面。
     const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, ' ')
         .split(/\r?\n/)
@@ -717,9 +696,6 @@ test('hijacked：repo 內的 link-policy.json 的 hijacked 現在就是有效的
         assert.ok(/20\d\d-\d\d-\d\d/.test(h.evidence), `${h.match.host} 的 evidence 必須寫明實測日期`);
     }
 });
-// ──────────────────────────────────────────────────────────────
-// 七、看門狗 issue 認領（沿用既有的 selectCanonicalIssue）
-// ──────────────────────────────────────────────────────────────
 
 const bot = (number, body) => ({ number, author: { login: ACTIONS_APP_LOGIN }, body });
 
@@ -750,11 +726,8 @@ test('issue 認領：空 marker 會讓認領退化成「只看作者」，必須
     }
 });
 
-// ──────────────────────────────────────────────────────────────
-// 八、workflow 的安全不變量
-// ──────────────────────────────────────────────────────────────
-// YAML 裡的東西沒有型別檢查，改壞了不會有任何訊號——直到某週報告貼錯地方，
-// 或某個分支被拿來當跳板。這幾條把「不可退讓的設定」釘成會紅的測試。
+// workflow 的安全不變量寫在 YAML 裡，沒有型別檢查，改壞了不會有任何訊號，直到某週
+// 報告貼錯地方，或某個分支被拿來當跳板。這幾條把「不可退讓的設定」釘成會紅的測試。
 
 const workflow = () =>
     readFileSync(fileURLToPath(new URL('../.github/workflows/external-links-check.yml', import.meta.url)), 'utf8');

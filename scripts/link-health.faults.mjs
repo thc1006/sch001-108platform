@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * SSRF 防護與例外政策的故障注入矩陣
- * --------------------------------------------------------------
+ * SSRF 防護、例外政策、接管偵測與裸網域擷取的故障注入矩陣。
  * 「有寫防護」與「防護擋得住」是兩件事，「測試會過」與「測試在把關」也是兩件事。
  * 這支逐一破壞一個東西，確認該紅的真的會紅：
  *
@@ -13,11 +12,11 @@
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
- * 「不是網域」丟掉——檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
+ * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B 那一半是刻意做的突變測試：把防護拿掉之後，如果測試還是綠的，那些測試就是
- * 裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」——同一
- * 類假象在自己的測試上也會發生。
+ * B、C、D 三段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
+ * 同一類假象在自己的測試上也會發生。
  *
  * 一律在副本上動手：政策與盤點寫進暫存目錄，程式碼複製到 scripts-faultcheck/。
  * 原始檔案在結構上就不可能被改壞，而不是靠還原邏輯寫得夠好。
@@ -132,7 +131,7 @@ const policyCases = [
         expect: /skipEverything/,
         policy: () => { const p = clonePolicy(); p.skipEverything = true; return p; },
     },
-    // ── hijacked（被接管的網域）：紀律必須與 allowlist 一樣嚴 ──
+    // hijacked 名單的紀律必須與 allowlist 一樣嚴。
     {
         name: '接管警示過期 → 必須讓 CI 紅（強迫重新查證是否仍被接管）',
         expect: /到期/,
@@ -150,7 +149,7 @@ const policyCases = [
     },
     {
         // 名單裡混進一個沒人認得的 kind，報告就只能亂貼標籤。arcade.now 標成
-        // hijacked 會被寫成「這台主機本身已被接管」——它並沒有，它是接管方。
+        // hijacked 會被寫成「這台主機本身已被接管」，但它並沒有，它是接管方。
         name: '接管警示的 kind 不是 hijacked／terminus',
         expect: /kind/,
         policy: () => { const p = clonePolicy(); p.hijacked[0].kind = 'suspicious'; return p; },
@@ -240,14 +239,14 @@ const policyCases = [
     },
 ];
 
-// ── B：SSRF 防護的突變測試 ──
-// 每一項都是「把防護的一段拿掉」，然後跑 link-health.test.mjs。測試必須失敗。
+// B 段是 SSRF 防護的突變測試：每一項都是「把防護的一段拿掉」，然後跑
+// link-health.test.mjs。測試必須失敗。
 const guardMutations = [
     {
         name: 'IPv4 封鎖網段清單被清空',
-        // 這裡改的是「編譯後的網段表」而不是原始清單：第一版寫成
-        // `const BLOCKED_IPV4 = [].concat([]) && [` ——文字確實變了，語意卻沒變
-        // （`[] && x` 回傳 x），突變等於沒做，而 mutated !== libSource 這個守衛
+        // 這裡動的是「編譯後的網段表」而不是原始清單：突變若把原始清單的開頭換成
+        // `const BLOCKED_IPV4 = [].concat([]) && [`，文字確實變了，語意卻沒變
+        // （`[] && x` 回傳 x），等於沒做，而 mutated !== libSource 這個守衛
         // 看不出來。這一整支腳本存在的理由就是這種「看起來有做、實際沒做」。
         apply: (s) => s.replace('const BLOCKED_IPV4_RANGES = BLOCKED_IPV4.map(', 'const BLOCKED_IPV4_RANGES = [].map('),
     },
@@ -319,10 +318,9 @@ const runMutantTests = (testFile = 'link-health.test.mjs') => {
     }
 };
 
-// ── D：接管偵測的突變測試 ──
-// 這三個訊號的價值完全取決於**誤判率**：報得太兇會被當雜訊關掉，關掉之後就回到
-// 「只能堵已知主機」。所以除了「拿掉偵測會不會漏」，也要測「拿掉防誤判的那一層
-// 會不會開始亂報」——後者的兩條（詞界、meta refresh）都是實測逼出來的。
+// D 段是接管偵測的突變測試。這三個訊號的價值完全取決於誤判率：報得太兇會被當
+// 雜訊關掉，關掉之後就回到「只能堵已知主機」。所以除了「拿掉偵測會不會漏」，
+// 也要測「拿掉防誤判的那一層會不會開始亂報」，後者有兩條：詞界與 meta refresh。
 const hijackMutations = [
     {
         name: '同站判定永遠回 true（跨站轉址完全偵測不到）',
@@ -338,8 +336,8 @@ const hijackMutations = [
             ),
     },
     {
-        // 這一條守的是**誤判**：純子字串比對會讓 free spins 命中
-        // 「free spins-off workshop」。寫測試時當場抓到過。
+        // 這一條守的是誤判：純子字串比對會讓 free spins 命中
+        // 「free spins-off workshop」。
         name: '詞組比對退回純子字串（連字號複合詞會誤判）',
         apply: (s) =>
             s.replace(
@@ -349,7 +347,7 @@ const hijackMutations = [
     },
     {
         // CodeQL js/bad-tag-filter。`</script >` 是合法的結束標籤，瀏覽器照樣收工，
-        // 而 `<\/script>` 對不上它——整段 JS 原始碼會被算成「可見文字」，
+        // 而 `<\/script>` 對不上它，整段 JS 原始碼會被算成「可見文字」，
         // 訊號 C 直接瞎掉。被偵測的是敵意主機，多打一個空格就是一種繞法。
         name: 'script 的結束標籤退回不容許空白（多一個空格就繞過訊號 C）',
         apply: (s) =>
@@ -367,8 +365,8 @@ const hijackMutations = [
             ),
     },
     {
-        // 這一條也是守誤判：第一版沒有排除 meta refresh，對照組裡
-        // www.cac.edu.tw 與 tpmso.k12ea.gov.tw 的舊式轉址頁立刻被誤標。
+        // 這一條也是守誤判：不排除 meta refresh 的話，對照組裡
+        // www.cac.edu.tw 與 tpmso.k12ea.gov.tw 的舊式轉址頁會被誤標。
         name: 'meta refresh 不再排除（正當的舊式轉址頁會被誤標成盲區）',
         apply: (s) =>
             s.replace(
@@ -385,7 +383,7 @@ const hijackMutations = [
             ),
     },
     {
-        // 這一條守的是**漏檢**：description 的引號改用「兩種引號都排除」的字元類別，
+        // 這一條守的是漏檢：description 的引號若改用「兩種引號都排除」的字元類別，
         // 內容裡有撇號就會被截在撇號上，撇號之後的變現詞組全部看不到。
         name: 'description 的引號退回字元類別（內容裡的撇號會把偵測截斷）',
         apply: (s) =>
@@ -395,7 +393,7 @@ const hijackMutations = [
             ),
     },
     {
-        // 長度上限寫進量詞時，超過上限不是截斷而是整條比對失敗——「太長」與
+        // 長度上限寫進量詞時，超過上限不是截斷而是整條比對失敗，「太長」與
         // 「沒有 title」在下游長得一模一樣，而蹲域名的頁面標題常常很長。
         name: '長度上限寫回正則量詞（過長的 title 會被整條丟掉而不是截斷）',
         apply: (s) =>
@@ -416,8 +414,8 @@ const hijackMutations = [
     },
 ];
 
-// ── C：裸網域擷取規則的突變測試 ──
-// 每一項都是「把一條規則拿掉或反過來」，然後跑 bare-domains.test.mjs。測試必須失敗。
+// C 段是裸網域擷取規則的突變測試：每一項都是「把一條規則拿掉或反過來」，然後跑
+// bare-domains.test.mjs。測試必須失敗。
 const bareDomainMutations = [
     {
         name: '網址不再先遮蔽（網址路徑會被當成裸網域重複擷出）',
@@ -434,7 +432,7 @@ const bareDomainMutations = [
     {
         // 這一條守的是「張冠李戴」：非 CJK 的 Unicode 字母緊貼網域時，少了這道
         // lookbehind 會把西里爾的 еvil.org 截成 vil.org、全形的 Ａbc.org 截成 bc.org，
-        // 檢查器去驗了另一台主機還回報它健康——產生的是錯誤的保證，比漏檢更糟。
+        // 檢查器去驗了另一台主機還回報它健康，產生的是錯誤的保證，比漏檢更糟。
         name: '非 CJK 字母的左界被拿掉（homograph 會被截成另一台真實主機）',
         apply: (s) =>
             s.replace(
@@ -496,7 +494,7 @@ const bareDomainMutations = [
     },
     {
         // 這一條守的是整份設計的樞紐。改用「解析得到才算網域」之後，
-        // concordreview.org 這種已經停用的網域會被當成「不是網域」丟掉——
+        // concordreview.org 這種已經停用的網域會被當成「不是網域」丟掉，
         // 檢查器對它唯一該偵測的目標永久失明，而報告會很乾淨地說一切正常。
         name: '改用「可不可解析」當作「是不是網域」的判準（會對死網域失明）',
         apply: (s) =>
@@ -516,8 +514,6 @@ const bareDomainMutations = [
     },
 ];
 
-// ──────────────────────────────────────────────────────────────
-
 let pass = 0;
 let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
@@ -533,7 +529,7 @@ function runBaselineTests() {
                 path.join(SCRIPTS, 'link-health.test.mjs'),
                 path.join(SCRIPTS, 'bare-domains.test.mjs'),
                 // D 段的突變要跑這一支。基準也必須涵蓋它，否則「基準是綠的」這句話
-                // 對新加的偵測是盲的——那正是這個矩陣存在的理由。
+                // 對接管偵測是盲的，而這個矩陣存在的理由就是不留這種盲點。
                 path.join(SCRIPTS, 'hijack-signals.test.mjs'),
             ],
             { encoding: 'utf8', stdio: 'pipe' },
@@ -553,10 +549,10 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B／C 兩段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B、C、D 三段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
-// 要等收尾那道檢查才抓得到——而摘要早就印成「43 擋下 / 0 漏掉」了。
-// 實測：把 extractBareDomainCandidates 改成永遠回 []，初始基準仍顯示綠燈。
+// 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
+// extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
     console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs）');
@@ -579,10 +575,9 @@ console.log('\nB. SSRF 防護的突變測試（link-health.test.mjs 必須紅）
 rmSync(MUTANT_DIR, { recursive: true, force: true });
 try {
     // 換行一律正規化成 LF 再做字串比對。這個 repo 的檔案在 Windows 上是 CRLF，
-    // 而下面每一條 mutation 的比對字串都是用 LF 寫的——不正規化的話，跨行的比對
+    // 而下面每一條 mutation 的比對字串都是用 LF 寫的。不正規化的話，跨行的比對
     // 會靜默失敗（String.replace 找不到就原樣回傳，不會報錯），整條保護在 Windows
-    // 上等於沒有測到，在 Linux CI 上卻是綠的。實際發生過：「DNS 解析結果不再逐一
-    // 檢查」這一條在本機顯示「注入未生效」，在 CI 上卻正常。
+    // 上等於沒有測到，在 Linux CI 上卻是綠的。
     // mutant 只是丟棄用的副本，寫回 LF 沒有副作用。
     const libSource = readFileSync(path.join(SCRIPTS, 'link-health.lib.mjs'), 'utf8')
         .split(/\r?\n/)

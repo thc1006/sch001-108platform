@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 /**
- * 外部連結政策的確定性檢查
- * --------------------------------------------------------------
- * 這支跑在**每個 PR**上，而且完全不連外網——它檢查的是「政策本身有沒有腐爛」，
+ * 外部連結政策的確定性檢查。
+ * 這支跑在每個 PR 上，而且完全不連外網：它檢查的是「政策本身有沒有腐爛」，
  * 那件事必須是確定性的，不能取決於今天某個站台連不連得上。
  *
  * 檢查三件事：
  *
  *   1. link-policy.json 的每一筆例外都合法：精確網址或精確主機名、有 reason／
- *      owner／expires、期限未過、期限不超過上限。**過期就讓 CI 紅**——這是刻意的：
+ *      owner／expires、期限未過、期限不超過上限。過期就讓 CI 紅，這是刻意的：
  *      allowlist 最常見的腐爛方式就是「當初說暫時的，三年後還在」。
  *
  *   2. 建置產物裡的每一個外部網址都通過靜態位址政策（scheme、credential、
  *      字面 IP、保留主機名）。這一關把「有人在資料檔裡寫 http://169.254.169.254/」
- *      擋在合併之前，而不是等每週排程跑到才發現——排程那時候已經是 main 了。
+ *      擋在合併之前，而不是等每週排程跑到才發現，排程跑的時候已經在 main 上了。
  *
  *   3. 每一筆例外都真的對得上盤點裡的某個網址。對不上代表那個網址早就被改掉／
- *      刪掉了，例外卻還留著——這種殭屍條目會一直放行一個沒有人再檢視的目標。
+ *      刪掉了，例外卻還留著，這種殭屍條目會一直放行一個沒有人再檢視的目標。
  *      hijacked（被接管的網域）走同一條規則：內文已經不再提到那個網域時，這筆
  *      警示就該刪掉，而不是留著讓人以為還有東西在盯。
  *
@@ -49,12 +48,12 @@ const POLICY_PATH = path.resolve(ROOT, argOf('--policy', 'scripts/link-policy.js
 const INVENTORY_PATH = path.resolve(ROOT, argOf('--inventory', '.reports/url-inventory.json'));
 
 // 期限一律以 UTC 日曆日判定。用 runner 的本地時區會讓「今天到期」的那一天，
-// 結果取決於 job 跑在哪個時區——期限檢查必須是確定性的。
+// 結果取決於 job 跑在哪個時區，而期限檢查必須是確定性的。
 const todayISO = new Date().toISOString().slice(0, 10);
 
 const errors = [];
 
-// ── ① 政策檔本身 ──
+// 第 1 項：驗證政策檔本身。
 let policyRaw;
 try {
     policyRaw = JSON.parse(await readFile(POLICY_PATH, 'utf8'));
@@ -65,7 +64,7 @@ try {
 const { errors: policyErrors, entries, hijacked } = validatePolicy(policyRaw, todayISO);
 errors.push(...policyErrors.map((m) => ({ where: 'link-policy.json', message: m })));
 
-// ── ② + ③ 需要盤點才能做的兩項 ──
+// 第 2、3 項都要用到盤點。
 let inventory = null;
 try {
     inventory = JSON.parse(await readFile(INVENTORY_PATH, 'utf8'));
@@ -77,7 +76,7 @@ let urls = [];
 if (inventory && Array.isArray(inventory.urls)) {
     // 故障注入（check-built-site.faults.mjs）會用 SITE_DIST 指向 dist 的副本，
     // 那一輪同樣會覆寫盤點檔。若日後有人把本檢查排到故障注入之後，驗到的就會是
-    // 被刻意破壞過的那一份——而且完全沒有訊號。這裡直接拒絕。
+    // 被刻意破壞過的那一份，而且完全沒有訊號。這裡直接拒絕。
     if (inventory.generatedFrom !== 'dist') {
         errors.push({
             where: INVENTORY_PATH,
@@ -86,7 +85,7 @@ if (inventory && Array.isArray(inventory.urls)) {
     }
     urls = inventory.urls.map((u) => u.url);
 } else {
-    // 「沒有盤點就靜靜跳過」會讓這支變成裝飾品——CI 綠燈但其實什麼都沒查。
+    // 「沒有盤點就靜靜跳過」會讓這支變成裝飾品：CI 綠燈但其實什麼都沒查。
     // 明確報錯，讓呼叫順序寫錯時當場看得到。
     errors.push({
         where: INVENTORY_PATH,
@@ -143,7 +142,6 @@ if (urls.length) {
     }
 }
 
-// ── 報告 ──
 console.log('外部連結政策檢查（確定性，不連外網）');
 console.log(`  今天（UTC）：${todayISO}`);
 const declared = Array.isArray(policyRaw?.entries) ? policyRaw.entries.length : 0;

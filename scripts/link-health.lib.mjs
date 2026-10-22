@@ -1,25 +1,23 @@
 /**
- * 外部連結健檢的共用核心（含 SSRF 防護）
- * --------------------------------------------------------------
+ * 外部連結健檢的共用核心，包含 SSRF 防護。
  * 本專案有兩處需要判斷「這個外部網址還活著嗎」：競賽資料看門狗
  * （check-competitions.mjs）與全站外部連結健檢（check-external-links.mjs）。
  * 兩者的語意必須一致，否則同一個網址在不同報告裡會得到不同結論；更重要的是
  * 兩者都會在 GitHub runner 上、帶著 issues:write 的 token 去連我們 repo 資料
- * 裡寫的任意網址——那是一條 SSRF 路徑，防護只寫在其中一邊等於沒寫。
+ * 裡寫的任意網址。這是一條 SSRF 路徑，防護只寫在其中一邊等於沒寫。
  *
- * 由 link-health.test.mjs 以本機 http server 做確定性測試（不依賴外網——
- * 外網測試會因防爬與站台狀態而飄）。
+ * link-health.test.mjs 用本機 http server 做確定性測試，不連外網，因為外網測試
+ * 會因防爬與站台狀態而飄。
  *
- * ── 為什麼不用 fetch() ──
- * fetch（undici）沒有辦法把「我驗過的那個 IP」交給連線層：只能先自己
- * dns.lookup 驗一次，再讓 fetch 自己重查一次 DNS。兩次查詢之間的窗口正是
- * DNS rebinding 的攻擊面——第一次回公網 IP 通過檢查，第二次回 169.254.169.254。
+ * 這裡不用 fetch()。fetch（undici）沒有辦法把「我驗過的那個 IP」交給連線層：
+ * 只能先自己 dns.lookup 驗一次，再讓 fetch 自己重查一次 DNS。兩次查詢之間的窗口
+ * 正是 DNS rebinding 的攻擊面：第一次回公網 IP 通過檢查，第二次回 169.254.169.254。
  * node:http / node:https 的 request options 支援自訂 `lookup`，可以把驗證過的
  * 位址「原封不動」交給 net.connect，連的就是驗過的那個 IP，窗口不存在。
  * （已實測：Node 24 會以 { hints: 0, all: true } 呼叫 lookup，並接受回傳陣列。）
  *
- * 另外 fetch 的 redirect: 'follow' 是黑箱——中途每一跳的目的地都不會經過我們
- * 手上。這裡一律 redirect 手動處理，每一跳都重新跑完整的位址檢查。
+ * fetch 的 redirect: 'follow' 也是黑箱，中途每一跳的目的地都不會經過我們
+ * 手上。這裡一律手動處理轉址，每一跳都重新檢查位址。
  */
 
 import http from 'node:http';
@@ -27,7 +25,6 @@ import https from 'node:https';
 import net from 'node:net';
 import dns from 'node:dns';
 
-// ── 分類門檻 ──
 // 只有「網域解析不到」與 404/410 才算失效。競賽與教育網站大量使用 Cloudflare 等
 // 防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，一律歸入「無法判定」只做
 // 記錄，避免每週誤報把維護者訓練成忽略通知。
@@ -38,9 +35,8 @@ import dns from 'node:dns';
 //   curl --http1.1（排除 HTTP/2 的差異）      → 200
 //   根路徑、/contest/、/problemset/ 都一樣    → 200
 // UA、路徑、HTTP 版本都排除之後，剩下的差異是 TLS 指紋：Node 的 ClientHello
-// 不是 Chrome 的，Cloudflare 的 bot management 認得出來。這**不是換 header 能修的**，
-// 所以這一類 403 會永遠存在——把它們歸進 unverified 而不是 dead，是這個設計唯一
-// 能避免長期誤報的做法。
+// 不是 Chrome 的，Cloudflare 的 bot management 認得出來。這不是換 header 能修的，
+// 所以這一類 403 會一直存在，只能歸進 unverified 而不是 dead，否則會長期誤報。
 export const DEAD_STATUSES = new Set([404, 410]);
 export const LINK_TIMEOUT_MS = 20_000;
 export const MAX_REDIRECTS = 5;
@@ -50,25 +46,22 @@ export const MAX_REDIRECTS = 5;
 export const UA =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
-// keepAlive: false——這是一次上百站的批次工作，連線池留著沒有好處，而且
-// 每次都重新建立連線可確保「每一次連線都走過我們驗過的位址」，不會沿用池中
-// 的舊 socket。
+// 關掉 keepAlive：這是一次上百站的批次工作，連線池留著沒有好處；每次都重新
+// 建立連線，連的才一定是這次驗過的位址，不會沿用池中的舊 socket。
 const AGENTS = {
     'http:': new http.Agent({ keepAlive: false, maxSockets: 64 }),
     'https:': new https.Agent({ keepAlive: false, maxSockets: 64 }),
 };
 
-// ──────────────────────────────────────────────────────────────
-// SSRF 防護：位址政策
-// ──────────────────────────────────────────────────────────────
+// SSRF 防護的位址政策：哪些 scheme、IP 和主機名不能連。
 
 /** 只允許這兩種 scheme。file:、gopher:、ftp: 等一律拒絕。 */
 export const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 /**
- * IPv4 封鎖網段。用 CIDR 表達而不是逐個 IP 比對——169.254.169.254 只是
- * link-local 網段裡最有名的那一個，AWS / GCP / Azure / Alibaba 的 metadata
- * 端點全都落在 169.254.0.0/16，逐個列舉一定會漏。
+ * IPv4 封鎖網段。用 CIDR 表達而不是逐個 IP 比對，因為雲端 metadata 端點不只
+ * 169.254.169.254：AWS ECS 用的是 169.254.170.2，阿里雲的則在 100.64.0.0/10
+ * 裡面，逐個列舉一定會漏。
  */
 const BLOCKED_IPV4 = [
     ['0.0.0.0/8', '本網路（0.0.0.0 在多數系統上等同 localhost）'],
@@ -88,7 +81,7 @@ const BLOCKED_IPV4 = [
     ['240.0.0.0/4', '保留（含 255.255.255.255 廣播）'],
 ];
 
-/** 只有 loopback 這一段可以被 allowLoopback 放行——其餘一律不可放行。 */
+/** allowLoopback 只放行這一段，其餘網段照樣封鎖。 */
 const LOOPBACK_V4 = '127.0.0.0/8';
 
 const cidrToRange = (cidr) => {
@@ -106,7 +99,11 @@ function ipv4ToInt(addr) {
 
 const BLOCKED_IPV4_RANGES = BLOCKED_IPV4.map(([cidr, why]) => ({ cidr, why, ...cidrToRange(cidr) }));
 
-/** 把合法的 IPv6 字串轉成 16 bytes。輸入須先過 net.isIPv6()。 */
+/**
+ * ipv6ToBytes 把 IPv6 字串轉成 16 個位元組，解析不了時回傳 null。
+ * @param {string} text
+ * @returns {Uint8Array|null}
+ */
 export function ipv6ToBytes(text) {
     if (!net.isIPv6(text)) return null;
     let s = text;
@@ -187,29 +184,29 @@ export function blockedAddressReason(ip, opts = {}) {
         const why = blockedAddressReason(v4, opts);
         return why ? `${ip} 內含 IPv4 ${why}` : null;
     }
-    // NAT64 64:ff9b::/96
+    // NAT64 位址 64:ff9b::/96
     if (b[0] === 0x00 && b[1] === 0x64 && b[2] === 0xff && b[3] === 0x9b && allZero(b, 4, 12)) {
         const v4 = `${b[12]}.${b[13]}.${b[14]}.${b[15]}`;
         const why = blockedAddressReason(v4, opts);
         return why ? `${ip}（NAT64）內含 IPv4 ${why}` : null;
     }
-    // 6to4 2002::/16——內嵌的 IPv4 在 bytes 2..5
+    // 6to4 位址 2002::/16，內嵌的 IPv4 在 bytes 2..5。
     if (b[0] === 0x20 && b[1] === 0x02) {
         const v4 = `${b[2]}.${b[3]}.${b[4]}.${b[5]}`;
         const why = blockedAddressReason(v4, opts);
         return why ? `${ip}（6to4）內含 IPv4 ${why}` : `${ip} 是 6to4 位址（2002::/16）`;
     }
-    // Teredo 2001:0000::/32——同樣把 IPv4 隧道包在裡面
+    // Teredo 位址 2001:0000::/32，同樣內嵌 IPv4 位址。
     if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x00 && b[3] === 0x00) return `${ip} 是 Teredo 隧道位址（2001::/32）`;
     // 2001:db8::/32 文件用
     if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8) return `${ip} 是文件用位址（2001:db8::/32）`;
-    // 100::/64 discard-only
+    // 100::/64 discard-only 位址
     if (b[0] === 0x01 && b[1] === 0x00 && allZero(b, 2, 8)) return `${ip} 是 discard-only 位址（100::/64）`;
-    // fc00::/7 unique local
+    // fc00::/7 unique local 位址
     if ((b[0] & 0xfe) === 0xfc) return `${ip} 落在 fc00::/7（unique local）`;
-    // fe80::/10 link-local
+    // fe80::/10 link-local 位址
     if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return `${ip} 落在 fe80::/10（link-local）`;
-    // ff00::/8 multicast
+    // ff00::/8 multicast 位址
     if (b[0] === 0xff) return `${ip} 落在 ff00::/8（multicast）`;
 
     return null;
@@ -292,7 +289,7 @@ export function staticUrlPolicy(raw, opts = {}) {
  * 解析主機名並驗證「每一個」解析結果。
  *
  * 為什麼是「每一個」而不是「挑一個能用的」：一個主機名同時解析出公網與私網位址
- * 本身就是可疑訊號，而 Node 24 的 Happy Eyeballs 會依序嘗試清單裡的位址——
+ * 本身就是可疑訊號，而 Node 24 的 Happy Eyeballs 會依序嘗試清單裡的位址，
  * 只要放行一個私網位址，連線就可能真的連到它。全部通過才放行。
  *
  * 回傳的 addresses 會原封不動交給 net.connect 的 lookup，所以「驗過的位址」與
@@ -308,7 +305,7 @@ export async function resolveAndVerify(host, opts = {}) {
         // Windows 的 getaddrinfo 對「查無此名」有時回 ENOENT 而非 ENOTFOUND（已實測：
         // 同一台機器上 .invalid 回 ENOTFOUND、某些 NODATA 情況回 ENOENT）。兩者語意
         // 相同，正規化成 ENOTFOUND，讓本機與 Linux runner 的分類結果一致。
-        // EAI_AGAIN 是「暫時失敗」，刻意不正規化——那屬於 unverified，不是 dead。
+        // EAI_AGAIN 是「暫時失敗」，刻意不正規化，讓它歸入 unverified 而不是 dead。
         const code = err?.code === 'ENOENT' ? 'ENOTFOUND' : err?.code || 'EDNS';
         return { ok: false, code, reason: `無法解析主機名 ${host}（${code}）` };
     }
@@ -325,24 +322,17 @@ export const isBlockedResult = (r) => Boolean(r && r.blocked === true);
 
 const blockedResult = (reason, url) => ({ status: 0, code: 'EBLOCKED', blocked: true, reason, url });
 
-// ──────────────────────────────────────────────────────────────
-// 探測
-// ──────────────────────────────────────────────────────────────
-
-/** 會被視為轉址的狀態碼。308/307 保留方法，301/302/303 一律降為 GET——這裡本來就只送 GET。 */
+/** 會被視為轉址的狀態碼。這裡只送 GET，不必區分哪些狀態碼會保留請求方法。 */
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 /**
  * 送出單一次請求（不跟隨轉址），連線位址已由呼叫端驗證並釘死。
  * 只讀 status 與 location，body 立刻丟棄：Node 不像瀏覽器會積極回收未消耗的
  * response body，在這種一次上百站的批次工作下會占住連線甚至卡死。
- */
-/**
- * @param wantBody 要讀多少位元組的回應主體（0 ＝ 不讀，維持原本立刻丟棄的行為）。
- *
- * 只有「最終回應」才讀——轉址回應的 body 沒有內容價值，讀它只是浪費頻寬與時間。
- * 讀滿上限就 destroy，不等 end：接管的頁面常常是無限捲動或很大的廣告頁，
- * 讀完整份會把一次上百站的批次工作卡住（這正是原本立刻丟棄 body 的理由）。
+ * wantBody 大於 0 時，最終回應的 body 會讀到 wantBody 位元組為止，讀滿就 destroy，
+ * 不等 end：接管的頁面常常是無限捲動或很大的廣告頁，整份讀完一樣會卡住批次工作。
+ * 轉址回應的 body 沒有內容價值，不讀。
+ * @param wantBody 要讀多少位元組的回應主體，0 表示不讀。
  */
 function requestOnce(url, addresses, signal, wantBody = 0) {
     return new Promise((resolve) => {
@@ -376,8 +366,8 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8',
                         // 要讀 body 時改要未壓縮：只讀 16KB 前綴的話壓縮沒有意義，
-                        // 而壓縮串流被 destroy 截斷之後根本解不開，硬解只會拿到亂碼
-                        // 然後拿亂碼去比對詞組——那比不檢查更糟。
+                        // 而壓縮串流被 destroy 截斷之後根本解不開，硬解只會拿到亂碼，
+                        // 拿亂碼去比對詞組比不檢查更糟。
                         'Accept-Encoding': wantBody ? 'identity' : 'gzip, deflate, br',
                         Connection: 'close',
                     },
@@ -391,8 +381,8 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                         res.destroy();
                         return done({ status, location });
                     }
-                    // 伺服器無視 identity 仍然壓縮時，**不要**嘗試解析——截斷的壓縮
-                    // 串流解不開，而拿解不開的位元組去比對是假訊號。照實記錄原因。
+                    // 伺服器無視 identity 仍然壓縮時不解析：截斷的壓縮串流解不開，
+                    // 拿解不開的位元組去比對是假訊號。原因記在 bodySkipped。
                     const enc = String(res.headers?.['content-encoding'] || '').toLowerCase();
                     if (enc && enc !== 'identity') {
                         res.destroy();
@@ -425,13 +415,13 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
 }
 
 /**
- * 探測一個網址，手動跟隨轉址，且**每一跳都重新跑完整的位址檢查**。
+ * 探測一個網址，手動跟隨轉址，且每一跳都重新跑靜態政策與 DNS 位址檢查。
  *
- * 為什麼不用 redirect: 'follow'：轉址是最典型的 SSRF 繞道——起點是一個無害的
+ * 不用 redirect: 'follow'，因為轉址是最典型的 SSRF 繞道：起點是一個無害的
  * 公開網域，302 到 http://169.254.169.254/latest/meta-data/。只驗第一跳等於沒驗。
  *
  * 一律用 GET：目的是重現「使用者用瀏覽器點下去」的結果，而 HEAD 不是瀏覽器實際
- * 送的請求。曾用 HEAD 省流量，但站台對 HEAD 的回應並不可靠——有的不支援而回
+ * 送的請求。HEAD 雖然省流量，站台對它的回應卻不可靠：有的不支援而回
  * 404/500（Kaggle、tpmso.org），更糟的是有的 HEAD 回 200 但 GET 其實 404，
  * 會被誤判為健康。
  *
@@ -458,7 +448,8 @@ export async function probe(rawUrl, signal, opts = {}) {
         const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts);
         if (!resolved.ok) {
             if (resolved.code) {
-                // 解析不到不是封鎖，是「這個網域不存在」——分類上屬於 dead
+                // 解析不到不是封鎖，照錯誤碼分類：ENOTFOUND 是 dead，
+                // EAI_AGAIN 等其他錯誤碼是 unverified。
                 return { status: 0, code: resolved.code, message: resolved.reason, finalUrl: url.href, redirects: chain };
             }
             return { ...blockedResult(resolved.reason, url.href), redirects: chain, hop };
@@ -502,7 +493,7 @@ export const isDeadResult = (r) => !isBlockedResult(r) && (r.code === 'ENOTFOUND
 /**
  * healthy / dead / unverified 三態。三態是刻意的：把「驗不到」與「確定壞了」分開。
  *
- * 被 SSRF 政策擋下的網址歸入 unverified——我們確實沒驗到它，說它 dead 是編造。
+ * 被 SSRF 政策擋下的網址歸入 unverified：我們確實沒驗到它，說它 dead 是編造。
  * 但呼叫端必須另外用 isBlockedResult() 把它挑出來單獨大聲報告，不可混在
  * 「多為防爬、不需處理」那一堆裡（見 check-external-links.mjs）。
  */
@@ -528,7 +519,7 @@ export function describeResult(r) {
  * 檢查器共用，避免各自複製一份而漸漸長出不同語意。
  *
  * 回傳 { results, skipped }：results[i] 對應 urls[i]（未檢查者為 null），
- * skipped 為因預算用盡而未檢查的筆數——呼叫端必須據此避免宣稱「全部正常」。
+ * skipped 為因預算用盡而未檢查的筆數，大於 0 時呼叫端不能宣稱「全部正常」。
  *
  * @param {string[]} urls
  * @param {{concurrency?:number, budgetMs?:number, timeoutMs?:number, rotateSeed?:number, probeFn?:Function, allowLoopback?:boolean}} [opts]
@@ -581,7 +572,7 @@ export async function runProbes(urls, opts = {}) {
         );
 
         // 判定失效前再單獨重試一次，濾掉併發造成的暫時性錯誤。
-        // 被政策擋下的不重試——重試一百次也一樣會被擋，只是白白多送一次 DNS。
+        // 被政策擋下的不重試，重試一樣會被擋。
         for (let i = 0; i < results.length; i++) {
             if (results[i] && isDeadResult(results[i]) && !outOfBudget()) {
                 results[i] = await probeWithin(urls[i]);
