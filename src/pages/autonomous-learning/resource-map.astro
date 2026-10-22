@@ -25,14 +25,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <h2 class="text-2xl font-bold mb-2">✨ AI 學習路徑規劃師</h2>
             <p class="text-gray-600 mb-6">輸入你想學習的主題，AI 將為你生成一份從入門到進階的學習步驟，並推薦合適的資源類型。</p>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="pathInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：我想學 Python 爬蟲">
+                <input type="text" id="pathInput" maxlength="100" aria-label="你想學習的主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：我想學 Python 爬蟲">
                 <button id="generatePathBtn" class="w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>規劃路徑</span>
                 </button>
             </div>
-            <div id="pathResult" class="mt-6">
-                <!-- AI generated path will be injected here -->
+            {/* 進度區塊放在 #pathWork，live region #pathResult 只放最後的結果或訊息：WebKit 連
+                aria-live="off" 的子樹也算進外層的 live region，計時器放進去，VoiceOver 會反覆朗讀。 */}
+            <div class="mt-6">
+                <div id="pathWork"></div>
+                <div id="pathResult" aria-live="polite"></div>
             </div>
         </section>
 
@@ -88,7 +91,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
     </main>
 
-    <script is:inline src="https://js.puter.com/v2/"></script>
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- Static Data ---
@@ -185,156 +187,74 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         categoryFilter.addEventListener('change', renderResources);
 
         // --- AI Learning Path Planner Logic ---
+        // 路徑由 AI 閘道的 learning-path 任務產生（ai-gateway/src/task-catalog.mjs），閘道驗證過格式才交給這裡。
         const generatePathBtn = document.getElementById('generatePathBtn');
         const pathInput = document.getElementById('pathInput');
+        const pathWork = document.getElementById('pathWork');
         const pathResult = document.getElementById('pathResult');
+        const pathBtnLabel = generatePathBtn.querySelector('span');
+        // platform-ai.js 沒載入成功時沒有 describeError 可用。字句與它對未知錯誤的說法相同。
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-        function showLoader(element) {
-            element.textContent = '';
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex justify-center items-center py-4';
-            const loader = document.createElement('div');
-            loader.className = 'loader';
-            wrapper.appendChild(loader);
-            element.appendChild(wrapper);
+        function showMessage(text, tone = 'error') {
+            pathResult.textContent = '';
+            const p = document.createElement('p');
+            p.className = (tone === 'error' ? 'text-red-500' : 'text-gray-600') + ' text-center';
+            p.textContent = text;
+            pathResult.appendChild(p);
         }
 
         generatePathBtn.addEventListener('click', async () => {
             const topic = pathInput.value.trim();
             if (!topic) {
-                pathResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-                errorP.textContent = '請先輸入你想學習的主題！';
-                pathResult.appendChild(errorP);
+                showMessage('請先輸入你想學習的主題！');
                 return;
             }
 
-            // 雙擊防護
-            const button = generatePathBtn;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.textContent = '載入中...';
+            // 進行中停用按鈕，要停止就用進度區塊裡的「取消」。只換文字，圖示留著。
+            const originalLabel = pathBtnLabel.textContent;
+            generatePathBtn.disabled = true;
+            generatePathBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            pathBtnLabel.textContent = '規劃中…';
+            pathResult.textContent = '';
 
-            showLoader(pathResult);
-
-            const prompt = `你是一位專業的學習顧問，請為一位想自主學習「${topic}」的台灣高中生，規劃一份 4 個步驟的學習路徑。每個步驟都必須包含：1. 步驟標題 (title), 2. 步驟描述 (description), 3. 建議的資源類型 (resource_type), 4. 一個具體的行動建議與相關搜尋關鍵字 (actionable_suggestion)。
-
-請以 JSON 格式回應，包含以下欄位：
-{
-  "learning_path": [
-    {
-      "step": 1,
-      "title": "步驟標題",
-      "description": "步驟描述",
-      "resource_type": "資源類型",
-      "actionable_suggestion": "行動建議"
-    },
-    // ... 其他步驟
-  ]
-}
-
-請確保回應是有效的 JSON 格式。`;
-
+            const controller = new AbortController();
+            // mountProgress 也放在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
+            let progress = null;
             try {
-                const response = await PlatformAI.callGeminiWithFallback(prompt, {
-                    signal: AbortSignal.timeout(30000)
+                progress = PlatformAI.mountProgress(pathWork, { onCancel: () => controller.abort() });
+                const { result } = await PlatformAI.runTask('learning-path', { topic }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
                 });
-
-                // Extract content from response
-                let responseText = '';
-                if (response.message && response.message.content) {
-                    responseText = response.message.content;
-                } else if (typeof response === 'string') {
-                    responseText = response;
-                } else {
-                    responseText = JSON.stringify(response);
-                }
-
-                // Try to parse JSON from the response
-                let parsedJson;
-                try {
-                    // Look for JSON in the response
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        parsedJson = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error("No JSON found in response");
-                    }
-                } catch (parseError) {
-                    // If JSON parsing fails, create a fallback structure
-                    console.log("JSON parsing failed, creating fallback structure");
-                    parsedJson = {
-                        learning_path: [
-                            {
-                                step: 1,
-                                title: "入門基礎",
-                                description: "學習基本概念",
-                                resource_type: "線上課程",
-                                actionable_suggestion: "搜尋 'Python 入門教程'"
-                            },
-                            {
-                                step: 2,
-                                title: "實務練習",
-                                description: "應用知識",
-                                resource_type: "互動模擬",
-                                actionable_suggestion: "練習簡單程式碼"
-                            },
-                            {
-                                step: 3,
-                                title: "進階主題",
-                                description: "深入特定領域",
-                                resource_type: "閱讀材料",
-                                actionable_suggestion: "閱讀進階書籍"
-                            },
-                            {
-                                step: 4,
-                                title: "專案應用",
-                                description: "實際專案",
-                                resource_type: "知識型影片",
-                                actionable_suggestion: "建置小專案"
-                            }
-                        ]
-                    };
-                }
-
-                displayAIPath(parsedJson.learning_path);
-
+                progress.finish();
+                pathWork.textContent = '';
+                displayAIPath(result.learning_path);
             } catch (error) {
-                console.error("Error calling Puter.js:", PlatformAI.formatError(error), error);
-                pathResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
-                } else {
-                    errorP.textContent = '抱歉，規劃路徑時發生錯誤。請稍後再試。';
-                }
-
-                pathResult.appendChild(errorP);
+                if (progress) progress.finish();
+                pathWork.textContent = '';
+                const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                // 恢復按鈕狀態
-                button.disabled = false;
-                button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.textContent = originalText;
+                generatePathBtn.disabled = false;
+                generatePathBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                pathBtnLabel.textContent = originalLabel;
             }
         });
 
         function displayAIPath(learningPath) {
             pathResult.textContent = '';
 
-            learningPath.forEach(step => {
+            learningPath.forEach((step, index) => {
                 const stepElement = document.createElement('div');
                 stepElement.className = 'bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg mb-4';
 
-                // 步驟編號
+                // 任務指令要求步驟依學習先後排列，編號照陣列順序。
                 const stepNum = document.createElement('div');
                 stepNum.className = 'flex items-center mb-2';
                 const badge = document.createElement('span');
                 badge.className = 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white font-bold mr-2';
-                badge.textContent = step.step;
+                badge.textContent = index + 1;
                 // 標題與描述為 AI 回應內容，可能含 markdown（如 **粗體**）。
                 // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
                 const title = document.createElement('h4');
@@ -395,18 +315,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             background: -webkit-linear-gradient(45deg, #8b5cf6, #3b82f6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         .resource-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;

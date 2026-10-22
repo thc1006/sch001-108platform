@@ -270,3 +270,54 @@ test('civic-tech-suggestion：指令列出的專案與 projects.json 一一對�
         }
     }
 });
+
+test('learning-path：學習主題最多 100 字（頁面的輸入框同樣限制 100）；JSON 任務、不設溫度', () => {
+    const task = catalog.get('learning-path');
+    assert.equal(task.output.type, 'json');
+    assert.equal(task.temperature, undefined);
+    assert.equal(validateInput(task, { topic: '學'.repeat(100) }).topic.length, 100);
+    assert.throws(() => validateInput(task, { topic: '學'.repeat(101) }), { code: 'invalid_input', field: 'topic' });
+});
+
+test('learning-path：剛好 4 個步驟，每步的四個欄位都要有內容；步驟編號不收', () => {
+    const task = catalog.get('learning-path');
+    const step = (n) => ({
+        title: `步驟${n}`,
+        description: '認識網頁的結構，知道資料放在哪裡。',
+        resource_type: '線上課程',
+        actionable_suggestion: '搜尋「HTML 入門」，跟著做一個簡單的網頁。',
+    });
+    const ok = { learning_path: [1, 2, 3, 4].map(step) };
+    assert.deepEqual(finalizeOutput(task, JSON.stringify(ok)), ok);
+    const withLast = (last) => ({ learning_path: [step(1), step(2), step(3), last] });
+    const bad = {
+        '只有 3 步': { learning_path: ok.learning_path.slice(0, 3) },
+        '有 5 步': { learning_path: [...ok.learning_path, step(5)] },
+        '帶了步驟編號': withLast({ ...step(4), step: 4 }),
+        '多了規格外的屬性': { ...ok, extra: 'x' },
+    };
+    for (const field of Object.keys(step(4))) {
+        const { [field]: _omitted, ...missing } = step(4);
+        bad[`缺 ${field}`] = withLast(missing);
+        bad[`${field} 是空字串`] = withLast({ ...step(4), [field]: '' });
+        bad[`${field} 只有空白`] = withLast({ ...step(4), [field]: '  ' });
+    }
+    for (const [name, value] of Object.entries(bad)) {
+        assert.throws(() => finalizeOutput(task, JSON.stringify(value)), { code: 'format' }, name);
+    }
+});
+
+// maxLength 是硬截斷，長度要寫在指令裡，模型才不會寫到一半被切掉。指令寫的是「約」，模型可能
+// 寫得比上限長一些，maxLength 至少留到上限的兩倍。
+test('learning-path：指令要求剛好 4 個步驟、依先後排列（頁面照順序編號），每個欄位都寫了長度，maxLength 至少是上限的兩倍', () => {
+    const { instructions, output } = catalog.get('learning-path');
+    assert.match(instructions, /剛好 4 個步驟/);
+    assert.match(instructions, /依學習的先後順序排列/);
+    assert.match(instructions, /resource_type：[^\n]*簡短[^\n]*不要加說明/);
+    const fields = output.schema.properties.learning_path.items.properties;
+    for (const [name, { maxLength }] of Object.entries(fields)) {
+        const upper = Number(instructions.match(new RegExp(`${name}：[^\\n]*約 \\d+～(\\d+) 字`))?.[1]);
+        assert.ok(upper > 0, `指令沒寫 ${name} 的長度`);
+        assert.ok(maxLength >= 2 * upper, `${name} 的 maxLength ${maxLength} 不到指令上限 ${upper} 字的兩倍`);
+    }
+});
