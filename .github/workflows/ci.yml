@@ -344,6 +344,9 @@ jobs:
       - name: Prove the guards actually block (fault injection)
         run: npm run test:link-faults
 
+      - name: Run comment-checker unit tests
+        run: npm run test:comments
+
   # 固定名稱的聚合關卡。ruleset 只要求這一個 context，日後 job 改名或增減都不必
   # 同步調整 repository 設定——避免 workflow 與 ruleset 漂移。
   # if: always() 確保任一上游 job 被取消或失敗時本 job 仍會執行並判定為失敗，
