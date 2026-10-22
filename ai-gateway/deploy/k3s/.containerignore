@@ -1,0 +1,7 @@
+# 建映像檔時只讓白名單裡的目錄進建置。目錄裡的 .env、node_modules、log 要另外排除，寫在 ! 之後才生效
+*
+!ai-gateway/src
+!ai-gateway/licenses
+**/.env*
+**/node_modules
+**/*.log

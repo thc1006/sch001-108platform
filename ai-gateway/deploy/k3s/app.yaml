@@ -1,0 +1,176 @@
+# AI 閘道（ai-gateway/src/server.mjs），映像檔由 ai-gateway/deploy/k3s/build-image.sh 建置並匯入 k3s。
+# 這台主機的出口 IP 在 WinLab key 的來源白名單內，key 只存在這裡的 Secret。
+# 程式包在映像檔裡、log 只寫 stdout（kubectl logs），沒有任何 hostPath（命名空間強制 Pod Security restricted）。
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-gateway
+  namespace: sch001-ai
+spec:
+  replicas: 1
+  # 先起新的、新的 ready 才讓舊的收尾：換版期間不中斷。代價是重疊的那幾分鐘，兩版合計最多
+  # 2×LLM_CONCURRENCY 個並行，再加上共用同一把 key 的 ahp-match，可能超過 key 的 8 個並行上限；
+  # 撞到 429 時，接續輪由續寫引擎退避重試，第一輪由前端顯示「請稍後再試」
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: ai-gateway
+  template:
+    metadata:
+      labels:
+        app: ai-gateway
+    spec:
+      automountServiceAccountToken: false
+      # preStop 5 秒 + 進行中的任務最多 900 秒（SHUTDOWN_GRACE_MS，不小於任務時限
+      # LLM_TASK_TIMEOUT_MS）+ 餘裕
+      terminationGracePeriodSeconds: 920
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        # Secret 檔案的群組會設成這個，下面的 0440 才讀得到
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      # 外部網址（llm.winlab.tw）不要先把叢集與主機的搜尋網域都試一遍
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
+      containers:
+        - name: gateway
+          # tag 是 git commit；build-image.sh 會改這一行再 apply
+          image: localhost/sch001-ai-gateway:000000000000
+          imagePullPolicy: Never
+          env:
+            - name: PORT
+              value: "8787"
+            # 要讓 Service 連得到；誰可以連由下面的 NetworkPolicy 管。
+            # 只聽 IPv4：kube-router 的規則只管 IPv4，改成 :: 的話 IPv6 擋不住
+            - name: HOST
+              value: "0.0.0.0"
+            # key 從掛進來的檔案讀，不放環境變數：程式出錯把環境變數印出來時不會連 key 一起外流
+            - name: LLM_API_KEY_FILE
+              value: /run/secrets/sch001-ai/LLM_API_KEY
+            - name: ALLOWED_ORIGINS
+              value: "https://thc1006.github.io"
+            # 對外由 Tailscale Funnel 轉進來；它會把 X-Forwarded-For 覆寫成真實的用戶端 IP
+            # （tailscale/ipn/ipnlocal/serve.go 用 Set 而不是附加），限流才認得出不同來源
+            - name: CLIENT_IP_HEADER
+              value: x-forwarded-for
+            # 只有連線來自這裡時才採用上面的標頭。Funnel 在主機上，主機連 ClusterIP 時 Pod 看到的
+            # 來源是節點的 cni0 位址（k3s 預設 pod 網段 10.42.0.0/16 的第一個；2026-10-22 實測）。
+            # 一般 Pod 的位址不在這裡：就算哪天能連進來，自己填的標頭也沒有用。但主機上的任何程序、
+            # 任何命名空間裡的 hostNetwork Pod 連進來時，來源也是這個位址，它們送的標頭一樣會被採信，
+            # 能繞過依來源的限流；這是取捨（見下面 ai-gateway-ingress 的說明）
+            - name: TRUSTED_PROXIES
+              value: "10.42.0.1/32"
+            - name: SHUTDOWN_GRACE_MS
+              value: "900000"
+            - name: LOG_LEVEL
+              value: info
+          ports:
+            - name: http
+              containerPort: 8787
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8787
+            periodSeconds: 5
+            # 預設 1 秒太緊：請求湧入時事件迴圈可能延遲數百毫秒，被判成未就緒會把端點撤掉
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8787
+            periodSeconds: 30
+            # 重啟會讓進行中的 xhigh 任務全部白做：連續 3 次、每次等 5 秒都沒回應才算卡死
+            timeoutSeconds: 5
+            failureThreshold: 3
+            # 卡死被砍時不用等上面給換版用的 920 秒
+            terminationGracePeriodSeconds: 10
+          lifecycle:
+            # 收到 SIGTERM 前先等 5 秒：Service 撤掉這個 pod 的端點需要一點時間，
+            # 這段期間照常服務，避免新連線打到一個已經不收請求的 pod
+            preStop:
+              sleep:
+                seconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: secrets
+              mountPath: /run/secrets/sch001-ai
+              readOnly: true
+      volumes:
+        # 不進 git；建立與更換方式見 ai-gateway/README.md 的「部署」
+        - name: secrets
+          secret:
+            secretName: ai-gateway-env
+            # 288 就是 0440；寫成 0440 的話，有的 YAML 解析器當八進位、有的當十進位
+            defaultMode: 288
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-gateway
+  namespace: sch001-ai
+spec:
+  # 固定的 ClusterIP：主機上的 Tailscale Funnel 轉送到這個位址（主機解析不了叢集 DNS）。
+  # Service 重建後位址不變，Funnel 的設定不用跟著改。選在 10.43.0.0/16 前 256 個位址的靜態區段：
+  # 動態配置先用上段，這個位址不會被別的 Service 先拿走（Kubernetes 文件 Service ClusterIP allocation）
+  clusterIP: 10.43.0.87
+  selector:
+    app: ai-gateway
+  ports:
+    - name: http
+      port: 8787
+      targetPort: 8787
+---
+# 閘道拿著 LLM key：一般的 pod 都連不進來。例外是主機本身：Tailscale Funnel 在主機上，而
+# kube-router 會放行主機本地發出的流量，主機連 ClusterIP 時來源又會被 masquerade 成 10.42.0.1
+# （正好是 TRUSTED_PROXIES），所以主機上的任何程序、任何命名空間裡的 hostNetwork pod 都連得進來，
+# 它們送的 X-Forwarded-For 會被採信，能繞過依來源的限流（2026-10-22 實測）。這是取捨：
+# Funnel 就在主機上，閘道分不出誰是 Funnel、誰是主機上的其他程序
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-gateway-ingress
+  namespace: sch001-ai
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-gateway
+  policyTypes: ["Ingress"]
+  ingress: []
+---
+# 對外只需要連 WinLab（llm.winlab.tw）。開的是整個校內網段：WinLab 換 IP 也不會斷，
+# 代價是也連得到校內其他 443 的服務（與 ahp-match 相同的取捨）。DNS 在 namespace.yaml 開
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-gateway-egress
+  namespace: sch001-ai
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-gateway
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 140.113.0.0/16
+      ports:
+        - port: 443
