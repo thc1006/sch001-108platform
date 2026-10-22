@@ -13,6 +13,7 @@ const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 
 const PAGES = [
     { name: '學習歷程首頁', path: '/learning-portfolio/index.html', rName: '結果', icon: true },
+    { name: '反思引導提問集', path: '/learning-portfolio/reflection-guide.html', rName: '結果與反思', icon: false },
 ];
 
 const ACCEPTED = sse('accepted', { requestId: 'req-1', task: 'star-analysis' });
