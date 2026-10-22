@@ -11,8 +11,8 @@
  *   - 但線上服務的仍然是舊版本（vendor/fuse.min.js 回 404）
  *   - 沒有任何訊號
  *
- * 而且 `actions/deploy-pages` 成功本身也證明不了站台真的在服務新內容——它只證明
- * 「部署請求被接受」。要證明的唯一方法是去線上把它抓下來比對。
+ * 而且 `actions/deploy-pages` 成功只代表 Pages API 回報部署完成，不代表 CDN 已經在
+ * 服務新內容。要證明的唯一方法是去線上把它抓下來比對。
  *
  * 這支寫出戳記，scripts/verify-deploy.mjs 負責比對。
  */
