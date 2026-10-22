@@ -132,3 +132,40 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     const section = instructions.split('\n---\n')[1] ?? '';
     assert.deepEqual(section.split('\n\n'), blocks);
 });
+
+test('star-analysis：心得反思最多 2000 字（頁面的輸入框同樣限制 2000）', () => {
+    const task = catalog.get('star-analysis');
+    assert.equal(validateInput(task, { reflection: '寫'.repeat(2000) }).reflection.length, 2000);
+    assert.throws(() => validateInput(task, { reflection: '寫'.repeat(2001) }), { code: 'invalid_input', field: 'reflection' });
+});
+
+test('star-analysis：S、T、A、R 四項剛好各一，每項都要有評論與建議；舊的陣列格式不收', () => {
+    const task = catalog.get('star-analysis');
+    const item = { comment: '情境交代清楚。', suggestion: '補上時間與地點。' };
+    const ok = {
+        overall_comment: '內容真誠，但結果與反思可以再具體。',
+        analysis: { S: item, T: item, A: item, R: item },
+        revised_example: '高二上學期，我在社團擔任活動長……',
+    };
+    assert.deepEqual(finalizeOutput(task, JSON.stringify(ok)), ok);
+    const { R, ...withoutR } = ok.analysis;
+    for (const bad of [
+        { ...ok, analysis: withoutR },
+        { ...ok, analysis: { ...ok.analysis, X: item } },
+        { ...ok, analysis: { ...ok.analysis, R: { comment: '有反思。' } } },
+        { ...ok, analysis: { ...ok.analysis, R: { ...item, comment: '' } } },
+        { ...ok, analysis: ['S', 'T', 'A', 'R'].map((element) => ({ element, ...item })) },
+        { ...ok, revised_example: '' },
+        { ...ok, extra: 'x' },
+    ]) {
+        assert.throws(() => finalizeOutput(task, JSON.stringify(bad)), { code: 'format' });
+    }
+});
+
+// maxLength 是硬截斷，指令沒寫長度的話，模型會寫到一半被切掉。
+test('star-analysis：指令寫明總評、各項評論與建議、修改範例的長度', () => {
+    const { instructions } = catalog.get('star-analysis');
+    assert.match(instructions, /overall_comment：[^\n]*約 50～150 字/);
+    assert.match(instructions, /analysis：[^\n]*各一到兩句/);
+    assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
+});

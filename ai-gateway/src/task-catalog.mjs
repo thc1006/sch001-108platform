@@ -19,6 +19,17 @@ const CAREER_CLUSTERS = [
     { name: '醫藥衛生學群', description: '致力於人體健康的維護與疾病的治療，包含醫師、藥師、護理師、物理治療師等專業。', competencies: ['道德實踐與公民意識', '身心素質與自我精進'], careers: ['醫師', '藥師', '護理師', '物理治療師'] },
 ];
 
+/** STAR_ITEM 是 star-analysis 的 S、T、A、R 四項共用的 schema。 */
+const STAR_ITEM = {
+    type: 'object',
+    properties: {
+        comment: { type: 'string', minLength: 1, maxLength: 300 },
+        suggestion: { type: 'string', minLength: 1, maxLength: 300 },
+    },
+    required: ['comment', 'suggestion'],
+    additionalProperties: false,
+};
+
 /** TASK_DEFINITIONS 是正式上線的任務，server.mjs 啟動時交給 createCatalog 逐一檢查。 */
 export const TASK_DEFINITIONS = [
     {
@@ -110,5 +121,39 @@ export const TASK_DEFINITIONS = [
             '下一步建議要是學生自己就能完成的事，不要用「下次」「再跟我說」這類需要接續對話的說法。',
         ].join('\n'),
         output: { type: 'markdown' },
+    },
+    {
+        // 學習歷程首頁（src/pages/learning-portfolio/index.astro）與反思引導提問集
+        // （reflection-guide.astro）共用的「AI 學習歷程健檢」。
+        // analysis 以 S、T、A、R 為鍵：閘道的 schema 子集沒有 prefixItems，用陣列保證不了四項剛好各一。
+        // maxLength 是硬截斷（見 tasks.mjs），長度要求寫在指令裡。
+        id: 'star-analysis',
+        input: {
+            reflection: { label: '心得反思', maxLength: 2000 },
+        },
+        instructions: [
+            '你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation 情境、Task 任務、Action 行動、Result 結果），分析這位高中生寫的「心得反思」：',
+            '- overall_comment：一段簡短的總評，約 50～150 字',
+            '- analysis：S、T、A、R 四個項目各寫一則 comment（針對該項目的評論，點出優點或缺失）與 suggestion（具體的修改建議），各一到兩句',
+            '- revised_example：根據你的建議，提供一小段修改後的文字範例，約 100～300 字，使其更符合 STAR 原則',
+        ].join('\n'),
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: {
+                    overall_comment: { type: 'string', minLength: 1, maxLength: 400 },
+                    analysis: {
+                        type: 'object',
+                        properties: { S: STAR_ITEM, T: STAR_ITEM, A: STAR_ITEM, R: STAR_ITEM },
+                        required: ['S', 'T', 'A', 'R'],
+                        additionalProperties: false,
+                    },
+                    revised_example: { type: 'string', minLength: 1, maxLength: 1000 },
+                },
+                required: ['overall_comment', 'analysis', 'revised_example'],
+                additionalProperties: false,
+            },
+        },
     },
 ];
