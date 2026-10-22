@@ -199,3 +199,136 @@ export function loadLlmConfig(env = process.env, { warn = (msg) => console.warn(
         idleTimeoutMs: toInt(env, 'LLM_IDLE_TIMEOUT_MS', 180_000, 1_000, MAX_IDLE_TIMEOUT_MS, warn),
     };
 }
+
+const LOG_LEVELS = ['error', 'warn', 'info', 'debug'];
+
+// 被略過的 origin 與代理位址不是祕密，警告裡要看得出是哪一項：原樣顯示設定值（只限可見的
+// ASCII、最多 80 字；含帳密時帳密換成 ***），其他照 shown()
+function shownOrigin(raw, url) {
+    if (url && (url.username || url.password)) {
+        return JSON.stringify(`${url.protocol}//***@${url.host}${url.pathname === '/' ? '' : url.pathname}`.slice(0, 80));
+    }
+    return /^[\x21-\x7E]{1,80}$/.test(raw) ? JSON.stringify(raw) : shown(raw);
+}
+const shownAddress = (raw) => (/^[0-9a-fA-F.:/]{1,43}$/.test(raw) ? JSON.stringify(raw) : shown(raw));
+
+// origin 必須是 scheme://host[:port]，不能有路徑——瀏覽器送的 Origin 標頭就是這個格式，
+// 多寫了 /sch001-108platform 的話永遠比對不到（GitHub Pages 專案路徑不屬於 origin）。
+// 比對前一律正規化成 new URL(v).origin：大寫的主機名稱、寫明的預設埠（:443）、中文網域
+// 都會變成瀏覽器實際送出的樣子。只收 https（本機開發可用 http://localhost）；萬用字元與
+// 結尾帶點的主機名稱永遠不會等於瀏覽器送來的 Origin，寫了等於沒寫，一律略過並警告
+function toOrigins(env, name, fallback, warn) {
+    const raw = env[name];
+    if (raw === undefined || raw === '') return fallback;
+    const origins = [];
+    for (const item of String(raw).split(',').map((s) => s.trim()).filter(Boolean)) {
+        let url;
+        try {
+            url = new URL(item);
+        } catch {
+            url = null;
+        }
+        const bare = url && !url.username && !url.password && url.pathname === '/' && !url.search && !url.hash;
+        const secure = url && (url.protocol === 'https:' || (url.protocol === 'http:' && isLoopback(url.hostname)));
+        if (!bare || !secure || url.hostname.includes('*') || url.hostname.endsWith('.')) {
+            warn(`設定 ${name} 的 ${shownOrigin(item, url)} 不是可用的 origin（要像 https://thc1006.github.io，不含路徑），已略過`);
+            continue;
+        }
+        if (!origins.includes(url.origin)) origins.push(url.origin);
+    }
+    if (origins.length === 0) {
+        warn(`設定 ${name} 沒有任何合法的 origin，改用預設值 ${fallback.join(',')}`);
+        return fallback;
+    }
+    return origins;
+}
+
+// 信任的代理：逗號分隔的 IPv4 位址或 CIDR。寫錯的那一項略過並警告（createProxyMatcher 會再驗一次）
+function toCidrs(env, name, warn) {
+    const cidrs = [];
+    for (const item of String(env[name] || '').split(',').map((s) => s.trim()).filter(Boolean)) {
+        const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?:\/(\d{1,2}))?$/.exec(item);
+        if (m && m.slice(1, 5).every((p) => Number(p) <= 255) && (m[5] === undefined || Number(m[5]) <= 32)) {
+            cidrs.push(m[5] === undefined ? `${item}/32` : item);
+            // /0 等於信任所有來源：任何人都能自己填 CLIENT_IP_HEADER，換一個值就繞過限流
+            if (Number(m[5]) === 0) warn(`設定 ${name} 的 ${shownAddress(item)} 等於信任所有來源，任何人都能偽造用戶端 IP`);
+        } else {
+            warn(`設定 ${name} 的 ${shownAddress(item)} 不是 IPv4 位址或 CIDR，已略過`);
+        }
+    }
+    return cidrs;
+}
+
+/**
+ * HTTP 服務的設定（server.mjs 用）：
+ *
+ *   PORT                  監聽埠（預設 8787；0 代表由系統挑一個空的埠，START log 會印出實際的埠）
+ *   HOST                  綁定位址（預設 127.0.0.1；k3s 的 manifest 設 0.0.0.0）
+ *   ALLOWED_ORIGINS       允許呼叫的網站，逗號分隔（預設 https://thc1006.github.io）
+ *   CLIENT_IP_HEADER      由哪個標頭取得用戶端 IP（預設不用，看連線來源）。Tailscale Funnel
+ *                         用 x-forwarded-for：它會把這個標頭覆寫成真實來源
+ *   TRUSTED_PROXIES       只有連線來自這些 IPv4 位址／CIDR 時才採用上面的標頭（逗號分隔）；
+ *                         沒設的話標頭一律不採用——直接連進來的人自己填的值不能信。
+ *                         信任的是位址：同一個位址連進來的其他程式（k3s 上的主機與 hostNetwork
+ *                         pod）送的標頭也會被採信
+ *   LLM_CONCURRENCY       同時進行的任務數（預設 4，上限 8 = key 的並行上限）
+ *   LLM_MAX_QUEUE         最多排幾個（預設 8）
+ *   QUEUE_TIMEOUT_MS      最多排多久（預設 240000 = 4 分鐘）。WinLab 忙的時候，進行中的任務光等
+ *                         第一個位元組就要一兩分鐘，排隊的人要等得比這久才輪得到
+ *   RATE_LIMIT_WINDOW_MS  每個來源的計數窗口（預設 600000 = 10 分鐘）
+ *   RATE_LIMIT_MAX        每個來源在窗口內最多開始幾個任務（預設 100）。學校的整間教室、甚至
+ *                         整個學校共用一個對外 IP，這個數字是整個網路一起用的；沒用到 GPU 的
+ *                         請求（排隊已滿、排到逾時、排隊中離開，或上游在第一個 token 之前就回
+ *                         忙線、連不上、逾時）不計
+ *   REQUEST_LIMIT_PER_MINUTE 每個來源每分鐘最多送幾個任務請求，不論成敗（預設 120）。在讀 body
+ *                         之前就檢查：驗證失敗的請求不計入上面的次數，沒有這一道的話，連續送
+ *                         超大的錯誤請求就能把 CPU 吃滿
+ *   CLIENT_MAX_INFLIGHT   名額已滿時，每個來源最多佔用幾個（含排隊；預設 6）
+ *   BODY_TIMEOUT_MS       收完請求 body 的期限（預設 10000）。body 最多十幾 KB，慢慢上傳的連線
+ *                         佔著記憶體，不必等太久。Node 自己的 requestTimeout 在開始關機之後就
+ *                         不再檢查，這個期限由閘道自己計時
+ *   HEARTBEAT_MS          SSE 心跳間隔（預設 15000，上限 30000）。前端（public/shared/platform-ai.js
+ *                         的 IDLE_TIMEOUT_MS）連續 60 秒沒收到任何位元組就當成斷線，心跳一放慢，
+ *                         正常進行中的任務就會被當成斷線；兩邊要一起改
+ *   SHUTDOWN_GRACE_MS     關機時等進行中任務的上限（預設 900000 = 15 分鐘）。要不小於 LLM_TASK_TIMEOUT_MS：
+ *                         換版時進行中的任務才做得完，不會做到一半被中止（WinLab 忙的時候第一個位元組
+ *                         要等 80 秒以上，3 輪最壞約 13 分鐘）。k3s 的 terminationGracePeriodSeconds 要比它
+ *                         再多出 preStop 與收尾的時間（中止後送出錯誤 1 秒、等上傳中的請求最多 5 秒）
+ *   LOG_LEVEL             error／warn／info／debug（預設 info）
+ */
+export function loadServerConfig(env = process.env, { warn = (msg) => console.warn(msg) } = {}) {
+    let logLevel = String(env.LOG_LEVEL || 'info').trim().toLowerCase();
+    if (!LOG_LEVELS.includes(logLevel)) {
+        warn(`設定 LOG_LEVEL=${shown(env.LOG_LEVEL)} 不合法（只有 ${LOG_LEVELS.join('／')}），改用 info`);
+        logLevel = 'info';
+    }
+    const header = String(env.CLIENT_IP_HEADER || '').trim().toLowerCase();
+    const clientIpHeader = /^[a-z0-9-]+$/.test(header) ? header : '';
+    if (header && !clientIpHeader) warn(`設定 CLIENT_IP_HEADER=${shown(header)} 不是合法的標頭名稱，改看連線來源`);
+    const trustedProxies = toCidrs(env, 'TRUSTED_PROXIES', warn);
+    if (clientIpHeader && trustedProxies.length === 0) {
+        warn('設定了 CLIENT_IP_HEADER 卻沒有 TRUSTED_PROXIES：標頭一律不採用，限流改看連線來源');
+    }
+    if (!clientIpHeader && trustedProxies.length > 0) {
+        warn('設定了 TRUSTED_PROXIES 卻沒有 CLIENT_IP_HEADER：不會從標頭取用戶端 IP，所有經過代理的人共用代理的 IP 計數');
+    }
+    return {
+        port: toInt(env, 'PORT', 8787, 0, 65535, warn),
+        host: String(env.HOST || '').trim() || '127.0.0.1',
+        allowedOrigins: toOrigins(env, 'ALLOWED_ORIGINS', ['https://thc1006.github.io'], warn),
+        clientIpHeader,
+        trustedProxies,
+        concurrency: toInt(env, 'LLM_CONCURRENCY', 4, 1, 8, warn),
+        maxQueue: toInt(env, 'LLM_MAX_QUEUE', 8, 0, 1000, warn),
+        queueTimeoutMs: toInt(env, 'QUEUE_TIMEOUT_MS', 240_000, 1_000, 2_147_483_647, warn),
+        rateLimitWindowMs: toInt(env, 'RATE_LIMIT_WINDOW_MS', 600_000, 1_000, 2_147_483_647, warn),
+        // 每筆紀錄是一個時間戳；上限太大等於讓單一來源佔掉可觀的記憶體
+        rateLimitMax: toInt(env, 'RATE_LIMIT_MAX', 100, 1, 1_000, warn),
+        requestLimitPerMinute: toInt(env, 'REQUEST_LIMIT_PER_MINUTE', 120, 10, 10_000, warn),
+        clientMaxInflight: toInt(env, 'CLIENT_MAX_INFLIGHT', 6, 1, 64, warn),
+        bodyTimeoutMs: toInt(env, 'BODY_TIMEOUT_MS', 10_000, 1_000, 120_000, warn),
+        heartbeatMs: toInt(env, 'HEARTBEAT_MS', 15_000, 1_000, 30_000, warn),
+        shutdownGraceMs: toInt(env, 'SHUTDOWN_GRACE_MS', 900_000, 0, 2_147_483_647, warn),
+        logLevel,
+    };
+}

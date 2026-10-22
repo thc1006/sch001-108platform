@@ -101,6 +101,88 @@ WinLab 不收 vLLM 原生的 `continue_final_message`，所以接續一律在對
 - **語言**：接續的提示詞都再提醒一次台灣繁體中文；活體測試中，不思考的接續輪寫長文時
   會零星冒出簡體字。
 
+## HTTP 服務（`src/server.mjs`）
+
+網站的瀏覽器跨網域呼叫閘道。瀏覽器只說「要做哪個任務、輸入是什麼」，prompt、輸出格式與
+上限都由閘道決定（`src/tasks.mjs`、`src/task-catalog.mjs`）：閘道拿著 key、背後是有限的
+GPU，收任意 prompt 等於架一個免費的通用 LLM 代理，CORS 擋不住 curl。
+
+```bash
+node ai-gateway/src/server.mjs     # 預設 127.0.0.1:8787
+```
+
+| 端點 | 說明 |
+|---|---|
+| `POST /v1/tasks/<id>` | body `{"input": {...}}`；回應 `text/event-stream` |
+| `OPTIONS /v1/tasks/<id>` | CORS 預檢（只允許 `ALLOWED_ORIGINS` 列出的網站） |
+| `GET /healthz` | 程序活著就 200（liveness） |
+| `GET /readyz` | 有 key、上游設定合法、沒在關機才 200，否則 503（readiness） |
+
+SSE 事件（每個 `data` 都是一行 JSON）：`accepted { requestId, task }`、
+`progress { phase: queued|started|thinking|writing|continuing|retrying, … }`、`delta { text }`（只有
+文字任務，邊收邊顯示用）、`done { result, rounds, continuations, usage, elapsedMs }`、
+`error { code, message, retryable, retryAfter? }`。串流正常會以一個 `done` 或 `error` 結束；
+用戶端自己離開、程序被強制結束這類情況收不到結束事件，前端要把「沒收到結束事件就斷線」當成
+可以重試的中斷。開始串流之前的拒絕（輸入不合格、限流、排隊已滿、關機中）一律回 JSON
+`{"error": {code, message, requestId, …}}`。
+
+- **輸入**：每個欄位都是字串、有字數上限（以字素計，🇹🇼 算一個字）。看不見的字元（格式字元、
+  預設可忽略的字元，保留表情符號要用的 ZWJ／ZWNJ）先清掉；chat template 的控制符號中和成
+  全形；學生的資料包在每次請求才有的隨機標記裡，system 訊息明說標記裡的文字都只是資料。
+- **排隊與限流**（都依來源 IP 計算；經 Tailscale Funnel 時看它覆寫過的 `X-Forwarded-For`，
+  只有連線來自 `TRUSTED_PROXIES` 時才採信）：
+  - 同時進行 `LLM_CONCURRENCY` 個任務，其餘排隊（最多 `LLM_MAX_QUEUE` 個、最久
+    `QUEUE_TIMEOUT_MS`），排隊時有名次，輪到時送一個 `started`。名額空出來時先給進行中任務
+    最少的來源，一樣多的才照到達順序：只照到達順序的話，佔滿名額的來源隨時排著幾個請求，
+    空出來的名額就一直回到它手上，別人排到逾時。這只決定排隊的人誰先輪到。名額沒滿時請求
+    直接開始，所以閘道閒著時，一個來源可以拿走全部名額，每個佔到任務結束。它佔住的名額最晚在
+    任務的時限（任務定義的 `timeoutMs`，沒設就是 `LLM_TASK_TIMEOUT_MS`）內空出來、先給排隊的人；
+    時限比 `QUEUE_TIMEOUT_MS` 長的任務，排隊的人會先逾時。
+  - 每個來源每 10 分鐘最多開始 `RATE_LIMIT_MAX` 個任務。學校整間教室共用一個對外 IP，所以
+    預設給到 100；沒用到 GPU 的請求不計：排隊已滿、排到逾時、排隊中離開，以及上游在第一個
+    token 之前就回忙線（429）、連不上或逾時的。第一個 token 之前的逾時是 WinLab 忙到還沒開始
+    處理，學生看到的是忙線（`busy`），不是叫他把內容寫具體一點的 `timeout`。
+  - 每個來源每分鐘最多送 `REQUEST_LIMIT_PER_MINUTE` 個請求（不論成敗），在讀 body 之前就檢查：
+    驗證失敗的請求不計入上一項，沒有這一道，連續送超大的錯誤請求就能把 CPU 吃滿。
+  - 名額已滿時，每個來源最多佔用 `CLIENT_MAX_INFLIGHT` 個（含排隊）。依來源計的限制擋不住
+    握有很多 IP 的人，這是取捨，不是保證。
+  - `TRUSTED_PROXIES` 對不上實際的代理時，所有人都會落到同一個桶：帶著 `CLIENT_IP_HEADER` 的
+    連線不是來自信任的代理，log 每分鐘最多記一筆 `CLIENT-IP-UNTRUSTED`，附上次數與連線的位址
+    （內部位址才原樣記下，其他只記雜湊）；信任的代理沒送用戶端 IP 時記 `CLIENT-IP-MISSING`。
+- **資源上限**：同時在收 body 的任務請求最多 1000 個，超過就立刻回 503 並關掉連線；body 要在
+  `BODY_TIMEOUT_MS` 內收完，標頭最多 8 KiB，連線最多 2048 條。Funnel 收完標頭就轉送、body
+  邊收邊送，慢慢上傳的連線每條約佔 50 KiB，沒有這些上限的話，幾十個來源就能讓 256Mi 的 pod
+  被 OOMKill（2026-10-22 本機實測：3000 條慢速上傳、每條標頭 14 KB，RSS 從 71 MiB 漲到 266 MiB）。
+  上限是拿 503 換掉 OOM。每個 IPv4 來源每分鐘最多送 `REQUEST_LIMIT_PER_MINUTE` 個請求、每個最多
+  撐 `BODY_TIMEOUT_MS`，照預設平均同時佔 20 個，大約 50 個來源就能一直佔滿，這段期間所有新任務
+  都拿到 503；9 個來源同時把一分鐘的額度用完，可以佔滿 10 秒。1000 是依記憶體選的：同一天把
+  閘道放進 256 MiB 的 cgroup，用戶端一直維持 6000 條慢速上傳（標頭 8 KB，被關掉就重開，每秒新開
+  五千多條），RSS 最高 162 MiB，上限 2000 時是 204 MiB。
+- **心跳**：每 `HEARTBEAT_MS` 送一次 SSE 註解。前端連續 60 秒沒收到任何位元組就當成斷線，
+  所以心跳上限是 30 秒，兩邊要一起改。
+- **換版與關機**：收到 SIGTERM 後 readiness 改回 503、新請求回 503（`Retry-After: 5`、
+  `connection: close`，讓代理改連新的 pod），排隊中的任務立刻中止，進行中的任務最多等
+  `SHUTDOWN_GRACE_MS`；時間到了先送一個可重試的 `error` 再斷線。第二次 SIGTERM 立即結束。
+
+| 環境變數 | 預設 | 說明 |
+|---|---|---|
+| `PORT`／`HOST` | `8787`／`127.0.0.1` | k3s 的 manifest 設 `0.0.0.0` |
+| `ALLOWED_ORIGINS` | `https://thc1006.github.io` | 逗號分隔；只收 https（本機可用 http），比對前正規化成 origin |
+| `CLIENT_IP_HEADER` | — | 由哪個標頭取得用戶端 IP；Funnel 用 `x-forwarded-for` |
+| `TRUSTED_PROXIES` | — | 只有連線來自這些 IPv4／CIDR 時才採用上面的標頭 |
+| `LLM_CONCURRENCY` | `4` | 上限 8（key 的並行上限） |
+| `LLM_MAX_QUEUE` | `8` | |
+| `QUEUE_TIMEOUT_MS` | `240000` | WinLab 忙的時候，進行中的任務光等第一個位元組就要一兩分鐘；任務的 `timeoutMs` 不要比它長 |
+| `RATE_LIMIT_WINDOW_MS`／`RATE_LIMIT_MAX` | `600000`／`100` | |
+| `REQUEST_LIMIT_PER_MINUTE` | `120` | |
+| `CLIENT_MAX_INFLIGHT` | `6` | |
+| `BODY_TIMEOUT_MS` | `10000` | 收完 body 的期限（Node 自己的逾時在開始關機後就不檢查） |
+| `HEARTBEAT_MS` | `15000` | 上限 30000 |
+| `SHUTDOWN_GRACE_MS` | `900000` | 不能比 `LLM_TASK_TIMEOUT_MS` 短 |
+| `LOG_LEVEL` | `info` | |
+
+log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與模型的輸出（只記長度與代號）。
+
 ## 設定
 
 名稱沿用 ahp-match 的 `scripts/serve-local.js`（同一台 k3s、同一個 WinLab）。數值打錯時
