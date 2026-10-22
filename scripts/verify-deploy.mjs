@@ -183,7 +183,8 @@ async function compareWithLive(live) {
         });
         if (!res.ok) return null;
         const j = await res.json();
-        return typeof j.status === 'string' ? j.status : null;
+        // REST 文件只列這四種 status。其他值若放行，再確認會走到最後的 else，印成沒有退版。
+        return ['identical', 'ahead', 'behind', 'diverged'].includes(j.status) ? j.status : null;
     } catch {
         return null;
     } finally {

@@ -207,6 +207,13 @@ test('再確認時 compare API 失敗：維持成功，警告記在 compare API'
     assert.doesNotMatch(result.stdout, /再確認有/);
 });
 
+test('再確認時 compare 回文件沒有的 status：當成查不出關係', { timeout: 8000 }, async () => {
+    const result = await verify({ info: [matching, live(OLDER)], compare: [relation('weird')] });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /再確認時 compare API 有 1 次沒有回應/);
+    assert.doesNotMatch(result.stdout, /沒有退版/);
+});
+
 for (const [label, actions, info, expected] of [
     ['在 Actions 上、信心較低', true, [matching, { status: 404, body: 'missing' }], ['::warning title=部署驗證信心較低::再確認有 1 次未取得有效線上資料']],
     ['不在 Actions 上', false, [matching, { status: 404, body: 'missing' }], []],
