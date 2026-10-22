@@ -259,7 +259,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment-retry.outputs.page_url || steps.deployment.outputs.page_url }}
     # 同一時間只部署一次。預設的 queue: single 只留一個等待中的 job，連推三次時中間
     # 那個 commit 不會部署；max 最多排 100 個，不能和 cancel-in-progress: true 併用。
     # 排隊依開始等待的時間而不是 commit 先後，較舊的 run 晚到就會蓋掉較新的版本。
