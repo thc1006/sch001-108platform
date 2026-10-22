@@ -1,16 +1,5 @@
-# Dependabot 設定
-# ================================================================
-# 這個 repo 把所有 action 都 pin 到完整 commit SHA（那是唯一能讓 action 版本不可
-# 變的方式）。代價是「不會自動拿到上游修正」——包含安全性修正。
-#
-# Dependabot 對 SHA-pinned 的 `uses:` 一樣會開 PR，而且會保留 SHA 格式並同步更新
-# 後面的 `# vN` 註解（前提是註解已存在，本 repo 都有）。所以 pin SHA 與自動更新
-# 不衝突，反而必須一起用——只 pin 不更新，等於把版本凍結在某個過去的時間點。
-#
-# 這件事有實例：download-artifact 我們 pin 在 v7，而 v8 才把「artifact 雜湊不符」
-# 的預設行為從 warning 改成 error。整個 CI 的論點是「被驗證的位元組 == 被部署的
-# 位元組」，v7 遇到不符只印警告然後繼續——那個論點其實一直沒有被檢查。
-# 沒有自動更新的話，這種「新版才有的保護」不會有人發現。
+# action 都釘在完整 commit SHA，不會自己拿到上游修正，也不會有 Dependabot 警示。
+# 安全性修正也要靠下面的版本更新，Dependabot 開的 PR 仍釘在 SHA。
 version: 2
 updates:
   - package-ecosystem: 'github-actions'
@@ -21,13 +10,12 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(actions)'
-    # 與 npm 那組一樣，新版本發布 7 天後才開 PR（沒寫時 Dependabot 也有 3 天預設）。
-    # GitHub Actions 只支援 default-days、不支援 semver-*-days；cooldown 不套用在 security update 上
+    # 新版發布滿 7 天才開 PR，沒寫時預設 3 天；GitHub Actions 只支援 default-days。
     cooldown:
       default-days: 7
     groups:
-      # 官方 actions/* 的 minor／patch 併成一個 PR（同一週常一次來好幾個）。
-      # major 與第三方 action（lychee-action）仍各自開 PR，方便逐一審
+      # 官方 actions/* 的 minor 與 patch 常在同一週一起出，併成一個 PR。
+      # major 與 lychee-action 這類第三方 action 各自開 PR，方便逐一審。
       official-actions-minor-patch:
         applies-to: version-updates
         patterns:
@@ -53,53 +41,21 @@ updates:
       default-days: 7
 
     groups:
-      # tailwindcss 與 @tailwindcss/* 分在同一組。
-      #
-      # 先說清楚這一組**不能**做到什麼，免得被當成防護：分組只是把「當下剛好都有
-      # 新版」的更新併進同一個 PR，它擋不住「只有 tailwindcss 出新版」的情況。
-      # dependabot-core 的 message_builder.rb 對 dependencies.one? 有專屬分支
-      # （標題會變成「bump X … in the tailwind group」），也就是「一個群組、只有
-      # 一筆更新」本來就是官方預期行為。真正會擋下來的是 scripts/check-dep-tree.mjs。
-      #
-      # 為什麼要擋：@tailwindcss/vite 與 @tailwindcss/node 對 tailwindcss 都是
-      # **精確 pin**（4.3.3 依賴 tailwindcss 4.3.3），而 package.json 宣告的是 caret
-      # 範圍 ^4.3.3。只升其中一個就會產生 split tree：
-      #   node_modules/tailwindcss                                 新版  ← 根
-      #   node_modules/@tailwindcss/vite/node_modules/tailwindcss  舊版  ← 巢狀
-      #   node_modules/@tailwindcss/node/node_modules/tailwindcss  舊版  ← 巢狀
-      # 實測（把根釘回 4.3.2、其餘 4.3.3）：npm install exit 0、零警告，而重建全站後
-      # BaseLayout 的 CSS 由 76,092 變成 75,938 bytes——全站預設字體 --font-sans 被換掉，
-      # 且產出是混血：內容等同純 4.3.2，檔頭 banner 卻寫著 v4.3.3。
-      #
-      # 分在同一組的價值是「相關變更會一起被看到、一起被審」，不是預防。
+      # 分在一組是為了一起審。只有 tailwindcss 出新版時照樣單獨升級，相依樹會分裂，
+      # 擋下它的是 scripts/check-dep-tree.mjs，原因與實測寫在那裡。
       tailwind:
         patterns:
           - 'tailwindcss'
           - '@tailwindcss/*'
-      # 這三個是自架到 public/vendor/ 的前端函式庫（見 scripts/vendor-assets.mjs）。
-      # 版本一動就會改變使用者實際下載的檔案，分成一組讓它們的變更容易一起審。
+      # 這三個由 scripts/vendor-assets.mjs 複製到 public/vendor/，版本一動，
+      # 使用者下載的檔案就跟著變，分成一組一起審。
       vendored-frontend:
         patterns:
           - 'fuse.js'
           - 'feather-icons'
           - 'ionicons'
-      # astro 與官方 integration（@astrojs/sitemap）常一起發版，一起升、一起審
+      # astro 與官方 integration 常一起發版，一起升、一起審。
       astro:
         patterns:
           - 'astro'
           - '@astrojs/*'
-
-    # 目前沒有任何 ignore 規則。
-    #
-    # 這裡曾經擋住 fuse.js 的 major 更新，理由是「首頁用 classic script 靠全域
-    # window.Fuse，而 fuse.js 7 拿掉了 UMD／全域建置，升上去不是換版號、
-    # 是要把那段 inline script 改成 module + import」。
-    #
-    # **那個前提已經不成立了**：首頁現在是
-    #   <script is:inline type="module" src="…/vendor/fuse-global.js">
-    # 走 ESM 載入，而 vendor 解析也已改成從套件 metadata 推導、不再寫死 dist 路徑。
-    # 規則留著只會讓 fuse.js 7 的 PR 永遠不出現，而它正是我們想要的：
-    # 7.5.0 的 exports 有 './min' → dist/fuse.min.mjs，換上去使用者下載的位元組會變小。
-    #
-    # 教訓：ignore 規則要寫明「什麼條件成立時就該移除」，否則它會在條件消失後
-    # 繼續生效，而且沒有任何訊號。這條當初寫的是「為什麼現在擋」，不是「何時解除」。
