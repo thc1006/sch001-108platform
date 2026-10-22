@@ -1,0 +1,361 @@
+// 職涯探索首頁的「AI 學涯導師」（AI 閘道的 career-chat 任務）：用頁內的假閘道驗證頁面怎麼送出、
+// 邊收邊顯示回答、處理錯誤與取消，以及焦點與對話紀錄的 live region 結構。假閘道見 fake-gateway.js。
+//
+// 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
+const { test, expect } = require('@playwright/test');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+
+const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
+const PAGE = `${BASE}/sch001-108platform/career-exploration/index.html`;
+
+const ACCEPTED = sse('accepted', { requestId: 'req-1', task: 'career-chat' });
+const done = (result) => sse('done', { result, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 });
+const delta = (text) => sse('delta', { text });
+const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) => window.__stream.push(c)), chunks);
+
+// 對話紀錄裡的訊息（第一則是頁面本來就有的招呼）、第 n 則訊息的 AI 泡泡文字、接在紀錄後面的草稿、
+// 輸入列下方的進度區塊。
+const messages = (page) => page.locator('#chat-log > div');
+const aiText = (page, n) => messages(page).nth(n).locator('.chat-bubble-ai p');
+const draft = (page) => page.locator('#chat-log ~ *');
+const progress = (page) => page.locator('#chat-progress .platform-ai-progress');
+
+async function ask(page, question) {
+    await page.fill('#chat-input', question);
+    await page.click('#chat-submit');
+}
+
+test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(PAGE);
+        await stubBuiltInGateway(page);
+    });
+
+    test('回答邊收邊顯示：片段先畫成紀錄後面的草稿，收到 done 換成紀錄裡的回答；按鈕恢復原狀', async ({ page }) => {
+        await installFakeGateway(page, {
+            chunks: [
+                ACCEPTED,
+                sse('progress', { phase: 'writing', round: 1 }),
+                delta('推薦你 **資訊學群**：'),
+                delta('你喜歡電腦。\n'),
+            ],
+            hang: true,
+        });
+        await ask(page, '  我喜歡動手做東西，也對電腦有興趣  ');
+
+        const button = page.locator('#chat-submit');
+        const input = page.locator('#chat-input');
+        // 學生的問題（去掉前後空白）進了紀錄，輸入框清空，焦點交回輸入框。
+        await expect(messages(page)).toHaveCount(2);
+        await expect(messages(page).nth(1).locator('.chat-bubble-user')).toHaveText('我喜歡動手做東西，也對電腦有興趣');
+        await expect(input).toHaveValue('');
+        await expect(input).toBeFocused();
+
+        // 草稿出現時進度區塊還在（可以取消）；按鈕停用但仍可取得焦點，外觀也變淡。
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+        await expect(progress(page).getByRole('status')).toHaveText('AI 正在撰寫回答…');
+        await expect(progress(page).getByRole('button', { name: '取消' })).toBeVisible();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).not.toHaveAttribute('disabled');
+        await expect(button).toHaveClass(/opacity-50/);
+        await expect(button).toHaveText('思考中...');
+        await expect(input).toBeEditable();
+
+        await push(page, delta('下一步可以參加 APCS'));
+        await expect(draft(page)).toContainText('下一步可以參加 APCS');
+
+        // done 的結果和片段接起來的不同（句尾多了「。」）：畫面要以 done 為準。
+        await push(page, done('推薦你 **資訊學群**：你喜歡電腦。\n下一步可以參加 APCS。'));
+        await expect(draft(page)).toHaveCount(0);
+        await expect(messages(page)).toHaveCount(3);
+        const answer = aiText(page, 2);
+        await expect(answer.locator('strong')).toHaveText(['資訊學群']);
+        await expect(answer).toHaveText('推薦你 資訊學群：你喜歡電腦。下一步可以參加 APCS。');
+        await expect(progress(page)).toHaveCount(0);
+
+        const calls = await page.evaluate(() => window.__calls);
+        expect(calls).toHaveLength(1);
+        expect(calls[0].url).toBe('https://gateway.example/v1/tasks/career-chat');
+        expect(JSON.parse(calls[0].body)).toEqual({ input: { question: '我喜歡動手做東西，也對電腦有興趣' } });
+
+        // 按鈕恢復，文字與圖示都還在。
+        await expect(button).toBeEnabled();
+        await expect(button).not.toHaveAttribute('aria-disabled');
+        await expect(button).not.toHaveClass(/opacity-50/);
+        await expect(button).toHaveText('發送');
+        await expect(button.locator('ion-icon')).toHaveCount(1);
+        await expect(input).toBeFocused();
+    });
+
+    test('在輸入框按 Enter 送出；進行中可以先打下一題，但 Enter 與按鈕都不會再送出', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        const input = page.locator('#chat-input');
+        await input.fill('我喜歡畫畫');
+        await input.press('Enter');
+        await expect(messages(page).nth(1)).toHaveText('我喜歡畫畫');
+        await expect(progress(page)).toHaveCount(1);
+        await expect(input).toBeFocused();
+
+        await input.fill('那數學呢？');
+        await input.press('Enter');
+        await page.locator('#chat-submit').click({ force: true });
+        await expect(input).toHaveValue('那數學呢？');
+        await expect(messages(page)).toHaveCount(2);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+
+        await push(page, done('推薦你 **設計學群**。'));
+        await expect(messages(page)).toHaveCount(3);
+        await input.press('Enter');
+        await expect(messages(page).nth(3)).toHaveText('那數學呢？');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+    });
+
+    test('連續問兩題：各送一個請求，body 只有這一題；每一題的草稿都接在紀錄後面，收到 done 就移除', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你')], hang: true });
+        for (const [i, question] of ['我喜歡畫畫', '那如果我也喜歡數學呢？'].entries()) {
+            await ask(page, question);
+            await expect(draft(page)).toHaveText('推薦你');
+            await push(page, delta(` **設計學群**（第 ${i + 1} 題）`));
+            await expect(draft(page).locator('strong')).toHaveText(['設計學群']);
+            await push(page, done(`推薦你 **設計學群**（第 ${i + 1} 題）。`));
+            await expect(draft(page)).toHaveCount(0);
+            await expect(aiText(page, 2 * i + 2)).toHaveText(`推薦你 設計學群（第 ${i + 1} 題）。`);
+        }
+        await expect(messages(page).nth(3)).toHaveText('那如果我也喜歡數學呢？');
+
+        const calls = await page.evaluate(() => window.__calls);
+        expect(calls.map((c) => JSON.parse(c.body))).toEqual([
+            { input: { question: '我喜歡畫畫' } },
+            { input: { question: '那如果我也喜歡數學呢？' } },
+        ]);
+    });
+
+    test('學生的問題與 AI 的回答含 HTML 標籤 → 問題、草稿、最後的回答都當純文字顯示，不產生 img／script，也不執行', async ({ page }) => {
+        const text = `* ${XSS_IMG} **${XSS_SCRIPT}**`;
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('* ')], hang: true });
+        await ask(page, `${XSS_IMG}${XSS_SCRIPT}`);
+
+        const chat = page.locator('#chat-window');
+        await expect(messages(page).nth(1)).toHaveText(`${XSS_IMG}${XSS_SCRIPT}`);
+        // 分兩段送：第一段建立草稿，第二段走「更新草稿」那條路，兩條都要擋得住。
+        await expect(draft(page)).toHaveCount(1);
+        await push(page, delta(text.slice(2)));
+        await expect(draft(page).locator('strong')).toHaveText([XSS_SCRIPT]);
+        await expect(draft(page)).toContainText(XSS_IMG);
+        await expect(chat.locator('img, script, [onerror]')).toHaveCount(0);
+
+        await push(page, done(`${text}\n${XSS_IMG}${XSS_SCRIPT}`));
+        await expect(draft(page)).toHaveCount(0);
+        await expect(messages(page).nth(2)).toContainText(`${XSS_IMG}${XSS_SCRIPT}`);
+        await expect(chat.locator('img, script, [onerror]')).toHaveCount(0);
+
+        // img 的 onerror 要等圖片載入失敗才會跑；若真的塞進了 <img src=x>，這一等就會讓它現形。
+        await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 300)));
+        expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+    });
+
+    test('閘道回 error 事件 → 錯誤訊息照字面顯示在 AI 的泡泡裡，訊息裡的 HTML 標籤不生效', async ({ page }) => {
+        const message = `${XSS_IMG}目前使用的人很多，請稍後再試。`;
+        await installFakeGateway(page, { chunks: [ACCEPTED, sse('error', { code: 'busy', message, retryable: true })] });
+        await ask(page, '我喜歡畫畫');
+        const notice = aiText(page, 2);
+        await expect(notice).toHaveText(message);
+        await expect(notice).toHaveClass(/text-red-700/);
+        await expect(page.locator('#chat-window img')).toHaveCount(0);
+    });
+
+    test('閘道網址沒有設定 → 紀錄裡出現「尚未設定」的錯誤訊息，不送出請求', async ({ page }) => {
+        await installFakeGateway(page, { withMeta: false });
+        await ask(page, '我喜歡畫畫');
+        const notice = aiText(page, 2);
+        await expect(notice).toHaveText('AI 服務尚未設定完成，暫時無法使用。');
+        await expect(notice).toHaveClass(/text-red-700/);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+        await expect(page.locator('#chat-submit')).toBeEnabled();
+    });
+
+    test('沒有輸入（或只有空白）就送出 → 什麼都不做：不送請求，紀錄不變', async ({ page }) => {
+        await installFakeGateway(page);
+        for (const value of ['', '   ']) {
+            await page.fill('#chat-input', value);
+            await page.click('#chat-submit');
+            await page.locator('#chat-input').press('Enter');
+        }
+        await expect(messages(page)).toHaveCount(1);
+        await expect(progress(page)).toHaveCount(0);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+    });
+
+    test('草稿出現後按「取消」→ 草稿移除，紀錄裡出現「已取消。」（不是錯誤的紅字），焦點回到輸入框；之後還能再問', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+
+        await progress(page).getByRole('button', { name: '取消' }).click();
+        const notice = aiText(page, 2);
+        await expect(notice).toHaveText('已取消。');
+        await expect(notice).toHaveClass(/text-gray-600/);
+        await expect(notice).not.toHaveClass(/text-red-700/);
+        await expect(draft(page)).toHaveCount(0);
+        await expect(progress(page)).toHaveCount(0);
+        await expect(page.locator('#chat-submit')).toBeEnabled();
+        await expect(page.locator('#chat-input')).toBeFocused();
+
+        await ask(page, '那數學呢？');
+        await expect(messages(page).nth(3)).toHaveText('那數學呢？');
+        await push(page, done('推薦你 **工程學群**。'));
+        await expect(aiText(page, 4).locator('strong')).toHaveText(['工程學群']);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+    });
+
+    test('串流在 done 之前就斷了 → 草稿移除，紀錄裡出現連線中斷的錯誤訊息；之後還能再問', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+
+        // 草稿出現之後才結束串流，等於閘道重啟、通道斷線。
+        await page.evaluate(() => window.__stream.end());
+        const notice = aiText(page, 2);
+        await expect(notice).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
+        await expect(notice).toHaveClass(/text-red-700/);
+        await expect(draft(page)).toHaveCount(0);
+        await expect(page.locator('#chat-submit')).toBeEnabled();
+
+        await ask(page, '那數學呢？');
+        await expect(messages(page).nth(3)).toHaveText('那數學呢？');
+        await push(page, done('推薦你 **工程學群**。'));
+        await expect(aiText(page, 4).locator('strong')).toHaveText(['工程學群']);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+    });
+
+    test('回答到的時候不搬焦點：學生等待時把焦點移到別處，回答進了紀錄，焦點還在原處', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡畫畫');
+        await expect(progress(page)).toHaveCount(1);
+        const search = page.locator('#search-bar');
+        await search.focus();
+        await push(page, done('推薦你 **設計學群**。'));
+        await expect(aiText(page, 2).locator('strong')).toHaveText(['設計學群']);
+        await expect(search).toBeFocused();
+    });
+
+    // Safari 點按鈕不給按鈕焦點（MDN <button> 的 Clicking and focus），mousedown 時還會清掉輸入框的
+    // 焦點（WebKit 的 EventHandler::dispatchMouseEvent）。這裡在 mousedown 時 preventDefault 再 blur。
+    test('像 Safari 那樣點按鈕不給焦點：用滑鼠送出、取消之後，焦點都回到輸入框', async ({ page }) => {
+        await page.evaluate(() => document.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('button')) return;
+            e.preventDefault();
+            document.activeElement.blur();
+        }, true));
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        const input = page.locator('#chat-input');
+
+        await ask(page, '我喜歡畫畫');
+        await expect(messages(page)).toHaveCount(2);
+        await expect(input).toBeFocused();
+        await push(page, done('推薦你 **設計學群**。'));
+        await expect(messages(page)).toHaveCount(3);
+        await expect(input).toBeFocused();
+
+        await ask(page, '那數學呢？');
+        await progress(page).getByRole('button', { name: '取消' }).click();
+        await expect(aiText(page, 4)).toHaveText('已取消。');
+        await expect(input).toBeFocused();
+    });
+
+    test('輸入框最多 200 字（與閘道的任務規格相同）；輸入框與按鈕都有無障礙名稱，窄螢幕上也是', async ({ page }) => {
+        const input = page.locator('#chat-input');
+        const button = page.locator('#chat-submit');
+        await expect(input).toHaveAttribute('maxlength', '200');
+        await expect(input).toHaveAccessibleName('你的問題');
+        await expect(button).toHaveAccessibleName('發送');
+        // 窄螢幕只顯示圖示，按鈕的名稱來自圖示的 aria-label。
+        await page.setViewportSize({ width: 375, height: 800 });
+        await expect(button.locator('span')).toBeHidden();
+        await expect(button).toHaveAccessibleName('發送');
+    });
+
+    // 草稿每收到一段就重畫，放進 live region 會一路重唸。Safari 連 aria-live="off" 子樹裡的變化都算進
+    // 外層的 live region，所以草稿與進度區塊（含計時器、取消鈕）不能有身為 live region 的祖先。
+    test('對話紀錄是 role="log"；草稿與進度區塊不在任何 live region 裡，完成的回答加進紀錄，頭像不給螢幕閱讀器', async ({ page }) => {
+        const log = page.locator('#chat-log');
+        await expect(log).toHaveAttribute('role', 'log');
+        await expect(log).not.toHaveAttribute('aria-live');
+        await expect(log).toHaveAccessibleName('對話紀錄');
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('草稿')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page)).toHaveText('草稿');
+        await expect(progress(page)).toHaveCount(1);
+        const LIVE = '[aria-live]:not([aria-live="off"]), [role="log"], [role="status"], [role="alert"]';
+        const inLiveRegion = (locator) => locator.evaluate((el, selector) => el.closest(selector) !== null, LIVE);
+        expect(await inLiveRegion(draft(page))).toBe(false);
+        expect(await inLiveRegion(progress(page))).toBe(false);
+
+        await push(page, done('最後的回答'));
+        await expect(messages(page).nth(2)).toHaveText('最後的回答');
+        await expect(draft(page)).toHaveCount(0);
+        // ion-icon 預設是沒有名稱的 role="img"，頭像不藏起來，紀錄裡每則訊息都會多一張沒有名稱的圖。
+        await expect(log.locator('ion-icon')).toHaveCount(3);
+        await expect(log.locator('ion-icon:not([aria-hidden="true"])')).toHaveCount(0);
+    });
+
+    test('送出時捲到底；學生往上捲去看舊訊息時，新的片段與完成的回答不把他拉回底部', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        const chatWindow = page.locator('#chat-window');
+        const atBottom = () => chatWindow.evaluate((el) => el.scrollHeight - el.scrollTop - el.clientHeight < 4);
+        const lines = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => `第 ${from + i} 行`).join('\n');
+
+        await ask(page, '我喜歡電腦');
+        await push(page, delta(lines(1, 12)));
+        await expect(draft(page)).toContainText('第 12 行');
+        await expect.poll(atBottom).toBe(true);
+
+        await chatWindow.evaluate((el) => { el.scrollTop = 0; });
+        await push(page, delta(`\n${lines(13, 14)}`));
+        await expect(draft(page)).toContainText('第 14 行');
+        expect(await chatWindow.evaluate((el) => el.scrollTop)).toBe(0);
+
+        // 捲回底部就又跟著新的片段走。
+        await chatWindow.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+        await push(page, delta(`\n${lines(15, 16)}`));
+        await expect(draft(page)).toContainText('第 16 行');
+        await expect.poll(atBottom).toBe(true);
+
+        await chatWindow.evaluate((el) => { el.scrollTop = 0; });
+        await push(page, done(lines(1, 20)));
+        await expect(messages(page).nth(2)).toContainText('第 20 行');
+        expect(await chatWindow.evaluate((el) => el.scrollTop)).toBe(0);
+
+        // 自己送出的問題一定捲到底。
+        await ask(page, '那數學呢？');
+        await expect(messages(page).nth(3)).toHaveText('那數學呢？');
+        await expect.poll(atBottom).toBe(true);
+    });
+});
+
+// 共用腳本 public/shared/platform-ai.js 沒載入成功時，PlatformAI 不存在。404（檔案沒部署好、路徑錯）
+// 與連線中斷（網路、被擋）頁面的處理應該相同：顯示錯誤訊息，按鈕不能卡在「思考中...」。
+test.describe('職涯探索首頁：共用腳本 platform-ai.js 沒載入成功', () => {
+    const FAILURES = [
+        ['回 404', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })],
+        ['連線中斷', (route) => route.abort()],
+    ];
+
+    for (const [name, failScript] of FAILURES) {
+        test(`${name} → 紀錄裡出現錯誤訊息，按鈕恢復可按`, async ({ page }) => {
+            await page.route('**/shared/platform-ai.js', failScript);
+            await page.goto(PAGE);
+            expect(await page.evaluate(() => typeof window.PlatformAI)).toBe('undefined');
+
+            await ask(page, '我喜歡畫畫');
+            const notice = aiText(page, 2);
+            await expect(notice).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(notice).toHaveClass(/text-red-700/);
+            const button = page.locator('#chat-submit');
+            await expect(button).toBeEnabled();
+            await expect(button).toHaveText('發送');
+            await expect(button.locator('ion-icon')).toHaveCount(1);
+        });
+    }
+});

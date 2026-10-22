@@ -34,24 +34,28 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 </div>
 
                 <div id="chat-window" class="h-64 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4 space-y-4">
-                    <div class="flex gap-2 items-end">
-                        <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
-                            <ion-icon name="sparkles" class="text-indigo-600"></ion-icon>
-                        </div>
-                        <div class="chat-bubble-ai p-3 max-w-lg">
-                            <p class="text-sm sm:text-base">你好！我是 AI 學涯導師。你可以告訴我你喜歡的科目、興趣，或任何對未來科系的疑問，我會試著給你一些建議。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
+                    {/* 對話紀錄只放完成的訊息。串流中的草稿由程式接在紀錄後面，不在 live region 裡。 */}
+                    <div id="chat-log" role="log" aria-label="對話紀錄" class="space-y-4">
+                        <div class="flex gap-2 items-end">
+                            <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
+                                <ion-icon name="sparkles" aria-hidden="true" class="text-indigo-600"></ion-icon>
+                            </div>
+                            <div class="chat-bubble-ai p-3 max-w-lg">
+                                <p class="text-sm sm:text-base">你好！我是 AI 學涯導師。你可以告訴我你喜歡的科目、興趣，或任何對未來科系的疑問，我會試著給你一些建議。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
-                    <input type="text" id="chat-input" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
+                    <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
                     <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
                         <span class="hidden sm:inline">發送</span>
-                        <ion-icon name="send-outline" class="sm:hidden text-xl"></ion-icon>
+                        {/* 窄螢幕上文字隱藏，按鈕的名稱只能來自圖示。 */}
+                        <ion-icon name="send-outline" aria-label="發送" class="sm:hidden text-xl"></ion-icon>
                     </button>
                 </div>
-                <div id="loading-indicator" class="text-center text-sm text-gray-500 mt-2 hidden">AI 思考中...</div>
+                <div id="chat-progress"></div>
             </div>
         </section>
 
@@ -143,14 +147,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          有 <svg>（找不到 SVG 時 ion-icon 不報錯只是不顯示，所以必須這樣驗）。 -->
     <script is:inline type="module" src={`${vendorBase}/vendor/ionicons/ionicons.esm.js`}></script>
 
-    <script is:inline src="https://js.puter.com/v2/"></script>
-
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- 資料庫 (Data) ---
-        // 這是網站的核心資料，我們在這裡加入了更多有用的欄位
+        // 名稱、簡介、核心素養與未來出路另外抄在 AI 閘道 career-chat 任務的指令裡
+        // （ai-gateway/src/task-catalog.mjs），ai-gateway/test/task-catalog.test.mjs 會比對兩邊。
         const majorData = [
             { id: 'engineering', name: '工程學群', icon: 'settings-outline', description: '應用科學與數學原理，解決實務問題，從晶片設計到橋樑建造都屬此範疇。', competencies: ['系統思考與解決問題', '科技資訊與媒體素養'], majors: ['電機工程', '機械工程', '土木工程', '化學工程'], subjects: ['物理', '數學', '化學'], careers: ['半導體工程師', '結構技師', '廠務工程師'], portfolio_tips: '強調數理科目的學習成果，並附上參加過的科學競賽、程式設計或模型製作等實作經驗。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=1', guide: 'engineering' },
             { id: 'info', name: '資訊學群', icon: 'code-slash-outline', description: '專注於電腦科學、軟體開發、數據分析與網路通訊，是數位時代的核心驅動力。', competencies: ['系統思考與解決問題', '規劃執行與創新應變'], majors: ['資訊工程', '資訊管理', '數據科學', '人工智慧'], subjects: ['數學', '資訊科技', '物理'], careers: ['軟體工程師', '資料分析師', 'AI工程師', '資安專家'], portfolio_tips: '展示你的程式作品集(例如 GitHub)，或參與過的資訊競賽(如APCS)。自主學習新程式語言或技術的經驗會非常加分。', url: 'https://collego.edu.tw/Highschool/CollegeIntro?college_id=2', guide: 'info' },
@@ -170,7 +173,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         const chatInput = document.getElementById('chat-input');
         const chatSubmit = document.getElementById('chat-submit');
         const chatWindow = document.getElementById('chat-window');
-        const loadingIndicator = document.getElementById('loading-indicator');
 
         // --- 大學科系羅盤 (Major Explorer) 相關函式 ---
 
@@ -308,128 +310,118 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             });
         }
 
-        // --- ✨ 步驟 2: 修改 AI 聊天機器人函式以使用 Puter.js ---
+        // AI 學涯導師：prompt 與學群資料都在閘道的 career-chat 任務（ai-gateway/src/task-catalog.mjs），
+        // 頁面一次只送這一題，不帶先前的對話。
+        const chatLog = document.getElementById('chat-log');
+        const chatProgress = document.getElementById('chat-progress');
+        const chatSubmitLabel = chatSubmit.querySelector('span');
+        // platform-ai.js 沒載入成功時用這句，與 describeError 對未知錯誤的說法相同。
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
+        let chatBusy = false;
 
-        /**
-         * 將訊息新增到聊天視窗
-         * @param {string} message - 訊息內容 (可以是 HTML)
-         * @param {'user' | 'ai'} sender - 發送者
-         * @returns {HTMLElement | null} - 如果是 AI 訊息，返回包含訊息的 <p> 元素，以便後續更新
-         */
-        function addMessageToChat(message, sender) {
-            const messageWrapper = document.createElement('div');
-            let textElement = null;
-
+        // 一則訊息的外框、頭像與泡泡；內容由呼叫的人填進 text。
+        function createMessage(sender) {
+            const row = document.createElement('div');
             if (sender === 'user') {
-                messageWrapper.className = 'flex gap-2 items-end justify-end';
-                messageWrapper.innerHTML = `
+                row.className = 'flex gap-2 items-end justify-end';
+                row.innerHTML = `
                     <div class="chat-bubble-user p-3 max-w-lg">
-                        <p class="text-sm sm:text-base text-gray-800">${escapeHtml(message)}</p>
+                        <p class="text-sm sm:text-base text-gray-800"></p>
                     </div>
                     <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center flex-shrink-0">
-                        <ion-icon name="person" class="text-green-700"></ion-icon>
+                        <ion-icon name="person" aria-hidden="true" class="text-green-700"></ion-icon>
                     </div>
                 `;
-            } else { // sender === 'ai'
-                messageWrapper.className = 'flex gap-2 items-end';
-                messageWrapper.innerHTML = `
+            } else {
+                row.className = 'flex gap-2 items-end';
+                row.innerHTML = `
                     <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
-                        <ion-icon name="sparkles" class="text-indigo-600"></ion-icon>
+                        <ion-icon name="sparkles" aria-hidden="true" class="text-indigo-600"></ion-icon>
                     </div>
                     <div class="chat-bubble-ai p-3 max-w-lg">
-                        <p class="text-sm sm:text-base">${escapeHtml(message)}</p>
+                        <p class="text-sm sm:text-base"></p>
                     </div>
                 `;
-                textElement = messageWrapper.querySelector('p');
             }
-            chatWindow.appendChild(messageWrapper);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return textElement;
+            return { row, text: row.querySelector('p') };
         }
 
-        /**
-         * 處理使用者發送聊天訊息的事件 (已用 Puter.js 升級)
-         */
+        function isScrolledToBottom() {
+            return chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight < 4;
+        }
+
+        function scrollToBottom() {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
         async function handleChatSubmit() {
-            const userInput = chatInput.value.trim();
-            if (!userInput) return;
+            const question = chatInput.value.trim();
+            if (chatBusy || !question) return;
 
-            addMessageToChat(userInput, 'user');
+            const asked = createMessage('user');
+            asked.text.textContent = question;
+            chatLog.appendChild(asked.row);
+            scrollToBottom();
             chatInput.value = '';
+            // 現在就交回輸入框：等回答到了才搬，VoiceOver 可能漏唸回答（WebKit bug 222190）。
+            chatInput.focus();
 
-            // 雙擊防護：禁用發送按鈕和輸入框
-            const sendBtn = chatSubmit;
-            const originalBtnText = sendBtn.innerHTML;
-            sendBtn.disabled = true;
-            chatInput.disabled = true;
-            sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            sendBtn.innerHTML = '思考中...';
+            // 進行中不停用輸入框，按鈕用 aria-disabled 而不是 disabled：有焦點的元素一停用，焦點就
+            // 掉到 <body>。學生可以先打下一題，但要等這一題結束才送得出去。
+            chatBusy = true;
+            const originalLabel = chatSubmitLabel.textContent;
+            chatSubmit.setAttribute('aria-disabled', 'true');
+            chatSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            chatSubmitLabel.textContent = '思考中...';
 
-            loadingIndicator.classList.remove('hidden');
-
-            const context = majorData.map(c =>
-                `學群: ${c.name}\n簡介: ${c.description}\n適合特質: ${c.competencies.join(', ')}\n未來出路: ${c.careers.join(', ')}`
-            ).join('\n\n');
-
-            const prompt = `
-                你是一位專業的高中生學涯輔導老師，請用親切、鼓勵的語氣回答問題。
-                請依據以下台灣的大學學群資料作為你回答的主要參考依據：
-                ---
-                ${context}
-                ---
-                現在，請根據以上資料，回答這位高中生的問題：
-                「${userInput}」
-
-                你的回答應該包含：
-                1. 根據學生的興趣，推薦1-2個最相關的學群。
-                2. 簡單說明為什麼推薦這些學群。
-                3. 給予一個具體的下一步探索建議。
-                回答請簡潔，總長度不要超過200字。
-            `;
-
-            // ✨ 步驟 3: 使用 Puter.js 進行流式 API 呼叫 (安全版本)
+            const controller = new AbortController();
+            // mountProgress 也要放在 try 裡：PlatformAI 不存在時它會丟 ReferenceError。
+            let progress = null;
+            let draft = null;
+            // 拿掉草稿，把完成的訊息加進紀錄，螢幕閱讀器唸一次。學生往上捲去看舊訊息時不拉回底部。
+            const settle = (message) => {
+                const follow = isScrolledToBottom();
+                if (draft) draft.row.remove();
+                chatLog.appendChild(message.row);
+                if (follow) scrollToBottom();
+            };
             try {
-                // 預先建立一個空的 AI 訊息框，並取得其文字容器
-                const aiTextElement = addMessageToChat('', 'ai');
-                if (!aiTextElement) throw new Error("無法建立 AI 訊息框");
-
-                // 使用流式輸出來獲取回應（串流輸出建議較長逾時）
-                const responseStream = await PlatformAI.callGeminiWithFallback(prompt, {
-                    stream: true,
-                    signal: AbortSignal.timeout(45000)  // 45 秒逾時（串流較慢）
+                // 進度放在輸入列下方。聊天視窗只有 h-64，放進去會擠掉對話，往上捲時取消鈕也會跟著捲走。
+                progress = PlatformAI.mountProgress(chatProgress, { onCancel: () => controller.abort() });
+                const { result } = await PlatformAI.runTask('career-chat', { question }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
+                    // 草稿接在紀錄後面，不在 live region 裡，否則每收到一段就重唸一次。Safari 連
+                    // aria-live="off" 子樹裡的變化也算進外層的 live region，放在紀錄裡再關掉沒有用。
+                    onDelta: (_, text) => {
+                        const follow = isScrolledToBottom();
+                        if (!draft) {
+                            draft = createMessage('ai');
+                            chatWindow.appendChild(draft.row);
+                        }
+                        // renderMarkdown 先 HTML escape 再套 markdown，AI 的輸出塞不進可執行的 HTML。
+                        draft.text.innerHTML = PlatformAI.renderMarkdown(text);
+                        if (follow) scrollToBottom();
+                    },
                 });
-
-                // 逐字將 AI 回應安全地填入文字容器
-                // 累積文本後,每次以 PlatformAI.renderMarkdown() 重新渲染整段。
-                // renderMarkdown 內部「先 HTML escape、後套 markdown」,
-                // 故 innerHTML 注入是安全的,AI 無法插入可執行 HTML。
-                // 串流期間若 ** 尚未閉合,該段暫時維持字面,閉合後即正確。
-                let accumulatedText = '';
-                for await (const part of responseStream) {
-                    if (part?.text) {
-                        accumulatedText += part.text;
-                        aiTextElement.innerHTML = PlatformAI.renderMarkdown(accumulatedText);
-                        chatWindow.scrollTop = chatWindow.scrollHeight; // 持續滾動到底部
-                    }
-                }
-
+                progress.finish();
+                // 以 done 的結果為準，片段接起來的只是草稿。
+                const answer = createMessage('ai');
+                answer.text.innerHTML = PlatformAI.renderMarkdown(result);
+                settle(answer);
             } catch (error) {
-                console.error("Error calling Puter.js AI:", PlatformAI.formatError(error), error);
-
-                // 區分逾時錯誤和其他錯誤
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    addMessageToChat("請求超時，請檢查網路連線後重試。", 'ai');
-                } else {
-                    addMessageToChat("哎呀，連線好像有點問題，請稍後再試一次。", 'ai');
-                }
+                if (progress) progress.finish();
+                const notice = createMessage('ai');
+                notice.text.classList.add(error && error.name === 'AbortError' ? 'text-gray-600' : 'text-red-700');
+                notice.text.textContent = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                settle(notice);
             } finally {
-                // 恢復發送按鈕和輸入框狀態
-                loadingIndicator.classList.add('hidden');
-                sendBtn.disabled = false;
-                chatInput.disabled = false;
-                sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                sendBtn.innerHTML = originalBtnText;
-                chatInput.focus(); // 讓使用者可以馬上問下一個問題
+                chatBusy = false;
+                chatSubmit.removeAttribute('aria-disabled');
+                chatSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+                chatSubmitLabel.textContent = originalLabel;
+                // Safari 點按鈕不給焦點，按了取消的話，焦點不一定在 finish() 交給的 #chat-progress。
+                if (controller.signal.aborted || chatProgress.contains(document.activeElement)) chatInput.focus();
             }
         }
 
