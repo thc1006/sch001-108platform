@@ -186,7 +186,9 @@ jobs:
     permissions:
       contents: read
     # 這些指令只用 Node 內建模組與 repo 裡的模組，所以不安裝相依。加入第三方 import
-    # 時，要改回先跑閘門再 npm ci。
+    # 時，要改回先跑閘門再 npm ci。package.json 沒有指定 packageManager，所以
+    # package-manager-cache: false 現在不改變行為；日後指定了，setup-node 也不會在
+    # 不安裝相依的 job 自動開快取。
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -197,6 +199,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: '.node-version'
+          package-manager-cache: false
 
       - name: Validate competition data (schema only)
         run: npm run check:competitions
@@ -321,6 +324,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: '.node-version'
+          package-manager-cache: false
 
       - name: Fail fast when the deploy job did not succeed
         if: ${{ needs.deploy.result != 'success' }}
