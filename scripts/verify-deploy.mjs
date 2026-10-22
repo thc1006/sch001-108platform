@@ -117,6 +117,15 @@ const FRESH_MAX_AGE_S = Math.min(RECHECK_S + 30, 120);
 /** SHA 就縮短；其他（像「格式不合法」那種說明文字）原樣印出，不要攔腰切斷。 */
 const short = (s) => (/^[0-9a-f]{40}$/.test(s) ? s.slice(0, 12) : s);
 
+/**
+ * parseAge 照 RFC 9111 第 5.1 節讀 Age：清單只取第一個值，不合法就當成 0，不讓 NaN 把退版當成舊快取放過。
+ * @param {string|null} raw @returns {number}
+ */
+function parseAge(raw) {
+    const first = String(raw ?? '').split(',')[0].trim();
+    return /^\d+$/.test(first) ? Number(first) : 0;
+}
+
 console.log(`驗證線上站台是否已服務 ${want.slice(0, 12)}`);
 console.log(`  ${url}`);
 
@@ -143,7 +152,7 @@ async function fetchInfo() {
         // 請求標頭的 Cache-Control: no-cache / Pragma 同樣不會強制回源。
         // 唯一可用的新鮮度資訊是回應的 Age 標頭。
         const res = await fetch(url, { signal: ac.signal });
-        const age = Number(res.headers.get('age') || 0);
+        const age = parseAge(res.headers.get('age'));
         if (res.status !== 200) return { commit: '', label: `HTTP ${res.status}`, age };
         const info = await res.json();
         const commit = String(info.commit || '');
