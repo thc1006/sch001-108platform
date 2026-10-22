@@ -285,4 +285,63 @@ export const TASK_DEFINITIONS = [
             },
         },
     },
+    {
+        // 自主學習 › 選題靈感頁（src/pages/autonomous-learning/topic-ideas.astro）的「AI 個人化發想」。
+        // 研究方法與關鍵字在頁面上顯示成小標籤，只放短詞。
+        // 各欄的長度寫在指令裡，maxLength 只當保險，理由見 tasks.mjs 檔頭。
+        id: 'topic-ideas',
+        input: {
+            interests: { label: '興趣關鍵字', maxLength: 100 },
+        },
+        instructions: [
+            '你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的「興趣關鍵字」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題，放在 ideas 裡。每個主題包含：',
+            '- title：主題名稱，約 10～25 字',
+            '- description：簡短描述，約 50～120 字',
+            '- methods：建議研究方法 2～4 種，每種只寫簡短的方法名稱（約 2～12 字），不要加說明',
+            '- challenges：潛在挑戰 2～3 個，每個一句話（約 15～50 字）',
+            '- keywords：相關關鍵字 3～5 個，每個只寫一個簡短的詞（約 2～10 字）',
+        ].join('\n'),
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: {
+                    ideas: {
+                        type: 'array',
+                        minItems: 3,
+                        maxItems: 3,
+                        items: {
+                            type: 'object',
+                            properties: {
+                                title: { type: 'string', minLength: 1, maxLength: 80 },
+                                description: { type: 'string', minLength: 1, maxLength: 300 },
+                                methods: {
+                                    type: 'array',
+                                    minItems: 2,
+                                    maxItems: 4,
+                                    items: { type: 'string', minLength: 1, maxLength: 50 },
+                                },
+                                challenges: {
+                                    type: 'array',
+                                    minItems: 2,
+                                    maxItems: 3,
+                                    items: { type: 'string', minLength: 1, maxLength: 150 },
+                                },
+                                keywords: {
+                                    type: 'array',
+                                    minItems: 3,
+                                    maxItems: 5,
+                                    items: { type: 'string', minLength: 1, maxLength: 50 },
+                                },
+                            },
+                            required: ['title', 'description', 'methods', 'challenges', 'keywords'],
+                            additionalProperties: false,
+                        },
+                    },
+                },
+                required: ['ideas'],
+                additionalProperties: false,
+            },
+        },
+    },
 ];

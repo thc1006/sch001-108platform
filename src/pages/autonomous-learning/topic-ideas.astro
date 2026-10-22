@@ -68,14 +68,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <h2 class="text-2xl font-bold mb-2">1. ✨ AI 個人化發想</h2>
             <p class="text-gray-600 mb-6">輸入你的興趣（可以是多個，用逗號分隔），AI 將為你打造專屬的學習主題，並提供初步的研究藍圖。</p>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="ideaInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：旅行、心理學、環保">
+                <input type="text" id="ideaInput" maxlength="100" aria-label="你的興趣關鍵字" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：旅行、心理學、環保">
                 <button id="generateIdeaBtn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                     <span>產生靈感</span>
                 </button>
             </div>
-            <div id="ideaResult" class="mt-6 space-y-4">
-                <!-- AI generated content will be injected here -->
+            {/* 計時器與取消鈕所在的進度區塊放在工作區，結果區只放最後的結果或訊息。
+                Safari 搭配 VoiceOver 時，live region 裡 aria-live="off" 的子樹有變化也會唸出來。 */}
+            <div class="mt-6">
+                <div id="ideaWorkspace"></div>
+                <div id="ideaResult" class="space-y-4" aria-live="polite"></div>
             </div>
         </section>
 
@@ -108,137 +111,61 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
     </main>
 
-    <script is:inline src="https://js.puter.com/v2/"></script>
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         // --- AI Generator Logic ---
+        // 走 AI 閘道的 topic-ideas 任務，prompt 與輸出格式在 ai-gateway/src/task-catalog.mjs。
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaInput = document.getElementById('ideaInput');
+        const ideaWorkspace = document.getElementById('ideaWorkspace');
         const ideaResult = document.getElementById('ideaResult');
+        const ideaBtnLabel = generateIdeaBtn.querySelector('span');
+        // platform-ai.js 沒載入時沒有 describeError 可用。字句與它對未知錯誤的說法相同。
+        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-        function showLoader(element) {
-            element.textContent = '';
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex justify-center items-center py-4';
-            const loader = document.createElement('div');
-            loader.className = 'loader';
-            wrapper.appendChild(loader);
-            element.appendChild(wrapper);
+        function showMessage(text, tone = 'error') {
+            ideaResult.textContent = '';
+            const p = document.createElement('p');
+            p.className = (tone === 'error' ? 'text-red-500' : 'text-gray-600') + ' text-center';
+            p.textContent = text;
+            ideaResult.appendChild(p);
         }
 
         generateIdeaBtn.addEventListener('click', async () => {
             const interests = ideaInput.value.trim();
             if (!interests) {
-                ideaResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-                errorP.textContent = '請先輸入你的興趣關鍵字！';
-                ideaResult.appendChild(errorP);
+                showMessage('請先輸入你的興趣關鍵字！');
                 return;
             }
 
-            // 雙擊防護
-            const button = generateIdeaBtn;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.textContent = '載入中...';
+            // 雙擊防護。只換 <span> 的文字，按鈕的圖示才不會被清掉。
+            const originalLabel = ideaBtnLabel.textContent;
+            generateIdeaBtn.disabled = true;
+            generateIdeaBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            ideaBtnLabel.textContent = '產生中…';
 
-            showLoader(ideaResult);
-
-            const prompt = `你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的興趣關鍵字：「${interests}」，為他發想 3 個具體、創新且可執行的跨領域自主學習主題。每個主題都必須包含以下項目：1. 主題名稱 (title), 2. 簡短描述 (description), 3. 建議研究方法 (methods), 4. 潛在挑戰 (challenges), 5. 相關關鍵字 (keywords)。
-
-請以 JSON 格式回應，包含以下欄位：
-{
-  "ideas": [
-    {
-      "title": "主題名稱",
-      "description": "簡短描述",
-      "methods": ["方法1", "方法2"],
-      "challenges": ["挑戰1", "挑戰2"],
-      "keywords": ["關鍵字1", "關鍵字2"]
-    },
-    // ... 其他主題
-  ]
-}
-
-請確保回應是有效的 JSON 格式。`;
-
+            ideaResult.textContent = '';
+            const controller = new AbortController();
+            let progress = null;
             try {
-                const response = await PlatformAI.callGeminiWithFallback(prompt, {
-                    signal: AbortSignal.timeout(30000)
+                // PlatformAI 不存在時這行就會丟錯，放在 try 裡 finally 才會恢復按鈕。
+                progress = PlatformAI.mountProgress(ideaWorkspace, { onCancel: () => controller.abort() });
+                const { result } = await PlatformAI.runTask('topic-ideas', { interests }, {
+                    signal: controller.signal,
+                    onProgress: progress.update,
                 });
-
-                // Extract content from response
-                let responseText = '';
-                if (response.message && response.message.content) {
-                    responseText = response.message.content;
-                } else if (typeof response === 'string') {
-                    responseText = response;
-                } else {
-                    responseText = JSON.stringify(response);
-                }
-
-                // Try to parse JSON from the response
-                let parsedJson;
-                try {
-                    // Look for JSON in the response
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        parsedJson = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error("No JSON found in response");
-                    }
-                } catch (parseError) {
-                    // If JSON parsing fails, create a fallback structure
-                    console.log("JSON parsing failed, creating fallback structure");
-                    parsedJson = {
-                        ideas: [
-                            {
-                                title: "範例主題1",
-                                description: "基於您的興趣的範例描述",
-                                methods: ["方法1", "方法2"],
-                                challenges: ["挑戰1", "挑戰2"],
-                                keywords: ["關鍵字1", "關鍵字2"]
-                            },
-                            {
-                                title: "範例主題2",
-                                description: "另一個範例描述",
-                                methods: ["方法A", "方法B"],
-                                challenges: ["挑戰A", "挑戰B"],
-                                keywords: ["關鍵字A", "關鍵字B"]
-                            },
-                            {
-                                title: "範例主題3",
-                                description: "第三個範例描述",
-                                methods: ["方法X", "方法Y"],
-                                challenges: ["挑戰X", "挑戰Y"],
-                                keywords: ["關鍵字X", "關鍵字Y"]
-                            }
-                        ]
-                    };
-                }
-
-                displayAIdeas(parsedJson.ideas);
-
+                progress.finish();
+                ideaWorkspace.textContent = '';
+                displayAIdeas(result.ideas);
             } catch (error) {
-                console.error("Error calling Puter.js:", PlatformAI.formatError(error), error);
-                ideaResult.textContent = '';
-                const errorP = document.createElement('p');
-                errorP.className = 'text-red-500 text-center';
-
-                if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-                    errorP.textContent = '請求超時，請檢查網路連線後重試。';
-                } else {
-                    errorP.textContent = '抱歉，產生靈感時發生錯誤。請稍後再試。';
-                }
-
-                ideaResult.appendChild(errorP);
+                if (progress) progress.finish();
+                ideaWorkspace.textContent = '';
+                const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                // 恢復按鈕狀態
-                button.disabled = false;
-                button.classList.remove('opacity-50', 'cursor-not-allowed');
-                button.textContent = originalText;
+                generateIdeaBtn.disabled = false;
+                generateIdeaBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                ideaBtnLabel.textContent = originalLabel;
             }
         });
 
@@ -451,18 +378,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             background: -webkit-linear-gradient(45deg, #3b82f6, #14b8a6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         .matrix-btn {
             transition: all 0.2s ease-in-out;

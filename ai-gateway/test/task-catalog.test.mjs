@@ -321,3 +321,64 @@ test('learning-path：指令要求剛好 4 個步驟、依先後排列（頁面�
         assert.ok(maxLength >= 2 * upper, `${name} 的 maxLength ${maxLength} 不到指令上限 ${upper} 字的兩倍`);
     }
 });
+
+test('topic-ideas：興趣關鍵字最多 100 字（頁面的輸入框同樣限制 100）', () => {
+    const task = catalog.get('topic-ideas');
+    assert.equal(validateInput(task, { interests: '旅'.repeat(100) }).interests.length, 100);
+    assert.throws(() => validateInput(task, { interests: '旅'.repeat(101) }), { code: 'invalid_input', field: 'interests' });
+});
+
+test('topic-ideas：剛好 3 個主題，每個主題的五個欄位都要有，個數不符或空字串都不收', () => {
+    const task = catalog.get('topic-ideas');
+    const idea = {
+        title: '旅行中的心理復原力',
+        description: '探討自助旅行如何影響高中生的壓力調適。',
+        methods: ['問卷調查', '深度訪談'],
+        challenges: ['樣本不易取得。', '心理變化難以量化。'],
+        keywords: ['心理復原力', '自我效能', '背包客'],
+    };
+    const most = { ...idea, methods: ['甲', '乙', '丙', '丁'], challenges: ['甲', '乙', '丙'], keywords: ['甲', '乙', '丙', '丁', '戊'] };
+    for (const ok of [{ ideas: [idea, idea, idea] }, { ideas: [most, most, most] }]) {
+        assert.deepEqual(finalizeOutput(task, JSON.stringify(ok)), ok);
+    }
+    const third = (changes) => ({ ideas: [idea, idea, { ...idea, ...changes }] });
+    const { keywords, ...withoutKeywords } = idea;
+    for (const bad of [
+        { ideas: [idea, idea] },
+        { ideas: [idea, idea, idea, idea] },
+        third({ methods: ['問卷調查'] }),
+        third({ methods: [...most.methods, '戊'] }),
+        third({ challenges: ['樣本不易取得。'] }),
+        third({ challenges: [...most.challenges, '丁'] }),
+        third({ keywords: ['甲', '乙'] }),
+        third({ keywords: [...most.keywords, '己'] }),
+        third({ title: '' }),
+        third({ description: ' ' }),
+        third({ methods: ['問卷調查', ''] }),
+        third({ challenges: ['樣本不易取得。', ''] }),
+        third({ keywords: ['心理復原力', '自我效能', ' '] }),
+        third({ extra: 'x' }),
+        { ideas: [idea, idea, withoutKeywords] },
+        { ideas: [idea, idea, idea], extra: 'x' },
+    ]) {
+        assert.throws(() => finalizeOutput(task, JSON.stringify(bad)), { code: 'format' });
+    }
+});
+
+// 照指令寫的輸出要過得了 schema：個數一致，字數上限不超過 maxLength 的一半，因為 maxLength 是硬截斷。
+test('topic-ideas：指令寫明每個欄位的字數，個數與 schema 一致', () => {
+    const { instructions, output } = catalog.get('topic-ideas');
+    const { ideas } = output.schema.properties;
+    assert.match(instructions, new RegExp(`發想 ${ideas.minItems} 個`));
+    assert.equal(ideas.minItems, ideas.maxItems);
+    for (const [name, spec] of Object.entries(ideas.items.properties)) {
+        const line = instructions.split('\n').find((l) => l.startsWith(`- ${name}：`)) ?? '';
+        const words = /約 (\d+)～(\d+) 字/.exec(line);
+        assert.ok(words, `${name} 沒寫字數`);
+        const maxLength = spec.type === 'array' ? spec.items.maxLength : spec.maxLength;
+        assert.ok(Number(words[2]) * 2 <= maxLength, `${name}：指令寫到 ${words[2]} 字，maxLength 是 ${maxLength}`);
+        if (spec.type === 'array') assert.match(line, new RegExp(`${spec.minItems}～${spec.maxItems} [種個]`), name);
+    }
+    assert.match(instructions, /methods：[^\n]*不要加說明/);
+    assert.match(instructions, /challenges：[^\n]*每個一句話/);
+});
