@@ -215,7 +215,7 @@ for (const s of scripted) {
 }
 
 // ── 2. 孤兒：核准清單裡已經沒有對應套件的條目 ──
-// 留著不會立刻出事，但規則活得比前提久正是這個 repo 反覆踩到的坑（見 dependabot.yml）。
+// 留著不會立刻出事，但規則活得比前提久正是這個 repo 反覆踩到的坑。
 const names = new Set(scripted.map((s) => s.name));
 for (const k of Object.keys(allow)) {
     if (!names.has(splitKey(k).name)) {
