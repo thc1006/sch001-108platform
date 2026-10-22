@@ -101,6 +101,8 @@ test('200 與轉址後 200 → healthy', async () => {
 // resolveAndVerify 的 catch 當成 DNS 錯誤，失敗訊息會指錯地方。
 for (const { injected, reported, verdict } of [
     { injected: 'ENOTFOUND', reported: 'ENOTFOUND', verdict: 'dead' },
+    // Windows 上名稱存在、卻沒有位址記錄（WSANO_DATA）時，Node 回報 ENOENT，Linux 則是 ENOTFOUND。
+    { injected: 'ENOENT', reported: 'ENOTFOUND', verdict: 'dead' },
     // 暫時失敗不是失效。當成 ENOTFOUND 的話，resolver 一抖就會開 issue。
     { injected: 'EAI_AGAIN', reported: 'EAI_AGAIN', verdict: 'unverified' },
 ]) {

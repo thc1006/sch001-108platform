@@ -112,6 +112,8 @@ test('三態：200 與轉址後 200 → healthy', async () => {
 // DNS 這一層注入。斷言寫在 mock 外面，mock 裡丟出的斷言錯誤會被當成 DNS 錯誤。
 for (const { injected, reported, verdict } of [
     { injected: 'ENOTFOUND', reported: 'ENOTFOUND', verdict: 'dead' },
+    // Windows 上名稱存在、卻沒有位址記錄（WSANO_DATA）時，Node 回報 ENOENT，Linux 則是 ENOTFOUND。
+    { injected: 'ENOENT', reported: 'ENOTFOUND', verdict: 'dead' },
     // 暫時失敗不是失效。當成 ENOTFOUND 的話，resolver 一抖就會開 issue。
     { injected: 'EAI_AGAIN', reported: 'EAI_AGAIN', verdict: 'unverified' },
 ]) {
@@ -131,6 +133,15 @@ for (const { injected, reported, verdict } of [
         assert.equal(isBlockedResult(r), false, 'DNS 失敗不是位址政策封鎖');
     });
 }
+
+test('三態：DNS 沒有回任何位址 → 視同 ENOTFOUND（dead），不是封鎖', async (t) => {
+    const lookup = t.mock.method(dns.promises, 'lookup', async () => []);
+    const r = await probe('https://dns-empty.example/');
+    assert.equal(lookup.mock.callCount(), 1, '必須真的走到 DNS 查詢');
+    assert.equal(r.code, 'ENOTFOUND');
+    assert.equal(classifyLink(r), 'dead');
+    assert.equal(isBlockedResult(r), false, '沒有答案不是位址政策封鎖');
+});
 
 test('三態：逾時 → unverified', async () => {
     const slow = await probe(`${base}/slow`, AbortSignal.timeout(300), LOOPBACK_OK);
