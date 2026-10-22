@@ -95,7 +95,7 @@ jobs:
         run: node scripts/check-install-gate.mjs
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --fund=false
 
       # 網址盤點是 build 產物的副產品。這裡跑的是與 ci.yml 完全相同的兩個指令，
       # 所以被檢查的網址就是實際會被部署出去的那一份頁面上的網址。
