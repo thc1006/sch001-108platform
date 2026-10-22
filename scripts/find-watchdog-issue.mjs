@@ -4,19 +4,19 @@
  *
  * 用法：
  *   node scripts/find-watchdog-issue.mjs [--marker '<!-- xxx-watchdog:v1 -->']
- *   （省略 --marker 時用競賽看門狗的標記，維持既有呼叫端不變）
+ *   省略 --marker 時用競賽看門狗的標記，competitions-check.yml 就不傳。
  *
  * 輸出（stdout，供 workflow 取用）：
  *   create          沒有可接管的 issue，應新開
  *   comment <n>     接管 #n
  *
- * 找到多於一個 canonical issue 時以 exit 2 失敗並列出全部——安靜地挑第一個會讓
- * 另一個 issue 永遠收不到報告。
+ * 找到多於一個 canonical issue 時以 exit 2 失敗並列出全部。安靜地挑第一個，
+ * 另一個 issue 就永遠收不到報告。
  */
 import { selectCanonicalIssue, WATCHDOG_MARKER } from './watchdog-issue.lib.mjs';
 
-// 每支排程都要傳自己的標記。若傳了 --marker 卻沒有值，寧可中止也不要退回預設——
-// 退回預設會讓外部連結看門狗去接管競賽看門狗的 issue，而且完全沒有訊號。
+// 競賽看門狗以外的排程都要傳自己的標記。傳了 --marker 卻沒有值時中止，不退回預設標記，
+// 否則會拿競賽看門狗的標記比對，認不出自己開的 issue，每次回報都另開一個，也不報錯。
 const markerFlag = process.argv.indexOf('--marker');
 if (markerFlag >= 0 && !process.argv[markerFlag + 1]) {
     console.error('--marker 後面必須接標記字串');

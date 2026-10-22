@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /**
- * 公民科技專案地圖資料看門狗
- * --------------------------------------------------------------
- * 檢查 public/civic-tech-map/projects.json：
+ * 公民科技專案地圖資料看門狗，檢查 public/civic-tech-map/projects.json：
  *   1. JSON 格式與必填欄位是否正確
  *   2. id 格式（小寫英數與連字號）與唯一性
  *   3. status 欄位值是否在允許清單內
@@ -36,8 +34,8 @@ const REPORT_PATH = process.env.CIVIC_TECH_REPORT || 'civic-tech-report.md';
 
 // 必填文字欄位:必須存在且為非空字串
 const TEXT_FIELDS = ['id', 'name', 'org', 'url', 'description'];
-// 必填陣列欄位:必須存在且為陣列。competencies / sdgs / tags 三個分類欄位改由
-// scripts/taxonomy.lib.mjs 的 validateTaxonomyFields 一手負責,避免同一個欄位
+// 必填陣列欄位：必須存在且為陣列。competencies / sdgs / tags 三個分類欄位由
+// scripts/taxonomy.lib.mjs 的 validateTaxonomyFields 一手負責，避免同一個欄位
 // 有兩個檢查者卻各報一次錯。
 const ARRAY_FIELDS = ['subjects'];
 const ALLOWED_STATUS = ['active', 'maintenance', 'dormant'];
@@ -139,9 +137,9 @@ list.forEach((proj, index) => {
         });
     }
 
-    // competencies / sdgs / tags:代碼合法性、重複、型別。合法代碼與中文標籤的
-    // 唯一來源是 scripts/taxonomy.json,build-search-index.js 讀的是同一份——
-    // 先前這裡自己寫了一條 /^[ABC][1-3]$/,與索引端各自維護,必然漂移。
+    // competencies / sdgs / tags：代碼合法性、重複、型別。合法代碼與中文標籤的
+    // 唯一來源是 scripts/taxonomy.json，build-search-index.js 讀的是同一份；
+    // 這裡和索引端各寫一份規則的話，遲早會漂移。
     validateTaxonomyFields(proj, label, schemaErrors, {
         requireCompetencies: true,
         requireSdgs: true,
@@ -177,14 +175,13 @@ list.forEach((proj, index) => {
 
 const needsAttention = schemaErrors.length > 0 || dormant.length > 0 || linkWarnings.length > 0;
 
-// ---- 主控台摘要 ----
 console.log(`公民科技專案資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
 console.log(`  專案總數：${list.length}`);
 console.log(`  欄位錯誤：${schemaErrors.length}`);
 console.log(`  連結提醒：${linkWarnings.length}`);
 console.log(`  待查證　：${dormant.length}（status 為 dormant）`);
 
-// ---- Markdown 報告(供 workflow 開 issue 用)----
+// Markdown 報告，workflow 用它開 issue 或在既有 issue 留言。
 const lines = ['## 公民科技專案地圖資料檢查報告', ''];
 lines.push(`- 檢查日期：${taipeiToday}（台灣時間）`);
 lines.push(`- 資料最後更新：${data.lastUpdated || '未標記'}`);
@@ -212,7 +209,6 @@ if (!needsAttention) {
 
 await writeFile(REPORT_PATH, lines.join('\n'), 'utf8');
 
-// ---- 回傳結果給 GitHub Actions ----
 if (process.env.GITHUB_OUTPUT) {
     await appendFile(process.env.GITHUB_OUTPUT, `needs_attention=${needsAttention}\n`);
 }

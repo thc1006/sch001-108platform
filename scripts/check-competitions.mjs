@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /**
- * 競賽資料看門狗
- * --------------------------------------------------------------
- * 檢查 public/advanced-resources/competitions.json：
+ * 競賽資料看門狗，檢查 public/advanced-resources/competitions.json：
  *   1. JSON 格式與必填欄位是否正確
  *   2. category / level 欄位值是否在允許清單內
  *   3. deadline 是否為合法日期
@@ -39,22 +37,22 @@ import {
     validateSchedule,
 } from './check-competitions.lib.mjs';
 // 探測與分類走共用的 link-health.lib.mjs（含 SSRF 防護）。刻意「不」用
-// check-competitions.lib.mjs 匯出的那個相容別名——別名為了讓既有單元測試打得到
+// check-competitions.lib.mjs 匯出的那個相容別名：別名為了讓單元測試打得到
 // 本機 http server 而放寬了 loopback，正式執行不該帶著那個放寬。
 import { runProbes, classifyLink, describeResult, isBlockedResult } from './link-health.lib.mjs';
 
-// 遷移到 Astro 後,競賽資料的單一家為 public/(會被 astro build 複製進 dist/、
-// 供頁面 client fetch);看門狗改讀此處。
+// 競賽資料只放在 public/，astro build 會把它複製進 dist/ 供頁面在瀏覽器 fetch，
+// 看門狗讀的也是這一份。
 const DATA_PATH = new URL('../public/advanced-resources/competitions.json', import.meta.url);
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
 // 「狀態是未知」的條目多久該回去看一次。
 //
-// 這一桶是現行機制完全沒有覆蓋到的：沒有可行動的截止日（deadline 為空或已過），
+// 這一桶是「已過期」和「下屆將近」兩段都沒有覆蓋到的：沒有確切的截止日（deadline 為空），
 // 也沒有 cycle.closes（所以下面那個「下屆將近」的迴圈會直接 continue 跳過）。
-// 2026-08-29 實測，119 筆裡有 **90 筆**落在這裡，而且沒有一筆帶已過期的 deadline
-// ——連 🔴 那一段也抓不到它們。沒有任何東西會叫人回去看旺宏 2027 開了沒。
+// 2026-08-29 實測，119 筆裡有 90 筆落在這裡，而且沒有一筆帶已過期的 deadline，
+// 連 🔴 那一段也抓不到它們。少了這一桶，不會有任何東西叫人回去看旺宏 2027 開了沒。
 //
 // 判準刻意用 sourceCheckedAt 而不是推算的週期：官網說「尚未公布」時，那句話本身
 // 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
@@ -120,7 +118,8 @@ const todayUTC = Date.UTC(todayYear, todayMonth - 1, todayDay);
 
 const schemaErrors = [];
 const expired = [];
-const staleCycle = []; // 已截止但有 cycle、且下屆將近——提醒去查本屆確切日期
+// 有 cycle.closes、下屆將近，卻沒有未來確切日期的條目，要提醒去查本屆的確切日期。
+const staleCycle = [];
 const expiringSoon = [];
 
 list.forEach((comp, index) => {
@@ -167,7 +166,7 @@ list.forEach((comp, index) => {
     }
     validateCycle(comp.cycle, label, schemaErrors);
     // 報名時程與賽事日期（deadlineAt / opensAt / eventStartsAt / eventEndsAt /
-    // registrationNote / sourceCheckedAt）——皆選填，但填了就必須合法且自洽。
+    // registrationNote / sourceCheckedAt）皆選填，但填了就必須合法且自洽。
     validateSchedule(comp, label, schemaErrors);
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」
@@ -202,37 +201,35 @@ list.forEach((comp, index) => {
     // 會在跨時區的競賽上差半天到一天。上面的 validateSchedule 已確保兩者日期部分
     // 一致，所以剩餘天數仍用日曆日算，與頁面顯示的「剩 N 天」保持同一套語意。
     //
-    // 注意不要在這裡提早 return：那會連「即將截止」的提醒一起跳過，看門狗就再也
-    // 不會提醒任何有精確時刻的競賽——本檔存在的理由正是那個提醒。
+    // 這裡不能提早 return：那會連「已過期」和「即將截止」的判斷一起跳過，有精確時刻
+    // 的競賽就不會再出現在報告裡。
     const exactMs = typeof comp.deadlineAt === 'string' ? Date.parse(comp.deadlineAt) : NaN;
     const hasExact = !Number.isNaN(exactMs);
     const diffDays = Math.ceil((deadlineUTC - todayUTC) / 86_400_000);
     const past = hasExact ? exactMs < Date.now() : diffDays < 0;
 
     if (past) {
-        // 已過的截止日若配有 cycle，代表「本屆已結束、下屆時間可推算」——那是有效
-        // 狀態而非過時資料，不再要求維護者把 deadline 清空（清空反而丟掉資訊，也是
-        // #63→#66→#68 反覆出現的原因）。下屆逼近的提醒統一在迴圈後處理。
+        // 已過的截止日若配有 cycle.closes，代表「本屆已結束、下屆時間可推算」，那是有效
+        // 狀態而非過時資料，不要求維護者把 deadline 清空（清空反而丟掉資訊，見
+        // #63、#66、#68）。下屆逼近的提醒統一在迴圈後處理。
         if (!comp.cycle?.closes) expired.push({ label, deadline: comp.deadline });
     } else if (diffDays <= SOON_DAYS) {
         expiringSoon.push({ label, deadline: comp.deadline, diffDays });
     }
 });
 
-// ---- 年度週期：下屆逼近時提醒去查確切日期 ----
-// 必須獨立於 deadline 的處理之外。先前這段寫在「deadline 已過」的分支裡，導致
-// 只有已填過 deadline 的條目會被提醒；但 cycle 的價值正是「沒有確切日期、只知道
-// 大概何時」，19 筆有週期的條目中有 15 筆 deadline 為空，那批永遠不會被提醒——
-// 剛好漏掉最需要提醒的一群。
+// 年度週期：下屆逼近時提醒去查確切日期。這段獨立於上面 deadline 的處理：寫在
+// 「deadline 已過」的分支裡的話，只有填了 deadline 的條目會被提醒，但 cycle 的價值
+// 正是「沒有確切日期、只知道大概何時」，deadline 為空的那批反而永遠不會被提醒。
 for (const comp of list) {
     if (comp === null || typeof comp !== 'object') continue;
     const closes = comp.cycle?.closes;
     if (!closes) continue;
     const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
 
-    // 已經填了「未來的」確切日期就不必提醒——那正是提醒想要的結果。
+    // 已經填了「未來的」確切日期就不必提醒，那正是提醒想要的結果。
     // 已過的日期則作為 lastEdition 傳入：不傳的話，月份精度的週期（如 OPhO 的 08）
-    // 會把同月月底誤算成「下屆將近」。推算方式見 nextOccurrenceUTC——它會先把本屆
+    // 會把同月月底誤算成「下屆將近」。推算方式見 nextOccurrenceUTC，它會先把本屆
     // 對應回最近的一個週期實例，而不是直接用「本屆年份 + 1」。
     let lastEditionUTC = null;
     if (typeof comp.deadline === 'string' && DATE_RE.test(comp.deadline)) {
@@ -255,16 +252,14 @@ for (const comp of list) {
     }
 }
 
-// ---- 狀態未知且太久沒重查 ----
 // 選取邏輯放在 lib 裡（selectNeedsRecheck），這樣它可以被單元測試釘住；
 // 腳本這邊只負責分級與輸出。
 const needsRecheck = selectNeedsRecheck(list, todayUTC, RECHECK_DAYS);
 const recheckUrgent = needsRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
 
-// ---- 連結健檢 ----
 // 競賽頁是資料驅動的（前端 fetch competitions.json 後才渲染卡片），這些 url
-// 不會出現在 astro build 的 HTML 裡，link-checker.yml 的 lychee 掃不到，因此
-// 官網換網域或改版時連結會無聲失效。改由本看門狗直接連線檢查。
+// 不會出現在 astro build 的 HTML 裡，ci.yml 的 lychee 掃不到，官網換網域或改版時
+// 連結會無聲失效，所以由本看門狗直接連線檢查。
 //
 // 判定原則見 check-competitions.lib.mjs 的 classifyLink()：只有「網域解析不到」與
 // 404/410 才算失效並觸發 issue，403/429/5xx/逾時歸為「無法判定」只做記錄。
@@ -285,8 +280,8 @@ if (!process.argv.includes('--no-link-check')) {
         .map((comp, index) => ({ comp, index }))
         .filter(({ comp }) => comp && typeof comp.url === 'string' && /^https?:\/\//i.test(comp.url));
 
-    // 併發、預算、逾時、失效前重試、起點輪替全部交給共用的 runProbes——先前這裡
-    // 有一份自己的實作，全站健檢落地後就會變成第二份，兩份遲早長出不同語意。
+    // 併發、預算、逾時、失效前重試、起點輪替全部交給和全站健檢共用的 runProbes，
+    // 各寫一份遲早會長出不同語意。
     // 每週從不同位置起跑：若 runner 網路變差而經常用完預算，固定從 0 開始會讓
     // JSON 尾端永遠檢查不到；以「當年第幾週」輪替起點可讓覆蓋率長期均勻。
     const weekIndex = Math.floor((todayUTC - Date.UTC(todayYear, 0, 1)) / (7 * 86_400_000));
@@ -302,7 +297,7 @@ if (!process.argv.includes('--no-link-check')) {
         const result = results[i];
         if (!result) continue; // 預算用盡，這筆沒檢查到（已計入 skipped）
 
-        // 被位址政策擋下的要單獨列出、不可混進「多為防爬、不需處理」那一堆——
+        // 被位址政策擋下的要單獨列出，不可混進「多為防爬、不需處理」那一堆：
         // competitions.json 裡出現指向 loopback／私網／雲端 metadata 的網址，
         // 意義是資料被動了手腳或寫錯，不是站台防爬。
         if (isBlockedResult(result)) {
@@ -327,13 +322,12 @@ const needsAttention =
     deadLinks.length > 0 ||
     blockedLinks.length > 0 ||
     staleCycle.length > 0 ||
-    // 只有逾 RECHECK_URGENT_DAYS 的才觸發通知。90 天那一批放進報告就好——
-    // 90 筆條目每季一起越過門檻，一旦每週開一次 issue，維護者第三週就會學會
-    // 忽略整個看門狗，那是這個 repo 已經記取過的教訓。
+    // 只有逾 RECHECK_URGENT_DAYS 的才觸發通知，90 天那一批放進報告就好。
+    // 90 筆條目每季一起越過門檻，要是每週都為它們通知，維護者第三週就會學會
+    // 忽略整個看門狗。
     recheckUrgent.length > 0 ||
     !coverageComplete;
 
-// ---- 主控台摘要 ----
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
 console.log(`  競賽總數：${list.length}`);
 console.log(`  欄位錯誤：${schemaErrors.length}`);
@@ -349,7 +343,7 @@ console.log(`  無法判定：${unverifiedLinks.length}`);
 if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（SSRF 政策擋下，必須處理）`);
 if (skippedLinks) console.log(`  未檢查　：${skippedLinks}（連線檢查逾時間預算）`);
 
-// ---- Markdown 報告（供 workflow 開 issue 用）----
+// Markdown 報告，workflow 用它開 issue 或在既有 issue 留言。
 const lines = ['## 競賽資料檢查報告', ''];
 lines.push(`- 檢查日期：${taipeiToday}（台灣時間）`);
 lines.push(`- 資料最後更新：${data.lastUpdated || '未標記'}`);
@@ -406,7 +400,6 @@ if (unverifiedLinks.length) {
     for (const e of unverifiedLinks) lines.push(`- ${e.label}　${e.reason}：${e.url}`);
     lines.push('', '</details>', '');
 }
-// 有未檢查的連結時不能報「一切正常」——那只代表沒查完，不代表沒問題。
 if (needsRecheck.length) {
     const urgent = recheckUrgent.length;
     lines.push(
@@ -437,13 +430,13 @@ if (needsRecheck.length) {
     lines.push('');
 }
 
+// 有未檢查的連結時不能報「一切正常」，那只代表沒查完，不代表沒問題。
 if (!needsAttention && !expiringSoon.length && !skippedLinks) {
     lines.push('✅ 一切正常，沒有過期、欄位錯誤或連結失效。', '');
 }
 
 await writeFile(REPORT_PATH, lines.join('\n'), 'utf8');
 
-// ---- 回傳結果給 GitHub Actions ----
 if (process.env.GITHUB_OUTPUT) {
     await appendFile(
         process.env.GITHUB_OUTPUT,
@@ -457,7 +450,7 @@ if (!coverageComplete) {
 console.log(needsAttention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');
 
 // --strict：供 PR CI 使用，欄位錯誤即讓 job 失敗。
-// 只看 schemaErrors（結構性錯誤，是這次改動造成的），不看 expired／deadLinks——
+// 只看 schemaErrors（結構性錯誤，是這次改動造成的），不看 expired／deadLinks：
 // 那兩者取決於外部世界隨時間變化，不該讓無關的 PR 無故變紅。
 if (process.argv.includes('--strict') && schemaErrors.length > 0) {
     console.error(`\n❌ --strict：發現 ${schemaErrors.length} 項欄位錯誤，請修正 competitions.json。`);

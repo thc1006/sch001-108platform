@@ -2,46 +2,30 @@
 /**
  * 逐字引文稽核：把 competitions.json 裡的「官網逐字原文」拿回官方來源比對。
  *
- * ── 這支工具刻意不接 CI ──
- *
- * 它要連幾百個外站、要跑幾分鐘，而且**它的「未命中」不是一個可以直接行動的結論**。
- * 接進 CI 只會製造每週都紅、每週都得人工判讀的噪音，最後被關掉。
+ * 這支工具刻意不接 CI。它要連幾百個外站、要跑幾分鐘，而且它的「未命中」不是一個可以
+ * 直接行動的結論。接進 CI 只會製造每週都紅、每週都得人工判讀的噪音，最後被關掉。
  * 定位是「定期抽樣複查時人工執行的稽核工具」，跟 check-vendor-size.mjs --update 同一類。
  *
  *   node scripts/audit-quote-freshness.mjs            # 全部
  *   node scripts/audit-quote-freshness.mjs --only=AIME  # 只查標題含該字串的
  *   node scripts/audit-quote-freshness.mjs --json      # 輸出 JSON 給後續處理
  *
- * ── 它為什麼長這樣：五輪實測逼出來的 ──
+ * 抓取方式依 2026-08-29 對全庫 155 條引文／70 個條目的實測決定：
+ *   - 引文大量來自子頁。Purple Comet 的引文在 /information，url 欄位是首頁，/rules 又掛在
+ *     /information 底下，所以從 url 那一頁往下走兩層，找齊就停。
+ *   - 抓取用 curl。leetcode.com 對 Node 回 403、對 curl 回 200：UA、路徑、HTTP 版本全部
+ *     排除之後，剩下的差異是 TLS 指紋，Cloudflare 認得出 Node 的 ClientHello，換 header 修不掉。
+ *   - 也抓 PDF。GENIUS Olympiad 的資格引文在該站 9 個 HTML 頁面出現 0 次，disciplines.html
+ *     寫的是「age between 13-18」；那句逐字在官方 GENIUS_Rules.pdf 的 ELIGIBILITY 段落裡，
+ *     而 13-18 是陪同人規則的門檻，兩者不衝突。競賽規則常常就住在 PDF 裡。
  *
- * 2026-08-29 第一次跑全庫（155 條引文／70 個條目），每一輪都是因為「找不到」
- * 的原因被查清楚才改的：
- *
- *   一 只抓 url 欄位那一頁            命中 49／155
- *     → 引文大量來自子頁。Purple Comet 的引文在 /information，url 欄位是首頁。
- *   二 加一層同站子頁                 再命中 36
- *     → 還是不夠。/rules 掛在 /information 底下，不在首頁。
- *   三 改兩層 BFS ＋ 找齊就停          再命中 9
- *     → 有些站 Node 根本連不上。
- *   四 改用 curl                      再命中 11
- *     → leetcode.com 對 Node 回 403、對 curl 回 200：UA、路徑、HTTP 版本全部
- *        排除之後，剩下的差異是 TLS 指紋，Cloudflare 認得出 Node 的 ClientHello。
- *        換 header 修不掉，只能換抓取器。
- *   五 加入 PDF ＋ 修爬取順序          再命中 2
- *     → 我差一點發布一個假指控：GENIUS Olympiad 的資格引文在該站 9 個 HTML 頁面
- *        出現 0 次，disciplines.html 寫的是「age between 13-18」。實際上那句逐字
- *        在官方 GENIUS_Rules.pdf 的 ELIGIBILITY 段落裡，而 13-18 是**陪同人規則**
- *        的門檻，兩者不衝突。競賽規則常常就住在 PDF 裡。
- *
- * 最終 107／155（69%）逐字找到，48 條未命中，而那 48 條逐一查證後**沒有一條是
- * 資料錯誤**：16 條的站台是前端渲染（工具看不到內容）、1 條擋機器人、
+ * 那次 107／155（69%）逐字找到，48 條未命中，而那 48 條逐一查證後沒有一條是
+ * 資料錯誤：16 條的站台是前端渲染（工具看不到內容）、1 條擋機器人、
  * 31 條是站台可讀但引文在爬取範圍外（子頁更深、或引文本來就來自別的來源，
  * 例如條目在記錄「被接管的舊網域回了什麼」或「http:// port 80 回了什麼」）。
  *
- * ── 所以它的輸出要怎麼讀 ──
- *
- * **`absent` 不等於「引文是錯的」。** 它等於「這支工具在它走過的範圍內沒找到」。
- * 要據以修改資料，必須人工再查一次，而且要先問「這句話原本是從哪裡抄來的」。
+ * 所以 `absent` 不等於「引文是錯的」，它等於「這支工具在它走過的範圍內沒找到」。
+ * 要據以修改資料，必須人工再查一次，而且要先問「這句話是從哪裡抄來的」。
  */
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
@@ -59,13 +43,10 @@ const MAX_PDFS = 12;
 const CONCURRENCY = 6;
 const BUDGET_MS = 200_000;
 
-// ── 正規化 ────────────────────────────────────────────────
-//
-// 字元類一律用 \uXXXX。**絕對不要在這裡放肉眼看不出來的字面字元**：
-// 這支工具第一版就是這樣瞎掉的——空白字元類寫成字面的 U+00A0／U+2000／U+202F，
-// 寫檔過程中被正規化成普通空白，於是類變成 [U+0020-U+200B]，涵蓋全部 ASCII。
-// norm() 把英文引文壓成空字串，而 "x".includes("") 恆為真，
-// 於是 97 條引文全部被判「精確命中」，實際上在比對空字串。
+// 字元類一律用 \uXXXX，不要在這裡放肉眼看不出來的字面字元：空白字元類寫成字面的
+// U+00A0／U+2000／U+202F 的話，寫檔過程中可能被正規化成普通空白，類就變成
+// [U+0020-U+200B]，涵蓋全部 ASCII。norm() 會因此把英文引文壓成空字串，而
+// "x".includes("") 恆為真，這些英文引文都會被判「精確命中」，實際上在比對空字串。
 const ENTITIES = {
     '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'",
     '&nbsp;': ' ', '&#039;': "'", '&#39;': "'", '&#8217;': "'", '&#8216;': "'",
@@ -87,7 +68,10 @@ export function norm(s) {
 }
 export const skeleton = (s) => norm(s).toLowerCase().replace(/[^a-z0-9\u4E00-\u9FFF]/g, '');
 
-// ── 自我檢查：這支工具已經瞎過一次，不能再瞎第二次 ──
+/**
+ * selfTest 檢查 norm() 和 skeleton() 沒有吃掉英文或中文，也有把不斷行空白正規化，
+ * 有問題就拋錯。CLI 每次執行前先跑。
+ */
 export function selfTest() {
     const en = 'International Group Leaders for 2025-26';
     if (norm(en) !== en) throw new Error(`norm() 破壞了 ASCII → ${JSON.stringify(norm(en))}`);
@@ -95,7 +79,7 @@ export function selfTest() {
     const zh = '\u4E2D\u83EF\u6578\u5B78\u5354\u6703';
     if (skeleton(zh).length !== 6) throw new Error(`skeleton() 吃掉了中文 → ${JSON.stringify(skeleton(zh))}`);
     if (norm('a\u00A0b') !== 'a b') throw new Error('norm() 沒有把不斷行空白正規化');
-    // 空引文必須被擋掉：includes('') 恆真，那是上次全綠的直接原因
+    // 空引文必須被擋掉：includes('') 恆真，任何頁面都會被判命中。
     if (skeleton('...').length !== 0) throw new Error('skeleton() 對純標點應回空字串');
 }
 
@@ -105,7 +89,6 @@ const visible = (html) => norm(String(html)
     .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ')
     .replace(/<[^>]*>/g, ' '));
 
-// ── 抓取 ──────────────────────────────────────────────────
 const run = (cmd, args, opts = {}) => new Promise((res) =>
     execFile(cmd, args, { timeout: 60_000, maxBuffer: 24 * 1024 * 1024, ...opts },
         (e, out) => res({ err: e ? String(e.message).slice(0, 60) : null, out })));
@@ -124,7 +107,7 @@ async function fetchHtml(url) {
     if (!/text\/html|application\/xhtml/.test(ct)) return { status: Number(meta[0]), url: meta[1] };
     const body = buf.subarray(0, i);
     // 台灣的老站台大量使用 Big5（tmo.com.tw 就是），一律 utf8 會得到亂碼，
-    // 然後「引文找不到」——那會被誤讀成資料錯誤。
+    // 然後「引文找不到」，那會被誤讀成資料錯誤。
     const head = body.subarray(0, 2048).toString('latin1');
     const enc = ((/charset=["']?([\w-]+)/i.exec(ct) || [])[1]
         || (/<meta[^>]+charset=["']?([\w-]+)/i.exec(head) || [])[1] || 'utf-8').toLowerCase();
@@ -150,11 +133,9 @@ const sameSite = (a, b) => {
 
 function harvest(base, html) {
     const pages = []; const pdfs = []; const seen = new Set();
-    // href 與標籤分開抓。
-    //
-    // 第一版把兩者綁在同一個正則裡（`<a ...>(內容){0,90}</a>`），結果**內容超過 90
-    // 字元的連結整個配對不到**——geniusolympiad.org 首頁的 Guides 就是這樣消失的，
-    // 而官方規則 PDF 的唯一入口就在那一頁。連結抽取絕對不能被內容長度綁死。
+    // href 與標籤分開抓。綁在同一個正則裡（`<a ...>(內容){0,90}</a>`）的話，內容超過 90
+    // 字元的連結整個配對不到，geniusolympiad.org 首頁的 Guides 就會消失，而官方規則 PDF
+    // 的唯一入口就在那一頁。連結抽取不能被內容長度綁死。
     for (const m of String(html).matchAll(/<a\b[^>]*?href=(["'])([^"']+)\1/gi)) {
         let abs;
         try { abs = new URL(m[2], base).href.split('#')[0]; } catch { continue; }
@@ -187,7 +168,6 @@ async function pool(items, fn, n) {
     }));
 }
 
-// ── 抽引文 ────────────────────────────────────────────────
 const QUOTE_RE = /[「『]([^」』]{8,400})[」』]/g;
 const FIELDS = ['description', 'eligibility', 'registrationNote', 'organizer'];
 
@@ -210,10 +190,10 @@ function match(text, want) {
     const sk = skeleton(text);
     for (const w of want) {
         if (w.hit) continue;
-        // 省略號是我們自己加的，整段不可能命中——拆片段，要求同一份文件裡每段都在。
+        // 省略號是我們自己加的，整段不可能命中，所以拆片段，要求同一份文件裡每段都在。
         // 門檻 >= 3 而不是 >= 6：John Locke 的「Entry ... is open to students from
         // any country」第一段 skeleton 只有 "entry"（5 字元），>= 6 會把它濾掉、
-        // 讓 parts 掉回 1 段而不觸發省略號分支——那一條其實逐字在頁面上。
+        // 讓 parts 掉回 1 段而不觸發省略號分支，但那一條其實逐字在頁面上。
         const parts = w.nq.split(/\s*(?:…+|\.\.\.)\s*/).map(skeleton).filter((z) => z.length >= 3);
         const elidable = parts.length > 1 && parts.some((z) => z.length >= 12);
         if (text.includes(w.nq)) w.hit = { verdict: 'exact', where: w.where };
@@ -231,7 +211,7 @@ async function auditEntry(entry) {
     const pdfQueue = []; const done = new Set();
     let nPages = 0; let nPdf = 0; let rootStatus = null; let bestText = 0;
 
-    // 第一階段：HTML。深度優先於分數——站台的頂層導覽是最有價值的一組，
+    // 第一階段：HTML。深度優先於分數，因為站台的頂層導覽是最有價值的一組，
     // 只按分數排會讓第二層的高分頁把第一層擠掉（geniusolympiad.org 的
     // guides.html 分數 0 卻是規則 PDF 的唯一入口）。
     while (queue.length && nPages < MAX_PAGES && Date.now() - t0 < BUDGET_MS) {
@@ -280,7 +260,6 @@ async function auditEntry(entry) {
     }));
 }
 
-// ── CLI ───────────────────────────────────────────────────
 if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, '/')}`
     || process.argv[1]?.endsWith('audit-quote-freshness.mjs')) {
     selfTest();

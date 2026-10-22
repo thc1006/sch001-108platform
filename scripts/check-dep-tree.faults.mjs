@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * 相依樹一致性檢查的故障注入矩陣
- * --------------------------------------------------------------
- * check-dep-tree.mjs 擋的是「靜默分裂」——建置會成功、沒有警告，只有產出變了。
+ * 相依樹一致性檢查的故障注入矩陣。
+ * check-dep-tree.mjs 擋的是「靜默分裂」：建置會成功、沒有警告，只有產出變了。
  * 這種把關本身也是靜默的：在正常狀態下，它印幾行綠字，跟「根本沒在檢查」
  * 長得一模一樣。所以必須有常駐測試證明它真的會擋。
  *
  * 這個矩陣涵蓋三類故障，缺一不可：
  *   A. 該擋的分裂有沒有擋（tailwindcss／astro／@tailwindcss/node／oxide）
  *   B. 不該擋的良性重複有沒有放行（否則這支檢查會在第一次無關更新時被當雜訊關掉）
- *   C. 「讀不到東西」時會不會誤印綠字——這一類才是最危險的。空的 packages、
+ *   C. 「讀不到東西」時會不會誤印綠字，這一類才是最危險的。空的 packages、
  *      lockfileVersion 1、lock 檔不見了，全都會讓檢查變成全盲；全盲必須是紅的。
  *
  * 一律在副本上注入，版控裡的 package-lock.json 不會被更動。
@@ -51,7 +50,7 @@ function runCheck() {
 
 const original = readFileSync(SOURCE_LOCK, 'utf8');
 
-/** 寫檔並讀回來確認內容真的落地——本 repo 過去多次踩到注入靜默無效的坑。 */
+/** 寫檔並讀回來，呼叫端拿讀回的內容確認注入真的生效。 */
 function writeLock(lock) {
     writeFileSync(WORK_LOCK, JSON.stringify(lock, null, 2), 'utf8');
     return JSON.parse(readFileSync(WORK_LOCK, 'utf8'));
@@ -61,8 +60,8 @@ function writeLock(lock) {
  * 注入一份巢狀副本，模擬「上游精確 pin 舊版、根被單獨升上去」的分裂。
  *
  * 這裡是結構性變更而不是字串取代，所以「注入未生效」的守衛也要是結構性的：
- * 寫檔後重新讀回來，確認那個巢狀條目真的在裡面。（本 repo 過去多次踩到
- * 字串取代因為 CRLF 而靜默無效的坑，教訓是：注入一定要有事後驗證。）
+ * 寫檔後重新讀回來，確認那個巢狀條目真的在裡面。字串取代可能因為 CRLF 而靜默無效，
+ * 注入一定要有事後驗證。
  */
 function injectSplit(name, hostPath, fakeVersion) {
     const lock = JSON.parse(original);
@@ -83,7 +82,7 @@ function injectSplit(name, hostPath, fakeVersion) {
 }
 
 const cases = [
-    // ── A. 該擋的分裂 ────────────────────────────────────────────
+    // A. 該擋的分裂
     {
         name: 'tailwindcss 分裂（@tailwindcss/vite 精確 pin 舊版，根被單獨升上去）',
         inject: () => injectSplit('tailwindcss', '@tailwindcss/vite', '4.2.9'),
@@ -134,8 +133,8 @@ const cases = [
         expect: /tw-alias/,
     },
     {
-        // link:true 的條目沒有 version 欄位。舊版在列印時對 undefined 呼叫 padEnd，
-        // 丟出 TypeError——擋是擋下來了，但畫面是一坨堆疊而不是原因。
+        // link:true 的條目沒有 version 欄位，直接拿來列印會對 undefined 呼叫 padEnd 而丟出
+        // TypeError：擋是擋下來了，但畫面是一坨堆疊而不是原因。
         name: 'link:true 條目（沒有 version 欄位）——要擋，而且不准丟堆疊',
         inject: () => {
             const lock = JSON.parse(original);
@@ -152,7 +151,7 @@ const cases = [
         forbid: /TypeError|at ModuleJob|node:internal/,
     },
 
-    // ── B. 不該擋的良性重複 ──────────────────────────────────────
+    // B. 不該擋的良性重複
     {
         // 反例：證明這不是「任何重複版本都紅」的粗暴檢查。
         // tslib 在真實的 npm 樹裡本來就常常有多份，那是無害的。
@@ -176,7 +175,7 @@ const cases = [
         expectBlocked: false,
     },
     {
-        // 名字結尾像但不是同一個套件，不可以誤判——否則這支檢查會製造假紅燈。
+        // 名字結尾像但不是同一個套件，不可以誤判，否則這支檢查會製造假紅燈。
         name: '名稱相似但無關的套件（my-tailwindcss）——必須**不**被擋',
         inject: () => {
             const lock = JSON.parse(original);
@@ -191,7 +190,7 @@ const cases = [
         expectBlocked: false,
     },
 
-    // ── C. 全盲時必須紅，不准印綠字 ──────────────────────────────
+    // C. 全盲時必須紅，不准印綠字
     {
         name: 'packages 是空的——檢查其實什麼都沒看，必須擋',
         inject: () => {
