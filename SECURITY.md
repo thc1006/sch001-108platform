@@ -114,6 +114,13 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   該套件只存在於建置期相依、不隨站台發布。
   **上游釋出修正版時 Dependabot 會重新開啟，屆時照常升版即可。**
 
+- **`postcss-selector-parser` 的 GHSA-rj75-hqrm-r3gf（Dependabot alert #37）**：
+  已關閉為 `tolerable_risk`。這個漏洞要在請求流程中解析攻擊者送來的選擇器才會觸發；
+  本站只在建置時由 `@tailwindcss/typography` 解析它自己內建的選擇器，GHSA 也寫明
+  建置期處理可信來源不受影響。typography 最新的 0.5.20 固定相依 6.0.10，修正版 7.1.6
+  只能用 overrides 強制跨 major 升級，所以先不升。6.x 的修正版 6.1.5 收進 GHSA、
+  而且發布滿 7 天（2026-10-26 23:02 以後），就改用同 major 的 override 升級。
+
 - **缺少安全性 response header**：GitHub Pages 不支援自訂 response header，
   這是平台限制。但 CSP 不受此限——Astro 7 可以把政策寫成
   `<meta http-equiv="content-security-policy">`。所以**站上沒有 CSP 是還沒做，
