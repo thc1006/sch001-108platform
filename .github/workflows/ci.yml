@@ -53,8 +53,10 @@ jobs:
       - name: Verify the install-script gate is in effect (before installing)
         run: node scripts/check-install-gate.mjs
 
+      # 安裝時不查 advisory：查詢卡住時 npm ci 要等滿 fetch-timeout，預設 5 分鐘。
+      # 漏洞由 Dependabot alerts 追蹤。
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --fund=false
 
       - name: Run site-contract unit tests
         run: npm run test:site-integrity
