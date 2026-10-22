@@ -2,7 +2,8 @@
 /**
  * 連結健檢的 SSRF 防護與例外政策測試
  * --------------------------------------------------------------
- * 全部打本機 http server 或純函式，不依賴外網——外網測試會因防爬與站台狀態而飄。
+ * 全部打本機 http server 或純函式，DNS 結果在測試裡注入，不連外網也不查真的 DNS。外網會因
+ * 防爬與站台狀態而飄，DNS 則要看執行的機器上 resolver 通不通。
  *
  * 為什麼要有這一份：「有寫防護」證明不了「防護擋得住」。這裡每一條都是先讓
  * 攻擊真的走一遍，再斷言它被擋下來，而不是只檢查程式碼裡有那個 if。
@@ -12,7 +13,8 @@
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import http, { createServer } from 'node:http';
+import dns from 'node:dns';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -36,6 +38,7 @@ import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_A
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
+const PRIVATE_DNS_HOST = 'private-dns.example';
 
 let base;
 let server;
@@ -64,7 +67,7 @@ before(async () => {
         // 167772161 是 10.0.0.1 的十進位寫法——混淆寫法 + 轉址繞道的組合
         if (u === '/to-decimal-private') { res.writeHead(302, { Location: 'http://167772161/x' }); return res.end(); }
         if (u === '/to-creds') { res.writeHead(302, { Location: 'http://user:pass@example.com/' }); return res.end(); }
-        if (u === '/to-dns-private') { res.writeHead(302, { Location: 'http://10.0.0.1.nip.io/' }); return res.end(); }
+        if (u === '/to-dns-private') { res.writeHead(302, { Location: `http://${PRIVATE_DNS_HOST}/` }); return res.end(); }
         if (u === '/to-ok') { res.writeHead(302, { Location: '/ok' }); return res.end(); }
         if (u === '/loop') { res.writeHead(302, { Location: '/loop' }); return res.end(); }
         // 一路轉到 /ok，用來確認「上限之內的多跳」仍然可行
@@ -105,12 +108,31 @@ test('三態：200 與轉址後 200 → healthy', async () => {
     assert.equal(classifyLink(await probe(`${base}/to-ok`, undefined, LOOPBACK_OK)), 'healthy');
 });
 
-test('三態：網域無法解析 → dead；逾時 → unverified', async () => {
-    const nx = await probe('https://this-domain-must-not-exist-4b81f2a9.invalid/');
-    assert.equal(nx.code, 'ENOTFOUND');
-    assert.equal(classifyLink(nx), 'dead');
-    assert.equal(isBlockedResult(nx), false, '解析不到是 dead，不是被政策擋下');
+// .invalid 也要經過機器上的 resolver，連不上 resolver 時拿到的是 EAI_AGAIN，所以錯誤直接在
+// DNS 這一層注入。斷言寫在 mock 外面，mock 裡丟出的斷言錯誤會被當成 DNS 錯誤。
+for (const { injected, reported, verdict } of [
+    { injected: 'ENOTFOUND', reported: 'ENOTFOUND', verdict: 'dead' },
+    // 暫時失敗不是失效。當成 ENOTFOUND 的話，resolver 一抖就會開 issue。
+    { injected: 'EAI_AGAIN', reported: 'EAI_AGAIN', verdict: 'unverified' },
+]) {
+    test(`三態：DNS ${injected} → ${verdict}`, async (t) => {
+        const lookup = t.mock.method(dns.promises, 'lookup', async () => {
+            throw Object.assign(new Error(`測試注入的 DNS 錯誤 ${injected}`), { code: injected });
+        });
+        const r = await probe('https://dns-error.example/');
+        assert.equal(lookup.mock.callCount(), 1, '必須真的走到 DNS 查詢');
+        const [host, options] = lookup.mock.calls[0].arguments;
+        assert.equal(host, 'dns-error.example');
+        assert.equal(options?.all, true, '必須取回全部答案逐一檢查');
+        assert.equal(r.status, 0);
+        assert.equal(r.code, reported);
+        assert.equal(classifyLink(r), verdict);
+        assert.equal(isDeadResult(r), verdict === 'dead');
+        assert.equal(isBlockedResult(r), false, 'DNS 失敗不是位址政策封鎖');
+    });
+}
 
+test('三態：逾時 → unverified', async () => {
     const slow = await probe(`${base}/slow`, AbortSignal.timeout(300), LOOPBACK_OK);
     assert.equal(slow.status, 0);
     assert.equal(classifyLink(slow), 'unverified');
@@ -279,31 +301,59 @@ test('SSRF：轉址的每一跳都要重新驗證——第二跳指向 metadata 
     }
 });
 
-test('SSRF：DNS 解析結果才是判斷對象——公開網域解析到私網 IP 一樣要擋', async () => {
-    // nip.io 是公開服務，10.0.0.1.nip.io 解析到 10.0.0.1。只看 hostname 完全看不出問題。
-    const resolved = await resolveAndVerify('10.0.0.1.nip.io');
-    if (resolved.ok) assert.fail('10.0.0.1.nip.io 應解析到 10.0.0.1 並被封鎖');
-    if (resolved.code) {
-        // 沒有網路或 DNS 不通時跳過——但不可靜默當成通過
-        console.log(`      （略過：DNS 不可用，${resolved.code}）`);
-        return;
-    }
+test('SSRF：DNS 解析結果才是判斷對象——公開網域解析到私網 IP 一樣要擋', async (t) => {
+    // 名稱本身看不出問題，靜態政策會放行，問題只在解析結果。答案給兩個，公網在前、私網在後，
+    // 只檢查第一個答案的實作也會被抓到。
+    assert.equal(staticUrlPolicy(`http://${PRIVATE_DNS_HOST}/`).ok, true);
+    const lookup = t.mock.method(dns.promises, 'lookup', async () => [
+        { address: '8.8.8.8', family: 4 },
+        { address: '10.0.0.1', family: 4 },
+    ]);
+    // 被擋下的答案若走到連線層就在送出前拋錯。requestOnce 會把例外吞成 status 0，
+    // 測試失敗靠的是後面的斷言，不是這個例外。
+    const request = t.mock.method(http, 'request', () => {
+        throw Object.assign(new Error('測試攔下：被封鎖的 DNS 答案不得送出請求'), { code: 'ETEST_TRANSPORT' });
+    });
+    const resolved = await resolveAndVerify(PRIVATE_DNS_HOST);
+    assert.equal(resolved.ok, false, '私網答案排在第二個也要擋下');
+    assert.equal(resolved.code, undefined, '答案是私網位址，不是 DNS 失敗');
     assert.match(resolved.reason, /10\.0\.0\.0\/8/);
 
-    const r = await probe('http://10.0.0.1.nip.io/');
-    assert.equal(isBlockedResult(r), true);
+    const r = await probe(`http://${PRIVATE_DNS_HOST}/`);
+    assert.equal(isBlockedResult(r), true, `應被位址政策擋下，實際：${JSON.stringify(r)}`);
     assert.match(r.reason, /10\.0\.0\.0\/8/);
+    assert.equal(lookup.mock.callCount(), 2);
+    for (const call of lookup.mock.calls) {
+        assert.equal(call.arguments[0], PRIVATE_DNS_HOST);
+        assert.equal(call.arguments[1]?.all, true, '必須取回全部答案逐一檢查');
+    }
+    assert.equal(request.mock.callCount(), 0, '被封鎖的 DNS 答案不得走到連線層');
 });
 
-test('SSRF：轉址到「解析成私網的公開網域」同樣要擋', async () => {
-    const pre = await resolveAndVerify('10.0.0.1.nip.io');
-    if (pre.ok || pre.code) {
-        console.log('      （略過：DNS 不可用或 nip.io 行為改變）');
-        return;
-    }
+test('SSRF：轉址到「解析成私網的公開網域」同樣要擋', async (t) => {
+    const lookup = t.mock.method(dns.promises, 'lookup', async (host) =>
+        host === '127.0.0.1' ? [{ address: '127.0.0.1', family: 4 }] : [{ address: '10.0.0.1', family: 4 }],
+    );
+    const originalRequest = http.request;
+    // 第一跳是本機 server，照常送出；其他目的地在送出前拋錯，第二跳不會真的連出去。
+    // 例外一樣會被 requestOnce 吞掉，測試失敗靠的是後面的斷言。
+    const request = t.mock.method(http, 'request', function (options, ...args) {
+        if (options?.hostname !== '127.0.0.1') {
+            throw Object.assign(new Error(`測試攔下：不得送出到 ${options?.hostname}`), { code: 'ETEST_TRANSPORT' });
+        }
+        return originalRequest.call(this, options, ...args);
+    });
     const r = await probe(`${base}/to-dns-private`, undefined, LOOPBACK_OK);
-    assert.equal(isBlockedResult(r), true);
+    assert.equal(isBlockedResult(r), true, `第二跳應被位址政策擋下，實際：${JSON.stringify(r)}`);
     assert.match(r.reason, /10\.0\.0\.0\/8/);
+    assert.equal(r.redirects.length, 1, '應該已經走過第一跳才被擋在第二跳');
+    const privateLookups = lookup.mock.calls.filter((call) => call.arguments[0] === PRIVATE_DNS_HOST);
+    assert.equal(privateLookups.length, 1, `第二跳必須查 ${PRIVATE_DNS_HOST} 的 DNS`);
+    assert.deepEqual(
+        request.mock.calls.map((call) => call.arguments[0]?.hostname),
+        ['127.0.0.1'],
+        '只有第一跳的本機 server 可以送出',
+    );
 });
 
 test('SSRF：被擋下的網址分類成 unverified，絕不可被說成 healthy 或 dead', async () => {
@@ -314,8 +364,8 @@ test('SSRF：被擋下的網址分類成 unverified，絕不可被說成 healthy
 });
 
 test('SSRF：競賽看門狗的相容 probe 只放寬 loopback，metadata 仍然擋得死', async () => {
-    // check-competitions.lib.mjs 的 probe 是為了讓既有 44 個單元測試打得到本機
-    // server 而保留的別名。它只放寬 loopback——這裡把「沒有放寬別的」釘住。
+    // check-competitions.lib.mjs 的 probe 是為了讓看門狗的連線測試打得到本機 server
+    // 而保留的別名，只放寬 loopback。這裡把「沒有放寬別的」釘住。
     const ok = await competitionsProbe(`${base}/ok`);
     assert.equal(ok.status, 200, '既有單元測試仰賴這個別名連得上本機 server');
 

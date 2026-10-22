@@ -2,14 +2,16 @@
 /**
  * 看門狗連結健檢的狀態機測試
  * --------------------------------------------------------------
- * 全部打本機 http server，不依賴外網——外網測試會因防爬與站台狀態而飄。
+ * 全部打本機 http server，DNS 結果在測試裡注入，不連外網也不查真的 DNS。外網會因防爬與
+ * 站台狀態而飄，DNS 則要看執行的機器上 resolver 通不通。
  *
- * 執行：  node --test scripts/
+ * 執行：  npm run test:watchdog
  */
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
+import dns from 'node:dns';
 import { readFile } from 'node:fs/promises';
 
 import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
@@ -94,12 +96,29 @@ test('200 與轉址後 200 → healthy', async () => {
     assert.equal(classifyLink(await probe(`${base}/redirect`)), 'healthy');
 });
 
-test('網域無法解析 (ENOTFOUND) → dead', async () => {
-    const r = await probe('https://this-domain-must-not-exist-4b81f2a9.invalid/');
-    assert.equal(r.status, 0);
-    assert.equal(r.code, 'ENOTFOUND');
-    assert.equal(classifyLink(r), 'dead');
-});
+// .invalid 也要經過機器上的 resolver，連不上 resolver 時拿到的是 EAI_AGAIN 而不是 ENOTFOUND，
+// 所以錯誤直接在 DNS 這一層注入。斷言寫在 mock 外面：mock 裡丟出的斷言錯誤會被
+// resolveAndVerify 的 catch 當成 DNS 錯誤，失敗訊息會指錯地方。
+for (const { injected, reported, verdict } of [
+    { injected: 'ENOTFOUND', reported: 'ENOTFOUND', verdict: 'dead' },
+    // 暫時失敗不是失效。當成 ENOTFOUND 的話，resolver 一抖就會開 issue。
+    { injected: 'EAI_AGAIN', reported: 'EAI_AGAIN', verdict: 'unverified' },
+]) {
+    test(`DNS ${injected} → ${verdict}`, async (t) => {
+        const lookup = t.mock.method(dns.promises, 'lookup', async () => {
+            throw Object.assign(new Error(`測試注入的 DNS 錯誤 ${injected}`), { code: injected });
+        });
+        const r = await probe('https://dns-error.example/');
+        assert.equal(lookup.mock.callCount(), 1, '必須真的走到 DNS 查詢');
+        const [host, options] = lookup.mock.calls[0].arguments;
+        assert.equal(host, 'dns-error.example');
+        assert.equal(options?.all, true, '必須取回全部答案逐一檢查');
+        assert.equal(r.status, 0);
+        assert.equal(r.code, reported);
+        assert.equal(classifyLink(r), verdict);
+        assert.equal(isDeadResult(r), verdict === 'dead');
+    });
+}
 
 test('逾時 → unverified，不可當成失效', async () => {
     const r = await probe(`${base}/slow`, AbortSignal.timeout(300));
@@ -519,7 +538,7 @@ test('watchdog：CLI 的輸出格式與退出碼', async () => {
     const { execFileSync } = await import('node:child_process');
     const { fileURLToPath } = await import('node:url');
     // 用 fileURLToPath 而非手刻 pathname 轉換：pathname 是 percent-encoded，
-    // 路徑含空白或非 ASCII（本 repo 就在 .claude/worktrees 下）時會解析錯誤。
+    // 路徑含空白或非 ASCII 時會解析錯誤。
     const cli = fileURLToPath(new URL('./find-watchdog-issue.mjs', import.meta.url));
     const run = (payload) =>
         execFileSync(process.execPath, [cli], { input: JSON.stringify(payload), encoding: 'utf8' }).trim();
