@@ -21,6 +21,20 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(actions)'
+    # 與 npm 那組一樣，新版本發布 7 天後才開 PR（沒寫時 Dependabot 也有 3 天預設）。
+    # GitHub Actions 只支援 default-days、不支援 semver-*-days；cooldown 不套用在 security update 上
+    cooldown:
+      default-days: 7
+    groups:
+      # 官方 actions/* 的 minor／patch 併成一個 PR（同一週常一次來好幾個）。
+      # major 與第三方 action（lychee-action）仍各自開 PR，方便逐一審
+      official-actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - 'actions/*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
   - package-ecosystem: 'npm'
     directory: '/'
@@ -33,8 +47,8 @@ updates:
     # 與 .npmrc 的 min-release-age=7 對齊。沒有這一段的話那道閘門形同虛設：
     # Dependabot 自己算 lockfile，而 npm ci 不重新解析，min-release-age 只擋得到
     # 本機的 install/update，擋不到這條路徑。預設是 3 天，不是沒有。
-    # cooldown 不套用在 security update 上，安全性修正不會被延後。
-    # github-actions 那組沒有這段：該 ecosystem 不支援 cooldown，寫了會被靜默忽略。
+    # cooldown 不套用在 security update 上，安全性修正不會被延後；它也只管被升級的那個
+    # 套件本身，管不到 lockfile 裡跟著重新解析的間接相依（dependabot-core#14683）。
     cooldown:
       default-days: 7
 
@@ -69,6 +83,11 @@ updates:
           - 'fuse.js'
           - 'feather-icons'
           - 'ionicons'
+      # astro 與官方 integration（@astrojs/sitemap）常一起發版，一起升、一起審
+      astro:
+        patterns:
+          - 'astro'
+          - '@astrojs/*'
 
     # 目前沒有任何 ignore 規則。
     #
