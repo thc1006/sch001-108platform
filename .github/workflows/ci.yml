@@ -68,17 +68,13 @@ jobs:
       - name: Verify external URL policy (deterministic, no network)
         run: npm run check:link-policy
 
+      # 這三組故障測試要用建置產物，留在這個 job。相依樹與安裝閘門的故障測試用不到，
+      # 在 Validate Data 跑。
       - name: Prove the checker actually blocks (fault injection)
         run: npm run test:site-faults
 
       - name: Prove the taxonomy validators actually block (fault injection)
         run: npm run test:taxonomy-faults
-
-      - name: Prove the dependency-tree guard actually blocks (fault injection)
-        run: npm run test:deps-faults
-
-      - name: Prove the install-script gate actually blocks (fault injection)
-        run: npm run test:install-gate-faults
 
       - name: Prove the vendor size budget actually blocks (fault injection)
         run: npm run test:vendor-size-faults
@@ -221,6 +217,12 @@ jobs:
 
       - name: Prove the guards actually block (fault injection)
         run: npm run test:link-faults
+
+      - name: Prove the dependency-tree guard actually blocks (fault injection)
+        run: npm run test:deps-faults
+
+      - name: Prove the install-script gate actually blocks (fault injection)
+        run: npm run test:install-gate-faults
 
       - name: Test deployment verification
         run: npm run test:verify-deploy
