@@ -200,6 +200,61 @@ log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與�
 - 對照表 `src/s2t-table.mjs` 由 `scripts/build-s2t-table.mjs` 從固定 commit 的 OpenCC 資料產生，
   不要手動改；OpenCC 的授權（Apache License 2.0）見 `licenses/OpenCC-LICENSE.txt`。
 
+## 部署（`deploy/k3s/`）
+
+跑在實驗室主機的 k3s 上（這台主機的出口 IP 在 WinLab key 的來源白名單內），慣例與 ahp-match
+相同：buildah 建映像檔、匯入 k3s 的 containerd、以 git commit 當 tag。命名空間強制 Pod Security
+restricted，網路預設全部拒絕，只開 DNS 與校內網段（含 WinLab）的 443，範圍與取捨見 `app.yaml`；
+一般的 pod 連不進閘道，外部流量由主機上的 Tailscale Funnel 轉到 Service 的固定 ClusterIP
+`10.43.0.87`。這個位址選在 Service 網段（k3s 預設 `10.43.0.0/16`）前 256 個位址的靜態區段：
+Kubernetes 動態配置時先用上段，固定位址才不會被別的 Service 先拿走。clusterIP 建立之後不能
+修改，要換位址得先刪掉 Service 再套用，Funnel 也要改指新的位址。主機與 hostNetwork pod 是
+例外：kube-router 會放行主機本地發出的流量，主機連 ClusterIP 時來源又會被 masquerade 成
+`10.42.0.1`（正好是 `TRUSTED_PROXIES`），所以主機上的任何程序、任何命名空間裡的 hostNetwork
+pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過依來源的限流（2026-10-22 實測）。
+這是取捨：Funnel 就在主機上，閘道分不出誰是 Funnel、誰是主機上的其他程序。
+
+1. 建立 key 的 Secret（只做一次；key 不進 git，也不放環境變數，以檔案掛進 pod）：
+
+   ```bash
+   sudo k3s kubectl apply -f ai-gateway/deploy/k3s/namespace.yaml
+   read -rsp 'LLM API key：' KEY; echo
+   printf '%s' "$KEY" | sudo k3s kubectl -n sch001-ai create secret generic ai-gateway-env \
+     --from-file=LLM_API_KEY=/dev/stdin
+   unset KEY
+   ```
+
+   檔案裡只能有 key 本身：寫成 `LLM_API_KEY=…`、包在引號裡、或有好幾行，閘道都會當成沒設定、
+   readiness 一直不就緒。換 key 時把上面的 `create` 換成
+   `create … --dry-run=client -o yaml | sudo k3s kubectl replace -f -`（不用 `apply`：它會把整份
+   Secret，含 key 的 base64，另外寫進 `kubectl.kubernetes.io/last-applied-configuration`
+   註記，key 就多了一份副本），再
+   `sudo k3s kubectl -n sch001-ai rollout restart deployment/ai-gateway`（key 只在啟動時讀一次）。
+2. 建映像檔並換版：`ai-gateway/deploy/k3s/build-image.sh`。用到的檔案與 manifest 都要先 commit；
+   腳本會把 `app.yaml` 的 image 換成這次的 tag 再套用。腳本不會 commit，換版成功後自己把那一行
+   commit，否則下一次執行會因為 manifest 有沒 commit 的改動而停下。
+   換版失敗時（`rollout status` 等了 180 秒還沒就緒，腳本就直接結束），Deployment 會停在新版的
+   spec 上，要手動退回上一版：`sudo k3s kubectl -n sch001-ai rollout undo deployment/ai-gateway`，
+   並用 `git checkout` 還原 `app.yaml`（腳本只改了 image 那一行）。
+3. 確認：`curl http://10.43.0.87:8787/readyz` 回 200；`sudo k3s kubectl -n sch001-ai logs deployment/ai-gateway`
+   的 START 一行列出設定與任務。
+4. 對外開放：在主機上用 Tailscale Funnel 把公網的 HTTPS 轉到 Service 的 ClusterIP，再確認設定：
+
+   ```bash
+   sudo tailscale funnel --bg --https=443 http://10.43.0.87:8787
+   tailscale funnel status
+   ```
+
+   對外網址是 `https://<機器名稱>.<tailnet 名稱>.ts.net`，`tailscale funnel status` 會列出來；
+   這個網址不寫進 repo。目標要寫完整的 `http://` 網址：只寫埠號的話，Funnel 會轉到主機的
+   `127.0.0.1`，那裡沒有閘道在聽，每個請求都是 502。Funnel 要跑在主機上，不能放進 pod：主機連
+   ClusterIP 時來源被 masquerade 成 `10.42.0.1`，也就是 `TRUSTED_PROXIES`，閘道才會採信 Funnel
+   覆寫的 `X-Forwarded-For`。從別的地方轉進來的話，所有人都落到同一個限流桶，log 會出現
+   `CLIENT-IP-UNTRUSTED`。
+
+下架時先關掉 Funnel（`sudo tailscale funnel --https=443 off`），再刪 Service 或整個命名空間。
+`--bg` 的設定會一直留著，原本的位址之後可能配給別的 Service，公網的流量就轉進那裡。
+
 ## 設定
 
 名稱沿用 ahp-match 的 `scripts/serve-local.js`（同一台 k3s、同一個 WinLab）。數值打錯時
@@ -228,7 +283,9 @@ log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與�
   每一輪的第一個位元組還要再等一兩分鐘，3 輪都寫滿、沒有任何額外請求（探測、重試）時約
   13 分鐘，所以預設 15 分鐘——大約只容得下一次額外的排隊，再多就以時限結束、交出已寫好的
   部分。調高輪數時，時限要跟著調；HTTP 服務的 `SHUTDOWN_GRACE_MS` 也不能比它短（換版時
-  進行中的任務才做得完）。
+  進行中的任務才做得完）。k3s 上的 `terminationGracePeriodSeconds`（`deploy/k3s/app.yaml`）
+  又要比它多出 preStop 的 5 秒與收尾的 6 秒（中止後等錯誤送出 1 秒、等上傳中的請求 5 秒），
+  否則 kubelet 會在閘道送出可重試的錯誤之前就把它砍掉。
 - `LLM_TASK_TIMEOUT_MS` 刻意不叫 ahp-match 的 `LLM_MAX_GENERATION_MS`：那邊是單一請求的
   上限，這裡涵蓋一個任務的所有接續輪，同名不同義容易設錯。
 

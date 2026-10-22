@@ -1,0 +1,44 @@
+# 台灣教育處方籤的 AI 閘道：交給 k3s 託管
+# 強制 Pod Security restricted：沒有 hostPath、不用 root、拿掉 capability 的 pod 才建得起來
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sch001-ai
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.37
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+# 網路預設全部拒絕（進出都是），每個 pod 要的連線在 app.yaml 裡一條一條開
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: sch001-ai
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+# 要查 DNS（llm.winlab.tw），但只能問叢集的 CoreDNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: sch001-ai
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

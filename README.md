@@ -36,7 +36,7 @@
 
 設計重點：
 
-* 全站採 **靜態輸出**，無後端伺服器，部署成本低、易於長期維運。
+* 網站本身是 **靜態輸出**，部署成本低、易於長期維運；逐步改走自架 LLM 的 AI 功能由另外部署的 `ai-gateway/` 服務處理（見 `ai-gateway/README.md`）。
 * `astro.config.mjs` 設定 `build.format: 'preserve'`，輸出的目錄結構與 `src/pages/` 一對一對應，完整保留既有網址、書籤與 SEO。
 * 部署於 GitHub Pages 專案頁，網址含 `/sch001-108platform` 前綴（`base` 設定）。
 * `sitemap.xml` 由 `@astrojs/sitemap` 於建置時自動產生（`dist/sitemap-index.xml`、`dist/sitemap-0.xml`），無需手動維護。

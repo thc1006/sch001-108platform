@@ -1,0 +1,14 @@
+# AI 閘道的映像檔；建置與部署：ai-gateway/deploy/k3s/build-image.sh
+# 只 COPY 執行需要的目錄；目錄裡的 .env、node_modules 與 log 由 .containerignore 擋掉。
+# 基底映像檔以 multi-arch index 的 digest 釘死：tag 之後改指別的映像檔，建出來的仍是這一份。
+# 目錄結構與 repo 一致（/app/ai-gateway/src），程式裡的相對路徑在兩邊都成立。
+
+FROM docker.io/library/node:24.22.1-alpine3.24@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
+WORKDIR /app
+COPY ai-gateway/src/ ai-gateway/src/
+# 簡轉繁的對照表衍生自 OpenCC（Apache 2.0）：授權全文跟著散布
+COPY ai-gateway/licenses/ ai-gateway/licenses/
+# 不用 root；uid 跟 manifest 的 runAsUser 一樣
+USER 1000:1000
+EXPOSE 8787
+CMD ["node", "ai-gateway/src/server.mjs"]
