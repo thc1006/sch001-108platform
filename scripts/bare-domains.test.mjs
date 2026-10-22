@@ -1,11 +1,10 @@
 /**
- * 內文裸網域擷取規則的精確度測試
- * --------------------------------------------------------------
+ * 內文裸網域擷取規則的精確度測試。
  * 「跑起來看起來對」不算證明。這支用正例／反例語料把規則釘死：哪些字串必須被
- * 擷出、哪些絕對不可以。反例是重點——裸網域擷取天生會誤判檔名、版本號、縮寫，
+ * 擷出、哪些絕對不可以。反例是重點：裸網域擷取天生會誤判檔名、版本號、縮寫，
  * 而每一個誤判都會變成一筆假的「連結失效」，最後把維護者訓練成忽略報告。
  *
- * 全部離線。TLD 是否存在由注入的假 resolver 決定，測試不得依賴外網——外網會飄，
+ * 全部離線。TLD 是否存在由注入的假 resolver 決定，測試不得依賴外網：外網會飄，
  * 而「規則對不對」必須是確定性的。真實 DNS 只在排程健檢裡用。
  */
 
@@ -32,7 +31,7 @@ const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
 const hostsOf = (text) => extractBareDomainCandidates(text).map((c) => c.host);
 
 /**
- * 假的根區。刻意只放測試會用到的 TLD——真實根區有一千多個，而且會變；
+ * 假的根區。刻意只放測試會用到的 TLD：真實根區有一千多個，而且會變；
  * 測試要驗的是「規則怎麼用這個答案」，不是「根區今天長怎樣」。
  */
 const FAKE_ROOT = new Set([
@@ -53,9 +52,7 @@ const screen = (hosts) => {
     return screenBareDomains(hosts, { resolveNs: fakeResolveNs });
 };
 
-// ──────────────────────────────────────────────────────────────
-// A. 正例：真實資料裡實際出現的寫法都必須被擷出
-// ──────────────────────────────────────────────────────────────
+// A. 正例：真實資料裡實際出現的寫法都必須被擷出。
 
 test('正例：中文句子裡的裸網域（句號、逗號、頓號為界）', () => {
     assert.deepEqual(hostsOf('現行官網為 harvardmun.org。'), ['harvardmun.org']);
@@ -90,9 +87,7 @@ test('正例：後面接路徑時只取主機名', () => {
     assert.deepEqual(hostsOf('國際官方頁面為 www.igeoscied.org/activities/ieso-2/。'), ['www.igeoscied.org']);
 });
 
-// ──────────────────────────────────────────────────────────────
-// B. 反例：這些一個都不可以被當成網域
-// ──────────────────────────────────────────────────────────────
+// B. 反例：這些一個都不可以被當成網域。
 
 test('反例：版本號與數字序列（TLD 必須是純字母）', () => {
     for (const s of ['v1.63', '版本 1.2.3 起支援', 'Chrome/126.0.0.0 Safari/537.36', '第 66 屆 3.14 分']) {
@@ -119,11 +114,10 @@ test('反例：與副檔名撞名的 TLD 一律不從內文擷取（確定性，
 });
 
 test('.ai 刻意不遮蔽——遮了會漏掉本站內文推薦的真實網站', () => {
-    // 原始清單把 .ai 當成 Adobe Illustrator 遮掉，並宣稱「代價為 0」。canary 測試
-    // 一跑就推翻了：online-courses.json 的課程提供者是「DeepLearning.AI」、
-    // methodology.json 推薦「Otter.ai (AI語音轉文字)」，兩個都是真實網站，卻永遠
-    // 不會被檢查。.ai 現在是 AI 產品的主流網域，內文裡出現真網域的機率遠高於
-    // 出現 Illustrator 檔名，因此不遮——代價是 logo.ai 這種檔名會被探測，
+    // 把 .ai 當成 Adobe Illustrator 遮掉的話，online-courses.json 的課程提供者
+    // 「DeepLearning.AI」、methodology.json 推薦的「Otter.ai (AI語音轉文字)」這兩個
+    // 真實網站永遠不會被檢查。.ai 現在是 AI 產品的主流網域，內文裡出現真網域的機率遠高於
+    // 出現 Illustrator 檔名，因此不遮。代價是 logo.ai 這種檔名會被探測，
     // 拿到的結果只是一筆無害的噪音，遠比永久漏檢兩個真網站好。
     assert.ok(!SHADOWED_BY_FILE_EXT.has('ai'), '.ai 不可以在遮蔽清單裡');
     assert.deepEqual(hostsOf('課程由 DeepLearning.AI 提供'), ['deeplearning.ai']);
@@ -140,23 +134,23 @@ test('反例：電子郵件的右半邊是郵件主機，不是網站', () => {
 test('反例：信箱的「左」半邊帶點時也不可被當成網域', () => {
     // 這一條是故障注入抓出來的漏洞。右半邊靠左界的 lookbehind（@ 擋掉）就夠了，
     // 但左半邊沒有任何東西擋：把遮蔽信箱那一步拿掉之後，first.last@maa.org 會
-    // 擷出 first.last、hctsai.linux@example.com 會擷出 hctsai.linux，而原本的
-    // 測試全部照樣是綠的。
+    // 擷出 first.last、hctsai.linux@example.com 會擷出 hctsai.linux，而只驗右半邊的
+    // 上一條測試照樣是綠的。
     assert.deepEqual(hostsOf('寄到 first.last@maa.org'), []);
     assert.deepEqual(hostsOf('寄到 hctsai.linux@example.com'), []);
 });
 
 test('反例：網址的 query／fragment 裡帶網域也不可被擷出', () => {
-    // 同樣是故障注入抓出來的。左界的 lookbehind 擋得掉路徑（前面是 /），卻擋不掉
-    // 「?ref=」「&subid=」「#」後面的網域——= 與 # 都不在 lookbehind 的字元類裡。
+    // 同樣是故障注入抓出來的。左界的 lookbehind 只擋 / 的話擋得掉路徑，卻擋不掉
+    // 「?ref=」「&subid=」「#」後面的網域，所以 = # ? & 也在 lookbehind 的字元類裡。
     // 這不是假設的情況：本站資料實際記錄的轉址鏈就長這樣。
     assert.deepEqual(hostsOf('轉址到 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW 的廣告頁'), []);
     assert.deepEqual(hostsOf('見 https://a.com/x?ref=foo.org 一文'), []);
     assert.deepEqual(hostsOf('見 https://a.com/x#frag.org 一節'), []);
 
-    // 上面三條全都帶 scheme，所以是被 URL_LIKE 整段遮掉才通過的——它們並沒有測到
-    // 註解裡點名的真正成因（= 與 # 不在 lookbehind 裡）。內文若把轉址鏈寫成沒有
-    // scheme 的形式，URL_LIKE 就遮不到，參數值會被當成主機名擷出去探測。
+    // 上面三條全都帶 scheme，所以是被 URL_LIKE 整段遮掉才通過的，並沒有測到
+    // lookbehind 裡的 = 與 #。內文若把轉址鏈寫成沒有 scheme 的形式，URL_LIKE
+    // 就遮不到，只能靠 lookbehind 擋住參數值。
     // 這正是本站 competitions.json 記錄 sasmo.sg 轉址鏈時可能出現的寫法。
     assert.deepEqual(hostsOf('會被導向 arcade.now/lp1/play?subid=sasmo.sg&subid2=TW'), ['arcade.now']);
     assert.deepEqual(hostsOf('追蹤網址 tracker.com/x?ref=partner.org'), ['tracker.com']);
@@ -211,9 +205,7 @@ test('反例：不合法的 DNS label', () => {
     assert.deepEqual(hostsOf(`見 ${'a'.repeat(64)}.org 說明`), []);
 });
 
-// ──────────────────────────────────────────────────────────────
-// C. 去重與主機名語意
-// ──────────────────────────────────────────────────────────────
+// C. 去重與主機名語意。
 
 test('去重：同一網域重複出現只算一次，且大小寫視為同一台', () => {
     const found = collectBareDomains({
@@ -240,9 +232,7 @@ test('collectBareDomains 可只掃指定欄位', () => {
     assert.deepEqual([...found.keys()], ['a.org']);
 });
 
-// ──────────────────────────────────────────────────────────────
-// D. Stage 2：TLD 是否存在（用 DNS 根區，不是可解析性）
-// ──────────────────────────────────────────────────────────────
+// D. Stage 2：TLD 是否存在（用 DNS 根區，不是可解析性）。
 
 test('stage2：TLD 不在根區的候選被淘汰（Node.js／檔名／自創詞）', async () => {
     const { accepted, rejected } = await screen(['node.js', 'fuse.min.js', 'edu.harbour', 'competitions.html', 'check-competitions.mjs']);
@@ -280,10 +270,10 @@ test('stage2：同一個 TLD 只查一次（快取）', async () => {
 });
 
 test('stage2：DNS 沒回答的候選不採用，但必須進 unresolved 而不是 rejected', async () => {
-    // 「根區說沒有這個 TLD」與「這次沒問到答案」是兩件事，先前都被壓成 rejected。
+    // 「根區說沒有這個 TLD」與「這次沒問到答案」是兩件事，不可以都壓成 rejected。
     // 壓在一起的代價實測過：把 resolver 指到 192.0.2.1（無人回應），30 個候選全數
     // 變成 rejected，報告寫「.org 不是 DNS 根區裡的 TLD」，而 needs_attention=false、
-    // coverage_complete=true——一個裸網域都沒檢查，CI 全綠。那正是靜默漏檢。
+    // coverage_complete=true，一個裸網域都沒檢查，CI 全綠。那正是靜默漏檢。
     for (const code of ['SERVFAIL', 'ETIMEOUT', 'ECONNREFUSED', 'EAI_AGAIN', 'ECANCELLED']) {
         const { accepted, rejected, unresolved } = await screenBareDomains(['x.org'], {
             resolveNs: async () => {
@@ -322,7 +312,7 @@ test('stage2：沒有注入 resolver 就必須拋錯（測試不得連外網）'
 
 test('反例：非 CJK 字母緊貼網域時不可截斷成另一台主機（張冠李戴）', () => {
     // 這比誤判更糟：內文點名 A 網域，檢查器去驗 B 網域並回報 B 的健康狀態，
-    // 產生的是**錯誤的保證**。西里爾 е 與全形 Ａ 都不在 ASCII 左界字元類裡，
+    // 產生的是錯誤的保證。西里爾 е 與全形 Ａ 都不在 ASCII 左界字元類裡，
     // 少了第二道 lookbehind 就會擷出 vil.org／bc.org 這兩台真實存在的主機。
     assert.deepEqual(hostsOf('假冒網站 еvil.org 請勿點擊'), []);
     assert.deepEqual(hostsOf('請見 Ａbc.org 的說明'), []);
@@ -330,7 +320,7 @@ test('反例：非 CJK 字母緊貼網域時不可截斷成另一台主機（張
 });
 
 test('正例：CJK 緊貼網域必須照樣擷得出來（本站語料的實際形態）', () => {
-    // 上一條的左界不可以連中文一起擋掉——「官網為tpmso.org」沒有空白，
+    // 上一條的左界不可以連中文一起擋掉：「官網為tpmso.org」沒有空白，
     // 而那正是 competitions.json 描述文字裡最常見的寫法。
     assert.deepEqual(hostsOf('官網為tpmso.org，請注意'), ['tpmso.org']);
     assert.deepEqual(hostsOf('サイトはtcr.orgです'), ['tcr.org']);
@@ -343,7 +333,7 @@ test('makeSkipFieldFilter：pointer 的任何一段命中就跳過（不是只�
     assert.equal(accept('/_readme'), false);
     assert.equal(accept('/competitions/0/image'), false);
     // 這四條是重點：欄位一旦變成陣列或物件，最後一段就會變成索引或子鍵。
-    // 舊的「只比最後一段」寫法在這裡會靜默失效，把檔名與圖片路徑放進候選。
+    // 只比最後一段的話，這裡會靜默失效，把檔名與圖片路徑放進候選。
     assert.equal(accept('/_readme/0'), false);
     assert.equal(accept('/_readme/notes/3'), false);
     assert.equal(accept('/gallery/0/image/src'), false);
@@ -352,7 +342,7 @@ test('makeSkipFieldFilter：pointer 的任何一段命中就跳過（不是只�
 
 test('遮蔽的代價必須是 0：本站語料不得有網域落在被遮蔽的 TLD 上', async () => {
     // SHADOWED_BY_FILE_EXT 是啟發式清單（副檔名撞名），代價是「用這些 TLD 的真實
-    // 網域永遠不會被內文擷取」。那個代價現在是 0，但它必須**持續**是 0：哪天有競賽
+    // 網域永遠不會被內文擷取」。那個代價現在是 0，但它必須持續是 0：哪天有競賽
     // 官網是 foo.app、或說明文字提到 something.map，這條測試會紅，逼人當場決定要
     // 不要把該 TLD 從遮蔽清單拿掉，而不是靜靜地永久漏檢。
     const dataPages = JSON.parse(await readFile(path.join(ROOT, 'scripts/data-pages.json'), 'utf8'));
@@ -374,7 +364,7 @@ test('遮蔽的代價必須是 0：本站語料不得有網域落在被遮蔽的
 });
 
 test('stage2：篩選有時間預算，用盡的候選歸 unresolved 而不是 rejected', async () => {
-    // 篩選跑在 runProbes 的 12＋3 分鐘預算之外，先前完全沒有上限——實測 resolver
+    // 篩選跑在 runProbes 的 12＋3 分鐘預算之外。沒有上限的話，實測 resolver
     // 掛掉時光是篩 30 個候選就多花 208 秒，全部白白疊在 job 上。
     let clock = 0;
     const { accepted, rejected, unresolved } = await screenBareDomains(['a.org', 'b.tw', 'c.de'], {
@@ -388,9 +378,7 @@ test('stage2：篩選有時間預算，用盡的候選歸 unresolved 而不是 r
     assert.match(unresolved[0].reason, /時間預算/);
 });
 
-// ──────────────────────────────────────────────────────────────
-// E. 探測入口仍然走既有的 SSRF 防護
-// ──────────────────────────────────────────────────────────────
+// E. 探測入口仍然走既有的 SSRF 防護。
 
 test('裸網域一律用 https 探測，且仍受靜態位址政策管轄', () => {
     assert.equal(probeUrlFor('harvardmun.org'), 'https://harvardmun.org/');
@@ -402,16 +390,14 @@ test('裸網域一律用 https 探測，且仍受靜態位址政策管轄', () =
     }
 });
 
-// ──────────────────────────────────────────────────────────────
-// F. 真實語料的精確度（把實測數字釘住）
-// ──────────────────────────────────────────────────────────────
+// F. 真實語料的精確度（把實測數字釘住）。
 
 test('真實語料：competitions.json 的擷取結果與實測一致', async () => {
     const data = JSON.parse(await readFile(path.join(ROOT, 'public/advanced-resources/competitions.json'), 'utf8'));
     const candidates = [...collectBareDomains(data).keys()].sort();
 
     // stage 1 會擷到的三個非網域，全部必須在 stage 2 被淘汰。
-    // 這三筆是實測結果，不是猜的——它們來自 _readme 欄位裡的檔名與一個團隊名。
+    // 這三筆是實測結果，不是猜的：它們來自 _readme 欄位裡的檔名與一個團隊名。
     const knownFalsePositives = ['check-competitions.mjs', 'competitions.html', 'edu.harbour'];
     for (const fp of knownFalsePositives) {
         assert.ok(candidates.includes(fp), `語料應仍包含已知誤判 ${fp}（資料改了就更新這份清單）`);
@@ -447,7 +433,7 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // 親自取過的來源：
     //   www.fisp.org       200（國家哲學學會名單，IPO 的正式選拔管道要求經 FISP 會員辦理）
     //   www.codechef.com   200（/api/list/contests/all 公開賽程 API）
-    //   leetcode.com       403 —— 這一個特別記一下，它會**永遠**是 403：
+    //   leetcode.com       403，這一個特別記一下，它會永遠是 403：
     //     不是 UA 的問題（Chrome/126 與 Chrome/140、根路徑與 /contest/，curl 全部 200），
     //     也不是 HTTP 版本（curl --http1.1 照樣 200）。剩下的差異是 TLS 指紋：
     //     Node 的 ClientHello 不是 Chrome 的，Cloudflare 認得出來。
@@ -458,13 +444,13 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     //   firstinspires.org  301 → www.firstinspires.org
     //   immchallenge.org   200
     //   maa.org            /amc-international/ 200（apex 根路徑對最小 UA 回 403，
-    //                      帶瀏覽器標頭就是 200——那是機器人阻擋，不是死站）
+    //                      帶瀏覽器標頭就是 200，那是機器人阻擋，不是死站）
     //   www.era.org.tw     302 → /main/
     //   www.tmo.com.tw     200
     //
-    // 這次查證同時修掉一個引用錯誤：原本寫的是 apex 的 aksf.org，而那台主機
-    // https 連線會被重設、http 回 404（連測三次一致，DNS 解得到 193.2.68.165）。
-    // 內容在 www.aksf.org 上。不改的話，看門狗每週都會報一次永遠修不好的死連結。
+    // 引用的是 www.aksf.org 而不是 apex 的 aksf.org：apex 那台主機 https 連線
+    // 會被重設、http 回 404（連測三次一致，DNS 解得到 193.2.68.165），內容在
+    // www.aksf.org 上。引用 apex 的話，看門狗每週都會報一次永遠修不好的死連結。
     assert.equal(candidates.length, 53, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
     assert.equal(accepted.length, 50, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
 });
