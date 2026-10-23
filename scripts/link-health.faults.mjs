@@ -5,7 +5,7 @@
  * 這支逐一破壞一個東西，確認該紅的真的會紅：
  *
  *   A. 政策檔的每一條規則 → check-link-policy.mjs 必須以非零碼結束
- *   B. SSRF 防護的每一段   → link-health.test.mjs 必須失敗
+ *   B. SSRF 防護與讀 body → link-health.test.mjs 必須失敗
  *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *
@@ -239,7 +239,7 @@ const policyCases = [
     },
 ];
 
-// B 段是 SSRF 防護的突變測試：每一項都是「把防護的一段拿掉」，然後跑
+// B 段是 SSRF 防護與讀 body 的突變測試：每一項都把其中一段拿掉或改掉，然後跑
 // link-health.test.mjs。測試必須失敗。
 const guardMutations = [
     {
@@ -264,6 +264,18 @@ const guardMutations = [
     {
         name: '不再檢查網址內嵌的帳號密碼',
         apply: (s) => s.replace('if (url.username || url.password) {', 'if (false) {'),
+    },
+    {
+        name: '讀 body 不再標截斷（只讀到前綴的頁面會被當成很小的殼）',
+        apply: (s) => s.replace('bodyTruncated: !complete || read > wantBody,', 'bodyTruncated: false,'),
+    },
+    {
+        name: '讀 body 時 close 也當成讀完（讀到上限時後面還有資料，不再標截斷）',
+        apply: (s) => s.replace("res.on('close', finish);", "res.on('close', () => { complete = true; finish(); });"),
+    },
+    {
+        name: '讀 body 的上限改算解碼後的長度（非 UTF-8 的頁面收完了也被標成截斷）',
+        apply: (s) => s.replace('read += chunk.length;', "read += Buffer.byteLength(chunk.toString('utf8'), 'utf8');"),
     },
     {
         name: 'scheme 檢查被拿掉（file:／ftp: 也放行）',
@@ -381,6 +393,10 @@ const hijackMutations = [
                 'export function opaqueShell(bodyHead, truncated = false) {',
                 'export function opaqueShell(bodyHead, truncated = false) {\n    return null;',
             ),
+    },
+    {
+        name: 'HTTP 層盲區偵測不理會截斷（只讀到前綴的頁面會被當成殼）',
+        apply: (s) => s.replace('    if (truncated) return null;\n', ''),
     },
     {
         // 這一條守的是漏檢：description 的引號若改用「兩種引號都排除」的字元類別，
@@ -571,7 +587,7 @@ policyCases.forEach((c, i) => {
     ok(c.name);
 });
 
-console.log('\nB. SSRF 防護的突變測試（link-health.test.mjs 必須紅）：');
+console.log('\nB. SSRF 防護與讀 body 的突變測試（link-health.test.mjs 必須紅）：');
 rmSync(MUTANT_DIR, { recursive: true, force: true });
 try {
     // 換行一律正規化成 LF 再做字串比對。這個 repo 的檔案在 Windows 上是 CRLF，
