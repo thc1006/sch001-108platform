@@ -370,7 +370,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             };
             try {
                 // 進度放在輸入列下方。聊天視窗只有 h-64，放進去會擠掉對話，往上捲時取消鈕也會跟著捲走。
-                progress = PlatformAI.mountProgress(chatProgress, { onCancel: () => controller.abort() });
+                // 焦點交給輸入框而不是按鈕：送出時已經清空輸入框、把焦點交回去，接下來要打的是下一題。
+                progress = PlatformAI.mountProgress(chatProgress, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: chatInput,
+                });
                 const { result } = await PlatformAI.runTask('career-chat', { question }, {
                     signal: controller.signal,
                     onProgress: progress.update,
@@ -403,8 +407,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 chatSubmit.removeAttribute('aria-disabled');
                 chatSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
                 chatSubmitLabel.textContent = originalLabel;
-                // Safari 點按鈕不給焦點，按了取消的話，焦點不一定在 finish() 交給的 #chat-progress。
-                if (controller.signal.aborted || chatProgress.contains(document.activeElement)) chatInput.focus();
+                // Safari 點按鈕不給焦點，滑鼠按了取消時焦點不在進度區塊裡，finish() 不會把它交給輸入框。
+                if (controller.signal.aborted) chatInput.focus();
             }
         }
 

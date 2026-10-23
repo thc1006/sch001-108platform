@@ -39,6 +39,14 @@ const XSS_RESULT = {
     revised_example: `${XSS_SCRIPT}${XSS_IMG} 範例`,
 };
 
+// 結果與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+const SETTLE = [
+    ['結果送達', done(RESULT), (page) => expect(page.locator('#analysisResult')).toContainText(RESULT.overall_comment)],
+    ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
+        (page) => expect(page.locator('#analysisResult')).toHaveText(FORMAT_ERROR)],
+];
+
 for (const p of PAGES) {
     const PAGE = `${BASE}/sch001-108platform${p.path}`;
 
@@ -125,33 +133,61 @@ for (const p of PAGES) {
             expect(await page.evaluate(() => window.__calls.length)).toBe(0);
         });
 
-        test('進行中按「取消」→ 以提示的樣式（不是錯誤）顯示「已取消。」，焦點留在工作區，按鈕恢復可按', async ({ page }) => {
+        test('進行中用鍵盤按「取消」→ 以提示的樣式（不是錯誤）顯示「已取消。」，焦點回到「開始健檢」按鈕，按鈕恢復可按', async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');
             await page.click('#analyzeBtn');
             const button = page.locator('#analyzeBtn');
-            await expect(button).toBeDisabled();
+            await expect(button).toHaveAttribute('aria-disabled', 'true');
             await expect(button).toHaveText('健檢中…');
-            await page.locator('#analysisWork').getByRole('button', { name: '取消' }).click();
+            await page.locator('#analysisWork').getByRole('button', { name: '取消' }).focus();
+            await page.keyboard.press('Enter');
             const result = page.locator('#analysisResult');
             await expect(result).toHaveText('已取消。');
             await expect(result.locator('p')).toHaveClass(/text-gray-600/);
             await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
-            // 取消鈕隨進度區塊移除，progress.finish() 會先把焦點交給工作區，不讓它掉回 <body>。
-            await expect(page.locator('#analysisWork')).toBeFocused();
             await expect(button).toBeEnabled();
+            // 取消鈕隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
+            // 訊息，live region 又唸一次。
+            await expect(button).toBeFocused();
+            for (const el of [button, page.locator('#analysisWork'), result]) await expect(el).not.toHaveAttribute('tabindex');
         });
 
-        test('等待時焦點停在「取消」上，結果到了 → 焦點交給工作區，不掉回 <body>', async ({ page }) => {
+        for (const [when, chunk, expectSettled] of SETTLE) {
+            test(`等待時焦點停在「取消」上，${when} → 焦點交給「開始健檢」按鈕，不掉回 <body>`, async ({ page }) => {
+                await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+                await page.fill('#reflectionInput', '心得');
+                await page.click('#analyzeBtn');
+                const cancel = page.locator('#analysisWork').getByRole('button', { name: '取消' });
+                await cancel.focus();
+                await expect(cancel).toBeFocused();
+                await page.evaluate((c) => window.__stream.push(c), chunk);
+                await expectSettled(page);
+                await expect(page.locator('#analyzeBtn')).toBeFocused();
+            });
+        }
+
+        // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
+        test('用鍵盤按「開始健檢」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');
-            await page.click('#analyzeBtn');
-            const cancel = page.locator('#analysisWork').getByRole('button', { name: '取消' });
-            await cancel.focus();
-            await expect(cancel).toBeFocused();
+            const button = page.locator('#analyzeBtn');
+            await button.focus();
+            await page.keyboard.press('Enter');
+            await expect(button).toHaveAttribute('aria-disabled', 'true');
+            await expect(button).not.toHaveAttribute('disabled');
+            await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+            // 等過一次畫面更新再看焦點。
+            await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            await page.keyboard.press('Enter');
+            await expect(button).toBeFocused();
+            expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+
             await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
             await expect(page.locator('#analysisResult')).toContainText(RESULT.overall_comment);
-            await expect(page.locator('#analysisWork')).toBeFocused();
+            await expect(button).toBeEnabled();
+            await expect(button).not.toHaveAttribute('aria-disabled');
+            await expect(button).toBeFocused();
         });
 
         test('輸入框最多 2000 字（與閘道的任務規格相同），下方寫著這個上限；有無障礙名稱，上限說明是它的描述', async ({ page }) => {

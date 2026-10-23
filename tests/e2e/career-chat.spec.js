@@ -20,6 +20,14 @@ const aiText = (page, n) => messages(page).nth(n).locator('.chat-bubble-ai p');
 const draft = (page) => page.locator('#chat-log ~ *');
 const progress = (page) => page.locator('#chat-progress .platform-ai-progress');
 
+// 回答與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const BUSY = '目前使用的人很多，請稍後再試。';
+const SETTLE = [
+    ['回答送達', done('推薦你 **設計學群**。'), (page) => expect(aiText(page, 2)).toHaveText('推薦你 設計學群。')],
+    ['閘道回報錯誤', sse('error', { code: 'busy', message: BUSY, retryable: true }),
+        (page) => expect(aiText(page, 2)).toHaveText(BUSY)],
+];
+
 async function ask(page, question) {
     await page.fill('#chat-input', question);
     await page.click('#chat-submit');
@@ -200,6 +208,8 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(progress(page)).toHaveCount(0);
         await expect(page.locator('#chat-submit')).toBeEnabled();
         await expect(page.locator('#chat-input')).toBeFocused();
+        // finish() 直接交給輸入框，不先交給 #chat-progress（得補上 tabindex）再搬一次。
+        for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
 
         await ask(page, '那數學呢？');
         await expect(messages(page).nth(3)).toHaveText('那數學呢？');
@@ -227,6 +237,20 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(aiText(page, 4).locator('strong')).toHaveText(['工程學群']);
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
+
+    for (const [when, chunk, expectSettled] of SETTLE) {
+        test(`焦點停在「取消」上時${when} → 焦點交給輸入框，#chat-progress 不留 tabindex`, async ({ page }) => {
+            await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+            await ask(page, '我喜歡畫畫');
+            const cancel = progress(page).getByRole('button', { name: '取消' });
+            await cancel.focus();
+            await expect(cancel).toBeFocused();
+            await push(page, chunk);
+            await expectSettled(page);
+            await expect(page.locator('#chat-input')).toBeFocused();
+            for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
+        });
+    }
 
     test('回答到的時候不搬焦點：學生等待時把焦點移到別處，回答進了紀錄，焦點還在原處', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });

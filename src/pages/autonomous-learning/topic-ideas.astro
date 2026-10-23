@@ -132,15 +132,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         }
 
         generateIdeaBtn.addEventListener('click', async () => {
+            if (generateIdeaBtn.getAttribute('aria-disabled') === 'true') return;
             const interests = ideaInput.value.trim();
             if (!interests) {
                 showMessage('請先輸入你的興趣關鍵字！');
                 return;
             }
 
-            // 雙擊防護。只換 <span> 的文字，按鈕的圖示才不會被清掉。
+            // 雙擊防護。停用靠 aria-disabled：disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
+            // 只換 <span> 的文字，按鈕的圖示才不會被清掉。
             const originalLabel = ideaBtnLabel.textContent;
-            generateIdeaBtn.disabled = true;
+            generateIdeaBtn.setAttribute('aria-disabled', 'true');
             generateIdeaBtn.classList.add('opacity-50', 'cursor-not-allowed');
             ideaBtnLabel.textContent = '產生中…';
 
@@ -149,7 +151,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             let progress = null;
             try {
                 // PlatformAI 不存在時這行就會丟錯，放在 try 裡 finally 才會恢復按鈕。
-                progress = PlatformAI.mountProgress(ideaWorkspace, { onCancel: () => controller.abort() });
+                progress = PlatformAI.mountProgress(ideaWorkspace, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: generateIdeaBtn,
+                });
                 const { result } = await PlatformAI.runTask('topic-ideas', { interests }, {
                     signal: controller.signal,
                     onProgress: progress.update,
@@ -163,7 +168,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                generateIdeaBtn.disabled = false;
+                generateIdeaBtn.removeAttribute('aria-disabled');
                 generateIdeaBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 ideaBtnLabel.textContent = originalLabel;
             }

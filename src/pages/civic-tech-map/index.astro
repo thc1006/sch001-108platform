@@ -46,7 +46,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <button
                             id="ai-submit-btn"
                             type="button"
-                            class="inline-flex items-center gap-2 bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-emerald-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="inline-flex items-center gap-2 bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-emerald-700 transition duration-300"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>探索推薦</span>
@@ -713,27 +713,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 resultsArea.appendChild(box);
             }
 
-            // 焦點在進度區塊裡時（例如剛按了取消），finish() 會把它交給工作區；工作區清空後就藏起來了，
-            // 所以改交給結果區。
+            // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它交給按鈕，直接清空會掉回 <body>。
             function clearWorkspace(progress) {
                 if (progress) progress.finish();
-                if (document.activeElement === workspace) {
-                    resultsArea.setAttribute('tabindex', '-1');
-                    resultsArea.focus({ preventScroll: true });
-                }
                 workspace.textContent = '';
             }
 
             submitBtn.addEventListener('click', async function() {
+                if (submitBtn.getAttribute('aria-disabled') === 'true') return;
                 var interest = input.value.trim();
                 if (!interest) {
                     input.focus();
                     return;
                 }
 
-                // 進行中停用按鈕，防止重複送出；要停下來用進度區塊裡的「取消」。
+                // 進行中停用按鈕，防止重複送出；要停下來用進度區塊裡的「取消」。停用靠 aria-disabled：
+                // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
                 var originalLabel = submitLabel.textContent;
-                submitBtn.disabled = true;
+                submitBtn.setAttribute('aria-disabled', 'true');
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 submitLabel.textContent = '分析中…';
                 resultsArea.textContent = '';
 
@@ -741,7 +739,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // mountProgress 也在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
                 var progress = null;
                 try {
-                    progress = PlatformAI.mountProgress(workspace, { onCancel: function() { controller.abort(); } });
+                    progress = PlatformAI.mountProgress(workspace, {
+                        onCancel: function() { controller.abort(); },
+                        focusTarget: submitBtn
+                    });
                     var draft = null;
                     var outcome = await PlatformAI.runTask('civic-tech-suggestion', { interest: interest }, {
                         signal: controller.signal,
@@ -763,7 +764,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     var text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(err);
                     showMessage(text, err && err.name === 'AbortError' ? 'info' : 'error');
                 } finally {
-                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('aria-disabled');
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                     submitLabel.textContent = originalLabel;
                 }
             });
