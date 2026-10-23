@@ -27,7 +27,13 @@ const STAR_ITEM = {
     additionalProperties: false,
 };
 
-/** TASK_DEFINITIONS 是正式上線的任務，server.mjs 啟動時交給 createCatalog 逐一檢查。 */
+/**
+ * TASK_DEFINITIONS 是正式上線的任務，server.mjs 啟動時交給 createCatalog 逐一檢查。
+ * 任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS。時限從拿到名額就開始算，要容得下 WinLab 忙時等第一個
+ * 位元組的 2 分鐘。xhigh 的思考長度變化很大，2026-10-23 經正式閘道實測，同一題 career-chat 是 40.1 秒和
+ * 145.8 秒；思考寫滿一輪、接到第二輪的 civic-tech-suggestion 是 218.9 秒。145.8 秒與 218.9 秒加上 2 分鐘
+ * 都超過 QUEUE_TIMEOUT_MS，不超過它的時限會切掉正常的請求。
+ */
 export const TASK_DEFINITIONS = [
     {
         // 自主學習 › AI 自主學習教練（src/pages/autonomous-learning/index.astro）的「學習啟動包」。
@@ -38,8 +44,6 @@ export const TASK_DEFINITIONS = [
         input: {
             topic: { label: '初步想法', maxLength: 200 },
         },
-        // 不超過 QUEUE_TIMEOUT_MS 的預設值（見 limits.mjs）；WinLab 忙時第一個位元組等滿 2 分鐘，還剩 90 秒生成。
-        timeoutMs: 210_000,
         instructions: [
             '你是一位專業的台灣高中教育顧問，請為一位想自主學習的學生，依他的「初步想法」生成一份「學習啟動包」：',
             '- suggested_topic：將學生的模糊想法，聚焦為一個更具體的研究主題',

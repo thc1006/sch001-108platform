@@ -11,7 +11,6 @@ import vm from 'node:vm';
 
 import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput } from '../src/tasks.mjs';
-import { loadServerConfig } from '../src/config.mjs';
 
 const catalog = createCatalog(TASK_DEFINITIONS);
 
@@ -30,18 +29,9 @@ test('每個任務都組得出訊息：學生的資料只在 user 訊息、包�
     }
 });
 
-// 閘道閒著時一個來源可以拿走全部名額，排隊的人要等到它的任務結束（見 limits.mjs）
-test('starter-pack 的時限不超過 QUEUE_TIMEOUT_MS 的預設值：一個來源佔住全部名額時，排隊的人等得到', () => {
-    const { timeoutMs } = catalog.get('starter-pack');
-    assert.ok(Number.isInteger(timeoutMs));
-    assert.ok(timeoutMs <= loadServerConfig({}).queueTimeoutMs, `timeoutMs=${timeoutMs}`);
-});
-
-// 時限從拿到名額就開始算，等第一個位元組的時間也在裡面。WinLab 忙的時候要等一兩分鐘（README 的
-// 實測行為）；2026-10-22 在本機閘道同時送 4 個學習啟動包，生成最長 48.4 秒（思考 1873 tokens）。
-test('starter-pack 的時限容得下 WinLab 忙的時候等 2 分鐘的第一個位元組，再加上實測最長的生成', () => {
-    const { timeoutMs } = catalog.get('starter-pack');
-    assert.ok(timeoutMs >= 120_000 + 48_400, `timeoutMs=${timeoutMs}`);
+// 依據見 task-catalog.mjs 的 TASK_DEFINITIONS。
+test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
+    for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
 });
 
 test('starter-pack：初步想法最多 200 字（頁面的輸入框同樣限制 200）', () => {

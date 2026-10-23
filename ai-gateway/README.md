@@ -172,7 +172,7 @@ SSE 事件（每個 `data` 都是一行 JSON）：`accepted { requestId, task }`
 | `TRUSTED_PROXIES` | — | 只有連線來自這些 IPv4／CIDR 時才採用上面的標頭 |
 | `LLM_CONCURRENCY` | `4` | 上限 8（key 的並行上限） |
 | `LLM_MAX_QUEUE` | `8` | |
-| `QUEUE_TIMEOUT_MS` | `240000` | WinLab 忙的時候，進行中的任務光等第一個位元組就要一兩分鐘；任務的 `timeoutMs` 不要比它長 |
+| `QUEUE_TIMEOUT_MS` | `240000` | WinLab 忙的時候，進行中的任務光等第一個位元組就要一兩分鐘；任務的 `timeoutMs` 不要比它長。目前任務都不設，理由見 `src/task-catalog.mjs` 的 `TASK_DEFINITIONS` |
 | `RATE_LIMIT_WINDOW_MS`／`RATE_LIMIT_MAX` | `600000`／`100` | |
 | `REQUEST_LIMIT_PER_MINUTE` | `120` | |
 | `CLIENT_MAX_INFLIGHT` | `6` | |
