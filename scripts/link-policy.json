@@ -8,10 +8,10 @@
         "host": "ieso-info.org"
       },
       "kind": "hijacked",
-      "reason": "國際地球科學奧林匹亞（IESO）原先登記的網域已被第三方取得，轉作澳洲線上博弈站，與 IESO 完全無關。它回 HTTP 200，三態分類會把它算成「健康」——這正是狀態碼健康但內容被接管的盲點。本站資料只在說明文字裡提到它（作為警告），沒有做成連結；現行國際官方頁面是 www.igeoscied.org。",
-      "evidence": "2026-08-28 實測：https://ieso-info.org/ 以 301 轉至 https://www.ieso-info.org/（HTTP 200，server: cloudflare），<title> 為「Best Online Pokies in Australia 2026 - Play For Real Money」，meta description 為「Enjoy the best real money pokies in Australia at trusted casinos. Claim free spins, grab exclusive bonuses…」。",
+      "reason": "國際地球科學奧林匹亞（IESO）原先登記的網域已被第三方取得，轉作澳洲線上博弈站，與 IESO 完全無關。它回 HTTP 200，三態分類會把它算成「健康」——這正是狀態碼健康但內容被接管的盲點。本站資料只在說明文字裡提到它（作為警告），沒有做成連結。IESO 國際主辦單位 IGEO 的網站 www.igeoscied.org 自 2026 年 9 月中起連不上，台灣的選訓資訊在 tpmso.k12ea.gov.tw/ieso/。",
+      "evidence": "2026-10-23 重測，與 2026-08-28 首次記錄相同：https://ieso-info.org/ 以 301 轉至 https://www.ieso-info.org/（HTTP 200，server: cloudflare），<title> 為「Best Online Pokies in Australia 2026 - Play For Real Money」，meta description 為「Enjoy the best real money pokies in Australia at trusted casinos. Claim free spins, grab exclusive bonuses…」。",
       "owner": "thc1006",
-      "expires": "2026-11-30"
+      "expires": "2027-01-31"
     },
     {
       "match": {
@@ -19,9 +19,9 @@
       },
       "kind": "hijacked",
       "reason": "新加坡與亞洲數學奧林匹亞（SASMO）舊網域已失守，整條轉址鏈把訪客導向聯盟廣告頁，與 SASMO 無關。最終頁回 HTTP 200，會被三態分類誤計為健康。現行官網是 sasmo.simcc.org。",
-      "evidence": "2026-08-28 實測轉址鏈：https://www.sasmo.sg/ 301 → https://sasmo.sg/ 302 → https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en（HTTP 200），<title>「Press START - Play Free | Arcade.now」。轉址參數 subid2=TW 顯示這條漏斗會依訪客地區投放，台灣訪客同樣會被導過去。",
+      "evidence": "2026-10-23 重測轉址鏈：https://www.sasmo.sg/ 301 → https://sasmo.sg 302 → https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en&click_id=… 302 → https://arcade.now/lp1/play（HTTP 200），<title>「Play Snake Free | Arcade.now」。2026-08-28 首次記錄時，鏈的終點是 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en（HTTP 200），<title>「Press START - Play Free | Arcade.now」。轉址參數 subid2=TW 顯示這條漏斗會依訪客地區投放，台灣訪客同樣會被導過去。",
       "owner": "thc1006",
-      "expires": "2026-11-30"
+      "expires": "2027-01-31"
     },
     {
       "match": {
@@ -29,9 +29,9 @@
       },
       "kind": "hijacked",
       "reason": "哈佛模擬聯合國（HMUN）舊網域已成停放網域，導向點擊變現的廣告網路。回 HTTP 200，會被誤計為健康。現行官網是 harvardmun.org。",
-      "evidence": "2026-08-28 實測：https://hmun.org/ 回 HTTP 200 但只有 470 bytes、<title> 為「Loading...」的 JS 轉址殼（server: Cowboy）；同日另一次探測則以 302 轉至 http://xml-v4.pushub.net/click?i=… 再轉 http://live.sportsvot.com/filter?q=hmun。兩種回應交替出現，是停放網域變現的典型行為。",
+      "evidence": "2026-10-23 用 curl（Chrome 的 User-Agent）重測 7 次：6 次回 HTTP 200、470 bytes、<title> 為「Loading...」的 JS 轉址殼，殼裡的 window.location.replace 轉回 https://hmun.org/?ch=1&js=…；1 次以 302 轉至 http://click-v4.expclknb.com/click?i=…，該網址回 HTTP 200、0 bytes。兩種回應的 server 都是 Cowboy。2026-08-28 首次記錄時也是這兩種回應交替出現：470 bytes 的 JS 轉址殼，以及 302 轉至 http://xml-v4.pushub.net/click?i=… 再轉 http://live.sportsvot.com/filter?q=hmun。轉址目標會換，是停放網域變現的典型行為。",
       "owner": "thc1006",
-      "expires": "2026-11-30"
+      "expires": "2027-01-31"
     },
     {
       "match": {
@@ -39,9 +39,9 @@
       },
       "kind": "terminus",
       "reason": "這是 www.sasmo.sg 那條接管鏈的終點——聯盟廣告漏斗，與 SASMO 或任何教育單位無關。它本身沒有被接管，它就是接管方，所以標為 terminus 而不是 hijacked。本站 competitions.json 的說明文字為了警告讀者而點名了它，因此它會被裸網域擷取當成候選、實測回 HTTP 200，若不列在這裡就會被三態分類算進「健康」——等於用檢查器替廣告漏斗背書，正是本檔要防的事。",
-      "evidence": "2026-08-28 實測：https://arcade.now/ 直接回 HTTP 200（無轉址）。同日實測 https://www.sasmo.sg/ 301 → https://sasmo.sg/ 302 → https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en&click_id=…，subid2=TW 顯示這條漏斗會對台灣訪客投放。",
+      "evidence": "2026-10-23 重測：https://arcade.now/ 直接回 HTTP 200（無轉址），<title>「70+ Free Arcade Games Online - No Downloads | Arcade.now」。同日 https://www.sasmo.sg/ 的轉址鏈照樣經過 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en&click_id=…，subid2=TW 顯示這條漏斗會對台灣訪客投放。2026-08-28 首次記錄：https://arcade.now/ 同樣直接回 HTTP 200（當時沒有記標題），www.sasmo.sg 的轉址鏈同樣經過這裡。",
       "owner": "thc1006",
-      "expires": "2026-11-30"
+      "expires": "2027-01-31"
     }
   ]
 }
