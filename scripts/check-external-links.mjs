@@ -245,17 +245,6 @@ if (bareHosts.length) {
 // --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘完全沒看過；算成完整覆蓋的話，
 // 一次只驗 3 筆的執行也會宣稱「全站都查過了」。
 const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && bareUnresolved.length === 0;
-// 被接管的網域一定要讓人看到：它回 200，不會出現在任何一個「壞掉」的桶子裡。
-// 需處理的自動訊號（actionableSignals）也要讓 needs_attention 變 true。偵測到了卻不開
-// issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。
-const needsAttention =
-    dead.length > 0 ||
-    blocked.length > 0 ||
-    bareDead.length > 0 ||
-    hijackedHits.length > 0 ||
-    actionableSignals.length > 0 ||
-    !coverageComplete;
-
 // 三個訊號的精確度差很多，混在一起會讓高精確度的那兩個被雜訊淹掉。
 // 實測（全站 508 個目標，2026-08-28）：
 //   訊號 A 跨站轉址   11 個命中、全部是誤判
@@ -274,6 +263,16 @@ const needsAttention =
 // 它適合放進報告給人瀏覽，不適合每週開一次 issue。
 const actionableSignals = autoSignals.filter((a) => a.confidence === 'actionable');
 const browseOnlySignals = autoSignals.filter((a) => a.confidence !== 'actionable');
+// 被接管的網域一定要讓人看到：它回 200，不會出現在任何一個「壞掉」的桶子裡。
+// 需處理的自動訊號（actionableSignals）也要讓 needs_attention 變 true。偵測到了卻不開
+// issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。
+const needsAttention =
+    dead.length > 0 ||
+    blocked.length > 0 ||
+    bareDead.length > 0 ||
+    hijackedHits.length > 0 ||
+    actionableSignals.length > 0 ||
+    !coverageComplete;
 
 const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => o.file))].sort();
 // 出處全列會炸掉報告：同一個網址可能出現在 90 幾個頁面（例如共用的頁尾連結），
