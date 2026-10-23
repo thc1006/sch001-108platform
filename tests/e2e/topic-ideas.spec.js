@@ -113,7 +113,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await page.click('#generateIdeaBtn');
         const result = page.locator('#ideaResult');
         await expect(result).toHaveText('AI 服務尚未設定完成，暫時無法使用。');
-        await expect(result.locator('p')).toHaveClass(/text-red-500/);
+        await expect(result.locator('p')).toHaveClass(/text-red-700/);
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
@@ -123,7 +123,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
             await page.fill('#ideaInput', value);
             await page.click('#generateIdeaBtn');
             await expect(page.locator('#ideaResult')).toHaveText('請先輸入你的興趣關鍵字！');
-            await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-500/);
+            await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-700/);
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
@@ -141,7 +141,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         const message = page.locator('#ideaResult p');
         await expect(message).toHaveText('已取消。');
         await expect(message).toHaveClass(/text-gray-600/);
-        await expect(message).not.toHaveClass(/text-red-500/);
+        await expect(message).not.toHaveClass(/text-red-700/);
         // 取消鈕隨進度區塊移除，progress.finish() 會先把焦點交給工作區，不讓它掉回 <body>。
         await expect(page.locator('#ideaWorkspace')).toBeFocused();
         await expect(page.locator('#ideaWorkspace > *')).toHaveCount(0);
@@ -212,7 +212,7 @@ test.describe('選題靈感頁：共用腳本 platform-ai.js 沒載入成功', (
             await page.click('#generateIdeaBtn');
 
             await expect(page.locator('#ideaResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
-            await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-500/);
+            await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-700/);
             const button = page.locator('#generateIdeaBtn');
             await expect(button).toBeEnabled();
             await expect(button).toHaveText('產生靈感');
