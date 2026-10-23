@@ -310,15 +310,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         }
 
         generatePlanBtn.addEventListener('click', async () => {
+            if (generatePlanBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = planInput.value.trim();
             if (!topic) {
                 showMessage('請先輸入你的自主學習主題！');
                 return;
             }
 
-            // 進行中停用按鈕，免得重複送出；要中途停止就按進度區塊裡的「取消」。
+            // 進行中停用按鈕，免得重複送出；要中途停止就按進度區塊裡的「取消」。停用靠 aria-disabled：
+            // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = planBtnLabel.textContent;
-            generatePlanBtn.disabled = true;
+            generatePlanBtn.setAttribute('aria-disabled', 'true');
+            generatePlanBtn.classList.add('opacity-50', 'cursor-not-allowed');
             planBtnLabel.textContent = '產生中…';
             planResult.textContent = '';
 
@@ -326,7 +329,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // mountProgress 也放在 try 裡：PlatformAI 不存在時它會丟錯，按鈕仍要在 finally 恢復。
             let progress = null;
             try {
-                progress = PlatformAI.mountProgress(planWorkspace, { onCancel: () => controller.abort() });
+                progress = PlatformAI.mountProgress(planWorkspace, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: generatePlanBtn,
+                });
                 const { result } = await PlatformAI.runTask('study-plan', { topic }, {
                     signal: controller.signal,
                     onProgress: progress.update,
@@ -338,10 +344,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                generatePlanBtn.disabled = false;
+                generatePlanBtn.removeAttribute('aria-disabled');
+                generatePlanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 planBtnLabel.textContent = originalLabel;
-                // finish() 把進度區塊裡的焦點交給工作區，但工作區已經清空，改交回按鈕。
-                if (document.activeElement === planWorkspace) generatePlanBtn.focus();
             }
         });
 

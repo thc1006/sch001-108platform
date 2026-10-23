@@ -178,7 +178,10 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             // mountProgress 放在 try 裡：PlatformAI 沒載入時它會丟 ReferenceError，按鈕仍要靠 finally 恢復。
             let progress = null;
             try {
-                progress = PlatformAI.mountProgress(aiWorkContainer, { onCancel: () => controller.abort() });
+                progress = PlatformAI.mountProgress(aiWorkContainer, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: aiGenerateBtn,
+                });
                 let draft = null;
                 const { result } = await PlatformAI.runTask('competency-analysis', { experience }, {
                     signal: controller.signal,
@@ -190,7 +193,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         draft = box;
                     },
                 });
-                // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它移到 #ai-work，直接清空會掉回 <body>。
+                // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它交給按鈕，直接清空會掉回 <body>。
                 progress.finish();
                 aiWorkContainer.textContent = '';
                 // 以 done 的 result 為準，片段接起來的只是草稿。

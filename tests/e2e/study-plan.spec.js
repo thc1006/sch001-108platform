@@ -40,6 +40,14 @@ const XSS_RESULT = {
     expected_outcome: [`產出一 ${XSS_IMG}`, `產出二 ${XSS_SCRIPT}`],
 };
 
+// 結果與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+const SETTLE = [
+    ['結果送達', done(RESULT), (page) => expectPlan(page, RESULT)],
+    ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
+        (page) => expect(page.locator('#planResult')).toHaveText(FORMAT_ERROR)],
+];
+
 async function expectPlan(page, plan) {
     const result = page.locator('#planResult');
     await expect(result.locator('h4')).toHaveText(['學習目標', '執行方法', '週次進度', '預期產出']);
@@ -70,6 +78,7 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
 
         const button = page.locator('#generatePlanBtn');
         await expect(button).toBeEnabled();
+        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         await expect(button).toHaveText('產生計畫草案');
         await expect(button.locator('svg')).toHaveCount(1);
     });
@@ -113,7 +122,8 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
 
         // 進行中只換按鈕的文字，圖示留著。
         const button = page.locator('#generatePlanBtn');
-        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
         await expect(button).toHaveText('產生中…');
         await expect(button.locator('svg')).toHaveCount(1);
 
@@ -125,20 +135,46 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         await expect(message).not.toHaveClass(/text-red-700/);
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(button).toBeEnabled();
+        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         await expect(button).toHaveText('產生計畫草案');
-        // 取消鈕跟著進度區塊移除了，焦點不能停在清空的工作區。
+        // 取消鈕跟著進度區塊移除了，焦點不能停在清空的工作區，也不能移進結果區：螢幕閱讀器會唸一次
+        // 訊息，live region 又唸一次。
         await expect(button).toBeFocused();
+        for (const el of [button, page.locator('#planWorkspace'), page.locator('#planResult')]) await expect(el).not.toHaveAttribute('tabindex');
     });
 
-    test('焦點停在「取消」上時結果送達 → 顯示計畫，焦點回到按鈕', async ({ page }) => {
+    for (const [when, chunk, expectSettled] of SETTLE) {
+        test(`焦點停在「取消」上時${when} → 焦點回到按鈕`, async ({ page }) => {
+            await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+            await page.fill('#planInput', '手搖飲');
+            await page.click('#generatePlanBtn');
+            await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).focus();
+
+            await page.evaluate((c) => window.__stream.push(c), chunk);
+            await expectSettled(page);
+            await expect(page.locator('#generatePlanBtn')).toBeFocused();
+        });
+    }
+
+    // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
+    test('用鍵盤按「產生計畫草案」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#planInput', '手搖飲');
-        await page.click('#generatePlanBtn');
-        await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).focus();
+        const button = page.locator('#generatePlanBtn');
+        await button.focus();
+        await page.keyboard.press('Enter');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).not.toHaveAttribute('disabled');
+        // 等過一次畫面更新再看焦點。
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.keyboard.press('Enter');
+        await expect(button).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
 
         await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
         await expectPlan(page, RESULT);
-        await expect(page.locator('#generatePlanBtn')).toBeFocused();
+        await expect(button).toBeEnabled();
+        await expect(button).toBeFocused();
     });
 
     test('等待時焦點移到輸入框 → 結果送達後焦點留在輸入框', async ({ page }) => {

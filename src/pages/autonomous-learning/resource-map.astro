@@ -203,6 +203,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         }
 
         generatePathBtn.addEventListener('click', async () => {
+            if (generatePathBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = pathInput.value.trim();
             if (!topic) {
                 showMessage('請先輸入你想學習的主題！');
@@ -210,8 +211,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
 
             // 進行中停用按鈕，要停止就用進度區塊裡的「取消」。只換文字，圖示留著。
+            // 停用靠 aria-disabled：disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = pathBtnLabel.textContent;
-            generatePathBtn.disabled = true;
+            generatePathBtn.setAttribute('aria-disabled', 'true');
             generatePathBtn.classList.add('opacity-50', 'cursor-not-allowed');
             pathBtnLabel.textContent = '規劃中…';
             pathResult.textContent = '';
@@ -220,7 +222,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // mountProgress 也放在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
             let progress = null;
             try {
-                progress = PlatformAI.mountProgress(pathWork, { onCancel: () => controller.abort() });
+                progress = PlatformAI.mountProgress(pathWork, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: generatePathBtn,
+                });
                 const { result } = await PlatformAI.runTask('learning-path', { topic }, {
                     signal: controller.signal,
                     onProgress: progress.update,
@@ -234,7 +239,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                generatePathBtn.disabled = false;
+                generatePathBtn.removeAttribute('aria-disabled');
                 generatePathBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 pathBtnLabel.textContent = originalLabel;
             }

@@ -50,6 +50,14 @@ const xssStep = (n) => ({
 });
 const XSS_RESULT = { learning_path: [1, 2, 3, 4].map(xssStep) };
 
+// 結果與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+const SETTLE = [
+    ['結果送達', done(RESULT), (page) => expect(page.locator('#pathResult > div')).toHaveCount(4)],
+    ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
+        (page) => expect(page.locator('#pathResult')).toHaveText(FORMAT_ERROR)],
+];
+
 const push = (page, chunk) => page.evaluate((c) => window.__stream.push(c), chunk);
 
 // 半透明和禁止游標也要拿掉，否則按鈕能按，看起來卻像停用的。
@@ -134,37 +142,63 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('進行中按「取消」→ 進度區塊移除，以一般的語氣顯示「已取消。」，焦點留在工作區，按鈕恢復原狀', async ({ page }) => {
+    test('進行中用鍵盤按「取消」→ 進度區塊移除，以一般的語氣顯示「已取消。」，焦點回到「規劃路徑」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#pathInput', 'Python');
         await page.click('#generatePathBtn');
         const button = page.locator('#generatePathBtn');
-        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
         await expect(button).toHaveText('規劃中…');
         await expect(button).toHaveClass(/opacity-50/);
         await expect(button).toHaveClass(/cursor-not-allowed/);
         await expect(button.locator('svg')).toHaveCount(1);
 
-        await page.locator('#pathWork').getByRole('button', { name: '取消' }).click();
+        await page.locator('#pathWork').getByRole('button', { name: '取消' }).focus();
+        await page.keyboard.press('Enter');
         const message = page.locator('#pathResult p');
         await expect(message).toHaveText('已取消。');
         await expect(message).toHaveClass(/text-gray-600/);
         await expect(message).not.toHaveClass(/text-red-700/);
         await expect(page.locator('#pathWork > *')).toHaveCount(0);
-        // 取消鈕會隨進度區塊移除，progress.finish() 先把焦點交給工作區，才不會掉回 <body>。
-        await expect(page.locator('#pathWork')).toBeFocused();
         await expectButtonRestored(button);
+        // 取消鈕會隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
+        // 訊息，live region 又唸一次。
+        await expect(button).toBeFocused();
+        for (const el of [button, page.locator('#pathWork'), page.locator('#pathResult')]) await expect(el).not.toHaveAttribute('tabindex');
     });
 
-    test('等待時焦點停在「取消」上，結果送達 → 焦點交給工作區，不掉回 <body>', async ({ page }) => {
+    for (const [when, chunk, expectSettled] of SETTLE) {
+        test(`等待時焦點停在「取消」上，${when} → 焦點交給「規劃路徑」按鈕，不掉回 <body>`, async ({ page }) => {
+            await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+            await page.fill('#pathInput', 'Python');
+            await page.click('#generatePathBtn');
+            await page.locator('#pathWork').getByRole('button', { name: '取消' }).focus();
+
+            await push(page, chunk);
+            await expectSettled(page);
+            await expect(page.locator('#generatePathBtn')).toBeFocused();
+        });
+    }
+
+    // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
+    test('用鍵盤按「規劃路徑」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#pathInput', 'Python');
-        await page.click('#generatePathBtn');
-        await page.locator('#pathWork').getByRole('button', { name: '取消' }).focus();
+        const button = page.locator('#generatePathBtn');
+        await button.focus();
+        await page.keyboard.press('Enter');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).not.toHaveAttribute('disabled');
+        // 等過一次畫面更新再看焦點。
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.keyboard.press('Enter');
+        await expect(button).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
 
         await push(page, done(RESULT));
         await expect(page.locator('#pathResult > div')).toHaveCount(4);
-        await expect(page.locator('#pathWork')).toBeFocused();
+        await expectButtonRestored(button);
+        await expect(button).toBeFocused();
     });
 
     test('閘道回報錯誤（error 事件）→ 進度區塊移除，以錯誤的紅字顯示閘道給的訊息', async ({ page }) => {

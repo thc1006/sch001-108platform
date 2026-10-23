@@ -18,6 +18,13 @@ const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) =
 const hasBox = (locator) => locator.evaluate((el) => el.checkVisibility());
 // 這些角色與 <output>（隱含 role="status"）不寫 aria-live 也是 live region。
 const LIVE_REGION = '[aria-live], [role="alert"], [role="log"], [role="marquee"], [role="status"], [role="timer"], output';
+// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+const SETTLE = [
+    ['收到 done', done('**最後的答案**'), (page) => expect(page.locator('#ai-results .ai-result-text')).toHaveText('最後的答案')],
+    ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
+        (page) => expect(page.locator('#ai-results')).toHaveText(FORMAT_ERROR)],
+];
 
 test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任務）', () => {
     test.beforeEach(async ({ page }) => {
@@ -49,7 +56,8 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         await expect(workspace.getByRole('status')).toHaveText('AI 正在撰寫回答…');
         await expect(workspace.getByRole('button', { name: '取消' })).toBeVisible();
         await expect(results.locator('*')).toHaveCount(0);
-        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
         await expect(button).toHaveText('分析中…');
 
         await push(page, delta('\n探索建議：當查核志工。'));
@@ -72,6 +80,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
 
         // 按鈕恢復可按，文字與圖示都還在。
         await expect(button).toBeEnabled();
+        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         await expect(button).toHaveText('探索推薦');
         await expect(button.locator('svg')).toHaveCount(1);
     });
@@ -145,21 +154,63 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('草稿出現後按「取消」→ 草稿移除，結果區顯示「已取消。」（不是紅字）並取得焦點，按鈕恢復可按', async ({ page }) => {
+    test('草稿出現後用鍵盤按「取消」→ 草稿移除，結果區顯示「已取消。」（不是紅字），焦點回到「探索推薦」按鈕，按鈕恢復可按', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**')], hang: true });
         await page.fill('#ai-interest-input', '假訊息');
         await page.click('#ai-submit-btn');
         const workspace = page.locator('#ai-workspace');
         const results = page.locator('#ai-results');
+        const button = page.locator('#ai-submit-btn');
         await expect(workspace.locator('.ai-result-text strong')).toHaveText(['Cofacts 真的假的']);
 
-        await workspace.getByRole('button', { name: '取消' }).click();
+        await workspace.getByRole('button', { name: '取消' }).focus();
+        await page.keyboard.press('Enter');
         await expect(results).toHaveText('已取消。');
         await expect(results.locator('p')).toHaveClass(/text-gray-700/);
         await expect(workspace.locator('*')).toHaveCount(0);
-        // 取消鈕跟著進度區塊移除，焦點不能掉回 <body>。
-        await expect(results).toBeFocused();
-        await expect(page.locator('#ai-submit-btn')).toBeEnabled();
+        await expect(button).toBeEnabled();
+        // 取消鈕跟著進度區塊移除，清空的工作區也藏起來了；焦點移進結果區的話，螢幕閱讀器會唸一次
+        // 訊息，live region 又唸一次。
+        await expect(button).toBeFocused();
+        for (const el of [button, workspace, results]) await expect(el).not.toHaveAttribute('tabindex');
+    });
+
+    for (const [when, chunk, expectSettled] of SETTLE) {
+        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「探索推薦」按鈕`, async ({ page }) => {
+            await installFakeGateway(page, { chunks: [ACCEPTED, delta('**草稿**')], hang: true });
+            await page.fill('#ai-interest-input', '假訊息');
+            await page.click('#ai-submit-btn');
+            const workspace = page.locator('#ai-workspace');
+            await expect(workspace.locator('.ai-result-text')).toHaveText('草稿');
+
+            await workspace.getByRole('button', { name: '取消' }).focus();
+            await push(page, chunk);
+            await expectSettled(page);
+            await expect(workspace.locator('*')).toHaveCount(0);
+            await expect(page.locator('#ai-submit-btn')).toBeFocused();
+            await expect(page.locator('#ai-results')).not.toHaveAttribute('tabindex');
+        });
+    }
+
+    // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
+    test('用鍵盤按「探索推薦」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-interest-input', '假訊息');
+        const button = page.locator('#ai-submit-btn');
+        await button.focus();
+        await page.keyboard.press('Enter');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).not.toHaveAttribute('disabled');
+        // 等過一次畫面更新再看焦點。
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.keyboard.press('Enter');
+        await expect(button).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+
+        await push(page, done('**最後的答案**'));
+        await expect(page.locator('#ai-results .ai-result-text')).toHaveText('最後的答案');
+        await expect(button).toBeEnabled();
+        await expect(button).toBeFocused();
     });
 
     test('串流在 done 之前就斷了 → 草稿移除，結果區用紅字顯示連線中斷', async ({ page }) => {

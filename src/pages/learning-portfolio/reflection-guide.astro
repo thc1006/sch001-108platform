@@ -166,15 +166,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         }
 
         analyzeBtn.addEventListener('click', async () => {
+            if (analyzeBtn.getAttribute('aria-disabled') === 'true') return;
             const reflection = reflectionInput.value.trim();
             if (!reflection) {
                 showMessage('請先貼上你的心得反思文字！');
                 return;
             }
 
-            // 停用按鈕避免重複送出，要中途停止就用進度區塊裡的「取消」。
+            // 停用按鈕避免重複送出，要中途停止就用進度區塊裡的「取消」。停用靠 aria-disabled：
+            // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = analyzeBtnLabel.textContent;
-            analyzeBtn.disabled = true;
+            analyzeBtn.setAttribute('aria-disabled', 'true');
             analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
             analyzeBtnLabel.textContent = '健檢中…';
             analysisResult.textContent = '';
@@ -183,7 +185,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // PlatformAI 不存在時 mountProgress 會丟 ReferenceError，要放在 try 裡，按鈕才會在 finally 恢復。
             let progress = null;
             try {
-                progress = PlatformAI.mountProgress(analysisWork, { onCancel: () => controller.abort() });
+                progress = PlatformAI.mountProgress(analysisWork, {
+                    onCancel: () => controller.abort(),
+                    focusTarget: analyzeBtn,
+                });
                 const { result } = await PlatformAI.runTask('star-analysis', { reflection }, {
                     signal: controller.signal,
                     onProgress: progress.update,
@@ -197,7 +202,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
-                analyzeBtn.disabled = false;
+                analyzeBtn.removeAttribute('aria-disabled');
                 analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 analyzeBtnLabel.textContent = originalLabel;
             }

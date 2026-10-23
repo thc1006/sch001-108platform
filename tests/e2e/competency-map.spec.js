@@ -11,6 +11,14 @@ const done = (result) => sse('done', { result, rounds: 1, continuations: [], usa
 const delta = (text) => sse('delta', { text });
 const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) => window.__stream.push(c)), chunks);
 
+// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+const SETTLE = [
+    ['收到 done', done('* 最後的答案'), (page) => expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案')],
+    ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
+        (page) => expect(page.locator('#ai-result')).toHaveText(FORMAT_ERROR)],
+];
+
 /**
  * liveSettingsUpFrom 從 el 往上（含自己）列出設了 aria-live、或 role 隱含 live 的元素，在頁面裡執行。
  * @param {Element} el @returns {string[]}
@@ -127,7 +135,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點移到 #ai-work，按鈕恢復原狀', async ({ page }) => {
+    test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點回到「開始分析」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**')], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
@@ -142,24 +150,29 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(result.locator('p')).toHaveClass(/text-gray-600/);
         await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
         await expect(work).toBeEmpty();
-        // 取消鈕跟著進度區塊移除了，焦點不能掉回 <body>。
-        await expect(work).toBeFocused();
         await expect(button).toBeEnabled();
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        // 取消鈕跟著進度區塊移除了。空的 #ai-work 看不到焦點框；焦點移進 #ai-result 的話，螢幕閱讀器
+        // 會唸一次訊息，live region 又唸一次。
+        await expect(button).toBeFocused();
+        for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
     });
 
-    test('焦點在「取消」上時收到 done → 焦點移到 #ai-work', async ({ page }) => {
-        await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
-        await page.fill('#ai-input', '科展');
-        await page.click('#ai-generate-btn');
-        const work = page.locator('#ai-work');
-        await expect(work.locator('.prose')).toHaveText('• 草稿');
+    for (const [when, chunk, expectSettled] of SETTLE) {
+        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「開始分析」按鈕`, async ({ page }) => {
+            await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
+            await page.fill('#ai-input', '科展');
+            await page.click('#ai-generate-btn');
+            const work = page.locator('#ai-work');
+            await expect(work.locator('.prose')).toHaveText('• 草稿');
 
-        await work.getByRole('button', { name: '取消' }).focus();
-        await push(page, done('* 最後的答案'));
-        await expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案');
-        await expect(work).toBeFocused();
-    });
+            await work.getByRole('button', { name: '取消' }).focus();
+            await push(page, chunk);
+            await expectSettled(page);
+            await expect(work).toBeEmpty();
+            await expect(page.locator('#ai-generate-btn')).toBeFocused();
+        });
+    }
 
     test('用鍵盤按「開始分析」→ 進行中焦點留在按鈕上，再按 Enter 不會再送一次；完成後焦點仍在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
@@ -171,7 +184,8 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         // 按鈕若變得不能聚焦，瀏覽器到更新畫面時才移走焦點（HTML 標準的 focus fixup），所以先等兩個畫格。
         await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await expect(button).toBeFocused();
-        await expect(button).toBeDisabled();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).not.toHaveAttribute('disabled');
 
         await page.keyboard.press('Enter');
         await push(page, done('* 最後的答案'));
