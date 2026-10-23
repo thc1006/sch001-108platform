@@ -56,7 +56,7 @@ const SOON_DAYS = 30;
 //
 // 判準刻意用 sourceCheckedAt 而不是推算的週期：官網說「尚未公布」時，那句話本身
 // 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
-// 對 The Earth Prize／TYPT／John Locke 等就是這樣釘的）。這裡不猜任何日期，
+// 對 Ayn Rand／Embracing Our Differences／John Locke 等就是這樣釘的）。這裡不猜任何日期，
 // 只陳述「我們上次看是 N 天前，答案是未知，該再看一次」。
 //
 // 90 天＝一季，對年度賽事是一個合理的抽樣節奏；180 天＝半年，一個年度賽事的
