@@ -38,14 +38,33 @@ rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
 
 const realPolicy = JSON.parse(readFileSync(path.join(SCRIPTS, 'link-policy.json'), 'utf8'));
+// entries 用固定的測資：正式的例外可能一筆都不剩，entries 的規則仍要有東西可以破壞。hijacked 用正式名單。
+const fixtureExpires = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+const policyFixture = {
+    ...realPolicy,
+    entries: [
+        {
+            match: { url: 'https://files.example.org/guide.pdf' },
+            reason: '故障注入的測資：只放行這一個檔案，不放行整台主機。',
+            owner: 'link-faults',
+            expires: fixtureExpires,
+        },
+        {
+            match: { host: 'www.example.net' },
+            reason: '故障注入的測資：整台主機層級的例外，用 host 而不是單一網址。',
+            owner: 'link-faults',
+            expires: fixtureExpires,
+        },
+    ],
+};
 
 /** 只含政策目標的最小盤點，讓「殭屍條目」以外的規則不會被誤觸發。 */
 const baselineInventory = {
     generatedFrom: 'dist',
     total: 3,
     urls: [
-        { url: realPolicy.entries[0].match.url, occurrences: [{ file: 'x.html', location: 'a[href]' }] },
-        { url: 'https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html', occurrences: [{ file: 'y.html', location: 'a[href]' }] },
+        { url: policyFixture.entries[0].match.url, occurrences: [{ file: 'x.html', location: 'a[href]' }] },
+        { url: 'https://www.example.net/bbs/page.html', occurrences: [{ file: 'y.html', location: 'a[href]' }] },
         { url: 'https://example.com/', occurrences: [{ file: 'z.html', location: 'a[href]' }] },
     ],
     // hijacked 的目標只活在說明文字裡，不是 url 欄位。少了這一段，基準狀態的
@@ -77,7 +96,7 @@ const runPolicyCheck = (policyPath, inventoryPath) => {
 };
 
 // 深拷貝一份可以隨意破壞的政策
-const clonePolicy = () => JSON.parse(JSON.stringify(realPolicy));
+const clonePolicy = () => JSON.parse(JSON.stringify(policyFixture));
 const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
 
 const policyCases = [
@@ -109,12 +128,12 @@ const policyCases = [
     {
         name: '例外使用萬用字元主機名',
         expect: /萬用字元/,
-        policy: () => { const p = clonePolicy(); p.entries[1].match = { host: '*.ptt.cc' }; return p; },
+        policy: () => { const p = clonePolicy(); p.entries[1].match = { host: '*.example.net' }; return p; },
     },
     {
         name: '例外把整個母網域放進來（子網域全放行）',
         expect: /找不到對應的網址/,
-        policy: () => { const p = clonePolicy(); p.entries[1].match = { host: 'ptt.cc' }; return p; },
+        policy: () => { const p = clonePolicy(); p.entries[1].match = { host: 'example.net' }; return p; },
     },
     {
         name: '例外指向雲端 metadata',
@@ -577,7 +596,7 @@ function runBaselineTests() {
 }
 
 console.log('先確認基準狀態為綠：');
-const basePolicy = write('policy-base.json', realPolicy);
+const basePolicy = write('policy-base.json', policyFixture);
 const baseInv = write('inventory-base.json', baselineInventory);
 const base = runPolicyCheck(basePolicy, baseInv);
 if (base.code !== 0) {
