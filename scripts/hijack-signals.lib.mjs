@@ -172,7 +172,7 @@ export function visibleText(html) {
  * 但訊號 C 會觸發 issue，誤判的成本比漏檢高。
  * <meta refresh> 不需要 JS 就能跟隨，www.cac.edu.tw、tpmso.k12ea.gov.tw 這類舊式轉址頁不算盲區。
  * probe 不跟隨 meta refresh，這類頁面在訊號 B 看到的是殼的 <title>，不是真正的頁面。
- * @param truncated body 是不是被截斷了（連線中途斷掉）。截斷的 body 看起來也像很小的殼，不確定就不報。
+ * @param truncated body 沒有讀完：超過讀取上限，或有長度、chunked 的回應中途斷線。截斷的 body 看起來也像很小的殼，不確定就不報。
  */
 export function opaqueShell(bodyHead, truncated = false) {
     if (typeof bodyHead !== 'string' || !bodyHead) return null;

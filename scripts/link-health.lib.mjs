@@ -388,17 +388,29 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                         res.destroy();
                         return done({ status, location, bodySkipped: `content-encoding: ${enc}` });
                     }
-                    let bodyHead = '';
+                    // 上限算的是原始位元組。先解碼再算的話，非 UTF-8 內容裡的無效位元組會變成 3 bytes 的 U+FFFD，長度被高估。
+                    const chunks = [];
                     let read = 0;
-                    res.setEncoding('utf8');
+                    let complete = false;
                     res.on('data', (chunk) => {
-                        read += Buffer.byteLength(chunk, 'utf8');
-                        bodyHead += chunk;
+                        read += chunk.length;
+                        chunks.push(chunk);
                         if (read >= wantBody) res.destroy();
                     });
+                    // 收到 end、又沒有超過上限才算讀完。超過上限的部分會被切掉；有 Content-Length 或 chunked 的
+                    // 回應中途斷線時不會有 end。這兩種都算截斷，訊號 C 不拿不完整的 body 判斷。整包一次到達時，
+                    // 超過上限也可能收到 end。靠關閉連線結束的回應，中途斷線和正常結束分不出來。
                     // destroy 之後 end 不一定會觸發，close 一定會；done 本身有防重入。
-                    const finish = () => done({ status, location, bodyHead: bodyHead.slice(0, wantBody) });
-                    res.on('end', finish);
+                    const finish = () => done({
+                        status,
+                        location,
+                        bodyHead: Buffer.concat(chunks).subarray(0, wantBody).toString('utf8'),
+                        bodyTruncated: !complete || read > wantBody,
+                    });
+                    res.on('end', () => {
+                        complete = true;
+                        finish();
+                    });
                     res.on('close', finish);
                     res.on('error', finish);
                 },
@@ -468,6 +480,7 @@ export async function probe(rawUrl, signal, opts = {}) {
                 redirects: chain,
                 addresses: resolved.addresses.map((a) => a.address),
                 ...(r.bodyHead !== undefined ? { bodyHead: r.bodyHead } : {}),
+                ...(r.bodyTruncated ? { bodyTruncated: true } : {}),
                 ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
             };
         }

@@ -34,6 +34,7 @@ import {
     runProbes,
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
+import { detectHijackSignals } from './hijack-signals.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 
@@ -66,6 +67,9 @@ let base;
 let server;
 let hits;
 
+/** SHELL 是只靠 JavaScript 轉走、不執行 JS 就看不到內容的殼，訊號 C 要抓的就是這種頁面。 */
+const SHELL = '<html><head><script>window.location.replace("/next")</script></head><body></body></html>';
+
 before(async () => {
     hits = new Map();
     server = createServer((req, res) => {
@@ -78,6 +82,22 @@ before(async () => {
         if (u === '/429') { res.writeHead(429); return res.end('slow down'); }
         if (u === '/500') { res.writeHead(500); return res.end('boom'); }
         if (u === '/slow') { return; } // 不回應，用來測逾時
+        // 讀 body 的幾種結束方式：完整收到、超過讀取上限、chunked 回應中途斷線。
+        if (u === '/shell') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(SHELL); }
+        if (u === '/big-body') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('x'.repeat(4096)); }
+        if (u === '/cut-shell') {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(SHELL);
+            return setTimeout(() => res.socket.destroy(), 20);
+        }
+        // 先送剛好 512 bytes，晚一點才送其餘的：讀到上限時 end 還沒來
+        if (u === '/exact-then-more') {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write('x'.repeat(512));
+            return setTimeout(() => res.end('y'.repeat(512)), 50);
+        }
+        // 300 bytes 的 Latin-1：0xE9 不是合法的 UTF-8，解碼後每個位元組都變成 3 bytes 的 U+FFFD
+        if (u === '/latin1') { res.writeHead(200, { 'Content-Type': 'text/html; charset=iso-8859-1' }); return res.end(Buffer.alloc(300, 0xe9)); }
         // SSRF 的轉址繞道：起點無害，第二跳才指向內網／metadata。
         if (u === '/to-metadata') { res.writeHead(302, { Location: 'http://169.254.169.254/latest/meta-data/' }); return res.end(); }
         if (u === '/to-private') { res.writeHead(302, { Location: 'http://10.1.2.3/admin' }); return res.end(); }
@@ -106,6 +126,43 @@ before(async () => {
 });
 
 after(() => server.close());
+
+test('讀 body：完整收到的不算截斷，訊號 C 看得到只靠 JavaScript 轉走的殼', async () => {
+    const r = await probe(`${base}/shell`, undefined, { ...LOOPBACK_OK, readBodyBytes: 1024 });
+    assert.equal(r.bodyHead, SHELL);
+    assert.equal(r.bodyTruncated, undefined);
+    assert.ok(detectHijackSignals(`${base}/shell`, r)?.shell);
+});
+
+test('讀 body：超過上限就算截斷，body 只留上限內的前綴', async () => {
+    const r = await probe(`${base}/big-body`, undefined, { ...LOOPBACK_OK, readBodyBytes: 512 });
+    assert.equal(r.bodyTruncated, true);
+    assert.equal(r.bodyHead, 'x'.repeat(512));
+});
+
+test('讀 body：讀到上限時後面還有資料，也算截斷', async () => {
+    const r = await probe(`${base}/exact-then-more`, undefined, { ...LOOPBACK_OK, readBodyBytes: 512 });
+    assert.equal(r.bodyTruncated, true);
+    assert.equal(r.bodyHead, 'x'.repeat(512));
+});
+
+test('讀 body：上限算的是原始位元組，非 UTF-8 的內容收完了就不算截斷', async () => {
+    const r = await probe(`${base}/latin1`, undefined, { ...LOOPBACK_OK, readBodyBytes: 512 });
+    assert.equal(r.bodyTruncated, undefined);
+});
+
+test('讀 body：chunked 回應中途斷線算截斷，同樣的殼不報訊號 C', async () => {
+    const r = await probe(`${base}/cut-shell`, undefined, { ...LOOPBACK_OK, readBodyBytes: 1024 });
+    assert.equal(r.bodyHead, SHELL);
+    assert.equal(r.bodyTruncated, true);
+    assert.equal(detectHijackSignals(`${base}/cut-shell`, r)?.shell ?? null, null);
+});
+
+test('沒有要讀 body 時，結果不帶 bodyHead 與 bodyTruncated', async () => {
+    const r = await probe(`${base}/shell`, undefined, LOOPBACK_OK);
+    assert.equal(r.bodyHead, undefined);
+    assert.equal(r.bodyTruncated, undefined);
+});
 
 // 競賽看門狗與外部連結健檢共用這套三態分類。
 

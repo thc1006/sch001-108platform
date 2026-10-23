@@ -439,6 +439,8 @@ test('opaqueShell：hmun.org 實測到的 JS 挑戰殼會被標出來', () => {
     assert.ok(r, '470 bytes 的純 JS 轉址殼應該被標出來');
     assert.equal(r.title, 'Loading...');
     assert.ok(r.bytes < 2048);
+    // 沒讀完的 body 看起來也像很小的殼，不能拿來報
+    assert.equal(opaqueShell(real, true), null);
 });
 
 test('opaqueShell：有 meta refresh 的小殼**不算**盲區（不需要 JS 就走得下去）', () => {
