@@ -29,6 +29,7 @@ import {
     classifyReference,
     resolveInternalPath,
     collectAnchors,
+    collectTextNodes,
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
@@ -36,7 +37,8 @@ import {
     gatewayUrlProblem,
 } from './site-contract.lib.mjs';
 import { validateIndexedTaxonomy } from './taxonomy.lib.mjs';
-import { collectBareDomains, makeSkipFieldFilter } from './bare-domains.lib.mjs';
+import { collectBareDomains, extractSchemeUrls, makeSkipFieldFilter } from './bare-domains.lib.mjs';
+import { staticUrlPolicy } from './link-health.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -96,16 +98,15 @@ const ignored = new Map();
 let refCount = 0;
 
 const addError = (file, location, message) => errors.push({ file, location, message });
+const noteIgnored = (reason, sample) => {
+    if (!ignored.has(reason)) ignored.set(reason, { count: 0, sample: String(sample).slice(0, 60) });
+    ignored.get(reason).count++;
+};
 const record = (ref, fromUrl, file, location) => {
     refCount++;
     const r = classifyReference(ref, fromUrl, CTX);
     if (r.kind === 'invalid') return addError(file, location, `${r.reason}（值：${String(ref).slice(0, 90)}）`);
-    if (r.kind === 'ignored') {
-        const key = r.reason || '未標示理由';
-        if (!ignored.has(key)) ignored.set(key, { count: 0, sample: String(ref).slice(0, 60) });
-        ignored.get(key).count++;
-        return;
-    }
+    if (r.kind === 'ignored') return noteIgnored(r.reason || '未標示理由', ref);
     if (r.kind === 'external') {
         const key = r.url.split('#')[0];
         if (!external.has(key)) external.set(key, { url: key, occurrences: [] });
@@ -114,6 +115,21 @@ const record = (ref, fromUrl, file, location) => {
     }
     internal.push({ path: r.path, fragment: r.fragment, file, location, ref });
 };
+// 說明文字裡的網址有些是寫給人照著做的，例如「在網址列輸入 chrome://extensions」「開 http://localhost:8888/」。
+// 只有 http(s)、又是位址政策允許探測的，才當成連結檢查，其餘列進略過不檢查。
+const recordTextUrl = (url, fromUrl, file, location) => {
+    if (/^https?:\/\//i.test(url) && staticUrlPolicy(url).ok) return record(url, fromUrl, file, location);
+    refCount++;
+    noteIgnored(/^https?:\/\//i.test(url) ? '說明文字裡位址政策不允許探測的網址' : '說明文字裡不是 http(s) 的網址', url);
+};
+
+/** 帶網址的屬性。頁面與資料 JSON 的 HTML 欄位都照這份收。 */
+const REF_ATTRS = [
+    ['a[href]', 'href'], ['area[href]', 'href'],
+    ['img[src]', 'src'], ['script[src]', 'src'], ['iframe[src]', 'src'],
+    ['source[src]', 'src'], ['video[src]', 'src'], ['audio[src]', 'src'],
+    ['embed[src]', 'src'], ['object[data]', 'data'], ['form[action]', 'action'],
+];
 
 const anchorCache = new Map(); // dist 相對路徑 → Set<id>
 const htmlFiles = distFiles.filter((f) => f.endsWith('.html'));
@@ -165,12 +181,7 @@ for (const rel of htmlFiles) {
         }
     }
 
-    for (const [sel, attr] of [
-        ['a[href]', 'href'], ['area[href]', 'href'],
-        ['img[src]', 'src'], ['script[src]', 'src'], ['iframe[src]', 'src'],
-        ['source[src]', 'src'], ['video[src]', 'src'], ['audio[src]', 'src'],
-        ['embed[src]', 'src'], ['object[data]', 'data'], ['form[action]', 'action'],
-    ]) {
+    for (const [sel, attr] of REF_ATTRS) {
         $(sel).each((_, el) => {
             const v = $(el).attr(attr);
             if (v != null) record(v, fromUrl, rel, `${sel}[${attr}]`);
@@ -187,10 +198,7 @@ for (const rel of htmlFiles) {
         const linkRel = ($(el).attr('rel') || '').toLowerCase().split(/\s+/);
         if (linkRel.includes('preconnect') || linkRel.includes('dns-prefetch')) {
             refCount++;
-            const key = 'link rel=preconnect／dns-prefetch（連線提示，瀏覽器不會擷取）';
-            if (!ignored.has(key)) ignored.set(key, { count: 0, sample: String(href).slice(0, 60) });
-            ignored.get(key).count++;
-            return;
+            return noteIgnored('link rel=preconnect／dns-prefetch（連線提示，瀏覽器不會擷取）', href);
         }
         record(href, fromUrl, rel, 'link[href]');
     });
@@ -342,28 +350,45 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
         }
     }
 
+    // 說明文字裡的網址和裸網域，都不從下面兩種欄位擷取，兩種都是實測出來的誤判來源：
+    //   localAssetFields  存的是檔案路徑而不是說明文字
+    //   _readme           是給維護者看的欄位說明，裡面有本 repo 的檔名
+    //                     （check-competitions.mjs、competitions.html…）和網址範本。
+    //                     2026-10-23 實測不跳過的話，67 個裸網域候選裡有 11 個是 _readme 的檔名；
+    //                     reading-list.json 的封面網址範本會擷成 https://covers.openlibrary.org/b/isbn/，回 404。
+    // 比對 pointer 的每一段而不是只比最後一段：_readme 或圖片欄位一旦變成陣列，
+    // pointer 會是 /_readme/0，最後一段是 "0"，只比最後一段的話跳過邏輯會靜默失效。
+    const acceptField = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
     for (const { pointer, value } of walkJsonStrings(data)) {
         const field = pointer.split('/').pop();
         if (dataPages.localAssetFields.includes(field)) {
             record(value, consumerUrl, jsonRel, pointer);
-        } else if (dataPages.htmlFields.includes(field)) {
+            continue;
+        }
+        let texts = [value];
+        let at = pointer;
+        if (dataPages.htmlFields.includes(field)) {
             const $$ = cheerio.load(value);
-            $$('a[href]').each((_, el) => record($$(el).attr('href'), consumerUrl, jsonRel, `${pointer} a[href]`));
-            $$('img[src]').each((_, el) => record($$(el).attr('src'), consumerUrl, jsonRel, `${pointer} img[src]`));
+            for (const [sel, attr] of REF_ATTRS) {
+                $$(sel).each((_, el) => record($$(el).attr(attr), consumerUrl, jsonRel, `${pointer} ${sel}`));
+            }
+            $$('[srcset]').each((_, el) => {
+                for (const u of parseSrcset($$(el).attr('srcset'))) record(u, consumerUrl, jsonRel, `${pointer} srcset`);
+            });
+            texts = collectTextNodes($$);
+            at = `${pointer} 內文`;
         } else if (/^https?:\/\//i.test(value)) {
             // 其餘外部網址只進 inventory，交給排程健康檢查
             record(value, consumerUrl, jsonRel, pointer);
+            continue;
+        }
+        // 裸網域擷取會先遮掉帶 scheme 的網址，這裡不收的話兩邊都不檢查
+        if (!acceptField(pointer)) continue;
+        for (const text of texts) {
+            for (const url of extractSchemeUrls(text)) recordTextUrl(url, consumerUrl, jsonRel, at);
         }
     }
 
-    // 內文裸網域有兩種欄位要跳過，都是實測出來的誤判來源：
-    //   localAssetFields  存的是檔案路徑而不是說明文字
-    //   _readme           是給維護者看的欄位說明，裡面全是本 repo 的檔名
-    //                     （check-competitions.mjs、competitions.html…）。實測不跳過
-    //                     的話，56 個候選裡有 11 個是 _readme 的檔名。
-    // 比對 pointer 的每一段而不是只比最後一段：_readme 或圖片欄位一旦變成陣列，
-    // pointer 會是 /_readme/0，最後一段是 "0"，只比最後一段的話跳過邏輯會靜默失效。
-    const acceptField = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
     for (const [host, pointers] of collectBareDomains(data, acceptField)) {
         if (!bareDomains.has(host)) bareDomains.set(host, { host, occurrences: [] });
         for (const p of pointers) bareDomains.get(host).occurrences.push({ file: jsonRel, location: p });
@@ -584,7 +609,7 @@ console.log(`  外部網址（僅列入 inventory）：${external.size} 個去�
 // 裸網域是「候選」不是「網域」：TLD 存不存在要等排程健檢用 DNS 判斷。這裡的
 // 數字刻意分成三個，否則「候選 44」會被誤讀成「新增了 44 個要查的網址」。
 console.log(
-    `  內文裸網域候選：${bareDomains.size} 個（${bareDomains.size - bareOnly.length} 個已由 url 欄位涵蓋，${bareOnly.length} 個待排程健檢以 DNS 篩選）`,
+    `  內文裸網域候選：${bareDomains.size} 個（${bareDomains.size - bareOnly.length} 個已由盤點的網址涵蓋，${bareOnly.length} 個待排程健檢以 DNS 篩選）`,
 );
 const ignoredTotal = [...ignored.values()].reduce((a, b) => a + b.count, 0);
 console.log(`  略過不檢查：${ignoredTotal}`);

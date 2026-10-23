@@ -165,6 +165,22 @@ export function collectAnchors($) {
     return ids;
 }
 
+/**
+ * 逐個列出文字節點（實體已解碼），不含 script、style、template 裡的內容。整段 text() 會把相鄰的區塊
+ * 接成一串，網址就連上下一段的字。
+ */
+export function collectTextNodes($) {
+    const texts = [];
+    // template 的內容在另一個 fragment 底下，選擇器排除不掉，所以自己走樹
+    const walk = (node) => {
+        if (node.type === 'text') return texts.push(node.data);
+        if (['script', 'style', 'template'].includes(node.name)) return;
+        for (const child of node.children ?? []) walk(child);
+    };
+    walk($.root().get(0));
+    return texts;
+}
+
 /** srcset="a.png 1x, b.png 2x" → ['a.png','b.png'] */
 export function parseSrcset(value) {
     return String(value ?? '')

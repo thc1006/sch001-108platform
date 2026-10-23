@@ -17,6 +17,7 @@ import {
     classifyReference,
     resolveInternalPath,
     collectAnchors,
+    collectTextNodes,
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
@@ -134,6 +135,20 @@ test('anchor 收集涵蓋 id 與 legacy a[name]', () => {
     assert.ok(ids.has('old'));
     assert.ok(ids.has('grid'));
     assert.ok(!ids.has('missing'));
+});
+
+test('文字節點逐個列出：相鄰的區塊不接成一串，註解不算，實體要解碼', () => {
+    const $ = cheerio.load('<p>官網 https://a.org/</p><p>報名</p><!-- https://b.org/ --><div>a &amp; b<b>粗體</b></div>');
+    // $.root().text() 是「官網 https://a.org/報名a & b粗體」，擷出的網址會變成 https://a.org/報名a
+    assert.deepEqual(collectTextNodes($), ['官網 https://a.org/', '報名', 'a & b', '粗體']);
+});
+
+test('文字節點不含 script、style、template 裡的內容', () => {
+    const $ = cheerio.load(
+        '<style>a{background:url(https://c.org/i.png)}</style><script>var u = "https://s.org/";</script>' +
+            '<template><p>https://t.org/</p></template><p>看得到的字</p>',
+    );
+    assert.deepEqual(collectTextNodes($), ['看得到的字']);
 });
 
 test('javascript: 與 vbscript: 一律視為錯誤', () => {

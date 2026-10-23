@@ -10,6 +10,7 @@
  * 種退化在正常狀態下完全看不出來。只有持續地「故意弄壞、確認會紅」才擋得住。
  *
  * 本檔在 dist/ 的副本上逐項破壞再還原，最後確認副本回到綠燈。
+ * 標了 expectGreen 的是反向項目：改動之後 checker 必須維持綠燈，守的是刻意不檢查的欄位，或不該誤報的寫法。
  *
  * 執行：  npm run test:site-faults    （需先 npm run build:deployable）
  */
@@ -114,6 +115,54 @@ const cases = [
     expect: /找不到對應的部署檔案/,
     file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
     mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "<a href=\\"missing-page.html\\">x</a>'),
+  },
+  {
+    name: '資料 JSON 的說明文字寫了站內網址，指向不存在的頁面',
+    expect: /找不到對應的部署檔案/,
+    file: `${DIST}/advanced-resources/competitions.json`,
+    mutate: (t) => t.replace(/"description":\s*"/, '"description": "見 https://thc1006.github.io/sch001-108platform/missing-page.html 。'),
+  },
+  {
+    name: '資料 JSON 的 HTML 欄位內文寫了站內網址，指向不存在的頁面',
+    expect: /找不到對應的部署檔案/,
+    file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
+    mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "見 https://thc1006.github.io/sch001-108platform/missing-page.html 。'),
+  },
+  {
+    name: '_readme 裡的網址範本不檢查',
+    expectGreen: true,
+    file: `${DIST}/advanced-resources/reading-list.json`,
+    mutate: (t) => t.replace(/"_readme":\s*"/, '"_readme": "範本 https://thc1006.github.io/sch001-108platform/missing-page.html 。'),
+  },
+  {
+    name: 'HTML 欄位相鄰兩段的文字不接成一個網址',
+    expectGreen: true,
+    file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
+    mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "<p>https://thc1006.github.io/sch001-108platform/about.html</p><p>x</p>'),
+  },
+  {
+    name: '說明文字裡寫給人照著做的網址（chrome://、localhost）不當成連結',
+    expectGreen: true,
+    file: `${DIST}/learning-portfolio/tools.json`,
+    mutate: (t) => t.replace(/"description":\s*"/, '"description": "在網址列輸入 chrome://extensions，或開 http://localhost:8888/ 。'),
+  },
+  {
+    name: 'HTML 欄位 style 裡的網址不當成內文',
+    expectGreen: true,
+    file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
+    mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "<style>a{background:url(https://thc1006.github.io/sch001-108platform/missing-page.html)}</style>'),
+  },
+  {
+    name: '資料 JSON 的 HTML 欄位用 iframe 嵌入不存在的站內頁面',
+    expect: /找不到對應的部署檔案/,
+    file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
+    mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "<iframe src=\\"missing-page.html\\"></iframe>'),
+  },
+  {
+    name: '資料 JSON 的 HTML 欄位用 srcset 指向不存在的站內圖片',
+    expect: /找不到對應的部署檔案/,
+    file: `${DIST}/learning-portfolio/portfolio-gallery.json`,
+    mutate: (t) => t.replace(/"analysis_html":\s*"/, '"analysis_html": "<img srcset=\\"missing-page.png 2x\\">'),
   },
   {
     name: 'search-index 的 url 指向不存在的頁面',
@@ -350,13 +399,14 @@ for (const c of cases) {
       c.apply();
     }
     const r = run(c.env);
-    const caught = r.code !== 0 && c.expect.test(r.out);
-    if (caught) {
+    const ok = c.expectGreen ? r.code === 0 : r.code !== 0 && c.expect.test(r.out);
+    if (ok) {
       pass++;
       console.log(`  ✅ ${c.name}`);
     } else {
       fail++;
-      console.log(`  ❌ ${c.name}  → exit=${r.code}${r.code === 0 ? '（沒擋下來！）' : '（擋了但訊息不符預期）'}`);
+      if (c.expectGreen) console.log(`  ❌ ${c.name}  → exit=${r.code}（這項改動不該變紅）`);
+      else console.log(`  ❌ ${c.name}  → exit=${r.code}${r.code === 0 ? '（沒擋下來！）' : '（擋了但訊息不符預期）'}`);
       if (r.code !== 0) console.log('       實際訊息片段：' + (r.out.match(/✗ .*/) || ['(無)'])[0].slice(0, 100));
     }
   } catch (e) {
@@ -368,7 +418,7 @@ for (const c of cases) {
   }
 }
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${cases.length} 項）`);
+console.log(`\n故障注入：${pass} 項符合預期 / ${fail} 項不符（共 ${cases.length} 項）`);
 const after = run();
 console.log(after.code === 0 ? '還原後仍為綠燈 ✅' : `⚠ 還原後仍是紅的，${DIST} 沒復原乾淨`);
 

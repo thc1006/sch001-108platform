@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
     extractBareDomainCandidates,
+    extractSchemeUrls,
     collectBareDomains,
     screenBareDomains,
     makeTldChecker,
@@ -179,6 +180,74 @@ test('反例：完整網址已由既有擷取涵蓋，不可重複擷出，路�
     assert.deepEqual(hostsOf('見 https://a.com/path;report.org 一文'), []);
     assert.deepEqual(hostsOf('見 https://a.com/path+report.org 一文'), []);
     assert.deepEqual(hostsOf('見 https://a.com/path%20report.org 一文'), []);
+});
+
+test('內文網址：裸網域擷取遮掉的網址要由 extractSchemeUrls 交出去', () => {
+    // competitions.json /competitions/89/description 的實際寫法。只遮不交的話，這個網址兩邊都不檢查
+    const text = '官方會員國頁自己載入的資料來源 https://www.wro.events/countries/json 逐字列出';
+    assert.deepEqual(hostsOf(text), []);
+    assert.deepEqual(extractSchemeUrls(text), ['https://www.wro.events/countries/json']);
+
+    assert.deepEqual(extractSchemeUrls('官網https://a.org/x。報名'), ['https://a.org/x']);
+    assert.deepEqual(
+        extractSchemeUrls('轉址到 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW#top 的廣告頁'),
+        ['https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW#top'],
+    );
+    // scheme 不限 http，由呼叫端決定能不能接受。前面緊接英文字母時，那些字母也會被當成 scheme
+    assert.deepEqual(extractSchemeUrls('https://a.org 與 ftp://b.tw/c'), ['https://a.org', 'ftp://b.tw/c']);
+    assert.deepEqual(extractSchemeUrls('官方網站Websitehttps://a.org/'), ['Websitehttps://a.org/']);
+});
+
+test('內文網址：全形標點、彎引號與括號都是結尾', () => {
+    assert.deepEqual(extractSchemeUrls('官網是https://www.canva.com？'), ['https://www.canva.com']);
+    assert.deepEqual(extractSchemeUrls('官網https://www.canva.com！'), ['https://www.canva.com']);
+    assert.deepEqual(extractSchemeUrls('網址https://a.org/x…'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('見https://a.org/x～'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('“https://a.org/x”與‘https://b.org/’'), ['https://a.org/x', 'https://b.org/']);
+    assert.deepEqual(extractSchemeUrls('〈https://a.org/〉［https://b.org/］｛https://c.org/｝'), ['https://a.org/', 'https://b.org/', 'https://c.org/']);
+    assert.deepEqual(extractSchemeUrls('[https://www.canva.com]'), ['https://www.canva.com']);
+    assert.deepEqual(extractSchemeUrls('[見 https://a.org/x]'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('https://a.org/[x]'), ['https://a.org/[x]']);
+    assert.deepEqual(extractSchemeUrls('{見 https://a.org/x}'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('https://a.org/{x}'), ['https://a.org/{x}']);
+    // 破折號、刪節號、全形斜線與直線也是結尾
+    assert.deepEqual(extractSchemeUrls('官網 https://a.org/news——已改版'), ['https://a.org/news']);
+    assert.deepEqual(extractSchemeUrls('見https://a.org/x⋯'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('https://a.org／https://b.org/x｜c'), ['https://a.org', 'https://b.org/x']);
+});
+
+test('內文網址：主機名後面緊接其他字時，網址到主機名為止', () => {
+    assert.deepEqual(extractSchemeUrls('請上https://www.canva.com查詢'), ['https://www.canva.com']);
+    assert.deepEqual(extractSchemeUrls('連到https://a.org:8080後'), ['https://a.org:8080']);
+    assert.deepEqual(extractSchemeUrls('見 https://a.org?x=1 與 https://b.org#top'), ['https://a.org?x=1', 'https://b.org#top']);
+    // userinfo 只收 RFC 3986 允許的字元，網址後面接著信箱也不會把主機名吞掉
+    assert.deepEqual(extractSchemeUrls('請上https://a.org查詢或寄信x@b.com'), ['https://a.org']);
+    assert.deepEqual(extractSchemeUrls('見 https://user@a.org/ 說明'), ['https://user@a.org/']);
+    // 主機名只收英數字：中文網域不擷取，scheme 後面直接接中文的也不是網址
+    assert.deepEqual(extractSchemeUrls('只測了http://造成的誤判'), []);
+    assert.deepEqual(extractSchemeUrls('見 https://臺灣.tw/ 說明'), []);
+    // 路徑後面緊接中文字時分不出界線（已知限制）
+    assert.deepEqual(extractSchemeUrls('請見https://a.org/news查詢'), ['https://a.org/news查詢']);
+    assert.deepEqual(extractSchemeUrls('開 http://[::1]:8888/ 就能看到'), ['http://[::1]:8888/']);
+});
+
+test('內文網址：結尾的英文標點不算網址，有配對的右括號要保留', () => {
+    assert.deepEqual(extractSchemeUrls('see https://a.org/x.'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('see https://a.org/x?!'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('see https://a.org/x:;,'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('(see https://a.org/x)'), ['https://a.org/x']);
+    assert.deepEqual(extractSchemeUrls('https://en.wikipedia.org/wiki/Foo_(bar)'), ['https://en.wikipedia.org/wiki/Foo_(bar)']);
+    assert.deepEqual(extractSchemeUrls('(https://en.wikipedia.org/wiki/Foo_(bar)).'), ['https://en.wikipedia.org/wiki/Foo_(bar)']);
+    // 中間的標點不動
+    assert.deepEqual(extractSchemeUrls('https://a.org/x.html?a=1,2;b=3'), ['https://a.org/x.html?a=1,2;b=3']);
+});
+
+test('內文網址：只寫了 scheme 的不是網址', () => {
+    // competitions.json /competitions/48/description 的實際寫法
+    assert.deepEqual(extractSchemeUrls('只測了 http:// 造成的誤判'), []);
+    assert.deepEqual(extractSchemeUrls('只測了 http://.'), []);
+    assert.deepEqual(extractSchemeUrls(''), []);
+    assert.deepEqual(extractSchemeUrls(undefined), []);
 });
 
 test('反例：路徑片段（左界不可接在斜線或英數之後）', () => {
