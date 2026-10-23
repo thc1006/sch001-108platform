@@ -619,6 +619,20 @@ test('政策：只降低 unverified 的噪音，404／410 一律不得被壓下�
     assert.ok(!deadBranch.includes('matchPolicy'), 'dead 分支內不可查例外政策');
 });
 
+// const 在宣告之前讀取會丟 ReferenceError。|| 會提早結束，所以只有前面的桶子全是空的那一週才會崩潰。
+test('排程：needsAttention 用到的值都在它之前宣告', () => {
+    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
+    const at = src.indexOf('const needsAttention =');
+    assert.ok(at > 0, '找不到 needsAttention');
+    const expr = src.slice(at + 'const needsAttention ='.length, src.indexOf(';', at));
+    const names = [...new Set(expr.match(/[A-Za-z_$][\w$]*/g))].filter((name) => name !== 'length');
+    assert.ok(names.includes('actionableSignals'), names.join(','));
+    for (const name of names) {
+        const decl = src.search(new RegExp(`\\b(?:const|let)\\s+${name}\\b`));
+        assert.ok(decl >= 0 && decl < at, `${name} 要在 needsAttention 之前宣告`);
+    }
+});
+
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
     const entries = validatePolicy({ version: 1, entries: [validEntry()] }, TODAY).entries;
     assert.ok(matchPolicy(entries, 'https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html'));
