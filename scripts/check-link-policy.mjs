@@ -19,8 +19,8 @@
  *      hijacked（被接管的網域）走同一條規則：內文已經不再提到那個網域時，這筆
  *      警示就該刪掉，而不是留著讓人以為還有東西在盯。
  *
- * 比對的目標包含兩種來源：url 欄位（inventory.urls）與只寫在說明文字裡的裸網域
- * （inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
+ * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
+ * 只寫在說明文字裡的裸網域（inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
  *
  * 網址來源是 .reports/url-inventory.json（由 check-built-site.mjs 產生），
  * 刻意不自己再掃一次：同一件事有兩份擷取邏輯正是 #72 一路在修的失效模式。

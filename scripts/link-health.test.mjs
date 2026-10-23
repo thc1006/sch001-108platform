@@ -633,6 +633,15 @@ test('排程：needsAttention 用到的值都在它之前宣告', () => {
     }
 });
 
+// 報告產生器要連外網才跑得起來，這裡比對原始碼：資料 JSON 的出處帶 JSON pointer，
+// 競賽看門狗只探測 url 欄位，「另由 competitions-check.yml 檢查」只能附在 url 欄位的出處上。
+test('週報：資料 JSON 的出處帶 JSON pointer，競賽看門狗的註只看 url 欄位', () => {
+    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
+    assert.ok(src.includes("o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file"), 'sourcesOf 沒有帶上 JSON pointer');
+    assert.ok(src.includes('c.location.test(o.location)'), 'coveredElsewhere 沒有比對出處的 location');
+    assert.ok(src.includes('location: /^\\/competitions\\/\\d+\\/url$/'), 'competitions.json 的註沒有限定在 url 欄位');
+});
+
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
     const entries = validatePolicy({ version: 1, entries: [validEntry()] }, TODAY).entries;
     assert.ok(matchPolicy(entries, 'https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html'));

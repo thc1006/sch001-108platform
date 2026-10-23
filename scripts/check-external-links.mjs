@@ -3,7 +3,7 @@
  * 全站外部連結的健康檢查，排程執行。
  *
  * ci.yml 的 lychee 只驗站內的 file:// 連結，競賽看門狗只涵蓋 competitions.json 的
- * 網址，其餘的外部網址只有這支在看（#72）。
+ * url 欄位，其餘的外部網址只有這支在看（#72）。
  *
  * 網址一律讀 .reports/url-inventory.json，由 check-built-site.mjs 在 npm run check:site
  * 時產生，記有每一處引用的出處檔案。
@@ -56,9 +56,14 @@ const INVENTORY_PATH = path.resolve(ROOT, '.reports/url-inventory.json');
 const POLICY_PATH = path.resolve(ROOT, 'scripts/link-policy.json');
 const REPORT_PATH = path.resolve(ROOT, 'external-links-report.md');
 
-/** 這個資料檔另有專屬看門狗；重疊是刻意的縱深防禦，但報告要講清楚免得重複處理。 */
+/** 這個資料檔另有專屬看門狗；重疊是刻意的縱深防禦，但報告要講清楚免得重複處理。競賽看門狗只探測 url 欄位。 */
 const ALSO_COVERED_BY = [
-    { file: 'advanced-resources/competitions.json', by: 'competitions-check.yml（另含截止日與欄位的語意檢查）' },
+    {
+        file: 'advanced-resources/competitions.json',
+        location: /^\/competitions\/\d+\/url$/,
+        scope: 'url 欄位',
+        by: 'competitions-check.yml（另含截止日與欄位的語意檢查）',
+    },
 ];
 
 const argOf = (name) => {
@@ -274,17 +279,19 @@ const needsAttention =
     actionableSignals.length > 0 ||
     !coverageComplete;
 
-const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => o.file))].sort();
+// 資料 JSON 的出處帶上 JSON pointer，才知道是哪一筆；頁面的出處只列檔名
+const sourcesOf = (item) => [...new Set(item.occurrences.map((o) => (o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file)))].sort();
 // 出處全列會炸掉報告：同一個網址可能出現在 90 幾個頁面（例如共用的頁尾連結），
 // 一筆失效就吃掉整個 issue 的可讀性。列前幾個、其餘只給數字。
 const MAX_SOURCES_SHOWN = 5;
 const sourceLines = (item) => {
     const all = sourcesOf(item);
     const out = all.slice(0, MAX_SOURCES_SHOWN).map((s) => `  - 出處：\`${s}\``);
-    if (all.length > MAX_SOURCES_SHOWN) out.push(`  - …另有 ${all.length - MAX_SOURCES_SHOWN} 處引用（共 ${all.length} 個檔案）`);
+    if (all.length > MAX_SOURCES_SHOWN) out.push(`  - …另有 ${all.length - MAX_SOURCES_SHOWN} 處引用（共 ${all.length} 處）`);
     return out;
 };
-const coveredElsewhere = (item) => ALSO_COVERED_BY.filter((c) => sourcesOf(item).includes(c.file));
+const coveredElsewhere = (item) =>
+    ALSO_COVERED_BY.filter((c) => item.occurrences.some((o) => o.file === c.file && c.location.test(o.location)));
 
 console.log('全站外部連結檢查');
 console.log(`  盤點來源：${INVENTORY_PATH}（${inventory.urls.length} 個去重網址）`);
@@ -296,7 +303,7 @@ console.log(`  無法判定：${unverified.length}`);
 console.log(`  已列例外：${suppressed.length}`);
 if (skipped) console.log(`  未檢查　：${skipped}（逾時間預算）`);
 console.log('內文裸網域（只寫在說明文字裡的網域）');
-console.log(`  盤點候選：${bareInfo.total}（其中 ${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋，不重複檢查）`);
+console.log(`  盤點候選：${bareInfo.total}（其中 ${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋，不重複檢查）`);
 console.log(`  DNS 篩掉：${bareRejected.length}（TLD 確定不存在＝檔名或縮寫，不是網域）`);
 if (bareUnresolved.length) console.log(`  DNS 未答：${bareUnresolved.length}（查不到答案，本次未檢查——不等於它們不是網域）`);
 console.log(`  實際探測：${bareHosts.length}`);
@@ -318,7 +325,7 @@ lines.push(`- 檢查日期：${todayISO}（UTC）`);
 lines.push(`- 盤點：${inventory.urls.length} 個去重外部網址，來自 check-built-site.mjs 的建置產物掃描`);
 lines.push(`- 本次檢查 ${targets.length} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${urlBlockedCount}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
 lines.push(
-    `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由 url 欄位涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
+    `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHosts.length}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
 );
 // 無條件寫，即使是 0。理由與主控台那一行相同，而且這裡更重要：主控台只在
 // job step 的 log 裡，這份報告才是貼進 issue／job summary、真的有人讀的東西。
@@ -342,7 +349,7 @@ if (hijackedHits.length) {
     for (const h of hijackedHits) {
         const kindLabel = h.policy.kind === 'terminus' ? '接管鏈的終點（本來就不是教育網域）' : '這台主機本身已被接管';
         lines.push(`- **${h.policy.match.host}** — ${kindLabel}（本次探測：${h.reason}）`);
-        lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域' : 'url 欄位'}　\`${h.url}\``);
+        lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域' : '盤點的網址'}　\`${h.url}\``);
         lines.push(`  - 情況：${h.policy.reason}`);
         lines.push(`  - 證據：${h.policy.evidence}`);
         lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);
@@ -373,7 +380,7 @@ if (actionableSignals.length) {
         '',
     );
     for (const a of actionableSignals) {
-        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
+        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `盤點的網址 \`${a.url}\``;
         lines.push(`- **${where}**`);
         if (a.cross) {
             lines.push(`  - 🔀 轉址終點跨站：\`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
@@ -417,7 +424,7 @@ if (browseOnlySignals.length) {
         '',
     );
     for (const a of browseOnlySignals) {
-        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `url 欄位 \`${a.url}\``;
+        const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `盤點的網址 \`${a.url}\``;
         lines.push(`- ${where}`);
         if (a.cross) {
             lines.push(`  - \`${a.cross.fromHost}\` → \`${a.cross.toHost}\``);
@@ -594,7 +601,7 @@ if (suppressed.length) {
 
 if (ALSO_COVERED_BY.length) {
     lines.push('<details><summary>📁 另有專屬看門狗的資料檔</summary>', '');
-    for (const c of ALSO_COVERED_BY) lines.push(`- \`${c.file}\` → ${c.by}`);
+    for (const c of ALSO_COVERED_BY) lines.push(`- \`${c.file}\`（${c.scope}）→ ${c.by}`);
     lines.push('', '這裡仍然會一起檢查（縱深防禦），只是同一筆失效可能在兩份報告都看得到。', '', '</details>', '');
 }
 
