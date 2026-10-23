@@ -283,7 +283,7 @@ export function validateCycle(cycle, label, errors) {
  *
  * 判準刻意用 sourceCheckedAt 而不是推算週期：官網說「尚未公布」時，那句話本身
  * 就是查證過的事實，用推測的日期蓋掉它是拿猜測換掉事實（competitions-data.test.mjs
- * 對 The Earth Prize／TYPT／John Locke 就是這樣釘的）。這裡不猜任何日期，
+ * 對 Ayn Rand／Embracing Our Differences／John Locke 就是這樣釘的）。這裡不猜任何日期，
  * 只陳述「我們上次看是 N 天前，當時的答案是未知」。
  *
  * @param list 競賽陣列

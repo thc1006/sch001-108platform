@@ -697,12 +697,13 @@ test('recheck：壞掉的輸入不得讓看門狗爆掉', () => {
     assert.equal(out[0].label, '（未命名）', '沒有標題時要有可讀的替代字');
 });
 
-test('recheck：真實資料現在應該一筆都不該列出（全庫三天內查過）', async () => {
+// 2026-10-23 重查 90 筆，其中 89 筆打開了官網；其餘條目的查證日期都在 2026-08-27 到 08-29 之間，距那天不到 90 天。
+test('recheck：重查當天的真實資料一筆都不該列出', async () => {
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
-    const out = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 90);
+    const out = selectNeedsRecheck(data.competitions, Date.UTC(2026, 9, 23), 90);
     assert.deepEqual(out, [], `不該有陳舊條目，實際：${JSON.stringify(out.slice(0, 3))}`);
     // 但這一桶本身必須是有東西的，否則上面那條會空洞地通過。
-    const wouldCover = selectNeedsRecheck(data.competitions, Date.UTC(2026, 7, 29), 0);
+    const wouldCover = selectNeedsRecheck(data.competitions, Date.UTC(2026, 9, 23), 0);
     assert.ok(wouldCover.length >= 60,
         `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
 });

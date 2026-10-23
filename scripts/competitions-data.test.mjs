@@ -18,7 +18,7 @@
  *   - Conrad Challenge 的官網網域已停放（HTTPS 交握失敗、HTTP 導向 /lander），
  *     但看門狗的連結分類會把交握失敗歸為「無法判定」而不是「失效」。
  *   - 世界歷史學家論文獎的「每年 5 月 1 日截止」只存在於已下線的 archive 站；
- *     現行官網逐字寫「The deadline for 2027 will be announced in September.」
+ *     2026-10-23 官網逐字寫「The deadline for 2027 will be announced by early November.」
  *
  * 每一項下面都附了官網逐字原文。要改這裡的值，請先開官網確認並更新引文。
  */
@@ -185,12 +185,12 @@ test('data：查到確切時刻的競賽必須保留時區位移', () => {
 });
 
 test('data：官網未公布截止日的競賽不得被補上一個猜出來的日期', () => {
-    // 官網獎項頁逐字：「Deadline for submissions: The deadline for 2027 will be announced in September.」
-    // 舊資料的「每年 5 月 1 日截止」只存在於已下線的 archive.thewha.org 與第三方轉述。
+    // 官網獎項頁逐字（2026-10-23 重查）：「Deadline for submissions: The deadline for 2027 will be
+    // announced by early November.」舊資料的「每年 5 月 1 日截止」只存在於已下線的 archive.thewha.org 與第三方轉述。
     const wha = find('世界歷史學家論文獎');
     assert.equal(wha.deadline, '');
     assert.equal(wha.cycle, undefined, '官網已不再公布固定的 5/1 截止日');
-    assert.ok(wha.registrationNote?.includes('9 月'), '應說明截止日何時公布，而不是留一個舊日期');
+    assert.ok(wha.registrationNote?.includes('11 月'), '應說明截止日何時公布，而不是留一個舊日期');
 
     // 「總統教育獎辦理要點」只訂獎金與名額，未訂推薦截止日；各年度期程也不一致
     //（2026 屆 2025-11-27 至 2025-12-30、2025 屆至 2 月 3 日止）。
@@ -298,8 +298,8 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
     // 沒有公開報名：狀態列必須說清楚，日期欄顯示賽事日期而不是假的截止日
     assert.deepEqual(card('亞太數學奧林匹亞'), {
         status: '每年 3 月舉行 · 無公開報名',
-        field: '報名截止',
-        label: '每年 3 月舉行 · 無公開報名',
+        field: '賽事日期',
+        label: '2027-03-09 舉行',
     });
     assert.deepEqual(card('亞太資訊奧林匹亞'), {
         status: '每年 5 月舉行 · 無公開報名',
@@ -309,7 +309,7 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
 
     // 官網未公布下屆截止日：不得出現任何具體日期
     const wha = card('世界歷史學家論文獎');
-    assert.equal(wha.status, '2027 年截止日 9 月公布');
+    assert.equal(wha.status, '2027 年截止日 11 月初公布');
     assert.ok(!/\d{4}-\d{2}-\d{2}/.test(wha.label), '不得憑空生出一個截止日期');
 
     // 只辦過兩屆、間隔不固定：顯示賽事日期，不推算下一屆
@@ -602,7 +602,7 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     );
     assert.equal(find('國際地球科學奧林匹亞').url, 'https://tpmso.k12ea.gov.tw/ieso/');
 
-    // ipho2026.com 是單屆網站，明年即失效；臺灣物奧選訓辦公室連結的常設官網是 ipho-new.org
+    // ipho2026.com 是單屆網站；臺灣物奧選訓辦公室連結的常設官網是 ipho-new.org
     assert.equal(find('國際物理奧林匹亞').url, 'https://www.ipho-new.org/');
 
     // 全域護欄：這些網域整份資料都不該再出現
@@ -641,11 +641,11 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     assert.equal(apcs.deadline, '2026-09-11');
     assert.equal(apcs.eventStartsAt, '2026-11-01', '11/1 是檢測日，不是報名截止日');
 
-    // 旺宏科學獎：報名 5/20 15:00 截止、8/21 繳成果報告書、9/5–9/6 才是決賽。
+    // 旺宏科學獎第 25 屆（2026）：報名 5/20 15:00 截止、8/21 繳成果報告書、9/5–9/6 才是決賽。
     const mx = find('旺宏科學獎');
     assert.equal(mx.eventStartsAt, '2026-09-05');
     assert.equal(mx.eventEndsAt, '2026-09-06');
-    assert.equal(mx.deadline, '', '第 24 屆報名已於 2026-05-20 截止、下屆時程未公告，不得填舊日期');
+    assert.equal(mx.deadline, '', '第 25 屆報名已於 2026-05-20 截止、下屆時程未公告，不得填舊日期');
 
     // FRC：官方 2026-06-17 貼文逐字「The season registration due date is November 17, 2026.」
     // FIRST Championship 2027-04-28 至 05-01 是賽事日期。
@@ -662,24 +662,18 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
 });
 
 test('data：官網明講「尚未公布」的競賽不得被補上猜測日期', () => {
-    // 官網逐字「Keep an eye out for the 2027 Contest theme, which will be announced in September!」
-    const bowSeat = find('Bow Seat');
-    assert.equal(bowSeat.deadline, '');
-    assert.equal(bowSeat.cycle, undefined, '不得用 2026 屆的 6/8 推一個年度週期');
-    assert.ok(bowSeat.registrationNote?.includes('9 月'));
-
     // 官網競賽區塊顯示「Unable to load contest information. Please check back later.」與「NEXT DEADLINE / TBD」
     const ari = find('Ayn Rand');
     assert.equal(ari.deadline, '');
     assert.ok(ari.registrationNote?.includes('TBD'));
 
-    // 2027 屆報名已開放，但兩個截止日官網皆未公布；/competition 頁仍是 2026 屆的舊時程
-    const earthPrize = find('The Earth Prize');
-    assert.equal(earthPrize.deadline, '');
-    assert.equal(earthPrize.cycle, undefined, '不得沿用 2026 屆的 1/10 與 2/28');
-
-    // 官網逐字「Student registration is closed ... for the 2026-2027 season」
-    assert.equal(find('Technovation').deadline, '');
+    // 官網時程寫報名到 2027-03-11 23:59 UTC，但報名平台逐字「Registration is currently closed」、
+    // Get Involved 頁逐字「Student registration is closed」。填了截止日卡片就會顯示「報名中」，
+    // 所以截止日留空，用 registrationNote 說明。
+    const techno = find('Technovation');
+    assert.equal(techno.deadline, '');
+    assert.equal(techno.deadlineAt, undefined);
+    assert.ok(techno.registrationNote?.includes('2027-03-11'));
 
     // Purple Comet 全站查無報名截止日，只有 2027-04-06 至 04-15 的競賽視窗
     const purple = find('Purple Comet');
@@ -692,9 +686,8 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.equal(seamo.deadline, '');
     assert.ok(seamo.registrationNote?.includes('N/A'));
 
-    // AAHSFF 2026 屆四個期限全過、2027 屆未公布；Embracing Our Differences 的官方投稿平台
-    // 逐字顯示「There are presently no open calls for submissions.」
-    for (const needle of ['全美高中生影展', 'Embracing Our Differences', 'John Locke', '哈佛克里姆森全球論文競賽']) {
+    // Embracing Our Differences 的官方投稿平台逐字顯示「There are presently no open calls for submissions.」
+    for (const needle of ['Embracing Our Differences', 'John Locke']) {
         const c = find(needle);
         assert.equal(c.deadline, '', `${needle} 的下一屆截止日官網尚未公布，不得猜`);
         assert.ok(c.registrationNote, `${needle} 應以 registrationNote 說明狀態，而不是留白`);
@@ -705,18 +698,44 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     const sony = find('Sony 世界攝影獎');
     assert.equal(sony.deadline, '2027-01-05');
     assert.equal(sony.deadlineAt, undefined, '官網時刻自相矛盾（16:00 vs 13:00 GMT），不得擇一寫死');
+});
 
-    // TYPT：第 18 屆已辦完、第 19 屆只公告了題目。報名截止 2026-01-19 已過且無
-    // 多年證據可推週期，因此 deadline 留空、以 registrationNote 說明，賽事日期照填。
-    // 官網成績頁的 2026-02-24 早於競賽日 2026-03-06，但那一欄的表頭是 Joomla 的
-    // 「建立日期」而不是發布日，是賽前先建好的占位頁，官網並沒有自相矛盾。
-    // 報名規則頁的 3/6=週五、3/9=週一也和 2026 年的曆法吻合。
+// 2026-10-23 重查時，這幾筆的官網已經公布下一屆時程，日期照官網填，官網寫明時刻的也一併填上。
+test('data：重查時官網已公布下一屆時程的競賽，日期照官網填', () => {
+    // 逐字「CONTEST DEADLINE: JUNE 7, 2027, 11:59 PM EDT」；2027 屆起改稱 Blue Planet Awareness Contest
+    const bowSeat = find('Bow Seat');
+    assert.equal(bowSeat.deadline, '2027-06-07');
+    assert.equal(bowSeat.deadlineAt, '2027-06-07T23:59:00-04:00');
+    assert.equal(bowSeat.cycle, undefined, '不得用單一屆的日期推一個年度週期');
+
+    // 逐字「Registration for The Earth Prize 2027 is open until 10th of January 2027.」
+    const earthPrize = find('The Earth Prize');
+    assert.equal(earthPrize.deadline, '2027-01-10');
+    assert.equal(earthPrize.cycle, undefined);
+
+    // 逐字「Submissions Open: Monday, November 2nd, 2026」「Final Deadline: Friday, July 2nd, 2027」。
+    // 開放前卡片不得顯示「報名中」，所以要有 opensAt；官網沒寫時刻，取主辦地紐約當天 00:00。
+    const aahsff = find('全美高中生影展');
+    assert.equal(aahsff.deadline, '2027-07-02');
+    assert.equal(aahsff.opensAt, '2026-11-02T00:00:00-05:00');
+
+    // FAQ 逐字「Registration: Open Oct 1, 2026 – Feb 10, 2027」，截止時刻是 GMT+0 的 23:59
+    const hcgec = find('哈佛克里姆森全球論文競賽');
+    assert.equal(hcgec.deadline, '2027-02-10');
+    assert.equal(hcgec.deadlineAt, '2027-02-10T23:59:00Z');
+
+    // TYPT 第 19 屆逐字「報名期間：115. 10. 15 （中午開始報名）~ 116. 01. 28 (中午12:00截止)」
+    // 「競賽日期：116. 03. 05 ~ 116. 03. 08」。報名系統頁寫到 23:59:59，和公告不一致；報名規則頁逐字
+    // 「官方公告之報名截止日後（詳見首頁）系統將關閉」，所以以首頁公告的中午為準。
     const typt = find('臺灣青年學生物理辯論競賽');
-    assert.equal(typt.deadline, '', '第 18 屆報名已於 2026-01-19 截止、第 19 屆未公告，不得填舊日期');
-    assert.equal(typt.eventStartsAt, '2026-03-06');
-    assert.equal(typt.eventEndsAt, '2026-03-09');
-    assert.ok(typt.registrationNote?.includes('19'));
-    assert.match(typt.description, /115\. 03\. 06 ~ 115\. 03\. 09/, '請保留官網逐字原文');
+    assert.equal(typt.deadline, '2027-01-28');
+    assert.equal(typt.deadlineAt, '2027-01-28T12:00:00+08:00');
+    assert.equal(typt.eventStartsAt, '2027-03-05');
+    assert.equal(typt.eventEndsAt, '2027-03-08');
+    assert.match(typt.description, /116\. 03\. 05 ~ 116\. 03\. 08/, '請保留官網逐字原文');
+
+    // 有截止日時卡片不顯示 registrationNote，這幾筆不留著它
+    for (const c of [bowSeat, earthPrize, aahsff, hcgec, typt]) assert.equal(c.registrationNote, undefined, c.title);
 });
 
 test('data：第二輪查到確切時刻的競賽必須保留時區位移', () => {
@@ -914,7 +933,7 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
 
     // 報名已結束、但決賽還沒到：狀態講報名、日期欄講賽事，且不得顯示成「已結束」
     assert.deepEqual(card('旺宏科學獎'), {
-        status: '第 24 屆已截止 · 下屆依官網公告',
+        status: '第 25 屆已截止 · 下屆依官網公告',
         field: '賽事日期',
         label: '2026 賽事 9/5–9/6',
     });
@@ -923,13 +942,13 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
     assert.deepEqual(card('亞洲物理奧林匹亞'), {
         status: '每年 5 月舉行 · 無公開報名',
         field: '賽事日期',
-        label: '上屆 2026 賽事 5/17–5/25 已結束',
+        label: '2027 賽事 5/16–5/24',
     });
     assert.equal(card('臺灣數學奧林匹亞競賽').status, '須由就讀學校報名 · 不接受個人報名');
     assert.equal(card('普通型高級中等學校數理及資訊').status, '經校內初賽選拔 · 無個人報名');
 
     // 官網未公布下屆時程的，不得出現任何具體日期
-    for (const needle of ['Bow Seat', 'Ayn Rand', 'The Earth Prize', 'Technovation', '東南亞數學奧林匹亞']) {
+    for (const needle of ['Ayn Rand', '東南亞數學奧林匹亞']) {
         const c = card(needle);
         assert.ok(
             !/\d{4}-\d{2}-\d{2}/.test(c.status + c.label),
