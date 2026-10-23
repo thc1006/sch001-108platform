@@ -43,8 +43,8 @@ export const SHADOWED_BY_FILE_EXT = new Set([
     'app', // macOS 應用程式 bundle（.app 是 2015 年開放的 gTLD）
 ]);
 
-/** URL_LIKE 是帶 scheme 的網址。中文內文的網址後面常緊接「。」「，」「）」而不是空白，所以中文標點也算結尾。 */
-const URL_LIKE = /[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s<>"'`，。、；：（）「」『』《》【】]+/g;
+/** URL_LIKE 是帶 scheme 的網址。中文內文的網址後面常緊接全形標點而不是空白，所以全形標點、彎引號與破折號也算結尾。 */
+const URL_LIKE = /[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s<>"'`，。、；：（）「」『』《》【】！？…～“”‘’〈〉［］｛｝—⋯／｜]+/g;
 
 /** EMAIL_LIKE 是電子郵件位址，整串遮掉：右半邊是郵件主機，不等於網站主機，拿去探測只會製造誤報。 */
 const EMAIL_LIKE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+/g;
@@ -92,6 +92,41 @@ export function extractBareDomainCandidates(text, opts = {}) {
         if (!opts.keepShadowedTlds && SHADOWED_BY_FILE_EXT.has(tld)) continue;
 
         out.push({ host, raw, index: m.index });
+    }
+    return out;
+}
+
+/**
+ * AUTHORITY 是網址開頭到主機名與 port 為止。userinfo 只收 RFC 3986 允許的字元，網址後面接著信箱時
+ * 主機名才不會被當成 userinfo。主機名只收英數字、點、連字號與底線，IPv6 位址要有中括號。
+ */
+const AUTHORITY = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/(?:[A-Za-z0-9._~!$&'()*+,;=:%-]*@)?(?:\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+)(?::\d*)?/;
+/** 右邊的括號要有配對才算網址的一部分，Foo_(bar) 這種路徑才不會被截斷。 */
+const CLOSERS = { ')': '(', ']': '[', '}': '{' };
+
+/**
+ * extractSchemeUrls 回傳內文裡帶 scheme 的網址，也就是 extractBareDomainCandidates 先遮掉的部分。
+ * 呼叫端要把這些網址交給網址檢查，否則寫在說明文字裡的網址，兩邊都不會檢查。
+ * 結尾的 . , : ; ! ? 不算網址；純文字裡沒有 HTML 實體，結尾的分號就是標點。主機名後面緊接其他字時，
+ * 網址到主機名為止，所以中文網域不擷取。路徑後面緊接中文字時分不出界線，會連著中文一起收。
+ * @param {string} text
+ * @returns {string[]} 依出現順序，不去重
+ */
+export function extractSchemeUrls(text) {
+    if (typeof text !== 'string' || !text) return [];
+    const out = [];
+    for (const [match] of text.matchAll(URL_LIKE)) {
+        const head = match.match(AUTHORITY);
+        if (!head) continue;
+        let url = /^(?:[/?#]|$)/.test(match.slice(head[0].length)) ? match : head[0];
+        for (;;) {
+            const last = url.at(-1);
+            if ('.,:;!?'.includes(last)) url = url.slice(0, -1);
+            else if (last in CLOSERS && url.split(last).length > url.split(CLOSERS[last]).length) url = url.slice(0, -1);
+            else break;
+        }
+        // 「http://.」去掉標點之後連主機名都沒有，不是網址
+        if (AUTHORITY.test(url)) out.push(url);
     }
     return out;
 }

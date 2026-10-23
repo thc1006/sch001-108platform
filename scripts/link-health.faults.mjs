@@ -457,6 +457,26 @@ const bareDomainMutations = [
             ),
     },
     {
+        name: '全形標點不再算網址的結尾（官網https://a.org？ 會擷成無法解析的網址）',
+        apply: (s) => s.replace('】！？…～“”‘’〈〉［］｛｝—⋯／｜]+/g;', '】]+/g;'),
+    },
+    {
+        name: 'userinfo 收任何字元（網址後面接著信箱時，主機名會被當成 userinfo）',
+        apply: (s) => s.replace("(?:[A-Za-z0-9._~!$&'()*+,;=:%-]*@)?", '(?:[^@/?#]*@)?'),
+    },
+    {
+        name: '主機名後面緊接的字不再截斷（請上https://a.org查詢 會變成另一台主機）',
+        apply: (s) => s.replace('let url = /^(?:[/?#]|$)/.test(match.slice(head[0].length)) ? match : head[0];', 'let url = match;'),
+    },
+    {
+        name: '內文網址不去結尾的英文標點（句點會被當成網址的一部分）',
+        apply: (s) => s.replace("if ('.,:;!?'.includes(last)) url = url.slice(0, -1);", 'if (false) url = url.slice(0, -1);'),
+    },
+    {
+        name: '內文網址的右括號一律去掉（Foo_(bar) 這種路徑會被截斷）',
+        apply: (s) => s.replace('else if (last in CLOSERS && url.split(last).length > url.split(CLOSERS[last]).length)', 'else if (last in CLOSERS)'),
+    },
+    {
         name: '主機名總長度上限不再檢查（253 字元以上也放行）',
         apply: (s) => s.replace('        if (host.length > 253) continue;', '        void host;'),
     },
