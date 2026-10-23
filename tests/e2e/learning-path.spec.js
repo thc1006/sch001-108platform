@@ -128,7 +128,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
             await page.fill('#pathInput', value);
             await page.click('#generatePathBtn');
             await expect(page.locator('#pathResult')).toHaveText('請先輸入你想學習的主題！');
-            await expect(message).toHaveClass(/text-red-500/);
+            await expect(message).toHaveClass(/text-red-700/);
             await expect(message).not.toHaveClass(/text-gray-600/);
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
@@ -149,7 +149,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         const message = page.locator('#pathResult p');
         await expect(message).toHaveText('已取消。');
         await expect(message).toHaveClass(/text-gray-600/);
-        await expect(message).not.toHaveClass(/text-red-500/);
+        await expect(message).not.toHaveClass(/text-red-700/);
         await expect(page.locator('#pathWork > *')).toHaveCount(0);
         // 取消鈕會隨進度區塊移除，progress.finish() 先把焦點交給工作區，才不會掉回 <body>。
         await expect(page.locator('#pathWork')).toBeFocused();
@@ -174,7 +174,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         await page.click('#generatePathBtn');
         const message = page.locator('#pathResult p');
         await expect(message).toHaveText(text);
-        await expect(message).toHaveClass(/text-red-500/);
+        await expect(message).toHaveClass(/text-red-700/);
         await expect(page.locator('#pathWork > *')).toHaveCount(0);
         await expect(page.locator('#generatePathBtn')).toBeEnabled();
     });

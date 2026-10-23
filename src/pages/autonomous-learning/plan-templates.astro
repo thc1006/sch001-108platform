@@ -303,7 +303,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         function showMessage(text, tone = 'error') {
             planResult.textContent = '';
             const p = document.createElement('p');
-            p.className = (tone === 'error' ? 'text-red-500' : 'text-gray-600') + ' text-center';
+            // red-500 對白底只有 3.8:1，不到 WCAG 對一般文字要求的 4.5:1
+            p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
             p.textContent = text;
             planResult.appendChild(p);
         }

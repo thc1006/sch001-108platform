@@ -140,7 +140,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await page.keyboard.press('Enter');
         await expect(result).toHaveText('已取消。');
         await expect(result.locator('p')).toHaveClass(/text-gray-600/);
-        await expect(result.locator('p')).not.toHaveClass(/text-red-500/);
+        await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
         await expect(work).toBeEmpty();
         // 取消鈕跟著進度區塊移除了，焦點不能掉回 <body>。
         await expect(work).toBeFocused();
@@ -192,7 +192,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         // 閘道重啟、通道斷線時，串流就是這樣結束。
         await page.evaluate(() => window.__stream.end());
         await expect(result).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
-        await expect(result.locator('p')).toHaveClass(/text-red-500/);
+        await expect(result.locator('p')).toHaveClass(/text-red-700/);
         await expect(work).toBeEmpty();
         await expect(page.locator('#ai-generate-btn')).toBeEnabled();
     });

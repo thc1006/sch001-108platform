@@ -111,7 +111,7 @@ for (const p of PAGES) {
             await page.click('#analyzeBtn');
             const result = page.locator('#analysisResult');
             await expect(result).toHaveText('AI 服務尚未設定完成，暫時無法使用。');
-            await expect(result.locator('p')).toHaveClass(/text-red-500/);
+            await expect(result.locator('p')).toHaveClass(/text-red-700/);
             expect(await page.evaluate(() => window.__calls.length)).toBe(0);
         });
 
@@ -136,7 +136,7 @@ for (const p of PAGES) {
             const result = page.locator('#analysisResult');
             await expect(result).toHaveText('已取消。');
             await expect(result.locator('p')).toHaveClass(/text-gray-600/);
-            await expect(result.locator('p')).not.toHaveClass(/text-red-500/);
+            await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
             // 取消鈕隨進度區塊移除，progress.finish() 會先把焦點交給工作區，不讓它掉回 <body>。
             await expect(page.locator('#analysisWork')).toBeFocused();
             await expect(button).toBeEnabled();

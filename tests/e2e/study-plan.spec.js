@@ -101,7 +101,7 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
             await page.fill('#planInput', value);
             await page.click('#generatePlanBtn');
             await expect(page.locator('#planResult')).toHaveText('請先輸入你的自主學習主題！');
-            await expect(page.locator('#planResult p')).toHaveClass(/text-red-500/);
+            await expect(page.locator('#planResult p')).toHaveClass(/text-red-700/);
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
@@ -122,7 +122,7 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         const message = page.locator('#planResult p');
         await expect(page.locator('#planResult')).toHaveText('已取消。');
         await expect(message).toHaveClass(/text-gray-600/);
-        await expect(message).not.toHaveClass(/text-red-500/);
+        await expect(message).not.toHaveClass(/text-red-700/);
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(button).toBeEnabled();
         await expect(button).toHaveText('產生計畫草案');
@@ -158,7 +158,7 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         await page.fill('#planInput', '手搖飲');
         await page.click('#generatePlanBtn');
         await expect(page.locator('#planResult')).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
-        await expect(page.locator('#planResult p')).toHaveClass(/text-red-500/);
+        await expect(page.locator('#planResult p')).toHaveClass(/text-red-700/);
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(page.locator('#generatePlanBtn')).toBeEnabled();
     });
