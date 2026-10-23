@@ -495,8 +495,11 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
         assert.match(host, /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/, `${host} 不是合法主機名`);
     }
 
-    // 實測基準：53 個候選、50 個真網域。資料變動時這個數字會變，屆時請一併
+    // 實測基準：52 個候選、49 個真網域。資料變動時這個數字會變，屆時請一併
     // 重新查證新增的網域，而不是直接把數字改掉。
+    //
+    // 2026-10-23：/competitions/65/description 拿掉「302 轉至無法連線的 ww1.hmun.org」。hmun.org 已經不轉到
+    // 那裡，ww1.hmun.org 有時回 200 的停放頁、有時逾時，留著會被當成健康的網域。候選與通過各少 1 個。
     //
     // 2026-08-29：#70 的 P5 桶複查再讓候選從 50 變成 53。新增的三個都是複查當下
     // 親自取過的來源：
@@ -520,6 +523,6 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // 引用的是 www.aksf.org 而不是 apex 的 aksf.org：apex 那台主機 https 連線
     // 會被重設、http 回 404（連測三次一致，DNS 解得到 193.2.68.165），內容在
     // www.aksf.org 上。引用 apex 的話，看門狗每週都會報一次永遠修不好的死連結。
-    assert.equal(candidates.length, 53, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
-    assert.equal(accepted.length, 50, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
+    assert.equal(candidates.length, 52, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
+    assert.equal(accepted.length, 49, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
 });
