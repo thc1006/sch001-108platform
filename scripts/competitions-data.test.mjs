@@ -915,7 +915,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // Earth Science Week 四項競賽中只有攝影與影片對國際開放
     assert.match(find('Earth Science Week').description, /美國居民|residents of the United States/);
 
-    // ichosc.org 是 IChO 國際指導委員會的官網，不是台灣的委員會；
+    // www.ichosc.org 是 IChO 國際指導委員會的官網，不是台灣的委員會；
     // 官網時程逐字：「2026 July 10-19, Uzbekistan」「2027 July 19-28, Chinese Taipei」
     const icho = find('國際化學奧林匹亞');
     assert.match(icho.organizer, /International Chemistry Olympiad Steering Committee/);
