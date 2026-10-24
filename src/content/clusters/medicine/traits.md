@@ -108,7 +108,7 @@ description: 醫藥衛生學群教授在備審與面試中真正在找什麼？�
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
 - [選才育才輔助系統 — 醫藥衛生學群｜ColleGo!（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=4)
 - [長庚大學醫學系核心能力](https://www.cgu.edu.tw/med/Contents?nodeId=3166)
-- [大專院校教授怎麼看備審｜108 課綱資訊網](https://12basic.edu.tw/topic-opinion.php)
+- [大專院校教授怎麼看備審｜108 課綱資訊網](https://shs.k12ea.gov.tw/site/12basic/category?root=41&cid=82&oid=90281)
 - [《醫師的內心世界》：為什麼醫學生在臨床階段會失去同理心｜The News Lens 關鍵評論網](https://www.thenewslens.com/article/134268)
 - [選才育才輔助系統 — 醫學檢驗學類｜ColleGo!](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=38)
 - [葉丙成揪教授談備審準備：好好說一個故事｜親子天下](https://www.parenting.com.tw/article/5088921)
