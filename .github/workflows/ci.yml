@@ -138,6 +138,18 @@ jobs:
           name: ${{ steps.artifact.outputs.name }}
           path: dist
 
+      # runner 的 apt 照 apt-mirrors.txt 每行的 priority 選鏡像，數字小的先用，
+      # azure.archive.ubuntu.com 是 1。azure 慢的時候仍有資料在傳，apt 不會換到
+      # 下一個（actions/runner-images#14823），下一步 --with-deps 要裝的套件就只能
+      # 從它慢慢下載。拿掉 azure 的 priority，沒有 priority 的鏡像最後才用。
+      # TODO(thc1006): actions/runner-images#14823 修好後拿掉這一步。
+      - name: Move the Azure apt mirror to the end
+        run: |
+          f=/etc/apt/apt-mirrors.txt
+          [ -f "$f" ] || { echo "$f 不存在，不改。"; exit 0; }
+          sudo sed -i '/azure\.archive\.ubuntu\.com/s/priority:[0-9]*//' "$f"
+          cat "$f"
+
       # 只裝 headless shell，改用 channel 或 headed 時拿掉 --only-shell。
       # 版面預算要靠 --with-deps 裝的中文字型。瀏覽器不快取，Playwright 也不建議。
       - name: Install Chromium headless shell
