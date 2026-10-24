@@ -81,7 +81,7 @@ description: 工程學群教授到底在找什麼樣的學生？解析頂大工�
 
 - [中華工程教育學會認證委員會 IEET 認證實地訪評](http://www.me.ntu.edu.tw/epaper/20110630/1001007%20%E9%9B%BB%E5%AD%90%E5%A0%B1-IEET%E8%AA%8D%E8%AD%89%E5%AF%A6%E5%9C%B0%E8%A8%AA%E8%A9%95.pdf)
 - [國立清華大學動力機械工程學系（ColleGo!）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011036)
-- [國立臺灣大學機械工程學系暨研究所](http://140.112.14.7/NTUME-2008/ALL-NTUME.pdf?p=view&listid=148)
+- [國立臺灣大學機械工程學系教育目標](https://www.me.ntu.edu.tw/web/about/about.jsp?cp_id=9)
 - [成功大學資訊工程學系給高中生的建議](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [台大資工系教授：把握這原則書審面試脫穎而出](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=240720)
 - [個人申請審查資料準備方向（文華高中）](https://web.whsh.tc.edu.tw/ischool/resources/WID_16_1_9e219f14084484f8c2243907e88129384453f8c5/CLS_16_1_62b116c8c5715ccff93e298f6bad8c13d6966245/e64ea8d72c4650a77aa9eb8cd2382caf.pdf)
