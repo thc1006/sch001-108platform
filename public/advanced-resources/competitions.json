@@ -977,6 +977,9 @@
       "opensAt": "2026-08-10T00:00:00-04:00",
       "eventStartsAt": "2027-04-29",
       "eventEndsAt": "2027-04-30",
+      "cycle": {
+        "closes": "09"
+      },
       "sourceCheckedAt": "2026-08-27",
       "url": "https://globalyouth.wharton.upenn.edu/competitions/investment-competition/",
       "description": "由賓州大學華頓商學院 Wharton Global Youth Program 主辦的免費線上投資競賽，逐字「High school students around the world who are interested in business and finance」皆可參加：4 至 6 人同校組隊、須有同校教師 advisor，隊長須於競賽首日滿 16 歲，逐字「the competition is free for all participants. There is no registration fee」。2026-27 屆由指導老師於 2026-08-10 至 09-11 17:00 ET 完成報名並建立學生帳號，9/15 釋出競賽細節、9/28 開始模擬交易、11/6 繳交投資策略書、12/4 繳交期末報告，2027 年 4 月 29 至 30 日於費城舉行全球決賽。（原名 KWHS Investment Competition，官方已更名。）"

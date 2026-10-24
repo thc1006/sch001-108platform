@@ -800,6 +800,9 @@ test('data：#138 補上的週期與新截止日', () => {
     assert.equal(tisf.deadline, '2026-11-06');
     assert.equal(tisf.deadlineAt, '2026-11-06T17:00:00+08:00');
     assert.equal(tisf.opensAt, '2026-10-12T00:00:00+08:00');
+
+    // 往年截止日：Wharton 2024-09-13、2025-09-12、2026-09-11
+    assert.equal(find('華頓全球高中投資競賽').cycle.closes, '09');
 });
 
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
