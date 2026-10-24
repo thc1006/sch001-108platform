@@ -645,7 +645,7 @@ const reportMutations = [
     },
     {
         name: "needsAttention 拿掉接管命中",
-        apply: (s) => s.replace("        hijackedHits.length > 0 ||\n", ""),
+        apply: (s) => s.replace("        hijackedHits.some((h) => h.source === 'url') ||\n", ""),
     },
     {
         name: "訊號數只在有命中時才寫進報告",
@@ -669,7 +669,7 @@ const reportMutations = [
     },
     {
         name: "有待辦時仍寫「全部外部連結正常」",
-        apply: (s) => s.replace("if (!attention && !unverified.length && !bareOther.length)", "if (!unverified.length && !bareOther.length)"),
+        apply: (s) => s.replace("if (!attention && !unverified.length", "if (!unverified.length"),
     },
     {
         name: "5xx 那段不列網址",
@@ -742,6 +742,26 @@ const reportMutations = [
     {
         name: "到期提醒不寫負責人",
         apply: (s) => s.replace("到期日：${e.expires}　負責人：${e.owner}`);", "到期日：${e.expires}`);"),
+    },
+    {
+        name: "盤點網址的接管命中標成 bare（直接連到也不通知）",
+        apply: (s) => s.replace("policy: hijack, source: 'url' }", "policy: hijack, source: 'bare' }"),
+    },
+    {
+        name: "裸網域的接管命中標成 url（回到每週通知）",
+        apply: (s) => s.replace("policy: hijack, source: 'bare' }", "policy: hijack, source: 'url' }"),
+    },
+    {
+        name: "needsAttention 改回所有接管命中都通知",
+        apply: (s) => s.replace("hijackedHits.some((h) => h.source === 'url')", "hijackedHits.length > 0"),
+    },
+    {
+        name: "列出接管主機時仍寫「全部外部連結正常」",
+        apply: (s) => s.replace(" && !hijackedHits.length) lines.push", ") lines.push"),
+    },
+    {
+        name: "報告的來源標籤對調",
+        apply: (s) => s.replace("h.source === 'bare' ? '說明文字裡的裸網域（本身不觸發通知）'", "h.source !== 'bare' ? '說明文字裡的裸網域（本身不觸發通知）'"),
     },
 ];
 
@@ -819,6 +839,10 @@ const assemblyMutations = [
     {
         name: "主控台不印快到期的項目",
         apply: (s) => s.replace("    if (expiringSoon.length) summary.push(", "    if (false) summary.push("),
+    },
+    {
+        name: "主控台的接管主機那行不分來源（盤點的網址算成全部）",
+        apply: (s) => s.replace("（盤點的網址 ${hijackedHits.filter((h) => h.source === 'url').length}）", "（盤點的網址 ${hijackedHits.length}）"),
     },
 ];
 
