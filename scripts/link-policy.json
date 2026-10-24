@@ -42,6 +42,16 @@
       "evidence": "2026-10-23 重測：https://arcade.now/ 直接回 HTTP 200（無轉址），<title>「70+ Free Arcade Games Online - No Downloads | Arcade.now」。同日 https://www.sasmo.sg/ 的轉址鏈照樣經過 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en&click_id=…，subid2=TW 顯示這條漏斗會對台灣訪客投放。2026-08-28 首次記錄：https://arcade.now/ 同樣直接回 HTTP 200（當時沒有記標題），www.sasmo.sg 的轉址鏈同樣經過這裡。",
       "owner": "thc1006",
       "expires": "2027-01-31"
+    },
+    {
+      "match": {
+        "host": "www.ijso-official.org"
+      },
+      "kind": "hijacked",
+      "reason": "國際國中科學奧林匹亞（IJSO）先前的官網網域，已經不是 IJSO 的網站：2025 年 8 月到 2026 年 7 月被轉作泰文線上博弈站，網域之後過期，2026-10-20 又被重新註冊。現在解析不到，但隨時可能重新上線並回 HTTP 200，三態分類會把它算成「健康」。本站資料只在說明文字裡提到它（作為警告），沒有做成連結；IJSO 現行官網是 ijsoweb.org。",
+      "evidence": "2026-10-24 查：PIR 的 RDAP 顯示 ijso-official.org 的 registration 是 2026-10-20T09:09:35Z，registrar 為 Gname.com Pte. Ltd.，狀態 client transfer prohibited、add period；ijso-official.org 與 www.ijso-official.org 都沒有 A 紀錄。Internet Archive 從 2025-08-29（www.ijso-official.org）到 2026-05-21（ijso-official.org）的 12 份首頁存檔，<title> 都是「สล็อตเว็บตรง 100 % อันดับ 1 ประเทศไทย ฝากถอนไม่มีขั้นต่ำ ปี 2025」（泰文線上老虎機）；內頁的存檔到 2026-06-16（Internet Archive，/contact-us/、/about-us/）與 2026-07-15（Common Crawl，/สล็อตเว็บตรง-100/ 等 3 頁）仍是同一個博弈站；2024-03-05 的存檔標題是「IJSO Official | International Junior Science Olympiad」。",
+      "owner": "thc1006",
+      "expires": "2027-01-31"
     }
   ]
 }
