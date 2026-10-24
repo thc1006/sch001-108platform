@@ -256,6 +256,9 @@ jobs:
       - name: Check activity-database fields and status badges
         run: npm run test:activity-database
 
+      - name: Prove the activity-database checks actually block (fault injection)
+        run: npm run test:activity-faults
+
       - name: Test the quote-audit matching logic (network half stays manual)
         run: npm run test:quote-audit
 
