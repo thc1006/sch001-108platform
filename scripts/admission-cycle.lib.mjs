@@ -287,6 +287,16 @@ export function checkContent(files, config) {
 }
 
 /**
+ * pendingForNext 列出 cycle 換成 next 之後會不放行的學年度，也就是換屆還要改的地方。
+ * keep 不算放行，換屆時每一筆都要重新確認，by 列出目前放行它的 keep。
+ * @param {Array<{path: string, text: string}>} files @param {{next: number, keep: object[]}} config
+ * @returns {Array<{path: string, line: number, year: number, kind: string, phrase: string, by: number[]}>}
+ */
+export function pendingForNext(files, config) {
+    return classify(files, config.keep, new Set([config.next, config.next + 1])).hits;
+}
+
+/**
  * dueKeeps 列出 recheckAfter 已經過了的 keep，當天還不算，和 remindAfter 一樣。
  * @param {{keep: object[]}} config @param {string} todayISO
  * @returns {Array<{index: number, keep: object}>}

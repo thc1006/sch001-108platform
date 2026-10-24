@@ -1,0 +1,120 @@
+name: Admission Cycle Reminder
+
+# 內容學年度的每週提醒（#116）。過了 scripts/admission-cycle.json 的 remindAfter 而 cycle 還沒換、
+# 有 keep 過了 recheckAfter，或檢查本身有錯，就開或更新一個 issue。不連網，只讀 repo 裡的檔案，不改檔案。
+# 同一支檢查 ci.yml 每個 PR 都跑，在那裡日期只帶出警告，不會讓 PR 變紅。
+
+on:
+  schedule:
+    - cron: '40 2 * * 1'   # 每週一 02:40 UTC（台灣時間 10:40），錯開另外三支看門狗和整點
+  workflow_dispatch:
+
+# 排程和手動觸發同時在跑時，兩個 run 都會查到沒有既有 issue 而各開一個。後到的要排隊，不能取消。
+concurrency:
+  group: admission-cycle-watchdog
+  cancel-in-progress: false
+
+# issues: write 只寫在下面的 job，日後新增的 job 不會跟著拿到。
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: 檢查學年度換屆
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    # 帶著 issues: write 跑的程式和資料只能是 main 的。下一步的 shell 檢查是同一條規則，
+    # 這行被拿掉時還擋得住。
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Refuse to run outside the default branch
+        run: |
+          echo "ref = $GITHUB_REF / event = $GITHUB_EVENT_NAME"
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "本 workflow 只能在 main 上執行（帶著 issues:write 跑分支程式碼）。" >&2
+            exit 1
+          fi
+          case "$GITHUB_EVENT_NAME" in
+            schedule|workflow_dispatch) ;;
+            *)
+              echo "只接受 schedule 與 workflow_dispatch，實際為 $GITHUB_EVENT_NAME。" >&2
+              exit 1
+              ;;
+          esac
+
+      # 檢查只用 Node 內建模組，不安裝相依。
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: '.node-version'
+          package-manager-cache: false
+
+      - name: Check the admission cycle
+        id: check
+        run: node scripts/check-admission-cycle.mjs --remind
+
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          if [ -f admission-cycle-report.md ]; then
+            cat admission-cycle-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '檢查沒有寫出報告（admission-cycle-report.md 不存在）。' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # 檢查有錯時以 1 結束，錯誤寫在報告裡，所以用 always() 照樣開 issue。
+      - name: Open or update issue when attention is needed
+        if: always() && steps.check.outputs.needs_attention == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 和 scripts/watchdog-issue.lib.mjs 的 ADMISSION_CYCLE_MARKER 相同，admission-cycle.test.mjs 會比對。
+          MARKER: '<!-- admission-cycle-watchdog:v1 -->'
+        run: |
+          # 報告的第一行是機器標記。少了它，下一輪認不出自己開的 issue，會每週另開一個。
+          if ! grep -qF -- "$MARKER" admission-cycle-report.md; then
+            echo "報告缺少機器標記 $MARKER，中止而不開 issue。" >&2
+            exit 1
+          fi
+
+          gh label create --force admission-cycle-watchdog \
+            --color FBCA04 \
+            --description "看門狗自動開立，請勿手動使用此標籤" || true
+
+          # 不用 --app 過濾，原因見 competitions-check.yml。認領的判斷在 find-watchdog-issue.mjs，
+          # 有單元測試；有多個 issue 符合時它以 2 結束，這裡中止而不亂貼。
+          gh issue list \
+            --label admission-cycle-watchdog --state open --limit 100 \
+            --json number,author,body > watchdog-candidates.json
+          if ! decision=$(node scripts/find-watchdog-issue.mjs --marker "$MARKER" < watchdog-candidates.json); then
+            echo "無法決定要接管哪個 issue（見上方訊息），中止而不亂貼。" >&2
+            exit 1
+          fi
+
+          case "$decision" in
+            comment\ *)
+              existing="${decision#comment }"
+              echo "接管既有 issue #$existing，補上最新報告。"
+              gh issue comment "$existing" --body-file admission-cycle-report.md
+              echo "報告已補到 issue #$existing" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            create)
+              url=$(gh issue create \
+                --title "內容學年度檢查的提醒（自動偵測）" \
+                --label admission-cycle-watchdog \
+                --body-file admission-cycle-report.md)
+              echo "沒有可接管的 issue，已新開：$url"
+              echo "已新開 issue $url" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "find-watchdog-issue.mjs 回傳了未預期的結果：$decision" >&2
+              exit 1
+              ;;
+          esac

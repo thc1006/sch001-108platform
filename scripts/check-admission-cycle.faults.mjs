@@ -2,11 +2,12 @@
 // check-admission-cycle.mjs 的故障注入，一次改一處，確認該紅的會紅、該放行的放行：
 //   A. 內容、keep、設定：寫進舊年度、殭屍 keep、cycle 過期的 keep、next 和 remindAfter 不合規則、
 //      內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
-//      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0
+//      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0；--remind 要寫出報告和 needs_attention
 //   B. 判斷：改壞 admission-cycle.lib.mjs，admission-cycle.test.mjs 必須失敗
 //   C. 串接：改壞 check-admission-cycle.mjs，A 段至少要有一項失敗
+//   D. 排程：改壞 admission-cycle-check.yml，admission-cycle.test.mjs 必須失敗
 // 用固定的測資和日期，不用真實內容：真實內容哪天沒有 keep 或甄選會網址，這裡照樣測得到。
-// scripts/ 複製到 .admission-cycle-faultcheck/ 再放測資，版控裡的檔案不會被改到。
+// scripts/ 和 .github/ 複製到 .admission-cycle-faultcheck/ 再放測資，版控裡的檔案不會被改到。
 //
 // 執行：  npm run test:admission-cycle-faults
 import { execFileSync } from 'node:child_process';
@@ -19,6 +20,8 @@ const WORK = path.join(ROOT, '.admission-cycle-faultcheck');
 const SCRIPTS = path.join(WORK, 'scripts');
 const CONFIG = path.join(SCRIPTS, 'admission-cycle.json');
 const CONTENT = path.join(WORK, 'src/content');
+const REPORT = path.join(WORK, 'admission-cycle-report.md');
+const OUTPUT = path.join(WORK, 'github-output');
 const PAGE_A = 'src/content/clusters/a/overview.md';
 const PAGE_B = 'src/content/clusters/b/application.md';
 const KEEP_TEXT = '多來自 111 學年度的舊統計';
@@ -56,6 +59,8 @@ const baselineConfig = () => ({
 
 rmSync(WORK, { recursive: true, force: true });
 cpSync(path.join(ROOT, 'scripts'), SCRIPTS, { recursive: true });
+// 單元測試會讀 workflow。
+cpSync(path.join(ROOT, '.github'), path.join(WORK, '.github'), { recursive: true });
 
 /** reset 把測資和設定寫回基準狀態。 */
 function reset() {
@@ -77,17 +82,29 @@ function snapshot() {
     return [readFileSync(CONFIG, 'utf8'), ...entries.sort()].join('\n');
 }
 
-/** check 跑沙盒裡的檢查，回傳結束碼和 stdout、stderr 合併的輸出。 */
-function check(env = {}) {
-    // 不測 annotation 的案例不設 GITHUB_ACTIONS，子行程在 CI 上才不會多發 ::warning。
-    const base = { ...process.env, ADMISSION_CYCLE_TODAY: '2026-10-25' };
+/**
+ * check 跑沙盒裡的檢查，回傳結束碼、stdout 和 stderr 合併的輸出、報告，以及寫進 GITHUB_OUTPUT 的
+ * needs_attention（沒寫是 null）。
+ */
+function check(env = {}, args = []) {
+    rmSync(REPORT, { force: true });
+    rmSync(OUTPUT, { force: true });
+    // GITHUB_OUTPUT 指到沙盒，CI 上不會把故障注入的結果寫進真正的 step output。不測 annotation 的
+    // 案例不設 GITHUB_ACTIONS，子行程才不會多發 ::warning。
+    const base = { ...process.env, ADMISSION_CYCLE_TODAY: '2026-10-25', GITHUB_OUTPUT: OUTPUT };
     delete base.GITHUB_ACTIONS;
     const cli = path.join(SCRIPTS, 'check-admission-cycle.mjs');
+    let code = 0;
+    let out;
     try {
-        return { code: 0, out: String(execFileSync(process.execPath, [cli], { stdio: 'pipe', env: { ...base, ...env } })) };
+        out = String(execFileSync(process.execPath, [cli, ...args], { stdio: 'pipe', env: { ...base, ...env } }));
     } catch (e) {
-        return { code: e.status ?? 1, out: String(e.stdout || '') + String(e.stderr || '') };
+        code = e.status ?? 1;
+        out = String(e.stdout || '') + String(e.stderr || '');
     }
+    const report = existsSync(REPORT) ? readFileSync(REPORT, 'utf8') : null;
+    const flag = existsSync(OUTPUT) ? readFileSync(OUTPUT, 'utf8').match(/^needs_attention=(true|false)$/m) : null;
+    return { code, out, report, attention: flag ? flag[1] === 'true' : null };
 }
 
 const append = (file, line) => () => writeFileSync(path.join(WORK, file), `${readFileSync(path.join(WORK, file), 'utf8')}\n${line}\n`);
@@ -172,6 +189,40 @@ const cases = [
         code: 0,
         absent: /警告/,
     },
+    { name: '不加 --remind：不寫報告，也不寫 needs_attention', env: { ADMISSION_CYCLE_TODAY: '2026-12-16' }, code: 0, attention: null, report: null },
+    {
+        name: '--remind 過了 remindAfter：通知，報告有機器標記和換屆後要改的地方',
+        args: ['--remind'],
+        env: { ADMISSION_CYCLE_TODAY: '2026-12-16' },
+        code: 0,
+        attention: true,
+        report: /^<!-- admission-cycle-watchdog:v1 -->\n[^]*### 該換屆了\n\n.*remindAfter 的依據：故障注入的測資，日期落在 116 學年度的範圍裡。\n[^]*cycle 改成 116 之後不放行的有 8 處，在 1 個檔案，其中 2 處現在由 keep 放行：\n\n- `src\/content\/clusters\/a\/overview\.md`：第 2、3、6、8、10、12 行\n/,
+    },
+    { name: '--remind remindAfter 當天：不通知', args: ['--remind'], env: { ADMISSION_CYCLE_TODAY: '2026-12-15' }, code: 0, attention: false, report: /沒有需要處理的事/ },
+    {
+        name: '--remind 過了 keep 的 recheckAfter：通知',
+        args: ['--remind'],
+        inject: editConfig((c) => { c.keep[1].recheckAfter = '2026-10-24'; }),
+        code: 0,
+        attention: true,
+        report: /### 該重新確認的 keep\n\n- keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）的 recheckAfter 是 2026-10-24。/,
+    },
+    {
+        name: '--remind 內容有錯：以 1 結束，照樣通知，錯誤寫進報告',
+        args: ['--remind'],
+        inject: append(PAGE_B, '另見 114 學年度的統計。'),
+        code: 1,
+        attention: true,
+        report: /### 檢查的錯誤\n\n- src\/content\/clusters\/b\/application\.md:7 「114 學年度」裡的 114 不是 115 或 116\n  另見/,
+    },
+    {
+        name: '--remind 設定檔壞掉：以 1 結束，照樣通知',
+        args: ['--remind'],
+        inject: () => writeFileSync(CONFIG, '{'),
+        code: 1,
+        attention: true,
+        report: /^<!-- admission-cycle-watchdog:v1 -->\n[^]*- 讀不到或無法解析 scripts\/admission-cycle\.json/,
+    },
 ];
 
 /** problem 跑一個 A 段的案例，結果符合預期時回傳 null，否則回傳哪裡不對。 */
@@ -182,12 +233,15 @@ function problem(c) {
         c.inject();
         if (snapshot() === before) return '注入沒有改到任何東西，請更新這一條';
     }
-    const r = check(c.env);
+    const r = check(c.env, c.args);
     // 印出來之前壓成一行，輸出裡的 ::warning 才不會被 runner 當成這個 job 的 annotation。
     const out = r.out.replace(/\s+/g, ' ').slice(0, 240);
     if (r.code !== c.code) return `結束碼是 ${r.code}，應該是 ${c.code}。輸出：${out}`;
     if (c.expect && !c.expect.test(r.out)) return `輸出裡沒有 ${c.expect}。輸出：${out}`;
     if (c.absent?.test(r.out)) return `輸出裡不該有 ${c.absent}`;
+    if ('attention' in c && r.attention !== c.attention) return `needs_attention 是 ${r.attention}，應該是 ${c.attention}`;
+    if (c.report === null && r.report !== null) return '不該寫出報告';
+    if (c.report && !c.report.test(r.report ?? '')) return `報告裡沒有 ${c.report}。報告：${(r.report ?? '（沒有報告）').replace(/\s+/g, ' ').slice(0, 240)}`;
     return null;
 }
 
@@ -233,6 +287,18 @@ const libMutations = [
     ['今天用 UTC 的日期', "timeZone: 'Asia/Taipei'", "timeZone: 'UTC'"],
     ['沒有檔案也算通過', 'if (files.length === 0) return', 'if (false) return'],
     ['一個學年度都沒找到也算通過', 'if (found === 0) errors.push', 'if (false) errors.push'],
+    ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
+];
+// 每一條都是曾經讓單元測試照樣通過的改法。
+const workflowMutations = [
+    ['開 issue 的條件拿掉 always()', "if: always() && steps.check.outputs.needs_attention == 'true'", "if: steps.check.outputs.needs_attention == 'true'"],
+    ['檢查那一步的 id 改名', '        id: check\n', '        id: chk\n'],
+    ['列出 issue 的標籤打錯', '--label admission-cycle-watchdog --state open', '--label admission-cycle --state open'],
+    ['新開 issue 的標籤打錯', '                --label admission-cycle-watchdog \\\n', '                --label admission-cycles \\\n'],
+    ['排程改成每天', "cron: '40 2 * * 1'", "cron: '40 2 * * *'"],
+    ['拿掉機器標記的檢查', 'if ! grep -qF -- "$MARKER" admission-cycle-report.md; then', 'if false; then'],
+    ['多了 push 觸發', '  workflow_dispatch:\n', '  workflow_dispatch:\n  push:\n'],
+    ['報告檔名打錯', '--body-file admission-cycle-report.md)', '--body-file admission-cycle-reports.md)'],
 ];
 const cliMutations = [
     ['有錯誤也以 0 結束', 'if (errors.length) {', 'if (false) {'],
@@ -244,6 +310,10 @@ const cliMutations = [
     ['recheckAfter 拿 remindAfter 比', 'dueKeeps(config, today)', 'dueKeeps(config, remindAfter)'],
     ['目錄也當成檔案讀', "e.isFile() && e.name.endsWith('.md')", "e.name.endsWith('.md')"],
     ['CRLF 不換成 LF', ".replace(/\\r\\n/g, '\\n')", ''],
+    ['報告沒有機器標記', "[ADMISSION_CYCLE_MARKER, '',", "['',"],
+    ['needs_attention 一律寫 false', 'needs_attention=${attention}', 'needs_attention=false'],
+    ['有錯時不寫報告', 'if (remind) {', 'if (false) {'],
+    ['換屆清單不算 keep 放行的', 'pending.filter((h) => h.by.length).length', '0'],
 ];
 
 let pass = 0;
@@ -295,9 +365,12 @@ for (const m of libMutations) mutate('scripts/admission-cycle.lib.mjs', m, passe
 console.log('\nC. 改壞串接（A 段至少一項必須失敗）：');
 for (const m of cliMutations) mutate('scripts/check-admission-cycle.mjs', m, () => cases.every((c) => problem(c) === null), 'A 段全部照樣符合');
 
+console.log('\nD. 改壞排程（admission-cycle.test.mjs 必須失敗）：');
+for (const m of workflowMutations) mutate('.github/workflows/admission-cycle-check.yml', m, passes, '改壞之後單元測試還是通過');
+
 const after = baseline();
 console.log(after ? '\n還原後仍是綠燈。' : '\n還原後不是綠燈，沙盒沒有復原乾淨。');
 rmSync(WORK, { recursive: true, force: true });
-const total = cases.length + libMutations.length + cliMutations.length;
+const total = cases.length + libMutations.length + cliMutations.length + workflowMutations.length;
 console.log(`故障注入：${pass} 項符合，${fail} 項不符（共 ${total} 項）`);
 process.exit(fail === 0 && after ? 0 : 1);
