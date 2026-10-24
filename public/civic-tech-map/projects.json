@@ -1,6 +1,6 @@
 {
   "_readme": "公民科技專案地圖資料檔。彙整台灣公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔同時是看門狗 check-civic-tech.mjs 的結構化資料來源、以及 build-search-index.js 的搜尋索引來源（見 scripts/data-pages.json），與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號，必須真的存在於建置後的頁面，否則搜尋結果會指向不存在的錨點，建置會直接失敗）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3，合法代碼見 scripts/taxonomy.json）；sdgs=對應 SDG 編號陣列（1-17 整數）；tags=議題關鍵字陣列（使用者會直接打進搜尋框的字，如「環保」「假訊息」；選填但填了就必須是非空字串陣列）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，maintenance 代表專案以維護方式運作（既有服務持續、但新進度放緩），dormant 代表近期幾無活動、需提醒讀者查證最新狀態。AI 閘道的 civic-tech-suggestion 任務指令另外抄了一份專案名稱與狀態（閘道的映像檔裡沒有這個檔案），由 ai-gateway/test/task-catalog.test.mjs 比對兩邊是否一致。",
-  "lastUpdated": "2026-08-27",
+  "lastUpdated": "2026-10-25",
   "projects": [
     {
       "id": "disfactory",
@@ -90,12 +90,12 @@
       "id": "civil-iot",
       "name": "民生公共物聯網 Civil IoT Taiwan",
       "org": "行政院跨部會開放資料專案",
-      "url": "https://ci.taiwan.gov.tw/",
+      "url": "https://scidm.nchc.org.tw/zh_TW/organization/civiliot",
       "subjects": ["自然科學 (地球科學)", "資訊科技"],
       "competencies": ["A2", "B2"],
       "sdgs": [11, 13],
       "tags": ["環保", "開放資料", "空氣品質", "防災", "物聯網", "資料科學"],
-      "description": "整合空氣品質、地震、防救災、水資源四大主題的開放感測資料與即時監測平台，提供大量公開 API 與資料視覺化。雖由政府跨部會主導而非 g0v 社群專案，但其完全開放的資料是高中生實作資料科學的理想素材。",
+      "description": "整合空氣品質、地震、防救災、水資源四大主題開放感測資料的政府計畫，已於 2025 年 12 月 31 日結束，原本的資料服務平台已經連不上。資料集現在列在國網中心資料集平台：空品微型感測器、氣象、水資源的即時資料改由 sta.colife.org.tw 的 SensorThings API 提供，水、空、地、災的歷史資料可以下載，少數連結仍指向舊站。雖由政府跨部會主導而非 g0v 社群專案，這些開放資料仍是高中生實作資料科學的理想素材。",
       "status": "active"
     }
   ]
