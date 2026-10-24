@@ -256,6 +256,23 @@ const policyCases = [
         }),
     },
     {
+        // 基準盤點在說明文字裡點名每一台接管主機，照樣是綠的；這一條把其中一台寫成網址。
+        name: '盤點的網址連到接管主機（說明文字只能寫裸網域）',
+        expect: /連到接管警示的主機/,
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: `https://${realPolicy.hijacked[0].match.host}/`, occurrences: [{ file: 'data.json', location: '/0/url' }] }],
+        }),
+    },
+    {
+        name: '盤點的網址連到接管主機，主機名大寫又帶結尾的點（比對要先正規化）',
+        expect: /連到接管警示的主機/,
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: `https://${realPolicy.hijacked[0].match.host.toUpperCase()}./x`, occurrences: [{ file: 'data.json', location: '/0/url' }] }],
+        }),
+    },
+    {
         name: '盤點來自故障注入用的副本，不是要部署的 dist/',
         expect: /不是實際要部署的 dist/,
         inventory: () => ({ ...baselineInventory, generatedFrom: 'dist-faultcheck' }),
@@ -775,6 +792,10 @@ const policyLibMutations = [
     {
         name: 'match.host 只比小寫與結尾的點（全形、Unicode 的寫法照樣通過，訊息給的寫法改完還要再改）',
         apply: (s) => s.replace('const normalized = canonicalHost(verdict.url.hostname);', 'const normalized = canonicalHost(raw);'),
+    },
+    {
+        name: 'matchHijacked 不再正規化主機名（大寫或結尾帶點的網址比不到）',
+        apply: (s) => s.replace('        host = canonicalHost(new URL(url).hostname);\n    } catch {\n        return null;', '        host = new URL(url).hostname;\n    } catch {\n        return null;'),
     },
 ];
 
