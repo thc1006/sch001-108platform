@@ -776,8 +776,13 @@ test('data：第二輪查到確切時刻的競賽必須保留時區位移', () =
     assert.equal(genius.deadlineAt, '2027-03-01T23:59:00-05:00');
     assert.equal(genius.eventStartsAt, '2027-06-07');
 
-    // IYMC：「The deadline for the Qualification Round is: Sunday, 27 September 2026, 23:59 UTC+0」
-    assert.equal(find('國際青年數學挑戰賽').deadlineAt, '2026-09-27T23:59:00Z');
+    // IYMC 2026 屆：「The deadline for the Qualification Round is: Sunday, 27 September 2026, 23:59 UTC+0」，已過。
+    // 2025 屆題目卷：「Submit your solution by Sunday, 30 November 2025, 23:59 UTC+0 online!」
+    // 兩屆月份不同，不能用 cycle 推下一屆；2027 屆公布前比照旺宏，不留已過的日期。
+    const iymc = find('國際青年數學挑戰賽');
+    assert.equal(iymc.deadline, '');
+    assert.equal(iymc.cycle, undefined, '2025 屆 11/30、2026 屆 9/27，沒有固定月份');
+    assert.ok(iymc.registrationNote?.includes('2027'));
 
     // 全體護欄
     for (const needle of VERIFIED_ROUND2) {
