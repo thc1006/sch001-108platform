@@ -108,3 +108,4 @@ school/
 # 故障注入矩陣的工作副本。腳本結束時會自己刪掉，這裡是為了中途失敗的情況。
 .deptree-faultcheck/
 .installgate-faultcheck/
+/.admission-cycle-faultcheck/
