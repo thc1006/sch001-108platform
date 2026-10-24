@@ -1,5 +1,5 @@
 {
-  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式；常態招募或依官網公告者請填 null；featured=true 代表此活動會顯示於頁面上方的精選區塊（建議僅 1 筆設為 true）；url=官方網站連結。所有純文字欄位於頁面以 escapeHtml 處理，請放心填寫。",
+  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆；url=官方網站連結，用 https。deadline 的填法：本屆還能報名的，填本屆的截止日。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。所有純文字欄位在頁面上都會先經過 escapeHtml。",
   "lastUpdated": "2026-10-24",
   "activities": [
     {
@@ -79,6 +79,7 @@
       "form": "個人",
       "description": "參與收容所的日常照護工作，為等待認養的動物提供陪伴與溫暖，全年常態招募。",
       "deadline": null,
+      "rolling": true,
       "featured": false,
       "url": "https://www.tcapo.gov.taipei/"
     }

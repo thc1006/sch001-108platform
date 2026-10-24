@@ -253,6 +253,9 @@ jobs:
       - name: Run per-entry verified-data regression tests
         run: npm run test:competitions-data
 
+      - name: Check activity-database fields and status badges
+        run: npm run test:activity-database
+
       - name: Test the quote-audit matching logic (network half stays manual)
         run: npm run test:quote-audit
 

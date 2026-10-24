@@ -87,12 +87,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             ));
         }
 
-        function getActivityStatus(deadline) {
-            if (!deadline) {
-                return { text: '全年招募', color: 'bg-blue-100 text-blue-800' };
+        function getActivityStatus(activity) {
+            if (!activity.deadline) {
+                return activity.rolling
+                    ? { text: '全年招募', color: 'bg-blue-100 text-blue-800' }
+                    : { text: '依官網公告', color: 'bg-slate-100 text-slate-700' };
             }
             const now = new Date();
-            const deadlineDate = new Date(deadline);
+            const deadlineDate = new Date(activity.deadline);
             const diffDays = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
 
             if (diffDays < 0) {
@@ -102,6 +104,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             } else {
                 return { text: '報名中', color: 'bg-green-100 text-green-800' };
             }
+        }
+
+        function deadlineText(activity) {
+            if (activity.deadline) return activity.deadline;
+            return activity.rolling ? '全年招募' : '依官網公告';
         }
 
         // 由實際資料動態產生篩選器選項，避免選項與資料不符。
@@ -136,7 +143,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 featuredSection.classList.add('hidden');
                 return;
             }
-            const status = getActivityStatus(featured.deadline);
+            const status = getActivityStatus(featured);
             featuredCard.innerHTML = `
                 <div class="p-8 md:w-full flex flex-col justify-center">
                     <div class="flex justify-between items-center mb-2">
@@ -149,7 +156,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <div class="flex flex-wrap gap-2 mb-4">
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.category)}</span>
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.form)}</span>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${featured.deadline ? escapeHtml(featured.deadline) : '依官網公告'}</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${escapeHtml(deadlineText(featured))}</span>
                     </div>
                     <a href="${encodeURI(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
                         查看活動詳情 &rarr;
@@ -180,7 +187,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     const card = document.createElement('div');
                     card.className = 'activity-card bg-white rounded-lg shadow-md flex flex-col';
 
-                    const status = getActivityStatus(activity.deadline);
+                    const status = getActivityStatus(activity);
 
                     card.innerHTML = `
                         <div class="p-6 flex-grow">
@@ -195,7 +202,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
                             <div>
                                 <p class="text-xs text-gray-500">報名截止</p>
-                                <p class="font-semibold text-gray-700">${activity.deadline ? escapeHtml(activity.deadline) : '依官網公告'}</p>
+                                <p class="font-semibold text-gray-700">${escapeHtml(deadlineText(activity))}</p>
                             </div>
                             <a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
                                 查看詳情
