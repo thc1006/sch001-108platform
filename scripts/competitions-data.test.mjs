@@ -959,6 +959,31 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(ieso.description, /博弈|Pokies/, '必須留下「原網域已成博弈站」的警告，否則下次又會被改回去');
 });
 
+// #70 在 2026-10-25 更正的描述。每一句的官網原文寫在更正它的 commit 訊息裡。
+test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => {
+    // 完整結果 PDF 的 Country/Region Represented 欄逐字「Taiwan, China」，每個國家／地區至多 2 隊
+    const immc = find('國際數學建模挑戰賽').description;
+    assert.match(immc, /「Taiwan, China」/);
+    assert.ok(!/未見 Chinese Taipei|沒有獨立賽區/.test(immc), 'IMMC 的 2026 年結果有 2 隊來自台灣的學校');
+
+    // 賽事規則、Code of Conduct、服務條款都有參賽與年齡條文
+    assert.ok(!/未刊登年齡或國籍限制/.test(find('CodeChef').description));
+
+    // 條款 1.3 在 2026 年 9 月到 10 月之間從 13:00 改成 16:00 (GMT)
+    const sony = find('Sony 世界攝影獎').description;
+    assert.match(sony, /5 January 2027 at 16:00 \(GMT\)/);
+    assert.ok(!/13:00/.test(sony), 'Sony 青年組現在只寫 16:00 (GMT)');
+
+    assert.ok(!/沒有加註任何免責聲明/.test(find('哈佛克里姆森全球論文競賽').description), '要寫明查了哪些頁');
+    assert.ok(!/帶一般瀏覽器 User-Agent/.test(find('LeetCode').description), '單日實測不寫進描述');
+    // APhO 的常設網站還在（只有 http，2018 年之後沒更新）
+    assert.ok(!/沒有常設官網/.test(find('亞洲物理奧林匹亞').description));
+
+    // 卡片用 escapeHtml 顯示描述，Markdown 記號會原樣出現在畫面上
+    const marked = DATA.competitions.filter((c) => /\*\*|`/.test(c.description)).map((c) => c.title);
+    assert.deepEqual(marked, [], '描述不得含 ** 或反引號');
+});
+
 test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日期欄', () => {
     const src = readFileSync(
         new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
