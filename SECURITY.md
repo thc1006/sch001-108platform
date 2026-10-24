@@ -44,6 +44,10 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
   版本，間接相依也一樣。security update 不套用 cooldown，Dependabot 偵測得到 npm
   版本時還會帶 `--min-release-age=0` 略過 `.npmrc`。偵測不到時 `.npmrc` 照樣生效，
   發布未滿七天的修正要等滿七天，或手動帶 `--min-release-age=0` 升級。
+  `--min-release-age=0` 作用在整次 `npm update`，同一個套件的其他副本也會升到相依範圍
+  允許的最新版，不論那是不是修正版：#182 修 undici 7.x 時，unifont 底下的 8.x 就這樣
+  升到發布才五天、不是修正版的 8.12.3。遇到這種情況，在 `min-release-age=7` 下自己跑
+  `npm update <套件> --package-lock-only`，只會取到滿七天的版本（#186）。
 - `package.json` 的 `allowScripts` 搭配 `strict-allow-scripts=true`：
   只有列在清單裡的套件能跑安裝腳本，其餘一律 fail-closed。目前只核准
   `esbuild`（需要它連結平台二進位），`core-js` 與 `fsevents` 都拒絕。
