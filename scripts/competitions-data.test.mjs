@@ -450,7 +450,7 @@ const VERIFIED_ROUND2 = [
     'Project Euler', 'Advent of Code', 'picoCTF', 'HITCON CTF',
     // 資料科學與機器人
     'Kaggle Competitions', 'DrivenData 社會公益資料競賽', 'Zindi 資料科學競賽',
-    'AIcrowd 機器學習挑戰賽', 'Technovation Girls', 'FIRST 機器人競賽 (FRC)',
+    'AIcrowd 機器學習挑戰賽', 'Technovation', 'FIRST 機器人競賽 (FRC)',
     'VEX 機器人世界錦標賽', 'WRO 世界機器人奧林匹亞', 'iGEM 國際基因工程機器競賽',
     // 數學競賽
     'Purple Comet! Math Meet', '袋鼠數學競賽 (Math Kangaroo)',
