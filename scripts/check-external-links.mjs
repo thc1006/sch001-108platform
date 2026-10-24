@@ -26,7 +26,7 @@
  *
  * 三態：
  *   dead       網域解析不到、404/410      → 觸發 issue
- *   unverified 403/429/5xx/逾時/TLS       → 只記錄（多為防爬，瀏覽器仍可開）
+ *   unverified 403/429/5xx/逾時/TLS       → 只記錄，報告依原因分組
  *   healthy    2xx/3xx                    → 不處理
  * 三態有一個結構性盲點：網域被接管之後照樣回 200，狀態碼健康、內容卻已經換人。
  * ieso-info.org 現在是澳洲線上博弈站，www.sasmo.sg 轉去聯盟廣告頁，兩者都回 200。
@@ -527,24 +527,20 @@ if (skipped || bareSkipped) {
 }
 
 if (unverified.length) {
-    // 「無法判定」底下其實有兩種完全不同的東西，不能用同一句「多為防爬機制，通常
-    // 瀏覽器仍可開啟」帶過：
-    //
-    //   403／429／5xx  → 站台有回應，只是拒絕這個 client。瀏覽器多半打得開。
-    //   逾時／連線被拒 → TCP 層完全不通。這種很可能是真的死站，只是我們刻意不把它
-    //                    判成 dead：runner 的網路環境（境外資料中心 IP）常被台灣的
-    //                    政府與學校站台整段封鎖，貿然判死會產生大量誤報。
-    //
-    // 例如 sdl.ntl.edu.tw 與 12basic.edu.tw 在台灣本地也是連線逾時，
-    // 等於已經死掉。分類規則刻意維持只有 ENOTFOUND 與 404/410 才開 issue，但報告
-    // 必須讓人看得出差別。
+    // 「無法判定」底下是幾種原因不同的東西，處理方式也不同，所以分組、每組的標題各自寫明。
+    // 三態裡只有 dead（ENOTFOUND 與 404/410）會觸發通知，無法判定刻意不觸發，但報告必須讓人看得出差別。
+    // 2026-10-25 在台灣本地抽查：10-19 週報裡逾時的 apcs.csie.ntnu.edu.tw、law.moj.gov.tw 等 5 台
+    // 都連得上，runner 在境外資料中心才連不上；sdl.ntl.edu.tw 與 12basic.edu.tw 在本地也逾時。
+    // 5xx 有真的壞掉的，也有 CDN 擋自動程式的：sch001.g0v.tw 的 dash 頁在 Chromium 裡一樣是 502，
+    // sasmo.simcc.org 對檢查器回 520，Chromium 開到的是 Cloudflare 的驗證頁。
     const unreachable = unverified.filter((u) => u.bucket === 'unreachable');
+    const serverErrors = unverified.filter((u) => u.bucket === 'server-error');
     const rejected = unverified.filter((u) => u.bucket === 'rejected');
     const other = unverified.filter((u) => u.bucket === 'other');
 
     if (unreachable.length) {
         lines.push(
-            `<details open><summary>⚠️ 連得上但沒有回應的連結 ${unreachable.length} 筆（TCP 層不通，<strong>值得人工確認是否已停站</strong>）</summary>`,
+            `<details open><summary>⚠️ 連不上或沒有回應的連結 ${unreachable.length} 筆（逾時、連線被拒或被重設，值得人工確認是否已停站）</summary>`,
             '',
             'runner 位於境外資料中心，台灣的政府／學校站台常整段封鎖這類 IP，所以不自動判定為失效。',
             '但若你在本地瀏覽器也開不起來，那就是真的停站了，請更新或移除連結。',
@@ -553,19 +549,33 @@ if (unverified.length) {
         for (const u of unreachable) lines.push(`- ${u.reason}：${u.url}`);
         lines.push('', '</details>', '');
     }
+    if (serverErrors.length) {
+        lines.push(
+            `<details open><summary>⚠️ 站台回報伺服器錯誤的連結 ${serverErrors.length} 筆（HTTP 5xx）</summary>`,
+            '',
+            '可能是站台故障，也可能是站台前面的 CDN 擋下了自動程式。用瀏覽器也打不開的話，請更新或移除連結。',
+            '',
+        );
+        for (const u of serverErrors) lines.push(`- ${u.reason}：${u.url}`);
+        lines.push('', '</details>', '');
+    }
     if (rejected.length) {
         lines.push(
-            `<details><summary>ℹ️ 被站台拒絕的連結 ${rejected.length} 筆（有 HTTP 狀態碼，多為防爬機制，瀏覽器通常仍可開啟）</summary>`,
+            `<details><summary>ℹ️ 被站台拒絕的連結 ${rejected.length} 筆（HTTP 403、429 等，常見原因是擋自動程式，瀏覽器多半打得開）</summary>`,
+            '',
+            '也有頁面在瀏覽器裡一樣被拒絕，那就是真的不公開或已經刪掉了。',
             '',
         );
         for (const u of rejected) lines.push(`- ${u.reason}：${u.url}`);
         lines.push('', '</details>', '');
     }
     if (other.length) {
-        // 轉址迴圈、TLS 問題這類「瀏覽器裡也一樣壞」的情況不能混進上面那組，
-        // 否則會被「瀏覽器通常仍可開啟」這句話帶過去。
         lines.push(
-            `<details open><summary>⚠️ 其他無法判定的連結 ${other.length} 筆（轉址迴圈／TLS 等，<strong>瀏覽器裡多半也是壞的</strong>）</summary>`,
+            `<details open><summary>⚠️ 其他無法判定的連結 ${other.length} 筆（憑證、轉址迴圈、DNS 暫時失敗等，要逐筆看原因）</summary>`,
+            '',
+            '憑證過期（CERT_HAS_EXPIRED）的站，瀏覽器一樣打不開。憑證鏈接不到 Node 內建的根憑證時',
+            '（UNABLE_TO_GET_ISSUER_CERT_LOCALLY、UNABLE_TO_VERIFY_LEAF_SIGNATURE），瀏覽器多半會自己補齊而打得開。',
+            '轉址迴圈有時只是因為這支檢查器不帶 cookie。',
             '',
         );
         for (const u of other) lines.push(`- ${u.reason}：${u.url}`);

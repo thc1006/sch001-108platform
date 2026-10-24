@@ -339,13 +339,17 @@ const guardMutations = [
             ),
     },
     {
-        // 下面兩條守週報的分組：分組錯了，三態照樣正確，只有讀報告的人看得出來。
+        // 下面三條守週報的分組：分組錯了，三態照樣正確，只有讀報告的人看得出來。
         name: '無法判定的分組一律回 other（週報看不出連不上與被拒絕的差別）',
         apply: (s) => s.replace('export function unverifiedBucket(r) {', "export function unverifiedBucket(r) {\n    if (true) return 'other';"),
     },
     {
-        name: '無法判定的分組不看狀態碼（403、429 被歸到其他）',
-        apply: (s) => s.replace("    if (r.status) return 'rejected';\n", ''),
+        name: '無法判定的分組不看狀態碼（403、429、5xx 被歸到其他）',
+        apply: (s) => s.replace("    if (r.status >= 500 && r.status <= 599) return 'server-error';\n    if (r.status) return 'rejected';\n", ''),
+    },
+    {
+        name: '5xx 併回被站台拒絕（伺服器錯誤收進收合的那一段）',
+        apply: (s) => s.replace("    if (r.status >= 500 && r.status <= 599) return 'server-error';\n", ''),
     },
 ];
 
