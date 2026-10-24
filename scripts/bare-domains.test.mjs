@@ -536,4 +536,7 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // www.aksf.org 上。引用 apex 的話，看門狗每週都會報一次永遠修不好的死連結。
     assert.equal(candidates.length, 51, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
     assert.equal(accepted.length, 48, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
+
+    // ichosc.org 的 https 會逾時，IChO 的描述點名 www.ichosc.org。改回 apex 時候選數不變，要另外擋。
+    assert.ok(!candidates.some((host) => host === 'ichosc.org'), 'IChO 的描述應寫 www.ichosc.org');
 });
