@@ -7,7 +7,7 @@
 // （stage 2）要查 DNS，只在排程健檢 check-external-links.mjs 裡做。
 //
 // 篩選只問 TLD 在不在 DNS 根區（查 NS），不必維護 TLD 清單，Node.js、fuse.min.js 這類候選自然被淘汰。
-// 不拿「網域解析得到」當判準，因為兩頭都錯：已經停用、查不到 A 記錄的 concordreview.org 正是要抓的網域，
+// 不拿「網域解析得到」當判準，因為兩頭都錯：內文點名的網域停用之後就查不到 A 記錄，那正是要抓的網域，
 // readme.md、logo.ai、test.sh 卻都被蹲域名的人註冊了，解析得到。網域還活著與否交給探測分類決定。
 // 與副檔名撞名的 TLD 不從內文擷取，見 SHADOWED_BY_FILE_EXT。
 
