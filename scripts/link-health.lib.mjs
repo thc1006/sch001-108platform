@@ -520,10 +520,13 @@ export function classifyLink(r) {
 /**
  * unverifiedBucket 把判成 unverified 的探測結果分組，週報每組給的處理建議不同。看 status 與 code，
  * 不看 describeResult 的字串：那是給人看的，會改寫，也會直接吐出原始 code。
- * 站台回了狀態碼是 rejected，逾時、連線被拒或被重設是 unreachable，憑證、轉址迴圈、DNS 暫時失敗等其餘的是 other。
- * @param {{status?: number, code?: string}} r @returns {'rejected'|'unreachable'|'other'}
+ * 5xx 是 server-error，其他狀態碼是 rejected，逾時、連線被拒或被重設是 unreachable，其餘的（憑證、
+ * 轉址迴圈、DNS 暫時失敗等）是 other。站台故障和 CDN 擋自動程式都會回 5xx，要用瀏覽器確認，
+ * 所以和多半是擋自動程式的 4xx 分開。
+ * @param {{status?: number, code?: string}} r @returns {'rejected'|'server-error'|'unreachable'|'other'}
  */
 export function unverifiedBucket(r) {
+    if (r.status >= 500 && r.status <= 599) return 'server-error';
     if (r.status) return 'rejected';
     if (/TIMEOUT|ETIMEDOUT|ABORT_ERR|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|EPIPE/i.test(String(r.code || ''))) {
         return 'unreachable';

@@ -250,7 +250,8 @@ test('無法判定的分組：照本機 server 實際探測的結果分', async 
     const closedPort = closed.address().port;
     await new Promise((r) => closed.close(r));
     const groups = {
-        rejected: [`${base}/403`, `${base}/429`, `${base}/status/400`, `${base}/500`],
+        rejected: [`${base}/403`, `${base}/429`, `${base}/status/400`],
+        'server-error': [`${base}/500`, `${base}/status/520`, `${base}/status/599`],
         unreachable: [`http://127.0.0.1:${closedPort}/`, `${base}/reset`],
         // 用 https 連 http server，TLS 交握失敗，code 是 EPROTO。
         other: [`${base}/loop`, `${base.replace('http:', 'https:')}/ok`],
@@ -689,7 +690,7 @@ test('週報：無法判定的連結在放進 unverified 時就照探測結果�
     const pushes = src.split('\n').filter((line) => line.includes('unverified.push('));
     assert.ok(pushes.length > 0, '找不到放進 unverified 的地方，測試需要更新');
     for (const line of pushes) assert.ok(line.includes('bucket: unverifiedBucket(r)'), `沒有帶分組：${line.trim()}`);
-    for (const b of ['unreachable', 'rejected', 'other']) assert.ok(src.includes(`u.bucket === '${b}'`), `報告沒有用分組挑出 ${b}`);
+    for (const b of ['unreachable', 'server-error', 'rejected', 'other']) assert.ok(src.includes(`u.bucket === '${b}'`), `報告沒有用分組挑出 ${b}`);
 });
 
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
