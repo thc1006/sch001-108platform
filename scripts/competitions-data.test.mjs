@@ -805,11 +805,13 @@ test('data：#138 補上的週期與新截止日', () => {
 
     // 往年截止日：Wharton 2024-09-13、2025-09-12、2026-09-11；
     // AMC 10/12 一般報名 2024-10-22、2025-10-15、2026-10-15；ACSL 2023-24 起四季都是 December 31；
-    // FRC 官網「The season team registration fee due date is in mid-November」
+    // FRC 官網「The season team registration fee due date is in mid-November」；
+    // Earth Science Week 2023-10-13、2024-10-18、2025-10-17、2026-10-16
     assert.equal(find('華頓全球高中投資競賽').cycle.closes, '09');
     assert.equal(find('美國數學競賽 (AMC 10/12)').cycle.closes, '10', '2024 年是 10/22，只能寫月份');
     assert.equal(find('ACSL').cycle.closes, '12-31');
     assert.equal(find('FIRST 機器人競賽').cycle.closes, '11');
+    assert.equal(find('Earth Science Week').cycle.closes, '10');
 });
 
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
