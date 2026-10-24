@@ -329,8 +329,16 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
     assert.equal(card('台灣國際學生創意設計大賽').status, '本屆已截止 · 下次約 2027-07-31');
     assert.equal(card('育秀盃').label, '本屆 2025-12-30 已截止 · 每年約 12/30 · 上屆 2026-04-24 已結束');
 
-    // 沒有確切截止日但有週期與賽事日期
-    assert.equal(card('台灣國際科學展覽會').label, '每年約 11 月截止 · 2027 賽事 1/25–1/30');
+    // 2027 屆 10/12 才開放報名，8/27 這天顯示開放日與截止日
+    assert.equal(card('台灣國際科學展覽會').label, '預計 2026-10-12 開放報名 · 2026-11-06 截止 · 2027 賽事 1/25–1/30');
+
+    // 沒有 deadline、只有 cycle 與賽事日期的條目：就地建一筆，不靠資料裡剛好有這種條目
+    const cycleOnly = { deadline: '', cycle: { closes: '11' }, eventStartsAt: '2027-01-25', eventEndsAt: '2027-01-30' };
+    const cs = f.getStatus(cycleOnly);
+    assert.deepEqual(
+        { status: f.statusText(cs), ...f.deadlineField(cycleOnly, cs) },
+        { status: '每年固定辦理 · 下次約 2026-11-30', label: '報名截止', value: '每年約 11 月截止 · 2027 賽事 1/25–1/30' },
+    );
 
     // 沒有任何日期主張的兩筆：狀態列講規則，不得出現數字日期
     for (const needle of ['外交小尖兵', '總統教育獎']) {
@@ -784,6 +792,12 @@ test('data：#138 補上的週期與新截止日', () => {
     assert.equal(hmun.deadline, '2026-11-01');
     assert.equal(hmun.cycle.closes, '11');
     assert.equal(hmun.cycle.opens, '06', '2022、2023 年是 5 月開放，只寫月份');
+
+    // TISF 2027 報名作業注意事項：「報名期間：115年10月12日(一)至115年11月6日(五)下午5時止」
+    const tisf = find('台灣國際科學展覽會');
+    assert.equal(tisf.deadline, '2026-11-06');
+    assert.equal(tisf.deadlineAt, '2026-11-06T17:00:00+08:00');
+    assert.equal(tisf.opensAt, '2026-10-12T00:00:00+08:00');
 });
 
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
