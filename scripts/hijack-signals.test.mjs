@@ -116,7 +116,7 @@ test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
     // 這一條守的是接線，不是函式本身：inertText 寫得再對，報告那邊忘了呼叫
     // 就一點用都沒有，而那個漏接不會有任何其他訊號。
     const src = readFileSync(new URL('./check-external-links.lib.mjs', import.meta.url), 'utf8');
-    for (const expr of ['inertText(c.text)', 'inertText(a.shell.title)', 'inertText(h)']) {
+    for (const expr of ['inertText(c.text)', 'inertText(a.shell.title)', 'inertText(h)', 'inertText(h.via)']) {
         assert.ok(src.includes(expr), `check-external-links.lib.mjs 的報告樣板少了 ${expr}`);
     }
     assert.ok(!/原文：\$\{c\.text\}/.test(src), '報告仍在原樣輸出遠端可控的 c.text');
