@@ -5,7 +5,7 @@
  * 先 fetch() JSON 再渲染卡片。JSON 若壞掉、被改名、或前端 JS 丟例外，靜態檢查
  * 全綠、build 成功，使用者卻只看到一個空白容器或「載入失敗」。
  *
- * 這支測試就是補那一段：在真的瀏覽器裡開頁面，等資料渲染出來，並且不接受任何
+ * 這支測試就是補那一段：在真的瀏覽器裡開頁面，等資料渲染出來，並且不接受本站的
  * console error、pageerror 或失敗的網路請求。
  *
  * 前置：dist/ 已 build 並 stage 到 .link-root/sch001-108platform/
@@ -21,10 +21,15 @@ function watchForErrors(page) {
     const errors = [];
     page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
     page.on('console', (m) => {
-        if (m.type() === 'error') errors.push(`console.error: ${m.text()}`);
+        if (m.type() !== 'error') return;
+        // 外部主機在 playwright.config.js 一律解析失敗。被擋的樣式表、script、圖片與 fetch，
+        // Chromium 都會各記一筆這個 error，位置是那個資源的網址。
+        const blocked = m.text() === 'Failed to load resource: net::ERR_NAME_NOT_RESOLVED';
+        if (blocked && !m.location().url.startsWith(BASE)) return;
+        errors.push(`console.error: ${m.text()}`);
     });
     page.on('requestfailed', (r) => {
-        // 只在乎本站資源；外部第三方（例如字型）在離線的 CI 上失敗是預期的
+        // 只在乎本站資源。外部主機已由 playwright.config.js 設成解析失敗，失敗是預期的。
         if (r.url().startsWith(BASE)) errors.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`);
     });
     page.on('response', (r) => {
@@ -32,6 +37,11 @@ function watchForErrors(page) {
     });
     return () => errors;
 }
+
+// 設定被拿掉時這一條會紅，不必等到哪天字型或 GA 沒有回應才看到逾時。
+test('測試瀏覽器解析不到外部主機（playwright.config.js 的 host-resolver-rules）', async ({ page }) => {
+    await expect(page.goto('https://example.com/')).rejects.toThrow('net::ERR_NAME_NOT_RESOLVED');
+});
 
 test.describe('部署產物 smoke test', () => {
     test('首頁載入且無錯誤', async ({ page }) => {
