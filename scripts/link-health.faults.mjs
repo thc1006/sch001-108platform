@@ -10,7 +10,7 @@
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
- *   G. 連結政策的檢查與比對 → link-health.test.mjs 必須失敗
+ *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -719,6 +719,30 @@ const reportMutations = [
         name: "報告不寫檢查未完成那一段",
         apply: (s) => s.replace("    if (skipped || bareSkipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
     },
+    {
+        name: "EXPIRY_NOTICE_DAYS 改成 0（永遠不提醒，要等到期當天 PR 全紅才發現）",
+        apply: (s) => s.replace("export const EXPIRY_NOTICE_DAYS = 30;", "export const EXPIRY_NOTICE_DAYS = 0;"),
+    },
+    {
+        name: "報告不寫到期提醒那一段",
+        apply: (s) => s.replace("    if (expiringSoon.length) {\n        lines.push(`### ⏰", "    if (false) {\n        lines.push(`### ⏰"),
+    },
+    {
+        name: "needsAttention 拿掉快到期的政策項目",
+        apply: (s) => s.replace("        expiringSoon.length > 0 ||\n", ""),
+    },
+    {
+        name: "到期提醒只算例外，接管警示沒算",
+        apply: (s) => s.replace("...expiringWithin(hijacked, todayISO, EXPIRY_NOTICE_DAYS)", "...expiringWithin(entries, todayISO, EXPIRY_NOTICE_DAYS)"),
+    },
+    {
+        name: "到期提醒只印 match.host（寫 match.url 的例外印成 undefined）",
+        apply: (s) => s.replace("${e.match.host ?? e.match.url}", "${e.match.host}"),
+    },
+    {
+        name: "到期提醒不寫負責人",
+        apply: (s) => s.replace("到期日：${e.expires}　負責人：${e.owner}`);", "到期日：${e.expires}`);"),
+    },
 ];
 
 // F 段是 buildReport 的突變測試：把探測結果分進各段、算覆蓋與通知條件，再交給報告、GITHUB_OUTPUT 與主控台。
@@ -780,6 +804,22 @@ const assemblyMutations = [
         name: "通知條件沒拿到自動訊號",
         apply: (s) => s.replace("    const attention = needsAttention(model);", "    const attention = needsAttention({ ...model, autoSignals: [] });"),
     },
+    {
+        name: "到期提醒沒算接管警示",
+        apply: (s) => s.replace("expiringPolicyItems(policy.entries, policy.hijacked, todayISO)", "expiringPolicyItems(policy.entries, [], todayISO)"),
+    },
+    {
+        name: "通知條件沒拿到快到期的項目",
+        apply: (s) => s.replace("    const attention = needsAttention(model);", "    const attention = needsAttention({ ...model, expiringSoon: [] });"),
+    },
+    {
+        name: "報告沒拿到快到期的項目",
+        apply: (s) => s.replace("report: renderReport({ ...model, attention }),", "report: renderReport({ ...model, expiringSoon: [], attention }),"),
+    },
+    {
+        name: "主控台不印快到期的項目",
+        apply: (s) => s.replace("    if (expiringSoon.length) summary.push(", "    if (false) summary.push("),
+    },
 ];
 
 // G 段是 link-policy.lib.mjs 的突變測試。check-link-policy 與排程健檢共用這些函式，
@@ -796,6 +836,14 @@ const policyLibMutations = [
     {
         name: 'matchHijacked 不再正規化主機名（大寫或結尾帶點的網址比不到）',
         apply: (s) => s.replace('        host = canonicalHost(new URL(url).hostname);\n    } catch {\n        return null;', '        host = new URL(url).hostname;\n    } catch {\n        return null;'),
+    },
+    {
+        name: "expiringWithin 永遠回空（到期當天 CI 才紅，事前沒有通知）",
+        apply: (s) => s.replace("export function expiringWithin(items, todayISO, days) {", "export function expiringWithin(items, todayISO, days) {\n    if (true) return [];"),
+    },
+    {
+        name: "到期提醒少算最後一天（第 30 天到期的不通知）",
+        apply: (s) => s.replace("        return left > 0 && left <= days;", "        return left > 0 && left < days;"),
     },
 ];
 
@@ -964,7 +1012,7 @@ for (const [title, mutations] of [
     }
 }
 
-console.log('\nG. 連結政策檢查與比對的突變測試（link-health.test.mjs 必須紅）：');
+console.log('\nG. 連結政策檢查、比對與到期提醒的突變測試（link-health.test.mjs 必須紅）：');
 try {
     const policySource = readFileSync(path.join(SCRIPTS, 'link-policy.lib.mjs'), 'utf8')
         .split(/\r?\n/)

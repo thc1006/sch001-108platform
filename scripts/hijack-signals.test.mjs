@@ -128,7 +128,7 @@ const emptyReport = (autoSignals = []) => {
         todayISO: '2026-10-25', inventoryTotal: 1, targetsCount: 1, healthy: 1, dead: [], blocked: [], urlBlockedCount: 0,
         unverified: [], suppressed: [], hijackedHits: [], autoSignals, bareInfo: { total: 0, alreadyCoveredByUrls: 0 },
         bareRejected: [], bareUnresolved: [], bareHostsCount: 0, bareHealthy: 0, bareDead: [], bareOther: [],
-        skipped: 0, bareSkipped: 0, budgetMs: 720_000, bareBudgetMs: 180_000, coverageComplete: true,
+        skipped: 0, bareSkipped: 0, budgetMs: 720_000, bareBudgetMs: 180_000, coverageComplete: true, expiringSoon: [],
     };
     return { ...m, attention: needsAttention(m) };
 };
@@ -151,7 +151,7 @@ test('報告：跨站轉址不進 needsAttention，內容標記與 HTTP 盲區�
     // 這是這份檢查最重要的一條線。實測全站 508 個目標，跨站轉址命中 11 筆、
     // 全部誤判（4 筆兄弟子網域、7 筆機構改名或短網址）。把它接上通知，
     // 維護者會在第三週學會忽略整個看門狗。
-    const quiet = { dead: [], blocked: [], bareDead: [], hijackedHits: [], coverageComplete: true };
+    const quiet = { dead: [], blocked: [], bareDead: [], hijackedHits: [], expiringSoon: [], coverageComplete: true };
     assert.equal(needsAttention({ ...quiet, autoSignals: [signal('browse-only')] }), false, '跨站轉址算進了通知');
     assert.equal(needsAttention({ ...quiet, autoSignals: [signal('actionable')] }), true, '需處理的訊號沒有算進通知');
 });
