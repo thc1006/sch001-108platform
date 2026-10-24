@@ -1,0 +1,303 @@
+#!/usr/bin/env node
+// check-admission-cycle.mjs 的故障注入，一次改一處，確認該紅的會紅、該放行的放行：
+//   A. 內容、keep、設定：寫進舊年度、殭屍 keep、cycle 過期的 keep、next 和 remindAfter 不合規則、
+//      內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
+//      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0
+//   B. 判斷：改壞 admission-cycle.lib.mjs，admission-cycle.test.mjs 必須失敗
+//   C. 串接：改壞 check-admission-cycle.mjs，A 段至少要有一項失敗
+// 用固定的測資和日期，不用真實內容：真實內容哪天沒有 keep 或甄選會網址，這裡照樣測得到。
+// scripts/ 複製到 .admission-cycle-faultcheck/ 再放測資，版控裡的檔案不會被改到。
+//
+// 執行：  npm run test:admission-cycle-faults
+import { execFileSync } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
+const WORK = path.join(ROOT, '.admission-cycle-faultcheck');
+const SCRIPTS = path.join(WORK, 'scripts');
+const CONFIG = path.join(SCRIPTS, 'admission-cycle.json');
+const CONTENT = path.join(WORK, 'src/content');
+const PAGE_A = 'src/content/clusters/a/overview.md';
+const PAGE_B = 'src/content/clusters/b/application.md';
+const KEEP_TEXT = '多來自 111 學年度的舊統計';
+const KEEP_URL = 'https://www.cac.edu.tw/apply114/guide.php';
+
+const pages = {
+    [PAGE_A]: [
+        '---',
+        'title: 測試頁 — 115 學年度',
+        'description: 115 學年度申請入學的測試資料。',
+        '---',
+        '',
+        '本頁以 **115 學年度**申請入學為準，簡章見[甄選會](https://www.cac.edu.tw/apply115/index.php)。',
+        '',
+        '核心能力自 113 至 115 學年度沒有改變，請以 115／116 學年度的簡章為準。',
+        '',
+        `坊間的數字${KEEP_TEXT}，本頁不引用。`,
+        '',
+        `簡章公告後還沒更新的頁面：[校系分則](${KEEP_URL})`,
+        '',
+    ].join('\n'),
+    [PAGE_B]: ['---', 'title: 申請時程', '---', '', '116 學年度的簡章在 2026 年 11 月公告。', ''].join('\n'),
+};
+const reason = '故障注入的測資，保留理由至少十個字。';
+const baselineConfig = () => ({
+    cycle: 115,
+    next: 116,
+    remindAfter: '2026-12-15',
+    remindReason: '故障注入的測資，日期落在 116 學年度的範圍裡。',
+    keep: [
+        { file: PAGE_A, text: KEEP_TEXT, cycle: 115, reason },
+        { url: KEEP_URL, cycle: 115, reason },
+    ],
+});
+
+rmSync(WORK, { recursive: true, force: true });
+cpSync(path.join(ROOT, 'scripts'), SCRIPTS, { recursive: true });
+
+/** reset 把測資和設定寫回基準狀態。 */
+function reset() {
+    rmSync(CONTENT, { recursive: true, force: true });
+    for (const [file, text] of Object.entries(pages)) {
+        mkdirSync(path.dirname(path.join(WORK, file)), { recursive: true });
+        writeFileSync(path.join(WORK, file), text);
+    }
+    writeFileSync(CONFIG, JSON.stringify(baselineConfig(), null, 2));
+}
+
+/** snapshot 把設定和內容目錄串成一個字串，用來確認注入真的改到了東西。 */
+function snapshot() {
+    if (!existsSync(CONTENT)) return `${readFileSync(CONFIG, 'utf8')}\n（沒有內容目錄）`;
+    const entries = readdirSync(CONTENT, { recursive: true, withFileTypes: true }).map((e) => {
+        const p = path.join(e.parentPath, e.name);
+        return e.isFile() ? `${p}\n${readFileSync(p, 'utf8')}` : p;
+    });
+    return [readFileSync(CONFIG, 'utf8'), ...entries.sort()].join('\n');
+}
+
+/** check 跑沙盒裡的檢查，回傳結束碼和 stdout、stderr 合併的輸出。 */
+function check(env = {}) {
+    // 不測 annotation 的案例不設 GITHUB_ACTIONS，子行程在 CI 上才不會多發 ::warning。
+    const base = { ...process.env, ADMISSION_CYCLE_TODAY: '2026-10-25' };
+    delete base.GITHUB_ACTIONS;
+    const cli = path.join(SCRIPTS, 'check-admission-cycle.mjs');
+    try {
+        return { code: 0, out: String(execFileSync(process.execPath, [cli], { stdio: 'pipe', env: { ...base, ...env } })) };
+    } catch (e) {
+        return { code: e.status ?? 1, out: String(e.stdout || '') + String(e.stderr || '') };
+    }
+}
+
+const append = (file, line) => () => writeFileSync(path.join(WORK, file), `${readFileSync(path.join(WORK, file), 'utf8')}\n${line}\n`);
+const replace = (file, from, to) => () => {
+    const p = path.join(WORK, file);
+    writeFileSync(p, readFileSync(p, 'utf8').replace(from, to));
+};
+const editConfig = (fn) => () => {
+    const c = JSON.parse(readFileSync(CONFIG, 'utf8'));
+    fn(c);
+    writeFileSync(CONFIG, JSON.stringify(c, null, 2));
+};
+
+const cases = [
+    { name: '內文多了「114 學年度」', inject: append(PAGE_B, '另見 114 學年度的統計。'), code: 1, expect: /application\.md:7 「114 學年度」裡的 114 不是 115 或 116/ },
+    { name: '粗體的「**114** 學年度」', inject: append(PAGE_B, '**114** 學年度的規定'), code: 1, expect: /「114 學年度」裡的 114/ },
+    { name: 'HTML 標籤包住的 114', inject: append(PAGE_B, '<strong>114</strong> 學年度的規定'), code: 1, expect: /「114 學年度」裡的 114/ },
+    {
+        name: 'CRLF 的內容照樣檢查，錯誤訊息裡沒有 \\r',
+        inject: () => writeFileSync(path.join(WORK, PAGE_B), `${pages[PAGE_B]}另見 114 學年度的統計。\n`.replace(/\n/g, '\r\n')),
+        code: 1,
+        expect: /application\.md:6 「114 學年度」裡的 114/,
+        absent: /\r/,
+    },
+    { name: '列舉「114、115 學年度」', inject: append(PAGE_B, '114、115 學年度都一樣'), code: 1, expect: /「114、115 學年度」裡的 114/ },
+    { name: '區間不包含 cycle 或 next：「112 至 114 學年度」', inject: append(PAGE_B, '112 至 114 學年度'), code: 1, expect: /「112 至 114 學年度」不包含 115 或 116/ },
+    { name: '出現 apply114 網址', inject: append(PAGE_B, '[時程](https://www.cac.edu.tw/apply114/schedule.php)'), code: 1, expect: /網址 https:\/\/www\.cac\.edu\.tw\/apply114\/schedule\.php 的 114/ },
+    { name: '出現沒有 scheme 的 star113 網址', inject: append(PAGE_B, '見 www.cac.edu.tw/star113/。'), code: 1, expect: /網址 www\.cac\.edu\.tw\/star113\/ 的 113/ },
+    { name: 'keep 放行的那一行另外寫了 114 學年度', inject: replace(PAGE_A, '，本頁不引用。', '，114 學年度也一樣。'), code: 1, expect: /overview\.md:10 「114 學年度」裡的 114/ },
+    { name: '殭屍 keep：keep 指的那句刪掉了', inject: replace(PAGE_A, `坊間的數字${KEEP_TEXT}，本頁不引用。`, ''), code: 1, expect: /keep\[0\] 的 text 在 \S+ 裡找不到/ },
+    { name: '殭屍 keep：keep 指的網址刪掉了', inject: replace(PAGE_A, `[校系分則](${KEEP_URL})`, ''), code: 1, expect: /keep\[1\] 的網址 \S+ 已經不在內容裡/ },
+    { name: 'keep 的 cycle 過期', inject: editConfig((c) => { c.keep[0].cycle = 114; }), code: 1, expect: /keep\[0\] 的 cycle 是 114，和設定檔的 cycle 115 不同/ },
+    { name: 'keep 的 text 在檔案裡不只一處', inject: append(PAGE_A, `另一處也${KEEP_TEXT}。`), code: 1, expect: /keep\[0\] 的 text 在 \S+ 裡不只一處/ },
+    { name: 'keep 的 text 沒有完整的學年度字樣', inject: editConfig((c) => { c.keep[0].text = '多來自 111 學年'; }), code: 1, expect: /keep\[0\] 的 text 沒有完整包含任何一處學年度/ },
+    { name: 'keep 的年度本來就放行', inject: editConfig((c) => { c.keep.push({ file: PAGE_A, text: '115／116 學年度', cycle: 115, reason }); }), code: 1, expect: /keep\[2\] 的 text 裡的學年度本來就放行/ },
+    { name: '重複的 keep', inject: editConfig((c) => { c.keep.push({ ...c.keep[0] }); }), code: 1, expect: /keep\[2\] 和前面的 keep 重複/ },
+    { name: 'keep 的 reason 太短', inject: editConfig((c) => { c.keep[1].reason = '還沒上線'; }), code: 1, expect: /keep\[1\] 的 reason/ },
+    { name: 'next 不是 cycle + 1', inject: editConfig((c) => { c.next = 117; }), code: 1, expect: /next 必須是 cycle \+ 1，也就是 116/ },
+    { name: 'remindAfter 晚了一天（2027-04-01）', inject: editConfig((c) => { c.remindAfter = '2027-04-01'; }), code: 1, expect: /remindAfter（2027-04-01）必須在 2026-08-01 到 2027-03-31 之間/ },
+    { name: 'remindAfter 早了一天（2026-07-31）', inject: editConfig((c) => { c.remindAfter = '2026-07-31'; }), code: 1, expect: /必須在 2026-08-01 到 2027-03-31 之間/ },
+    { name: 'remindAfter 不是存在的日期', inject: editConfig((c) => { c.remindAfter = '2026-12-32'; }), code: 1, expect: /remindAfter 必須是存在的 YYYY-MM-DD 日期/ },
+    { name: '設定檔不是合法的 JSON', inject: () => writeFileSync(CONFIG, '{ "cycle": 115,'), code: 1, expect: /讀不到或無法解析 scripts\/admission-cycle\.json/ },
+    {
+        name: '內容目錄清空',
+        inject: () => { rmSync(CONTENT, { recursive: true, force: true }); mkdirSync(CONTENT); },
+        code: 1,
+        expect: /src\/content 底下沒有任何 \.md 檔/,
+    },
+    { name: '內容目錄不見了', inject: () => rmSync(CONTENT, { recursive: true, force: true }), code: 1, expect: /讀不到內容目錄 src\/content/ },
+    {
+        name: '內容裡一個學年度都沒有',
+        inject: () => {
+            editConfig((c) => { c.keep = []; })();
+            for (const file of Object.keys(pages)) writeFileSync(path.join(WORK, file), '---\ntitle: 空白頁\n---\n\n沒有年度的內容。\n');
+        },
+        code: 1,
+        expect: /2 個檔案裡找不到任何學年度或甄選會網址/,
+    },
+    { name: '「115 年度」不算學年度，放行', inject: append(PAGE_B, '114 年度預算和 115 年度預算'), code: 0, expect: /沒有問題/ },
+    { name: '「113 至 115 學年度」的結尾是 cycle，放行', inject: append(PAGE_B, '113 至 115 學年度的統計'), code: 0, expect: /沒有問題/ },
+    { name: '「113 學年度至 115 學年度」也是區間，放行', inject: append(PAGE_B, '113 學年度至 115 學年度'), code: 0, expect: /沒有問題/ },
+    { name: '「115 至 119 學年度」包含 cycle，放行', inject: append(PAGE_B, '115 至 119 學年度入學適用第三期'), code: 0, expect: /沒有問題/ },
+    { name: '區間在「至」後面換行，照樣是區間，放行', inject: append(PAGE_B, '112 學年度至\n115 學年度'), code: 0, expect: /沒有問題/ },
+    { name: 'HTML 註解裡的年度不算，放行', inject: append(PAGE_B, '<!-- 114 學年度的舊資料 -->'), code: 0, expect: /沒有問題/ },
+    { name: '名稱是 .md 的目錄不讀，放行', inject: () => mkdirSync(path.join(CONTENT, 'clusters/c/notes.md'), { recursive: true }), code: 0, expect: /沒有問題/ },
+    { name: '「116 學年度」是 next，放行', inject: append(PAGE_A, '116 學年度的簡章'), code: 0, expect: /沒有問題/ },
+    { name: 'apply116 網址是 next，放行', inject: append(PAGE_A, '[簡章](https://www.cac.edu.tw/apply116/regulation.php)'), code: 0, expect: /沒有問題/ },
+    { name: 'Markdown 連結的網址部分不算內文，放行', inject: append(PAGE_B, '[簡章](https://example.com/114學年度.pdf)'), code: 0, expect: /沒有問題/ },
+    { name: '過了 remindAfter：只印警告', env: { ADMISSION_CYCLE_TODAY: '2026-12-16' }, code: 0, expect: /警告：今天 2026-12-16 已經過了 remindAfter（2026-12-15），cycle 還是 115/ },
+    { name: '過了 remindAfter：Actions 上發 warning annotation', env: { ADMISSION_CYCLE_TODAY: '2026-12-16', GITHUB_ACTIONS: 'true' }, code: 0, expect: /^::warning title=學年度還沒換屆::/m },
+    { name: 'remindAfter 當天：不警告', env: { ADMISSION_CYCLE_TODAY: '2026-12-15' }, code: 0, absent: /警告/ },
+    { name: 'ADMISSION_CYCLE_TODAY 不是日期', env: { ADMISSION_CYCLE_TODAY: '2026-13-01' }, code: 1, expect: /ADMISSION_CYCLE_TODAY 必須是 YYYY-MM-DD 日期/ },
+    {
+        name: '過了 keep 的 recheckAfter：只印警告',
+        inject: editConfig((c) => { c.keep[1].recheckAfter = '2026-10-24'; }),
+        code: 0,
+        expect: /警告：keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）的 recheckAfter 是 2026-10-24，已經過了/,
+    },
+    {
+        name: 'keep 的 recheckAfter 在今天之後、remindAfter 之前：不警告',
+        inject: editConfig((c) => { c.keep[1].recheckAfter = '2026-11-01'; }),
+        code: 0,
+        absent: /警告/,
+    },
+];
+
+/** problem 跑一個 A 段的案例，結果符合預期時回傳 null，否則回傳哪裡不對。 */
+function problem(c) {
+    reset();
+    if (c.inject) {
+        const before = snapshot();
+        c.inject();
+        if (snapshot() === before) return '注入沒有改到任何東西，請更新這一條';
+    }
+    const r = check(c.env);
+    // 印出來之前壓成一行，輸出裡的 ::warning 才不會被 runner 當成這個 job 的 annotation。
+    const out = r.out.replace(/\s+/g, ' ').slice(0, 240);
+    if (r.code !== c.code) return `結束碼是 ${r.code}，應該是 ${c.code}。輸出：${out}`;
+    if (c.expect && !c.expect.test(r.out)) return `輸出裡沒有 ${c.expect}。輸出：${out}`;
+    if (c.absent?.test(r.out)) return `輸出裡不該有 ${c.absent}`;
+    return null;
+}
+
+/** passes 在沙盒裡跑單元測試，回傳是否通過。 */
+function passes() {
+    try {
+        execFileSync(process.execPath, ['--test', path.join(SCRIPTS, 'admission-cycle.test.mjs')], { stdio: 'pipe' });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+const libMutations = [
+    ['區間的開頭也檢查', 'rangeStart = RANGE_SEP.test(', 'rangeStart = false && RANGE_SEP.test('],
+    ['「學年度至」後面的區間開頭也檢查', 'rangeStart = RANGE_TO_NEXT.test(text);', 'rangeStart = false;'],
+    ['區間只看結尾', '[...years].some((y) => t.from <= y && y <= t.year)', 'years.has(t.year)'],
+    ['列舉少了和、與、或', "const LIST = '[、／/及和與或]';", "const LIST = '[、／/及]';"],
+    ['區間只認至和 en dash', "const RANGE = '[至到~～〜\\\\-–—－]';", "const RANGE = '[至–]';"],
+    ['分隔符號後面不能換行', 'const BREAK = `${SP}(?:\\\\r?\\\\n${SP})?`;', 'const BREAK = SP;'],
+    ['HTML 註解當成內文', '.replace(/<!--[^]*?-->/g, blank)', ''],
+    ['HTML 標籤擋住年度', '.replace(/<\\/?[A-Za-z][^<>\\n]*>/g, blank)', ''],
+    ['參考式連結的定義當成內文', '.replace(/^ {0,3}\\[[^\\]\\n]+\\]:.*/gm, blank)', ''],
+    ['裸網址當成內文', '.replace(/https?:\\/\\/[^\\s<>()[\\]"\'`\\u0080-\\uffff]*/g, blank)', ''],
+    ['甄選會網址的結尾吃進中文標點', "[^\\s()<>[\\]\"'`*|\\u0080-\\uffff]*/gi", "[^\\s()<>[\\]\"'`*|]*/gi"],
+    ['甄選會網址只認 www', '(?:[a-z0-9-]+\\.)*cac', '(?:www\\.)?cac'],
+    ['reason 九個字也接受', 'const MIN_REASON_CHARS = 10;', 'const MIN_REASON_CHARS = 9;'],
+    ['reason 不去掉前後空白', '[...v.trim()].length', '[...v].length'],
+    ['網址 keep 不看是不是網址', " || found[0].kind !== 'url'", ''],
+    ['本來就放行的判斷用 some', 'inside.every((t) => allows(allowed, t))', 'inside.some((t) => allows(allowed, t))'],
+    ['摘錄前後只留 5 個字', 'const from = Math.max(lineStart, start - 30);', 'const from = Math.max(lineStart, start - 5);'],
+    ['不去掉粗體', '.replace(/[*_]|~~/g, blank);', ';'],
+    ['Markdown 連結的網址當成內文', '.replace(/\\]\\([^)\\n]*\\)/g,', '.replace(/$^/g,'],
+    ['全形數字不轉半形', '.replace(/[０-９]/g,', '.replace(/$^/g,'],
+    ['空白可以跨行', "const SP = '[^\\\\S\\\\r\\\\n]*';", "const SP = '\\\\s*';"],
+    ['keep 放行整個檔案', 's.file === f.path && s.start <= t.start && t.end <= s.end', 's.file === f.path'],
+    ['keep 的 text 不只一處也接受', 'if (f.text.indexOf(k.text, at + 1) >= 0)', 'if (false)'],
+    ['網址 keep 用開頭比對', 'k.url === t.phrase', 't.phrase.startsWith(k.url)'],
+    ['不檢查 keep 的 cycle', 'if (cycleOk && k.cycle !== cycle)', 'if (false)'],
+    ['不檢查 next', 'else if (next !== cycle + 1)', 'else if (false)'],
+    ['remindAfter 的上限少一天', 'remindAfter > w.to', 'remindAfter >= w.to'],
+    ['remindAfter 當天就算過了', 'todayISO > dateISO', 'todayISO >= dateISO'],
+    ['今天用 UTC 的日期', "timeZone: 'Asia/Taipei'", "timeZone: 'UTC'"],
+    ['沒有檔案也算通過', 'if (files.length === 0) return', 'if (false) return'],
+    ['一個學年度都沒找到也算通過', 'if (found === 0) errors.push', 'if (false) errors.push'],
+];
+const cliMutations = [
+    ['有錯誤也以 0 結束', 'if (errors.length) {', 'if (false) {'],
+    ['只讀內容目錄的第一層', 'recursive: true, withFileTypes: true', 'recursive: false, withFileTypes: true'],
+    ['過了 remindAfter 就失敗', "warn('學年度還沒換屆',", "fail(['學年度還沒換屆'],"],
+    ['不看 keep', 'checkContent(files, config)', 'checkContent(files, { ...config, keep: [] })'],
+    ['不檢查設定檔', 'if (configErrors.length) fail(', 'if (false) fail('],
+    ['不檢查 ADMISSION_CYCLE_TODAY', 'if (!isRealDate(today)) fail(', 'if (false) fail('],
+    ['recheckAfter 拿 remindAfter 比', 'dueKeeps(config, today)', 'dueKeeps(config, remindAfter)'],
+    ['目錄也當成檔案讀', "e.isFile() && e.name.endsWith('.md')", "e.name.endsWith('.md')"],
+    ['CRLF 不換成 LF', ".replace(/\\r\\n/g, '\\n')", ''],
+];
+
+let pass = 0;
+let fail = 0;
+const ok = (name) => { pass++; console.log(`  符合  ${name}`); };
+const bad = (name, why) => { fail++; console.log(`  不符  ${name}：${why}`); };
+
+/**
+ * mutate 把沙盒裡的 file（從沙盒根目錄起算）換成改壞的版本跑 survived，跑完換回原檔。survived 回傳 true
+ * 表示改壞了沒被抓到。換行先統一成 LF：Windows 上的 checkout 是 CRLF，用 LF 寫的比對字串會對不上。
+ */
+function mutate(file, [name, from, to], survived, why) {
+    const target = path.join(WORK, file);
+    const original = readFileSync(target, 'utf8').split(/\r?\n/).join('\n');
+    if (original.split(from).length !== 2) return bad(name, '原文找不到或不只一處，請更新這一條');
+    writeFileSync(target, original.replace(from, to));
+    try {
+        if (survived()) bad(name, why);
+        else ok(name);
+    } finally {
+        writeFileSync(target, original);
+    }
+}
+
+const baseline = () => {
+    reset();
+    const r = check();
+    return r.code === 0 && !/警告/.test(r.out) && passes();
+};
+if (!baseline()) {
+    console.error('基準就不是綠燈（檢查沒過、有警告或單元測試失敗），後面的結果沒有意義。');
+    console.error(check().out);
+    rmSync(WORK, { recursive: true, force: true });
+    process.exit(1);
+}
+console.log('基準是綠燈：測資通過檢查、沒有警告，單元測試通過。\n');
+
+console.log('A. 內容、keep、設定與日期：');
+for (const c of cases) {
+    const why = problem(c);
+    if (why) bad(c.name, why);
+    else ok(c.name);
+}
+
+console.log('\nB. 改壞判斷（admission-cycle.test.mjs 必須失敗）：');
+reset();
+for (const m of libMutations) mutate('scripts/admission-cycle.lib.mjs', m, passes, '改壞之後單元測試還是通過');
+
+console.log('\nC. 改壞串接（A 段至少一項必須失敗）：');
+for (const m of cliMutations) mutate('scripts/check-admission-cycle.mjs', m, () => cases.every((c) => problem(c) === null), 'A 段全部照樣符合');
+
+const after = baseline();
+console.log(after ? '\n還原後仍是綠燈。' : '\n還原後不是綠燈，沙盒沒有復原乾淨。');
+rmSync(WORK, { recursive: true, force: true });
+const total = cases.length + libMutations.length + cliMutations.length;
+console.log(`故障注入：${pass} 項符合，${fail} 項不符（共 ${total} 項）`);
+process.exit(fail === 0 && after ? 0 : 1);
