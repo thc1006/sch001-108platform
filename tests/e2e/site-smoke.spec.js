@@ -73,8 +73,13 @@ test.describe('部署產物 smoke test', () => {
         const { activities } = await (await request.get(P('/learning-portfolio/activity-database.json'))).json();
         await page.goto(P('/learning-portfolio/activity-database.html'), { waitUntil: 'networkidle' });
 
-        await expect(page.locator('#activity-grid .activity-card')).toHaveCount(activities.length);
-        await expect(page.locator('#featured-section')).toBeVisible({ visible: activities.some((a) => a.featured) });
+        const cards = page.locator('#activity-grid .activity-card');
+        await expect(cards).toHaveCount(activities.length);
+        // 精選截止後頁面會收起精選區塊。截止與否照列表裡那張卡片的狀態，不在測試裡另算一次日期。
+        const featured = activities.find((a) => a.featured);
+        const heading = featured && page.getByRole('heading', { name: featured.title, exact: true });
+        const closed = featured && (await cards.filter({ has: heading }).locator('.rounded-full').textContent()) === '已截止';
+        await expect(page.locator('#featured-section')).toBeVisible({ visible: Boolean(featured) && !closed });
         expect(errors(), errors().join('\n')).toEqual([]);
     });
 
