@@ -51,7 +51,7 @@ description: 生命科學學群自主學習與探究專題實戰指南，提供�
 
 - 校園或社區某類昆蟲（如螞蟻）對不同食物的偏好行為實驗。
 - 潮間帶、校園、公園的物種觀察與生物多樣性記錄（可長期）。
-- 光照、溫度對某類無脊椎動物（如麵包蟲、果蠅）活動力的影響——成大生科面試考古題正出現過「麵包蟲在高壓環境下活動力」的科展案例。
+- 光照、溫度對某類無脊椎動物（如麵包蟲、果蠅）活動力的影響。111 年成大生科特殊選才有考生用麵包蟲做科展，面試時被問到「你可以推測一下為什麼麵包蟲在高壓的時候，活動力會提高？」
 - 賞鳥日誌、校園植物相調查的系統化、量化整理。
 
 ### D. 食品科學方向（適合對食品生技有興趣者）
@@ -109,4 +109,4 @@ description: 生命科學學群自主學習與探究專題實戰指南，提供�
 - [〈自主學習計劃怎麼做？學習主題、撰寫格式、學長姐範例〉，臺灣吧 school.taiwanbar.cc](https://school.taiwanbar.cc/posts/self-directed-learning-program)
 - [「科學探究競賽—這樣教我就懂」官網，國家教育研究院 / colife](https://sciexplore2026.colife.org.tw/)
 - [臺灣探究與實作教育學會官網](https://trpec.com.tw/)
-- [國立成功大學跨領域學群查詢—生命科學學群](https://campus4.ncku.edu.tw/uac/cross_search/class_info/5.html)
+- [〈成大生科特殊選才面試考古題分享〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/interview-archaeology/)
