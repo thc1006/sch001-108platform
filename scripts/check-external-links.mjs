@@ -534,7 +534,7 @@ if (unverified.length) {
     //                    判成 dead：runner 的網路環境（境外資料中心 IP）常被台灣的
     //                    政府與學校站台整段封鎖，貿然判死會產生大量誤報。
     //
-    // 例如 sdl.ntl.edu.tw（6 個頁面引用）與 12basic.edu.tw 在台灣本地也是連線逾時，
+    // 例如 sdl.ntl.edu.tw 與 12basic.edu.tw 在台灣本地也是連線逾時，
     // 等於已經死掉。分類規則刻意維持只有 ENOTFOUND 與 404/410 才開 issue，但報告
     // 必須讓人看得出差別。
     // 依「結構化的 status / code」分類，不要比對 describeResult 產出的中文字串。
