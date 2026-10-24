@@ -1,6 +1,6 @@
 {
   "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式；常態招募或依官網公告者請填 null；featured=true 代表此活動會顯示於頁面上方的精選區塊（建議僅 1 筆設為 true）；url=官方網站連結。所有純文字欄位於頁面以 escapeHtml 處理，請放心填寫。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-10-24",
   "activities": [
     {
       "title": "TRML 台灣地區高中數學競賽",
@@ -81,16 +81,6 @@
       "deadline": null,
       "featured": false,
       "url": "https://www.tcapo.gov.taipei/"
-    },
-    {
-      "title": "Let's Talk 青年好政系列活動",
-      "organizer": "教育部青年發展署",
-      "category": "青年論壇",
-      "form": "團體",
-      "description": "以審議式民主的方式與政府官員直接對話，探討公共政策，是展現公民意識與社會參與的最佳實踐。",
-      "deadline": "2026-08-31",
-      "featured": true,
-      "url": "https://youthhub.yda.gov.tw/"
     }
   ]
 }
