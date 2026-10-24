@@ -30,6 +30,8 @@ module.exports = defineConfig({
     // 而那正是最需要被看見的訊號。有這一行，本來就穩定的 run 不會變慢也不會變紅，
     // 只有會被 retry 蓋掉的 flake 變成明確失敗。
     failOnFlakyTests: !!process.env.CI,
+    // 公開 repo 的 runner 有 4 顆 vCPU，Playwright 預設開邏輯核心數的一半，也就是 2 個 worker。
+    workers: process.env.CI ? 4 : undefined,
     reporter: process.env.CI ? [['list'], ['github']] : 'list',
     use: {
         baseURL: process.env.BASE_URL || 'http://localhost:8000',
