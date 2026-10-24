@@ -17,7 +17,7 @@
 本平台由 g0v 零時小學校提案社群發起，是一個 **開源、靜態、可長期維護** 的公共資源網站。
 
 * **專案網站**：<https://thc1006.github.io/sch001-108platform/>
-* **g0v 提案連結**：[零時小學校 2021 年度獲獎團隊](https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
+* **g0v 提案連結**：[零時小學校 2021 年度獲獎團隊（Internet Archive 2026-03-28 存檔）](https://web.archive.org/web/20260328115517/https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
 * **專案介紹影片**：[YouTube](https://youtu.be/BxKFVSTmiYI)
 * **原始碼**：[GitHub Repository](https://github.com/thc1006/sch001-108platform)
 
