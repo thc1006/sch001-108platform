@@ -97,12 +97,14 @@ test('data：比賽日期不得再被寫成報名截止（My First CTF／iBridge
     assert.equal(ibridge.cycle, undefined, 'iBridge 只辦過兩屆且間隔不固定，不得宣稱年度週期');
     assert.ok(ibridge.registrationNote, '沒有固定週期時應以 registrationNote 說明，而不是留白');
 
-    // 官網競賽時程：「報名及初賽截止日 2025 / 12 / 30」「決賽評選暨頒獎典禮 2026 / 4 / 24」
+    // 第 23 屆官網競賽時程：「報名及初賽截止日 2025 / 12 / 30」「決賽評選暨頒獎典禮 2026 / 4 / 24」
+    // 第 24 屆高中職組：「報名及初賽截止日 2026 / 12 / 31」，決賽「2027 / 4月辦理」還沒有日期
     const ysed = find('育秀盃');
-    assert.equal(ysed.deadline, '2025-12-30');
-    assert.equal(ysed.eventStartsAt, '2026-04-24', '4/24 是決賽暨頒獎，不是報名截止');
+    assert.equal(ysed.deadline, '2026-12-31');
+    assert.equal(ysed.deadlineAt, '2026-12-31T23:59:00+08:00');
+    assert.equal(ysed.eventStartsAt, '2026-04-24', '4/24 是第 23 屆的決賽暨頒獎，不是報名截止');
     assert.equal(ysed.cycle.opens, '10-01');
-    assert.equal(ysed.cycle.closes, '12-30');
+    assert.equal(ysed.cycle.closes, '12', '兩屆分別是 12/30 與 12/31');
 });
 
 // 沒有公開報名的競賽不得顯示「每年約 X 月截止」。
@@ -329,7 +331,9 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
 
     // 本屆已截止但知道週期
     assert.equal(card('台灣國際學生創意設計大賽').status, '本屆已截止 · 下次約 2027-07-31');
-    assert.equal(card('育秀盃').label, '本屆 2025-12-30 已截止 · 每年約 12/30 · 上屆 2026-04-24 已結束');
+
+    // 第 24 屆 10/1 才開放報名，日期欄同時講報名期間與上一屆的決賽
+    assert.equal(card('育秀盃').label, '預計 2026-10-01 開放報名 · 2026-12-31 截止 · 上屆 2026-04-24 已結束');
 
     // 2027 屆 10/12 才開放報名，8/27 這天顯示開放日與截止日
     assert.equal(card('台灣國際科學展覽會').label, '預計 2026-10-12 開放報名 · 2026-11-06 截止 · 2027 賽事 1/25–1/30');
