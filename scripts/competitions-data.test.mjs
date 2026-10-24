@@ -777,6 +777,15 @@ test('data：第二輪查到確切時刻的競賽必須保留時區位移', () =
     }
 });
 
+test('data：#138 補上的週期與新截止日', () => {
+    // HMUN Application Process：「Late Registration Deadline: November 1, 2026」。
+    // 往年 Late 截止 2022-11-15、2023-11-01、2024-11-01、2025-12-01；2024 年起都是 6/1 開放報名
+    const hmun = find('哈佛模擬聯合國 (HMUN)');
+    assert.equal(hmun.deadline, '2026-11-01');
+    assert.equal(hmun.cycle.closes, '11');
+    assert.equal(hmun.cycle.opens, '06', '2022、2023 年是 5 月開放，只寫月份');
+});
+
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // 官網頁尾逐字：「Cambridge Centre for International Research, Ltd is not affiliated to
     // the University of Cambridge or its constituent colleges.」標題不得再暗示是劍橋大學主辦。
