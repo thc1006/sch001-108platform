@@ -1856,18 +1856,18 @@
     },
     {
       "title": "國際青年數學挑戰賽 (IYMC)",
-      "organizer": "International Youth Math Challenge",
+      "organizer": "Edu.Harbour",
       "category": "數理",
       "level": "國際",
       "form": "個人",
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
-      "deadline": "2026-09-27",
-      "deadlineAt": "2026-09-27T23:59:00Z",
-      "sourceCheckedAt": "2026-08-27",
+      "deadline": "",
+      "registrationNote": "2026 屆已截止 · 2027 屆未公布",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://iymc.info/en/",
-      "description": "官網逐字「The International Youth Math Challenge is coordinated by Edu.Harbour」，團隊主要位於德國，屬線上商業競賽：Qualification Round 免費，晉級 Pre-Final Round 須繳 15 歐元報名費（另有經濟弱勢補助），獎金總額逾 1,400 美元。資格逐字「Current high school and university students from all grades and countries are eligible to participate」，台灣學生可直接個人線上報名。主辦方自己逐字說明「IYMC does not intend to be an alternative to established competitions like the International Mathematical Olympiad (IMO) ... Instead, IYMC serves as a supplementary program」，評估投入前請留意其定位。2026 屆 Qualification Round 截止 2026-09-27 23:59 UTC，Pre-Final 於 11 月、Final 於 12 月。"
+      "description": "官網逐字「The International Youth Math Challenge is coordinated by Edu.Harbour」，主辦團隊有多位成員在德國，屬線上競賽：Qualification Round 免費，晉級 Pre-Final Round 須繳 13 歐元報名費（另有經濟弱勢補助），三個年齡組的前三名有現金獎，獎項頁列的金額合計 1,400 美元。資格逐字「Current high school and university students from all grades and countries are eligible to participate」，台灣學生可直接個人線上報名。主辦方自己逐字說明「IYMC does not intend to be an alternative to established competitions like the International Mathematical Olympiad (IMO) ... Instead, IYMC serves as a supplementary program」，評估投入前請留意其定位。2026 屆 Qualification Round 截止 2026-09-27 23:59 UTC，Pre-Final 於 11 月、Final 於 12 月；2025 屆的 Qualification Round 則是 2025-11-30 截止，兩屆月份不同，2027 屆時程尚未公布。"
     },
     {
       "title": "國際天文與天文物理競賽 (IAAC)",
