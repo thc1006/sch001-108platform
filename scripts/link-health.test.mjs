@@ -38,6 +38,7 @@ import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
+import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport } from './check-external-links.lib.mjs';
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
@@ -640,57 +641,251 @@ test('政策：repo 內的 link-policy.json 現在就是有效的', () => {
     assert.deepEqual(errors, [], `link-policy.json 無效：${errors.join('；')}`);
 });
 
-test('政策：只降低 unverified 的噪音，404／410 一律不得被壓下去', async () => {
+test('政策：只降低 unverified 的噪音，404／410 與網域解析不到一律不得被壓下去', () => {
     // 這是 allowlist 最危險的失效模式：為了少幾則通知，把真的壞掉的連結一起藏起來。
-    const host = `127.0.0.1`;
-    const entries = validatePolicy(
-        { version: 1, entries: [validEntry({ match: { host }, expires: '2026-10-01' })] },
-        TODAY,
-    ).entries;
+    const loopback = validatePolicy({ version: 1, entries: [validEntry({ match: { host: '127.0.0.1' } })] }, TODAY).entries;
     // 127.0.0.1 違反位址政策，所以連進不了 entries，這本身就是一道保險。
-    assert.equal(entries.length, 0, '指向 loopback 的例外連寫都不該寫得出來');
+    assert.equal(loopback.length, 0, '指向 loopback 的例外連寫都不該寫得出來');
 
-    // 改用純函式驗證「dead 不查政策」這條規則：check-external-links.mjs 的分支順序是
-    //   dead → 直接進 dead 桶（不查政策）
-    //   unverified → 才查政策
-    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
-    const deadIdx = src.indexOf("if (verdict === 'dead')");
-    const policyIdx = src.indexOf('matchPolicy(policyEntries');
-    assert.ok(deadIdx > 0 && policyIdx > deadIdx, 'dead 分支必須排在查政策之前，且 dead 分支內不得呼叫 matchPolicy');
-    const deadBranch = src.slice(deadIdx, policyIdx);
-    assert.ok(!deadBranch.includes('matchPolicy'), 'dead 分支內不可查例外政策');
+    const policy = { hijacked: [], entries: validatePolicy({ version: 1, entries: [validEntry()] }, TODAY).entries };
+    const target = { url: 'https://www.ptt.cc/bbs/SENIORHIGH/index.html', occurrences: [] };
+    for (const r of [{ status: 404 }, { status: 410 }, { status: 0, code: 'ENOTFOUND' }]) {
+        assert.equal(judgeUrl(target, r, policy).bin, 'dead', `${describeResult(r)} 被例外壓下去了`);
+    }
+    assert.equal(judgeUrl(target, { status: 403 }, policy).bin, 'suppressed', '例外仍要能壓下 403');
 });
 
-// const 在宣告之前讀取會丟 ReferenceError。|| 會提早結束，所以只有前面的桶子全是空的那一週才會崩潰。
-test('排程：needsAttention 用到的值都在它之前宣告', () => {
-    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
-    const at = src.indexOf('const needsAttention =');
-    assert.ok(at > 0, '找不到 needsAttention');
-    const expr = src.slice(at + 'const needsAttention ='.length, src.indexOf(';', at));
-    const names = [...new Set(expr.match(/[A-Za-z_$][\w$]*/g))].filter((name) => name !== 'length');
-    assert.ok(names.includes('actionableSignals'), names.join(','));
-    for (const name of names) {
-        const decl = src.search(new RegExp(`\\b(?:const|let)\\s+${name}\\b`));
-        assert.ok(decl >= 0 && decl < at, `${name} 要在 needsAttention 之前宣告`);
+// needsAttention 原本是頂層的 || 運算式，讀了宣告在後面的 const，只有前面的桶子全空的那一週才會崩潰（19f28e0）。
+test('排程：needsAttention 在每一段都空的時候回 false，任何一段有東西就回 true', () => {
+    const empty = { dead: [], blocked: [], bareDead: [], hijackedHits: [], autoSignals: [], coverageComplete: true };
+    assert.equal(needsAttention(empty), false);
+    for (const [key, value] of [
+        ['dead', [{}]],
+        ['blocked', [{}]],
+        ['bareDead', [{}]],
+        ['hijackedHits', [{ source: 'url' }]],
+        ['autoSignals', [{ confidence: 'actionable' }]],
+        ['coverageComplete', false],
+    ]) {
+        assert.equal(needsAttention({ ...empty, [key]: value }), true, key);
     }
 });
 
-// 報告產生器要連外網才跑得起來，這裡比對原始碼：資料 JSON 的出處帶 JSON pointer，
-// 競賽看門狗只探測 url 欄位，「另由 competitions-check.yml 檢查」只能附在 url 欄位的出處上。
-test('週報：資料 JSON 的出處帶 JSON pointer，競賽看門狗的註只看 url 欄位', () => {
-    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
-    assert.ok(src.includes("o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file"), 'sourcesOf 沒有帶上 JSON pointer');
-    assert.ok(src.includes('c.location.test(o.location)'), 'coveredElsewhere 沒有比對出處的 location');
-    assert.ok(src.includes('location: /^\\/competitions\\/\\d+\\/url$/'), 'competitions.json 的註沒有限定在 url 欄位');
+/** reportModel 是 renderReport 的參數：預設只有一個健康的網址、沒有裸網域，測試只覆寫自己關心的欄位。attention 沒給就照 needsAttention 算。 */
+const reportModel = (over = {}) => {
+    const m = {
+        todayISO: TODAY, inventoryTotal: 1, targetsCount: 1, healthy: 1, dead: [], blocked: [], urlBlockedCount: 0,
+        unverified: [], suppressed: [], hijackedHits: [], autoSignals: [], bareInfo: { total: 0, alreadyCoveredByUrls: 0 },
+        bareRejected: [], bareUnresolved: [], bareHostsCount: 0, bareHealthy: 0, bareDead: [], bareOther: [],
+        skipped: 0, bareSkipped: 0, budgetMs: 12 * 60_000, bareBudgetMs: 3 * 60_000, coverageComplete: true, ...over,
+    };
+    return { attention: needsAttention(m), ...m };
+};
+
+/** reportSection 取出報告裡含 title 的那一段：從前面最近的 <details 到後面最近的 </details>。 */
+function reportSection(report, title) {
+    const at = report.indexOf(title);
+    assert.ok(at >= 0, `報告裡沒有「${title}」`);
+    return report.slice(report.lastIndexOf('<details', at), report.indexOf('</details>', at));
+}
+
+test('週報：資料 JSON 的出處帶 JSON pointer，競賽看門狗的註只附在 url 欄位的出處', () => {
+    const comp = 'advanced-resources/competitions.json';
+    const report = renderReport(reportModel({
+        dead: [
+            { url: 'https://a.example/', reason: 'HTTP 404', occurrences: [{ file: comp, location: '/competitions/3/url' }, { file: 'about.html', location: 'a[href]' }] },
+            { url: 'https://b.example/', reason: 'HTTP 404', occurrences: [{ file: comp, location: '/competitions/89/description' }] },
+        ],
+    }));
+    const a = report.slice(report.indexOf('https://a.example/'), report.indexOf('https://b.example/'));
+    const b = report.slice(report.indexOf('https://b.example/'));
+    assert.ok(a.includes(`出處：\`${comp} /competitions/3/url\``) && a.includes('出處：`about.html`'), a);
+    assert.ok(a.includes('註：此檔另由 competitions-check.yml'), 'url 欄位的出處要附競賽看門狗的註');
+    assert.ok(b.includes(`出處：\`${comp} /competitions/89/description\``), b);
+    assert.ok(!b.includes('註：此檔另由'), '競賽看門狗只探測 url 欄位，說明文字的出處不附註');
 });
 
-// 放進 unverified 的物件只有 url、occurrences、reason，到寫報告時才分組的話讀不到 status 與 code，全部落到其他（#134）。
-test('週報：無法判定的連結在放進 unverified 時就照探測結果分好組', () => {
-    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
-    const pushes = src.split('\n').filter((line) => line.includes('unverified.push('));
-    assert.ok(pushes.length > 0, '找不到放進 unverified 的地方，測試需要更新');
-    for (const line of pushes) assert.ok(line.includes('bucket: unverifiedBucket(r)'), `沒有帶分組：${line.trim()}`);
-    for (const b of ['unreachable', 'server-error', 'rejected', 'other']) assert.ok(src.includes(`u.bucket === '${b}'`), `報告沒有用分組挑出 ${b}`);
+test('週報：沒有待辦、也沒有無法判定的時候，才寫「全部外部連結正常」', () => {
+    assert.ok(renderReport(reportModel()).includes('✅ 全部外部連結正常。'));
+    const dead = [{ url: 'https://a.example/', reason: 'HTTP 404', occurrences: [] }];
+    assert.ok(!renderReport(reportModel({ dead })).includes('全部外部連結正常'), '有失效連結時不可以寫全部正常');
+    const unverified = [{ url: 'https://b.example/', reason: 'HTTP 403', occurrences: [], bucket: 'rejected' }];
+    assert.ok(!renderReport(reportModel({ unverified })).includes('全部外部連結正常'), '有無法判定時不可以寫全部正常');
+});
+
+test('週報：盤點網址的無法判定照探測結果分組，各自列在對應的段落', () => {
+    const cases = [
+        ['https://a.example/', { status: 0, code: 'ABORT_ERR' }, 'unreachable', '連不上或沒有回應的連結'],
+        ['https://b.example/', { status: 520 }, 'server-error', '站台回報伺服器錯誤的連結'],
+        ['https://c.example/', { status: 403 }, 'rejected', '被站台拒絕的連結'],
+        ['https://d.example/', { status: 0, code: 'CERT_HAS_EXPIRED' }, 'other', '其他無法判定的連結'],
+    ];
+    const unverified = cases.map(([url, r, bucket]) => {
+        const { bin, item } = judgeUrl({ url, occurrences: [] }, r, { hijacked: [], entries: [] });
+        assert.equal(bin, 'unverified', url);
+        assert.equal(item.bucket, bucket, url);
+        return item;
+    });
+    const report = renderReport(reportModel({ unverified }));
+    for (const [url, , , title] of cases) {
+        const section = reportSection(report, title);
+        for (const [other] of cases) assert.equal(section.includes(other), other === url, `「${title}」那段與 ${other} 對不上`);
+    }
+    for (const title of ['連不上或沒有回應的連結', '站台回報伺服器錯誤的連結', '其他無法判定的連結']) {
+        assert.match(reportSection(report, title), /^<details open>/, `「${title}」那段要展開`);
+    }
+    assert.match(reportSection(report, '被站台拒絕的連結'), /^<details><summary>/, '被站台拒絕那段收合');
+});
+
+/** SQUAT 是蹲域名的變現頁：標題與描述命中兩個以上的博弈詞組，訊號 B 要抓的就是這種頁面。 */
+const SQUAT = '<html><head><title>Best Online Pokies 2026 - Play For Real Money</title>' +
+    '<meta name="description" content="Claim free spins at trusted casinos with real money pokies"></head><body>x</body></html>';
+
+test('週報：judgeUrl 與 judgeBare 把自動偵測的訊號連同來源交出來', () => {
+    const occurrences = [{ file: 'a.html', location: 'a[href]' }];
+    const shell = { status: 200, finalUrl: 'https://shell.example/', redirects: [], bodyHead: SHELL };
+    const urlSignal = judgeUrl({ url: 'https://shell.example/', occurrences }, shell, { hijacked: [], entries: [] }).signal;
+    assert.equal(urlSignal?.confidence, 'actionable', '只靠 JavaScript 轉走的殼要交出需處理的訊號');
+    assert.equal(urlSignal.source, 'url');
+    assert.deepEqual(urlSignal.occurrences, occurrences);
+    const squat = { status: 200, finalUrl: 'https://squat.example/', redirects: [], bodyHead: SQUAT };
+    const bareSignal = judgeBare({ host: 'squat.example', url: 'https://squat.example/', occurrences }, squat, { hijacked: [] }).signal;
+    assert.equal(bareSignal?.confidence, 'actionable', '蹲域名的變現頁要交出需處理的訊號');
+    assert.equal(bareSignal.source, 'bare');
+    assert.equal(bareSignal.host, 'squat.example');
+    assert.equal(judgeUrl({ url: 'https://ok.example/' }, { status: 200 }, { hijacked: [], entries: [] }).signal, null);
+});
+
+/** buildInput 是 buildReport 的參數：預設一個健康的網址、沒有裸網域、名單是空的，測試只覆寫自己關心的欄位。 */
+const buildInput = (over = {}) => ({
+    todayISO: TODAY, limit: 0, inventoryPath: '.reports/url-inventory.json', inventoryTotal: 1,
+    targets: [{ url: 'https://ok.example/', occurrences: [] }], results: [{ status: 200 }], skipped: 0,
+    bareInfo: { total: 0, alreadyCoveredByUrls: 0 }, bareCandidates: [], screen: { accepted: [], rejected: [], unresolved: [] },
+    bareResults: [], bareSkipped: 0, policy: { entries: [], hijacked: [] }, budgetMs: 12 * 60_000, bareBudgetMs: 3 * 60_000,
+    ...over,
+});
+/** bareHost 讓 buildInput 多一台只寫在說明文字裡、通過篩選的主機，r 是它的探測結果。 */
+const bareHost = (host, r) => ({
+    bareInfo: { total: 1, alreadyCoveredByUrls: 0 },
+    bareCandidates: [{ host, occurrences: [{ file: 'advanced-resources/competitions.json', location: '/competitions/7/description' }] }],
+    screen: { accepted: [host], rejected: [], unresolved: [] },
+    bareResults: [r],
+});
+/** policyWith 回傳 validatePolicy 驗過的 hijacked 名單，每個參數覆寫一筆 validHijack 的欄位。 */
+const policyWith = (...over) => validatePolicy({ version: 1, entries: [], hijacked: over.map((o) => validHijack(o)) }, TODAY).hijacked;
+
+test('buildReport：沒有待辦時不通知，報告、GITHUB_OUTPUT 與主控台都照實寫', () => {
+    const out = buildReport(buildInput());
+    assert.equal(out.attention, false);
+    assert.equal(out.coverageComplete, true);
+    assert.equal(out.githubOutput, 'needs_attention=false\ncoverage_complete=true\n');
+    assert.ok(out.report.includes('✅ 全部外部連結正常。'));
+    assert.equal(out.consoleSummary[1], '  盤點來源：.reports/url-inventory.json（1 個去重網址）');
+    assert.deepEqual(out.consoleTail, ['→ 無待辦項目。']);
+});
+
+test('buildReport：盤點網址的接管命中列進報告、不算例外，並觸發通知', () => {
+    const url = 'https://ieso-info.org/x';
+    const out = buildReport(buildInput({
+        targets: [{ url, occurrences: [{ file: 'advanced-resources/competitions.json', location: '/competitions/17/url' }] }],
+        results: [{ status: 200 }],
+        policy: { entries: [], hijacked: policyWith({}) },
+    }));
+    assert.equal(out.attention, true, '盤點網址的接管命中沒有觸發通知');
+    assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=true\n');
+    const section = out.report.slice(out.report.indexOf('### 🚨 已知不可信任的主機'));
+    assert.ok(section.startsWith('### 🚨'), '報告沒有列出接管主機');
+    assert.ok(section.includes('- **ieso-info.org** — 這台主機本身已被接管（本次探測：HTTP 200）'), section.slice(0, 400));
+    assert.ok(section.includes('出處：`advanced-resources/competitions.json /competitions/17/url`'), '接管主機要列出處');
+    assert.ok(!out.report.includes('已列入例外政策的連結'), '接管命中被當成例外');
+    assert.ok(!out.report.includes('全部外部連結正常'));
+    assert.ok(out.consoleSummary.includes('🚨 已知不可信任的主機：1'));
+    assert.deepEqual(out.consoleTail, ['→ 有項目需要處理，已寫入報告。']);
+});
+
+test('buildReport：說明文字裡點名的接管主機列在同一段，標明來源與 kind', () => {
+    const out = buildReport(buildInput({
+        ...bareHost('arcade.now', { status: 200 }),
+        policy: { entries: [], hijacked: policyWith({ match: { host: 'arcade.now' }, kind: 'terminus' }) },
+    }));
+    const section = out.report.slice(out.report.indexOf('### 🚨 已知不可信任的主機'));
+    assert.ok(section.startsWith('### 🚨'), '說明文字裡的接管主機沒有列出來');
+    assert.ok(section.includes('- **arcade.now** — 接管鏈的終點（本來就不是教育網域）（本次探測：HTTP 200）'), section.slice(0, 400));
+    assert.ok(section.includes('來源：說明文字裡的裸網域'));
+    assert.ok(out.consoleSummary.includes('  健康　　：0'), '接管主機算進了裸網域的健康數');
+});
+
+test('buildReport：需處理的自動訊號列進報告並觸發通知，盤點網址與裸網域都算', () => {
+    const fromUrl = buildReport(buildInput({
+        targets: [{ url: 'https://shell.example/', occurrences: [] }],
+        results: [{ status: 200, finalUrl: 'https://shell.example/', redirects: [], bodyHead: SHELL }],
+    }));
+    assert.equal(fromUrl.attention, true, '盤點網址的需處理訊號沒有觸發通知');
+    assert.ok(fromUrl.report.includes('### 🕵️ 自動偵測到的可疑訊號'), '報告沒有需處理的訊號那一段');
+    assert.ok(fromUrl.report.includes('- **盤點的網址 `https://shell.example/`**'));
+    const fromBare = buildReport(buildInput(bareHost('squat.example', { status: 200, finalUrl: 'https://squat.example/', redirects: [], bodyHead: SQUAT })));
+    assert.equal(fromBare.attention, true, '裸網域的需處理訊號沒有觸發通知');
+    assert.ok(fromBare.report.includes('- **說明文字裡的裸網域 `squat.example`**'));
+});
+
+test('buildReport：裸網域失效列進「說明文字裡的網域失效」並觸發通知，無法判定只列在收合的那一段', () => {
+    const dead = buildReport(buildInput(bareHost('gone.example', { status: 0, code: 'ENOTFOUND' })));
+    assert.equal(dead.attention, true);
+    assert.ok(dead.report.includes('### 🔤 說明文字裡的網域失效'), '報告沒有說明文字裡的網域失效那一段');
+    assert.ok(dead.report.includes('- **網域無法解析**：gone.example'));
+    assert.ok(!dead.report.includes('說明文字裡的網域無法判定'));
+    const other = buildReport(buildInput(bareHost('slow.example', { status: 403 })));
+    assert.equal(other.attention, false, '裸網域的無法判定不該觸發通知');
+    assert.ok(other.report.includes('<details><summary>🔤 說明文字裡的網域無法判定 1 筆</summary>'), '無法判定的裸網域被算成健康');
+    assert.ok(other.report.includes('- HTTP 403：slow.example'));
+});
+
+test('buildReport：位址政策封鎖列在同一段，原因照探測結果寫，並觸發通知', () => {
+    const out = buildReport(buildInput({
+        targets: [{ url: 'https://evil.example/', occurrences: [] }],
+        results: [{ status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：evil.example 解析到被封鎖的位址' }],
+        ...bareHost('evil-bare.example', { status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：evil-bare.example 解析到被封鎖的位址' }),
+    }));
+    assert.equal(out.attention, true);
+    const section = out.report.slice(out.report.indexOf('### 🛑 網址被位址政策擋下'));
+    assert.ok(section.startsWith('### 🛑'), '報告沒有位址政策封鎖那一段');
+    assert.ok(section.includes('- **測試：evil.example 解析到被封鎖的位址**'));
+    assert.ok(section.includes('- **測試：evil-bare.example 解析到被封鎖的位址**'), '裸網域封鎖的原因要照探測結果寫');
+    assert.ok(out.consoleSummary.filter((l) => l === '  位址封鎖：1').length === 2, '盤點網址與裸網域各一筆封鎖');
+});
+
+test('buildReport：DNS 沒答的裸網域、預算用完沒檢查的網址、--limit 都讓覆蓋不完整並觸發通知', () => {
+    const unresolved = buildReport(buildInput({
+        bareInfo: { total: 1, alreadyCoveredByUrls: 0 },
+        bareCandidates: [{ host: 'weird.zz', occurrences: [] }],
+        screen: { accepted: [], rejected: [], unresolved: [{ host: 'weird.zz', reason: '.zz 查不到答案（SERVFAIL）' }] },
+    }));
+    assert.equal(unresolved.coverageComplete, false);
+    assert.equal(unresolved.githubOutput, 'needs_attention=true\ncoverage_complete=false\n');
+    assert.ok(unresolved.report.includes('### ⚠️ 裸網域的 TLD 這次查不到答案（本次未檢查）'), '報告沒有 TLD 查不到那一段');
+    assert.ok(unresolved.report.includes('- weird.zz — .zz 查不到答案（SERVFAIL）'));
+    assert.ok(unresolved.consoleTail.includes('→ 覆蓋不完整：0 筆未檢查、1 筆未篩選，不可視為健康。'));
+    const skipped = buildReport(buildInput({ results: [null], skipped: 1 }));
+    assert.equal(skipped.githubOutput, 'needs_attention=true\ncoverage_complete=false\n');
+    assert.ok(skipped.report.includes('### ⏱️ 檢查未完成（覆蓋不完整）'), '報告沒有檢查未完成那一段');
+    assert.ok(skipped.report.includes('本次有 1 筆未檢查'));
+    const limited = buildReport(buildInput({ limit: 3 }));
+    assert.equal(limited.coverageComplete, false);
+    assert.equal(limited.consoleTail[0], '→ 使用了 --limit 3：只驗了一部分，coverage_complete 一律為 false。');
+});
+
+test('buildReport：失效與例外照分類放，例外不觸發通知', () => {
+    const entries = validatePolicy({ version: 1, entries: [validEntry()] }, TODAY).entries;
+    const out = buildReport(buildInput({
+        targets: [{ url: 'https://gone.example/', occurrences: [] }, { url: 'https://www.ptt.cc/bbs/x', occurrences: [] }],
+        results: [{ status: 404 }, { status: 403 }],
+        inventoryTotal: 2,
+        policy: { entries, hijacked: [] },
+    }));
+    assert.ok(out.report.includes('- **HTTP 404**：https://gone.example/'));
+    assert.ok(out.report.includes('<details><summary>📋 已列入例外政策的連結 1 筆'));
+    const quiet = buildReport(buildInput({ targets: [{ url: 'https://www.ptt.cc/bbs/x', occurrences: [] }], results: [{ status: 403 }], policy: { entries, hijacked: [] } }));
+    assert.equal(quiet.attention, false, '列入例外的 403 不該觸發通知');
 });
 
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
@@ -797,25 +992,20 @@ test('hijacked：比對是完全相等，不得順帶涵蓋子網域或相似網
     assert.equal(matchHijacked([], 'https://ieso-info.org/'), null);
 });
 
-test('hijacked：判定必須排在三態分類之前，否則 200 會被算成健康', () => {
+test('hijacked：判定排在三態分類之前，回 200 的接管主機不算健康；位址政策封鎖又排在接管之前', () => {
     // 這是整份機制的重點：被接管的網域回的就是 200，一旦先跑 classifyLink，
     // 它就會進 healthy 而永遠不會被列出來，等於用檢查器替博弈站背書。
-    // 註解裡提到 classifyLink 不算「呼叫」。比對前先把註解拿掉，否則這一條會被
-    // 說明文字誤導：check-external-links.mjs 解釋順序的那句註解裡有「classifyLink」，
-    // 位置比真正的 matchHijacked 還前面。
-    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8')
-        .replace(/\/\*[\s\S]*?\*\//g, ' ')
-        .split(/\r?\n/)
-        .map((line) => line.replace(/(^|[^:])\/\/.*$/, '$1'))
-        .join('\n');
-    for (const scope of [/for \(let i = 0; i < targets\.length[\s\S]*?\n}/, /for \(let i = 0; i < bareHosts\.length[\s\S]*?\n    }/]) {
-        const body = (src.match(scope) || [''])[0];
-        assert.ok(body, '找不到分類迴圈，測試需要更新');
-        const hijackIdx = body.indexOf('matchHijacked');
-        const classifyIdx = body.indexOf('classifyLink');
-        assert.ok(hijackIdx > 0, '分類迴圈裡必須查 hijacked 名單');
-        assert.ok(hijackIdx < classifyIdx, 'matchHijacked 必須排在 classifyLink 之前');
-    }
+    const { hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack()] }, TODAY);
+    const url = judgeUrl({ url: 'https://ieso-info.org/', occurrences: [] }, { status: 200 }, { hijacked, entries: [] });
+    assert.equal(url.bin, 'hijacked');
+    assert.equal(url.item.source, 'url');
+    const target = { host: 'ieso-info.org', url: 'https://ieso-info.org/', occurrences: [] };
+    const bare = judgeBare(target, { status: 200 }, { hijacked });
+    assert.equal(bare.bin, 'hijacked');
+    assert.equal(bare.item.source, 'bare');
+    const blockedResult = { status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：解析到被封鎖的位址' };
+    assert.equal(judgeUrl({ url: 'https://ieso-info.org/' }, blockedResult, { hijacked, entries: [] }).bin, 'blocked');
+    assert.equal(judgeBare(target, blockedResult, { hijacked }).bin, 'blocked');
 });
 
 test('hijacked：repo 內的 link-policy.json 的 hijacked 現在就是有效的', () => {

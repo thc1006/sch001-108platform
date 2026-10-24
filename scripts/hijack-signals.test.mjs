@@ -19,6 +19,7 @@ import {
     inertText,
     SQUAT_PHRASES,
 } from './hijack-signals.lib.mjs';
+import { needsAttention, renderReport } from './check-external-links.lib.mjs';
 
 const LOOPBACK = { allowLoopback: true };
 
@@ -114,65 +115,45 @@ test('inertText：遠端可控的文字進不了 issue 的渲染層', () => {
 test('報告樣板：遠端可控的欄位一定要經過 inertText', () => {
     // 這一條守的是接線，不是函式本身：inertText 寫得再對，報告那邊忘了呼叫
     // 就一點用都沒有，而那個漏接不會有任何其他訊號。
-    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
+    const src = readFileSync(new URL('./check-external-links.lib.mjs', import.meta.url), 'utf8');
     for (const expr of ['inertText(c.text)', 'inertText(a.shell.title)', 'inertText(h)']) {
-        assert.ok(src.includes(expr), `check-external-links.mjs 的報告樣板少了 ${expr}`);
+        assert.ok(src.includes(expr), `check-external-links.lib.mjs 的報告樣板少了 ${expr}`);
     }
     assert.ok(!/原文：\$\{c\.text\}/.test(src), '報告仍在原樣輸出遠端可控的 c.text');
 });
 
+/** emptyReport 是 renderReport 的參數：一個健康的網址、沒有裸網域，autoSignals 是自動偵測的訊號。 */
+const emptyReport = (autoSignals = []) => {
+    const m = {
+        todayISO: '2026-10-25', inventoryTotal: 1, targetsCount: 1, healthy: 1, dead: [], blocked: [], urlBlockedCount: 0,
+        unverified: [], suppressed: [], hijackedHits: [], autoSignals, bareInfo: { total: 0, alreadyCoveredByUrls: 0 },
+        bareRejected: [], bareUnresolved: [], bareHostsCount: 0, bareHealthy: 0, bareDead: [], bareOther: [],
+        skipped: 0, bareSkipped: 0, budgetMs: 720_000, bareBudgetMs: 180_000, coverageComplete: true,
+    };
+    return { ...m, attention: needsAttention(m) };
+};
+const signal = (confidence) => ({ confidence, source: 'url', url: 'https://x.example/', occurrences: [], content: [], cross: null, shell: null });
+
 test('報告：訊號數要無條件寫進報告，不只寫在主控台', () => {
     // 「這次沒偵測到」與「偵測根本沒接上線」必須在人真的會讀的那份東西上
     // 分得出來。主控台只在 job step 的 log 裡；貼進 issue 的是這份 markdown。
-    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
     // 兩個等級都要有數字。只報 actionable 的話，「跨站轉址那一段今天是 0」與
     // 「跨站轉址整段被我不小心刪掉了」在報告上長得一模一樣。
-    for (const bucket of ['actionableSignals', 'browseOnlySignals']) {
-        const re = new RegExp(`\\$\\{${bucket}\\.length\\}`);
-        const summary = src.slice(src.indexOf('const lines = '));
-        assert.ok(re.test(summary), `報告的摘要沒有列出 ${bucket} 的數量`);
-    }
-    // 摘要那一段不可以被包在「有命中才寫」的條件裡，包起來就等於沒寫。
-    //
-    // 這裡比對的是源碼形狀，不是行為：check-external-links.mjs 的報告產生器是
-    // 第 324–610 行的一整段頂層語句，要真的跑起來得先連 508 個目標，沒辦法做成
-    // 單元測試。所以驗的是一個在這個檔案裡成立、而且繞不開的不變量：
-    // 那個 lines.push( 必須是第 0 欄的頂層語句。
-    //
-    // 之所以不比對「有沒有被包在 if 裡」：只找 `if (x) {` 的話，無大括號的
-    // `if (x) lines.push(` 就直接繞開了。
-    // 縮排這條線兩種寫法都擋得住，因為任何一種包裹都會讓它離開第 0 欄。
-    const srcLines = src.split(/\r?\n/);
-    const at = srcLines.findIndex((l) => l.includes('- 自動偵測：需處理'));
-    assert.ok(at > 0, '報告的摘要裡找不到訊號數那一行');
-    let open = -1;
-    for (let i = at; i >= 0; i -= 1) {
-        if (srcLines[i].includes('lines.push(')) { open = i; break; }
-    }
-    assert.ok(open >= 0, '訊號數那一行前面找不到 lines.push(');
-    assert.match(
-        srcLines[open],
-        /^lines\.push\($/,
-        `訊號數那一行的 lines.push 不是頂層語句（實際是 ${JSON.stringify(srcLines[open])}）——` +
-            '被縮排或被前綴，代表它被包進了某個條件裡，沒命中時就不會出現在報告上',
+    assert.ok(
+        renderReport(emptyReport()).includes('- 自動偵測：需處理 0（內容標記／HTTP 層盲區）、僅供瀏覽 0（跨站轉址；'),
+        '沒有命中時，報告的摘要也要寫出兩個 0',
     );
+    const both = renderReport(emptyReport([signal('actionable'), signal('browse-only'), signal('browse-only')]));
+    assert.ok(both.includes('- 自動偵測：需處理 1（內容標記／HTTP 層盲區）、僅供瀏覽 2（跨站轉址；'), both.split('\n').slice(0, 9).join('\n'));
 });
 
 test('報告：跨站轉址不進 needsAttention，內容標記與 HTTP 盲區才進', () => {
     // 這是這份檢查最重要的一條線。實測全站 508 個目標，跨站轉址命中 11 筆、
     // 全部誤判（4 筆兄弟子網域、7 筆機構改名或短網址）。把它接上通知，
     // 維護者會在第三週學會忽略整個看門狗。
-    const src = readFileSync(new URL('./check-external-links.mjs', import.meta.url), 'utf8');
-    const cond = src.match(/const needsAttention =[\s\S]*?;/);
-    assert.ok(cond, '找不到 needsAttention 的定義');
-    assert.ok(
-        cond[0].includes('actionableSignals.length > 0'),
-        'needsAttention 沒有把 actionable 訊號算進去',
-    );
-    assert.ok(
-        !/\bautoSignals\.length\b/.test(cond[0]) && !/\bbrowseOnlySignals\b/.test(cond[0]),
-        'needsAttention 仍然把誤判率極高的跨站轉址算進去了',
-    );
+    const quiet = { dead: [], blocked: [], bareDead: [], hijackedHits: [], coverageComplete: true };
+    assert.equal(needsAttention({ ...quiet, autoSignals: [signal('browse-only')] }), false, '跨站轉址算進了通知');
+    assert.equal(needsAttention({ ...quiet, autoSignals: [signal('actionable')] }), true, '需處理的訊號沒有算進通知');
 });
 
 test('contentSquatSignals：ieso-info.org 實測到的 head 會被抓到', () => {

@@ -8,13 +8,15 @@
  *   B. SSRF 防護、讀 body 與無法判定的分組 → link-health.test.mjs 必須失敗
  *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
+ *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
+ *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
  * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B、C、D 三段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * B 到 F 五段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
  * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
  * 同一類假象在自己的測試上也會發生。
  *
@@ -582,6 +584,180 @@ const bareDomainMutations = [
     },
 ];
 
+// E 段是 check-external-links.lib.mjs 的突變測試：判定、通知條件與報告內容。這些改壞了，
+// 三態與 SSRF 防護照樣正確，只有讀報告、等通知的人會發現。
+const reportMutations = [
+    {
+        name: "盤點網址的接管比對被拿掉（被接管的網域回 200，算成健康）",
+        apply: (s) => s.replace("    if (hijack) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'url' }, signal: null };", "    if (false) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'url' }, signal: null };"),
+    },
+    {
+        name: "裸網域的接管比對被拿掉",
+        apply: (s) => s.replace("    if (hijack) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'bare' }, signal: null };", "    if (false) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'bare' }, signal: null };"),
+    },
+    {
+        name: "盤點網址的位址政策封鎖被拿掉（指向內網的網址混進無法判定）",
+        apply: (s) => s.replace("    if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };\n    // 接管的判定", "    // 接管的判定"),
+    },
+    {
+        name: "裸網域的位址政策封鎖被拿掉（指向內網的主機混進無法判定）",
+        apply: (s) => s.replace("    if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };\n    const hijack = matchHijacked(hijacked, item.url);", "    const hijack = matchHijacked(hijacked, item.url);"),
+    },
+    {
+        name: "dead 也查例外政策（確定壞掉的連結被壓下去）",
+        apply: (s) => s.replace("    if (verdict === 'dead') return { bin: 'dead', item, signal };", "    if (verdict === 'dead' && !matchPolicy(entries, target.url)) return { bin: 'dead', item, signal };"),
+    },
+    {
+        name: "分組用 item 算（item 沒有 status 與 code，全部落到其他）",
+        apply: (s) => s.replace("bucket: unverifiedBucket(r)", "bucket: unverifiedBucket(item)"),
+    },
+    {
+        name: "needsAttention 把跨站轉址也算進去",
+        apply: (s) => s.replace("        splitSignals(autoSignals).actionable.length > 0 ||", "        autoSignals.length > 0 ||"),
+    },
+    {
+        name: "needsAttention 拿掉需處理的自動訊號",
+        apply: (s) => s.replace("        splitSignals(autoSignals).actionable.length > 0 ||\n", ""),
+    },
+    {
+        name: "needsAttention 拿掉接管命中",
+        apply: (s) => s.replace("        hijackedHits.length > 0 ||\n", ""),
+    },
+    {
+        name: "訊號數只在有命中時才寫進報告",
+        apply: (s) => s.replace("    lines.push(\n        `- 自動偵測：需處理", "    if (autoSignals.length) lines.push(\n        `- 自動偵測：需處理"),
+    },
+    {
+        name: "出處不帶 JSON pointer",
+        apply: (s) => s.replace("(o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file)", "o.file"),
+    },
+    {
+        name: "競賽看門狗的註附在所有出處",
+        apply: (s) => s.replace("o.file === c.file && c.location.test(o.location)", "o.file === c.file"),
+    },
+    {
+        name: "報告對調 server-error 與 rejected 的篩選",
+        apply: (s) => s.replace("const serverErrors = unverified.filter((u) => u.bucket === 'server-error');\n        const rejected = unverified.filter((u) => u.bucket === 'rejected');", "const serverErrors = unverified.filter((u) => u.bucket === 'rejected');\n        const rejected = unverified.filter((u) => u.bucket === 'server-error');"),
+    },
+    {
+        name: "5xx 那段改回收合",
+        apply: (s) => s.replace("`<details open><summary>⚠️ 站台回報伺服器錯誤", "`<details><summary>⚠️ 站台回報伺服器錯誤"),
+    },
+    {
+        name: "有待辦時仍寫「全部外部連結正常」",
+        apply: (s) => s.replace("if (!attention && !unverified.length && !bareOther.length)", "if (!unverified.length && !bareOther.length)"),
+    },
+    {
+        name: "5xx 那段不列網址",
+        apply: (s) => s.replace("for (const u of serverErrors) lines.push(`- ${u.reason}：${u.url}`);", ""),
+    },
+    {
+        name: "judgeUrl 的自動訊號一律丟掉",
+        apply: (s) => s.replace("const signal = sig ? { ...sig, source: 'url', occurrences: item.occurrences } : null;", "const signal = null;"),
+    },
+    {
+        name: "judgeBare 的自動訊號一律丟掉",
+        apply: (s) => s.replace("const signal = sig ? { ...sig, source: 'bare', host: item.host, occurrences: item.occurrences } : null;", "const signal = null;"),
+    },
+    {
+        name: "judgeBare 把無法判定算成健康",
+        apply: (s) => s.replace("return { bin: verdict === 'dead' || verdict === 'unverified' ? verdict : 'healthy', item, signal };", "return { bin: verdict === 'dead' ? 'dead' : 'healthy', item, signal };"),
+    },
+    {
+        name: "裸網域封鎖的原因改用 describeResult",
+        apply: (s) => s.replace("    if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };\n    const hijack = matchHijacked(hijacked, item.url);", "    if (isBlockedResult(r)) return { bin: 'blocked', item, signal: null };\n    const hijack = matchHijacked(hijacked, item.url);"),
+    },
+    {
+        name: "接管主機不列出處",
+        apply: (s) => s.replace("            lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);\n            lines.push(...sourceLines(h));", "            lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);"),
+    },
+    {
+        name: "kind 標籤對調",
+        apply: (s) => s.replace("h.policy.kind === 'terminus' ? '接管鏈的終點", "h.policy.kind !== 'terminus' ? '接管鏈的終點"),
+    },
+    {
+        name: "報告不寫說明文字裡的網域失效那一段",
+        apply: (s) => s.replace("    if (bareDead.length) {\n        lines.push(", "    if (false) {\n        lines.push("),
+    },
+    {
+        name: "報告不寫位址政策封鎖那一段",
+        apply: (s) => s.replace("    if (blocked.length) {\n        lines.push(", "    if (false) {\n        lines.push("),
+    },
+    {
+        name: "報告不寫需處理的自動訊號那一段",
+        apply: (s) => s.replace("    if (actionableSignals.length) {\n        lines.push(", "    if (false) {\n        lines.push("),
+    },
+    {
+        name: "報告不寫 TLD 查不到那一段",
+        apply: (s) => s.replace("    if (bareUnresolved.length) {\n        lines.push(", "    if (false) {\n        lines.push("),
+    },
+    {
+        name: "報告不寫檢查未完成那一段",
+        apply: (s) => s.replace("    if (skipped || bareSkipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
+    },
+];
+
+// F 段是 buildReport 的突變測試：把探測結果分進各段、算覆蓋與通知條件，再交給報告、GITHUB_OUTPUT 與主控台。
+// judgeUrl、renderReport 各自都對，這裡傳錯一個值，週報照樣會錯。
+const assemblyMutations = [
+    {
+        name: "judgeUrl 拿到空的接管名單（盤點網址的接管命中算成健康）",
+        apply: (s) => s.replace("{ hijacked: policy.hijacked, entries: policy.entries }", "{ hijacked: [], entries: policy.entries }"),
+    },
+    {
+        name: "盤點網址的接管命中放進例外那一段",
+        apply: (s) => s.replace("const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified };", "const urlBins = { blocked, hijacked: suppressed, dead, suppressed, unverified };"),
+    },
+    {
+        name: "judgeBare 拿到空的接管名單",
+        apply: (s) => s.replace("judgeBare(target, r, { hijacked: policy.hijacked })", "judgeBare(target, r, { hijacked: [] })"),
+    },
+    {
+        name: "裸網域失效放進無法判定那一段",
+        apply: (s) => s.replace("dead: bareDead, unverified: bareOther }", "dead: bareOther, unverified: bareOther }"),
+    },
+    {
+        name: "盤點網址的自動訊號沒收",
+        apply: (s) => s.replace("        if (signal) autoSignals.push(signal);\n        if (bin === 'healthy') healthy++;", "        if (bin === 'healthy') healthy++;"),
+    },
+    {
+        name: "裸網域的自動訊號沒收",
+        apply: (s) => s.replace("        if (signal) autoSignals.push(signal);\n        if (bin === 'healthy') bareHealthy++;", "        if (bin === 'healthy') bareHealthy++;"),
+    },
+    {
+        name: "通知條件沒拿到接管命中",
+        apply: (s) => s.replace("    const attention = needsAttention(model);", "    const attention = needsAttention({ ...model, hijackedHits: [] });"),
+    },
+    {
+        name: "報告沒拿到接管命中",
+        apply: (s) => s.replace("report: renderReport({ ...model, attention }),", "report: renderReport({ ...model, hijackedHits: [], attention }),"),
+    },
+    {
+        name: "報告的通知條件寫死 false（結尾和 GITHUB_OUTPUT 對不上）",
+        apply: (s) => s.replace("report: renderReport({ ...model, attention }),", "report: renderReport({ ...model, attention: false }),"),
+    },
+    {
+        name: "覆蓋不看 DNS 沒答的候選",
+        apply: (s) => s.replace(" && screen.unresolved.length === 0;", ";"),
+    },
+    {
+        name: "GITHUB_OUTPUT 寫死 coverage_complete=true",
+        apply: (s) => s.replace("\\ncoverage_complete=${coverageComplete}\\n`", "\\ncoverage_complete=true\\n`"),
+    },
+    {
+        name: "GITHUB_OUTPUT 寫死 needs_attention=false",
+        apply: (s) => s.replace("`needs_attention=${attention}\\n", "`needs_attention=false\\n"),
+    },
+    {
+        name: "主控台結尾寫死「無待辦項目」",
+        apply: (s) => s.replace("tail.push(attention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');", "tail.push('→ 無待辦項目。');"),
+    },
+    {
+        name: "通知條件沒拿到自動訊號",
+        apply: (s) => s.replace("    const attention = needsAttention(model);", "    const attention = needsAttention({ ...model, autoSignals: [] });"),
+    },
+];
+
 let pass = 0;
 let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
@@ -617,7 +793,7 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B、C、D 三段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 F 五段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
 // 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
@@ -717,6 +893,36 @@ try {
     rmSync(MUTANT_DIR, { recursive: true, force: true });
 }
 
+// E、F 兩段突變的是同一個檔案，跑法相同。
+const reportSource = readFileSync(path.join(SCRIPTS, 'check-external-links.lib.mjs'), 'utf8')
+    .split(/\r?\n/)
+    .join('\n');
+for (const [title, mutations] of [
+    ['E. 判定、通知與報告內容的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：', reportMutations],
+    ['F. buildReport 組裝的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：', assemblyMutations],
+]) {
+    console.log(`\n${title}`);
+    try {
+        for (const m of mutations) {
+            cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
+            const mutated = m.apply(reportSource);
+            if (mutated === reportSource) {
+                bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
+                rmSync(MUTANT_DIR, { recursive: true, force: true });
+                continue;
+            }
+            writeFileSync(path.join(MUTANT_DIR, 'check-external-links.lib.mjs'), mutated, 'utf8');
+            // 兩支測試有一支紅就算擋下；兩支都要跑，報告的接線有一部分在 hijack-signals.test.mjs。
+            const caught = ['link-health.test.mjs', 'hijack-signals.test.mjs'].some((f) => runMutantTests(f).code !== 0);
+            if (!caught) bad(m.name, '改壞這一段之後測試竟然還是綠的——那些測試沒有在把關');
+            else ok(m.name);
+            rmSync(MUTANT_DIR, { recursive: true, force: true });
+        }
+    } finally {
+        rmSync(MUTANT_DIR, { recursive: true, force: true });
+    }
+}
+
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
 const afterTests = runBaselineTests();
@@ -724,5 +930,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
