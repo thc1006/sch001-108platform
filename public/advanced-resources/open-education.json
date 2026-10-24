@@ -1,6 +1,6 @@
 {
   "_readme": "開放教育資源資料檔。open-education.astro 載入時 fetch 此檔並渲染。新增或修改資源請編輯下方 resources 陣列,不需要動頁面。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-10-25",
   "resources": [
     {
       "id": "anthropic-prompt-eng-tutorial",
@@ -110,10 +110,10 @@
     {
       "id": "google-gemma",
       "category": "ai-labs",
-      "name": "Gemma 開源模型與開發文件",
+      "name": "Gemma 開放模型與開發文件",
       "org": "Google DeepMind",
-      "url": "https://ai.google.dev/gemma",
-      "description": "Google 以 Gemini 同源技術打造的輕量開源模型家族,採 Apache 2.0 授權,可在一般電腦本地執行,並有完整官方文件。適合高中生免費下載、實際動手玩前沿 AI 模型。",
+      "url": "https://gemma.ai/",
+      "description": "Google 以 Gemini 同源技術打造的輕量開放模型家族,可在一般電腦本地執行,並有完整官方文件。Gemma 4 採 Apache 2.0 授權,較早的 Gemma 模型適用 Google 的 Gemma 使用條款(Gemma Terms of Use)。適合高中生免費下載、實際動手玩前沿 AI 模型。",
       "tags": [
         "開源模型",
         "官方文件",
