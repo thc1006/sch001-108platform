@@ -68,6 +68,16 @@ test.describe('部署產物 smoke test', () => {
         expect(errors(), errors().join('\n')).toEqual([]);
     });
 
+    test('多元表現資料庫把每一筆活動都渲染出來', async ({ page, request }) => {
+        const errors = watchForErrors(page);
+        const { activities } = await (await request.get(P('/learning-portfolio/activity-database.json'))).json();
+        await page.goto(P('/learning-portfolio/activity-database.html'), { waitUntil: 'networkidle' });
+
+        await expect(page.locator('#activity-grid .activity-card')).toHaveCount(activities.length);
+        await expect(page.locator('#featured-section')).toBeVisible({ visible: activities.some((a) => a.featured) });
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
+
     test('競賽頁的狀態篩選都篩得出東西（chip 與狀態 key 沒有脫節）', async ({ page }) => {
         await page.goto(P('/advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
         await expect(page.locator('.comp-card').first()).toBeVisible({ timeout: 10_000 });
