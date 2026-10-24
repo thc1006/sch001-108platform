@@ -8,6 +8,9 @@ export const WATCHDOG_MARKER = '<!-- competitions-watchdog:v1 -->';
 /** 全站外部連結健檢的機器標記。和競賽看門狗用不同的標記，兩支排程才不會接管對方的 issue。 */
 export const EXTERNAL_LINKS_MARKER = '<!-- external-links-watchdog:v1 -->';
 
+/** 學年度換屆提醒的機器標記，admission-cycle-check.yml 用。 */
+export const ADMISSION_CYCLE_MARKER = '<!-- admission-cycle-watchdog:v1 -->';
+
 /** issue 層級的 bot 作者格式。留言層級是 "github-actions"，兩者不可混用。 */
 export const ACTIONS_APP_LOGIN = 'app/github-actions';
 

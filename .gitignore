@@ -93,6 +93,9 @@ school/
 # 全站外部連結健檢產生的報告（CI 與本機執行 check-external-links.mjs 時產生）
 /external-links-report.md
 
+# 學年度換屆提醒的報告（check-admission-cycle.mjs --remind 產生）
+/admission-cycle-report.md
+
 # 故障注入用的暫存副本（link-health.faults.mjs 產生，跑完就刪；
 # 中途被中斷時留下的殘骸不該進版控）
 /.faultcheck/

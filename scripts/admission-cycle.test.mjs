@@ -1,5 +1,5 @@
-// admission-cycle.lib.mjs 的測試：哪些寫法算學年度、設定檔的規則、keep 放行的範圍，以及日期的邊界。
-// 今天的日期一律由測試傳入，哪一天跑結果都一樣。
+// admission-cycle.lib.mjs 的測試：哪些寫法算學年度、設定檔的規則、keep 放行的範圍、日期的邊界，
+// 以及每週提醒的 workflow 設定。今天的日期一律由測試傳入，哪一天跑結果都一樣。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -10,10 +10,12 @@ import {
     findYears,
     isPast,
     isRealDate,
+    pendingForNext,
     remindWindow,
     taipeiToday,
     validateConfig,
 } from './admission-cycle.lib.mjs';
+import { ADMISSION_CYCLE_MARKER, EXTERNAL_LINKS_MARKER, WATCHDOG_MARKER } from './watchdog-issue.lib.mjs';
 
 const cfg = (fields = {}) => ({
     cycle: 115,
@@ -262,6 +264,26 @@ test('checkContent：沒有檔案，或一個學年度都找不到，都不能�
     assert.match(errorsOf(doc('沒有年度的內容'), cfg()).join('\n'), /1 個檔案裡找不到任何學年度或甄選會網址/);
 });
 
+test('pendingForNext：換成 next 之後不放行的年度，keep 也列出來', () => {
+    const files = doc(
+        '115 學年度',
+        '116 學年度',
+        '117 學年度',
+        '多來自 111 學年度的舊統計',
+        'https://www.cac.edu.tw/apply115/',
+        '113 至 115 學年度',
+        '115 至 119 學年度入學適用第三期',
+    );
+    const config = cfg({ keep: [textKeep(FILE, '多來自 111 學年度的舊統計')] });
+    const pending = pendingForNext(files, config).map((h) => [h.line, h.kind, h.year, h.by]);
+    assert.deepEqual(pending, [
+        [1, 'text', 115, []],
+        [4, 'text', 111, [0]],
+        [5, 'url', 115, []],
+        [6, 'text', 115, []],
+    ]);
+});
+
 test('日期：isRealDate、isPast 當天不算過、taipeiToday 用台灣的日曆日', () => {
     assert.ok(isRealDate('2028-02-29'));
     assert.ok(!isRealDate('2027-02-29'));
@@ -289,3 +311,66 @@ test('admission-cycle.json：repo 裡的設定通過 validateConfig', () => {
     assert.deepEqual(validateConfig(config), []);
 });
 
+// 下面幾條釘住 admission-cycle-check.yml 的設定。YAML 改壞了不會有錯誤，要等哪一週 issue 開錯地方才發現。
+// Windows 上 checkout 出來可能是 CRLF，比對前換成 LF。
+const workflow = (name) => readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const WORKFLOW = 'admission-cycle-check.yml';
+const OTHER_WATCHDOGS = ['competitions-check.yml', 'civic-tech-check.yml', 'external-links-check.yml'];
+// 註解裡也會提到 --app、標籤和檔名，只看會執行的行。
+const code = () => workflow(WORKFLOW).split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+
+test('workflow：機器標記和 ADMISSION_CYCLE_MARKER 相同，另外三支看門狗都沒有用它', () => {
+    assert.ok(workflow(WORKFLOW).includes(`MARKER: '${ADMISSION_CYCLE_MARKER}'`));
+    assert.notEqual(ADMISSION_CYCLE_MARKER, WATCHDOG_MARKER);
+    assert.notEqual(ADMISSION_CYCLE_MARKER, EXTERNAL_LINKS_MARKER);
+    for (const other of OTHER_WATCHDOGS) assert.ok(!workflow(other).includes(ADMISSION_CYCLE_MARKER), other);
+});
+
+test('workflow：只在 main 上由排程或手動執行，排程是每週一', () => {
+    const y = workflow(WORKFLOW);
+    const on = y.match(/^on:\n((?: {2}.*\n|\n)+)/m)[1];
+    assert.deepEqual([...on.matchAll(/^ {2}([a-z_]+):/gm)].map((m) => m[1]), ['schedule', 'workflow_dispatch']);
+    assert.match(on, /^ {4}- cron: '\d+ \d+ \* \* 1'/m);
+    assert.match(y, /if: github\.ref == 'refs\/heads\/main'/);
+    assert.match(y, /GITHUB_REF" != "refs\/heads\/main"/, 'if: 被拿掉時要有第二道會 exit 1 的檢查');
+    assert.match(y, /schedule\|workflow_dispatch\)/);
+});
+
+test('workflow：權限、concurrency、逾時，action 釘在 commit SHA', () => {
+    const y = workflow(WORKFLOW);
+    assert.match(y, /^permissions:\n {2}contents: read\n\njobs:/m, 'workflow 層級只能有 contents: read');
+    assert.match(y, /permissions:\n {6}contents: read\n {6}issues: write\n/);
+    assert.match(y, /concurrency:\n {2}group: admission-cycle-watchdog\n {2}cancel-in-progress: false\n/);
+    assert.match(y, /timeout-minutes: \d+/);
+    assert.match(y, /persist-credentials: false/);
+    const uses = [...y.matchAll(/uses:\s*([^\s#]+)/g)].map((m) => m[1]);
+    assert.equal(uses.length, 2);
+    for (const u of uses) assert.match(u, /@[0-9a-f]{40}$/, u);
+});
+
+test('workflow：開 issue 的那一步讀得到 --remind 的結果，檢查失敗時照樣執行', () => {
+    const c = code();
+    const id = c.match(/id: (\S+)\n\s+run: node scripts\/check-admission-cycle\.mjs --remind\n/)?.[1];
+    assert.ok(id, '跑 --remind 的那一步要有 id');
+    // 內容有錯時檢查以 1 結束，少了 always() 就不會開 issue。
+    assert.ok(c.includes(`if: always() && steps.${id}.outputs.needs_attention == 'true'`), `開 issue 的條件要讀 steps.${id}`);
+    assert.match(c, /if ! grep -qF -- "\$MARKER" admission-cycle-report\.md; then\n\s+echo .+\n\s+exit 1\n/, '報告沒有機器標記就中止');
+    const reports = [...c.matchAll(/[\w.-]*report[\w.-]*\.md/g)].map((m) => m[0]);
+    assert.deepEqual([...new Set(reports)], ['admission-cycle-report.md'], '報告檔名要和 check-admission-cycle.mjs 寫的一樣');
+});
+
+test('workflow：認領交給 find-watchdog-issue.mjs，標籤只有一個，不用 gh issue list --app', () => {
+    const c = code();
+    assert.match(c, /find-watchdog-issue\.mjs --marker "\$MARKER"/);
+    assert.ok(!/--app\b/.test(c));
+    const labels = [...c.matchAll(/(?:--label|gh label create --force) (\S+)/g)].map((m) => m[1]);
+    assert.equal(labels.length, 3, '建立、列出、新開各用一次');
+    assert.deepEqual([...new Set(labels)], ['admission-cycle-watchdog']);
+});
+
+test('workflow：排程時間和另外三支看門狗錯開', () => {
+    const cron = (name) => [...workflow(name).matchAll(/cron: '([^']+)'/g)].map((m) => m[1]);
+    const [mine, ...rest] = cron(WORKFLOW);
+    assert.ok(mine && rest.length === 0);
+    for (const other of OTHER_WATCHDOGS) assert.ok(!cron(other).includes(mine), `${other} 也排在 ${mine}`);
+});
