@@ -1400,7 +1400,10 @@
       "opensAt": "2026-09-02T00:00:00-04:00",
       "eventStartsAt": "2026-11-05",
       "eventEndsAt": "2026-11-13",
-      "sourceCheckedAt": "2026-08-28",
+      "cycle": {
+        "closes": "10"
+      },
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://maa.org/amcreg/",
       "description": "由 Mathematical Association of America 主辦，AMC 12 逐字「For high school students in grades 12 and below」、AMC 10「For high school students in grades 10 and below」。台灣學生不能自行報名：MAA 逐字「International students participate in AMC competitions through one of our International Group Leaders (IGLs) ... Students must register for the competitions through the IGL in the country they reside」，官網的 2026-27 名單（International Group Leaders for 2026-27）列台灣的 IGL 為 Peter Shiue（shiue@unlv.nevada.edu）。2026-27 報名 9/2 開放，早鳥 9/30（US$55）、一般 10/15（US$75，新任 competition manager 的最後期限）、逾期 10/28（US$115，僅限續任）；考試日 AMC 10/12 A 為 11/5、B 為 11/13——考試日不是報名截止日。"
     },
