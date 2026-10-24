@@ -64,7 +64,7 @@ description: 工程學群自主學習與探究專題怎麼做？教你如何從�
 
 ### 把學科知識帶進探究專題
 
-優秀的探究專題會把課堂所學「用出來」。曾有學生在自主學習報告中提到，設計桌牌時發現成品角度不對，他並未反覆盲試，而是意識到可以「利用先前所學的畢氏定理計算角度」，把數學知識與實作問題結合。這種「學科知識 × 實作問題」的連結，正是教授欣賞的科學素養體現。
+優秀的探究專題會把課堂所學「用出來」。曾有學生在自主學習報告中提到，設計桌牌時，列印前發現浮雕字體和桌牌的斜面對不上，於是「開始利用先前所學的『畢氏定理』嘗試去計算角度，與數學領域做結合」。這種「學科知識 × 實作問題」的連結，正是教授欣賞的科學素養體現。
 
 ### 連結大學科系教育目標
 
@@ -85,7 +85,7 @@ description: 工程學群自主學習與探究專題怎麼做？教你如何從�
 
 - [TISF 2026 臺灣國際科學展覽會（國立臺灣科學教育館）](https://twsf.ntsec.gov.tw/tisf/TISF2026/about-ntsec.html)
 - [學習歷程檔案作為學生準備申請入學備審資料來源之一（教育部）](https://www.edu.tw/News_Content.aspx?n=9E7AC85F1954DDA8&s=D0EACB4F71D86A83)
-- [主題：3D 列印從無到有（自主學習報告範例）](https://sdl.chsh.ntct.edu.tw/Pic/PublicFile/17182405000558.pdf)
+- [主題：3D 列印從無到有（自主學習報告範例）](https://www.chsh.ntct.edu.tw/ischool/resources/WID_141_1_526656ef92aceeef5cfc799fdbf2c82263ae7ada/CLS_141_1_5f1642f11fcb4708da65b0f41d686848a733a7c9/8fea5daca17793225e54185b9a21bdd8.pdf)
 - [國立清華大學動力機械工程學系（ColleGo!）](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011036)
 - [學習歷程大學申請入學第二階段準備指南](https://adm21.cmu.edu.tw/sites/default/files/%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B-%E5%A4%A7%E5%AD%B8%E7%94%B3%E8%AB%8B%E5%85%A5%E5%AD%B8%E7%AC%AC%E4%BA%8C%E9%9A%8E%E6%AE%B5%E6%BA%96%E5%82%99%E6%8C%87%E5%8D%97.pdf)
 - [成功大學資訊工程學系給高中生的建議](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
