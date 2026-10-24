@@ -6,9 +6,12 @@
 //   4. 是否有競賽報名截止日「已過期」（資料過時，需要更新）
 //   5. 哪些競賽「即將截止」（僅列入報告參考，不觸發提醒）
 //   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
+// 也檢查 public/learning-portfolio/activity-database.json，判斷在 activity-watchdog.lib.mjs：
+//   7. 精選活動是否 14 天內截止或已經截止
+//   8. 截止日已過或沒有截止日的活動，上次查證是否太久以前
 //
-// 由 .github/workflows/competitions-check.yml 每週執行；發現「過期」「欄位錯誤」
-// 或「連結失效」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
+// 由 .github/workflows/competitions-check.yml 每週執行；有 needsAttention 列出的項目時，
+// workflow 會自動開 / 更新一個 issue 提醒維護者。
 //
 // 本機執行：  node scripts/check-competitions.mjs
 //             node scripts/check-competitions.mjs --no-link-check   （略過連線檢查）
@@ -38,12 +41,19 @@ import {
 // check-competitions.lib.mjs 匯出的那個相容別名：別名為了讓單元測試打得到
 // 本機 http server 而放寬了 loopback，正式執行不該帶著那個放寬。
 import { runProbes, classifyLink, describeResult, isBlockedResult } from './link-health.lib.mjs';
+import { featuredAlert, selectActivityRecheck } from './activity-watchdog.lib.mjs';
 
 // 競賽資料只放在 public/，astro build 會把它複製進 dist/ 供頁面在瀏覽器 fetch，
 // 看門狗讀的也是這一份。
 const DATA_PATH = new URL('../public/advanced-resources/competitions.json', import.meta.url);
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
+
+// 多元表現資料庫沒有自己的看門狗。TRML、TISDC 兩份資料都有，放進同一份報告，
+// 同一件事才不會開成兩個 issue。欄位格式由 activity-database.test.mjs 在 CI 檢查。
+const ACTIVITY_PATH = new URL('../public/learning-portfolio/activity-database.json', import.meta.url);
+// 和頁面顯示「即將截止」的天數相同。
+const FEATURED_SOON_DAYS = 14;
 
 // 「狀態是未知」的條目多久該回去看一次。
 //
@@ -73,7 +83,7 @@ const RECHECK_URGENT_DAYS = 180;
 async function fail(message) {
     console.error(`❌ ${message}`);
     const report = [
-        '## 競賽資料檢查報告',
+        '## 競賽與活動資料檢查報告',
         '',
         '### ❌ 致命錯誤：competitions.json 無法檢查',
         '',
@@ -255,6 +265,21 @@ for (const comp of list) {
 const needsRecheck = selectNeedsRecheck(list, todayUTC, RECHECK_DAYS);
 const recheckUrgent = needsRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
 
+// 讀不到多元表現資料庫時寫進報告並通知，競賽的檢查照樣做完，不走 fail()。
+let activityData = null;
+let activityError = null;
+try {
+    activityData = JSON.parse(await readFile(ACTIVITY_PATH, 'utf8'));
+    if (!Array.isArray(activityData?.activities)) throw new Error('最外層必須是物件，且需包含 activities 陣列');
+} catch (err) {
+    activityError = `activity-database.json 無法檢查：${err.message}`;
+}
+const activities = activityError ? [] : activityData.activities;
+const featured = featuredAlert(activities, todayUTC, FEATURED_SOON_DAYS);
+// 已截止的活動留著本屆的截止日是 _readme 的規定，不算資料過期，只照查證日期分級，門檻和競賽相同。
+const activityRecheck = selectActivityRecheck(activities, todayUTC, RECHECK_DAYS);
+const activityRecheckUrgent = activityRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
+
 // 競賽頁是資料驅動的（前端 fetch competitions.json 後才渲染卡片），這些 url
 // 不會出現在 astro build 的 HTML 裡，ci.yml 的 lychee 掃不到，官網換網域或改版時
 // 連結會無聲失效，所以由本看門狗直接連線檢查。
@@ -320,10 +345,13 @@ const needsAttention =
     deadLinks.length > 0 ||
     blockedLinks.length > 0 ||
     staleCycle.length > 0 ||
+    activityError !== null ||
+    featured !== null ||
     // 只有逾 RECHECK_URGENT_DAYS 的才觸發通知，90 天那一批放進報告就好。
     // 90 筆條目每季一起越過門檻，要是每週都為它們通知，維護者第三週就會學會
     // 忽略整個看門狗。
     recheckUrgent.length > 0 ||
+    activityRecheckUrgent.length > 0 ||
     !coverageComplete;
 
 console.log(`競賽資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
@@ -340,12 +368,19 @@ console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
 if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（SSRF 政策擋下，必須處理）`);
 if (skippedLinks) console.log(`  未檢查　：${skippedLinks}（連線檢查逾時間預算）`);
+console.log(`多元表現資料庫：${activityError ?? `${activities.length} 筆活動`}`);
+console.log(`  精選快截止或已截止：${featured ? `${featured.label}（${featured.deadline}）` : '無'}`);
+console.log(
+    `  逾 ${RECHECK_DAYS} 天未重查：${activityRecheck.length}`
+    + `（其中逾 ${RECHECK_URGENT_DAYS} 天：${activityRecheckUrgent.length}）`,
+);
 
 // Markdown 報告，workflow 用它開 issue 或在既有 issue 留言。
-const lines = ['## 競賽資料檢查報告', ''];
+const lines = ['## 競賽與活動資料檢查報告', ''];
 lines.push(`- 檢查日期：${taipeiToday}（台灣時間）`);
 lines.push(`- 資料最後更新：${data.lastUpdated || '未標記'}`);
 lines.push(`- 競賽總數：${list.length}`);
+lines.push(activityError ? '- 多元表現資料庫：無法檢查' : `- 多元表現資料庫：${activities.length} 筆活動，資料最後更新 ${activityData.lastUpdated || '未標記'}`);
 lines.push('');
 
 if (schemaErrors.length) {
@@ -424,6 +459,46 @@ if (needsRecheck.length) {
     }
     if (needsRecheck.length > 40) {
         lines.push('', `（只列出最久沒查的 40 筆，其餘 ${needsRecheck.length - 40} 筆同類）`);
+    }
+    lines.push('');
+}
+if (activityError) {
+    lines.push('### ❌ 多元表現資料庫無法檢查', '', `- ${activityError}`, '');
+}
+if (featured) {
+    const { label, deadline, days } = featured;
+    lines.push(
+        `### 📌 多元表現資料庫的精選活動${days < 0 ? '已截止' : days === 0 ? '今天截止' : `剩 ${days} 天截止`}`,
+        '',
+        `- ${label}　截止日 ${deadline}${days < 0 ? `，已過 ${-days} 天` : ''}`,
+        '',
+        days < 0
+            ? '頁面已經收起精選區塊。請換一筆還能報名的活動當精選，或拿掉這一筆的 featured。'
+            : '截止後頁面會收起精選區塊，請先找好下一筆精選。',
+        '',
+    );
+}
+if (activityRecheck.length) {
+    const urgent = activityRecheckUrgent.length;
+    lines.push(
+        `### 🕰️ 多元表現資料庫逾 ${RECHECK_DAYS} 天未重查：${activityRecheck.length} 筆`
+        + (urgent ? `（其中 ${urgent} 筆已逾 ${RECHECK_URGENT_DAYS} 天）` : ''),
+        '',
+        '這裡列的是截止日已過或沒有截止日的活動。已截止的照 _readme 留著本屆的截止日，下一屆開放報名時，'
+        + '卡片仍然顯示「已截止」。資料裡沒有下一屆的日期，這裡也不推算，只列出上次查證是幾天前。',
+        '',
+        `逾 ${RECHECK_URGENT_DAYS} 天的會通知，${RECHECK_DAYS} 至 ${RECHECK_URGENT_DAYS} 天的只列在這裡。`
+        + '重查之後把 sourceCheckedAt 改成當天的日期。'
+        + '也在 competitions.json 的活動，符合競賽的規則時，上面競賽的段落會另外列出，兩份資料要各自更新。',
+        '',
+        '| 活動 | 上次查證 | 距今 | 頁面上的截止日 |',
+        '|---|---|---|---|',
+    );
+    for (const r of activityRecheck) {
+        const shown = r.closedDays !== null
+            ? `${r.deadline}（已過 ${r.closedDays} 天）`
+            : r.deadline ?? (r.rolling ? '全年招募' : '依官網公告');
+        lines.push(`| ${r.label} | ${r.checked} | ${r.days === Infinity ? '從未' : `${r.days} 天`} | ${shown} |`);
     }
     lines.push('');
 }
