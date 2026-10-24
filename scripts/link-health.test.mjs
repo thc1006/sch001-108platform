@@ -36,7 +36,7 @@ import {
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
-import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin } from './link-policy.lib.mjs';
+import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems } from './check-external-links.lib.mjs';
 
@@ -1080,6 +1080,44 @@ test('hijacked：比對是完全相等，不得順帶涵蓋子網域或相似網
     assert.equal(matchHijacked([], 'https://ieso-info.org/'), null);
     const hmun = validatePolicy({ version: 1, entries: [], hijacked: [validHijack({ match: { host: 'hmun.org' } })] }, TODAY).hijacked;
     assert.ok(matchHijacked(hmun, 'https://HMUN.org./x'), '主機名的大小寫與結尾的點不影響比對');
+});
+
+test('hijacked：轉址鏈的任何一跳是名單上的主機也算命中', () => {
+    const { hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack()] }, TODAY);
+    const via = (...to) => ({ status: 200, redirects: to.map((u) => ({ from: 'https://start.example/', status: 302, to: u })) });
+    const hit = matchHijackedHop(hijacked, via('https://a.example/', 'https://ieso-info.org/x?y=1', 'https://b.example/'));
+    assert.deepEqual(hit, { policy: hijacked[0], url: 'https://ieso-info.org/x?y=1' });
+    assert.equal(matchHijackedHop(hijacked, via('https://www.ieso-info.org/')), null, '子網域不算');
+    assert.equal(matchHijackedHop(hijacked, { status: 200 }), null, '沒有轉址');
+});
+
+test('hijacked：盤點的網址轉址經過名單上的主機也算接管命中，報告寫出轉址經過哪裡，而且點不了', () => {
+    const { hijacked } = validatePolicy({ version: 1, entries: [], hijacked: [validHijack()] }, TODAY);
+    // 轉址目標是接管主機給的，可以夾帶 @ 與 markdown 連結。
+    const to = 'https://ieso-info.org/lp?ref=@someone&x=[click](https://evil.example/)';
+    const r = { status: 200, finalUrl: to, redirects: [{ from: 'https://old.example/', status: 302, to }] };
+    const { bin, item } = judgeUrl({ url: 'https://old.example/', occurrences: [] }, r, { hijacked, entries: [] });
+    assert.equal(bin, 'hijacked', '轉址經過接管主機的網址被算成健康');
+    assert.equal(item.source, 'url');
+    assert.equal(item.via, to);
+    const report = renderReport(reportModel({ hijackedHits: [item] }));
+    assert.ok(report.includes(`  - 轉址經過：\`${to}\``), '轉址經過的網址要包成行內程式碼');
+    assert.equal(needsAttention({ dead: [], blocked: [], bareDead: [], expiringSoon: [], autoSignals: [], coverageComplete: true, hijackedHits: [item] }), true);
+});
+
+test('buildReport：盤點的網址轉址經過接管主機，不算健康，列進報告並觸發通知', () => {
+    const to = 'https://ieso-info.org/lp?subid=old.example';
+    const out = buildReport(buildInput({
+        targets: [{ url: 'https://old.example/', occurrences: [{ file: 'a.html', location: 'a[href]' }] }],
+        results: [{ status: 200, finalUrl: to, redirects: [{ from: 'https://old.example/', status: 302, to }] }],
+        policy: { entries: [], hijacked: policyWith({}) },
+    }));
+    assert.equal(out.attention, true, '轉址經過接管主機的網址沒有觸發通知');
+    assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=true\n');
+    assert.ok(out.report.includes(`  - 轉址經過：\`${to}\``), out.report);
+    const urlHealthy = out.consoleSummary[out.consoleSummary.indexOf('  本次檢查：1') + 1];
+    assert.equal(urlHealthy, '  健康　　：0', '轉址經過接管主機的網址算進了健康');
+    assert.ok(out.consoleSummary.includes('🚨 已知不可信任的主機：1（盤點的網址 1）'));
 });
 
 test('hijacked：判定排在三態分類之前，回 200 的接管主機不算健康；位址政策封鎖又排在接管之前', () => {

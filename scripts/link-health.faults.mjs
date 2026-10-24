@@ -613,7 +613,7 @@ const bareDomainMutations = [
 const reportMutations = [
     {
         name: "盤點網址的接管比對被拿掉（被接管的網域回 200，算成健康）",
-        apply: (s) => s.replace("    if (hijack) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'url' }, signal: null };", "    if (false) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'url' }, signal: null };"),
+        apply: (s) => s.replace("    if (hijack || hop) {", "    if (false) {"),
     },
     {
         name: "裸網域的接管比對被拿掉",
@@ -745,7 +745,7 @@ const reportMutations = [
     },
     {
         name: "盤點網址的接管命中標成 bare（直接連到也不通知）",
-        apply: (s) => s.replace("policy: hijack, source: 'url' }", "policy: hijack, source: 'bare' }"),
+        apply: (s) => s.replace("policy: hijack ?? hop.policy, source: 'url'", "policy: hijack ?? hop.policy, source: 'bare'"),
     },
     {
         name: "裸網域的接管命中標成 url（回到每週通知）",
@@ -762,6 +762,22 @@ const reportMutations = [
     {
         name: "報告的來源標籤對調",
         apply: (s) => s.replace("h.source === 'bare' ? '說明文字裡的裸網域（本身不觸發通知）'", "h.source !== 'bare' ? '說明文字裡的裸網域（本身不觸發通知）'"),
+    },
+    {
+        name: "轉址鏈命中被忽略（只比起點）",
+        apply: (s) => s.replace("    if (hijack || hop) {", "    if (hijack) {"),
+    },
+    {
+        name: "轉址鏈命中標成 bare（不通知）",
+        apply: (s) => s.replace("source: 'url', via: hop?.url", "source: hop ? 'bare' : 'url', via: hop?.url"),
+    },
+    {
+        name: "轉址鏈拿例外名單比對（永遠比不到）",
+        apply: (s) => s.replace("matchHijackedHop(hijacked, r)", "matchHijackedHop(entries, r)"),
+    },
+    {
+        name: "「轉址經過」不經 inertText（接管主機給的網址在 issue 裡點得到）",
+        apply: (s) => s.replace("轉址經過：${inertText(h.via)}", "轉址經過：${h.via}"),
     },
 ];
 
@@ -868,6 +884,10 @@ const policyLibMutations = [
     {
         name: "到期提醒少算最後一天（第 30 天到期的不通知）",
         apply: (s) => s.replace("        return left > 0 && left <= days;", "        return left > 0 && left < days;"),
+    },
+    {
+        name: "matchHijackedHop 永遠回 null（轉址到接管主機的連結被算成健康）",
+        apply: (s) => s.replace("export function matchHijackedHop(hijacked, r) {", "export function matchHijackedHop(hijacked, r) {\n    if (true) return null;"),
     },
 ];
 

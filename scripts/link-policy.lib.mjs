@@ -21,12 +21,14 @@
  * （IESO 舊網域）正是如此，現在是澳洲線上博弈站，回 200，而健檢會很有信心地把它算進「健康」。
  *
  * 名單上的主機不論狀態碼都單獨列出，不算進健康。盤點的網址直接連到它們的，由 check-link-policy
- * 擋在 PR；排程健檢在 workflow 裡先跑同一個檢查，這種網址走不到健檢那一步。說明文字點名它們
- * 是在警告讀者，期限內只列出、不通知，到期前 30 天起每週通知（見 expiringWithin）。名單上的主機
- * 在期限內狀態改變，例如重新上線或被原主收回，也不會通知，到期重新查證時才會處理；expires 最長
- * 180 天。規則沿用 allowlist 的同一套紀律（精確主機名、reason／owner／expires、到期讓確定性
- * CI 紅），另外多要求一個 evidence：到期時要重新查證的是「它是否仍被接管」，沒有當初看到什麼的
- * 紀錄就無從比對。
+ * 擋在 PR；排程健檢在 workflow 裡先跑同一個檢查，這種網址走不到健檢那一步。轉址才經過它們的，
+ * check-link-policy 看不到，由排程健檢通知（見 matchHijackedHop）。這只對內文仍點名的主機有效：
+ * 殭屍規則要求名單上的主機出現在盤點裡，內文不再點名它，那一筆就得刪掉，轉址比對也跟著失效。
+ * 說明文字點名它們是在警告讀者，期限內只列出、不通知，到期前 30 天起每週通知（見 expiringWithin）。
+ * 名單上的主機在期限內狀態改變，例如重新上線或被原主收回，也不會通知，到期重新查證時才會處理；
+ * expires 最長 180 天。規則沿用 allowlist 的同一套紀律（精確主機名、reason／owner／expires、到期讓
+ * 確定性 CI 紅），另外多要求一個 evidence：到期時要重新查證的是「它是否仍被接管」，沒有當初看到
+ * 什麼的紀錄就無從比對。
  * 同一台主機不可以同時以 host 列在 entries 與 hijacked，那是自相矛盾的宣告。
  *
  * 每一筆還要標 kind：hijacked（這台主機本身易主）或 terminus（接管鏈的終點，本來就
@@ -313,6 +315,20 @@ export function matchHijacked(hijacked, url) {
     }
     for (const e of hijacked ?? []) {
         if (e.match?.host !== undefined && canonicalHost(e.match.host) === host) return e;
+    }
+    return null;
+}
+
+/**
+ * matchHijackedHop 用 matchHijacked 比對探測結果轉址鏈的每一跳，回傳第一個命中的 { policy, url }，
+ * 沒有就回傳 null。起點不在這裡比對，呼叫端先用 matchHijacked 查過。
+ * @param {object[]} hijacked @param {{redirects?: {to: string}[]}} r probe 的結果
+ * @returns {{policy: object, url: string}|null}
+ */
+export function matchHijackedHop(hijacked, r) {
+    for (const hop of r?.redirects ?? []) {
+        const policy = matchHijacked(hijacked, hop.to);
+        if (policy) return { policy, url: hop.to };
     }
     return null;
 }

@@ -3,7 +3,7 @@
 // 檢查分組、通知條件與報告內容（link-health.test.mjs、hijack-signals.test.mjs）。
 
 import { classifyLink, describeResult, isBlockedResult, unverifiedBucket } from './link-health.lib.mjs';
-import { matchPolicy, matchHijacked, expiringWithin } from './link-policy.lib.mjs';
+import { matchPolicy, matchHijacked, matchHijackedHop, expiringWithin } from './link-policy.lib.mjs';
 import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
@@ -32,8 +32,12 @@ export function judgeUrl(target, r, { hijacked, entries }) {
     if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };
     // 接管的判定必須在三態分類之前：被接管的網域回的就是 200，
     // 走到 classifyLink 就會被算進 healthy，等於用檢查器替博弈站背書。
+    // 轉址鏈經過名單上的主機也算，讀者點下去一樣會被帶過去，check-link-policy 只看得到起點。
     const hijack = matchHijacked(hijacked, target.url);
-    if (hijack) return { bin: 'hijacked', item: { ...item, policy: hijack, source: 'url' }, signal: null };
+    const hop = hijack ? null : matchHijackedHop(hijacked, r);
+    if (hijack || hop) {
+        return { bin: 'hijacked', item: { ...item, policy: hijack ?? hop.policy, source: 'url', via: hop?.url }, signal: null };
+    }
     // 自動訊號跑在分類之外：它只是多一段報告，不動 dead/unverified/healthy。
     const sig = detectHijackSignals(target.url, r);
     const signal = sig ? { ...sig, source: 'url', occurrences: item.occurrences } : null;
@@ -111,8 +115,8 @@ export function splitSignals(autoSignals) {
  * needsAttention 判斷這一輪要不要開 issue 或留言，參數是 buildReport 整理好的結果。
  * 接管命中只算盤點網址的：說明文字點名接管主機是在警告讀者，名單期限內每週通知只是重複一件已知的事，
  * 到期前 30 天起改由 expiringSoon 通知。直接連到接管主機的網址，workflow 先跑的 check-link-policy
- * 就會擋下，單獨執行 check-external-links.mjs 時才會走到這裡。需處理的自動訊號也要算，偵測到了卻
- * 不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
+ * 就會擋下；轉址才經過接管主機的，check-link-policy 看不到，靠這裡通知。需處理的自動訊號也要算，
+ * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
  * 否則要等到期當天所有 PR 變紅才會發現。
  * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[], coverageComplete: boolean}} s
  * @returns {boolean}
@@ -189,7 +193,8 @@ export function renderReport(m) {
         lines.push('### 🚨 已知不可信任的主機（狀態碼健康，內容不可信）', '');
         lines.push(
             '這些主機列在 `scripts/link-policy.json` 的 `hijacked`。它們多半回 HTTP 200，三態分類看不出異常，所以靠這份名單標出來，',
-            '名單上的主機不算進健康。盤點的網址直接連到它們的，check-link-policy 會在 PR 擋下；這裡列到的話會觸發通知。',
+            '名單上的主機不算進健康。盤點的網址直接連到它們的，check-link-policy 會在 PR 擋下；轉址才經過它們的，',
+            'check-link-policy 看不到，列在這裡並觸發通知。',
             '說明文字點名它們是在警告讀者，這種命中本身不觸發通知；名單到期前 30 天起由到期提醒通知，到期當天起確定性 CI 會紅，',
             '要重新查證它是否仍被接管。',
             '',
@@ -198,6 +203,8 @@ export function renderReport(m) {
             const kindLabel = h.policy.kind === 'terminus' ? '接管鏈的終點（本來就不是教育網域）' : '這台主機本身已被接管';
             lines.push(`- **${h.policy.match.host}** — ${kindLabel}（本次探測：${h.reason}）`);
             lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域（本身不觸發通知）' : '盤點的網址（會觸發通知，請換成現行網址）'}　\`${h.url}\``);
+            // 轉址目標是被接管的主機給的，包成行內程式碼才不會在 issue 裡變成連結或 @ 人。
+            if (h.via) lines.push(`  - 轉址經過：${inertText(h.via)}`);
             lines.push(`  - 情況：${h.policy.reason}`);
             lines.push(`  - 證據：${h.policy.evidence}`);
             lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);
