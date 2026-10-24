@@ -1,4 +1,4 @@
-// 競賽看門狗對多元表現資料庫做的兩項判斷：精選活動快截止或已截止，以及該回官網重查的活動。
+// 競賽看門狗對多元表現資料庫做的判斷：精選活動快截止或已截止，以及該回官網重查的活動。
 // 判斷放在這裡給 activity-watchdog.test.mjs 測試，分級與寫報告在 check-competitions.mjs。
 import { DATE_ONLY_RE } from './check-competitions.lib.mjs';
 
@@ -32,10 +32,34 @@ export function featuredAlert(activities, todayUTC, soonDays) {
 }
 
 /**
+ * selectRecheckDue 列出 recheckOn 已到的活動，當天就算到，預定日最早的排前面。recheckOn 是編輯者
+ * 照官網寫的時間或上一屆的日期定下的回來查的日子，不是活動日期，所以不看截止日。
+ * recheckOn 不是存在的日期時當成沒填，由 selectActivityRecheck 照天數處理。
+ * @param {unknown} activities @param {number} todayUTC 台灣日曆日的 UTC 零點
+ * @returns {Array<{label: string, recheckOn: string, checked: string, note: string}>}
+ */
+export function selectRecheckDue(activities, todayUTC) {
+    const out = [];
+    for (const a of Array.isArray(activities) ? activities : []) {
+        if (a === null || typeof a !== 'object') continue;
+        const due = dayUTC(a.recheckOn);
+        if (due === null || due > todayUTC) continue;
+        out.push({
+            label: labelOf(a),
+            recheckOn: a.recheckOn,
+            checked: dayUTC(a.sourceCheckedAt) === null ? '（無）' : a.sourceCheckedAt,
+            note: typeof a.recheckNote === 'string' && a.recheckNote.trim() ? a.recheckNote : '（沒寫）',
+        });
+    }
+    return out.sort((x, y) => x.recheckOn.localeCompare(y.recheckOn));
+}
+
+/**
  * selectActivityRecheck 列出截止日已過或沒有截止日、而且 sourceCheckedAt 距今至少 minDays 天的活動，
  * 最久沒查的排前面。截止日還沒到的，頁面顯示的是查證過的本屆截止日，不列。已截止的照 _readme 留著
  * 本屆的截止日，下一屆何時開放資料裡沒有，所以和沒有截止日的一樣，只看上次查證是幾天前，不推算日期。
- * 沒有查證日期的算從未查過，days 是 Infinity。closedDays 是截止日已過幾天，沒有截止日時是 null。
+ * 有 recheckOn 的照預定日提醒，不列。沒有查證日期的算從未查過，days 是 Infinity。
+ * closedDays 是截止日已過幾天，沒有截止日時是 null。
  * @param {unknown} activities @param {number} todayUTC 台灣日曆日的 UTC 零點 @param {number} minDays
  * @returns {Array<{label: string, checked: string, days: number, deadline: unknown, rolling: boolean, closedDays: number|null}>}
  */
@@ -43,6 +67,7 @@ export function selectActivityRecheck(activities, todayUTC, minDays) {
     const out = [];
     for (const a of Array.isArray(activities) ? activities : []) {
         if (a === null || typeof a !== 'object') continue;
+        if (dayUTC(a.recheckOn) !== null) continue;
         const deadline = dayUTC(a.deadline);
         if (deadline !== null && deadline >= todayUTC) continue;
         const checked = dayUTC(a.sourceCheckedAt);

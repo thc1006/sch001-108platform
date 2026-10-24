@@ -2,12 +2,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { featuredAlert, selectActivityRecheck } from './activity-watchdog.lib.mjs';
+import { featuredAlert, selectActivityRecheck, selectRecheckDue } from './activity-watchdog.lib.mjs';
 
 const TODAY = Date.UTC(2027, 1, 15);
 const day = (n) => new Date(TODAY + n * 86_400_000).toISOString().slice(0, 10);
 const featuredWith = (deadline) => featuredAlert([{ title: '精選', featured: true, deadline }], TODAY, 14);
 const recheck = (list, minDays = 90) => selectActivityRecheck(list, TODAY, minDays);
+const due = (list) => selectRecheckDue(list, TODAY);
 
 test('精選：14 天內截止、截止日當天、已截止都要提醒，15 天以後不用', () => {
     assert.equal(featuredWith(day(15)), null);
@@ -88,13 +89,54 @@ test('重查：壞掉的輸入不讓看門狗出錯', () => {
     assert.equal(recheck([{ deadline: null }])[0].label, '（未命名）');
 });
 
+test('重查：有預定重查日的照預定日提醒，不套天數規則', () => {
+    const scheduled = { title: '有預定日', deadline: day(-30), recheckOn: day(30), recheckNote: '依據', sourceCheckedAt: day(-200) };
+    assert.deepEqual(recheck([scheduled]), []);
+});
+
+test('預定重查：當天就算到，前一天還不到', () => {
+    assert.equal(due([{ title: '今天', recheckOn: day(0), recheckNote: '依據' }]).length, 1);
+    assert.equal(due([{ title: '昨天', recheckOn: day(-1), recheckNote: '依據' }]).length, 1);
+    assert.deepEqual(due([{ title: '明天', recheckOn: day(1), recheckNote: '依據' }]), []);
+});
+
+test('預定重查：不看截止日，報名中的活動也照預定日', () => {
+    assert.equal(due([{ title: '報名中', deadline: day(30), recheckOn: day(0), recheckNote: '依據' }]).length, 1);
+});
+
+test('預定重查：帶出上次查證和依據，預定日最早的排前面', () => {
+    const out = due([
+        { title: '後', recheckOn: day(-1), sourceCheckedAt: day(-100), recheckNote: '官網寫的時間' },
+        { title: '先', recheckOn: day(-10), recheckNote: '上一屆的日期' },
+    ]);
+    assert.deepEqual(out, [
+        { label: '先', recheckOn: day(-10), checked: '（無）', note: '上一屆的日期' },
+        { label: '後', recheckOn: day(-1), checked: day(-100), note: '官網寫的時間' },
+    ]);
+});
+
+test('預定重查：日期壞掉的當成沒填，改照天數規則；輸入壞掉不出錯', () => {
+    const broken = { title: '壞掉', deadline: null, recheckOn: '2027/05/01', recheckNote: '依據', sourceCheckedAt: day(-200) };
+    assert.deepEqual(due([broken]), []);
+    assert.equal(recheck([broken]).length, 1);
+    assert.deepEqual(due(null), []);
+    assert.deepEqual(due([null, 42, 'x']), []);
+    assert.equal(due([{ recheckOn: day(0) }])[0].note, '（沒寫）');
+});
+
 // 欄位名稱和真實資料對不上時，上面用自造資料的測試照樣會過。
-test('重查：真實資料的每一筆都讀得到截止日與查證日期', () => {
+test('真實資料的每一筆都讀得到截止日、查證日期和預定重查日', () => {
     const { activities } = JSON.parse(
         readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
     );
-    const out = selectActivityRecheck(activities, Date.UTC(9999, 11, 31), 0);
-    assert.equal(out.length, activities.length);
+    const far = Date.UTC(9999, 11, 31);
+    const scheduled = activities.filter((a) => 'recheckOn' in a);
+    const dueAll = selectRecheckDue(activities, far);
+    assert.equal(dueAll.length, scheduled.length);
+    assert.deepEqual(dueAll.filter((r) => r.checked === '（無）' || r.note === '（沒寫）').map((r) => r.label), []);
+    const out = selectActivityRecheck(activities, far, 0);
+    assert.equal(out.length, activities.length - scheduled.length);
     assert.deepEqual(out.filter((r) => r.days === Infinity).map((r) => r.label), []);
-    assert.equal(out.filter((r) => r.closedDays !== null).length, activities.filter((a) => a.deadline !== null).length);
+    const dated = activities.filter((a) => !('recheckOn' in a) && a.deadline !== null);
+    assert.equal(out.filter((r) => r.closedDays !== null).length, dated.length);
 });
