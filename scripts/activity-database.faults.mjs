@@ -3,7 +3,7 @@
 //   A. 資料：精選的截止日和查證日期放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
 //   B. 判斷：改壞 activity-watchdog.lib.mjs，activity-watchdog.test.mjs 必須失敗
 //   C. 串接：改壞 check-competitions.mjs 接上這兩項判斷的地方，A 段至少要有一項失敗
-//   D. 查證日期：sourceCheckedAt 缺漏或不可信時，activity-database.test.mjs 必須失敗
+//   D. 查證日期：sourceCheckedAt 或 recheckOn 缺漏、不可信時，activity-database.test.mjs 必須失敗
 // 日期都從執行當天的台灣日期往前後推，哪一天跑結果都一樣。scripts/ 和資料複製到
 // .activity-faultcheck/ 再動手，版控裡的檔案不會被改到。
 //
@@ -49,6 +49,7 @@ const baseline = () => ({
         entry('本屆已截止', { deadline: day(-30) }),
         entry('沒有截止日', {}),
         entry('隨時可以報名', { rolling: true }),
+        entry('預定重查', { deadline: day(-30), recheckOn: day(30), recheckNote: '故障注入用的依據' }),
     ],
 });
 /** set 回傳一個函式，把 title 那一筆的 field 改成 value，value 是 undefined 時刪掉這個欄位。 */
@@ -192,6 +193,10 @@ const checkedCases = [
     ['sourceCheckedAt 是三天後', set('本屆已截止', 'sourceCheckedAt', day(3))],
     ['sourceCheckedAt 不是 YYYY-MM-DD', set('本屆已截止', 'sourceCheckedAt', '2026/10/24')],
     ['欄位名打成 sourceCheckedOn', (d) => { set('本屆已截止', 'sourceCheckedOn', day(0))(d); set('本屆已截止', 'sourceCheckedAt', undefined)(d); }],
+    ['recheckOn 不是 YYYY-MM-DD', set('預定重查', 'recheckOn', '2027/05/01')],
+    ['recheckOn 早於 sourceCheckedAt', set('預定重查', 'recheckOn', day(-1))],
+    ['有 recheckOn 沒有 recheckNote', set('預定重查', 'recheckNote', undefined)],
+    ['有 recheckNote 沒有 recheckOn', set('預定重查', 'recheckOn', undefined)],
 ];
 
 let pass = 0;
@@ -250,7 +255,7 @@ for (const m of scriptMutations) {
     mutate('check-competitions.mjs', m, () => dataCases.every((c) => dataProblem(c) === null), 'A 段全部照樣通過');
 }
 
-console.log('\nD. 查證日期不可信（activity-database.test.mjs 必須紅）：');
+console.log('\nD. 查證日期或預定重查日不可信（activity-database.test.mjs 必須紅）：');
 for (const [name, change] of checkedCases) {
     const data = baseline();
     change(data);

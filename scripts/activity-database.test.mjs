@@ -8,9 +8,15 @@ import { sourceCheckedProblem } from './check-competitions.lib.mjs';
 const DATA = JSON.parse(
     readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
 );
-const FIELDS = ['title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured', 'sourceCheckedAt', 'url'];
+const FIELDS = [
+    'title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured',
+    'sourceCheckedAt', 'recheckOn', 'recheckNote', 'url',
+];
 // #184 在這天逐筆開過官網，查證日期不能早於這天。
 const CHECKED_NOT_BEFORE = '2026-10-24';
+/** isDate 判斷 v 是不是存在的 YYYY-MM-DD 日期。 */
+const isDate = (v) =>
+    typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 
 /**
  * loadStatus 從頁面抽出 getActivityStatus，回傳一個以 at 為現在時間的版本。
@@ -50,13 +56,7 @@ test('欄位：照 _readme 的規定填', () => {
         assert.match(a.url, /^https:\/\//, `「${a.title}」的 url 不是 https`);
         if (a.deadline !== null) {
             // 頁面把解析不了的日期算成「報名中」。
-            const d = new Date(a.deadline);
-            assert.ok(
-                /^\d{4}-\d{2}-\d{2}$/.test(a.deadline) &&
-                    !Number.isNaN(d.getTime()) &&
-                    d.toISOString().slice(0, 10) === a.deadline,
-                `「${a.title}」的 deadline 不是 YYYY-MM-DD 格式的日期：${a.deadline}`,
-            );
+            assert.ok(isDate(a.deadline), `「${a.title}」的 deadline 不是 YYYY-MM-DD 格式的日期：${a.deadline}`);
         }
         if ('rolling' in a) {
             assert.equal(a.rolling, true, `「${a.title}」的 rolling 只能是 true`);
@@ -67,6 +67,19 @@ test('欄位：照 _readme 的規定填', () => {
     }
     const featured = DATA.activities.filter((a) => a.featured);
     assert.ok(featured.length <= 1, `featured 有 ${featured.length} 筆，頁面只顯示第一筆`);
+});
+
+test('預定重查日：附上依據，不早於上次查證', () => {
+    for (const a of DATA.activities) {
+        if (!('recheckOn' in a) && !('recheckNote' in a)) continue;
+        // 沒有依據的日子就是猜的，兩個欄位要一起填。
+        assert.ok('recheckOn' in a && 'recheckNote' in a, `「${a.title}」的 recheckOn 和 recheckNote 要一起填`);
+        const note = a.recheckNote;
+        assert.ok(typeof note === 'string' && note && note.trim() === note, `「${a.title}」的 recheckNote 是空的或前後有空白`);
+        assert.ok(isDate(a.recheckOn), `「${a.title}」的 recheckOn 不是 YYYY-MM-DD 格式的日期：${a.recheckOn}`);
+        // 重查後沒換掉的 recheckOn 會早於新的查證日期。
+        assert.ok(a.recheckOn >= a.sourceCheckedAt, `「${a.title}」的 recheckOn 早於 sourceCheckedAt，重查後要設下一個或拿掉`);
+    }
 });
 
 test('狀態：沒有截止日的看 rolling，有截止日的看還剩幾天', () => {
