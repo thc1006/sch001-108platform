@@ -25,8 +25,8 @@ import { staticImportSpecifiers } from './site-contract.lib.mjs';
 // 故障注入一律在 dist/ 的副本上進行，被破壞的那份絕不能是要部署的那份。
 //
 // 還原邏輯本身是寫對的（每個 case 都有 finally，最後也會確認基準回到綠燈才
-// exit 0），但只要有一個 case 在 undo 之前崩潰，dist/ 就會留著壞掉的內容，而
-// CI 下一步就把它上傳部署。用副本讓這個風險在結構上不存在，而不是靠還原寫得夠好。
+// exit 0），但只要有一個 case 在 undo 之前崩潰，dist/ 就會留著壞掉的內容，
+// 後面檢查或上傳的就是它。用副本讓這個風險在結構上不存在，而不是靠還原寫得夠好。
 const SOURCE = process.env.SITE_DIST_SOURCE || 'dist';
 const DIST = process.env.SITE_DIST_WORK || 'dist-faultcheck';
 if (!existsSync(SOURCE)) {

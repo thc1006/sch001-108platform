@@ -25,7 +25,7 @@ permissions:
   contents: read
 
 jobs:
-  # 相依只裝一次：建置、靜態檢查、上傳 artifact，再下載同一份跑瀏覽器測試。
+  # 這個 job 的相依只裝一次：建置、靜態檢查、上傳 artifact，再下載同一份跑瀏覽器測試。
   # 瀏覽器測試失敗而重跑時，建置與靜態檢查也會重跑。
   site:
     name: Site and Browser Integrity
@@ -77,21 +77,9 @@ jobs:
           PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
         run: npm run check:site
 
-      # link-policy 讀 check:site 寫出的 .reports/url-inventory.json，下面的
-      # test:site-faults 會拿 dist 的副本重寫這個檔，順序不能調換（#86）。
+      # link-policy 讀 check:site 寫出的 .reports/url-inventory.json，要排在它後面。
       - name: Verify external URL policy (deterministic, no network)
         run: npm run check:link-policy
-
-      # 這三組故障測試要用建置產物，留在這個 job。相依樹與安裝閘門的故障測試用不到，
-      # 在 Validate Data 跑。
-      - name: Prove the checker actually blocks (fault injection)
-        run: npm run test:site-faults
-
-      - name: Prove the taxonomy validators actually block (fault injection)
-        run: npm run test:taxonomy-faults
-
-      - name: Prove the vendor size budget actually blocks (fault injection)
-        run: npm run test:vendor-size-faults
 
       # 站內連結是 /sch001-108platform/ 開頭的根相對路徑。lychee 檢查本機檔案時要有
       # --root-dir 才解析得了這類連結，否則在解析階段就報錯，--exclude 和 --scheme
@@ -192,6 +180,48 @@ jobs:
             test-results/
           retention-days: 7
 
+  # 這三組故障測試要先建置。這裡自己建一份，和 site 平行跑，瀏覽器測試不必等它們。
+  # 相依樹與安裝閘門的故障測試用不到建置產物，在 Validate Data 跑。
+  faults:
+    name: Built-Site Fault Injection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      # 和 site 一樣，閘門要在 npm ci 之前。
+      - name: Verify the install-script gate is in effect (before installing)
+        run: node scripts/check-install-gate.mjs
+
+      - name: Install dependencies
+        run: npm ci --no-audit --fund=false
+
+      # 建置設定和 site 相同。site-faults 會先拿掉閘道 meta，這個值不影響三組的結果。
+      - name: Build the deployable artifact
+        env:
+          PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
+        run: npm run build:deployable
+
+      - name: Prove the checker actually blocks (fault injection)
+        run: npm run test:site-faults
+
+      - name: Prove the taxonomy validators actually block (fault injection)
+        run: npm run test:taxonomy-faults
+
+      - name: Prove the vendor size budget actually blocks (fault injection)
+        run: npm run test:vendor-size-faults
+
   data:
     name: Validate Data
     runs-on: ubuntu-latest
@@ -289,7 +319,7 @@ jobs:
   required:
     name: CI Required
     if: ${{ always() }}
-    needs: [site, data, gateway]
+    needs: [site, faults, data, gateway]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -297,13 +327,16 @@ jobs:
       - name: Require every deterministic job to have succeeded
         env:
           SITE_RESULT: ${{ needs.site.result }}
+          FAULTS_RESULT: ${{ needs.faults.result }}
           DATA_RESULT: ${{ needs.data.result }}
           GATEWAY_RESULT: ${{ needs.gateway.result }}
         run: |
           echo "Site and Browser Integrity : $SITE_RESULT"
+          echo "Built-Site Fault Injection : $FAULTS_RESULT"
           echo "Validate Data              : $DATA_RESULT"
           echo "AI Gateway Tests           : $GATEWAY_RESULT"
           test "$SITE_RESULT" = "success"
+          test "$FAULTS_RESULT" = "success"
           test "$DATA_RESULT" = "success"
           test "$GATEWAY_RESULT" = "success"
 
