@@ -41,6 +41,7 @@
     "audit:quotes": "node scripts/audit-quote-freshness.mjs",
     "check:install-gate": "node scripts/check-install-gate.mjs",
     "test:install-gate-faults": "node scripts/check-install-gate.faults.mjs",
+    "check:admission-cycle": "node scripts/check-admission-cycle.mjs",
     "test:admission-cycle": "node --test scripts/admission-cycle.test.mjs",
     "check:comments": "node scripts/check-comments.mjs",
     "test:comments": "node --test scripts/check-comments.test.mjs",

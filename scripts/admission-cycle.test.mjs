@@ -2,6 +2,7 @@
 // 今天的日期一律由測試傳入，哪一天跑結果都一樣。
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
     checkContent,
@@ -281,5 +282,10 @@ test('dueKeeps：recheckAfter 過了才列，當天不列，沒填的不列', ()
     });
     assert.deepEqual(dueKeeps(config, '2027-03-31'), []);
     assert.deepEqual(dueKeeps(config, '2027-04-01').map((d) => d.index), [0]);
+});
+
+test('admission-cycle.json：repo 裡的設定通過 validateConfig', () => {
+    const config = JSON.parse(readFileSync(new URL('./admission-cycle.json', import.meta.url), 'utf8'));
+    assert.deepEqual(validateConfig(config), []);
 });
 
