@@ -1,5 +1,5 @@
 {
-  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，以台灣時間計算，當天結束才算截止，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆，截止後區塊會收起來；url=官方網站連結，用 https。deadline 的填法：本屆還能報名的，填本屆的截止日。同一屆有好幾個報名管道的，填一般報名管道的截止日，其他管道的期限寫進 description。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。所有純文字欄位在頁面上都會先經過 escapeHtml。",
+  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，以台灣時間計算，當天結束才算截止，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆，截止後區塊會收起來；url=官方網站連結，用 https；sourceCheckedAt=最後一次開官網逐項查證這一筆的日期，用 YYYY-MM-DD，每一筆都要填，重查之後改成當天的日期。deadline 的填法：本屆還能報名的，填本屆的截止日。同一屆有好幾個報名管道的，填一般報名管道的截止日，其他管道的期限寫進 description。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。所有純文字欄位在頁面上都會先經過 escapeHtml。",
   "lastUpdated": "2026-10-24",
   "activities": [
     {
@@ -10,6 +10,7 @@
       "description": "高中數學團體賽，每隊 9 位學生，另有指導教師和試務人員各 1 位，兩者可以是同一人，活動費每人 1,000 元。比賽分團體、思考、個人、接力四項，每年 8 月第三個週末在台北、台中、高雄舉行；每年 5 月開放報名，2026 年的報名期是 5 月 20 日至 27 日，各區額滿就不再受理。",
       "deadline": "2026-05-27",
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://www.99cef.org.tw/trml-s/"
     },
     {
@@ -20,6 +21,7 @@
       "description": "臺大在杜鵑花節期間舉辦的學系博覽會，2026 年在綜合體育館展出，也有線上展；2027 年訂在 3 月 13 日至 14 日。2026 年另有教務處註冊組長講解申請入學備審資料的講座，須事先報名。",
       "deadline": null,
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://event.ntu.edu.tw/azalea/2026/"
     },
     {
@@ -30,6 +32,7 @@
       "description": "伊甸的志工服務包括暑假到偏遠地區服務約 4 至 6 天的服務學習營隊，以及每週至少上線一次、每次一小時陪服務使用者聊天或教學的「雲志工」。兩者都限年滿 15 歲，報名後要先通過面談；營隊錄取後要繳費，並參加 2 至 3 次籌備會議。",
       "deadline": null,
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://www.eden.org.tw/participate/become-a-volunteer/volunteer-needs/"
     },
     {
@@ -40,6 +43,7 @@
       "description": "由學生自發舉辦的資訊年會，不向與會者收費，2027 年 3 月 13 日在中央研究院人文社會科學館舉行。投稿到 1 月 15 日，一般票預定 1 月 30 日至 2 月 28 日；經濟上有需要的學生可申請開源築夢計畫，到 1 月 3 日截止，外縣市、離島或海外的與會者可申請遠道而來票，11 月 23 日至 1 月 17 日。",
       "deadline": "2027-02-28",
       "featured": true,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://sitcon.org/2027/"
     },
     {
@@ -50,6 +54,7 @@
       "description": "分產品設計、視覺設計、數位動畫、建築與景觀設計、時尚設計五類，國內外高級中等以上學校的在校學生可以個人報名，也可以跨校組隊，免報名費。2026 年 4 月 27 日開放報名，原訂 7 月 6 日截止，延長到 7 月 15 日。",
       "deadline": "2026-07-15",
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://www.tisdc.org/"
     },
     {
@@ -60,6 +65,7 @@
       "description": "亞洲與國際物理奧林匹亞國家代表隊的選拔從初選開始，具中華民國國籍的國中、高中職學生向就讀學校報名，初選錄取約 400 名，參賽者都有參賽證明。2027 年選拔的初選已在 2026 年 9 月 30 日截止報名，11 月 7 日考試。",
       "deadline": "2026-09-30",
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://tpmso.k12ea.gov.tw/ipho/"
     },
     {
@@ -71,6 +77,7 @@
       "deadline": null,
       "rolling": true,
       "featured": false,
+      "sourceCheckedAt": "2026-10-24",
       "url": "https://www.tcapo.gov.taipei/cp.aspx?n=64E92A82C8BB7529"
     }
   ]
