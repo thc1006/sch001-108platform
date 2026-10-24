@@ -3,11 +3,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { sourceCheckedProblem } from './check-competitions.lib.mjs';
 
 const DATA = JSON.parse(
     readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
 );
-const FIELDS = ['title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured', 'url'];
+const FIELDS = ['title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured', 'sourceCheckedAt', 'url'];
+// #184 在這天逐筆開過官網，查證日期不能早於這天。
+const CHECKED_NOT_BEFORE = '2026-10-24';
 
 /**
  * loadStatus 從頁面抽出 getActivityStatus，回傳一個以 at 為現在時間的版本。
@@ -59,6 +62,8 @@ test('欄位：照 _readme 的規定填', () => {
             assert.equal(a.rolling, true, `「${a.title}」的 rolling 只能是 true`);
             assert.equal(a.deadline, null, `「${a.title}」有截止日，不能標 rolling`);
         }
+        const why = sourceCheckedProblem(a.sourceCheckedAt, CHECKED_NOT_BEFORE);
+        assert.equal(why, null, `「${a.title}」的 sourceCheckedAt ${why}`);
     }
     const featured = DATA.activities.filter((a) => a.featured);
     assert.ok(featured.length <= 1, `featured 有 ${featured.length} 筆，頁面只顯示第一筆`);
