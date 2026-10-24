@@ -24,16 +24,23 @@ const ACTIVITIES = [
     entry('十五天後截止', { deadline: '2026-11-09', featured: true }),
 ];
 
-test('卡片的狀態、截止欄與精選卡', async ({ page }) => {
+/** open 在台灣時間 2026-10-25 00:30 開頁面，資料換成 activities，等卡片渲染完。 */
+async function open(page, activities) {
     await page.clock.setFixedTime(new Date('2026-10-25T00:30:00+08:00'));
     await page.route('**/learning-portfolio/activity-database.json', (route) =>
-        route.fulfill({ json: { activities: ACTIVITIES } }),
+        route.fulfill({ json: { activities } }),
     );
     await page.goto(PAGE);
+    await expect(page.locator('#activity-grid .activity-card')).toHaveCount(activities.length);
+}
 
-    const cards = page.locator('#activity-grid .activity-card');
-    await expect(cards).toHaveCount(ACTIVITIES.length);
-    const shown = await cards.evaluateAll((els) =>
+/** featuredOn 回傳把精選改成 title 那一筆的資料。 */
+const featuredOn = (title) => ACTIVITIES.map((a) => ({ ...a, featured: a.title === title }));
+
+test('卡片的狀態、截止欄與精選卡', async ({ page }) => {
+    await open(page, ACTIVITIES);
+
+    const shown = await page.locator('#activity-grid .activity-card').evaluateAll((els) =>
         els.map((el) => [
             el.querySelector('h3').textContent,
             el.querySelector('.rounded-full').textContent,
@@ -54,3 +61,29 @@ test('卡片的狀態、截止欄與精選卡', async ({ page }) => {
     await expect(featured.locator('.rounded-full').first()).toHaveText('報名中');
     await expect(featured).toContainText('報名截止：2026-11-09');
 });
+
+// loadData 先跑 renderFeatured 才渲染卡片，open 等到卡片出現才回來，所以這裡的隱藏不是還沒渲染。
+test('精選活動截止後收起精選區塊，卡片還在列表裡', async ({ page }) => {
+    await open(page, featuredOn('昨天截止'));
+    await expect(page.locator('#featured-section')).toBeHidden();
+    const heading = page.getByRole('heading', { name: '昨天截止', exact: true });
+    await expect(page.locator('#activity-grid .activity-card', { has: heading }).locator('.rounded-full')).toHaveText('已截止');
+});
+
+test('精選活動截止當天還放在精選區塊', async ({ page }) => {
+    await open(page, featuredOn('今天截止'));
+    const featured = page.locator('#featured-section');
+    await expect(featured).toBeVisible();
+    await expect(featured.locator('h3')).toHaveText('今天截止');
+    await expect(featured.locator('.rounded-full').first()).toHaveText('即將截止');
+});
+
+for (const [title, badge] of [['隨時可以報名', '全年招募'], ['還沒公布', '依官網公告']]) {
+    test(`沒有截止日的精選照常顯示：${badge}`, async ({ page }) => {
+        await open(page, featuredOn(title));
+        const featured = page.locator('#featured-section');
+        await expect(featured).toBeVisible();
+        await expect(featured.locator('h3')).toHaveText(title);
+        await expect(featured.locator('.rounded-full').first()).toHaveText(badge);
+    });
+}
