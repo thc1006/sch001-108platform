@@ -670,6 +670,7 @@ test('排程：needsAttention 在每一段都空的時候回 false，任何一�
     ]) {
         assert.equal(needsAttention({ ...empty, [key]: value }), true, key);
     }
+    assert.equal(needsAttention({ ...empty, hijackedHits: [{ source: 'bare' }] }), false, '說明文字裡的接管主機觸發了通知');
 });
 
 /** reportModel 是 renderReport 的參數：預設只有一個健康的網址、沒有裸網域，測試只覆寫自己關心的欄位。attention 沒給就照 needsAttention 算。 */
@@ -800,11 +801,11 @@ test('buildReport：盤點網址的接管命中列進報告、不算例外，並
     assert.ok(section.includes('出處：`advanced-resources/competitions.json /competitions/17/url`'), '接管主機要列出處');
     assert.ok(!out.report.includes('已列入例外政策的連結'), '接管命中被當成例外');
     assert.ok(!out.report.includes('全部外部連結正常'));
-    assert.ok(out.consoleSummary.includes('🚨 已知不可信任的主機：1'));
+    assert.ok(out.consoleSummary.includes('🚨 已知不可信任的主機：1（盤點的網址 1）'));
     assert.deepEqual(out.consoleTail, ['→ 有項目需要處理，已寫入報告。']);
 });
 
-test('buildReport：說明文字裡點名的接管主機列在同一段，標明來源與 kind', () => {
+test('buildReport：說明文字裡點名的接管主機列在同一段，標明來源與 kind，本身不觸發通知', () => {
     const out = buildReport(buildInput({
         ...bareHost('arcade.now', { status: 200 }),
         policy: { entries: [], hijacked: policyWith({ match: { host: 'arcade.now' }, kind: 'terminus' }) },
@@ -812,8 +813,12 @@ test('buildReport：說明文字裡點名的接管主機列在同一段，標明
     const section = out.report.slice(out.report.indexOf('### 🚨 已知不可信任的主機'));
     assert.ok(section.startsWith('### 🚨'), '說明文字裡的接管主機沒有列出來');
     assert.ok(section.includes('- **arcade.now** — 接管鏈的終點（本來就不是教育網域）（本次探測：HTTP 200）'), section.slice(0, 400));
-    assert.ok(section.includes('來源：說明文字裡的裸網域'));
+    assert.ok(section.includes('來源：說明文字裡的裸網域（本身不觸發通知）'));
     assert.ok(out.consoleSummary.includes('  健康　　：0'), '接管主機算進了裸網域的健康數');
+    assert.equal(out.attention, false, '說明文字裡的接管主機觸發了通知');
+    assert.equal(out.githubOutput, 'needs_attention=false\ncoverage_complete=true\n');
+    assert.ok(out.consoleSummary.includes('🚨 已知不可信任的主機：1（盤點的網址 0）'));
+    assert.ok(!out.report.includes('全部外部連結正常'), '列出接管主機時不可以寫全部正常');
 });
 
 test('buildReport：需處理的自動訊號列進報告並觸發通知，盤點網址與裸網域都算', () => {
@@ -926,6 +931,7 @@ test('buildReport：快到期的例外與接管警示觸發通知，報告的第
     assert.ok(first.includes('- 接管警示 `ieso-info.org`　到期日：2026-09-26　負責人：test-owner'), first.slice(0, 600));
     assert.ok(out.consoleSummary.includes('⏰ 30 天內到期的政策項目：2'));
     assert.deepEqual(out.consoleTail, ['→ 有項目需要處理，已寫入報告。']);
+    assert.ok(!out.report.includes('全部外部連結正常'), '要通知時報告不可以寫全部正常');
 });
 
 test('buildReport：link-policy.json 最早的到期日前 30 天內，沒有其他待辦也會通知', (t) => {
@@ -942,13 +948,29 @@ test('buildReport：link-policy.json 最早的到期日前 30 天內，沒有其
     assert.ok(out.report.includes('### ⏰ 連結政策有'), '報告沒有到期提醒');
 });
 
+test('排程：說明文字裡的接管主機只列出、不觸發通知，盤點網址的接管命中才觸發', () => {
+    const policy = { match: { host: 'ieso-info.org' }, kind: 'hijacked', reason: '測試用的接管說明', evidence: '測試用的證據', owner: 'test-owner', expires: '2026-10-01' };
+    const bare = { url: 'https://ieso-info.org/', host: 'ieso-info.org', occurrences: [], reason: 'HTTP 200', policy, source: 'bare' };
+    const linked = { url: 'https://hmun.org/x', occurrences: [], reason: 'HTTP 200', policy: { ...policy, match: { host: 'hmun.org' } }, source: 'url' };
+    const quiet = { dead: [], blocked: [], bareDead: [], expiringSoon: [], autoSignals: [], coverageComplete: true };
+    assert.equal(needsAttention({ ...quiet, hijackedHits: [bare] }), false, '說明文字裡的接管主機觸發了通知');
+    assert.equal(needsAttention({ ...quiet, hijackedHits: [bare, linked] }), true, '盤點網址的接管命中沒有觸發通知');
+    const onlyBare = renderReport(reportModel({ hijackedHits: [bare] }));
+    assert.ok(onlyBare.includes('- **ieso-info.org**'), '說明文字裡的接管主機要照樣列出');
+    assert.ok(!onlyBare.includes('全部外部連結正常'), '列出接管主機時不可以寫全部正常');
+    const both = renderReport(reportModel({ hijackedHits: [bare, linked] }));
+    const entry = (host) => both.slice(both.indexOf(`- **${host}**`)).split('\n').slice(0, 2).join('\n');
+    assert.match(entry('ieso-info.org'), /來源：說明文字裡的裸網域（本身不觸發通知）/);
+    assert.match(entry('hmun.org'), /來源：盤點的網址（會觸發通知/);
+});
+
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
     const entries = validatePolicy({ version: 1, entries: [validEntry()] }, TODAY).entries;
     assert.ok(matchPolicy(entries, 'https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html'));
 });
 
 
-// hijacked 名單列出不可信任的主機，方向與 allowlist 相反：放大訊號，不是壓低。
+// hijacked 名單列出不可信任的主機：不算進健康，盤點的網址不可以連到它們，說明文字裡的警告在期限內只列出、不通知。
 
 const validHijack = (over = {}) => ({
     match: { host: 'ieso-info.org' },

@@ -164,7 +164,7 @@ for (const e of entries) {
     console.log(`      ${e._key}  → ${e.expires} 到期（owner: ${e.owner}）`);
 }
 console.log(
-    `  接管警示：${hijacked.length} 筆（放大訊號，不是例外；命中者不論狀態碼一律列出且永不計入健康）`,
+    `  接管警示：${hijacked.length} 筆（不是例外：名單上的主機不算進健康，盤點的網址不可以連到它們）`,
 );
 for (const h of hijacked) {
     console.log(`      ${h.match.host}  [${h.kind}]  → ${h.expires} 需重新查證（owner: ${h.owner}）`);

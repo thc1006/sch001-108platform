@@ -109,8 +109,10 @@ export function splitSignals(autoSignals) {
 
 /**
  * needsAttention 判斷這一輪要不要開 issue 或留言，參數是 buildReport 整理好的結果。
- * 被接管的網域一定要讓人看到：它回 200，不會出現在任何一個「壞掉」的桶子裡。需處理的自動訊號也要算，
- * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
+ * 接管命中只算盤點網址的：說明文字點名接管主機是在警告讀者，名單期限內每週通知只是重複一件已知的事，
+ * 到期前 30 天起改由 expiringSoon 通知。直接連到接管主機的網址，workflow 先跑的 check-link-policy
+ * 就會擋下，單獨執行 check-external-links.mjs 時才會走到這裡。需處理的自動訊號也要算，偵測到了卻
+ * 不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
  * 否則要等到期當天所有 PR 變紅才會發現。
  * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[], coverageComplete: boolean}} s
  * @returns {boolean}
@@ -120,7 +122,7 @@ export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiring
         dead.length > 0 ||
         blocked.length > 0 ||
         bareDead.length > 0 ||
-        hijackedHits.length > 0 ||
+        hijackedHits.some((h) => h.source === 'url') ||
         expiringSoon.length > 0 ||
         splitSignals(autoSignals).actionable.length > 0 ||
         !coverageComplete
@@ -186,15 +188,16 @@ export function renderReport(m) {
     if (hijackedHits.length) {
         lines.push('### 🚨 已知不可信任的主機（狀態碼健康，內容不可信）', '');
         lines.push(
-            '這些主機列在 `scripts/link-policy.json` 的 `hijacked`。它們多半回 HTTP 200——三態分類看不出任何異常，',
-            '所以必須靠這份名單標出來。名單只會**放大**訊號，不會壓低任何東西；每一筆都有到期日，到期會讓確定性 CI 紅，',
-            '強迫重新查證「它是否仍被接管」。',
+            '這些主機列在 `scripts/link-policy.json` 的 `hijacked`。它們多半回 HTTP 200，三態分類看不出異常，所以靠這份名單標出來，',
+            '名單上的主機不算進健康。盤點的網址直接連到它們的，check-link-policy 會在 PR 擋下；這裡列到的話會觸發通知。',
+            '說明文字點名它們是在警告讀者，這種命中本身不觸發通知；名單到期前 30 天起由到期提醒通知，到期當天起確定性 CI 會紅，',
+            '要重新查證它是否仍被接管。',
             '',
         );
         for (const h of hijackedHits) {
             const kindLabel = h.policy.kind === 'terminus' ? '接管鏈的終點（本來就不是教育網域）' : '這台主機本身已被接管';
             lines.push(`- **${h.policy.match.host}** — ${kindLabel}（本次探測：${h.reason}）`);
-            lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域' : '盤點的網址'}　\`${h.url}\``);
+            lines.push(`  - 來源：${h.source === 'bare' ? '說明文字裡的裸網域（本身不觸發通知）' : '盤點的網址（會觸發通知，請換成現行網址）'}　\`${h.url}\``);
             lines.push(`  - 情況：${h.policy.reason}`);
             lines.push(`  - 證據：${h.policy.evidence}`);
             lines.push(`  - 負責人：${h.policy.owner}　重新查證期限：${h.policy.expires}`);
@@ -448,7 +451,8 @@ export function renderReport(m) {
         lines.push('', '這裡仍然會一起檢查（縱深防禦），只是同一筆失效可能在兩份報告都看得到。', '', '</details>', '');
     }
 
-    if (!attention && !unverified.length && !bareOther.length) lines.push('✅ 全部外部連結正常。', '');
+    // 有列出接管主機時不寫這句，免得和上面的警示互相矛盾。
+    if (!attention && !unverified.length && !bareOther.length && !hijackedHits.length) lines.push('✅ 全部外部連結正常。', '');
 
     return lines.join('\n');
 }
@@ -482,7 +486,7 @@ function consoleLines(m) {
     summary.push(`  無法判定：${bareOther.length}`);
     if (bareSkipped) summary.push(`  未檢查　：${bareSkipped}（逾時間預算）`);
     if (expiringSoon.length) summary.push(`⏰ ${EXPIRY_NOTICE_DAYS} 天內到期的政策項目：${expiringSoon.length}`);
-    if (hijackedHits.length) summary.push(`🚨 已知不可信任的主機：${hijackedHits.length}`);
+    if (hijackedHits.length) summary.push(`🚨 已知不可信任的主機：${hijackedHits.length}（盤點的網址 ${hijackedHits.filter((h) => h.source === 'url').length}）`);
     // 無條件印，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
     // 在 CI log 上長得一模一樣。
     summary.push(
@@ -510,7 +514,7 @@ export function buildReport(input) {
     const blocked = [];
     const unverified = [];
     const suppressed = [];
-    // 已知被接管的主機。不論狀態碼都要單獨列出，且永不計入健康。
+    // 命中 hijacked 名單的主機，不論狀態碼都單獨列出、不算進健康。哪些要通知見 needsAttention。
     const hijackedHits = [];
     // 自動偵測到的可疑訊號（#117）。與上面那份名單的差別是它不需要有人先發現：
     // 訊號 A 看轉址終點有沒有離開起點的網域，訊號 B 看標題／描述有沒有蹲域名的
