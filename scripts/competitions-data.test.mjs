@@ -232,12 +232,14 @@ test('data：本輪查證到的賽事日期與週期', () => {
     assert.equal(conrad.eventEndsAt, '2027-04-24');
     assert.equal(conrad.cycle.closes, '10-29');
 
-    // ESU 官網：「The IPSC programme will run from Monday, 13 July to Saturday, 18 July 2026.」
-    //           「The deadline for submitting the preliminary registration form is Friday, 24 November 2025」
+    // ESU 官網：「IPSC Week will take place Monday 5 – Friday 9 July 2027」
+    //           「Registrations forms are to be filled out by national organisers only」
+    // 11/30 是各國主辦單位登記國內選拔賽的期限。官網名單沒有台灣的主辦單位，學生沒有可報名的截止日，不放進 cycle.closes
     const esu = find('ESU 國際公眾演說');
-    assert.equal(esu.eventStartsAt, '2026-07-13');
-    assert.equal(esu.eventEndsAt, '2026-07-18');
-    assert.equal(esu.cycle.closes, '11');
+    assert.equal(esu.eventStartsAt, '2027-07-05');
+    assert.equal(esu.eventEndsAt, '2027-07-09');
+    assert.equal(esu.cycle, undefined);
+    assert.ok(esu.registrationNote?.includes('無公開報名'));
 
     // Brain Bee 主辦單位報名頁：「報名：2026 年 5 月 9 日截止」
     //   第一階段 2026-05-23 筆試、第二階段 2026-06-27 口試
@@ -352,7 +354,7 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
 //
 // 兩種形狀：
 //   1. 已辦完的賽事寫成「2025-12-13 舉行」，讀起來像即將舉行，比不顯示還糟。
-//   2. 欄位標題與內容各說各話：ESU 沒有 deadline 但有 cycle 與賽事日期，標題若只看
+//   2. 欄位標題與內容各說各話：沒有 deadline、只有 cycle 與賽事日期的條目，標題若只看
 //      c.eventStartsAt 就會寫「賽事日期」，內容卻是「每年約 11 月截止 · …」。
 //      所以標題與內容都由 deadlineField() 決定。
 test('display：已辦完的賽事必須標示為已結束，且欄位標題與內容一致', () => {

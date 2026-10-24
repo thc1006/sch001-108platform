@@ -343,8 +343,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       // 卡片底部那一欄的標題與內容。OPhO、NASA 這類沒有公布報名截止日的競賽，欄位裡
       // 放的是賽事日期，標題寫「報名截止」就等於把賽事日期說成報名截止。標題由內容實際
-      // 是什麼決定，兩者一起算、放在同一個物件回傳，才不會各算各的：ESU 沒有 deadline，
-      // 但有 cycle 與賽事日期，內容同時講報名與賽事，標題是「報名截止」。
+      // 是什麼決定，兩者一起算、放在同一個物件回傳，才不會各算各的：沒有 deadline、只有
+      // cycle 與賽事日期時，內容同時講報名與賽事，標題是「報名截止」。
       function deadlineField(c, s) {
         const ev = eventLabel(c);
         const value = deadlineLabel(c, s);
