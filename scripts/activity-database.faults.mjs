@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 多元表現資料庫那幾項檢查的故障注入，一次弄壞一處，確認該通知的會通知、該紅的會紅：
-//   A. 資料：精選的截止日和查證日期放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
+//   A. 資料：精選的截止日、查證日期和預定重查日放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
 //   B. 判斷：改壞 activity-watchdog.lib.mjs，activity-watchdog.test.mjs 必須失敗
 //   C. 串接：改壞 check-competitions.mjs 接上這兩項判斷的地方，A 段至少要有一項失敗
 //   D. 查證日期：sourceCheckedAt 或 recheckOn 缺漏、不可信時，activity-database.test.mjs 必須失敗
@@ -148,6 +148,30 @@ const dataCases = [
         report: /\| 本屆已截止 \| （無） \| 從未 \|/,
         mutate: set('本屆已截止', 'sourceCheckedAt', undefined),
     },
+    {
+        name: '預定重查日是今天：通知',
+        attention: true,
+        report: /- 預定重查　預定重查日 \S+，上次查證 \S+。依據：故障注入用的依據/,
+        mutate: set('預定重查', 'recheckOn', day(0)),
+    },
+    {
+        name: '預定重查日是明天：還不通知',
+        attention: false,
+        absent: /到了預定重查日/,
+        mutate: set('預定重查', 'recheckOn', day(1)),
+    },
+    {
+        name: '有預定重查日的活動 200 天沒查：照預定日，不套 180 天',
+        attention: false,
+        absent: /到了預定重查日|\| 預定重查 \|/,
+        mutate: set('預定重查', 'sourceCheckedAt', day(-200)),
+    },
+    {
+        name: '預定重查日格式壞掉：改照 180 天的規則',
+        attention: true,
+        report: /\| 預定重查 \| \S+ \| 180 天 \|/,
+        mutate: (d) => { set('預定重查', 'recheckOn', '2027/05/01')(d); set('預定重查', 'sourceCheckedAt', day(-180))(d); },
+    },
     { name: '資料不是合法的 JSON：通知', attention: true, report: /多元表現資料庫無法檢查/, data: '{' },
     { name: '沒有 activities 陣列：通知', attention: true, report: /需包含 activities 陣列/, data: '{}' },
 ];
@@ -177,6 +201,11 @@ const libMutations = [
     ['重查不排序', 'return out.sort((x, y) => y.days - x.days);', 'return out;'],
     ['全年招募的標記丟掉，報告會寫成依官網公告', "rolling: a.rolling === true,", 'rolling: false,'],
     ['截止已過幾天沒算', 'closedDays: deadline === null ? null :', 'closedDays: true ? null :'],
+    ['預定重查日當天不算到', 'if (due === null || due > todayUTC) continue;', 'if (due === null || due >= todayUTC) continue;'],
+    ['有預定重查日的照樣套天數規則', '        if (dayUTC(a.recheckOn) !== null) continue;\n', ''],
+    ['格式壞掉的預定重查日也不套天數規則', 'if (dayUTC(a.recheckOn) !== null) continue;', 'if (a.recheckOn !== undefined) continue;'],
+    ['預定重查不排序', 'return out.sort((x, y) => x.recheckOn.localeCompare(y.recheckOn));', 'return out;'],
+    ['依據沒帶進報告', "a.recheckNote.trim() ? a.recheckNote : '（沒寫）',", "a.recheckNote.trim() ? '（沒寫）' : '（沒寫）',"],
 ];
 const scriptMutations = [
     ['精選提醒沒有接上通知', '    featured !== null ||\n', ''],
@@ -186,6 +215,8 @@ const scriptMutations = [
     ['精選的門檻用了競賽的 30 天', 'featuredAlert(activities, todayUTC, FEATURED_SOON_DAYS)', 'featuredAlert(activities, todayUTC, SOON_DAYS)'],
     ['報告少了精選那一段', 'if (featured) {', 'if (false) {'],
     ['報告少了重查那一段', 'if (activityRecheck.length) {', 'if (false) {'],
+    ['預定重查沒有接上通知', '    recheckDue.length > 0 ||\n', ''],
+    ['報告少了預定重查那一段', 'if (recheckDue.length) {', 'if (false) {'],
 ];
 const checkedCases = [
     ['一筆沒有 sourceCheckedAt', set('本屆已截止', 'sourceCheckedAt', undefined)],
@@ -197,6 +228,7 @@ const checkedCases = [
     ['recheckOn 早於 sourceCheckedAt', set('預定重查', 'recheckOn', day(-1))],
     ['有 recheckOn 沒有 recheckNote', set('預定重查', 'recheckNote', undefined)],
     ['有 recheckNote 沒有 recheckOn', set('預定重查', 'recheckOn', undefined)],
+    ['recheckOn 晚於上次查證一年後', set('預定重查', 'recheckOn', day(400))],
 ];
 
 let pass = 0;
@@ -208,7 +240,7 @@ const bad = (name, why) => { fail++; console.log(`  ❌ ${name} → ${why}`); };
 function baselineOk() {
     writeData(baseline());
     const r = watchdog();
-    const quiet = r.code === 0 && !r.attention && !/多元表現資料庫(的精選|逾|無法)/.test(r.report);
+    const quiet = r.code === 0 && !r.attention && !/多元表現資料庫(的精選|逾|無法|到了)/.test(r.report);
     return quiet && passes('activity-watchdog.test.mjs') && passes('activity-database.test.mjs');
 }
 

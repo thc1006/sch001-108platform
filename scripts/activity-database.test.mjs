@@ -69,7 +69,7 @@ test('欄位：照 _readme 的規定填', () => {
     assert.ok(featured.length <= 1, `featured 有 ${featured.length} 筆，頁面只顯示第一筆`);
 });
 
-test('預定重查日：附上依據，不早於上次查證', () => {
+test('預定重查日：附上依據，不早於上次查證，也不晚於它一年後', () => {
     for (const a of DATA.activities) {
         if (!('recheckOn' in a) && !('recheckNote' in a)) continue;
         // 沒有依據的日子就是猜的，兩個欄位要一起填。
@@ -79,6 +79,10 @@ test('預定重查日：附上依據，不早於上次查證', () => {
         assert.ok(isDate(a.recheckOn), `「${a.title}」的 recheckOn 不是 YYYY-MM-DD 格式的日期：${a.recheckOn}`);
         // 重查後沒換掉的 recheckOn 會早於新的查證日期。
         assert.ok(a.recheckOn >= a.sourceCheckedAt, `「${a.title}」的 recheckOn 早於 sourceCheckedAt，重查後要設下一個或拿掉`);
+        // 有 recheckOn 的不套 180 天的規則，設得太遠就一直不會被提醒。
+        const checked = String(a.sourceCheckedAt);
+        const limit = `${Number(checked.slice(0, 4)) + 1}${checked.slice(4)}`;
+        assert.ok(a.recheckOn <= limit, `「${a.title}」的 recheckOn 晚於上次查證一年後的 ${limit}`);
     }
 });
 

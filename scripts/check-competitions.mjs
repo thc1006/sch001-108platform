@@ -8,7 +8,8 @@
 //   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
 // 也檢查 public/learning-portfolio/activity-database.json，判斷在 activity-watchdog.lib.mjs：
 //   7. 精選活動是否 14 天內截止或已經截止
-//   8. 截止日已過或沒有截止日的活動，上次查證是否太久以前
+//   8. 有 recheckOn 的活動是否到了預定重查日
+//   9. 其他截止日已過或沒有截止日的活動，上次查證是否太久以前
 //
 // 由 .github/workflows/competitions-check.yml 每週執行；有 needsAttention 列出的項目時，
 // workflow 會自動開 / 更新一個 issue 提醒維護者。
@@ -41,7 +42,7 @@ import {
 // check-competitions.lib.mjs 匯出的那個相容別名：別名為了讓單元測試打得到
 // 本機 http server 而放寬了 loopback，正式執行不該帶著那個放寬。
 import { runProbes, classifyLink, describeResult, isBlockedResult } from './link-health.lib.mjs';
-import { featuredAlert, selectActivityRecheck } from './activity-watchdog.lib.mjs';
+import { featuredAlert, selectActivityRecheck, selectRecheckDue } from './activity-watchdog.lib.mjs';
 
 // 競賽資料只放在 public/，astro build 會把它複製進 dist/ 供頁面在瀏覽器 fetch，
 // 看門狗讀的也是這一份。
@@ -276,6 +277,7 @@ try {
 }
 const activities = activityError ? [] : activityData.activities;
 const featured = featuredAlert(activities, todayUTC, FEATURED_SOON_DAYS);
+const recheckDue = selectRecheckDue(activities, todayUTC);
 // 已截止的活動留著本屆的截止日是 _readme 的規定，不算資料過期，只照查證日期分級，門檻和競賽相同。
 const activityRecheck = selectActivityRecheck(activities, todayUTC, RECHECK_DAYS);
 const activityRecheckUrgent = activityRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
@@ -347,6 +349,7 @@ const needsAttention =
     staleCycle.length > 0 ||
     activityError !== null ||
     featured !== null ||
+    recheckDue.length > 0 ||
     // 只有逾 RECHECK_URGENT_DAYS 的才觸發通知，90 天那一批放進報告就好。
     // 90 筆條目每季一起越過門檻，要是每週都為它們通知，維護者第三週就會學會
     // 忽略整個看門狗。
@@ -370,6 +373,7 @@ if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（
 if (skippedLinks) console.log(`  未檢查　：${skippedLinks}（連線檢查逾時間預算）`);
 console.log(`多元表現資料庫：${activityError ?? `${activities.length} 筆活動`}`);
 console.log(`  精選快截止或已截止：${featured ? `${featured.label}（${featured.deadline}）` : '無'}`);
+console.log(`  到了預定重查日：${recheckDue.length}`);
 console.log(
     `  逾 ${RECHECK_DAYS} 天未重查：${activityRecheck.length}`
     + `（其中逾 ${RECHECK_URGENT_DAYS} 天：${activityRecheckUrgent.length}）`,
@@ -478,14 +482,27 @@ if (featured) {
         '',
     );
 }
+if (recheckDue.length) {
+    lines.push(
+        `### 📅 多元表現資料庫到了預定重查日：${recheckDue.length} 筆`,
+        '',
+        'recheckOn 是編輯者照官網寫的時間或上一屆的日期定下的回來查的日子，不是活動日期。'
+        + '重查之後把 sourceCheckedAt 改成當天的日期，再照官網的資訊設下一個 recheckOn，或把 recheckOn 和 recheckNote 一起拿掉。',
+        '',
+    );
+    for (const r of recheckDue) {
+        lines.push(`- ${r.label}　預定重查日 ${r.recheckOn}，上次查證 ${r.checked}。依據：${r.note}`);
+    }
+    lines.push('');
+}
 if (activityRecheck.length) {
     const urgent = activityRecheckUrgent.length;
     lines.push(
         `### 🕰️ 多元表現資料庫逾 ${RECHECK_DAYS} 天未重查：${activityRecheck.length} 筆`
         + (urgent ? `（其中 ${urgent} 筆已逾 ${RECHECK_URGENT_DAYS} 天）` : ''),
         '',
-        '這裡列的是截止日已過或沒有截止日的活動。已截止的照 _readme 留著本屆的截止日，下一屆開放報名時，'
-        + '卡片仍然顯示「已截止」。資料裡沒有下一屆的日期，這裡也不推算，只列出上次查證是幾天前。',
+        '這裡列的是截止日已過或沒有截止日、也沒有 recheckOn 的活動。已截止的照 _readme 留著本屆的截止日，'
+        + '下一屆開放報名時，卡片仍然顯示「已截止」。資料裡沒有下一屆的日期，這裡也不推算，只列出上次查證是幾天前。',
         '',
         `逾 ${RECHECK_URGENT_DAYS} 天的會通知，${RECHECK_DAYS} 至 ${RECHECK_URGENT_DAYS} 天的只列在這裡。`
         + '重查之後把 sourceCheckedAt 改成當天的日期。',
