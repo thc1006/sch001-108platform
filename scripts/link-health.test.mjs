@@ -36,9 +36,9 @@ import {
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
-import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
+import { validatePolicy, matchPolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
-import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport } from './check-external-links.lib.mjs';
+import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems } from './check-external-links.lib.mjs';
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
@@ -657,13 +657,14 @@ test('政策：只降低 unverified 的噪音，404／410 與網域解析不到�
 
 // needsAttention 原本是頂層的 || 運算式，讀了宣告在後面的 const，只有前面的桶子全空的那一週才會崩潰（19f28e0）。
 test('排程：needsAttention 在每一段都空的時候回 false，任何一段有東西就回 true', () => {
-    const empty = { dead: [], blocked: [], bareDead: [], hijackedHits: [], autoSignals: [], coverageComplete: true };
+    const empty = { dead: [], blocked: [], bareDead: [], hijackedHits: [], expiringSoon: [], autoSignals: [], coverageComplete: true };
     assert.equal(needsAttention(empty), false);
     for (const [key, value] of [
         ['dead', [{}]],
         ['blocked', [{}]],
         ['bareDead', [{}]],
         ['hijackedHits', [{ source: 'url' }]],
+        ['expiringSoon', [{}]],
         ['autoSignals', [{ confidence: 'actionable' }]],
         ['coverageComplete', false],
     ]) {
@@ -677,7 +678,7 @@ const reportModel = (over = {}) => {
         todayISO: TODAY, inventoryTotal: 1, targetsCount: 1, healthy: 1, dead: [], blocked: [], urlBlockedCount: 0,
         unverified: [], suppressed: [], hijackedHits: [], autoSignals: [], bareInfo: { total: 0, alreadyCoveredByUrls: 0 },
         bareRejected: [], bareUnresolved: [], bareHostsCount: 0, bareHealthy: 0, bareDead: [], bareOther: [],
-        skipped: 0, bareSkipped: 0, budgetMs: 12 * 60_000, bareBudgetMs: 3 * 60_000, coverageComplete: true, ...over,
+        skipped: 0, bareSkipped: 0, budgetMs: 12 * 60_000, bareBudgetMs: 3 * 60_000, coverageComplete: true, expiringSoon: [], ...over,
     };
     return { attention: needsAttention(m), ...m };
 };
@@ -886,6 +887,59 @@ test('buildReport：失效與例外照分類放，例外不觸發通知', () => 
     assert.ok(out.report.includes('<details><summary>📋 已列入例外政策的連結 1 筆'));
     const quiet = buildReport(buildInput({ targets: [{ url: 'https://www.ptt.cc/bbs/x', occurrences: [] }], results: [{ status: 403 }], policy: { entries, hijacked: [] } }));
     assert.equal(quiet.attention, false, '列入例外的 403 不該觸發通知');
+});
+
+test('政策：expiringWithin 列出 days 天以內到期的項目，照 UTC 日曆日算', () => {
+    const at = (expires) => ({ match: { host: 'www.ptt.cc' }, expires });
+    // TODAY 是 2026-08-27。明天與第 30 天到期的要列，第 31 天的不列；今天與昨天到期的是 validatePolicy 的錯誤，也不列。
+    const items = ['2026-08-28', '2026-09-26', '2026-09-27', '2026-08-27', '2026-08-26'].map(at);
+    assert.deepEqual(expiringWithin(items, TODAY, 30).map((e) => e.expires), ['2026-08-28', '2026-09-26']);
+    assert.deepEqual(expiringWithin([at('2027-01-31'), at('2027-02-01')], '2027-01-01', 30).map((e) => e.expires), ['2027-01-31']);
+    assert.deepEqual(expiringWithin(undefined, TODAY, 30), []);
+});
+
+test('排程：例外與接管警示在 30 天內到期時列進到期提醒，報告的第一段就是它', () => {
+    const entry = validEntry({ expires: '2026-09-10' });
+    const hijack = { match: { host: 'ieso-info.org' }, kind: 'hijacked', owner: 'test-owner', expires: '2026-09-26' };
+    const later = { ...hijack, match: { host: 'hmun.org' }, expires: '2026-09-27' };
+    const soon = expiringPolicyItems([entry], [hijack, later], TODAY);
+    assert.deepEqual(soon.map((e) => [e.list, e.match.host, e.expires]), [['例外', 'www.ptt.cc', '2026-09-10'], ['接管警示', 'ieso-info.org', '2026-09-26']]);
+    assert.equal(needsAttention({ dead: [], blocked: [], bareDead: [], hijackedHits: [], autoSignals: [], coverageComplete: true, expiringSoon: soon }), true);
+    const report = renderReport(reportModel({ expiringSoon: soon }));
+    const first = report.slice(report.indexOf('\n### '));
+    assert.ok(first.startsWith('\n### ⏰ 連結政策有 2 筆在 30 天內到期'), first.slice(0, 80));
+    assert.ok(first.includes('- 接管警示 `ieso-info.org`　到期日：2026-09-26') && first.includes('- 例外 `www.ptt.cc`　到期日：2026-09-10'));
+    assert.ok(first.includes('不再留言'), '要寫明到期之後排程就不會再留言');
+    assert.ok(!renderReport(reportModel()).includes('天內到期'), '沒有快到期的項目時不寫這一段');
+});
+
+test('buildReport：快到期的例外與接管警示觸發通知，報告的第一段與主控台都寫出來', () => {
+    // 例外寫的是 match.url，到期提醒要印出網址，不是只會印 match.host。
+    const entry = validEntry({ match: { url: 'https://www.ptt.cc/bbs/x' }, owner: 'test-owner', expires: '2026-09-10' });
+    const { entries } = validatePolicy({ version: 1, entries: [entry] }, TODAY);
+    const out = buildReport(buildInput({ policy: { entries, hijacked: policyWith({ owner: 'test-owner', expires: '2026-09-26' }) } }));
+    assert.equal(out.attention, true, '快到期的項目沒有觸發通知');
+    assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=true\n');
+    const first = out.report.slice(out.report.indexOf('\n### '));
+    assert.ok(first.startsWith('\n### ⏰ 連結政策有 2 筆在 30 天內到期'), first.slice(0, 80));
+    assert.ok(first.includes('- 例外 `https://www.ptt.cc/bbs/x`　到期日：2026-09-10　負責人：test-owner'), first.slice(0, 600));
+    assert.ok(first.includes('- 接管警示 `ieso-info.org`　到期日：2026-09-26　負責人：test-owner'), first.slice(0, 600));
+    assert.ok(out.consoleSummary.includes('⏰ 30 天內到期的政策項目：2'));
+    assert.deepEqual(out.consoleTail, ['→ 有項目需要處理，已寫入報告。']);
+});
+
+test('buildReport：link-policy.json 最早的到期日前 30 天內，沒有其他待辦也會通知', (t) => {
+    const policy = JSON.parse(readFileSync(new URL('./link-policy.json', import.meta.url), 'utf8'));
+    const all = [...policy.entries, ...(policy.hijacked ?? [])];
+    if (!all.length) return t.skip('link-policy.json 沒有任何項目');
+    const earliest = all.map((e) => e.expires).sort()[0];
+    // 到期前 27 天：在 30 天內，又離到期日夠遠，不會碰到 validatePolicy 的「已到期」。
+    const today = new Date(Date.parse(`${earliest}T00:00:00Z`) - 27 * 86_400_000).toISOString().slice(0, 10);
+    const { errors, entries, hijacked } = validatePolicy(policy, today);
+    assert.deepEqual(errors, []);
+    const out = buildReport(buildInput({ todayISO: today, policy: { entries, hijacked } }));
+    assert.equal(out.attention, true, `${today} 起每週要通知 ${earliest} 到期的項目`);
+    assert.ok(out.report.includes('### ⏰ 連結政策有'), '報告沒有到期提醒');
 });
 
 test('政策：403 這種 unverified 才會被例外壓下去', () => {

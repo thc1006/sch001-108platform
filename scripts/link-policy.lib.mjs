@@ -265,6 +265,20 @@ export function validatePolicy(policy, todayISO) {
 }
 
 /**
+ * expiringWithin 回傳 days 天以內到期的項目，entries 與 hijacked 都適用。明天到期算 1 天；
+ * 今天或更早到期的不列，validatePolicy 已經把它們當成錯誤。日期和 validatePolicy 一樣用 UTC 日曆日。
+ * @param {{expires: string}[]} items validatePolicy 回傳的 entries 或 hijacked
+ * @param {string} todayISO 今天（YYYY-MM-DD，UTC） @param {number} days @returns {{expires: string}[]}
+ */
+export function expiringWithin(items, todayISO, days) {
+    const todayMs = toUTCDay(todayISO);
+    return (items ?? []).filter((e) => {
+        const left = (toUTCDay(e.expires) - todayMs) / dayMs;
+        return left > 0 && left <= days;
+    });
+}
+
+/**
  * 這個網址有沒有對應的有效例外？回傳該筆 entry 或 null。
  * 比對一律是「完全相等」：精確網址或精確主機名，不做前綴／子字串／萬用字元。
  */

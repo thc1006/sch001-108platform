@@ -3,7 +3,7 @@
 // 檢查分組、通知條件與報告內容（link-health.test.mjs、hijack-signals.test.mjs）。
 
 import { classifyLink, describeResult, isBlockedResult, unverifiedBucket } from './link-health.lib.mjs';
-import { matchPolicy, matchHijacked } from './link-policy.lib.mjs';
+import { matchPolicy, matchHijacked, expiringWithin } from './link-policy.lib.mjs';
 import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
@@ -17,6 +17,9 @@ const ALSO_COVERED_BY = [
         by: 'competitions-check.yml（另含截止日與欄位的語意檢查）',
     },
 ];
+
+/** EXPIRY_NOTICE_DAYS 是政策項目到期前幾天開始每週通知。到期當天起 check-link-policy 會讓所有 PR 失敗。 */
+export const EXPIRY_NOTICE_DAYS = 30;
 
 /**
  * judgeUrl 決定盤點的一個網址在報告裡歸到哪一段，回傳 { bin, item, signal }。bin 是 blocked、hijacked、
@@ -62,6 +65,18 @@ export function judgeBare(target, r, { hijacked }) {
     return { bin: verdict === 'dead' || verdict === 'unverified' ? verdict : 'healthy', item, signal };
 }
 
+/**
+ * expiringPolicyItems 列出 EXPIRY_NOTICE_DAYS 天以內到期的政策項目，每筆加上 list，標明是例外還是接管警示。
+ * @param {object[]} entries @param {object[]} hijacked validatePolicy 回傳的兩份名單
+ * @param {string} todayISO 今天（YYYY-MM-DD，UTC） @returns {object[]}
+ */
+export function expiringPolicyItems(entries, hijacked, todayISO) {
+    return [
+        ...expiringWithin(entries, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: '例外' })),
+        ...expiringWithin(hijacked, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: '接管警示' })),
+    ];
+}
+
 // 三個訊號的精確度差很多，混在一起會讓高精確度的那兩個被雜訊淹掉。
 // 實測（全站 508 個目標，2026-08-28）：
 //   訊號 A 跨站轉址   11 個命中、全部是誤判
@@ -95,16 +110,18 @@ export function splitSignals(autoSignals) {
 /**
  * needsAttention 判斷這一輪要不要開 issue 或留言，參數是 buildReport 整理好的結果。
  * 被接管的網域一定要讓人看到：它回 200，不會出現在任何一個「壞掉」的桶子裡。需處理的自動訊號也要算，
- * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。
- * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], autoSignals: object[], coverageComplete: boolean}} s
+ * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
+ * 否則要等到期當天所有 PR 變紅才會發現。
+ * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[], coverageComplete: boolean}} s
  * @returns {boolean}
  */
-export function needsAttention({ dead, blocked, bareDead, hijackedHits, autoSignals, coverageComplete }) {
+export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiringSoon, autoSignals, coverageComplete }) {
     return (
         dead.length > 0 ||
         blocked.length > 0 ||
         bareDead.length > 0 ||
         hijackedHits.length > 0 ||
+        expiringSoon.length > 0 ||
         splitSignals(autoSignals).actionable.length > 0 ||
         !coverageComplete
     );
@@ -133,7 +150,7 @@ export function renderReport(m) {
     const {
         todayISO, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
-        budgetMs, bareBudgetMs, attention,
+        budgetMs, bareBudgetMs, expiringSoon, attention,
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
 
@@ -154,6 +171,17 @@ export function renderReport(m) {
             '　兩者都不改變上面的三態分類',
     );
     lines.push('');
+
+    if (expiringSoon.length) {
+        lines.push(`### ⏰ 連結政策有 ${expiringSoon.length} 筆在 ${EXPIRY_NOTICE_DAYS} 天內到期`, '');
+        lines.push(
+            '到期當天起 check-link-policy 會讓所有 PR 失敗，排程健檢也會停在 Validate the exception policy 那一步，不再留言。',
+            '請逐筆重新查證，仍然成立的延長期限並寫下這次查到的結果，不再成立的刪掉。',
+            '',
+        );
+        for (const e of expiringSoon) lines.push(`- ${e.list} \`${e.match.host ?? e.match.url}\`　到期日：${e.expires}　負責人：${e.owner}`);
+        lines.push('');
+    }
 
     if (hijackedHits.length) {
         lines.push('### 🚨 已知不可信任的主機（狀態碼健康，內容不可信）', '');
@@ -430,7 +458,7 @@ function consoleLines(m) {
     const {
         inventoryPath, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
-        coverageComplete, attention, limit,
+        coverageComplete, expiringSoon, attention, limit,
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
     const summary = [];
@@ -453,6 +481,7 @@ function consoleLines(m) {
     summary.push(`  位址封鎖：${blocked.length - urlBlockedCount}`);
     summary.push(`  無法判定：${bareOther.length}`);
     if (bareSkipped) summary.push(`  未檢查　：${bareSkipped}（逾時間預算）`);
+    if (expiringSoon.length) summary.push(`⏰ ${EXPIRY_NOTICE_DAYS} 天內到期的政策項目：${expiringSoon.length}`);
     if (hijackedHits.length) summary.push(`🚨 已知不可信任的主機：${hijackedHits.length}`);
     // 無條件印，即使是 0。只在有命中時才印的話，「這次沒偵測到」與「偵測根本沒跑」
     // 在 CI log 上長得一模一樣。
@@ -527,6 +556,7 @@ export function buildReport(input) {
     // --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘完全沒看過；算成完整覆蓋的話，
     // 一次只驗 3 筆的執行也會宣稱「全站都查過了」。
     const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && screen.unresolved.length === 0;
+    const expiringSoon = expiringPolicyItems(policy.entries, policy.hijacked, todayISO);
     const model = {
         todayISO,
         inventoryTotal: input.inventoryTotal,
@@ -551,6 +581,7 @@ export function buildReport(input) {
         budgetMs: input.budgetMs,
         bareBudgetMs: input.bareBudgetMs,
         coverageComplete,
+        expiringSoon,
     };
     const attention = needsAttention(model);
     return {
