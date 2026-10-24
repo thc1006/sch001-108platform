@@ -139,11 +139,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         function renderFeatured() {
             const featured = activities.find(a => a.featured);
-            if (!featured) {
+            const status = featured && getActivityStatus(featured);
+            // 截止後不再當精選，卡片仍在下面的列表裡。
+            if (!status || status.text === '已截止') {
                 featuredSection.classList.add('hidden');
                 return;
             }
-            const status = getActivityStatus(featured);
             featuredCard.innerHTML = `
                 <div class="p-8 md:w-full flex flex-col justify-center">
                     <div class="flex justify-between items-center mb-2">
