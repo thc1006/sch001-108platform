@@ -1468,6 +1468,9 @@
       "opensAt": "2026-06-17T12:00:00-04:00",
       "eventStartsAt": "2027-04-28",
       "eventEndsAt": "2027-05-01",
+      "cycle": {
+        "closes": "11"
+      },
       "sourceCheckedAt": "2026-08-28",
       "url": "https://www.firstinspires.org/programs/frc/",
       "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網逐字對象為「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00 開放，官方逐字「The season registration due date is November 17, 2026」（2026 年起已簡化流程，不再有早鳥／一般兩段期限）；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。更正：台灣管道官網其實查得到——firstinspires.org/find-local-support 這一頁自己查詢的 first-search API，在 region「Chinese Taipei」下列出 FRC 的 Regional Director 為 Rene Cheng（rcheng@firstpartners.org），FTC 亦由同一人掛 Partner；對應的在地組織是台灣玉山機器人協會（www.era.org.tw），站上設有 FRC／FTC／FLL 專區。"
