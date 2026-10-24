@@ -1543,17 +1543,20 @@
       "description": "由 iGEM Foundation, Inc. 主辦的合成生物學競賽。高中組並未取消——官網逐字「iGEM organizes two competition types ... High School Competition — For teams made up of high school-level students」，且無國籍限制。須由校方 PI（校長、教師或學術教練）發起註冊，逐字「Students are not allowed to do the application on behalf of the PI」。2026 屆報名 Stage I 早鳥 2/12（€4,950）、一般 4/2（€5,450）、最終 6/4（€5,950），Stage II 7/30 截止，皆已結束；Grand Jamboree 2026-11-12 至 11-16 於法國巴黎。2027 屆時程尚未公布。註：正確網域是單數的 competition.igem.org。"
     },
     {
-      "title": "Earth Science Week 國際短片與海報競賽",
+      "title": "Earth Science Week 國際攝影與影片競賽",
       "organizer": "American Geosciences Institute",
       "category": "社會永續",
       "level": "國際",
-      "form": "個人",
+      "form": "個人/團體",
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "2026-10-16",
       "deadlineAt": "2026-10-16T20:00:00-04:00",
-      "sourceCheckedAt": "2026-08-27",
+      "cycle": {
+        "closes": "10"
+      },
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://www.earthsciweek.org/contests",
       "description": "由 American Geosciences Institute (AGI) 主辦，配合 2026 年 10 月 11 至 17 日的 Earth Science Week（主題 Critical Minerals for a Thriving Society）舉辦四項競賽，四項截止日相同、皆為 2026-10-16 20:00 ET。重要資格差異：攝影組逐字「open to individuals of any age from anywhere in the world」、影片組「open to individuals or teams of any age from anywhere in the world」，台灣學生可投；但視覺藝術組逐字限「students in grades K-5 who are residents of the United States」、論文組限「students in grades 6-9 who are residents of the United States」，台灣學生不符資格且年級也不是高中。未滿 18 歲須家長或監護人簽署 release form。各組獎金為 US$300 加一本 AGI 出版品。"
     },
