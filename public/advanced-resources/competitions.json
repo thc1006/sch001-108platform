@@ -1126,10 +1126,10 @@
       "eligibility": "公開報名",
       "mode": "線上",
       "deadline": "2027-01-05",
-      "opensAt": "2026-06-01T00:00:00Z",
-      "sourceCheckedAt": "2026-08-28",
+      "opensAt": "2026-06-01T00:00:00+01:00",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://www.worldphoto.org/sony-world-photography-awards/youth",
-      "description": "由 World Photography Organisation 主辦的攝影獎青年組（Youth），官網逐字「The Youth competition is open to all members of the public aged 19 and under on the closing date of the competition」——只有 19 歲上限、沒有年齡下限，未滿 16 歲須家長或監護人同意；逐字「The competition is free to enter」，且條款無國籍限制，台灣學生可參加。2027 屆投件期間 2026-06-01 至 2027-01-05。注意兩點：官網同一頁對截止時刻並列 16:00 與 13:00 (GMT) 兩種說法，投件請以較早者為準並向主辦確認；另 Student 組是 18 至 30 歲修習攝影課程者，與 Youth 組不同，勿混用。"
+      "description": "由 World Photography Organisation 主辦的攝影獎青年組（Youth），官網逐字「The Youth competition is open to all members of the public aged 19 and under on the closing date of the competition」——只有 19 歲上限、沒有年齡下限，未滿 16 歲須家長或監護人同意；逐字「The competition is free to enter」，且條款無國籍限制，台灣學生可參加。2027 屆投件期間 2026-06-01 至 2027-01-05，截止時刻逐字「5 January 2027 at 16:00 (GMT)」，即台灣時間 1 月 6 日 00:00。另 Student 組規則逐字「open to all students of photography from World Photography Organisation’s selected Universities」，限 18 至 30 歲、修習高等教育層級的攝影課程，與 Youth 組不同，勿混用。"
     },
     {
       "title": "全美高中生影展 (AAHSFF)",
