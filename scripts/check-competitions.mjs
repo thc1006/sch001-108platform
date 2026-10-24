@@ -1,24 +1,22 @@
 #!/usr/bin/env node
-/**
- * 競賽資料看門狗，檢查 public/advanced-resources/competitions.json：
- *   1. JSON 格式與必填欄位是否正確
- *   2. category / level 欄位值是否在允許清單內
- *   3. deadline 是否為合法日期
- *   4. 是否有競賽報名截止日「已過期」（資料過時，需要更新）
- *   5. 哪些競賽「即將截止」（僅列入報告參考，不觸發提醒）
- *   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
- *
- * 由 .github/workflows/competitions-check.yml 每週執行；發現「過期」「欄位錯誤」
- * 或「連結失效」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
- *
- * 本機執行：  node scripts/check-competitions.mjs
- *             node scripts/check-competitions.mjs --no-link-check   （略過連線檢查）
- *             node scripts/check-competitions.mjs --no-link-check --strict
- *                 （PR CI 用：欄位錯誤即以非零碼結束）
- *
- * 連結探測與欄位驗證的核心在 check-competitions.lib.mjs，
- * 由 check-competitions.probe.test.mjs 以本機 http server 做確定性測試。
- */
+// 競賽資料看門狗，檢查 public/advanced-resources/competitions.json：
+//   1. JSON 格式與必填欄位是否正確
+//   2. category / level 欄位值是否在允許清單內
+//   3. deadline 是否為合法日期
+//   4. 是否有競賽報名截止日「已過期」（資料過時，需要更新）
+//   5. 哪些競賽「即將截止」（僅列入報告參考，不觸發提醒）
+//   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
+//
+// 由 .github/workflows/competitions-check.yml 每週執行；發現「過期」「欄位錯誤」
+// 或「連結失效」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
+//
+// 本機執行：  node scripts/check-competitions.mjs
+//             node scripts/check-competitions.mjs --no-link-check   （略過連線檢查）
+//             node scripts/check-competitions.mjs --no-link-check --strict
+//                 （PR CI 用：欄位錯誤即以非零碼結束）
+//
+// 連結探測與欄位驗證的核心在 check-competitions.lib.mjs，
+// 由 check-competitions.probe.test.mjs 以本機 http server 做確定性測試。
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import {
