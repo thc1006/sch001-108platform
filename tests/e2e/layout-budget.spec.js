@@ -333,6 +333,40 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
     });
 });
 
+/**
+ * settleFilters 等篩選面板的狀態定下來：捲動位置連續 3 個 frame 不變，面板也沒有進行中的動畫。
+ * 前提是 sticky-filters.js 在捲動後的下一個 frame 就改 transform，目前是在 rAF 裡改；反應晚了
+ * 幾個 frame 的話，例如用 setTimeout 延後 100ms，這裡可能在面板開始動之前就回傳。
+ * 面板動畫設定的時間連同 delay 超過 300ms 也算失敗。比的是設定值，不受 CPU 忙碌影響。
+ * @param {import('@playwright/test').Page} page
+ */
+async function settleFilters(page) {
+    await page.evaluate(() => {
+        window.__settle = { y: NaN, still: 0, running: 0, longest: 0 };
+    });
+    const settled = await page
+        .waitForFunction(
+            () => {
+                const s = window.__settle;
+                const panels = [...document.querySelectorAll('[data-autohide-filters]')];
+                const anims = panels.flatMap((el) => el.getAnimations());
+                for (const a of anims) s.longest = Math.max(s.longest, a.effect.getComputedTiming().endTime);
+                s.running = anims.length;
+                s.still = window.scrollY === s.y && !anims.length ? s.still + 1 : 0;
+                s.y = window.scrollY;
+                return s.still >= 3 && s;
+            },
+            null,
+            { polling: 'raf', timeout: 5000 },
+        )
+        .catch(async (e) => {
+            const s = await page.evaluate(() => window.__settle).catch(() => '讀不到');
+            throw new Error(`${e.message}\n面板沒有定下來：${JSON.stringify(s)}`);
+        });
+    const { longest } = await settled.jsonValue();
+    expect(longest, '面板的位移動畫連同 delay 要在 300ms 內跑完').toBeLessThanOrEqual(300);
+}
+
 // 面板釘在 header 底下，top 必須剛好等於 header 的實際高度 64px，寫錯就會留縫（例如
 // 68px、76px）或重疊。兩層都是半透明的（背景色帶 /80 透明度 ＋ backdrop-blur），縫裡的
 // 內容卻是全不透明的，捲動時會出現一條對比明顯的文字帶夾在兩條模糊的 bar 之間，看起來
@@ -369,9 +403,9 @@ test.describe('結構：sticky 面板必須與 header 底部齊平', () => {
                     content: '*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}',
                 });
                 await page.evaluate(() => window.scrollTo({ top: 2600, behavior: 'instant' }));
-                await page.waitForTimeout(150);
+                await settleFilters(page);
                 await page.evaluate(() => window.scrollTo({ top: 2300, behavior: 'instant' }));
-                await page.waitForTimeout(300);
+                await settleFilters(page);
 
                 const found = await page.evaluate(() => {
                     const header = document.querySelector('header');
@@ -439,9 +473,10 @@ test.describe('篩選面板的還原行為（360x640）', () => {
             return r.bottom > 8 && r.top < window.innerHeight;
         });
 
+    // 和 measure() 一樣用 instant：<html> 掛了 scroll-smooth，兩個參數的 scrollBy 會走平滑捲動。
     async function scrollBy(page, dy) {
-        await page.evaluate((d) => window.scrollBy(0, d), dy);
-        await page.waitForTimeout(420);
+        await page.evaluate((d) => window.scrollBy({ top: d, behavior: 'instant' }), dy);
+        await settleFilters(page);
     }
 
     test('向下捲動時讓開，向上捲動時立刻回來', async ({ page }) => {
@@ -464,8 +499,8 @@ test.describe('篩選面板的還原行為（360x640）', () => {
         await scrollBy(page, 300);
         expect(await visible(page)).toBe(false);
 
-        await page.evaluate(() => window.scrollTo(0, 0));
-        await page.waitForTimeout(420);
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+        await settleFilters(page);
         expect(await visible(page), '回到頂端時面板必須露出').toBe(true);
     });
 
@@ -477,8 +512,9 @@ test.describe('篩選面板的還原行為（360x640）', () => {
         await scrollBy(page, 300);
         expect(await visible(page)).toBe(false);
 
-        await page.evaluate(() => document.getElementById('search-input').focus());
-        await page.waitForTimeout(300);
+        // 不加 preventScroll 的話，focus() 捲動頁面時面板也會因為焦點在內而還原，測不到 focusin。
+        await page.evaluate(() => document.getElementById('search-input').focus({ preventScroll: true }));
+        await settleFilters(page);
         expect(await visible(page), '面板內的元素取得焦點時，面板必須回到畫面上').toBe(true);
     });
 
