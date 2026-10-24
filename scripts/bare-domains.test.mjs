@@ -514,11 +514,9 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // 親自取過的來源：
     //   www.fisp.org       200（國家哲學學會名單，IPO 的正式選拔管道要求經 FISP 會員辦理）
     //   www.codechef.com   200（/api/list/contests/all 公開賽程 API）
-    //   leetcode.com       403，這一個特別記一下，它會永遠是 403：
-    //     不是 UA 的問題（Chrome/126 與 Chrome/140、根路徑與 /contest/，curl 全部 200），
-    //     也不是 HTTP 版本（curl --http1.1 照樣 200）。剩下的差異是 TLS 指紋：
-    //     Node 的 ClientHello 不是 Chrome 的，Cloudflare 認得出來。
-    //     所以它落在 unverified（只記錄、不觸發通知），這正是那個分類存在的理由。
+    //   leetcode.com       403，落在 unverified（只記錄、不觸發通知），這正是那個分類存在的理由。
+    //     當時 curl 帶 Chrome UA 是 200、Node 是 403；2026-10-23 起 curl 也是 403，headless Chromium
+    //     要換成桌機 UA 並把語系設成 en-US 才拿到 200。回不回 403 看抓取方式，不代表網站壞了。
     //
     // 2026-08-28：#124 的逐筆查證讓候選從 44 變成 50。新增的六個逐一實測過：
     //   www.aksf.org       200（62KB，逐字含「Republic of China (Taiwan) (TW)」）

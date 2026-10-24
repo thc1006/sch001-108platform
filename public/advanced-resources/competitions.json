@@ -612,7 +612,7 @@
       "registrationNote": "常年開放 · 每週日週賽",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://leetcode.com/contest/",
-      "description": "LeetCode 每週日舉行 Weekly Contest、每隔週六舉行 Biweekly Contest，各 90 分鐘 4 題，註冊即可參加，適合高中生練習資料結構與演算法。更正：先前記載「官網對未登入的自動化存取一律回 403，賽制與資格條文無法從官方頁面取得逐字原文」不成立——那個 403 是**查詢方法造成的**，不是網站的性質。2026-08-29 實測：帶一般瀏覽器 User-Agent 取 /contest/ 連續三次都是 HTTP 200，單場頁 /contest/weekly-contest-517/ 同樣 200；改用 curl 預設 UA 或完全不帶 UA 才回 403。這與袋鼠數學那一筆「只測了 http:// port 80」是同一種錯誤：把查詢方法的產物記成網站的永久狀態。此外 leetcode.com/graphql 是公開端點、無需登入：`allContests` 回 714 場競賽，含開賽時間與時長。實測 Weekly Contest 517 開賽 2026-08-30 10:30（台北，UTC+8，星期日）、Biweekly Contest 190 開賽 2026-08-29 22:30（台北，星期六），皆 90 分鐘；`contestQuestionList` 查三場已完賽的場次（weekly 515、weekly 516、biweekly 189）都恰為 4 題，而尚未開賽的場次一律回 0 題——題目清單是開賽當下才發布的。題目本身由前端渲染，HTML 原始碼裡看不到，須用該 API 或瀏覽器才取得到。"
+      "description": "LeetCode 每週日舉行 Weekly Contest、每隔週六舉行 Biweekly Contest，各 90 分鐘 4 題，註冊即可參加，適合高中生練習資料結構與演算法。更正：先前記載「官網對未登入的自動化存取一律回 403，賽制與資格條文無法從官方頁面取得逐字原文」不成立——那個 403 是查詢方法造成的，不是網站的性質。leetcode.com/graphql 是公開端點、無需登入，2026-08-29 查詢時 allContests 回 714 場競賽，含開賽時間與時長。實測 Weekly Contest 517 開賽 2026-08-30 10:30（台北，UTC+8，星期日）、Biweekly Contest 190 開賽 2026-08-29 22:30（台北，星期六），皆 90 分鐘；contestQuestionList 查三場已完賽的場次（weekly 515、weekly 516、biweekly 189）都恰為 4 題，而尚未開賽的場次一律回 0 題——題目清單是開賽當下才發布的。題目本身由前端渲染，HTML 原始碼裡看不到，須用該 API 或瀏覽器才取得到。"
     },
     {
       "title": "USACO 美國資訊奧林匹亞競賽",
