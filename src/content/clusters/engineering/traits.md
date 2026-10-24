@@ -84,5 +84,4 @@ description: 工程學群教授到底在找什麼樣的學生？解析頂大工�
 - [國立臺灣大學機械工程學系教育目標](https://www.me.ntu.edu.tw/web/about/about.jsp?cp_id=9)
 - [成功大學資訊工程學系給高中生的建議](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [台大資工系教授：把握這原則書審面試脫穎而出](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=240720)
-- [個人申請審查資料準備方向（文華高中）](https://web.whsh.tc.edu.tw/ischool/resources/WID_16_1_9e219f14084484f8c2243907e88129384453f8c5/CLS_16_1_62b116c8c5715ccff93e298f6bad8c13d6966245/e64ea8d72c4650a77aa9eb8cd2382caf.pdf)
 - [學習歷程審查原則首公開（翻轉教育）](https://flipedu.parenting.com.tw/article/006301)
