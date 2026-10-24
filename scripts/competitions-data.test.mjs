@@ -644,10 +644,12 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     assert.equal(amc.eventStartsAt, '2026-11-05');
     assert.equal(amc.eventEndsAt, '2026-11-13');
 
-    // APCS：11/1 檢測場的報名期是「2026年08月03日」至「2026年09月11日」。
+    // APCS：2027-01-10 檢測場的報名期是「2026年11月23日-12月11日」，「每日9:00至18:00開放報名」。
     const apcs = find('APCS');
-    assert.equal(apcs.deadline, '2026-09-11');
-    assert.equal(apcs.eventStartsAt, '2026-11-01', '11/1 是檢測日，不是報名截止日');
+    assert.equal(apcs.deadline, '2026-12-11');
+    assert.equal(apcs.deadlineAt, '2026-12-11T18:00:00+08:00');
+    assert.equal(apcs.opensAt, '2026-11-23T09:00:00+08:00');
+    assert.equal(apcs.eventStartsAt, '2027-01-10', '1/10 是檢測日，不是報名截止日');
 
     // 旺宏科學獎第 25 屆（2026）：報名 5/20 15:00 截止、8/21 繳成果報告書、9/5–9/6 才是決賽。
     const mx = find('旺宏科學獎');
@@ -940,9 +942,9 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
 
     // 報名截止與考試日並陳，且欄位標題是「報名截止」而不是「賽事日期」
     assert.deepEqual(card('APCS'), {
-        status: '即將截止 · 剩 15 天',
+        status: '尚未開放 · 預計 2026-11-23 開放',
         field: '報名截止',
-        label: '2026-09-11 · 2026-11-01 舉行',
+        label: '預計 2026-11-23 開放報名 · 2026-12-11 截止 · 2027-01-10 舉行',
     });
     assert.deepEqual(card('加拿大計算機競賽'), {
         status: '報名中 · 剩 168 天',
