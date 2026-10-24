@@ -54,12 +54,12 @@
       "id": "national-treasure",
       "name": "國家寶藏 (National Treasure)",
       "org": "g0v 社群專案（2017 年發起）",
-      "url": "https://www.nationaltreasure.tw/",
+      "url": "https://github.com/national-treasures-tw",
       "subjects": ["歷史", "英文"],
       "competencies": ["C3", "A3"],
       "sdgs": [],
       "tags": ["數位典藏", "歷史檔案", "群眾外包", "台灣史"],
-      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。新檔案數位化因人力與經費受限而放緩，但既有檔案資料庫仍持續開放供研究使用。",
+      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。2026 年 10 月 25 日查，官網與檔案資料庫都無法使用，也查不到專案方的說明。",
       "status": "maintenance"
     },
     {
