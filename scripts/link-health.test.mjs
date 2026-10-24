@@ -958,6 +958,18 @@ test('hijacked：只接受精確主機名，不接受萬用字元／路徑／網
     assert.ok(hijackErrors({ match: { url: 'https://ieso-info.org/x' } }).some((m) => m.includes('host')));
 });
 
+test('政策：match.host 要寫成網址裡的主機名，國際化網域寫 punycode', () => {
+    // 比對時網址的主機名已經正規化，Unicode 或全形的寫法通過驗證卻永遠比不到。
+    // 訊息裡的寫法要是最後的形式：照著改一次就通過，不會改完小寫才看到要寫 punycode。
+    const cases = [['例子.tw', 'xn--fsqu00a.tw'], ['ｈｍｕｎ.org', 'hmun.org'], ['ＨＭＵＮ.org', 'hmun.org'], ['Bücher.de', 'xn--bcher-kva.de']];
+    for (const [host, fixed] of cases) {
+        const { errors } = validatePolicy({ version: 1, entries: [validEntry({ match: { host } })] }, TODAY);
+        assert.ok(errors.some((m) => m.includes(`：${fixed}（`) && m.includes('punycode')), `${host}：${errors.join('；')}`);
+        assert.ok(hijackErrors({ match: { host } }).some((m) => m.includes(`：${fixed}（`)), host);
+        assert.deepEqual(validatePolicy({ version: 1, entries: [validEntry({ match: { host: fixed } })] }, TODAY).errors, [], fixed);
+    }
+});
+
 test('hijacked：目標本身也必須通過位址政策', () => {
     assert.ok(hijackErrors({ match: { host: 'metadata.google.internal' } }).some((m) => m.includes('位址政策')));
     assert.ok(hijackErrors({ match: { host: '127.0.0.1' } }).some((m) => m.includes('位址政策')));

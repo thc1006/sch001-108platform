@@ -10,13 +10,14 @@
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
+ *   G. 連結政策的檢查與比對 → link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
  * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B 到 F 五段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * B 到 G 六段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
  * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
  * 同一類假象在自己的測試上也會發生。
  *
@@ -199,6 +200,12 @@ const policyCases = [
         name: '接管警示改用網址而不是主機名（接管是整台主機的性質）',
         expect: /host/,
         policy: () => { const p = clonePolicy(); p.hijacked[0].match = { url: 'https://ieso-info.org/x' }; return p; },
+    },
+    {
+        // 全形的 ｉｅｓｏ 在網址裡會被正規化成 ieso，名單寫成這樣就永遠比不到。
+        name: '接管警示的主機名寫成全形（國際化網域沒寫成 punycode 也一樣）',
+        expect: /punycode/,
+        policy: () => { const p = clonePolicy(); p.hijacked[0].match = { host: 'ｉｅｓｏ-info.org' }; return p; },
     },
     {
         name: '接管警示指向雲端 metadata',
@@ -758,6 +765,19 @@ const assemblyMutations = [
     },
 ];
 
+// G 段是 link-policy.lib.mjs 的突變測試。check-link-policy 與排程健檢共用這些函式，
+// 比對或檢查改壞時，名單上的主機會靜靜地比不到。
+const policyLibMutations = [
+    {
+        name: 'match.host 不再檢查網址正規化後的形式（Unicode、全形的寫法永遠比不到）',
+        apply: (s) => s.replace('    if (normalized !== raw) {', '    if (false) {'),
+    },
+    {
+        name: 'match.host 只比小寫與結尾的點（全形、Unicode 的寫法照樣通過，訊息給的寫法改完還要再改）',
+        apply: (s) => s.replace('const normalized = canonicalHost(verdict.url.hostname);', 'const normalized = canonicalHost(raw);'),
+    },
+];
+
 let pass = 0;
 let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
@@ -793,7 +813,7 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 F 五段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 G 六段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
 // 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
@@ -923,6 +943,29 @@ for (const [title, mutations] of [
     }
 }
 
+console.log('\nG. 連結政策檢查與比對的突變測試（link-health.test.mjs 必須紅）：');
+try {
+    const policySource = readFileSync(path.join(SCRIPTS, 'link-policy.lib.mjs'), 'utf8')
+        .split(/\r?\n/)
+        .join('\n');
+    for (const m of policyLibMutations) {
+        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
+        const mutated = m.apply(policySource);
+        if (mutated === policySource) {
+            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
+            rmSync(MUTANT_DIR, { recursive: true, force: true });
+            continue;
+        }
+        writeFileSync(path.join(MUTANT_DIR, 'link-policy.lib.mjs'), mutated, 'utf8');
+        const r = runMutantTests();
+        if (r.code === 0) bad(m.name, '改掉這一段之後測試竟然還是綠的——那些測試沒有在把關');
+        else ok(m.name);
+        rmSync(MUTANT_DIR, { recursive: true, force: true });
+    }
+} finally {
+    rmSync(MUTANT_DIR, { recursive: true, force: true });
+}
+
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
 const afterTests = runBaselineTests();
@@ -930,5 +973,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
