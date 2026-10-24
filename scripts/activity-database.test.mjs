@@ -73,3 +73,12 @@ test('狀態：沒有截止日的看 rolling，有截止日的看還剩幾天', 
     assert.equal(text({ deadline: '2026-11-01' }), '即將截止');
     assert.equal(text({ deadline: '2027-01-15' }), '報名中');
 });
+
+test('狀態：截止日照台灣時間的日曆日算，當天結束才算已截止', () => {
+    const late = loadStatus('2026-10-24T23:59:00+08:00');
+    assert.equal(late({ deadline: '2026-10-24' }).text, '即將截止');
+    const early = loadStatus('2026-10-25T00:30:00+08:00');
+    assert.equal(early({ deadline: '2026-10-24' }).text, '已截止');
+    assert.equal(early({ deadline: '2026-11-08' }).text, '即將截止');
+    assert.equal(early({ deadline: '2026-11-09' }).text, '報名中');
+});
