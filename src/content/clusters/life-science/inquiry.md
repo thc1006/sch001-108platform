@@ -79,7 +79,7 @@ description: 生命科學學群自主學習與探究專題實戰指南，提供�
 5. **執行紀錄**：過程中真實發生的事——包含卡關、調整、失敗。
 6. **成果與反思**：你得到什麼結論？學到什麼？如果重來會怎麼改？這個主題如何連結到你想念的科系？
 
-「高級中等學校自主學習網」收錄了大量依學群分類的優秀範例，可作為格式與深度的參考。
+教育部國教署「108 課綱資訊網」的自主學習專區收錄各校的自主學習計畫與成果範例，可作為格式與深度的參考。
 
 ## 五、執行時的五個專業細節（讓教授眼睛一亮）
 
@@ -104,7 +104,7 @@ description: 生命科學學群自主學習與探究專題實戰指南，提供�
 
 - [國立臺灣大學「生命科學系」書面資料準備指引（參採自主學習計畫與探究實作成果，國立臺灣大學教務處）](https://www.aca.ntu.edu.tw/)
 - [ColleGo! 選才育才輔助系統—生命科學學類（學習內容、探究實驗）](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=49)
-- [高級中等學校自主學習網（依學群分類之優秀範例，國家圖書館 / 教育部）](https://sdl.ntl.edu.tw/)
+- [108 課綱資訊網自主學習專區（各校自主學習計畫與成果範例，教育部國教署）](https://shs.k12ea.gov.tw/site/12basic/category?root=42&cid=42)
 - [〈自然科「探究與實作」學習歷程如何呈現？〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/inquire-science-academic-portfolio/)
 - [〈自主學習計劃怎麼做？學習主題、撰寫格式、學長姐範例〉，臺灣吧 school.taiwanbar.cc](https://school.taiwanbar.cc/posts/self-directed-learning-program)
 - [「科學探究競賽—這樣教我就懂」官網，國家教育研究院 / colife](https://sciexplore2026.colife.org.tw/)

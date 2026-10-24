@@ -82,7 +82,7 @@ description: 醫藥衛生學群自主學習計畫與探究專題的選題方向�
 6. **預期成果：** 最後會產出什麼？（報告、海報、簡報、影片、實作品⋯⋯）
 7. **（執行後）成果與反思：** 完成後，記錄實際成果、遇到的困難、如何調整、學到什麼。
 
-> 高級中等學校自主學習網與各校自主學習計畫頁面提供官方範例與資源，可作為格式參考。
+> 教育部國教署「108 課綱資訊網」的自主學習專區與各校自主學習計畫頁面都有範例與資源，可作為格式參考。
 
 ## 五、呈現策略：把自主學習寫成「有說服力的成果」
 
@@ -129,6 +129,6 @@ description: 醫藥衛生學群自主學習計畫與探究專題的選題方向�
 - [選才育才輔助系統 — 醫藥衛生學群｜ColleGo!（主辦：大學招生委員會聯合會）](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=4)
 - [自主學習是什麼？重點概念、撰寫訣竅、參考範本與資源全收錄｜布朗實驗教育機構](https://highschool.ltbrown.hcc.edu.tw/announcement-detail/self-learning/)
 - [自主學習計畫該怎麼寫？教授解密｜天下雜誌](https://www.cw.com.tw/article/5120375)
-- [高級中等學校自主學習網｜國立公共資訊圖書館](https://sdl.ntl.edu.tw/)
+- [108 課綱資訊網自主學習專區｜教育部國教署](https://shs.k12ea.gov.tw/site/12basic/category?root=42&cid=42)
 - [臺灣探究與實作教育學會](https://trpec.com.tw/)
 - [想讀公共衛生學類嗎？讓 ColleGo! 告訴你｜大考中心](https://www.ceec.edu.tw/xcepaper/cont?qperoid=0K111366079725494200&sid=0K129541479435807895&xsmsid=0J066588036013658199)
