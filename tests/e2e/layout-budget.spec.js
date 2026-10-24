@@ -233,12 +233,12 @@ test.describe('版面預算（360x640）', () => {
         contextOptions: { reducedMotion: 'reduce' },
     });
 
-    // 設定檔的預設單測逾時是 20s，對單頁不夠：goto 用 networkidle，而每一頁都會載入
-    // GoatCounter（gc.zgo.at）這個外部 script，networkidle 必須等它有結果才算安靜。
+    // 設定檔的預設單測逾時是 20s，對單頁不夠。
     //
-    // 90s 不是拍腦袋：本機 4 個 worker 實測單頁中位數約 1.6s、最慢 3.8s，但 worker 互相
-    // 搶 CPU 時，同一頁量到過 20.2s（單獨跑只要 2.2s）。CI 只有 2 個 worker，餘裕要
-    // 留夠。它仍然是真正的上限：卡住的頁面 90s 就失敗，而且只有它自己會被重試。
+    // 90s 不是拍腦袋：2026-08-28 本機 4 個 worker 實測單頁中位數約 1.6s、最慢 3.8s，但 worker
+    // 互相搶 CPU 時，同一頁量到過 20.2s（單獨跑只要 2.2s）。當時頁面還會等外部的 GoatCounter。
+    // CI 只有 2 個 worker，餘裕要留夠。它仍然是真正的上限：卡住的頁面 90s 就失敗，而且只有它
+    // 自己會被重試。
     //
     // measure() 裡那個 waitForFunction 不是「最多 8 秒的渲染穩定等待」。
     // { timeout: 8000, polling: 400 } 放在第二個參數，那是傳給述詞的 arg，不是 options，
