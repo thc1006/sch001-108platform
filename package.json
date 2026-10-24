@@ -41,6 +41,7 @@
     "audit:quotes": "node scripts/audit-quote-freshness.mjs",
     "check:install-gate": "node scripts/check-install-gate.mjs",
     "test:install-gate-faults": "node scripts/check-install-gate.faults.mjs",
+    "test:admission-cycle": "node --test scripts/admission-cycle.test.mjs",
     "check:comments": "node scripts/check-comments.mjs",
     "test:comments": "node --test scripts/check-comments.test.mjs",
     "test:ai-gateway": "node --test --test-timeout=30000 ai-gateway/test/config.test.mjs ai-gateway/test/control-tokens.test.mjs ai-gateway/test/upstream.test.mjs ai-gateway/test/generate.test.mjs ai-gateway/test/s2t.test.mjs ai-gateway/test/schema.test.mjs ai-gateway/test/tasks.test.mjs ai-gateway/test/task-catalog.test.mjs ai-gateway/test/limits.test.mjs ai-gateway/test/server-config.test.mjs ai-gateway/test/server.test.mjs ai-gateway/test/source-hygiene.test.mjs"

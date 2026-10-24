@@ -265,6 +265,9 @@ jobs:
       - name: Validate civic tech project data (schema only)
         run: npm run check:civic-tech
 
+      - name: Run admission-cycle unit tests
+        run: npm run test:admission-cycle
+
       - name: Run link-health SSRF and policy unit tests
         run: npm run test:link-health
 
