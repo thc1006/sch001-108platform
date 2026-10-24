@@ -112,7 +112,7 @@ node build-search-index.js
 │   ├── robots.txt
 │   └── **/*.json             # 資料驅動頁的資料檔
 ├── scripts/
-│   ├── check-competitions.mjs  # 競賽資料看門狗（截止日／欄位健檢）
+│   ├── check-competitions.mjs  # 競賽與多元表現活動資料看門狗（截止日／欄位／查證日期）
 │   ├── check-civic-tech.mjs    # 公民科技專案資料看門狗
 │   ├── data-pages.json         # 資料頁 → 來源 JSON 的單一設定來源
 │   ├── taxonomy.json           # 素養代碼／SDGs 的代碼與中文標籤（CJS 與 ESM 共用）
