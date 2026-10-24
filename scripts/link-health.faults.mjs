@@ -5,7 +5,7 @@
  * 這支逐一破壞一個東西，確認該紅的真的會紅：
  *
  *   A. 政策檔的每一條規則 → check-link-policy.mjs 必須以非零碼結束
- *   B. SSRF 防護與讀 body → link-health.test.mjs 必須失敗
+ *   B. SSRF 防護、讀 body 與無法判定的分組 → link-health.test.mjs 必須失敗
  *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *
@@ -258,8 +258,8 @@ const policyCases = [
     },
 ];
 
-// B 段是 SSRF 防護與讀 body 的突變測試：每一項都把其中一段拿掉或改掉，然後跑
-// link-health.test.mjs。測試必須失敗。
+// B 段是 SSRF 防護、讀 body 與無法判定分組的突變測試：每一項都把其中一段拿掉或改掉，
+// 然後跑 link-health.test.mjs。測試必須失敗。
 const guardMutations = [
     {
         name: 'IPv4 封鎖網段清單被清空',
@@ -337,6 +337,15 @@ const guardMutations = [
                 "const code = err?.code === 'ENOENT' ? 'ENOTFOUND' : err?.code || 'EDNS';",
                 "const code = err?.code === 'ENOENT' || err?.code === 'EAI_AGAIN' ? 'ENOTFOUND' : err?.code || 'EDNS';",
             ),
+    },
+    {
+        // 下面兩條守週報的分組：分組錯了，三態照樣正確，只有讀報告的人看得出來。
+        name: '無法判定的分組一律回 other（週報看不出連不上與被拒絕的差別）',
+        apply: (s) => s.replace('export function unverifiedBucket(r) {', "export function unverifiedBucket(r) {\n    if (true) return 'other';"),
+    },
+    {
+        name: '無法判定的分組不看狀態碼（403、429 被歸到其他）',
+        apply: (s) => s.replace("    if (r.status) return 'rejected';\n", ''),
     },
 ];
 
@@ -626,7 +635,7 @@ policyCases.forEach((c, i) => {
     ok(c.name);
 });
 
-console.log('\nB. SSRF 防護與讀 body 的突變測試（link-health.test.mjs 必須紅）：');
+console.log('\nB. SSRF 防護、讀 body 與無法判定分組的突變測試（link-health.test.mjs 必須紅）：');
 rmSync(MUTANT_DIR, { recursive: true, force: true });
 try {
     // 換行一律正規化成 LF 再做字串比對。這個 repo 的檔案在 Windows 上是 CRLF，

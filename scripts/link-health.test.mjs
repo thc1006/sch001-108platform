@@ -32,6 +32,7 @@ import {
     canonicalHost,
     resolveAndVerify,
     runProbes,
+    unverifiedBucket,
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
@@ -82,6 +83,10 @@ before(async () => {
         if (u === '/429') { res.writeHead(429); return res.end('slow down'); }
         if (u === '/500') { res.writeHead(500); return res.end('boom'); }
         if (u === '/slow') { return; } // 不回應，用來測逾時
+        if (u === '/reset') { return req.socket.destroy(); } // 收到請求就斷線，client 拿到 ECONNRESET
+        // 回指定的狀態碼，分組的邊界（400、520、599）用得到
+        const status = /^\/status\/(\d{3})$/.exec(u);
+        if (status) { res.writeHead(Number(status[1])); return res.end(); }
         // 讀 body 的幾種結束方式：完整收到、超過讀取上限、chunked 回應中途斷線。
         if (u === '/shell') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(SHELL); }
         if (u === '/big-body') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('x'.repeat(4096)); }
@@ -237,6 +242,42 @@ test('轉址上限之內可以一路跟到底，超過上限才放棄', async ()
 
     const capped = await probe(`${base}/hop3`, undefined, { ...LOOPBACK_OK, maxRedirects: 2 });
     assert.equal(capped.code, 'ETOOMANYREDIRECTS', 'maxRedirects 必須真的生效');
+});
+
+test('無法判定的分組：照本機 server 實際探測的結果分', async (t) => {
+    const closed = createServer();
+    await new Promise((r) => closed.listen(0, '127.0.0.1', r));
+    const closedPort = closed.address().port;
+    await new Promise((r) => closed.close(r));
+    const groups = {
+        rejected: [`${base}/403`, `${base}/429`, `${base}/status/400`, `${base}/500`],
+        unreachable: [`http://127.0.0.1:${closedPort}/`, `${base}/reset`],
+        // 用 https 連 http server，TLS 交握失敗，code 是 EPROTO。
+        other: [`${base}/loop`, `${base.replace('http:', 'https:')}/ok`],
+    };
+    for (const [bucket, urls] of Object.entries(groups)) {
+        for (const u of urls) {
+            const r = await probe(u, undefined, LOOPBACK_OK);
+            assert.equal(classifyLink(r), 'unverified', `${u}：${describeResult(r)}`);
+            assert.equal(unverifiedBucket(r), bucket, `${u}：${describeResult(r)}`);
+        }
+    }
+    const slow = await probe(`${base}/slow`, AbortSignal.timeout(300), LOOPBACK_OK);
+    assert.equal(unverifiedBucket(slow), 'unreachable', describeResult(slow));
+    // 憑證錯誤要有憑證才做得出來，主機或網路不可達、對方先關掉連線在本機也做不出來，這幾個直接用 code 測。
+    for (const code of ['CERT_HAS_EXPIRED', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY']) {
+        assert.equal(unverifiedBucket({ status: 0, code }), 'other', code);
+    }
+    for (const code of ['EHOSTUNREACH', 'ENETUNREACH', 'EPIPE']) {
+        assert.equal(unverifiedBucket({ status: 0, code }), 'unreachable', code);
+    }
+    // DNS 暫時失敗在 DNS 這一層注入。放在最後，因為 mock 也會攔下連本機 server 時的查詢。
+    t.mock.method(dns.promises, 'lookup', async () => {
+        throw Object.assign(new Error('測試注入的 DNS 錯誤 EAI_AGAIN'), { code: 'EAI_AGAIN' });
+    });
+    const again = await probe('https://dns-error.example/');
+    assert.equal(again.code, 'EAI_AGAIN');
+    assert.equal(unverifiedBucket(again), 'other');
 });
 
 test('一律用 GET（HEAD 不是使用者實際送的請求）', async () => {
@@ -640,6 +681,15 @@ test('週報：資料 JSON 的出處帶 JSON pointer，競賽看門狗的註只�
     assert.ok(src.includes("o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file"), 'sourcesOf 沒有帶上 JSON pointer');
     assert.ok(src.includes('c.location.test(o.location)'), 'coveredElsewhere 沒有比對出處的 location');
     assert.ok(src.includes('location: /^\\/competitions\\/\\d+\\/url$/'), 'competitions.json 的註沒有限定在 url 欄位');
+});
+
+// 放進 unverified 的物件只有 url、occurrences、reason，到寫報告時才分組的話讀不到 status 與 code，全部落到其他（#134）。
+test('週報：無法判定的連結在放進 unverified 時就照探測結果分好組', () => {
+    const src = readFileSync(fileURLToPath(new URL('./check-external-links.mjs', import.meta.url)), 'utf8');
+    const pushes = src.split('\n').filter((line) => line.includes('unverified.push('));
+    assert.ok(pushes.length > 0, '找不到放進 unverified 的地方，測試需要更新');
+    for (const line of pushes) assert.ok(line.includes('bucket: unverifiedBucket(r)'), `沒有帶分組：${line.trim()}`);
+    for (const b of ['unreachable', 'rejected', 'other']) assert.ok(src.includes(`u.bucket === '${b}'`), `報告沒有用分組挑出 ${b}`);
 });
 
 test('政策：403 這種 unverified 才會被例外壓下去', () => {
