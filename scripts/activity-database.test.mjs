@@ -1,0 +1,75 @@
+// 檢查 activity-database.json 是否照 _readme 填寫，並用固定的時間跑頁面的 getActivityStatus。
+// 函式從 .astro 抽出來跑，做法和 competitions-data.test.mjs 相同。
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const DATA = JSON.parse(
+    readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
+);
+const FIELDS = ['title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured', 'url'];
+
+/**
+ * loadStatus 從頁面抽出 getActivityStatus，回傳一個以 at 為現在時間的版本。
+ * @param {string} at @returns {(activity: object) => {text: string}}
+ */
+function loadStatus(at) {
+    const src = readFileSync(
+        new URL('../src/pages/learning-portfolio/activity-database.astro', import.meta.url),
+        'utf8',
+    );
+    const fn = src.match(/^( *)function getActivityStatus\([^)]*\) \{[\s\S]*?\n\1\}/m);
+    assert.ok(fn, '在 activity-database.astro 抽不到 getActivityStatus，改了名請同步更新這裡');
+    const fixed = new Date(at).getTime();
+    class FixedDate extends Date {
+        constructor(...a) {
+            super(...(a.length ? a : [fixed]));
+        }
+        static now() {
+            return fixed;
+        }
+    }
+    return new Function('Date', `${fn[0]}; return getActivityStatus;`)(FixedDate);
+}
+
+test('欄位：照 _readme 的規定填', () => {
+    for (const a of DATA.activities) {
+        const unknown = Object.keys(a).filter((k) => !FIELDS.includes(k));
+        assert.deepEqual(unknown, [], `「${a.title}」有不認得的欄位`);
+        for (const key of ['title', 'organizer', 'category', 'description', 'url']) {
+            const v = a[key];
+            assert.ok(typeof v === 'string' && v && v.trim() === v, `「${a.title}」的 ${key} 是空的或前後有空白`);
+        }
+        assert.ok(['個人', '團體', '個人／團體'].includes(a.form), `「${a.title}」的 form 是 ${a.form}`);
+        // 頁面只看真假，字串 "false" 也會被當成精選。
+        assert.equal(typeof a.featured, 'boolean', `「${a.title}」的 featured 不是 true 或 false`);
+        // url 直接放進 href，javascript: 這類網址點了會執行。
+        assert.match(a.url, /^https:\/\//, `「${a.title}」的 url 不是 https`);
+        if (a.deadline !== null) {
+            // 頁面把解析不了的日期算成「報名中」。
+            const d = new Date(a.deadline);
+            assert.ok(
+                /^\d{4}-\d{2}-\d{2}$/.test(a.deadline) &&
+                    !Number.isNaN(d.getTime()) &&
+                    d.toISOString().slice(0, 10) === a.deadline,
+                `「${a.title}」的 deadline 不是 YYYY-MM-DD 格式的日期：${a.deadline}`,
+            );
+        }
+        if ('rolling' in a) {
+            assert.equal(a.rolling, true, `「${a.title}」的 rolling 只能是 true`);
+            assert.equal(a.deadline, null, `「${a.title}」有截止日，不能標 rolling`);
+        }
+    }
+    const featured = DATA.activities.filter((a) => a.featured);
+    assert.ok(featured.length <= 1, `featured 有 ${featured.length} 筆，頁面只顯示第一筆`);
+});
+
+test('狀態：沒有截止日的看 rolling，有截止日的看還剩幾天', () => {
+    const status = loadStatus('2026-10-24T12:00:00+08:00');
+    const text = (a) => status(a).text;
+    assert.equal(text({ deadline: null, rolling: true }), '全年招募');
+    assert.equal(text({ deadline: null }), '依官網公告');
+    assert.equal(text({ deadline: '2026-09-30' }), '已截止');
+    assert.equal(text({ deadline: '2026-11-01' }), '即將截止');
+    assert.equal(text({ deadline: '2027-01-15' }), '報名中');
+});
