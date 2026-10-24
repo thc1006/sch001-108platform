@@ -45,7 +45,7 @@ import path from 'node:path';
 import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
 
-import { classifyLink, describeResult, isBlockedResult, runProbes } from './link-health.lib.mjs';
+import { classifyLink, describeResult, isBlockedResult, runProbes, unverifiedBucket } from './link-health.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
 import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
@@ -172,8 +172,9 @@ for (let i = 0; i < targets.length; i++) {
         dead.push(item);
     } else if (verdict === 'unverified') {
         const policy = matchPolicy(policyEntries, targets[i].url);
+        // item 沒有 status 與 code，報告的分組要在這裡從探測結果算好。
         if (policy) suppressed.push({ ...item, policy });
-        else unverified.push(item);
+        else unverified.push({ ...item, bucket: unverifiedBucket(r) });
     } else {
         healthy++;
     }
@@ -537,21 +538,9 @@ if (unverified.length) {
     // 例如 sdl.ntl.edu.tw 與 12basic.edu.tw 在台灣本地也是連線逾時，
     // 等於已經死掉。分類規則刻意維持只有 ENOTFOUND 與 404/410 才開 issue，但報告
     // 必須讓人看得出差別。
-    // 依「結構化的 status / code」分類，不要比對 describeResult 產出的中文字串。
-    // 顯示字串是給人看的，會被改寫、會有 fallback 直接吐出原始 code，不該拿來當
-    // 判斷依據。轉址迴圈（ETOOMANYREDIRECTS）沒有狀態碼，歸在 other，因為它在
-    // 瀏覽器裡一樣是壞的。
-    const bucketOf = (u) => {
-        if (u.status) return 'rejected'; // 有 HTTP 狀態碼＝站台有回應（403／429／5xx…）
-        const c = String(u.code || '');
-        if (/TIMEOUT|ETIMEDOUT|ABORT_ERR|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|EPIPE/i.test(c)) {
-            return 'unreachable';
-        }
-        return 'other'; // TLS、轉址迴圈、以及任何我們還沒歸類過的 code
-    };
-    const unreachable = unverified.filter((u) => bucketOf(u) === 'unreachable');
-    const rejected = unverified.filter((u) => bucketOf(u) === 'rejected');
-    const other = unverified.filter((u) => bucketOf(u) === 'other');
+    const unreachable = unverified.filter((u) => u.bucket === 'unreachable');
+    const rejected = unverified.filter((u) => u.bucket === 'rejected');
+    const other = unverified.filter((u) => u.bucket === 'other');
 
     if (unreachable.length) {
         lines.push(
