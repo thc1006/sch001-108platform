@@ -708,12 +708,42 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
         assert.equal(c.deadline, '', `${needle} 的下一屆截止日官網尚未公布，不得猜`);
         assert.ok(c.registrationNote, `${needle} 應以 registrationNote 說明狀態，而不是留白`);
     }
+});
 
-    // Sony WPA 官網同一頁對截止時刻並列 16:00 與 13:00 (GMT)，有歧義就不補 deadlineAt
-    //（與第一輪 Foyle 的 midnight 同一個處理原則）
+// Sony WPA 青年組逐字「5 January 2027 at 16:00 (GMT)」，正好是台灣 1/6 00:00。卡片用截止時刻的台北日曆日
+// 倒數，補上 deadlineAt 的話 1/5 當天會顯示「即將截止 · 剩 1 天」，所以只填日期。卡片狀態用頁面自己的函式算。
+test('data：Sony 青年組的截止時刻落在台北午夜，只填日期，1/5 當天卡片顯示今日截止', () => {
     const sony = find('Sony 世界攝影獎');
     assert.equal(sony.deadline, '2027-01-05');
-    assert.equal(sony.deadlineAt, undefined, '官網時刻自相矛盾（16:00 vs 13:00 GMT），不得擇一寫死');
+    assert.equal(sony.deadlineAt, undefined);
+    // 總覽頁逐字「1 June 0:00 BST」
+    assert.equal(sony.opensAt, '2026-06-01T00:00:00+01:00');
+
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText']
+        .map(grab).join('\n');
+    const statusAt = (c, iso) => {
+        const fixed = Date.parse(iso);
+        class FixedDate extends Date {
+            constructor(...a) { super(...(a.length ? a : [fixed])); }
+            static now() { return fixed; }
+        }
+        const f = new Function('Date', `${bundle}; return { getStatus, statusText };`)(FixedDate);
+        return f.statusText(f.getStatus(c));
+    };
+    assert.equal(statusAt(sony, '2027-01-05T09:00:00+08:00'), '今日截止');
+    assert.equal(statusAt(sony, '2027-01-05T23:59:59+08:00'), '今日截止');
+    assert.equal(statusAt(sony, '2027-01-06T00:00:01+08:00'), '已截止');
+    assert.equal(
+        statusAt({ ...sony, deadlineAt: '2027-01-05T16:00:00Z' }, '2027-01-05T09:00:00+08:00'),
+        '即將截止 · 剩 1 天',
+        '補上 deadlineAt 時同一刻會多算一天，這是只填日期的理由',
+    );
 });
 
 // 2026-10-23 重查時，這幾筆的官網已經公布下一屆時程，日期照官網填，官網寫明時刻的也一併填上。
