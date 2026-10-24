@@ -4,7 +4,7 @@
  * 這支跑在每個 PR 上，而且完全不連外網：它檢查的是「政策本身有沒有腐爛」，
  * 那件事必須是確定性的，不能取決於今天某個站台連不連得上。
  *
- * 檢查三件事：
+ * 檢查四件事：
  *
  *   1. link-policy.json 的每一筆例外都合法：精確網址或精確主機名、有 reason／
  *      owner／expires、期限未過、期限不超過上限。過期就讓 CI 紅，這是刻意的：
@@ -18,6 +18,9 @@
  *      刪掉了，例外卻還留著，這種殭屍條目會一直放行一個沒有人再檢視的目標。
  *      hijacked（被接管的網域）走同一條規則：內文已經不再提到那個網域時，這筆
  *      警示就該刪掉，而不是留著讓人以為還有東西在盯。
+ *
+ *   4. 盤點的網址不可以連到 hijacked 的主機。url 欄位與 href 讀者點得到；說明文字裡寫成
+ *      完整網址，看起來也是要讀者去開的位址。要提醒讀者某個網域已經易主，只寫裸網域。
  *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
  * 只寫在說明文字裡的裸網域（inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
@@ -33,7 +36,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { staticUrlPolicy } from './link-health.lib.mjs';
-import { validatePolicy, matchPolicy, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
+import { validatePolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -104,6 +107,17 @@ for (const url of urls) {
     }
 }
 
+// 第 4 項。matchHijacked 也是排程健檢判斷接管命中用的函式，兩邊的比對方式才會一樣。
+for (const url of urls) {
+    const h = matchHijacked(hijacked, url);
+    if (!h) continue;
+    const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
+    errors.push({
+        where: [...new Set(occ.map((o) => (o.file.endsWith('.json') ? `${o.file} ${o.location}` : o.file)))].join('、') || '(未知出處)',
+        message: `盤點的網址 ${url} 連到接管警示的主機 ${h.match.host}。要介紹網站請換成現行網址；要提醒讀者這個網域已經易主，只寫裸網域，不要寫成網址。`,
+    });
+}
+
 const inventorySet = new Set(urls.map(normalizeUrl));
 const inventoryHosts = new Set();
 for (const u of urls) {
@@ -164,4 +178,4 @@ if (errors.length) {
     console.error(`\n共 ${errors.length} 項錯誤。`);
     process.exit(1);
 }
-console.log('\n✅ 例外與接管警示全部有效，且盤點內沒有違反位址政策的網址。');
+console.log('\n✅ 例外與接管警示全部有效，盤點內沒有違反位址政策、也沒有連到接管主機的網址。');

@@ -1002,6 +1002,8 @@ test('hijacked：比對是完全相等，不得順帶涵蓋子網域或相似網
     assert.equal(matchHijacked(hijacked, 'https://evil-ieso-info.org/'), null, '子字串比對會誤中這個');
     assert.equal(matchHijacked(hijacked, 'not a url'), null);
     assert.equal(matchHijacked([], 'https://ieso-info.org/'), null);
+    const hmun = validatePolicy({ version: 1, entries: [], hijacked: [validHijack({ match: { host: 'hmun.org' } })] }, TODAY).hijacked;
+    assert.ok(matchHijacked(hmun, 'https://HMUN.org./x'), '主機名的大小寫與結尾的點不影響比對');
 });
 
 test('hijacked：判定排在三態分類之前，回 200 的接管主機不算健康；位址政策封鎖又排在接管之前', () => {
