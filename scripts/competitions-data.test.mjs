@@ -596,7 +596,7 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     assert.notEqual(
         find('小論文寫作比賽').url,
         find('閱讀心得寫作比賽').url,
-        '兩者截止日差一週、承辦學校也不同，不可共用同一個 URL',
+        '兩者截止日與承辦學校都不同，不可共用同一個 URL',
     );
 
     // 鄉土歌謠比賽 115 學年度起更名，專網是 /country/，不是藝教館首頁。
@@ -756,11 +756,11 @@ test('data：第二輪查到確切時刻的競賽必須保留時區位移', () =
     assert.equal(essay.deadline, '2027-03-15');
     assert.equal(essay.deadlineAt, '2027-03-15T12:00:00+08:00');
 
-    // 閱讀心得：「第一學期：115年9月1日（星期二）至10月8日（星期四）中午12時止」
+    // 閱讀心得：「第二學期：116年2月1日（星期一）至3月10日（星期三）中午12時止」
     const reading = find('閱讀心得寫作比賽');
-    assert.equal(reading.deadline, '2026-10-08');
-    assert.equal(reading.deadlineAt, '2026-10-08T12:00:00+08:00');
-    assert.notEqual(reading.deadline, essay.deadline, '兩者截止日相差一週，不可互相污染');
+    assert.equal(reading.deadline, '2027-03-10');
+    assert.equal(reading.deadlineAt, '2027-03-10T12:00:00+08:00');
+    assert.notEqual(reading.deadline, essay.deadline, '兩者截止日不同，不可互相污染');
 
     // Wharton：「August 10, 2026 through September 11, 2026」「Registration closes ... (5:00 p.m. ET)」
     const wharton = find('華頓全球高中投資競賽');
@@ -959,7 +959,7 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
 
     // 小論文與閱讀心得必須顯示各自的截止日，不能同一天
     assert.equal(card('小論文寫作比賽').label, '預計 2027-02-01 開放報名 · 2027-03-15 截止');
-    assert.equal(card('閱讀心得寫作比賽').label, '預計 2026-09-01 開放報名 · 2026-10-08 截止');
+    assert.equal(card('閱讀心得寫作比賽').label, '預計 2027-02-01 開放報名 · 2027-03-10 截止');
 
     // 報名已結束、但決賽還沒到：狀態講報名、日期欄講賽事，且不得顯示成「已結束」
     assert.deepEqual(card('旺宏科學獎'), {
