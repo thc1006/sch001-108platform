@@ -184,9 +184,9 @@ for (let i = 0; i < targets.length; i++) {
 // 因此 Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
 // 這裡用 DNS 根區把它們篩掉：查 TLD 的 NS 記錄，自我維護、不必養一份 TLD 清單。
 //
-// 刻意不用「這個網域解析得到嗎」當作「它算不算網域」的判準。實測兩頭都錯：
-// concordreview.org 正是已停用、查不到 A 記錄的網域，而那恰好是要抓的東西；
-// 反過來 readme.md、logo.ai、test.sh 都被蹲域名的人註冊、解析得到。詳見
+// 刻意不用「這個網域解析得到嗎」當作「它算不算網域」的判準，兩頭都錯：內文點名的網域
+// 停用之後就解析不到，那正是要抓的東西，列在 hijacked 的主機解析不到時也會連同接管警示
+// 一起被丟掉；反過來 readme.md、logo.ai、test.sh 都被蹲域名的人註冊、解析得到。詳見
 // bare-domains.lib.mjs 的檔頭。
 const BARE_BUDGET_MS = 3 * 60_000;
 // 與上面 inventory.urls 同一個道理：「盤點裡沒有這個欄位」和「一個裸網域都沒有」
