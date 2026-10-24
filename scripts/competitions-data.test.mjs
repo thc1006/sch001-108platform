@@ -200,7 +200,7 @@ test('data：官網未公布截止日的競賽不得被補上一個猜出來的�
     assert.ok(pea.registrationNote);
 
     // 外交小尖兵：113 年為「選拔活動」（9/1–9/30 報名）、114 年改辦「培訓營」（報名截止 4/29），
-    // 官網查無 115 年公告 → 不得再宣稱「每年 9 月開放」。
+    // 115 年度的「世界領航營」3/16 至 4/30 報名。每年形式與時程都不同 → 不得宣稱「每年 9 月開放」。
     const mofa = find('外交小尖兵');
     assert.equal(mofa.deadline, '');
     assert.equal(mofa.cycle, undefined);
