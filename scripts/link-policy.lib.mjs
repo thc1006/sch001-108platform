@@ -88,7 +88,7 @@ function checkExpires(value, at, todayISO, todayMs, push) {
 }
 
 /**
- * 精確主機名的共用檢查（不接受萬用字元／路徑／大小寫變體，且本身要過位址政策）。
+ * 精確主機名的共用檢查（不接受萬用字元／路徑，本身要過位址政策，且要寫成網址正規化後的主機名）。
  * 回傳正規化後的主機名，或 null（已經 push 過錯誤）。
  */
 function checkExactHost(raw, at, push) {
@@ -104,13 +104,16 @@ function checkExactHost(raw, at, push) {
         push(`${at}.match.host 只能是主機名，不得含路徑、埠號或空白`);
         return null;
     }
-    if (raw !== canonicalHost(raw)) {
-        push(`${at}.match.host 必須是小寫、無結尾點的形式：${canonicalHost(raw)}`);
-        return null;
-    }
     const verdict = staticUrlPolicy(`https://${raw}/`);
     if (!verdict.ok) {
         push(`${at}.match.host 本身就違反位址政策：${verdict.reason}`);
+        return null;
+    }
+    // 比對的對象是網址正規化後的主機名：小寫、沒有結尾的點，國際化網域變成 punycode，全形字變成半形。
+    // 寫成別種形式的 host 永遠比不到任何網址。訊息直接給正規化後的寫法，照著改一次就通過。
+    const normalized = canonicalHost(verdict.url.hostname);
+    if (normalized !== raw) {
+        push(`${at}.match.host 要寫成網址裡的主機名：${normalized}（小寫、沒有結尾的點，國際化網域寫 punycode）`);
         return null;
     }
     return raw;
