@@ -185,7 +185,9 @@ SSE 事件（每個 `data` 都是一行 JSON）：`accepted { requestId, task }`
 | `SHUTDOWN_GRACE_MS` | `900000` | 不能比 `LLM_TASK_TIMEOUT_MS` 短 |
 | `LOG_LEVEL` | `info` | |
 
-log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與模型的輸出（只記長度與代號）。
+log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與模型的輸出（只記長度與代號）。上游的
+錯誤只記固定的幾個欄位（見「錯誤與 log」）；程式錯誤只記錯誤的種類、Node 的錯誤代碼與呼叫
+堆疊，不記訊息：V8 的訊息可能夾帶字串的值（`Cannot create property 'x' on string '…'`）。
 
 ## 簡轉繁（`src/s2t.mjs`）
 
@@ -251,9 +253,10 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
    ```
 
    最後是 `error` 的話，看 log 的 `UPSTREAM-ERR`：`status` 401 代表 key 不對；504 或 408 是
-   WinLab 或它前面的代理逾時，`detail` 是它附的訊息。沒有 `status`、`detail` 寫著「還沒收到任何
-   token」的，是閘道的時限到了 WinLab 都還沒開始回應，多半是它正忙。這兩種逾時發生在第一個
-   token 之前時，學生看到的是忙線。
+   WinLab 或它前面的代理逾時，`upstreamCode`、`upstreamType` 是它附的錯誤代號（錯誤訊息的原文
+   不記，見「錯誤與 log」）。沒有 `status`、`reason` 寫著「還沒收到任何 token」的，是閘道的時限
+   到了 WinLab 都還沒開始回應，多半是它正忙。這兩種逾時發生在第一個 token 之前時，學生看到的
+   是忙線。
    從主機直接送的請求沒有 `X-Forwarded-For`，log 會多一筆 `CLIENT-IP-MISSING`，可以不理。
 4. 對外開放：在主機上用 Tailscale Funnel 把公網的 HTTPS 轉到 Service 的 ClusterIP，再確認設定：
 
@@ -311,7 +314,25 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
 
 ## 錯誤與 log
 
-上游的錯誤內容只讀前 8 KiB，遮罩後留 500 字給 log（`redact()`，在 `src/upstream.mjs`）：
+上游的錯誤內容可能照抄收到的使用者訊息（例如回報哪一則訊息驗證失敗），所以不進 log。
+`UPSTREAM-ERR` 只記這些欄位：
+
+- 閘道這次請求的 `id`、閘道自己的錯誤代號 `code` 與說明 `reason`（閘道寫的固定句子），以及
+  HTTP 狀態 `status`。
+- 上游的 request id `upstreamId`（串流裡最近一塊的 `id`，沒有就用 `x-request-id` 或
+  `x-litellm-call-id` 標頭），錯誤的 `type`、`code` 與 `param`（`upstreamType`、`upstreamCode`、
+  `upstreamParam`）。這幾個只收 `[A-Za-z0-9_.:-]` 組成、64 字以內、遮罩前後相同的值：句子進不來，
+  key 與內部位址雖然符合形狀，遮罩之後就不同。上游的結束原因（`finish_reason`）照同樣的規則，
+  不合格的換成 `unknown`，因為它會寫進錯誤訊息與 `TASK-ERR`。剩下的風險：上游若把一個剛好
+  符合這種形狀的輸入值（例如一個英文單字）放進這幾個欄位，它仍會進 log。
+- 回應不是正常的串流時：media type `mediaType`（`text/html` 這種形狀才收）、內容的長度
+  `bodyLength` 與開頭字元的類別 `bodyStart`（`letter`、`digit`、`punctuation`、`symbol`、`data:`
+  這類），不記字元本身。
+- 數字：`Retry-After` 的秒數 `retryAfter`，context 長度錯誤裡的上限 `contextLimit` 與輸入大小
+  （`inputTokens` 是精確值，`inputAtLeast` 只是下界）。
+
+錯誤內容只讀前 8 KiB，遮罩後留 500 字在錯誤物件的 `detail`（不可列舉，`redact()`，在
+`src/upstream.mjs`），只給 generate.mjs 判斷是不是 context 長度錯誤，不進 log，也不往外送：
 
 - 看不見的字元先清掉（被零寬字元或控制字元切開的 key 會重新接起來），JSON 在解析後的值與
   鍵上清，跳脫序列（`\uXXXX`、`\xXX`、`\b` 這類）最多還原三層——LiteLLM 會把內層錯誤
@@ -328,11 +349,12 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
   中間，殘段比對不到任何寫法。
 - 上游給的 content-type 也是上游的文字，同樣遮罩後放進 `detail`，不進錯誤訊息。
 - 回應不是正常的串流（200 卻不是 SSE、事件不是 JSON 或不是物件）時，`detail` 只記長度與開頭的
-  字元。這時的內容多半是模型的正文，常照抄學生的輸入，不能進 log。
-- 狀態碼已經決定錯誤的分類，錯誤內容只是給 log 看的：讀它用收尾期限（5 秒），內容慢慢滴時
-  不必等滿閒置逾時。
-- vLLM 的請求 id（`chatcmpl-…`）保留，回報問題時用得到；traceback 裡的 `檔名.py:行號`、
-  公開網域帶 port 不當成內部位址。
+  一個字元，log 只記上面的 `bodyLength` 與 `bodyStart`。這時的內容多半是模型的正文，常照抄學生的
+  輸入，`detail` 也不留原文。
+- 狀態碼已經決定錯誤的分類，錯誤內容只拿來判斷 context 長度：讀它用收尾期限（5 秒），內容
+  慢慢滴時不必等滿閒置逾時。
+- vLLM 的請求 id（`chatcmpl-…`）不遮；traceback 裡的 `檔名.py:行號`、公開網域帶 port 不當成
+  內部位址。
 
 ## 測試
 

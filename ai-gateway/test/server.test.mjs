@@ -740,10 +740,12 @@ test('模型輸出不符格式：error 事件 format；log 的細節不含模型
     }
 });
 
-test('上游錯誤：訊息只說「暫時無法使用」，遮罩過的細節只進 log', async () => {
+test('上游錯誤：訊息只說「暫時無法使用」；UPSTREAM-ERR 只記允許的欄位，上游的原文（detail）不進 log', async () => {
     const gw = await startGateway({
         generate: async () => {
-            throw new UpstreamError('auth', 'LLM 服務回應 HTTP 401', { status: 401, detail: 'key sk-*** not allowed from 1.2.3.4' });
+            throw new UpstreamError('auth', 'LLM 服務回應 HTTP 401', {
+                status: 401, detail: 'key sk-*** not allowed from 1.2.3.4', upstreamType: 'auth_error', upstreamId: 'req-up-1',
+            });
         },
     });
     try {
@@ -752,10 +754,99 @@ test('上游錯誤：訊息只說「暫時無法使用」，遮罩過的細節�
         assert.equal(error.event, 'error');
         assert.equal(error.data.code, 'unavailable');
         assert.equal(error.data.retryable, false);
-        assert.doesNotMatch(JSON.stringify(error.data), /401|1\.2\.3\.4|sk-/);
-        const upstreamLog = gw.logs.find((l) => l.tag === 'UPSTREAM-ERR');
-        assert.equal(upstreamLog.fields.status, 401);
-        assert.match(upstreamLog.fields.detail, /not allowed/);
+        assert.doesNotMatch(JSON.stringify(error.data), /401|1\.2\.3\.4|sk-|auth_error|req-up-1/);
+        const { id, ...fields } = gw.logs.find((l) => l.tag === 'UPSTREAM-ERR').fields;
+        assert.match(id, /^[0-9a-f-]{36}$/);
+        assert.deepEqual(Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)), {
+            code: 'auth', status: 401, reason: 'LLM 服務回應 HTTP 401', upstreamType: 'auth_error', upstreamId: 'req-up-1',
+        });
+        assert.doesNotMatch(JSON.stringify(gw.logs), /not allowed|1\.2\.3\.4|sk-/);
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 上游的錯誤內容可能照抄收到的使用者訊息，例如回報哪一則訊息驗證失敗
+const LEAK = '祕密標記K7Q2';
+const lastUser = (req) => req.body.messages.filter((m) => m.role === 'user').at(-1).content;
+const UPSTREAM_LOG_KEYS = [
+    'id', 'code', 'status', 'reason', 'upstreamId', 'upstreamType', 'upstreamCode', 'upstreamParam',
+    'mediaType', 'bodyLength', 'bodyStart', 'retryAfter', 'contextLimit', 'inputTokens', 'inputAtLeast',
+];
+
+/** createLogger 寫出的一行「時間 級別 標籤 key=value …」裡的欄位，值是解開引號之後的字串 */
+function logFields(line) {
+    return Object.fromEntries([...line.matchAll(/ (\w+)=("(?:[^"\\]|\\.)*"|\S+)/g)].map(([, k, v]) => [k, v.startsWith('"') ? JSON.parse(v) : v]));
+}
+
+test('上游的錯誤照抄了學生的輸入（HTTP 400 的 JSON、200 串流中的 error 事件）：log 與回給瀏覽器的錯誤都不含輸入，UPSTREAM-ERR 只記允許的欄位', async () => {
+    const echo = (req) => ({ code: 400, type: 'BadRequestError', message: `Validation failed for supplied user message: ${lastUser(req)}`, input: lastUser(req) });
+    const cases = [
+        ['HTTP 400', (req) => ({ status: 400, headers: { 'x-request-id': 'req-up-400' }, body: { error: echo(req) } }), 'req-up-400'],
+        ['串流中的 error', (req) => ({ headers: { 'x-request-id': 'req-up-sse' }, errorChunk: echo(req) }), 'req-up-sse'],
+    ];
+    for (const [label, step, upstreamId] of cases) {
+        const gw = await startRealGateway(step);
+        try {
+            const events = await readEvents(await post(gw.base, 'demo-md', { question: `我的${LEAK}與病史` }));
+            assert.ok(gw.upstream.requests[0].raw.includes(LEAK), `${label}：上游收到的訊息裡有標記`);
+            const last = events.at(-1);
+            assert.equal(last.event, 'error', label);
+            assert.equal(last.data.code, 'unavailable', label);
+            assert.doesNotMatch(JSON.stringify(events), new RegExp(LEAK), label);
+            assert.doesNotMatch(gw.lines.join('\n'), new RegExp(`${LEAK}|病史|Validation failed`), label);
+            const fields = logFields(gw.lines.find((l) => / UPSTREAM-ERR /.test(l)));
+            assert.deepEqual(Object.keys(fields).filter((k) => !UPSTREAM_LOG_KEYS.includes(k)), [], label);
+            assert.deepEqual([fields.status, fields.upstreamId, fields.upstreamType, fields.upstreamCode], ['400', upstreamId, 'BadRequestError', '400'], label);
+        } finally {
+            await gw.stop();
+        }
+    }
+});
+
+test('上游回 200 卻不是串流、內容照抄學生的輸入：UPSTREAM-ERR 只記 media type、長度與開頭字元的類別', async () => {
+    const gw = await startRealGateway((req) => ({ contentType: 'text/html; charset=utf-8', rawChunks: [`<p>${lastUser(req)}</p>`] }));
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: `我的${LEAK}` }));
+        assert.equal(events.at(-1).data.code, 'unavailable');
+        assert.doesNotMatch(gw.lines.join('\n'), new RegExp(LEAK));
+        const fields = logFields(gw.lines.find((l) => / UPSTREAM-ERR /.test(l)));
+        assert.deepEqual(Object.keys(fields).filter((k) => !UPSTREAM_LOG_KEYS.includes(k)), []);
+        assert.deepEqual([fields.code, fields.mediaType, fields.bodyStart], ['protocol', 'text/html', 'symbol']);
+        assert.ok(Number(fields.bodyLength) > LEAK.length);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('上游的 finish_reason 不是固定形狀的代號：當成 unknown，TASK-ERR 與回給瀏覽器的錯誤都不含原文', async () => {
+    const gw = await startRealGateway((req) => ({ content: ['部分'], finish: `stop ${lastUser(req)}` }));
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: `我的${LEAK}` }));
+        assert.equal(events.at(-1).data.code, 'unavailable');
+        assert.doesNotMatch(JSON.stringify(events), new RegExp(LEAK));
+        assert.doesNotMatch(gw.lines.join('\n'), new RegExp(LEAK));
+        assert.equal(logFields(gw.lines.find((l) => / TASK-ERR /.test(l))).detail, '模型以 unknown 結束');
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('程式錯誤：TASK-ERR 只記錯誤的種類、Node 的錯誤代碼與呼叫位置，不記訊息（V8 的訊息可能夾帶字串的值）', async () => {
+    const withCode = Object.assign(new Error(`write after end: ${LEAK}`), { code: 'ERR_STREAM_WRITE_AFTER_END' });
+    // 訊息裡照抄的字串值有一行看起來像堆疊
+    const fakeFrame = new TypeError(`Cannot create property 'x' on string '第一行\n    at ${LEAK} (x.js:1:1)'`);
+    const errors = [new TypeError(`Cannot create property 'x' on string '${LEAK}'`), withCode, fakeFrame];
+    const gw = await startGateway({ generate: async (request, hooks, n) => { throw errors[n - 1]; } });
+    try {
+        for (const expected of [/^TypeError at /, /^Error\(ERR_STREAM_WRITE_AFTER_END\) at /, /^TypeError at /]) {
+            const last = (await readEvents(await post(gw.base, 'demo-json', { topic: 'x' }))).at(-1);
+            assert.equal(last.data.code, 'internal');
+            const detail = gw.logs.filter((l) => l.tag === 'TASK-ERR').at(-1).fields.detail;
+            assert.match(detail, expected);
+            assert.match(detail, /server\.test\.mjs:\d+:\d+/);
+        }
+        assert.doesNotMatch(JSON.stringify(gw.logs), new RegExp(`${LEAK}|Cannot create|write after end`));
     } finally {
         await gw.stop();
     }
@@ -2000,7 +2091,7 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
         for (const [task, input] of [['demo-quick', { topic: '等' }], ['demo-md', { question: '等' }], ['demo-quick', { topic: '等' }]]) {
             assert.deepEqual((await readEvents(await post(base, task, input))).at(-1).data, busy, task);
         }
-        const waited = logs.filter((l) => l.tag === 'UPSTREAM-ERR').map((l) => [l.fields.code, l.fields.detail]);
+        const waited = logs.filter((l) => l.tag === 'UPSTREAM-ERR').map((l) => [l.fields.code, l.fields.reason]);
         assert.deepEqual(waited, [
             ['timeout', '超過總時限 300ms，還沒收到任何 token'],
             ['timeout', '上游超過 600ms 沒有回應任何資料，還沒收到任何 token'],
@@ -2020,7 +2111,7 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
 });
 
 // 408、504 是 WinLab（LiteLLM 或它前面的代理）自己回的逾時，維運要看得到它附的訊息。
-test('第一個 token 之前上游回 408、504（HTTP 狀態或串流中的 error）：回忙線、不計次，UPSTREAM-ERR 記著狀態碼與上游的內容', async () => {
+test('第一個 token 之前上游回 408、504（HTTP 狀態或串流中的 error）：回忙線、不計次，UPSTREAM-ERR 記著狀態碼與上游錯誤的 code，不記錯誤的原文', async () => {
     const litellm = { message: 'litellm.Timeout: upstream vllm timed out after 600s', code: '504' };
     const steps = [{ status: 504, body: { error: litellm } }, { status: 408, body: 'proxy request timeout' }, { errorChunk: litellm }];
     const upstream = await startFakeUpstream(steps);
@@ -2040,11 +2131,9 @@ test('第一個 token 之前上游回 408、504（HTTP 狀態或串流中的 err
             assert.equal((await readEvents(res)).at(-1).data.code, 'busy', `#${i}`);
         }
         const logged = logs.filter((l) => l.tag === 'UPSTREAM-ERR').map((l) => l.fields);
-        assert.deepEqual(logged.map((f) => [f.code, f.status]), [['timeout', 504], ['timeout', 408], ['timeout', 504]]);
-        assert.match(logged[0].detail, /litellm\.Timeout: upstream vllm timed out after 600s/);
-        assert.equal(logged[1].detail, 'proxy request timeout');
-        assert.match(logged[2].detail, /litellm\.Timeout: upstream vllm timed out after 600s/);
-        assert.doesNotMatch(JSON.stringify(logged), /還沒收到任何 token/);
+        assert.deepEqual(logged.map((f) => [f.code, f.status, f.upstreamCode]), [['timeout', 504, '504'], ['timeout', 408, undefined], ['timeout', 504, '504']]);
+        assert.deepEqual(logged.map((f) => f.reason), ['LLM 服務回應 HTTP 504', 'LLM 服務回應 HTTP 408', 'LLM 服務在串流途中回報錯誤']);
+        assert.doesNotMatch(JSON.stringify(logs), /litellm|proxy request timeout|還沒收到任何 token/);
         assert.equal(upstream.requests.length, 3);
     } finally {
         await gateway.close({ graceMs: 0, requestWaitMs: 0 });

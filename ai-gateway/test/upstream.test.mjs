@@ -332,6 +332,69 @@ test('串流途中的 error 物件：依 code 分類；LiteLLM 接著送的 [DON
     }
 });
 
+test('上游錯誤的 request id、type、code 與 param：只收 [A-Za-z0-9_.:-] 組成、64 字以內、遮罩前後相同的值', async () => {
+    const uuid = '0f8e2c1a-7b9d-4e5f-a1b2-c3d4e5f60718';
+    const cases = [
+        ['LiteLLM 的格式', { status: 400, headers: { 'x-request-id': 'req-abc_1.2:3' }, body: { error: { type: 'BadRequestError', code: 400, param: 'messages', message: '學生的輸入' } } },
+            ['req-abc_1.2:3', 'BadRequestError', '400', 'messages']],
+        ['vLLM 的格式（在最外層）', { status: 400, headers: { 'x-litellm-call-id': uuid }, body: { object: 'error', type: 'BadRequestError', code: 400, message: 'x' } },
+            [uuid, 'BadRequestError', '400', undefined]],
+        ['有空白、漢字、超過 64 字', { status: 400, headers: { 'x-request-id': 'has space' }, body: { error: { type: '學生的輸入', code: 'x'.repeat(65), param: '學生 的輸入' } } },
+            [undefined, undefined, undefined, undefined]],
+        ['遮罩會改掉的：key、內部位址、長十六進位', { status: 400, headers: { 'x-request-id': 'a'.repeat(40) }, body: { error: { type: 'litellm-proxy:4000', code: 'sk-test-key-123', param: '10.1.2.3' } } },
+            [undefined, undefined, undefined, undefined]],
+        ['內容不是 JSON', { status: 502, headers: { 'x-request-id': 'req-502' }, body: 'Bad Gateway' }, ['req-502', undefined, undefined, undefined]],
+    ];
+    for (const [label, step, expected] of cases) {
+        await withUpstream([step], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.ok(err instanceof UpstreamError, label);
+                assert.deepEqual([err.upstreamId, err.upstreamType, err.upstreamCode, err.upstreamParam], expected, label);
+                return true;
+            });
+        });
+    }
+});
+
+test('串流中的 error 事件：type 與 code 照同樣的規則收；request id 用串流裡最近一塊的 id，沒有才用標頭', async () => {
+    const id = 'chatcmpl-0123456789abcdef0123456789abcdef';
+    const rawChunks = [
+        `data: {"id":"${id}","choices":[{"index":0,"delta":{"content":"半"}}]}\n\n`,
+        'data: {"error":{"type":"InternalServerError","code":"500","message":"學生的輸入"}}\n\n',
+        'data: [DONE]\n\n',
+    ];
+    const headers = { 'x-request-id': 'req-header' };
+    await withUpstream([{ rawChunks, headers }, { errorChunk: { type: 'X Y', code: 503 }, headers }], async (up) => {
+        for (const expected of [[id, 'InternalServerError', '500'], ['req-header', undefined, '503']]) {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.deepEqual([err.upstreamId, err.upstreamType, err.upstreamCode], expected);
+                return true;
+            });
+        }
+    });
+});
+
+test('收到標頭之後的其他錯誤（不是串流、閒置逾時）也帶著標頭的 request id', async () => {
+    const headers = { 'x-request-id': 'req-after-headers' };
+    await withUpstream([{ contentType: 'text/html', headers }, { thinking: ['想'], hangAfterChunks: 2, headers }], async (up) => {
+        for (const code of ['protocol', 'timeout']) {
+            await assert.rejects(streamChat(testConfig(up.origin, { idleTimeoutMs: 300 }), basicPayload()), (err) => {
+                assert.equal(err.code, code);
+                assert.equal(err.upstreamId, 'req-after-headers', code);
+                return true;
+            });
+        }
+    });
+});
+
+test('finish_reason 只收固定形狀的代號，其他換成 unknown（它會寫進錯誤訊息與 log）', async () => {
+    for (const [raw, expected] of [['content_filter', 'content_filter'], ['stop 學生的輸入', 'unknown'], ['x'.repeat(65), 'unknown']]) {
+        await withUpstream([{ content: ['半'], finish: raw }], async (up) => {
+            assert.equal((await streamChat(testConfig(up.origin), basicPayload())).finishReason, expected, raw);
+        });
+    }
+});
+
 test('已經收到 finish_reason 之後才出錯：答案已完整，照樣回傳', async () => {
     const rawChunks = [
         'data: {"choices":[{"index":0,"delta":{"content":"完整答案"}}]}\n\n',

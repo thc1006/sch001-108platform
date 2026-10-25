@@ -8,26 +8,38 @@
  *   - 被截斷時要知道是斷在思考還是斷在正文（generate.mjs 的接續策略不同），
  *     而思考內容只出現在串流的 delta.reasoning_content。
  *
- * 錯誤一律轉成 UpstreamError，code 是給上層判斷用的穩定代號。上游回來的錯誤內容
- * 會夾帶 key 的雜湊與內網位址，遮罩後才放進 detail（不可列舉，JSON.stringify 帶不出去）
- * 給 log，絕不往外送；額度之類的數字留著，除錯時用得到。呼叫端的回呼丟出的例外原樣丟回，
- * 不翻譯成網路錯誤，否則上層會依 retryable 替已經離開的使用者再燒一次 GPU。
+ * 錯誤一律轉成 UpstreamError，code 是給上層判斷用的穩定代號。上游回來的錯誤內容會夾帶
+ * key 的雜湊與內網位址，也可能照抄收到的使用者訊息：遮罩後放進 detail（不可列舉，
+ * JSON.stringify 帶不出去），只給 generate.mjs 判斷 context 長度，不進 log 也不往外送。
+ * log 用的是 upstreamId、upstreamType 這類只收固定形狀的欄位（見 UpstreamError）。
+ * 呼叫端的回呼丟出的例外原樣丟回，不翻譯成網路錯誤，否則上層會依 retryable 替已經離開的
+ * 使用者再燒一次 GPU。
  */
 
 export class UpstreamError extends Error {
     /**
      * @param {string} code      busy | auth | misconfigured | unavailable | timeout | aborted | protocol
-     * @param {string} message   給 log 看的說明（不含上游原文）
+     * @param {string} message   給 log 看的說明，閘道自己寫的句子，不含上游原文
      * @param {object} [extra]   status：上游 HTTP 狀態；retryable：稍後重試有沒有機會成功；
-     *                           retryAfter：上游 Retry-After 秒數；detail：遮罩過的上游原文
+     *                           retryAfter：上游 Retry-After 秒數；detail：遮罩過的上游原文；
+     *                           upstreamId、upstreamType、upstreamCode、upstreamParam：上游的 request id
+     *                           與錯誤的 type、code、param；mediaType、bodyLength、bodyStart：不是正常串流的
+     *                           回應的形狀。這些只收固定形狀的值，可以進 log
      */
-    constructor(code, message, { status, retryable = false, retryAfter, detail, cause } = {}) {
+    constructor(code, message, {
+        status, retryable = false, retryAfter, detail, cause,
+        upstreamId, upstreamType, upstreamCode, upstreamParam, mediaType, bodyLength, bodyStart,
+    } = {}) {
         super(message, cause !== undefined ? { cause } : undefined);
         this.name = 'UpstreamError';
         this.code = code;
         this.status = status;
         this.retryable = retryable;
         this.retryAfter = retryAfter;
+        this.upstreamId = upstreamId;
+        this.upstreamType = upstreamType;
+        this.upstreamCode = upstreamCode;
+        Object.assign(this, { upstreamParam, mediaType, bodyLength, bodyStart });
         Object.defineProperty(this, 'detail', { value: detail, enumerable: false, writable: true, configurable: true });
     }
 }
@@ -73,11 +85,11 @@ const INTERNAL_ADDRESS = new RegExp([
     String.raw`(?<![\w.-])[a-z][a-z0-9]*-[\w-]*${PORT_AHEAD}`,
 ].map((p) => `${p}(?::\\d+)?`).join('|'), 'gi');
 
-// 一進來先截到這麼長。最後只留 limit（預設 500）字給 log，這之後的內容再長也輪不到；
+// 一進來先截到這麼長。最後只留 limit（預設 500）字，這之後的內容再長也輪不到；
 // 也讓下面每一步的成本都有上限（SSE 的一個事件最多 1 MiB）
 const REDACT_INPUT_CHARS = 64 * 1024;
 // 被截斷的內容丟掉尾端這麼多字：截斷點可能切在 key 中間，殘段比對不到任何寫法；前面的內容
-// 遮罩後又縮短（空白收斂、看不見的字元被拿掉）時，殘段就會落進留給 log 的那 500 字。
+// 遮罩後又縮短（空白收斂、看不見的字元被拿掉）時，殘段就會落進留下的那 500 字。
 // key 的十六進位寫法是兩倍長、還可能被看不見的字元隔開，留四倍以上的餘裕
 const TRUNCATED_TAIL_CHARS = 256;
 // 看不見、會把 key 切開或擾亂終端機的字元：控制字元（\t \n \r 換成空白）、格式字元（零寬、
@@ -177,7 +189,7 @@ function base64Forms(secret) {
 }
 
 /**
- * 遮罩後截短，給 log 用。truncated：text 是被截斷的（例如錯誤內容只讀了前 8 KiB），尾端
+ * 遮罩後截短，給錯誤的 detail 用。truncated：text 是被截斷的（例如錯誤內容只讀了前 8 KiB），尾端
  * 一併丟掉。依序：截到 REDACT_INPUT_CHARS（截斷時丟掉尾端）；拿掉看不見的字元（被切開的 key 會
  * 重新接起來，終端機跳脫碼與 RLO 也一併清掉）；JSON 解析後在值上清字元再序列化，不是 JSON
  * 就先還原跳脫序列再清一次；URL 編碼的可見 ASCII 解回原字；接著遮掉 key 本身（各種編碼的
@@ -220,6 +232,34 @@ export function redact(text, { secrets = [], limit = 500, truncated = false } = 
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, limit);
+}
+
+const UPSTREAM_TOKEN = /^[A-Za-z0-9_.:-]{1,64}$/;
+
+/**
+ * upstreamToken 回傳可以進 log 的上游代號，不合格就是 undefined。句子進不來；key 與內部位址符合形狀，
+ * 但遮罩前後不同，也不收。 @param {unknown} value @param {string[]} secrets @returns {string|undefined}
+ */
+function upstreamToken(value, secrets) {
+    if (typeof value !== 'string' && !Number.isInteger(value)) return undefined;
+    const text = String(value);
+    return UPSTREAM_TOKEN.test(text) && redact(text, { secrets }) === text ? text : undefined;
+}
+
+// 錯誤內容裡的 type、code 與 param：LiteLLM 包在 error 裡，vLLM 直接放在最外層
+function errorFields(body, secrets) {
+    const error = body?.error && typeof body.error === 'object' ? body.error : body;
+    if (!error || typeof error !== 'object') return {};
+    const [upstreamType, upstreamCode, upstreamParam] = [error.type, error.code, error.param].map((v) => upstreamToken(v, secrets));
+    return { upstreamType, upstreamCode, upstreamParam };
+}
+
+function parseJsonOrNull(text) {
+    try {
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
 }
 
 // Retry-After 只收十進位秒數或 HTTP-date，上限 5 分鐘。不能直接丟給 Number（'0x10' 會變 16）
@@ -365,17 +405,28 @@ export async function* sseData(body, onBytes) {
     // 沒有以空行結束的事件與殘行：依規格丟棄
 }
 
-// 錯誤內容最多讀這麼多：只是要留 500 字給 log，上游回幾百 MB 時不能把記憶體吃光
+// 錯誤內容最多讀這麼多：只是要留 500 字在 detail，上游回幾百 MB 時不能把記憶體吃光
 const MAX_ERROR_BODY_BYTES = 8 * 1024;
 // 收到 finish_reason 或 [DONE] 之後，剩下的只有 usage 與連線結尾：最多再等這麼久就收尾。
 // 這段期限是固定的，之後再進來的位元組（例如心跳）不會讓它延後
 const AFTER_FINISH_IDLE_MS = 5_000;
 
-// 回應不是正常的串流時，detail 只記形狀：正文常照抄學生的輸入，不能進 log
+// 回應不是正常的串流時，detail 只記形狀：正文常照抄學生的輸入，不留原文
 function shapeOf(text) {
     const head = text.trimStart();
     return `${text.length} 字元，開頭是 ${JSON.stringify(head.startsWith('data:') ? 'data:' : head.slice(0, 1))}`;
 }
+
+const START_CLASSES = [['letter', /^\p{L}/u], ['digit', /^\p{N}/u], ['punctuation', /^\p{P}/u], ['symbol', /^\p{S}/u]];
+
+// 給 log 的形狀：長度與開頭字元的類別，不記字元本身
+function shapeFields(text) {
+    const head = text.trimStart();
+    const start = !head ? 'empty' : head.startsWith('data:') ? 'data:' : START_CLASSES.find(([, re]) => re.test(head))?.[0] ?? 'other';
+    return { bodyLength: text.length, bodyStart: start };
+}
+
+const MEDIA_TYPE = /^[a-z0-9.+-]{1,64}\/[a-z0-9.+-]{1,64}$/;
 
 // 回傳 { text, truncated }：truncated 表示後面還有沒讀的，交給 redact 丟掉尾端
 async function readLimited(res, limit) {
@@ -463,7 +514,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         clearTimeout(idleTimer);
         idleTimer = setTimeout(() => idle.abort(), ms);
     };
-    // 收尾期限：答案收完之後等 usage，以及讀錯誤內容（狀態碼已經決定分類，內容只是給 log 看的）
+    // 收尾期限：答案收完之後等 usage，以及讀錯誤內容（狀態碼已經決定分類，內容只拿來判斷 context 長度）
     const closingMs = Math.min(config.idleTimeoutMs, config.afterFinishIdleMs ?? AFTER_FINISH_IDLE_MS);
     const enterClosing = () => {
         if (closing) return;
@@ -516,6 +567,8 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         if (signal?.aborted) throw new UpstreamError('aborted', '請求被取消', { cause: signal.reason });
     };
 
+    // 上游的 request id（回報問題時對照上游的 log），收到標頭之後丟出的錯誤都帶著它
+    let headerId;
     armIdle();
     try {
         let res;
@@ -536,14 +589,17 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
             throw translate(err);
         }
         armIdle();
+        headerId = upstreamToken(res.headers.get('x-request-id'), secrets) ?? upstreamToken(res.headers.get('x-litellm-call-id'), secrets);
 
         if (!res.ok) {
             // 錯誤內容慢慢滴的話，不必等滿閒置逾時（正式設定 3 分鐘）才回報
             armIdle(closingMs);
             let detail = '';
+            let fields = {};
             try {
                 const { text, truncated } = await readLimited(res, MAX_ERROR_BODY_BYTES);
                 detail = redact(text, { secrets, truncated });
+                fields = errorFields(parseJsonOrNull(text), secrets);
             } catch {
                 // 讀錯誤內容失敗（含收尾期限到了）不影響分類
             }
@@ -554,6 +610,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                 retryable,
                 retryAfter: parseRetryAfter(res.headers.get('retry-after')),
                 detail,
+                ...fields,
             });
         }
 
@@ -564,8 +621,11 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
             armIdle(closingMs);
             const { text } = await readLimited(res, MAX_ERROR_BODY_BYTES).catch(() => ({ text: '' }));
             throwIfAborted();
+            const mediaType = rawType.split(';')[0].trim().toLowerCase();
             throw new UpstreamError('protocol', 'LLM 服務沒有回串流', {
                 detail: `content-type: ${redact(rawType, { secrets, limit: 100 }) || '（無）'}；${shapeOf(text)}`,
+                mediaType: MEDIA_TYPE.test(mediaType) && redact(mediaType, { secrets }) === mediaType ? mediaType : undefined,
+                ...shapeFields(text),
             });
         }
 
@@ -576,6 +636,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         let reasoningChunks = 0;
         let contentChunks = 0;
         let sawDone = false;
+        let chunkId;
 
         try {
             for await (const data of sseData(res.body, () => { if (!closing) armIdle(); })) {
@@ -592,11 +653,12 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                 try {
                     chunk = JSON.parse(data);
                 } catch {
-                    throw new UpstreamError('protocol', '串流內容不是 JSON', { detail: shapeOf(data) });
+                    throw new UpstreamError('protocol', '串流內容不是 JSON', { detail: shapeOf(data), ...shapeFields(data) });
                 }
                 if (!chunk || typeof chunk !== 'object') {
                     throw new UpstreamError('protocol', '串流內容不是物件', { detail: `JSON 的 ${chunk === null ? 'null' : typeof chunk}` });
                 }
+                if (chunk.id !== undefined) chunkId = chunk.id;
                 // LiteLLM 串到一半出錯時會送 {"error": {...}}，不能當成正常結束；
                 // 答案已經收完（有 finish_reason）之後才出的錯不影響結果，後面若還有 usage 照收
                 if (chunk.error) {
@@ -609,6 +671,8 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                         retryable,
                         // 遮罩原本的那一行：再把 chunk.error 序列化一次的話，巢狀很深時會丟 RangeError
                         detail: redact(data, { secrets }),
+                        upstreamId: upstreamToken(chunkId, secrets),
+                        ...errorFields(chunk, secrets),
                     });
                 }
                 if (chunk.usage) usage = chunk.usage;
@@ -616,7 +680,8 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                 if (!choice) continue;
                 // 最後一塊（只帶 usage）的 finish_reason 是 null，不能蓋掉前一塊的 stop／length
                 if (choice.finish_reason && !finishReason) {
-                    finishReason = choice.finish_reason;
+                    // 結束原因會寫進錯誤訊息與 log：不是固定形狀的代號就換成 unknown
+                    finishReason = upstreamToken(choice.finish_reason, secrets) ?? 'unknown';
                     enterClosing();
                 }
                 const delta = choice.delta || {};
@@ -654,6 +719,9 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                 : 'LLM 服務的串流在途中中斷', { retryable: true });
         }
         return { reasoning, content, finishReason, usage, reasoningChunks, contentChunks };
+    } catch (err) {
+        if (err instanceof UpstreamError && err !== callbackError && err.upstreamId === undefined) err.upstreamId = headerId;
+        throw err;
     } finally {
         clearTimeout(idleTimer);
     }

@@ -32,7 +32,7 @@ import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { loadLlmConfig, loadServerConfig, configProblems } from './config.mjs';
-import { generate, GenerationError } from './generate.mjs';
+import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
 import { SlotGate, ClientLimiter, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, TaskError } from './tasks.mjs';
@@ -120,13 +120,52 @@ function isJsonContentType(value) {
     return /^application\/json\s*(;|$)/i.test(String(value || ''));
 }
 
-// 任何值都能轉成字串（Object.create(null) 之類 String() 會丟例外的也行）
-function describeValue(value) {
+// Node 的錯誤代碼（ERR_STREAM_WRITE_AFTER_END、ECONNRESET）
+const NODE_ERROR_CODE = /^[A-Z][A-Z0-9_]{1,63}$/;
+
+/**
+ * describeInternal 給程式錯誤寫 log：只有種類、Node 的錯誤代碼與呼叫堆疊，不含訊息。V8 的訊息
+ * 可能夾帶字串的值（Cannot create property 'x' on string '…'），那可能是學生的輸入或模型的輸出。
+ * 任何值都能描述，Object.create(null) 這類 String() 會丟例外的也行。
+ * @param {unknown} value @returns {string}
+ */
+function describeInternal(value) {
     try {
-        return value?.stack || String(value);
+        if (!(value instanceof Error)) return Object.prototype.toString.call(value);
+        const code = NODE_ERROR_CODE.test(value.code) ? `(${value.code})` : '';
+        // 先跳過訊息佔的行數：訊息裡的字串值也可能有一行以「    at 」開頭
+        const lines = String(value.stack).split('\n').slice(String(value.message).split('\n').length);
+        const frames = lines.filter((line) => /^\s+at /.test(line)).map((line) => line.trim());
+        return [`${value.name}${code}`, ...frames].join(' ');
     } catch {
         return Object.prototype.toString.call(value);
     }
+}
+
+/**
+ * upstreamLogFields 回傳 UPSTREAM-ERR 要記的欄位。上游的錯誤內容可能照抄學生的輸入，原文只留在
+ * 錯誤的 detail 給 generate 判斷 context 長度；這裡只記閘道自己的代號與說明、HTTP 狀態、
+ * 只收固定形狀的上游代號（見 upstream.mjs 的 upstreamToken），以及解析出來的數字。
+ * @param {object} err @returns {object}
+ */
+function upstreamLogFields(err) {
+    const overflow = parseContextOverflow(err);
+    return {
+        code: err.code,
+        status: err.status,
+        reason: err.message,
+        upstreamId: err.upstreamId,
+        upstreamType: err.upstreamType,
+        upstreamCode: err.upstreamCode,
+        upstreamParam: err.upstreamParam,
+        mediaType: err.mediaType,
+        bodyLength: err.bodyLength,
+        bodyStart: err.bodyStart,
+        retryAfter: err.retryAfter,
+        contextLimit: overflow?.limit,
+        inputTokens: overflow?.exact,
+        inputAtLeast: overflow?.atLeast,
+    };
 }
 
 class HttpError extends Error {
@@ -231,7 +270,7 @@ function isTimeout(err) {
 /**
  * 把各層的錯誤翻成給前端的 { code, retryable, retryAfter } 與給 log 的細節。
  * auth、misconfigured 這類是我們這邊的設定問題：對學生一律說「暫時無法使用」，
- * 真正原因（遮罩過的上游回應）只進 log。
+ * 狀態碼與上游的錯誤代號只進 log（見 upstreamLogFields）。
  * 取消（用戶端離開、關機）不經過這裡：呼叫端先看自己的 signal 判斷。
  * tokensSeen 表示上游已經送來過思考或正文。
  */
@@ -240,9 +279,9 @@ function describeError(err, { tokensSeen = true } = {}) {
         return { code: 'busy', retryable: true, retryAfter: err.retryAfter };
     }
     // 第一個 token 之前就逾時，是 WinLab 忙到還沒開始處理，跟學生寫了什麼無關：說忙線，不叫他改寫內容。
-    // 上游自己回了 408、504 的，log 照樣記狀態碼與它附的內容；其他是閘道的時限先到，註明一個 token 都沒收到。
+    // 上游自己回了 408、504 的，log 照樣記狀態碼與上游的錯誤代號；其他是閘道的時限先到，註明一個 token 都沒收到。
     if (!tokensSeen && isTimeout(err)) {
-        const upstream = err.status ? err : { code: 'timeout', detail: `${err.message}，還沒收到任何 token` };
+        const upstream = err.status ? err : { code: 'timeout', message: `${err.message}，還沒收到任何 token` };
         return { code: 'busy', retryable: true, retryAfter: 30, upstream };
     }
     if (err instanceof UpstreamError) {
@@ -265,7 +304,7 @@ function describeError(err, { tokensSeen = true } = {}) {
     if (err instanceof TaskError) {
         return { code: err.code === 'empty' ? 'empty' : 'format', retryable: true, detail: err.detail };
     }
-    return { code: 'internal', retryable: true, detail: describeValue(err) };
+    return { code: 'internal', retryable: true, detail: describeInternal(err) };
 }
 
 // generate 收下 JSON 的標準跟交出前的 finalizeOutput 一樣（見 generate 的 acceptJson）
@@ -344,7 +383,7 @@ export function createGateway({
         unanswered.add(answered);
         answered.then(() => unanswered.delete(answered));
         route(req, res).catch((err) => {
-            log('error', 'UNHANDLED', { method: req.method, path: req.url?.split('?')[0], error: describeValue(err) });
+            log('error', 'UNHANDLED', { method: req.method, path: req.url?.split('?')[0], error: describeInternal(err) });
             if (!res.headersSent) {
                 sendJson(req, res, 500, { error: { code: 'internal', message: MESSAGES.internal } }, corsHeaders(req));
             } else {
@@ -701,12 +740,7 @@ export function createGateway({
                 outcome = failure.code;
             }
             if (failure.upstream) {
-                log('warn', 'UPSTREAM-ERR', {
-                    id: requestId,
-                    code: failure.upstream.code,
-                    status: failure.upstream.status,
-                    detail: failure.upstream.detail || failure.upstream.message,
-                });
+                log('warn', 'UPSTREAM-ERR', { id: requestId, ...upstreamLogFields(failure.upstream) });
             } else if (failure.detail) {
                 log(failure.code === 'internal' ? 'error' : 'warn', 'TASK-ERR', { id: requestId, code: failure.code, detail: failure.detail });
             }
