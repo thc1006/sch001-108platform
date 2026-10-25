@@ -684,11 +684,11 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     assert.equal(frc.eventStartsAt, '2027-04-28');
     assert.equal(frc.eventEndsAt, '2027-05-01');
 
-    // 全國科展：報名 6/1–6/10、全國賽 7/13–7/19，三級選拔、不受理個人報名。
+    // 全國科展：報名 6/1–6/10、全國賽 7/13–7/19，三級選拔、無個人報名管道。
     const twsf = find('全國中小學科學展覽會');
     assert.equal(twsf.deadline, '');
     assert.equal(twsf.eventStartsAt, '2026-07-13');
-    assert.ok(twsf.registrationNote?.includes('個人'), '應說明不受理個人報名，而不是留白');
+    assert.ok(twsf.registrationNote?.includes('個人'), '應說明沒有個人報名管道，而不是留白');
 });
 
 test('data：官網明講「尚未公布」的競賽不得被補上猜測日期', () => {
