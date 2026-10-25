@@ -1432,9 +1432,9 @@
       "cycle": {
         "closes": "12-31"
       },
-      "sourceCheckedAt": "2026-08-27",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://www.acsl.org/",
-      "description": "營運至今第 49 年的 K-12 程式與計算機科學競賽，官網逐字「ACSL welcomes participation from all pre-college schools around the world」，台灣沒有指定代理，依「otherwise, use the form on this site to register」由指導老師（不是學生）直接在官網報名。2026-27 賽季報名 9/1 開放、逐字「The deadline for registering for the season is December 31, 2026」；四場例行賽各為開放視窗（Contest #1 10/19 開放至 2027-01-10、#2 2027-01-04 至 02-28、#3 2027-02-01 至 04-11、#4 2027-03-01 至 05-23，皆 23:59 ET 截止），Invitational Finals 2027-05-29。每隊報名費 US$175（Elementary 組 US$125）。"
+      "description": "營運至今第 49 年的 K-12 程式與計算機科學競賽，官網逐字「ACSL welcomes participation from all pre-college schools around the world」。首頁列出的各國合作單位在巴西、中國、南韓、緬甸、泰國、越南，沒有台灣，官網報名表的國家選單另列 Taiwan；依首頁「otherwise, use the form on this site to register」，台灣由隊伍的 advisor 直接在官網報名，報名頁逐字「team advisors (not students!)」，advisor 可以是「any teacher, parent or other adult with some CS experience」。2026-27 賽季報名 9/1 開放、逐字「The deadline for registering for the season is December 31, 2026」；四場例行賽各為開放視窗（Contest #1 10/19 開放至 2027-01-10、#2 2027-01-04 至 02-28、#3 2027-02-01 至 04-11、#4 2027-03-01 至 05-23，皆 23:59 ET 截止），Invitational Finals 2027-05-29。每隊報名費 US$175（Elementary 組 US$125）。"
     },
     {
       "title": "Technovation Challenge 科技創新挑戰（原 Technovation Girls）",
