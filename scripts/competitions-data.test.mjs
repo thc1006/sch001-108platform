@@ -149,9 +149,6 @@ test('data：本輪查證修掉的失效／停放網址不得被改回去', () =
     for (const needle of VERIFIED_2026_08_27) {
         const { url } = find(needle);
         assert.match(url, /^https:\/\//, `${needle} 的 url 必須是 https`);
-        const host = new URL(url).hostname;
-        assert.ok(host !== 'conradchallenge.org' && host !== 'www.conradchallenge.org', 'conradchallenge.org 已是停放網域');
-        assert.notEqual(host, 'tpmso.org', 'tpmso.org 已轉址到 tpmso.k12ea.gov.tw');
     }
 });
 
@@ -633,18 +630,24 @@ test('data：第二輪修掉的停放與空殼網址不得被改回去', () => {
     // ipho2026.com 是單屆網站；臺灣物奧選訓辦公室連結的常設官網是 ipho-new.org
     assert.equal(find('國際物理奧林匹亞').url, 'https://www.ipho-new.org/');
 
-    // 全域護欄：這些網域整份資料都不該再出現
+    // 全域護欄：這些網域和它們的子網域，整份資料都不該再出現。比對 URL 解析出的主機名稱
+    // （去掉結尾的點、轉小寫）：寫成網址前綴的 regex 會把 tpmso.org.tw 當成 tpmso.org，
+    // 也抓不到 hmun.org 轉去的 ww1.hmun.org。
     const DEAD_HOSTS = [
-        /^https?:\/\/(www\.)?tpmso\.org/, /^https?:\/\/(www\.)?apho\.org/,
-        /^https?:\/\/(www\.)?ijso-official\.org/, /^https?:\/\/(www\.)?sasmo\.sg/,
-        /^https?:\/\/(www\.)?hmun\.org/, /^https?:\/\/(www\.)?eucys\.eu/,
-        /^https?:\/\/(www\.)?conradchallenge\.org/, /^https?:\/\/(www\.)?yau-awards\.com/,
-        /^https?:\/\/(www\.)?roboticseducation\.org/, /^https?:\/\/competitions\.igem\.org/,
-        /^https?:\/\/(www\.)?ieso-info\.org/, /^https?:\/\/(www\.)?ipho2026\.com/,
-        /^https?:\/\/(www\.)?issp\.ac\.ru/,
+        'tpmso.org', 'apho.org', 'ijso-official.org', 'sasmo.sg', 'hmun.org', 'eucys.eu',
+        'conradchallenge.org', 'yau-awards.com', 'roboticseducation.org', 'competitions.igem.org',
+        'ieso-info.org', 'ipho2026.com', 'issp.ac.ru',
     ];
+    const isDead = (url) => {
+        const h = new URL(url).hostname.replace(/\.+$/, '').toLowerCase();
+        return DEAD_HOSTS.some((d) => h === d || h.endsWith('.' + d));
+    };
+    assert.equal(isDead('https://tpmso.org.tw/x'), false, 'tpmso.org.tw 不是 tpmso.org');
+    assert.equal(isDead('https://ww1.hmun.org/'), true, 'hmun.org 轉去的 ww1.hmun.org 也算');
+    assert.equal(isDead('https://tpmso.org./x'), true, '結尾帶點的主機名稱是同一台');
+    assert.equal(isDead('https://tpmso.org../x'), true, '結尾帶好幾個點也一樣');
     const offenders = DATA.competitions
-        .filter((c) => DEAD_HOSTS.some((re) => re.test(c.url)))
+        .filter((c) => isDead(c.url))
         .map((c) => `${c.title} → ${c.url}`);
     assert.deepEqual(offenders, [], '這些網域已確認為停放、過期、空殼或不存在：\n  ' + offenders.join('\n  '));
 });
