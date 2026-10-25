@@ -204,7 +204,7 @@ description: 作品集是設計學群的決勝點。本頁整合作品集 Portfo
 - [設計系學姐帶你做備審！作品集範例、印刷、面試技巧全面剖析 — IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-設計系備審-作品集範例-面試準備)
 - [設計作品集怎麼準備？實踐工設學長：比起畫技，展現原創性更重要 — IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-備審-面試-大學作品集-術科考試)
 - [【設計師履歷範本】最忌作品集塞好塞滿！面試官考量大公開 — 104 職場力](https://blog.104.com.tw/designer-resume-sample/)
-- [又見抄襲／剽竊 — Deerlight Design 曝鹿設計專欄](https://medium.com/deerlight/design-6637bfdb97e4)
+- [又見抄襲／剽竊，這次是文字 — Deerlight Design 曝鹿設計專欄（Medium 會員文章，文首有作者放的免費閱讀連結）](https://medium.com/deerlight/design-6637bfdb97e4)
 - [2026 TISDC 臺灣國際學生創意設計大賽官方網站](https://www.tisdc.org/)
 - [新一代設計展 Young Designers' Exhibition 官方網站](https://yodex.com.tw/)
 - [教育部鼓勵學生參加藝術與設計類國際競賽計畫（IDC）](https://www.moe-idc.org/Competition/Information)
