@@ -597,7 +597,7 @@
       "registrationNote": "常年開放 · 每週三 Starters",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.codechef.com/",
-      "description": "印度 CodeChef Inc. 營運的線上程式競賽平台，註冊免費、常年開放。現行主軸是每週三舉行的兩小時 Starters：2026-08-29 查官方賽程 API 顯示 9 月場次為 Starters 254（9/2）、255（9/9）、256（9/16），另有 Monday Munch DSA Challenge、Placement Prep Weekends 等系列。舊制的 Long Challenge、Cook-Off 與 LunchTime 已停辦：同一支 API（www.codechef.com/api/list/contests/all，公開、無需登入）回傳 present 1 筆、future 5 筆、past 20 筆，三段合計對這三個系列 0 命中，對 Starters 11 命中。要留意該 API 的 past 只回最近 20 場、是一個視窗而非全部歷史，所以這裡能斷定的是「現在與未來都不再舉辦」，而不是「歷史上從未存在」。官網未刊登年齡或國籍限制條文。"
+      "description": "印度 CodeChef Inc. 營運的線上程式競賽平台，註冊免費、常年開放。現行主軸是每週三舉行的兩小時 Starters：2026-08-29 查官方賽程 API 顯示 9 月場次為 Starters 254（9/2）、255（9/9）、256（9/16），另有 Monday Munch DSA Challenge、Placement Prep Weekends 等系列。舊制的 Long Challenge、Cook-Off 與 LunchTime 已停辦：同一支 API（www.codechef.com/api/list/contests/all，公開、無需登入）回傳 present 1 筆、future 5 筆、past 20 筆，三段合計對這三個系列 0 命中，對 Starters 11 命中。要留意該 API 的 past 只回最近 20 場、是一個視窗而非全部歷史，所以這裡能斷定的是「現在與未來都不再舉辦」，而不是「歷史上從未存在」。Starters 的賽事規則逐字「Our contests are open to all programmers across the globe」，並要求參賽者遵守 Code of Conduct。Code of Conduct 逐字「Residents of the following countries and territories are not eligible to win prizes/laddus/goodies, or earn any compensation due to legal restrictions」，名單列了 24 個國家與地區的名稱，沒有台灣；限制的是住在這些地方的人領獎和領取報酬，不是參賽。服務條款（Last Updated on 8th July 2024）逐字「you represent that you are at least the age of majority in your state or province of residence, or that you are the age of majority in your state or province of residence and you have given us your consent to allow any of your minor dependents to use this site」，也就是同意條款的人須已成年，未成年人要由家長或監護人同意才能使用。"
     },
     {
       "title": "LeetCode Weekly Contest",
