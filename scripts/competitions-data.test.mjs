@@ -233,13 +233,15 @@ test('data：本輪查證到的賽事日期與週期', () => {
     assert.equal(tisf.cycle.closes, '11');
 
     // Conrad 官網 Activation Stage：「Start: August 27, 2026」「End: October 29, 2026」
+    // 2026-2027 Student Guide：「October 29, 2026 by 11:59PM CT」，10/29 是 CDT（UTC−5）
     // Innovation Stage：「The submission deadline for all Innovation Stage content is January 7, 2027.」
     // Innovation Summit：April 21-24, 2027
     const conrad = find('Conrad Challenge');
     assert.equal(conrad.deadline, '2026-10-29', 'Activation 階段結束於 10/29，不是 10/30');
+    assert.equal(conrad.deadlineAt, '2026-10-29T23:59:00-05:00');
     assert.equal(conrad.eventStartsAt, '2027-04-21');
     assert.equal(conrad.eventEndsAt, '2027-04-24');
-    assert.equal(conrad.cycle.closes, '10-29');
+    assert.equal(conrad.cycle.closes, '10', '2025-26 季 10/30、2026-27 季 10/29，只寫月份');
 
     // ESU 官網：「IPSC Week will take place Monday 5 – Friday 9 July 2027」
     //           「Registrations forms are to be filled out by national organisers only」
@@ -336,7 +338,7 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
 
     // 報名中的兩筆：剩餘天數以帶時區的精確時刻換算成台北日曆日
     assert.equal(card('哈佛克里姆森商業個案分析賽').status, '報名中 · 剩 49 天');
-    assert.equal(card('Conrad Challenge').status, '報名中 · 剩 63 天');
+    assert.equal(card('Conrad Challenge').status, '報名中 · 剩 64 天');
 
     // 本屆已截止但知道週期
     assert.equal(card('台灣國際學生創意設計大賽').status, '本屆已截止 · 下次約 2027-07-31');
