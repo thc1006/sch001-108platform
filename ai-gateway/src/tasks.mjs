@@ -234,40 +234,32 @@ function describeParseFailure(err, content) {
     return `${err?.name || 'Error'}（正文 ${String(content).length} 字）`;
 }
 
-// 把物件與陣列裡所有的字串值轉成台灣繁體（遞迴）。鍵不動：鍵是規格裡的屬性名稱，驗證時已經比對過
-function traditionalizeStrings(value) {
-    if (typeof value === 'string') return toTraditional(value);
-    if (Array.isArray(value)) return value.map((item) => traditionalizeStrings(item));
-    if (value && typeof value === 'object') {
-        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, traditionalizeStrings(item)]));
-    }
-    return value;
-}
+// JSON.parse 的 reviver：解碼後的字串值轉成台灣繁體。鍵不經過 reviver，它是規格裡的屬性名稱，照原樣比對
+const traditionalStrings = (key, value) => (typeof value === 'string' ? toTraditional(value) : value);
 
 /**
  * 把模型的正文轉成前端拿到的結果：JSON 任務是驗證過的物件，文字任務是去掉前後空白的字串。
- * 零星冒出的簡體字先轉成台灣繁體（s2t.mjs）。JSON 在解析之前轉：只換中文字，碰不到 JSON 的
- * 結構字元；而且重寫過的輪次不受 response_format 約束，enum 的值要轉過才比對得上。
- * 解析之後再把字串值轉一次：模型若把字寫成 \uXXXX 跳脫序列，原文裡看不到簡體字，解析前的
- * 轉換碰不到，解碼之後才冒出來（實測 数据 寫成跳脫序列，解析後仍是簡體）。轉換是冪等的，
- * 轉兩次不會改壞
+ * 零星冒出的簡體字轉成台灣繁體（s2t.mjs）。JSON 先解析、轉換解碼後的字串值，再驗證 schema
+ * 與任務的 check：退化之後的輪次拿掉了 response_format，enum 的值可能寫成簡體字，轉過才比對
+ * 得上。不轉換解析前的原文：寫成 \uXXXX 跳脫序列的字在原文裡看不到，而 toTraditional 會看前一個字，
+ * 拮 寫成跳脫序列時 据 前面是 e，「拮据」會被轉成「拮據」。
  */
 export function finalizeOutput(task, content) {
-    const traditional = toTraditional(content);
     if (task.output.type === 'markdown') {
-        const text = traditional.trim();
+        const text = toTraditional(content).trim();
         if (!text) throw new TaskError('empty', 'AI 沒有產生內容');
         return text;
     }
-    let parsed;
     try {
-        parsed = extractJson(traditional, task.output.schema, { check: task.output.check });
+        return extractJson(content, task.output.schema, { reviver: traditionalStrings, check: task.output.check });
     } catch (err) {
         // 驗證錯誤的描述只有路徑與規格（schema.mjs 的 validate 與任務的 check），可以進 log
         if (err instanceof SchemaMismatch) throw new TaskError('format', 'AI 回覆的內容不符合格式', { detail: err.problem });
-        if (err instanceof SyntaxError) throw new TaskError('format', 'AI 回覆的格式無法解析', { detail: describeParseFailure(err, content) });
+        // 極深的巢狀會讓 reviver 用完堆疊，丟 RangeError；跟解析不了一樣是輸出的問題
+        if (err instanceof SyntaxError || err instanceof RangeError) {
+            throw new TaskError('format', 'AI 回覆的格式無法解析', { detail: describeParseFailure(err, content) });
+        }
         // 其他例外（例如 check 寫錯）是程式錯誤：照樣丟出，HTTP 服務回 internal，生成階段也不會拿它去重寫
         throw err;
     }
-    return traditionalizeStrings(parsed);
 }

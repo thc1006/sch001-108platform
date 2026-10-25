@@ -279,6 +279,14 @@ test('extractJson：check 丟出的例外照樣往外丟，不算解析不了，
     }
 });
 
+test('extractJson：reviver 交給 JSON.parse，每個候選都先經過它，schema 與 check 驗的是它處理過的值', () => {
+    const answer = { type: 'object', properties: { answer: { type: 'string', enum: ['好'] } }, required: ['answer'], additionalProperties: false };
+    const reviver = (key, value) => (value === 'ok' ? '好' : value);
+    const check = (value) => (value.answer === '好' ? null : '$.answer 沒有經過 reviver');
+    assert.deepEqual(extractJson('{"answer":"ok"}', answer, { reviver, check }), { answer: '好' });
+    assert.deepEqual(extractJson('前言 [1] {"answer":"ok"} 後記', answer, { reviver, check }), { answer: '好' });
+});
+
 test('extractJson：最多試 32 個起點', () => {
     const answer = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false };
     const noise = (n) => '[1] '.repeat(n);
