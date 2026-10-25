@@ -639,9 +639,9 @@
       "mode": "實體",
       "deadline": "2027-02-11",
       "eventStartsAt": "2027-02-18",
-      "sourceCheckedAt": "2026-08-27",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://cemc.uwaterloo.ca/contests/ccc",
-      "description": "由滑鐵盧大學 CEMC 主辦的程式競賽，須由學校向 CEMC 訂購並施測，學生無法個人報名。台灣學生在台灣的學校應試，只要「born on or after July 1, 2006」即符合 official 資格、可列 honour roll，但後續 CCO／CIW 邀請另有加拿大籍或居留條件。2027 屆學校訂購截止 2027-02-11；競賽日分兩場——北美與南美 2/17、其餘地區（含台灣）2/18。2/18 是比賽日，不是報名截止日。"
+      "description": "由滑鐵盧大學 CEMC 主辦的程式競賽，須由學校向 CEMC 訂購並施測，學生無法個人報名，官網逐字「It is not possible for students to individually register for a contest — all students must participate through their school」；自己的學校沒有參加的，可以找當地願意讓他們加入的其他學校。台灣學生在台灣的學校應試，只要「born on or after July 1, 2007」即符合 official 資格、可列 honour roll。CCO 邀請在加拿大學校應試、CCC Senior 成績頂尖的約 20 名 official 參賽者，CIW 邀請同樣條件中女性認同或非二元性別的約 10 名，官網另寫「Outstanding participants, including those who are Canadian citizens or permanent residents attending school outside of Canada, may also be invited」，人選由 CEMC 決定。2027 屆學校訂購截止 2027-02-11；競賽日分兩場——北美與南美 2/17、其餘地區（含台灣）2/18。2/18 是比賽日，不是報名截止日。"
     },
     {
       "title": "Project Euler",
