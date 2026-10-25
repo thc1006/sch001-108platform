@@ -22,7 +22,7 @@
       "category": "ai-labs",
       "name": "Claude 開發者文件與 Cookbook",
       "org": "Anthropic",
-      "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview",
       "description": "Anthropic 公開的 Claude 官方技術文件與程式範例庫(Cookbook),涵蓋提示技巧、工具使用與 AI 應用實作。對想了解大型語言模型如何運作、嘗試開發 AI 專題的高中生很有幫助。",
       "tags": [
         "官方文件",
