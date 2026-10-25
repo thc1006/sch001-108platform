@@ -41,6 +41,8 @@
  *   不論哪一種，下一輪的請求（不算提醒）若會跟這一輪一模一樣，例如整輪只有空白、只重複了已經
  *   寫過的內容、重寫出同一份草稿，這一輪就算「沒有淨進展」：下一輪加一句提醒（temperature 0
  *   時同樣的請求只會得到同樣的結果），連續兩輪沒有淨進展就提前結束，不把剩下的輪數燒完。
+ *   接續正文的一輪去重疊後沒有新增看得見的字就以 stop 結束，也算沒有淨進展：答案還停在截斷的
+ *   地方，不能當成寫完交出去。
  *
  * 每一輪都要放得進模型的 context：WinLab 這個模型只有 32768 tokens，而且「輸入 + max_tokens」
  * 超過就直接 400，不會自動縮小（2026-10-21 實測）。估算器（estimateTokens）依字元類別估，
@@ -85,6 +87,7 @@
  */
 import { neutralizeControlTokens } from './control-tokens.mjs';
 import { streamChat, UpstreamError } from './upstream.mjs';
+import { hasVisibleText } from './visible-text.mjs';
 
 export class GenerationError extends Error {
     /**
@@ -256,6 +259,16 @@ function hasDegenerateWhitespace(text) {
 
 const WORD = /[\p{L}\p{N}]/u;
 const DIGIT = /\p{N}/u;
+
+/**
+ * repeatsTail 判斷接續新增的部分是不是只把已寫正文的結尾重寫一次：去掉前後空白之後是 previous 的
+ * 結尾，而且至少有兩個字母或數字。開頭多了空白或換行的重疊，trimOverlap 要至少 8 個字才去掉。
+ * @param {string} previous @param {string} added @returns {boolean}
+ */
+function repeatsTail(previous, added) {
+    const text = added.trim();
+    return [...text].filter((ch) => WORD.test(ch)).length >= 2 && previous.trimEnd().endsWith(text);
+}
 // 英文字母與阿拉伯數字：以空格分詞的文字，詞的中間不會斷開
 const LATIN_WORD = /[A-Za-z0-9]/;
 
@@ -938,6 +951,7 @@ export async function generate(config, request, hooks = {}) {
     const runRounds = async () => {
         for (let round = 1; round <= config.maxRounds; round++) {
             currentRound = round;
+            const roundBegin = content;
             if (round > 1) {
                 onProgress({ phase: 'continuing', round, reason: continuations.at(-1), thinkingTokens, writingTokens });
                 throwIfHookFailed(round);
@@ -945,6 +959,7 @@ export async function generate(config, request, hooks = {}) {
 
             let result;
             let plan;
+            let roundStart;           // 這一次嘗試開始前的正文（重試時是斷線前已送出的部分）
             let tailDropped = false;  // 這一輪寫到最後退化成一大串空白（已丟掉）
             let squeezed = false;     // 這一輪的正文中間壓過退化的空白（正文的 token 比例因此不準）
             let attempt = 0;
@@ -1019,7 +1034,7 @@ export async function generate(config, request, hooks = {}) {
                     probedFit = true;
                 }
                 if (!pending) assertFits(plan, round);
-                const roundStart = content;
+                roundStart = content;
                 // 文字任務的正文先經過空白的關卡：一串空白先暫存，後面出現非空白才送出（退化的那種
                 // 壓成最多兩個換行）；輪末仍是退化的一大串空白就丟掉
                 let started = false;
@@ -1215,20 +1230,27 @@ export async function generate(config, request, hooks = {}) {
                 }
             }
 
+            // 接續正文的這一次說寫完了，去重疊後卻沒有多出看得見的字，或只是把結尾重寫一次：答案還停在
+            // 截斷或斷線的地方，不能交出。跟被截斷一樣交給下面的分支，並算成沒有淨進展
+            const added = content.slice(roundStart.length);
+            const stalled = result.finishReason === 'stop' && plan.mode === 'writing'
+                && (!hasVisibleText(added) || repeatsTail(content.slice(0, roundStart.length), added));
+            // 同一輪前面的嘗試已經寫出新字、之後斷線重試：這一輪有進展
+            const earlierProgress = hasVisibleText(content.slice(roundBegin.length, roundStart.length));
             if (result.finishReason === 'stop') {
-                if (!content.trim()) {
+                if (!hasVisibleText(content)) {
                     throw fail('empty', '模型結束了，但沒有寫出任何正文', { rounds: round });
                 }
-                if (!jsonMode) return finish({ content, rounds: round, usage, continuations }, round);
+                if (!jsonMode && !stalled) return finish({ content, rounds: round, usage, continuations }, round);
                 // JSON 任務：拿掉 response_format 之後（退化過一次）輸出不再受約束，可能包著圍欄、
                 // 夾帶說明或根本不合法；guided decoding 也不檢查任務另外的規定。合格才收下，否則用
                 // 剩下的輪數整份重寫（下面的分支）
-                if (acceptable(content)) return finish({ content: unwrapCodeFence(content), rounds: round, usage, continuations }, round);
+                if (jsonMode && acceptable(content)) return finish({ content: unwrapCodeFence(content), rounds: round, usage, continuations }, round);
             } else if (result.finishReason !== 'length') {
                 throw fail('stopped', `模型以 ${result.finishReason} 結束`, { rounds: round, finishReason: result.finishReason });
             }
 
-            // 被截斷：依這一輪產出了什麼決定下一輪
+            // 被截斷（或 stalled）：依這一輪產出了什麼決定下一輪
             const streakBefore = degenerateStreak;
             if (produced.trim()) {
                 let degenerated;
@@ -1297,19 +1319,23 @@ export async function generate(config, request, hooks = {}) {
             }
             // 下一輪的請求（不算提醒）會跟這一輪一模一樣：寫了字卻只是重複已寫的內容、重寫出同一份
             // 草稿、或思考了但下一輪不會帶上筆記（強度本來就是 none）。這一輪沒有淨進展：算進連續
-            // 退化，並加上提醒讓請求不同
-            if (shapeKey(roundShape()) === plan.shapeKey) {
+            // 退化，並加上提醒讓請求不同。stalled 的一輪不論請求變不變都算
+            if (earlierProgress) {
+                degenerateStreak = 0;
+            } else if (stalled || shapeKey(roundShape()) === plan.shapeKey) {
                 degenerateStreak = Math.max(degenerateStreak, streakBefore + 1);
                 nudge = true;
             }
             if (degenerateStreak >= 2) {
-                const code = !partial().trim() ? 'empty' : rejectedJson ? 'format' : 'incomplete';
-                throw fail(code, '模型連續兩輪沒有任何進展，提前結束', { rounds: round });
+                const code = !hasVisibleText(partial()) ? 'empty' : rejectedJson ? 'format' : 'incomplete';
+                // stalled：沒寫完是因為沒有進展，不是回答太長，HTTP 服務給學生的訊息不同
+                throw Object.assign(fail(code, '模型連續兩輪沒有任何進展，提前結束', { rounds: round }), { stalled: code === 'incomplete' });
             }
         }
 
+        if (!hasVisibleText(partial())) throw fail('empty', `用完 ${config.maxRounds} 輪仍沒有看得見的正文`, { rounds: config.maxRounds });
         if (rejectedJson) throw fail('format', `用完 ${config.maxRounds} 輪，JSON 仍不符合格式`, { rounds: config.maxRounds });
-        throw fail('incomplete', `用完 ${config.maxRounds} 輪仍未寫完`, { rounds: config.maxRounds });
+        throw Object.assign(fail('incomplete', `用完 ${config.maxRounds} 輪仍未寫完`, { rounds: config.maxRounds }), { stalled: degenerateStreak > 0 });
     };
 
     try {
