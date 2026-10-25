@@ -1001,6 +1001,14 @@ test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => 
     assert.deepEqual(marked, [], '描述不得含 ** 或反引號');
 });
 
+// Jamboree 官網逐字「13–16 NOVEMBER, 2026」，api.igem.org 的 startDate 也是 2026-11-13。
+test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致', () => {
+    const igem = find('iGEM');
+    assert.equal(igem.eventStartsAt, '2026-11-13');
+    assert.equal(igem.eventEndsAt, '2026-11-16');
+    assert.match(igem.description, /Grand Jamboree 2026-11-13 至 11-16/);
+});
+
 test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日期欄', () => {
     const src = readFileSync(
         new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
