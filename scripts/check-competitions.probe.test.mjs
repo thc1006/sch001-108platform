@@ -13,7 +13,7 @@ import { createServer } from 'node:http';
 import dns from 'node:dns';
 import { readFile } from 'node:fs/promises';
 
-import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS } from './check-competitions.lib.mjs';
+import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS, ALLOWED_REGIONS } from './check-competitions.lib.mjs';
 import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS, validateInstant, validateDateOnly, validateSchedule } from './check-competitions.lib.mjs';
 import { selectNeedsRecheck, sourceCheckedProblem } from './check-competitions.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
@@ -158,6 +158,15 @@ test('合法 https url 不應產生錯誤', () => {
 test('form 只接受三種值', () => {
     assert.deepEqual(ALLOWED_FORMS, ['個人', '團體', '個人/團體']);
     assert.ok(!ALLOWED_FORMS.includes('個人與團隊'));
+});
+
+// 地區選單寫死在 competitions.astro。選項的值對不上 ALLOWED_REGIONS 時，那個地區的競賽用選單篩不出來。
+test('地區篩選的選項與 ALLOWED_REGIONS 一致', async () => {
+    const src = await readFile(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const select = src.match(/<select id="filter-region"[^>]*>([\s\S]*?)<\/select>/);
+    assert.ok(select, '在 competitions.astro 抽不到 #filter-region——若已改名請同步更新本測試');
+    const options = [...select[1].matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map((m) => [m[1], m[2]]);
+    assert.deepEqual(options, [['all', '所有地區'], ...ALLOWED_REGIONS.map((r) => [r, r])]);
 });
 
 test('cycle：只知月份時取該月最後一天（保守，不會誤判成已截止）', () => {
