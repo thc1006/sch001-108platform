@@ -157,7 +157,7 @@ test('data：查到確切時刻的競賽必須保留時區位移', () => {
     //                「Extended deadline: July 15, 2026, 11:59 PM Taipei Time」
     assert.equal(find('台灣國際學生創意設計大賽').deadlineAt, '2026-07-15T23:59:00+08:00');
 
-    // HCC 官網 Terms：「The registration form closes automatically on October 14 (GMT+0), 23:59.」
+    // HCGCC 官網 Terms：「The registration form closes automatically on October 14 (GMT+0), 23:59.」
     assert.equal(find('哈佛克里姆森商業個案分析賽').deadlineAt, '2026-10-14T23:59:00Z');
 
     // Diamond Challenge 官網：「January 14 | Submission Deadline (5PM EST)」

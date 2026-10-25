@@ -866,8 +866,8 @@
       "description": "MLH 是全球學生黑客松的聯盟與認證方，本身不辦大多數活動，而是認證各校自辦的 Member Events（每年逾千場、遍及百國）。高中生並未被排除：官方 Member Event Guidelines 逐字「Student attendees can be enrolled at any level of study at a traditional (middle school, high school, university, etc.), nontraditional ... institution, or graduated in the past year」，並設有高中黑客松指南專頁；Code of Conduct 亦無年齡或學籍限制。但各場次可自訂更嚴格門檻（多數大學主辦場次實務上只收大學生），且沒有統一報名截止日，報名時程與資格請逐場查詢。"
     },
     {
-      "title": "哈佛克里姆森商業個案分析賽 (HCC)",
-      "organizer": "The Harvard Crimson",
+      "title": "哈佛克里姆森商業個案分析賽 (HCGCC)",
+      "organizer": "Crimson Education 與 The Harvard Crimson",
       "category": "商業管理",
       "level": "國際",
       "form": "團體",
@@ -876,13 +876,14 @@
       "mode": "線上",
       "deadline": "2026-10-14",
       "deadlineAt": "2026-10-14T23:59:00Z",
+      "eventStartsAt": "2026-11-29",
       "cycle": {
         "opens": "07",
-        "closes": "10-14"
+        "closes": "10"
       },
-      "sourceCheckedAt": "2026-08-27",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://www.casecomp.org/",
-      "description": "由哈佛校報 The Harvard Crimson 與 Crimson Education 合作的全球高中生商業個案競賽，全程線上，開放 13–18 歲在學（或已畢業但當年不入大學）學生，每隊須 2–4 人。屬付費競賽：早鳥（7/14–9/2）每人 15 美元、一般（9/2–10/14）每人 20 美元。2026 屆報名於 10/14 23:59（GMT+0）自動關閉，10 月下旬至 11 月初區域賽、全球決賽 11 月中、12/1 公布結果。"
+      "description": "由哈佛校報 The Harvard Crimson 與 Crimson Education 合作的全球高中生商業個案競賽，官網隱私權政策寫明籌辦團隊是 Crimson Education 內部的團隊。全程線上，開放 13–18 歲在學（或已畢業但當年不入大學）學生，每隊須 2–4 人，台灣屬 APAC 賽區。屬付費競賽：早鳥（7/14–9/2）每人 15 美元、一般（9/2–10/14）每人 20 美元。2026 屆報名已於 10/14 23:59（GMT+0）自動關閉；10/22 發區域賽個案、10/29 交簡報，11/19 起全球賽，11/29 線上決賽，12/1 公布結果。"
     },
     {
       "title": "Diamond Challenge 創業競賽",
