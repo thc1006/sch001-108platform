@@ -145,8 +145,9 @@ test('data：本輪查證修掉的失效／停放網址不得被改回去', () =
     for (const needle of VERIFIED_2026_08_27) {
         const { url } = find(needle);
         assert.match(url, /^https:\/\//, `${needle} 的 url 必須是 https`);
-        assert.ok(!/^https:\/\/(www\.)?conradchallenge\.org/.test(url), 'conradchallenge.org 已是停放網域');
-        assert.ok(!/^https:\/\/tpmso\.org/.test(url), 'tpmso.org 已轉址到 tpmso.k12ea.gov.tw');
+        const host = new URL(url).hostname;
+        assert.ok(host !== 'conradchallenge.org' && host !== 'www.conradchallenge.org', 'conradchallenge.org 已是停放網域');
+        assert.notEqual(host, 'tpmso.org', 'tpmso.org 已轉址到 tpmso.k12ea.gov.tw');
     }
 });
 
