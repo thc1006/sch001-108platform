@@ -123,5 +123,5 @@ description: 財經學群個人申請第二階段實戰指南，涵蓋備審資�
 - [Yory 優歷「臺大財金系陳彥行教授」專訪](https://www.yory.school/contents/620c56ee54391b00116fd9f9)
 - [TKB 甄戰「115 備審資料準備指引一覽」](https://www.reallygood.com.tw/newExam/inside?str=608CB2623AAD266CAC6CBC6D4CB6FC36)
 - [世新大學財務金融學系「如何準備個人申請備審文件」（2018）](https://fin.wp.shu.edu.tw/?p=1311)
-- [親子天下 premium「大學二階面試自我介紹、面試問題準備」](https://premium.parenting.com.tw/article/5094892)
+- [親子天下〈大學面試攻略！大學二階面試自我介紹範例、服裝、面試問題、提問準備一次看〉](https://www.parenting.com.tw/article/5094892)
 - [銘傳大學財務金融學系「面試須知」](https://fin2.mcu.edu.tw/zh-hant/content/面試須知)

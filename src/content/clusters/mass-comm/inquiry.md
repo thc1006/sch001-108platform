@@ -113,7 +113,7 @@ A：可以，但要誠實揭露，且 AI 只能是「工具」不能是「代筆
 
 - [108 課綱資訊網自主學習專區，教育部國教署](https://shs.k12ea.gov.tw/site/12basic/category?root=42&cid=42)
 - [自主學習是什麼？重點概念、撰寫訣竅與參考範本，布朗實驗教育機構](https://highschool.ltbrown.hcc.edu.tw/announcement-detail/self-learning/)
-- [自主學習計畫怎麼寫？各校範例與線上資源，未來 Family（親子天下）](https://premium.parenting.com.tw/article/5093328)
+- [自主學習計畫怎麼寫？各校自主學習範例/線上資源/課程一次看，親子天下](https://www.parenting.com.tw/article/5093328)
 - [【作伙學手冊】學習歷程——大學申請入學第二階段準備指南（第一章說明大學審查備審資料的「三重二不」原則），教育部學習歷程檔案審議計畫](https://www.108epo.com/results-detail.php?Key=38)
 - [媒體素養教學素材庫，台灣媒體觀察教育基金會](https://www.mediawatch.org.tw/work/literacy/materials)
 - [2026 新聞業展望：人工智慧消滅人類記者？關鍵評論網](https://www.thenewslens.com/article/263147)
