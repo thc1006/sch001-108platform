@@ -252,11 +252,13 @@ test('data：本輪查證到的賽事日期與週期', () => {
 
     // Brain Bee 主辦單位報名頁：「報名：2026 年 5 月 9 日截止」
     //   第一階段 2026-05-23 筆試、第二階段 2026-06-27 口試
+    // 2025 屆官網活動頁的票券販售在 2025-03-20 結束。兩屆截止月份不同，2027 屆公布前不留已過的日期。
     const bee = find('Taiwan Brain Bee');
-    assert.equal(bee.deadline, '2026-05-09');
+    assert.equal(bee.deadline, '');
     assert.equal(bee.eventStartsAt, '2026-05-23');
     assert.equal(bee.eventEndsAt, '2026-06-27');
-    assert.equal(bee.cycle.closes, '05-09');
+    assert.equal(bee.cycle, undefined, '2025 屆 3/20、2026 屆 5/9 截止，沒有固定月份');
+    assert.ok(bee.registrationNote?.includes('2027'));
 });
 
 // 資料對了不等於畫面對了。#82 修掉的正是「資料是賽事日期、卡片寫成報名截止」，
