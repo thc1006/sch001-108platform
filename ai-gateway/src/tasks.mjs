@@ -29,8 +29,9 @@
 import { randomBytes } from 'node:crypto';
 
 import { neutralizeControlTokens } from './control-tokens.mjs';
-import { assertSupportedSchema, validate, toResponseFormat, extractJson, SchemaMismatch } from './schema.mjs';
+import { assertSupportedSchema, toResponseFormat, extractJson, SchemaMismatch } from './schema.mjs';
 import { toTraditional } from './s2t.mjs';
+import { hasVisibleText } from './visible-text.mjs';
 
 export const SYSTEM_PROMPT = [
     '你是「台灣教育處方籤」平台的 AI 學習顧問，服務對象是台灣的高中生。',
@@ -65,9 +66,6 @@ const INVISIBLE = /(?![\t\n\u200C-\u200F\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\p{Cc
 // 一個。連續好幾個沒有意義，卻能把任意位元組藏在一個字後面（emoji smuggling：每個位元組
 // 對到一個選擇符）。只留緊跟在一般字後面的第一個；接在開頭、空白或另一個選擇符後面的都刪掉
 const EXTRA_VARIATION_SELECTORS = /(^|[\s\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+/gu;
-// 至少要有一個字母、數字、標點或符號，否則對模型來說就是空白。點字空白（U+2800）與
-// 物件替代字元（U+FFFC）屬於「符號」，畫面上卻是一片空白，不算
-const MEANINGFUL = /(?![\u2800\uFFFC])[\p{L}\p{N}\p{P}\p{S}]/u;
 // code point 的平均預算：整個欄位最多 maxLength × 4 個 code point（不是每個字各自的上限）。
 // 正常的字是 1 個，表情符號組合也很少超過 4 個；一個基底字後面疊上千個組合符號（Zalgo）
 // 仍算一個字，這一道擋的是那種輸入，它的 token 數遠多於字數。
@@ -184,7 +182,7 @@ export function validateInput(task, raw) {
             .replace(INVISIBLE, '')
             .replace(EXTRA_VARIATION_SELECTORS, '$1')
             .trim();
-        if (!MEANINGFUL.test(cleaned)) throw new TaskError('invalid_input', `請填寫${spec.label}`, { field: name });
+        if (!hasVisibleText(cleaned)) throw new TaskError('invalid_input', `請填寫${spec.label}`, { field: name });
         // 上限的兩倍以內照實寫出目前幾個字；再多就只說超過多少，不必為了訊息把整串數完
         const shownLimit = spec.maxLength * 2;
         const length = countChars(cleaned, shownLimit);
@@ -247,7 +245,7 @@ const traditionalStrings = (key, value) => (typeof value === 'string' ? toTradit
 export function finalizeOutput(task, content) {
     if (task.output.type === 'markdown') {
         const text = toTraditional(content).trim();
-        if (!text) throw new TaskError('empty', 'AI 沒有產生內容');
+        if (!hasVisibleText(text)) throw new TaskError('empty', 'AI 沒有產生內容');
         return text;
     }
     try {

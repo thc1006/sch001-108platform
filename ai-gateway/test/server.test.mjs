@@ -786,6 +786,24 @@ test('文字任務的正文只有空白：error 事件 empty（不是 format）'
     }
 });
 
+// 串流的片段不檢查內容，照樣送出；交出前的檢查才判定沒有看得見的字。
+test('文字任務的正文只有看不見的字元：片段照樣送出，最後是 error 事件 empty', async () => {
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            hooks.onContent('\u200B');
+            return { ...OK_RESULT, content: '\u200B' };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: 'q' }));
+        assert.deepEqual(events.filter((e) => e.event === 'delta').map((e) => e.data.text), ['\u200B']);
+        assert.equal(events.at(-1).event, 'error');
+        assert.equal(events.at(-1).data.code, 'empty');
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('失敗的任務：TASK log 仍記下輪數與已經用掉的 token', async () => {
     const err = new GenerationError('incomplete', '用完輪數', { rounds: 3, continuations: ['length', 'length'] });
     err.usage = { promptTokens: 900, completionTokens: 24_576, reasoningTokens: 8000 };
