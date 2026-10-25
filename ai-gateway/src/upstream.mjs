@@ -262,7 +262,7 @@ function parseJsonOrNull(text) {
     }
 }
 
-// Retry-After 只收十進位秒數或 HTTP-date，上限 5 分鐘。不能直接丟給 Number（'0x10' 會變 16）
+// Retry-After 只收十進位秒數或 HTTP-date。不能直接丟給 Number（'0x10' 會變 16）
 // 或 Date.parse（V8 連 '1.5' 都當成日期，沒有時區的 asctime 還會當成本地時間）。
 // HTTP-date 依 RFC 9110 §5.6.7：IMF-fixdate 是標準，接收端也要接受過時的 RFC 850 與 asctime
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -270,6 +270,8 @@ const MONTH = MONTHS.join('|');
 const IMF_FIXDATE = new RegExp(String.raw`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (${MONTH}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$`);
 const RFC850_DATE = new RegExp(String.raw`^(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (\d{2})-(${MONTH})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$`);
 const ASCTIME_DATE = new RegExp(String.raw`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (${MONTH}) ([ \d]\d) (\d{2}):(\d{2}):(\d{2}) (\d{4})$`);
+// 等多久照上游的要求，這個上限只讓數字留在合理範圍（setTimeout 最多約 24.8 天）
+const MAX_RETRY_AFTER_SECONDS = 24 * 60 * 60;
 
 function parseHttpDate(text, now) {
     let m;
@@ -302,18 +304,22 @@ function parseHttpDate(text, now) {
     return at;
 }
 
+function retryAfterSeconds(text, now) {
+    if (/^\d+$/.test(text)) return Number(text);
+    const at = parseHttpDate(text, now);
+    return Number.isNaN(at) ? undefined : Math.ceil((at - now) / 1000);
+}
+
 export function parseRetryAfter(value, now = Date.now()) {
     if (!value) return undefined;
     const text = String(value).trim();
-    let seconds;
-    if (/^\d+$/.test(text)) {
-        seconds = Number(text);
-    } else {
-        const at = parseHttpDate(text, now);
-        if (Number.isNaN(at)) return undefined;
-        seconds = Math.ceil((at - now) / 1000);
+    // fetch 把重複的標頭用「, 」接起來，取第一個值；HTTP-date 本身就有一個逗號，所以也試前兩段
+    const parts = text.split(',');
+    for (const candidate of [text, parts[0], parts.slice(0, 2).join(',')]) {
+        const seconds = retryAfterSeconds(candidate.trim(), now);
+        if (seconds !== undefined) return Math.min(MAX_RETRY_AFTER_SECONDS, Math.max(0, seconds));
     }
-    return Math.min(300, Math.max(0, seconds));
+    return undefined;
 }
 
 // 依 WinLab 的 HTTP 狀態分類。429 可能是速率、並行、key 或使用者額度（WinLab 文件），

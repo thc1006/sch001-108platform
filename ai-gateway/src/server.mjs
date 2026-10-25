@@ -278,6 +278,12 @@ function describeError(err, { tokensSeen = true } = {}) {
     if (err instanceof LimitError) {
         return { code: 'busy', retryable: true, retryAfter: err.retryAfter };
     }
+    // 上游要求等待的時間太長（超過在請求裡等的上限或任務剩下的時限），generate 沒有重試：照忙線回報，
+    // 轉告上游要求的秒數
+    if (err instanceof GenerationError && err.retryAfter !== undefined) {
+        const upstream = err.cause instanceof UpstreamError ? err.cause : undefined;
+        return { code: 'busy', retryable: true, retryAfter: Math.max(1, err.retryAfter), upstream };
+    }
     // 第一個 token 之前就逾時，是 WinLab 忙到還沒開始處理，跟學生寫了什麼無關：說忙線，不叫他改寫內容。
     // 上游自己回了 408、504 的，log 照樣記狀態碼與上游的錯誤代號；其他是閘道的時限先到，註明一個 token 都沒收到。
     if (!tokensSeen && isTimeout(err)) {
