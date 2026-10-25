@@ -17,8 +17,8 @@
  *   done      { result, rounds, continuations, usage, elapsedMs }
  *   error     { code, message, retryable, retryAfter? }
  * 串流正常會以一個 done 或 error 結束。收不到的情況：用戶端自己離開、用戶端不把資料收走
- * 而被斷線（DRAIN_TIMEOUT_MS）、程序被強制結束（第二次 SIGTERM、SIGKILL）、閘道本身的
- * 程式錯誤。前端要把「沒收到 done 或 error 就結束的串流」當成可以重試的中斷。
+ * 而被斷線（MAX_PENDING_BYTES、DRAIN_TIMEOUT_MS）、程序被強制結束（第二次 SIGTERM、SIGKILL）、
+ * 閘道本身的程式錯誤。前端要把「沒收到 done 或 error 就結束的串流」當成可以重試的中斷。
  *
  * 開始串流之前的拒絕一律回 JSON：{"error": {code, message, requestId, ...}}。
  *
@@ -46,6 +46,11 @@ const SHUTDOWN_FLUSH_MS = 1_000;
 const REQUEST_WAIT_MS = 5_000;
 // 回應寫完之後，用戶端遲遲不把資料收走（不讀的連線），最多再等這麼久就斷開
 const DRAIN_TIMEOUT_MS = 30_000;
+// 生成期間用戶端不把資料收走：待送的資料超過這麼多，或 write() 回 false 之後這麼久都沒有 drain，
+// 就中止上游並關掉連線。模型一秒只寫幾十個 token，正常的用戶端收得比它快，待送量接近 0；
+// 不設限的話，不讀的連線會讓整份回答（累計上限見 generate.mjs）都排在記憶體裡
+const MAX_PENDING_BYTES = 1024 * 1024;
+const STALL_TIMEOUT_MS = 30_000;
 // 用戶端 IP 標頭只看最後這麼多個字元：最右邊的值就在最後面，前面再長都與我們無關
 const MAX_IP_HEADER_CHARS = 256;
 // 信任的代理沒送用戶端 IP 時的警告，最多每分鐘一次
@@ -261,6 +266,8 @@ function isInputEnvelope(body) {
 
 // 關機時中止任務用的 reason：catch 裡據此分辨「我們要關機」與「用戶端自己離開」
 const SHUTDOWN = new Error('閘道正在關機');
+// 用戶端不把資料收走時中止任務用的 reason（見 MAX_PENDING_BYTES）
+const CLIENT_STALLED = new Error('用戶端不收資料');
 
 // 任務的總時限到了（GenerationError），或上游逾時（UpstreamError：太久沒送任何資料，或回了 408、504）。
 function isTimeout(err) {
@@ -335,10 +342,12 @@ function acceptsJson(task, content) {
  * @param {Function} [options.log]    createLogger() 的結果
  * @param {Function} [options.now]    單調時鐘（毫秒），限流與警告的頻率用；測試可以注入
  * @param {number} [options.maxBodyReads]  同時在收 body 的請求上限；測試可以調小
+ * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
+ * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
  */
 export function createGateway({
     llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(),
-    maxBodyReads = MAX_BODY_READS,
+    maxBodyReads = MAX_BODY_READS, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
 }) {
     const gate = new SlotGate({
         concurrency: cfg.concurrency,
@@ -627,6 +636,9 @@ export function createGateway({
         let release = () => {};
         let heartbeat;
         let progressTimer;
+        let stallTimer;
+        // 判定用戶端不收資料的那一道門檻（pending 或 drain_timeout）與當時待送的位元組，記進 TASK
+        let stalledBy;
         let queueMs = 0;
         let outcome = 'ok';
         let result;
@@ -662,9 +674,7 @@ export function createGateway({
             req.socket.setNoDelay(true);
             send('accepted', { requestId, task: task.id });
             if (entry.queued) send('progress', { phase: 'queued', position: entry.position });
-            heartbeat = setInterval(() => {
-                if (!res.writableEnded) res.write(': ping\n\n');
-            }, cfg.heartbeatMs);
+            heartbeat = setInterval(() => write(': ping\n\n'), cfg.heartbeatMs);
 
             handle.queued = entry.queued;
             const queuedAt = Date.now();
@@ -767,6 +777,10 @@ export function createGateway({
         } finally {
             clearInterval(heartbeat);
             clearTimeout(progressTimer);
+            // 之後用戶端不收資料的情況交給下面的 DRAIN_TIMEOUT_MS
+            clearTimeout(stallTimer);
+            // 寫 done 時才發現用戶端不收的，生成雖然做完了，用戶端也沒拿到結果
+            if (abort.signal.reason === CLIENT_STALLED) outcome = 'client_stalled';
             release();
             // 沒用到 GPU 的請求不算次數：尖峰時依 Retry-After 重試的整班學生，不該在負載退了之後
             // 反而被自己的重試鎖住。包括上游在第一個 token 之前就回忙線（429）、連不上或逾時的
@@ -786,7 +800,7 @@ export function createGateway({
                 task: task.id,
                 client: clientTag(key),
                 outcome,
-                status: outcome === 'aborted' ? 499 : res.statusCode,
+                status: outcome === 'aborted' || outcome === 'client_stalled' ? 499 : res.statusCode,
                 rounds: result?.rounds ?? failedWith?.rounds,
                 cont: (result?.continuations ?? failedWith?.continuations)?.join(','),
                 reasoning: usage?.reasoningTokens,
@@ -794,13 +808,40 @@ export function createGateway({
                 prompt: usage?.promptTokens,
                 queue: `${queueMs}ms`,
                 total: `${Date.now() - started}ms`,
+                stall: stalledBy?.reason,
+                pending: stalledBy?.pending,
             });
         }
         return undefined;
 
         function send(event, data) {
+            write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        }
+
+        // 寫進回應，用戶端不把資料收走時中止任務（見 MAX_PENDING_BYTES）。超過上限是在寫之前檢查：
+        // 一次寫入大的 done 不算，要上一筆還沒收走才算
+        function write(chunk) {
             if (!res.headersSent || res.writableEnded || res.destroyed) return;
-            res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+            if (res.writableLength > maxPendingBytes) {
+                stall('pending');
+                return;
+            }
+            if (res.write(chunk) || stallTimer) return;
+            stallTimer = setTimeout(stall, stallTimeoutMs, 'drain_timeout');
+            res.once('drain', () => {
+                clearTimeout(stallTimer);
+                stallTimer = undefined;
+            });
+        }
+
+        function stall(reason) {
+            clearTimeout(stallTimer);
+            stallTimer = undefined;
+            stalledBy = { reason, pending: res.writableLength };
+            abort.abort(CLIENT_STALLED);
+            // 用 RST 關掉：用戶端不收資料時，FIN 排在核心緩衝裡還沒送出的資料後面，連線與緩衝都會留著
+            if (res.socket) res.socket.resetAndDestroy();
+            else res.destroy();
         }
     }
 

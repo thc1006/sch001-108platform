@@ -174,6 +174,16 @@ SSE 事件（每個 `data` 都是一行 JSON）：`accepted { requestId, task }`
   五千多條），RSS 最高 162 MiB，上限 2000 時是 204 MiB。
 - **心跳**：每 `HEARTBEAT_MS` 送一次 SSE 註解。前端連續 60 秒沒收到任何位元組就當成斷線，
   所以心跳上限是 30 秒，兩邊要一起改。
+- **用戶端不收資料**：生成期間待送的資料（`res.writableLength`）超過 1 MiB，或 `write()` 回 false
+  之後 30 秒都沒有 drain，就中止上游、用 RST 關掉連線。TASK 記 `client_stalled`、499、判定的門檻
+  （`stall`：`pending` 或 `drain_timeout`）與當時待送的位元組（`pending`）。用 FIN 的話，它排在
+  核心緩衝裡還沒送出的資料後面，用戶端不讀就一直送不到，連線與緩衝都留著。2026-10-25 本機
+  （Linux 7.0）實測：伺服器寫了約 5 MB、用戶端不讀，關掉之後用戶端才開始讀；FIN 還收到約 4 MB
+  才結束，RST 收到約 0.2 MB 就是 ECONNRESET。模型一秒只寫幾十個 token，正常的用戶端收得比它快。
+  生成照常進行、不等 drain。這兩道門檻擋的是閘道自己記憶體裡排著的資料：`res.writableLength`
+  不含核心緩衝與中間的代理，經過反向代理時代理會一直把資料讀走，2026-10-26 審查時本機實測要送
+  約 13～16 MB 才判定 `client_stalled`，在那之前名額照樣被佔著。回應寫完之後用戶端還不收的，30 秒
+  後用 `res.destroy()` 關掉；那是 FIN，核心緩衝裡的資料會留到用戶端讀走或核心放棄這條連線。
 - **換版與關機**：收到 SIGTERM 後 readiness 改回 503、新請求回 503（`Retry-After: 5`、
   `connection: close`，讓代理改連新的 pod），排隊中的任務立刻中止，進行中的任務最多等
   `SHUTDOWN_GRACE_MS`；時間到了先送一個可重試的 `error` 再斷線。第二次 SIGTERM 立即結束。
