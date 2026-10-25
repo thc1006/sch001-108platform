@@ -11,12 +11,13 @@ const done = (result) => sse('done', { result, rounds: 1, continuations: [], usa
 const delta = (text) => sse('delta', { text });
 const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) => window.__stream.push(c)), chunks);
 
-// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。錯誤之前已經收到草稿，
+// 草稿標明沒有寫完、留在結果區，訊息接在最後。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
 const SETTLE = [
     ['收到 done', done('* 最後的答案'), (page) => expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案')],
     ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
-        (page) => expect(page.locator('#ai-result')).toHaveText(FORMAT_ERROR)],
+        (page) => expect(page.locator('#ai-result > p')).toHaveText(FORMAT_ERROR)],
 ];
 
 /**
@@ -173,6 +174,34 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
             await expect(page.locator('#ai-generate-btn')).toBeFocused();
         });
     }
+
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    const PARTIAL_ERRORS = [
+        ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
+        ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
+    ];
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在 #ai-result，紅字訊息接在下面；#ai-work 清空，焦點回到「開始分析」按鈕`, async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**：'), delta('寫出你怎麼')], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const work = page.locator('#ai-work');
+        const result = page.locator('#ai-result');
+        const button = page.locator('#ai-generate-btn');
+        await expect(work.locator('.prose li')).toHaveText(['• A2 系統思考與解決問題：寫出你怎麼']);
+
+        await work.getByRole('button', { name: '取消' }).focus();
+        await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
+        await expect(result.locator('.prose li')).toHaveText(['• A2 系統思考與解決問題：寫出你怎麼']);
+        await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
+        await expect(result.locator(':scope > p')).toHaveText(message);
+        await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
+        // 先放答案再放訊息，live region 唸的順序跟畫面一樣
+        expect(await result.evaluate((el) => [...el.children].map((c) => c.tagName))).toEqual(['DIV', 'P']);
+        expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual(['ai-result:polite']);
+        await expect(work).toBeEmpty();
+        await expect(button).toBeFocused();
+        for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
+    });
 
     test('用鍵盤按「開始分析」→ 進行中焦點留在按鈕上，再按 Enter 不會再送一次；完成後焦點仍在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });

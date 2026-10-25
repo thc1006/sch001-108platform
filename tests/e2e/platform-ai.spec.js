@@ -150,6 +150,7 @@ function fakeGatewayScript() {
             requestId: e.requestId,
             status: e.status,
             field: e.field,
+            partial: e.partial,
             describe: window.PlatformAI.describeError(e),
         }),
     );
@@ -747,6 +748,34 @@ test.describe('PlatformAI 共用 module', () => {
                 return __settle(PlatformAI.runTask('t', { a: 'b' }));
             });
             expect(r).toMatchObject({ ok: false, name: 'AIError', code: 'incomplete', retryable: false, requestId: 'req-final' });
+        });
+
+        // 頁面靠 partial 把沒寫完的答案留在畫面上
+        test('串流中的 error 事件：之前收到的片段接起來放在 partial；沒收到片段或只有看不見的字元就是 undefined', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                const incomplete = __sse('error', { code: 'incomplete', message: 'AI 的回答太長，沒能在時限內寫完。', retryable: false });
+                window.__installFakeGateway({
+                    chunks: [
+                        __sse('accepted', { requestId: 'req-partial', task: 't' }),
+                        __sse('delta', { text: '請先完成以下三項：\n' }),
+                        __sse('delta', { text: '1. 蒐集' }),
+                        incomplete,
+                    ],
+                });
+                const withText = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                window.__installFakeGateway({ chunks: [__sse('accepted', { requestId: 'req-none', task: 't' }), incomplete] });
+                const withoutText = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                // 只有零寬空白與韓文填充字：沒有看得見的字，跟沒收到一樣
+                const invisible = String.fromCodePoint(0x200B) + String.fromCodePoint(0x3164);
+                window.__installFakeGateway({ chunks: [__sse('accepted', { requestId: 'req-invisible', task: 't' }), __sse('delta', { text: invisible }), incomplete] });
+                const invisibleOnly = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                return { withText, withoutText, invisibleOnly };
+            });
+            expect(r.withText).toMatchObject({ ok: false, name: 'AIError', code: 'incomplete', partial: '請先完成以下三項：\n1. 蒐集' });
+            expect(r.withoutText).toMatchObject({ ok: false, code: 'incomplete' });
+            expect(r.withoutText.partial).toBeUndefined();
+            expect(r.invisibleOnly).toMatchObject({ ok: false, code: 'incomplete' });
+            expect(r.invisibleOnly.partial).toBeUndefined();
         });
 
         test('開始串流之前就被拒絕（429）→ 採用閘道的訊息與 Retry-After', async ({ page }) => {
