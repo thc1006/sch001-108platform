@@ -339,6 +339,11 @@ export function classifyStatus(status) {
 // 壞了，不要無限累積（也免得之後 JSON.parse／redact 在事件迴圈上同步處理一大串）
 const MAX_LINE_CHARS = 1024 * 1024;
 const MAX_EVENT_CHARS = 1024 * 1024;
+// 上游沒照 max_tokens 停時用的上限：一個 token 最多算這麼多字元。2026-10-26 數過 Qwen3.8-27B-FP8
+// 的詞表，最長的 token 是 128 個空白（id 55036）。換 LLM_MODEL 要重量
+export const MAX_CHARS_PER_TOKEN = 128;
+// 一個回應另外多給的字元，max_tokens 很小的請求（探測只要 1 個 token）才不會被零頭卡住
+const RESPONSE_SLACK_CHARS = 4096;
 
 /**
  * 把 SSE 位元組串流拆成一個個事件的 data 字串，依 WHATWG HTML 的 event stream 規格：
@@ -527,6 +532,8 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         closing = true;
         armIdle(closingMs);
     };
+    // 一個回應最多收的思考加正文（字元）
+    const maxChars = (Number(payload.maxTokens) || 0) * MAX_CHARS_PER_TOKEN + RESPONSE_SLACK_CHARS;
     // 回呼出錯時中止串流用；錯誤本身原樣丟回。用旗標判斷而不是看錯誤的真假值：
     // 回呼丟出 undefined、null、0 也要算數
     const callbackAbort = new AbortController();
@@ -643,6 +650,19 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         let contentChunks = 0;
         let sawDone = false;
         let chunkId;
+        // 上游送來的內容本身有問題（不是字串、超過上限）：丟出之後離開迴圈就會中止連線。記下來，
+        // 就算這一塊帶著 finish_reason，也不能當成答案已經收完
+        let contentError;
+        const reject = (message) => {
+            contentError = new UpstreamError('protocol', message);
+            throw contentError;
+        };
+        // 上游沒照 max_tokens 停、一直送：收下之前先檢查，不無限累積
+        const ensureRoom = (text) => {
+            if (reasoning.length + content.length + text.length > maxChars) {
+                reject(`上游送來的思考與正文超過 ${maxChars} 字元（max_tokens ${payload.maxTokens}）`);
+            }
+        };
 
         try {
             for await (const data of sseData(res.body, () => { if (!closing) armIdle(); })) {
@@ -691,14 +711,19 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                     enterClosing();
                 }
                 const delta = choice.delta || {};
+                if ([delta.content, delta.reasoning_content, delta.reasoning].some((v) => v != null && typeof v !== 'string')) {
+                    reject('串流的思考或正文不是字串');
+                }
                 // vLLM 的欄位是 reasoning_content；部分版本叫 reasoning，兩個都收
                 const thought = delta.reasoning_content || delta.reasoning;
                 if (thought) {
+                    ensureRoom(thought);
                     reasoning += thought;
                     reasoningChunks++;
                     call(onReasoning, thought);
                 }
                 if (delta.content) {
+                    ensureRoom(delta.content);
                     content += delta.content;
                     contentChunks++;
                     call(onContent, delta.content);
@@ -706,6 +731,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
             }
         } catch (err) {
             if (callbackFailed) throw callbackError;
+            if (contentError) throw contentError;
             // 答案已經收完（有 finish_reason），之後只是等 usage／[DONE] 時斷線或到了收尾期限：照樣交出結果
             if (!(finishReason && !signal?.aborted)) {
                 // 收尾期間被呼叫端取消的，照常回報 aborted

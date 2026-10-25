@@ -2403,3 +2403,19 @@ test('接續輪遇到 429、Retry-After 比剩下的總時限長（3600 秒、�
         }
     }
 });
+
+test('上游沒照 max_tokens 停、一直送正文：超過一個回應的上限就中止，瀏覽器收到 unavailable，UPSTREAM-ERR 記 protocol', async () => {
+    const gw = await startRealGateway([{ content: Array.from({ length: 270 }, () => 'x'.repeat(4096)), finish: 'stop' }]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        const last = events.at(-1);
+        assert.equal(last.event, 'error', JSON.stringify(last).slice(0, 200));
+        assert.equal(last.data.code, 'unavailable');
+        assert.ok(!events.some((e) => e.event === 'done'));
+        const fields = logFields(gw.lines.find((l) => / UPSTREAM-ERR /.test(l)));
+        assert.equal(fields.code, 'protocol');
+        assert.match(fields.reason, new RegExp(`${8192 * 128 + 4096} 字元`));
+    } finally {
+        await gw.stop();
+    }
+});

@@ -2299,6 +2299,73 @@ test('接續輪斷線後，重試的那次什麼都沒加就以 stop 結束：�
     assert.ok(calls[3].messages.at(-1).content.endsWith(DEGENERATE_NUDGE));
 });
 
+test('一個任務收到的思考加正文累計超過「輪數 × max_tokens × 128」字元：中止那一輪、回報 protocol，附上已寫好的部分', async () => {
+    // max_tokens 100、3 輪：上限 38400 字元，思考也算在內。每輪用不同的字，接續時才不會被當成重疊
+    const chunks = (ch, n) => Array(n).fill(ch.repeat(2000));
+    const { impl, calls } = scripted([
+        { content: chunks('甲', 9), finish: 'length' },
+        { thinking: chunks('想', 5), content: chunks('乙', 4), finish: 'length' },
+        { content: chunks('丙', 9), finish: 'stop' },
+    ]);
+    const streamed = [];
+    await assert.rejects(generate(config({ maxTokens: 100, maxRounds: 3 }), { messages: baseMessages }, {
+        streamChatImpl: impl,
+        onContent: (t) => streamed.push(t),
+    }), (err) => {
+        assert.ok(err instanceof UpstreamError);
+        assert.equal(err.code, 'protocol');
+        assert.equal(err.retryable, false);
+        assert.match(err.message, /38400 字元/);
+        assert.equal(err.partial, streamed.join(''));
+        assert.equal(err.partial.length, 28_000);
+        return true;
+    });
+    assert.equal(calls.length, 3);
+});
+
+test('上游送來的思考不是字串（例如數字）：照轉成字串的長度算進累計上限，不會讓計數失效', async () => {
+    // max_tokens 1、1 輪：上限 128 字元
+    const { impl } = scripted([{ thinking: Array(20).fill(1234567890), finish: 'length' }]);
+    await assert.rejects(generate(config({ maxTokens: 1, maxRounds: 1 }), { messages: baseMessages }, { streamChatImpl: impl }), (err) => {
+        assert.equal(err.code, 'protocol');
+        assert.match(err.message, /128 字元/);
+        return true;
+    });
+});
+
+test('一個任務的累計上限剛好用滿照常完成，多一個字元就是 protocol', async () => {
+    // max_tokens 1、1 輪：上限 128 字元
+    const exact = await run([{ content: ['好'.repeat(128)], finish: 'stop' }], { cfg: { maxTokens: 1, maxRounds: 1 } });
+    assert.equal(exact.result.content.length, 128);
+    await assert.rejects(run([{ content: ['好'.repeat(129)], finish: 'stop' }], { cfg: { maxTokens: 1, maxRounds: 1 } }), { code: 'protocol' });
+});
+
+test('上游守著 max_tokens、每個 token 都是詞表裡最長的 128 個空白：照退化流程重寫，不當成上游沒照 max_tokens 停', async () => {
+    const up = await startFakeUpstream([
+        { content: Array.from({ length: 1024 }, () => ' '.repeat(128)), finish: 'length', usage: usageOf(50, 1024) },
+        { content: ['{"answer":"好"}'], finish: 'stop' },
+    ]);
+    try {
+        const result = await generate(testConfig(up.origin, { maxTokens: 1024, taskTimeoutMs: 30_000 }), { messages: baseMessages, responseFormat: { type: 'json_object' } });
+        assert.equal(result.content, '{"answer":"好"}');
+        assert.equal(up.requests.length, 2);
+        assert.equal(up.requests[1].body.response_format, undefined);
+    } finally {
+        await up.close();
+    }
+});
+
+test('正常的長回答（三輪、每輪兩萬字）不受累計上限影響', async () => {
+    // 每輪用不同的字，接續時才不會被當成重疊去掉
+    const round = (ch) => Array(20).fill(ch.repeat(1000));
+    const { result } = await run([
+        { thinking: Array(5).fill('想'.repeat(1000)), content: round('甲'), finish: 'length' },
+        { content: round('乙'), finish: 'length' },
+        { content: round('丙'), finish: 'stop' },
+    ], { cfg: { maxRounds: 3 } });
+    assert.equal(result.content.length, 60_000);
+});
+
 /** 不給 usage 的假 vLLM：實際 token 數是估算的 ratio 倍；放不下就 400（訊息只給下界） */
 function noUsageVllm(ratio, steps) {
     const calls = [];

@@ -1552,3 +1552,99 @@ test('content-type 放進 detail 前截到 100 字（不會被其他規則縮短
 test('redact：%40、%60 這類可見 ASCII 的 URL 編碼也解回原字', () => {
     assert.equal(redact('a%40b%60c'), 'a@b`c');
 });
+
+// 上游沒照 max_tokens 停時，一個回應最多收的思考加正文（字元），與 upstream.mjs 的常數各自寫一次
+const responseLimit = (maxTokens) => maxTokens * 128 + 4096;
+
+test('上游沒照 max_tokens 停（max_tokens 1 卻送 2048 個 4096 字元的事件）：超過上限就中止連線、回報 protocol，不全部收下', async () => {
+    let sent = 0;
+    let markClosed;
+    const closed = new Promise((resolve) => { markClosed = resolve; });
+    const server = createHttpServer(async (req, res) => {
+        for await (const part of req) void part;
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        res.on('close', markClosed);
+        const event = `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: 'x'.repeat(4096) } }] })}\n\n`;
+        for (let i = 0; i < 2048 && !res.destroyed; i++) {
+            res.write(event);
+            sent++;
+            await new Promise((resolve) => setImmediate(resolve));
+        }
+        if (!res.destroyed) res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`);
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    try {
+        const origin = `http://127.0.0.1:${server.address().port}`;
+        await assert.rejects(streamChat(testConfig(origin), basicPayload({ maxTokens: 1 })), (err) => {
+            assert.ok(err instanceof UpstreamError);
+            assert.equal(err.code, 'protocol');
+            assert.equal(err.retryable, false);
+            assert.match(err.message, new RegExp(`${responseLimit(1)} 字元`));
+            return true;
+        });
+        await closed;
+        assert.ok(sent < 2048, `上游送了 ${sent} 個事件才發現連線關了`);
+    } finally {
+        server.closeAllConnections();
+        await new Promise((resolve) => server.close(resolve));
+    }
+});
+
+test('一個回應的思考加正文剛好等於上限照常收下，多一個字元就是 protocol；max_tokens 8192 收 30 萬字元（平均每個 token 36.6 字元）照常收下', async () => {
+    const limit = responseLimit(10);
+    await withUpstream([
+        { thinking: ['想'.repeat(1000)], content: ['a'.repeat(limit - 1000)], finish: 'stop' },
+        { thinking: ['想'.repeat(1000)], content: ['a'.repeat(limit - 1000 + 1)], finish: 'stop' },
+        { content: Array.from({ length: 300 }, () => '長回答。'.repeat(250)), finish: 'stop' },
+    ], async (up) => {
+        const exact = await streamChat(testConfig(up.origin), basicPayload({ maxTokens: 10 }));
+        assert.equal(exact.reasoning.length + exact.content.length, limit);
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload({ maxTokens: 10 })), { code: 'protocol' });
+        const long = await streamChat(testConfig(up.origin), basicPayload({ maxTokens: 8192 }));
+        assert.equal(long.content.length, 300_000);
+        assert.equal(long.finishReason, 'stop');
+    });
+});
+
+const sseEvent = (o) => `data: ${typeof o === 'string' ? o : JSON.stringify(o)}\n\n`;
+const piece = (delta, finish) => sseEvent({ choices: [{ index: 0, delta, ...(finish ? { finish_reason: finish } : {}) }] });
+
+// vLLM 結束時，最後一段正文與 finish_reason 在同一塊
+test('一個回應的上限在帶著 finish_reason 的那一塊、或 finish_reason 之後才超過：一樣是 protocol，不交出截短的內容', async () => {
+    const cases = [
+        ['超過上限的那一塊帶著 finish_reason', [piece({ content: 'a'.repeat(4000) }), piece({ content: 'b'.repeat(1000) }, 'stop'), sseEvent('[DONE]')]],
+        ['finish_reason 之後還有正文', [piece({ content: 'a'.repeat(4000) }), piece({}, 'stop'), piece({ content: 'b'.repeat(1000) }), sseEvent('[DONE]')]],
+    ];
+    for (const [label, rawChunks] of cases) {
+        await withUpstream([{ rawChunks }], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload({ maxTokens: 1 })), { code: 'protocol' }, label);
+        });
+    }
+});
+
+test('只送思考的洪流也受一個回應的上限限制', async () => {
+    await withUpstream([{ thinking: Array.from({ length: 64 }, () => '想'.repeat(1000)), finish: 'stop' }], async (up) => {
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload({ maxTokens: 1 })), (err) => {
+            assert.equal(err.code, 'protocol');
+            assert.match(err.message, new RegExp(`${responseLimit(1)} 字元`));
+            return true;
+        });
+    });
+});
+
+test('思考或正文不是字串（數字、物件）：protocol，帶著 finish_reason 的那一塊也一樣', async () => {
+    const cases = [
+        [piece({ content: 12345 }), piece({}, 'stop')],
+        [piece({ reasoning_content: { text: '想' } }), piece({}, 'stop')],
+        [piece({ content: '答案' }), piece({ content: 0 }, 'stop')],
+    ];
+    for (const chunks of cases) {
+        await withUpstream([{ rawChunks: [...chunks, sseEvent('[DONE]')] }], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.equal(err.code, 'protocol');
+                assert.equal(err.message, '串流的思考或正文不是字串');
+                return true;
+            });
+        });
+    }
+});
