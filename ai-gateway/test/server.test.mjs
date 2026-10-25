@@ -97,7 +97,7 @@ function deferred() {
  * 啟動一個閘道。generate 預設立刻回傳 {"answer":"好"}；可以傳入自訂的實作。
  * calls 記錄每次 generate 收到的設定、request 與 hooks。now 可以換成測試控制的時鐘。
  */
-async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads, host = '127.0.0.1' } = {}) {
+async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
     const logs = [];
     const calls = [];
     const generateImpl = async (llmConfig, request, hooks) => {
@@ -113,6 +113,8 @@ async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads
         log: (level, tag, fields) => logs.push({ level, tag, fields }),
         ...(now ? { now } : {}),
         ...(maxBodyReads ? { maxBodyReads } : {}),
+        ...(maxPendingBytes ? { maxPendingBytes } : {}),
+        ...(stallTimeoutMs ? { stallTimeoutMs } : {}),
     });
     await new Promise((resolve) => gateway.server.listen(0, host, resolve));
     const port = gateway.server.address().port;
@@ -2416,6 +2418,223 @@ test('上游沒照 max_tokens 停、一直送正文：超過一個回應的上�
         assert.equal(fields.code, 'protocol');
         assert.match(fields.reason, new RegExp(`${8192 * 128 + 4096} 字元`));
     } finally {
+        await gw.stop();
+    }
+});
+
+/** 送出任務請求之後完全不讀回應的用戶端：沒有 data 的監聽，緩衝滿了 TCP 視窗就是零 */
+async function silentClient(port, task, input) {
+    const socket = net.connect(port, '127.0.0.1');
+    socket.on('error', (err) => { socket.errorCode = err.code; });
+    socket.whenClosed = new Promise((resolve) => socket.on('close', resolve));
+    await new Promise((resolve) => socket.once('connect', resolve));
+    socket.write(rawPost(task, input));
+    return socket;
+}
+
+// 一直送 16 KiB 的片段，直到被中止或送滿 limit；回傳 { generate, state }
+function floodingGenerate(limit, { waitAfter = false } = {}) {
+    const state = { emitted: 0, aborted: false };
+    const piece = 'x'.repeat(16 * 1024);
+    const generate = async (request, hooks) => {
+        while (!hooks.signal.aborted && state.emitted < limit) {
+            hooks.onContent(piece);
+            state.emitted += piece.length;
+            await new Promise((resolve) => setImmediate(resolve));
+        }
+        if (waitAfter && !hooks.signal.aborted) {
+            await new Promise((resolve) => hooks.signal.addEventListener('abort', resolve, { once: true }));
+        }
+        state.aborted = hooks.signal.aborted;
+        throw new UpstreamError('aborted', '取消');
+    };
+    return { generate, state };
+}
+
+/**
+ * 閘道在時限內認定用戶端不收資料：上游被中止、TASK 記 client_stalled、499 與判定的門檻、伺服器那端
+ * 的連線已經放掉。不讀的用戶端要讀了才會發現連線被 RST 關掉，讀的時候拿到 ECONNRESET（FIN 的話
+ * 會先讀到排著的資料再正常結束）
+ */
+async function expectStalled(gw, flood, socket, stall) {
+    await waitFor(() => gw.logs.some((l) => l.tag === 'TASK'), 5_000);
+    const task = gw.logs.find((l) => l.tag === 'TASK').fields;
+    assert.deepEqual([task.outcome, task.status, task.stall], ['client_stalled', 499, stall]);
+    assert.ok(task.pending > 0);
+    assert.equal(flood.state.aborted, true, '上游沒有被中止');
+    const connections = () => new Promise((resolve) => gw.gateway.server.getConnections((err, n) => resolve(n)));
+    let open = await connections();
+    for (let i = 0; i < 100 && open > 0; i++) {
+        await sleep(10);
+        open = await connections();
+    }
+    assert.equal(open, 0, '伺服器那端的連線還在');
+    socket.resume();
+    assert.equal(await within(socket.whenClosed, 2_000), true, '用戶端讀了之後連線沒有結束');
+    assert.equal(socket.errorCode, 'ECONNRESET');
+}
+
+test('用戶端不讀資料：生成期間待送的資料超過上限，就中止上游並關掉連線，不繼續排進記憶體', async () => {
+    const flood = floodingGenerate(32 * 1024 * 1024);
+    const gw = await startGateway({ maxPendingBytes: 64 * 1024, stallTimeoutMs: 60_000, generate: flood.generate });
+    const socket = await silentClient(gw.port, 'demo-md', { question: '長' });
+    try {
+        await expectStalled(gw, flood, socket, 'pending');
+        assert.ok(flood.state.emitted < 32 * 1024 * 1024, `送了 ${flood.state.emitted} 字元才停`);
+    } finally {
+        socket.destroy();
+        await gw.stop();
+    }
+});
+
+test('用戶端不讀資料、待送的資料還沒到上限：write() 回 false 之後等 drain 有時限，時間到就中止上游並關掉連線', async () => {
+    const flood = floodingGenerate(16 * 1024 * 1024, { waitAfter: true });
+    const gw = await startGateway({ maxPendingBytes: 1024 * 1024 * 1024, stallTimeoutMs: 300, generate: flood.generate });
+    const socket = await silentClient(gw.port, 'demo-md', { question: '長' });
+    try {
+        await expectStalled(gw, flood, socket, 'drain_timeout');
+    } finally {
+        socket.destroy();
+        await gw.stop();
+    }
+});
+
+test('正常讀取的用戶端不受影響：4 MiB 的片段與同樣大的 done 都收到', async () => {
+    const piece = 'y'.repeat(16 * 1024);
+    const gw = await startGateway({
+        maxPendingBytes: 256 * 1024,
+        stallTimeoutMs: 300,
+        generate: async (request, hooks) => {
+            for (let i = 0; i < 256; i++) {
+                hooks.onContent(piece);
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+            return { ...OK_RESULT, content: piece.repeat(256) };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '長' }));
+        assert.equal(events.at(-1).event, 'done');
+        assert.equal(events.at(-1).data.result.length, 4 * 1024 * 1024);
+        assert.equal(deltaText(events).length, 4 * 1024 * 1024);
+        assert.equal(gw.logs.find((l) => l.tag === 'TASK').fields.outcome, 'ok');
+    } finally {
+        await gw.stop();
+    }
+});
+
+const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
+
+/**
+ * 時鐘用 mock，不必真的等（只換掉 setTimeout，網路照常運作）。stallTimeoutMs 用別處不會用到的 ms，
+ * 記下這個長度的計時器有沒有排著。backedUp() 在計時器排著、連續 10 輪事件迴圈都沒被 drain 清掉時
+ * 才是 true：一次寫入超過 16 KiB 時 write() 就會回 false，核心緩衝收得下的話 drain 馬上就來。
+ * restore() 換回真的計時器：測試失敗時 gw.stop() 等的計時器才會到
+ */
+function watchStall(t, ms) {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const set = globalThis.setTimeout;
+    const clear = globalThis.clearTimeout;
+    const live = new Set();
+    globalThis.setTimeout = (fn, delay, ...args) => {
+        const id = set((...a) => {
+            live.delete(id);
+            fn(...a);
+        }, delay, ...args);
+        if (delay === ms) live.add(id);
+        return id;
+    };
+    globalThis.clearTimeout = (id) => {
+        live.delete(id);
+        clear(id);
+    };
+    const restore = () => {
+        Object.assign(globalThis, { setTimeout: set, clearTimeout: clear });
+        t.mock.timers.reset();
+    };
+    const backedUp = async () => {
+        for (let i = 0; i < 10; i++) await nextTurn();
+        return live.size > 0;
+    };
+    return { backedUp, restore };
+}
+
+// 一直送 256 KiB 的片段，直到閘道在等 drain；之後等 release() 才交出結果
+function floodUntilBackedUp(backedUp) {
+    const state = { sent: 0, backedUp: false };
+    let release;
+    const released = new Promise((resolve) => { release = resolve; });
+    const piece = 'x'.repeat(256 * 1024);
+    const generate = async (request, hooks) => {
+        while (state.sent < 64 * 1024 * 1024 && !state.backedUp) {
+            hooks.onContent(piece);
+            state.sent += piece.length;
+            state.backedUp = await backedUp();
+        }
+        await released;
+        return { ...OK_RESULT, content: 'ok' };
+    };
+    return { generate, state, release };
+}
+
+/** 讓暫停的用戶端開始讀，讀到 done 或連線結束為止；回傳讀到的結尾 */
+async function readToEnd(socket) {
+    let tail = '';
+    socket.setEncoding('latin1');
+    socket.on('data', (d) => { tail = (tail + d).slice(-200); });
+    socket.resume();
+    while (!tail.includes('event: done') && !socket.destroyed) await nextTurn();
+    return tail;
+}
+
+test('用戶端暫停讀取到閘道開始等 drain、在時限內恢復讀取：drain 清掉計時器，之後過了時限也照常收到 done', async (t) => {
+    const STALL_MS = 1_234;
+    const watch = watchStall(t, STALL_MS);
+    const flood = floodUntilBackedUp(watch.backedUp);
+    const gw = await startGateway({ maxPendingBytes: 1024 * 1024 * 1024, stallTimeoutMs: STALL_MS, generate: flood.generate });
+    const socket = await silentClient(gw.port, 'demo-md', { question: '長' });
+    try {
+        while (!flood.state.backedUp) {
+            assert.ok(flood.state.sent < 64 * 1024 * 1024, '送了 64 MiB，閘道都沒有開始等 drain');
+            await nextTurn();
+        }
+        t.mock.timers.tick(STALL_MS - 1);
+        let received = 0;
+        socket.on('data', (d) => { received += d.length; });
+        const reading = readToEnd(socket);
+        while (received < flood.state.sent) await nextTurn();
+        // drain 之後計時器已經清掉；時鐘再走過時限也不能判定用戶端不收資料
+        t.mock.timers.tick(10 * STALL_MS);
+        flood.release();
+        assert.match(await reading, /event: done/);
+        while (!gw.logs.some((l) => l.tag === 'TASK')) await nextTurn();
+        assert.equal(gw.logs.find((l) => l.tag === 'TASK').fields.outcome, 'ok');
+    } finally {
+        watch.restore();
+        flood.release();
+        socket.destroy();
+        await gw.stop();
+    }
+});
+
+test('生成結束時用戶端還沒收完：生成期間的計時器在 finally 清掉，過了 stallTimeoutMs 才讀也照常收到 done', async (t) => {
+    const STALL_MS = 1_235;
+    const watch = watchStall(t, STALL_MS);
+    const flood = floodUntilBackedUp(watch.backedUp);
+    flood.release();
+    const gw = await startGateway({ maxPendingBytes: 1024 * 1024 * 1024, stallTimeoutMs: STALL_MS, generate: flood.generate });
+    const socket = await silentClient(gw.port, 'demo-md', { question: '長' });
+    try {
+        while (!gw.logs.some((l) => l.tag === 'TASK')) await nextTurn();
+        assert.equal(flood.state.backedUp, true, '送了 64 MiB，閘道都沒有開始等 drain');
+        // 回應寫完之後歸 DRAIN_TIMEOUT_MS（30 秒）管，生成期間的計時器不能再把連線關掉
+        t.mock.timers.tick(10 * STALL_MS);
+        assert.match(await readToEnd(socket), /event: done/);
+        assert.equal(gw.logs.find((l) => l.tag === 'TASK').fields.outcome, 'ok');
+    } finally {
+        watch.restore();
+        flood.release();
+        socket.destroy();
         await gw.stop();
     }
 });
