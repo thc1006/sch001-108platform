@@ -168,9 +168,6 @@ test('data：查到確切時刻的競賽必須保留時區位移', () => {
     assert.equal(diamond.eventStartsAt, '2027-04-29');
     assert.equal(diamond.eventEndsAt, '2027-04-30');
 
-    // IChC 官網：Qualification Round「Sunday, 29 March 2026, 23:59 UTC+0」
-    assert.equal(find('國際化學競賽').deadlineAt, '2026-03-29T23:59:00Z');
-
     // 生活科技學藝競賽官方實施計畫：「文件送繳時程：於115 年 3 月30 日(一) 下午5 點前」
     //                              「決賽日期：115 年5 月19 日(二)」
     const lt = find('生活科技學藝競賽');
@@ -208,6 +205,14 @@ test('data：官網未公布截止日的競賽不得被補上一個猜出來的�
     assert.equal(mofa.deadline, '');
     assert.equal(mofa.cycle, undefined);
     assert.ok(mofa.registrationNote);
+
+    // IChC about 頁：「The competition was organized in 2025 for the first time.」2025 屆的截止日查不到，
+    // 只有 2026 屆資格賽的「Sunday, 29 March 2026, 23:59 UTC+0」，一屆的日期推不出年度週期。
+    const ichc = find('國際化學競賽');
+    assert.equal(ichc.deadline, '');
+    assert.equal(ichc.deadlineAt, undefined);
+    assert.equal(ichc.cycle, undefined, '只查得到 2026 一屆的截止日');
+    assert.ok(ichc.registrationNote?.includes('2027'));
 
     // Foyle 官網 Rules：「Deadline: Midnight 31st July 2026 (BST)」。
     // midnight 究竟指 00:00 或 23:59 官網未界定 → 不得自行補一個 deadlineAt。
