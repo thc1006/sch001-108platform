@@ -27,6 +27,9 @@ const STAR_ITEM = {
     additionalProperties: false,
 };
 
+/** WEEKS 是 study-plan 的四個週次標籤，weekly_plan 的四項依序各用一個。 */
+const WEEKS = ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'];
+
 /**
  * TASK_DEFINITIONS 是正式上線的任務，server.mjs 啟動時交給 createCatalog 逐一檢查。
  * 任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS。時限從拿到名額就開始算，要容得下 WinLab 忙時等第一個
@@ -158,7 +161,7 @@ export const TASK_DEFINITIONS = [
     {
         // 自主學習 › 計畫範本庫的「AI 計畫草擬工具」（src/pages/autonomous-learning/plan-templates.astro）。
         // 頁面只送主題，計畫固定 8 週，和頁面上的範本相同。week 只能是四個標籤之一，模型寫不出
-        // Week 3-5 這種週次；標籤依序、不重複只靠指令要求，items 只能是單一 schema，表達不了。
+        // Week 3-5 這種週次；items 只能是單一 schema，表達不了標籤的順序，由 output.check 檢查。
         id: 'study-plan',
         input: {
             topic: { label: '自主學習主題', maxLength: 100 },
@@ -194,7 +197,7 @@ export const TASK_DEFINITIONS = [
                         items: {
                             type: 'object',
                             properties: {
-                                week: { type: 'string', enum: ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'] },
+                                week: { type: 'string', enum: WEEKS },
                                 tasks: { type: 'string', minLength: 1, maxLength: 200 },
                             },
                             required: ['week', 'tasks'],
@@ -210,6 +213,11 @@ export const TASK_DEFINITIONS = [
                 },
                 required: ['learning_objectives', 'execution_methods', 'weekly_plan', 'expected_outcome'],
                 additionalProperties: false,
+            },
+            // 重複或亂序就整份重寫，不替它改標籤：寫給前兩週的任務，改了標籤也不會變成後面幾週的計畫
+            check: ({ weekly_plan: plan }) => {
+                const at = plan.findIndex((item, i) => item.week !== WEEKS[i]);
+                return at === -1 ? null : `$.weekly_plan[${at}].week 應為 ${WEEKS[at]}`;
             },
         },
     },
