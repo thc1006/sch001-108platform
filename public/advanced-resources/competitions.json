@@ -657,7 +657,7 @@
       "registrationNote": "常年開放題庫 · 無報名截止",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://projecteuler.net/",
-      "description": "這不是競賽，而是常年開放的數學與程式解題題庫（problem archive）：沒有報名、沒有截止日、沒有賽季，註冊僅用於記錄進度，不註冊也能看題目。免費、無年齡或國籍限制，官網自述對象包含學生、成人與專業人士，適合高中生長期自主練習。"
+      "description": "這不是競賽，而是常年開放的數學與程式解題題庫（problem archive）：沒有報名、沒有截止日、沒有賽季，註冊僅用於記錄進度，不註冊也能看題目。註冊免費，要先解出一題 Problem Zero；About、註冊頁與隱私權政策都沒有年齡或國籍條件，帳號匿名，官網逐字「We do not require, collect, or store any personal information」。官網自述對象包含學生、成人與專業人士，適合高中生長期自主練習。"
     },
     {
       "title": "Advent of Code",
