@@ -969,10 +969,12 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.equal(ibo.eventStartsAt, '2027-07-18');
     assert.equal(ibo.eventEndsAt, '2027-07-25');
 
-    // 臺灣地科選訓官網「主辦國家」表：第 19 屆／2026／Torino 杜林／義大利；國際賽 8/20–8/27
+    // 第 19 屆 2026 年在杜林（8/20–8/27）已結束。第 20 屆的日本委員會大會概要：
+    // 「第20回 国際地学オリンピック2027 日本島根大会」「期間 2027年8月22日(日)～28日(土)」
+    // jeso.jp 首頁寫 8/23 開始，22 日是報到日，照大會概要與 2025-08-18 公告填 8/22。
     const ieso = find('國際地球科學奧林匹亞');
-    assert.equal(ieso.eventStartsAt, '2026-08-20');
-    assert.equal(ieso.eventEndsAt, '2026-08-27');
+    assert.equal(ieso.eventStartsAt, '2027-08-22');
+    assert.equal(ieso.eventEndsAt, '2027-08-28');
     assert.match(ieso.description, /博弈|Pokies/, '必須留下「原網域已成博弈站」的警告，否則下次又會被改回去');
 });
 
