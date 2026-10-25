@@ -863,6 +863,10 @@ test('各種錯誤對應到的代號、可否重試與建議等待時間', async
         ['demo-json', new GenerationError('incomplete', '用完輪數'), 'incomplete', false, undefined],
         ['demo-json', new GenerationError('timeout', '超時'), 'timeout', true, undefined, true],
         ['demo-json', new GenerationError('timeout', '超時'), 'busy', true, 30, false],
+        // 上游要求等待的時間比剩下的時限長、沒有重試：不論收到過 token 沒有，都照忙線轉告上游要求的秒數
+        ['demo-json', new GenerationError('timeout', '重試要等', { retryAfter: 3600 }), 'busy', true, 3600, true],
+        ['demo-json', new GenerationError('timeout', '重試要等', { retryAfter: 0 }), 'busy', true, 1, false],
+        ['demo-json', new GenerationError('busy', '上游要求等 121 秒', { retryAfter: 121 }), 'busy', true, 121, true],
         ['demo-json', new GenerationError('empty', '沒有正文'), 'empty', true, undefined],
         ['demo-json', new GenerationError('stopped', 'content_filter'), 'unavailable', true, undefined],
         ['demo-json', new UpstreamError('timeout', '閒置', { retryable: true }), 'timeout', true, undefined, true],
@@ -2371,6 +2375,29 @@ test('接續正文有新增的字就照常完成；第一輪就只有空白、JS
                 assert.equal(last.data.code, expected.code, label);
             }
             assert.equal(gw.upstream.requests.length, script.length, label);
+        } finally {
+            await gw.stop();
+        }
+    }
+});
+
+test('接續輪遇到 429、Retry-After 比剩下的總時限長（3600 秒、一小時後的 HTTP-date）：不重試，照忙線回報並轉告要等的秒數', async () => {
+    const cases = [['秒數', () => '3600'], ['HTTP-date', () => new Date(Date.now() + 3_600_000).toUTCString()]];
+    for (const [label, header] of cases) {
+        const gw = await startRealGateway((req, i) => (i === 0
+            ? { content: [CUT_HEAD], finish: 'length' }
+            : { status: 429, headers: { 'retry-after': header() }, body: { error: { message: 'rate limited', code: '429' } } }));
+        try {
+            const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+            const last = events.at(-1);
+            assert.equal(last.event, 'error', label);
+            assert.deepEqual([last.data.code, last.data.retryable], ['busy', true], label);
+            // HTTP-date 只到秒，算出來可能少一秒
+            assert.ok(last.data.retryAfter >= 3599 && last.data.retryAfter <= 3600, `${label}：${last.data.retryAfter}`);
+            assert.equal(deltaText(events), CUT_HEAD, label);
+            assert.equal(gw.upstream.requests.length, 2, `${label}：不重試`);
+            const fields = logFields(gw.lines.find((l) => / UPSTREAM-ERR /.test(l)));
+            assert.deepEqual([fields.status, fields.retryAfter], ['429', String(last.data.retryAfter)], label);
         } finally {
             await gw.stop();
         }

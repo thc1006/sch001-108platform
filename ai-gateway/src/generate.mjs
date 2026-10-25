@@ -93,10 +93,12 @@ export class GenerationError extends Error {
     /**
      * @param {string} code  incomplete（用完輪數或 context 放不下仍未寫完）| empty（沒有任何正文）|
      *                       format（JSON 任務最後一份正文寫完了卻不合格，之後用完輪數或提前結束）|
-     *                       timeout（超過總時限）| stopped（非 stop／length 的結束原因）
+     *                       timeout（超過總時限）| stopped（非 stop／length 的結束原因）|
+     *                       busy（上游要求等的時間超過在請求裡等的上限）
+     * retryAfter 與 cause：上游要求等得太久、沒有重試時（busy 或 timeout），帶著它與上游的錯誤
      */
-    constructor(code, message, { partial, rounds, finishReason, continuations, usage } = {}) {
-        super(message);
+    constructor(code, message, { partial, rounds, finishReason, continuations, usage, retryAfter, cause } = {}) {
+        super(message, cause !== undefined ? { cause } : undefined);
         this.name = 'GenerationError';
         this.code = code;
         this.partial = partial;
@@ -105,6 +107,7 @@ export class GenerationError extends Error {
         this.continuations = continuations;
         // 失敗之前已經用掉的 tokens（含探測），呼叫端記 log 用
         this.usage = usage;
+        this.retryAfter = retryAfter;
     }
 }
 
@@ -162,6 +165,8 @@ const MIN_SEGMENT_ESTIMATE = 64;
 const CONTINUATION_RETRIES = 2;
 const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 30_000;
+// 上游要求等更久的，不在請求裡等：學生看著畫面等、名額也一直佔著。直接回忙線，轉告要等多久
+const MAX_RETRY_WAIT_SECONDS = 120;
 
 const LANGUAGE_REMINDER = '全程使用台灣繁體中文與台灣用語，不要出現任何簡體字。';
 // 引用前文用的括號：一般文章幾乎不會出現，前文本身含「」時邊界也不會混淆
@@ -1185,9 +1190,16 @@ export async function generate(config, request, hooks = {}) {
                     const delayMs = err.retryAfter !== undefined
                         ? err.retryAfter * 1000
                         : Math.min(config.retryMaxMs ?? RETRY_MAX_MS, (config.retryBaseMs ?? RETRY_BASE_MS) * 2 ** attempt);
+                    // 等的是上游指定的時間（Retry-After）時，錯誤帶著它，閘道照忙線回報、轉告要等多久
+                    if (err.retryAfter > MAX_RETRY_WAIT_SECONDS) {
+                        throw fail('busy', `上游要求等 ${err.retryAfter} 秒，超過在請求裡等的上限 ${MAX_RETRY_WAIT_SECONDS} 秒`, {
+                            rounds: round, retryAfter: err.retryAfter, cause: err,
+                        });
+                    }
                     // 等不完總時限就不必等了
                     if (Date.now() + delayMs >= deadlineAt) {
-                        throw fail('timeout', `重試要等 ${delayMs}ms，超過總時限 ${config.taskTimeoutMs}ms`, { rounds: round });
+                        const upstreamWait = err.retryAfter !== undefined ? { retryAfter: err.retryAfter, cause: err } : {};
+                        throw fail('timeout', `重試要等 ${delayMs}ms，超過總時限 ${config.taskTimeoutMs}ms`, { rounds: round, ...upstreamWait });
                     }
                     attempt++;
                     onProgress({ phase: 'retrying', round, attempt, delayMs, thinkingTokens, writingTokens });

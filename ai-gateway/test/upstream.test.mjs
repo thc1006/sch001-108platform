@@ -200,15 +200,24 @@ test('錯誤內容很大時只讀一小段（不會把記憶體吃光），detai
     });
 });
 
-test('Retry-After：只收十進位秒數或 HTTP-date，上限 300 秒', () => {
+test('Retry-After：只收十進位秒數或 HTTP-date，照上游要求的秒數，上限一天只為了數值安全', () => {
     const now = Date.parse('2026-10-21T00:00:00Z');
     assert.equal(parseRetryAfter('7', now), 7);
     assert.equal(parseRetryAfter('0', now), 0);
     assert.equal(parseRetryAfter('0x10', now), undefined);
     assert.equal(parseRetryAfter('1.5', now), undefined);
     assert.equal(parseRetryAfter('1e9', now), undefined);
-    assert.equal(parseRetryAfter('999999', now), 300);
+    assert.equal(parseRetryAfter('3600', now), 3600);
+    assert.equal(parseRetryAfter('86400', now), 86_400);
+    assert.equal(parseRetryAfter('999999', now), 86_400);
     assert.equal(parseRetryAfter('Wed, 21 Oct 2026 00:00:30 GMT', now), 30);
+    assert.equal(parseRetryAfter('Wed, 21 Oct 2026 01:00:00 GMT', now), 3600);
+    assert.equal(parseRetryAfter('Fri, 01 Jan 2027 00:00:00 GMT', now), 86_400);
+    // fetch 把重複的標頭用「, 」接起來：取第一個值
+    assert.equal(parseRetryAfter('120, 120', now), 120);
+    assert.equal(parseRetryAfter('30, 999', now), 30);
+    assert.equal(parseRetryAfter('Wed, 21 Oct 2026 00:00:30 GMT, Wed, 21 Oct 2026 00:01:00 GMT', now), 30);
+    assert.equal(parseRetryAfter('soon, 30', now), undefined);
     assert.equal(parseRetryAfter('Tue, 20 Oct 2026 00:00:00 GMT', now), 0);
     assert.equal(parseRetryAfter('soon', now), undefined);
     assert.equal(parseRetryAfter(null, now), undefined);
@@ -1197,8 +1206,8 @@ test('Retry-After：時分秒超出範圍不收；閏秒 23:59:60 當成 :59；R
     for (const bad of ['Tue, 20 Oct 2026 10:60:00 GMT', 'Tue, 20 Oct 2026 10:00:61 GMT', 'Mon, 30 Feb 2026 00:00:00 GMT']) {
         assert.equal(parseRetryAfter(bad, now), undefined, bad);
     }
-    // 2076 年不算「50 年以後」，照字面；2077 年算，改成 1977 年
-    assert.equal(parseRetryAfter('Thursday, 01-Jan-76 00:00:00 GMT', now), 300);
+    // 2076 年不算「50 年以後」，照字面（遠在一天之後，夾到上限）；2077 年算，改成 1977 年
+    assert.equal(parseRetryAfter('Thursday, 01-Jan-76 00:00:00 GMT', now), 86_400);
     assert.equal(parseRetryAfter('Friday, 01-Jan-77 00:00:00 GMT', now), 0);
     assert.equal(parseRetryAfter(' 30 ', now), 30);
 });

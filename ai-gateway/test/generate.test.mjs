@@ -17,7 +17,7 @@ import {
     CONTINUE_THINKING_PROMPT, FORCE_ANSWER_PROMPT, REWRITE_JSON_PROMPT, REFORMAT_JSON_PROMPT, DEGENERATE_NUDGE, OVERLAP_WINDOW,
     jsonFormatPrompt,
 } from '../src/generate.mjs';
-import { UpstreamError } from '../src/upstream.mjs';
+import { UpstreamError, parseRetryAfter } from '../src/upstream.mjs';
 import { hasVisibleText } from '../src/visible-text.mjs';
 import { startFakeUpstream, testConfig } from './fake-upstream.mjs';
 
@@ -2777,6 +2777,61 @@ test('usage 的 prompt_tokens 是 0：不當成題目的精確值；負數的 to
     ]);
     assert.deepEqual(result.usage, { promptTokens: 10, completionTokens: 0, reasoningTokens: 0 });
 });
+
+// 429 的 Retry-After 經過 parseRetryAfter，跟 streamChat 建立的錯誤一樣
+const busyAfter = (header) => new UpstreamError('busy', 'HTTP 429', { status: 429, retryable: true, retryAfter: parseRetryAfter(header) });
+
+test('Retry-After 在請求裡等的上限（120 秒）以內：照它等足才重試，不提早送出；秒數與 HTTP-date 都一樣', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+    for (const header of [() => '120', () => new Date(Date.now() + 120_000).toUTCString()]) {
+        const { impl, calls } = scripted([{ content: ['一'], finish: 'length' }, { error: busyAfter(header()) }, { content: ['二'], finish: 'stop' }]);
+        const delays = [];
+        let settled;
+        generate(config({ taskTimeoutMs: 900_000 }), { messages: baseMessages }, {
+            streamChatImpl: impl,
+            onProgress: (p) => { if (p.phase === 'retrying') delays.push(p.delayMs); },
+        }).then((value) => { settled = value; }, (err) => { settled = err; });
+        await until(() => delays.length === 1);
+        assert.deepEqual(delays, [120_000]);
+        t.mock.timers.tick(119_999);
+        for (let i = 0; i < 20; i++) await new Promise((resolve) => setImmediate(resolve));
+        assert.equal(calls.length, 2, '還沒到上游指定的時間就送出了');
+        t.mock.timers.tick(1);
+        await until(() => settled !== undefined);
+        assert.equal(calls.length, 3);
+        assert.equal(settled.content, '一二');
+    }
+});
+
+test('Retry-After 超過在請求裡等的上限（121 秒、3600 秒）：不重試，馬上以 busy 結束，錯誤帶著上游要求的秒數與原本的錯誤', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+    for (const header of ['121', '3600']) {
+        await expectNoWait(header);
+    }
+});
+
+async function expectNoWait(header) {
+    const busy = busyAfter(header);
+    const { impl, calls } = scripted([{ content: ['一'], finish: 'length' }, { error: busy }, { content: ['不該被呼叫'], finish: 'stop' }]);
+    const ctrl = new AbortController();
+    const progress = [];
+    let settled;
+    generate(config({ taskTimeoutMs: 900_000 }), { messages: baseMessages }, {
+        streamChatImpl: impl,
+        signal: ctrl.signal,
+        onProgress: (p) => progress.push(p),
+    }).then((value) => { settled = value; }, (err) => { settled = err; });
+    await until(() => settled !== undefined || progress.some((p) => p.phase === 'retrying'));
+    ctrl.abort();
+    await until(() => settled !== undefined);
+    assert.ok(!progress.some((p) => p.phase === 'retrying'), `${header}：不該排重試`);
+    assert.ok(settled instanceof GenerationError);
+    assert.equal(settled.code, 'busy');
+    assert.equal(settled.retryAfter, Number(header));
+    assert.equal(settled.cause, busy);
+    assert.equal(settled.partial, '一');
+    assert.equal(calls.length, 2);
+}
 
 test('重試要等的時間剛好用完剩下的總時限：馬上以 timeout 結束，不白等', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
