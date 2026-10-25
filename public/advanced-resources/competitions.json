@@ -829,9 +829,9 @@
       "cycle": {
         "closes": "11"
       },
-      "sourceCheckedAt": "2026-08-28",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://comap.org/contests/himcm-midmcm",
-      "description": "美國 COMAP 主辦的高中數學建模競賽，4 人一隊、作品線上提交，須有指導老師（advisor）帶隊報名。台灣學生可參加；2026 年第 29 屆賽期為 11 月 4–17 日，報名時程依官網公告。"
+      "description": "美國 COMAP 主辦的高中數學建模競賽，每隊最多 4 人，隊員須來自同一所學校或同一個 program，並由同校（或同 program）的 faculty advisor 報名；以短期教學或競賽準備為主的補習班、考試與競賽培訓機構，以及數學或 STEM 學習中心，不算學校或 program。作品以英文撰寫、線上提交，台灣學生可參加。2026 年第 29 屆報名截止為 11 月 4 日 2:00 pm EST（台灣時間 11/5 03:00），逾時不受理，賽期 11 月 4–17 日，每隊報名費 US$100。"
     },
     {
       "title": "USAII 全球 AI 黑客松 (Global AI Hackathon)",
