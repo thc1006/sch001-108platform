@@ -16,6 +16,8 @@
  * 也不該靠自己寫 ^ 與 $（^a|b$ 這種寫法看起來錨定了，其實只錨定了兩個分支的各一端）。
  */
 
+import { hasVisibleText } from './visible-text.mjs';
+
 const TYPES = new Set(['object', 'array', 'string', 'integer', 'number', 'boolean']);
 // 每個關鍵字只能用在哪一種 type 上（type、enum、description 哪裡都能用）
 const KEYWORD_TYPES = {
@@ -147,8 +149,8 @@ export function validate(schema, value, path = '$') {
         if (schema.minLength !== undefined && length < schema.minLength) return `${path} 太短（${length} < ${schema.minLength}）`;
         if (schema.maxLength !== undefined && length > schema.maxLength) return `${path} 太長（${length} > ${schema.maxLength}）`;
         if (schema.pattern !== undefined && !patternRegExp(schema.pattern).test(value)) return `${path} 格式不符`;
-        // 只有空白的字串對學生來說跟沒有一樣
-        if (schema.minLength >= 1 && !value.trim()) return `${path} 只有空白`;
+        // 只有空白或看不見的字元的字串，對學生來說跟沒有一樣
+        if (schema.minLength >= 1 && !hasVisibleText(value)) return `${path} 只有空白或看不見的字元`;
     }
 
     if (expected === 'array') {

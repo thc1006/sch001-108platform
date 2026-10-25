@@ -187,6 +187,18 @@ test('validate：字數與項目數的上下限都含邊界（剛好等於上限
     assert.match(validate({ type: 'string', minLength: 1 }, '  '), /只有空白/);
 });
 
+// trim() 不去掉零寬空白（U+200B）、WORD JOINER（U+2060）這類格式字元。哪些字看得見由 visible-text.mjs
+// 判斷，逐字的情況在它自己的測試；這裡確認 validate 用的是它
+test('validate：必填字串只有空白或看不見的字元都不收；夾著格式字元的字、表情符號組合照收', () => {
+    const required = { type: 'string', minLength: 1 };
+    const blanks = ['\u200B', '\u200B\uFEFF \n', '\u2060', '\u00AD\u3164\u0085', '\u2800\uFFFC\u3000', '\u0301', '\uE000'];
+    for (const blank of blanks) assert.match(validate(required, blank), /\$ 只有空白或看不見的字元/, JSON.stringify(blank));
+    for (const text of ['a\u200Bb', '👩\u200D💻', '❤\uFE0F', '\u200B答\u200B']) assert.equal(validate(required, text), null, JSON.stringify(text));
+    // 沒有下限、或下限是 0 的字串不檢查
+    assert.equal(validate({ type: 'string' }, '\u200B'), null);
+    assert.equal(validate({ type: 'string', minLength: 0 }, '\u200B'), null);
+});
+
 test('validate：enum（字串與數字都檢查）、pattern 以 u 模式比對', () => {
     assert.match(validate({ type: 'string', enum: ['S', 'T'] }, 'X'), /不在允許的值/);
     assert.match(validate({ type: 'integer', enum: [1, 2] }, 3), /不在允許的值/);

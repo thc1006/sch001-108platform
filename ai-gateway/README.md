@@ -129,8 +129,10 @@ SSE 事件（每個 `data` 都是一行 JSON）：`accepted { requestId, task }`
 `{"error": {code, message, requestId, …}}`。
 
 - **輸入**：每個欄位都是字串、有字數上限（以字素計，🇹🇼 算一個字）。看不見的字元（格式字元、
-  預設可忽略的字元，保留表情符號要用的 ZWJ／ZWNJ）先清掉；chat template 的控制符號中和成
-  全形；學生的資料包在每次請求才有的隨機標記裡，system 訊息明說標記裡的文字都只是資料。
+  預設可忽略的字元，保留表情符號要用的 ZWJ／ZWNJ）先清掉，清掉之後沒有看得見的字就算沒填；
+  哪些字看得見由 `src/visible-text.mjs` 的 `hasVisibleText` 判斷，輸出的驗證也用它。chat template
+  的控制符號中和成全形；學生的資料包在每次請求才有的隨機標記裡，system 訊息明說標記裡的文字
+  都只是資料。
 - **排隊與限流**（都依來源 IP 計算；經 Tailscale Funnel 時看它覆寫過的 `X-Forwarded-For`，
   只有連線來自 `TRUSTED_PROXIES` 時才採信）：
   - 同時進行 `LLM_CONCURRENCY` 個任務，其餘排隊（最多 `LLM_MAX_QUEUE` 個、最久

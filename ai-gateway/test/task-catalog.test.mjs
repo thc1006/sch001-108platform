@@ -58,6 +58,14 @@ test('starter-pack：輸出要剛好 3 個探索問題與 3 種資源類型，�
     }
 });
 
+// trim() 去不掉零寬空白（U+200B），只有它的字串過得了 minLength: 1 和文字任務的非空檢查。
+test('starter-pack 與 career-chat：只有零寬空白的答案不收', () => {
+    const zwsp = '\u200B';
+    const pack = { suggested_topic: zwsp, research_questions: [zwsp, zwsp, zwsp], resource_types: [zwsp, zwsp, zwsp] };
+    assert.throws(() => finalizeOutput(catalog.get('starter-pack'), JSON.stringify(pack)), { code: 'format' });
+    assert.throws(() => finalizeOutput(catalog.get('career-chat'), zwsp), { code: 'empty' });
+});
+
 // schema 的 maxLength 是 guided decoding 的硬截斷（見 tasks.mjs 檔頭）：指令沒說長度時，模型把
 // 資源類型寫成長篇說明、被切在 50 字，學生看到半句話。長度要求才是真正的防線，maxLength 只當保險
 test('starter-pack：指令要求探索問題每個一句話、資源類型只寫簡短的名稱', () => {
@@ -252,7 +260,7 @@ test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的
     assert.throws(() => validateInput(task, { interest: '海'.repeat(301) }), { code: 'invalid_input', field: 'interest' });
     assert.equal(task.output.type, 'markdown');
     assert.equal(task.temperature, undefined);
-    // 文字任務沒有 schema：答案去掉前後空白就交給頁面，空的才算失敗。
+    // 文字任務沒有 schema：答案去掉前後空白就交給頁面，沒有看得見的字才算失敗。
     assert.equal(finalizeOutput(task, '\n**Cofacts 真的假的**：適合你。\n'), '**Cofacts 真的假的**：適合你。');
     assert.throws(() => finalizeOutput(task, ' \n '), { code: 'empty' });
 });

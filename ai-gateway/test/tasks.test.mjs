@@ -263,6 +263,15 @@ test('finalizeOutput：文字任務去掉前後空白；空的算 empty', () => 
     assert.throws(() => finalizeOutput(markdownTask, ' \n '), { code: 'empty' });
 });
 
+test('finalizeOutput：只有看不見的字元（零寬空白、BOM、WORD JOINER）的答案，文字任務是 empty、JSON 是 format', () => {
+    for (const blank of ['\u200B', '\u200B\uFEFF \n', '\u2060']) {
+        assert.throws(() => finalizeOutput(markdownTask, blank), { code: 'empty' }, JSON.stringify(blank));
+        assert.throws(() => finalizeOutput(jsonTask, JSON.stringify({ title: blank, items: ['a', 'b'] })), { code: 'format' }, JSON.stringify(blank));
+    }
+    // 表情符號組合裡的 ZWJ 與異體字選擇符看不見，前後的表情符號看得見
+    for (const text of ['a\u200Bb', '👩\u200D💻', '❤\uFE0F']) assert.equal(finalizeOutput(markdownTask, text), text);
+});
+
 test('finalizeOutput：JSON 任務回傳驗證過的物件', () => {
     assert.deepEqual(finalizeOutput(jsonTask, '{"title":"t","items":["a","b"]}'), { title: 't', items: ['a', 'b'] });
     assert.deepEqual(finalizeOutput(jsonTask, '```json\n{"title":"t","items":["a","b"]}\n```'), { title: 't', items: ['a', 'b'] });
