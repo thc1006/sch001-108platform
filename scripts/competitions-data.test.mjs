@@ -676,8 +676,11 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
 
     // FRC：官方 2026-06-17 貼文逐字「The season registration due date is November 17, 2026.」
     // FIRST Championship 2027-04-28 至 05-01 是賽事日期。
+    // 官網行事曆「All FIRST Robotics Competition District Events and Regional Events Registration Closes」
+    // 寫 November 17, 2026 at 12:00 PM (Eastern Time)；同日 05:00 PM 是初始賽事的付款期限，不是報名截止。
     const frc = find('FIRST 機器人競賽');
     assert.equal(frc.deadline, '2026-11-17');
+    assert.equal(frc.deadlineAt, '2026-11-17T12:00:00-05:00');
     assert.equal(frc.eventStartsAt, '2027-04-28');
     assert.equal(frc.eventEndsAt, '2027-05-01');
 
@@ -1071,7 +1074,7 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
     // 報名中的：剩餘天數以帶時區的精確時刻換算成台北日曆日
     assert.equal(card('華頓全球高中投資競賽').status, '即將截止 · 剩 16 天');
     assert.equal(card('Earth Science Week').status, '報名中 · 剩 51 天');
-    assert.equal(card('FIRST 機器人競賽').status, '報名中 · 剩 82 天');
+    assert.equal(card('FIRST 機器人競賽').status, '報名中 · 剩 83 天');
 
     // 尚未開放報名的不得顯示「報名中」
     assert.equal(card('GENIUS Olympiad').status, '尚未開放 · 預計 2026-12-15 開放');

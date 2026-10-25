@@ -1461,15 +1461,16 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "2026-11-17",
+      "deadlineAt": "2026-11-17T12:00:00-05:00",
       "opensAt": "2026-06-17T12:00:00-04:00",
       "eventStartsAt": "2027-04-28",
       "eventEndsAt": "2027-05-01",
       "cycle": {
         "closes": "11"
       },
-      "sourceCheckedAt": "2026-08-28",
+      "sourceCheckedAt": "2026-10-25",
       "url": "https://www.firstinspires.org/programs/frc/",
-      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網逐字對象為「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00 開放，官方逐字「The season registration due date is November 17, 2026」（2026 年起已簡化流程，不再有早鳥／一般兩段期限）；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。更正：台灣管道官網其實查得到——firstinspires.org/find-local-support 這一頁自己查詢的 first-search API，在 region「Chinese Taipei」下列出 FRC 的 Regional Director 為 Rene Cheng（rcheng@firstpartners.org），FTC 亦由同一人掛 Partner；對應的在地組織是台灣玉山機器人協會（www.era.org.tw），站上設有 FRC／FTC／FLL 專區。"
+      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網逐字對象為「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，2024-2025 賽季參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00（美東時間）開放，官方逐字「The season registration due date is November 17, 2026」，官網行事曆寫賽事報名 11/17 12:00 PM（美東時間，台灣時間 11/18 01:00）截止、初始賽事費同日 5:00 PM 前付清，每隊賽季報名費 US$6,500；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。台灣的聯絡窗口：firstinspires.org/find-local-support 這一頁查詢的 first-search API，在 region「Chinese Taipei」下列出 FRC 的 Regional Director 為 Rene Cheng（rcheng@firstpartners.org），FTC 的 Partner 也是同一人。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
     },
     {
       "title": "VEX 機器人世界錦標賽",
