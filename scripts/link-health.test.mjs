@@ -68,15 +68,18 @@ function onlyLoopbackNetwork(t) {
 let base;
 let server;
 let hits;
+let headersOf;
 
 /** SHELL 是只靠 JavaScript 轉走、不執行 JS 就看不到內容的殼，訊號 C 要抓的就是這種頁面。 */
 const SHELL = '<html><head><script>window.location.replace("/next")</script></head><body></body></html>';
 
 before(async () => {
     hits = new Map();
+    headersOf = new Map();
     server = createServer((req, res) => {
         const u = req.url;
         hits.set(u, (hits.get(u) || 0) + 1);
+        headersOf.set(u, req.headers);
         if (u === '/ok') { res.writeHead(200); return res.end('<html>ok</html>'); }
         if (u === '/404') { res.writeHead(404); return res.end('nope'); }
         if (u === '/410') { res.writeHead(410); return res.end('gone'); }
@@ -286,6 +289,17 @@ test('一律用 GET（HEAD 不是使用者實際送的請求）', async () => {
     hits.clear();
     await probe(`${base}/ok`, undefined, LOOPBACK_OK);
     assert.ok(hits.get('/ok') >= 1, '必須真的送出請求');
+});
+
+test('UA：送出精簡格式的 Chrome UA，主版本不低於 134', async () => {
+    headersOf.clear();
+    await probe(`${base}/ok`, undefined, LOOPBACK_OK);
+    const ua = headersOf.get('/ok')?.['user-agent'] ?? '';
+    // 精簡後的 UA 只有主版本，其餘固定是 0.0.0。2026-10-25 實測 globalyouth.wharton.upenn.edu
+    // 對 Chrome/120 到 133 都回 403。
+    const m = /^Mozilla\/5\.0 \([^)]+\) AppleWebKit\/537\.36 \(KHTML, like Gecko\) Chrome\/(\d+)\.0\.0\.0 Safari\/537\.36$/.exec(ua);
+    assert.ok(m, `不是精簡格式的 Chrome UA：${ua}`);
+    assert.ok(Number(m[1]) >= 134, `Chrome/${m[1]} 太舊`);
 });
 
 // 靜態網址政策不需要 DNS，PR 階段就能確定性地跑。
