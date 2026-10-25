@@ -30,7 +30,7 @@ import dns from 'node:dns';
 // 記錄，避免每週誤報把維護者訓練成忽略通知。
 //
 // 2026-08-29 把「多半」量成了事實。leetcode.com 對這支檢查器回 403，而同一時間：
-//   curl + Chrome/126 UA（與本檔的 UA 相同）  → 200
+//   curl + Chrome/126 UA（當時本檔的 UA）     → 200
 //   curl + Chrome/140 UA                      → 200
 //   curl --http1.1（排除 HTTP/2 的差異）      → 200
 //   根路徑、/contest/、/problemset/ 都一樣    → 200
@@ -41,10 +41,10 @@ export const DEAD_STATUSES = new Set([404, 410]);
 export const LINK_TIMEOUT_MS = 20_000;
 export const MAX_REDIRECTS = 5;
 
-// 目的是「重現使用者用瀏覽器點下去的結果」。不少站台對非瀏覽器 UA 會回 403/404，
-// 用一般爬蟲 UA 會產生大量誤判，故沿用瀏覽器 UA。
+// 目的是「重現使用者用瀏覽器點下去的結果」。不少站台對非瀏覽器 UA 會回 403/404，版本太舊也會被擋：
+// 2026-10-25 用這支檢查器實測，7 個網址對 Chrome/126 斷線或回 403、520，對 Chrome/156 都回 200。
 export const UA =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36';
 
 // 關掉 keepAlive：這是一次上百站的批次工作，連線池留著沒有好處；每次都重新
 // 建立連線，連的才一定是這次驗過的位址，不會沿用池中的舊 socket。

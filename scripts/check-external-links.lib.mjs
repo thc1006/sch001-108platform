@@ -386,7 +386,7 @@ export function renderReport(m) {
         // 2026-10-25 在台灣本地抽查：10-19 週報裡逾時的 apcs.csie.ntnu.edu.tw、law.moj.gov.tw 等 5 台
         // 都連得上，runner 在境外資料中心才連不上；sdl.ntl.edu.tw 與 12basic.edu.tw 在本地也逾時。
         // 5xx 有真的壞掉的，也有 CDN 擋自動程式的：sch001.g0v.tw 的 dash 頁在 Chromium 裡一樣是 502，
-        // sasmo.simcc.org 對檢查器回 520，Chromium 開到的是 Cloudflare 的驗證頁。
+        // sasmo.simcc.org 對 Chrome/126 的 UA 回 520，同一時間換成 Chrome/156 就是 200。
         const unreachable = unverified.filter((u) => u.bucket === 'unreachable');
         const serverErrors = unverified.filter((u) => u.bucket === 'server-error');
         const rejected = unverified.filter((u) => u.bucket === 'rejected');
