@@ -127,4 +127,4 @@ description: 自主學習成果是招生簡章「多元表現」的官方項目�
 - [ColleGo! 選才育才輔助系統 — 建築設計學群](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)
 - [【設計力研究系列2】AI 世代的設計突圍 — 台灣設計研究院 TDRI](https://www.tdri.org.tw/zh-TW/news/538)
 - [設計思考是什麼？5 步驟帶你拆解 — Cake](https://www.cake.me/resources/design-thinking)
-- [自主學習計畫怎麼寫？各校範例／線上資源／課程一次看 — 親子天下](https://premium.parenting.com.tw/article/5093328)
+- [自主學習計畫怎麼寫？各校自主學習範例/線上資源/課程一次看 — 親子天下](https://www.parenting.com.tw/article/5093328)

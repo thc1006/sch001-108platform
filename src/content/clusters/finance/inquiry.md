@@ -115,5 +115,5 @@ description: 財經學群自主學習完整指南，說明為何自主學習是�
 - [台大開放式課程「基礎財金素養」](https://ocw.aca.ntu.edu.tw/courses/110S204)
 - [證券交易所「宅在家學習網」](https://shl.twse.com.tw/)
 - [教育部國教署「108 課綱資訊網」自主學習專區](https://shs.k12ea.gov.tw/site/12basic/category?root=42&cid=42)
-- [親子天下 premium「自主學習計畫怎麼寫？」](https://premium.parenting.com.tw/article/5093328)
+- [親子天下「自主學習計畫怎麼寫？」](https://www.parenting.com.tw/article/5093328)
 - [TKB 甄戰「財金系學習歷程檔案該怎麼準備？」](https://www.reallygood.com.tw/newExam/inside?str=86E32A7C9CB49C0924E2334FA74BB875)
