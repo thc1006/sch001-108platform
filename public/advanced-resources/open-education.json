@@ -127,7 +127,7 @@
       "category": "ai-labs",
       "name": "Meta Llama 開源模型",
       "org": "Meta AI",
-      "url": "https://www.llama.com/",
+      "url": "https://dev.meta.ai/llama",
       "description": "Meta 推出的開放權重大型語言模型,可免費下載自行運用,並附開發者文件與工具。讓高中生有機會接觸全球廣泛使用的開源 AI 模型,理解大型語言模型的能力與限制。",
       "tags": [
         "開源模型",
