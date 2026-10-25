@@ -119,11 +119,14 @@ test('data：國家隊選拔類競賽不得憑賽事月份捏造報名截止', (
     assert.ok(!apmo.cycle?.closes, 'APMO 的 3 月是比賽月份，不得放進 cycle.closes');
     assert.ok(apmo.registrationNote?.includes('無公開報名'));
 
-    // APIO：台灣不開放個人報名，由 TOI 選訓隊代表；官網選訓時程「2026年5月9日 APIO 2026」
+    // APIO：台灣由 TOI 第二階段選訓營的學員參加；資奧辦公室首頁的行事曆「2026年5月9日 APIO 2026」。
+    // APIO 2026 規則：「The competition window will be held from 8:00 on May 9th to 20:00 on May 10th (UTC+8).」
     const apio = find('亞太資訊奧林匹亞');
     assert.equal(apio.deadline, '');
     assert.ok(!apio.cycle?.closes, 'APIO 的 5 月是比賽月份，不得放進 cycle.closes');
     assert.equal(apio.eventStartsAt, '2026-05-09');
+    assert.equal(apio.eventEndsAt, '2026-05-10', '比賽視窗跨 5/9 與 5/10，不是單日');
+    assert.match(apio.description, /5 月 9 日 08:00 至 10 日 20:00（UTC\+8）/);
     assert.ok(apio.registrationNote?.includes('無公開報名'));
 });
 
@@ -319,7 +322,7 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
     assert.deepEqual(card('亞太資訊奧林匹亞'), {
         status: '每年 5 月舉行 · 無公開報名',
         field: '賽事日期',
-        label: '上屆 2026-05-09 已結束',
+        label: '上屆 2026 賽事 5/9–5/10 已結束',
     });
 
     // 官網未公布下屆截止日：不得出現任何具體日期

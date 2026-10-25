@@ -423,18 +423,19 @@
       "category": "資訊",
       "level": "國際",
       "form": "個人",
-      "region": "東亞",
+      "region": "其他",
       "eligibility": "國家隊選拔",
       "mode": "實體",
       "deadline": "",
       "eventStartsAt": "2026-05-09",
+      "eventEndsAt": "2026-05-10",
       "registrationNote": "每年 5 月舉行 · 無公開報名",
       "cycle": {
         "note": "每年 5 月舉行，由 TOI 選訓隊代表參加"
       },
       "sourceCheckedAt": "2026-10-23",
       "url": "https://tpmso.k12ea.gov.tw/toi/",
-      "description": "亞太地區同步舉行的中學生程式競賽，各國於本地監考考場實體應試。台灣不開放個人報名，由資訊奧林匹亞（TOI）選訓隊代表參加，2026 年於 5 月 9 日舉行。相關公告見資奧辦公室網站（原 tpmso.org 已轉址至 tpmso.k12ea.gov.tw）。"
+      "description": "亞太地區的中學生程式競賽，各國在本地監考考場應試，官網逐字「Official Participants must compete onsite at one of the proctored sites of APIO 2026」。選手由各國領隊報名，官網逐字「If you are a student wishing to compete, please contact your national Informatics Olympiad Organization」；台灣由資訊奧林匹亞（TOI）第二階段選訓營的學員參加，國際資訊奧林匹亞競賽國家代表隊遴選作業要點（2025-04-02 修正）第八點把參加「Asia-Pacific Informatics Olympiad(亞太資奧，佔10%)」計入第二階段成績，不開放個人報名。2026 屆由台灣主辦，比賽視窗為 5 月 9 日 08:00 至 10 日 20:00（UTC+8），由領隊替每位選手選定 5 小時的開始時間，資奧辦公室首頁的行事曆列 5 月 9 日。相關公告見資奧辦公室網站（原 tpmso.org 已轉址至 tpmso.k12ea.gov.tw）。"
     },
     {
       "title": "歐洲女子數學奧林匹亞 (EGMO)",
