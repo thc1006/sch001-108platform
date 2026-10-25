@@ -240,6 +240,45 @@ test('extractJson：都不符合時丟出最前面那個候選的錯誤；不符
     assert.throws(() => extractJson('完全沒有 JSON', listSchema), SyntaxError);
 });
 
+test('extractJson：check 在 schema 通過後才呼叫；它不通過的候選跳過，都不通過時丟出它的描述', () => {
+    const answer = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false };
+    const seen = [];
+    const check = (value) => {
+        seen.push(value.answer);
+        return value.answer === '好' ? null : '$.answer 應為 好';
+    };
+    assert.deepEqual(extractJson('草稿 {"answer": 1} {"answer":"壞"} 定稿 {"answer":"好"}', answer, { check }), { answer: '好' });
+    assert.deepEqual(seen, ['壞', '好'], '不符 schema 的候選不交給 check');
+    assert.throws(() => extractJson('{"answer":"壞"}', answer, { check }), (err) => {
+        assert.ok(err instanceof SchemaMismatch);
+        assert.equal(err.problem, '$.answer 應為 好');
+        return true;
+    });
+    // 只有 null 算通過：check 寫錯、回傳空字串或忘了回傳時不會默默放行（整段與候選兩條路都是）
+    for (const text of ['{"answer":"好"}', '前言 {"answer":"好"}']) {
+        for (const result of ['', undefined]) {
+            assert.throws(() => extractJson(text, answer, { check: () => result }), SchemaMismatch, `${text}：${result}`);
+        }
+    }
+});
+
+// 整段的值丟出例外時，若當成解析不了，會改挑後面通過的片段，例外就被吞掉了
+test('extractJson：check 丟出的例外照樣往外丟，不算解析不了，也不改挑別的候選', () => {
+    const schema = {
+        type: 'object',
+        properties: { answer: { type: 'string' }, inner: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false } },
+        required: ['answer'],
+        additionalProperties: false,
+    };
+    const check = (value) => {
+        if (value.answer === '壞') throw new TypeError('check 壞了');
+        return null;
+    };
+    for (const text of ['{"answer":"壞","inner":{"answer":"好"}}', '前言 {"answer":"壞","inner":{"answer":"好"}}']) {
+        assert.throws(() => extractJson(text, schema, { check }), TypeError, text);
+    }
+});
+
 test('extractJson：最多試 32 個起點', () => {
     const answer = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false };
     const noise = (n) => '[1] '.repeat(n);

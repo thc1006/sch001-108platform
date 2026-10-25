@@ -203,6 +203,31 @@ test('study-plan：3 個目標、2～3 個方法與產出、四段週次進度�
     }
 });
 
+// schema 只管每個 week 是四個標籤之一，四個都寫 Week 1-2 也符合；順序由任務的 check 檢查。
+test('study-plan：週次要依序是 Week 1-2、Week 3-4、Week 5-6、Week 7-8，重複或亂序都不收', () => {
+    const task = catalog.get('study-plan');
+    const weeks = ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'];
+    const plan = (labels) => ({
+        learning_objectives: ['能說明手搖飲店的行銷策略。', '能設計問卷蒐集顧客意見。', '能提出改善建議並上台報告。'],
+        execution_methods: ['每週觀察兩家店的促銷活動。', '設計問卷並訪談三位同學。'],
+        weekly_plan: labels.map((week, i) => ({ week, tasks: `任務${i + 1}` })),
+        expected_outcome: ['一份行銷策略分析報告。', '一份五分鐘的簡報。'],
+    });
+    assert.deepEqual(finalizeOutput(task, JSON.stringify(plan(weeks))), plan(weeks));
+    for (const [labels, at] of [
+        [['Week 1-2', 'Week 1-2', 'Week 1-2', 'Week 1-2'], 1],
+        [['Week 3-4', 'Week 1-2', 'Week 5-6', 'Week 7-8'], 0],
+        [['Week 7-8', 'Week 5-6', 'Week 3-4', 'Week 1-2'], 0],
+        [['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 5-6'], 3],
+    ]) {
+        assert.throws(() => finalizeOutput(task, JSON.stringify(plan(labels))), (err) => {
+            assert.equal(err.code, 'format');
+            assert.equal(err.detail, `$.weekly_plan[${at}].week 應為 ${weeks[at]}`);
+            return true;
+        }, labels.join('、'));
+    }
+});
+
 // 數量、長度與週次在 schema 和指令各寫一次：guided decoding 照 schema，模型照指令寫內容，兩邊要一致。
 // maxLength 是硬截斷，留到指令長度上限的兩倍以上，模型稍微寫長也不會被切成半句。
 test('study-plan：指令寫明每一項的數量與長度，和 schema 一致；maxLength 至少是指令長度上限的兩倍', () => {

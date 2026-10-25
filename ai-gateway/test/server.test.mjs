@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createGateway, createLogger } from '../src/server.mjs';
 import { createCatalog } from '../src/tasks.mjs';
+import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { UpstreamError } from '../src/upstream.mjs';
 import { GenerationError } from '../src/generate.mjs';
 import { testConfig, startFakeUpstream } from './fake-upstream.mjs';
@@ -2022,6 +2023,69 @@ test('JSON 任務把交出前的驗證交給 generate（acceptJson）：包在�
         assert.equal(gw.calls[1].request.acceptJson, undefined);
     } finally {
         await gw.stop();
+    }
+});
+
+// 任務的 check 也在 acceptJson 裡：schema 抓不到的週次重複，在生成階段就走整份重寫，不會等到交出前才失敗。
+test('study-plan 的週次重複：generate 不收下，照寫完卻不合格的流程整份重寫，交出重寫後的計畫', async () => {
+    const plan = (labels) => ({
+        learning_objectives: ['能說明手搖飲店的行銷策略。', '能設計問卷蒐集顧客意見。', '能提出改善建議並上台報告。'],
+        execution_methods: ['每週觀察兩家店的促銷活動。', '設計問卷並訪談三位同學。'],
+        weekly_plan: labels.map((week, i) => ({ week, tasks: `任務${i + 1}` })),
+        expected_outcome: ['一份行銷策略分析報告。', '一份五分鐘的簡報。'],
+    });
+    const good = plan(['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8']);
+    const upstream = await startFakeUpstream([
+        { content: [JSON.stringify(plan(['Week 1-2', 'Week 1-2', 'Week 1-2', 'Week 1-2']))], finish: 'stop' },
+        { content: [JSON.stringify(good)], finish: 'stop' },
+    ]);
+    const gateway = createGateway({
+        llm: testConfig(upstream.origin),
+        server: serverConfig(),
+        tasks: createCatalog(TASK_DEFINITIONS.filter((def) => def.id === 'study-plan')),
+        log: () => {},
+    });
+    await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
+    try {
+        const events = await readEvents(await post(`http://127.0.0.1:${gateway.server.address().port}`, 'study-plan', { topic: '手搖飲的行銷' }));
+        const done = events.find((e) => e.event === 'done');
+        assert.deepEqual(done?.data.result, good);
+        assert.deepEqual(done.data.continuations, ['rewrite']);
+        assert.equal(upstream.requests.length, 2);
+        // 重寫用的是 REFORMAT_JSON_PROMPT（寫完卻不合格），不是說被截斷的 REWRITE_JSON_PROMPT
+        assert.match(upstream.requests[1].body.messages.at(-1).content, /^你上一則的回覆不是一份符合要求的 JSON/);
+    } finally {
+        await gateway.close({ graceMs: 0, requestWaitMs: 0 });
+        await upstream.close();
+    }
+});
+
+test('任務的 check 丟出例外：第一輪就以 internal 結束，不重寫，log 記下例外的種類', async () => {
+    const upstream = await startFakeUpstream([{ content: ['{"answer":"好"}'], finish: 'stop' }]);
+    const logs = [];
+    const gateway = createGateway({
+        llm: testConfig(upstream.origin),
+        server: serverConfig(),
+        tasks: createCatalog([{
+            id: 'demo-broken-check',
+            input: { topic: { label: '主題', maxLength: 20 } },
+            output: { ...TASKS.get('demo-json').output, check: (value) => value.missing.length },
+            instructions: '依主題回答。',
+        }]),
+        log: (level, tag, fields) => logs.push({ level, tag, fields }),
+    });
+    await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
+    try {
+        const events = await readEvents(await post(`http://127.0.0.1:${gateway.server.address().port}`, 'demo-broken-check', { topic: 'x' }));
+        assert.equal(events.at(-1).event, 'error');
+        assert.equal(events.at(-1).data.code, 'internal');
+        assert.equal(upstream.requests.length, 1);
+        const taskErr = logs.find((l) => l.tag === 'TASK-ERR');
+        assert.equal(taskErr?.level, 'error');
+        assert.match(taskErr.fields.detail, /^TypeError/);
+    } finally {
+        await gateway.close({ graceMs: 0, requestWaitMs: 0 });
+        await upstream.close();
     }
 });
 

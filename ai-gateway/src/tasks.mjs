@@ -8,10 +8,13 @@
  * 每個任務：
  *   id            網址上的名稱（/v1/tasks/<id>），小寫英數與連字號
  *   input         { 欄位: { label, maxLength } }，全部是字串、全部必填；maxLength 以「字」計
- *   output        { type: 'json', schema } 或 { type: 'markdown' }
+ *   output        { type: 'json', schema, check? } 或 { type: 'markdown' }
  *                 JSON 任務的 schema 會整份送給 WinLab 當 response_format（strict）。字串的
  *                 maxLength 在 guided decoding 裡是硬上限：模型寫到上限就被切斷，結果卻仍通過驗證，
- *                 學生看到的是半句話。所以要在 instructions 裡明確告訴模型長度，maxLength 只當保險
+ *                 學生看到的是半句話。所以要在 instructions 裡明確告訴模型長度，maxLength 只當保險。
+ *                 check(value) 檢查 schema 表達不了的規則，schema 通過才呼叫；回傳 null 才算通過，
+ *                 否則回傳問題描述。描述會進 log，只能寫路徑與規格，不能寫模型寫的內容。丟出例外
+ *                 算程式錯誤，HTTP 服務回 internal
  *   instructions  任務指令（可信），放進 system 訊息；用欄位的 label 指稱學生提供的資料
  *   temperature   選填
  *   timeoutMs     選填：這個任務的總時限（毫秒），比 LLM_TASK_TIMEOUT_MS 短才有作用。一個來源趁
@@ -132,6 +135,10 @@ export function defineTask(def) {
         responseFormat = toResponseFormat(def.id.replaceAll('-', '_'), def.output.schema);
     } else if (def.output?.type !== 'markdown') {
         throw new Error(`${def.id}：output.type 只能是 json 或 markdown`);
+    }
+    // 文字任務沒有結構可查，寫了 check 也不會被呼叫
+    if (def.output.check !== undefined && (def.output.type !== 'json' || typeof def.output.check !== 'function')) {
+        throw new Error(`${def.id}：output.check 只能用在 JSON 任務，而且必須是函式`);
     }
     return Object.freeze({ ...def, responseFormat });
 }
@@ -254,11 +261,13 @@ export function finalizeOutput(task, content) {
     }
     let parsed;
     try {
-        parsed = extractJson(traditional, task.output.schema);
+        parsed = extractJson(traditional, task.output.schema, { check: task.output.check });
     } catch (err) {
-        // 驗證錯誤的描述只有路徑與規格（見 schema.mjs 的 validate），可以進 log
+        // 驗證錯誤的描述只有路徑與規格（schema.mjs 的 validate 與任務的 check），可以進 log
         if (err instanceof SchemaMismatch) throw new TaskError('format', 'AI 回覆的內容不符合格式', { detail: err.problem });
-        throw new TaskError('format', 'AI 回覆的格式無法解析', { detail: describeParseFailure(err, content) });
+        if (err instanceof SyntaxError) throw new TaskError('format', 'AI 回覆的格式無法解析', { detail: describeParseFailure(err, content) });
+        // 其他例外（例如 check 寫錯）是程式錯誤：照樣丟出，HTTP 服務回 internal，生成階段也不會拿它去重寫
+        throw err;
     }
     return traditionalizeStrings(parsed);
 }

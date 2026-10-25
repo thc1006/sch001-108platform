@@ -72,6 +72,8 @@ test('defineTask：定義寫錯在啟動時就失敗', () => {
         [{ ...base, timeoutMs: '60000' }, /timeoutMs/],
         [{ ...base, output: { type: 'html' } }, /output.type/],
         [{ ...base, output: { type: 'json', schema: { type: 'object', properties: {}, required: [] } } }, /additionalProperties/],
+        [{ ...base, output: { type: 'json', schema: listSchema, check: '依序' } }, /output\.check/],
+        [{ ...base, output: { type: 'markdown', check: () => null } }, /output\.check/],
     ];
     for (const [def, pattern] of cases) assert.throws(() => defineTask(def), pattern);
     assert.doesNotThrow(() => defineTask({ ...base, id: 'a'.repeat(64), temperature: 0, timeoutMs: 60_000 }));
@@ -367,6 +369,48 @@ test('finalizeOutput：解析失敗或不符規格都是 format；detail 不含�
     });
     // JSON 的 null 不能變成 TypeError（那會被當成程式錯誤）
     assert.throws(() => finalizeOutput(jsonTask, 'null'), { code: 'format' });
+});
+
+test('finalizeOutput：任務的 check 只拿到符合 schema 的值；不通過是 format，detail 是它回傳的描述', () => {
+    const checked = [];
+    const distinctTask = defineTask({
+        id: 'demo-distinct',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: {
+            type: 'json',
+            schema: listSchema,
+            check: (value) => {
+                checked.push(value);
+                return new Set(value.items).size === value.items.length ? null : '$.items 有重複的項目';
+            },
+        },
+        instructions: '依主題列出不重複的重點。',
+    });
+    assert.deepEqual(finalizeOutput(distinctTask, '{"title":"t","items":["a","b"]}'), { title: 't', items: ['a', 'b'] });
+    assert.throws(() => finalizeOutput(distinctTask, '{"title":"t","items":["a","a"]}'), (err) => {
+        assert.equal(err.code, 'format');
+        assert.equal(err.detail, '$.items 有重複的項目');
+        return true;
+    });
+    assert.equal(checked.length, 2);
+    assert.throws(() => finalizeOutput(distinctTask, '{"title":"t","items":["a"]}'), { code: 'format' });
+    assert.equal(checked.length, 2, '不符 schema 的不交給 check');
+    // 先出現的草稿不通過 check，後面的定稿通過：收下定稿
+    const drafts = '草稿 {"title":"t","items":["a","a"]} 定稿 {"title":"t","items":["a","b"]}';
+    assert.deepEqual(finalizeOutput(distinctTask, drafts), { title: 't', items: ['a', 'b'] });
+});
+
+// 當成 format 的話，生成階段會一直重寫到用完輪數，log 也只看得到格式錯誤
+test('finalizeOutput：check 丟出的例外是程式錯誤，原樣丟出，不是 format', () => {
+    const brokenTask = defineTask({
+        id: 'demo-broken-check',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: { type: 'json', schema: listSchema, check: (value) => value.missing.length },
+        instructions: '依主題列出重點。',
+    });
+    assert.throws(() => finalizeOutput(brokenTask, '{"title":"t","items":["a","b"]}'), (err) => err instanceof TypeError && !(err instanceof TaskError));
+    // 解析不了照舊是 format
+    assert.throws(() => finalizeOutput(brokenTask, '{"title":'), { code: 'format' });
 });
 
 test('finalizeOutput：說明文字裡的括號吞不掉後面真正的答案；不符規格的片段不會被當成答案', () => {
