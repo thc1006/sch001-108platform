@@ -160,6 +160,10 @@ test('form 只接受三種值', () => {
     assert.ok(!ALLOWED_FORMS.includes('個人與團隊'));
 });
 
+test('region 只接受七種值，歐洲不寫成歐盟', () => {
+    assert.deepEqual(ALLOWED_REGIONS, ['台灣', '美國', '英國', '歐洲', '東亞', '全球線上', '其他']);
+});
+
 // 地區選單寫死在 competitions.astro。選項的值對不上 ALLOWED_REGIONS 時，那個地區的競賽用選單篩不出來。
 test('地區篩選的選項與 ALLOWED_REGIONS 一致', async () => {
     const src = await readFile(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
