@@ -1,6 +1,6 @@
 {
   "_readme": "線上製作工具資料來源檔。tools.html 會在載入時 fetch() 此檔並渲染。新增或修改工具請直接編輯下方 tools 陣列，不需要動 HTML。欄位：name=工具名；category=分類；description=說明；best_for=最適用情境；pricing=收費方式；url=官網；logo=工具 logo 的相對路徑。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-10-25",
   "tools": [
     {
       "name": "Canva",
@@ -26,7 +26,7 @@
       "description": "介面美觀、功能專注的心智圖軟體。非常適合用來進行腦力激盪、整理報告架構、或梳理複雜的知識體系。",
       "best_for": "腦力激盪與大綱整理",
       "pricing": "免費增值",
-      "url": "https://xmind.app/",
+      "url": "https://xmind.com/",
       "logo": "img/tools/xmind.png"
     },
     {
@@ -35,7 +35,7 @@
       "description": "強大的線上試算表工具，不僅能處理數據，更能輕鬆製作出長條圖、折線圖、圓餅圖等各種基本圖表，並嵌入報告中。",
       "best_for": "問卷分析與基本圖表",
       "pricing": "免費",
-      "url": "https://www.google.com/sheets/about/",
+      "url": "https://workspace.google.com/products/sheets/",
       "logo": "img/tools/google-sheets.svg"
     },
     {
@@ -44,7 +44,7 @@
       "description": "一個全功能的數位工作區，結合了筆記、資料庫、看板、日曆等多種功能。適合用來建立個人知識庫與管理自主學習專案。",
       "best_for": "建立個人知識庫",
       "pricing": "免費增值",
-      "url": "https://www.notion.so/",
+      "url": "https://www.notion.com/",
       "logo": "img/tools/notion.png"
     },
     {
