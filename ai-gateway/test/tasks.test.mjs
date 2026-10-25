@@ -297,8 +297,7 @@ const escapeNonAscii = (text) => text.replace(
     (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`,
 );
 
-// 跳脫序列的簡體字在原文裡看不見，解析之前的轉換碰不到，解碼之後才冒出來；
-// 所以解析之後要把每個字串值再轉一次，否則跳脫序列寫的「数据」解析後仍是簡體。
+// 跳脫序列的簡體字在原文裡看不見，解碼之後才冒出來，所以轉換做在解析出來的字串值上。
 test('finalizeOutput：JSON 字串值用跳脫序列寫的簡體字，解析後也轉成台灣繁體（陣列與巢狀物件都走過，非字串不動）', () => {
     const nestedTask = defineTask({
         id: 'demo-nested',
@@ -339,7 +338,7 @@ test('finalizeOutput：JSON 字串值用跳脫序列寫的簡體字，解析後�
         ],
     };
     const escaped = escapeNonAscii(JSON.stringify(answer));
-    // 整份正文是純 ASCII：解析前的轉換什麼都沒做，轉換全靠解析之後那一次
+    // 整份正文是純 ASCII，原文裡看不到任何簡體字
     assert.doesNotMatch(escaped, /[^\x00-\x7F]/);
     // 前一個字決定的字（拮据的据不轉、什么的么轉成麼、老么的么不轉）在解碼後的字串上同樣成立
     assert.deepEqual(finalizeOutput(nestedTask, escaped), {
@@ -350,9 +349,45 @@ test('finalizeOutput：JSON 字串值用跳脫序列寫的簡體字，解析後�
         ],
     });
 
-    // 同一個字串一半是原文、一半是跳脫序列：原文的部分解析前就轉了，其餘的解析後轉
+    // 同一個字串一半是原文、一半是跳脫序列
     const mixed = `{"title":"数${escapeNonAscii('据')}","items":["${escapeNonAscii('阶段')}一","阶段二"]}`;
     assert.deepEqual(finalizeOutput(jsonTask, mixed), { title: '數據', items: ['階段一', '階段二'] });
+});
+
+// toTraditional 會看前一個字。在解析前轉換原文的話，拮 寫成跳脫序列時 据 前面是 e，會被轉成「據」。
+test('finalizeOutput：同一份 JSON 的字串寫成原文、跳脫序列或一半一半，結果都相同（拮据不轉，数据、什么照轉）', () => {
+    const writings = {
+        直接寫: (word) => word,
+        全部跳脫: (word) => escapeNonAscii(word),
+        跳脫前一個字: (word) => escapeNonAscii(word.slice(0, 1)) + word.slice(1),
+        跳脫後一個字: (word) => word.slice(0, 1) + escapeNonAscii(word.slice(1)),
+    };
+    for (const [name, write] of Object.entries(writings)) {
+        const content = `{"title":"${write('拮据')}","items":["${write('数据')}","${write('什么')}"]}`;
+        assert.deepEqual(finalizeOutput(jsonTask, content), { title: '拮据', items: ['數據', '什麼'] }, name);
+    }
+});
+
+// 退化之後拿掉 response_format 的輪次沒有 guided decoding，enum 的值可能寫成簡體字或跳脫序列
+test('finalizeOutput：enum 的值寫成簡體字或跳脫序列，轉成台灣繁體之後比對得上', () => {
+    const levelTask = defineTask({
+        id: 'demo-level',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: { level: { type: 'string', enum: ['適合', '不適合'] } },
+                required: ['level'],
+                additionalProperties: false,
+            },
+        },
+        instructions: '判斷。',
+    });
+    for (const level of ['适合', escapeNonAscii('适合'), `${escapeNonAscii('适')}合`, `适${escapeNonAscii('合')}`]) {
+        assert.deepEqual(finalizeOutput(levelTask, `{"level":"${level}"}`), { level: '適合' }, level);
+    }
+    assert.throws(() => finalizeOutput(levelTask, `{"level":"${escapeNonAscii('还行')}"}`), { code: 'format' });
 });
 
 test('finalizeOutput：解析失敗或不符規格都是 format；detail 不含模型寫的內容', () => {
@@ -369,6 +404,28 @@ test('finalizeOutput：解析失敗或不符規格都是 format；detail 不含�
     });
     // JSON 的 null 不能變成 TypeError（那會被當成程式錯誤）
     assert.throws(() => finalizeOutput(jsonTask, 'null'), { code: 'format' });
+});
+
+// JSON.parse 本身不怕深層巢狀，帶著 reviver 才會用完堆疊；問題出在模型的輸出，不是程式錯誤
+test('finalizeOutput：極深的巢狀讓 reviver 丟出 RangeError，照樣是 format', () => {
+    const deep = `${'['.repeat(20_000)}${']'.repeat(20_000)}`;
+    assert.throws(() => finalizeOutput(jsonTask, deep), (err) => {
+        assert.equal(err.code, 'format');
+        assert.match(err.detail, /^RangeError（正文 \d+ 字）$/);
+        return true;
+    });
+});
+
+// 鍵是規格裡的屬性名稱，照原樣比對：簡體字寫的鍵不會被轉成規格裡的繁體鍵
+test('finalizeOutput：只轉換字串值，鍵不轉換', () => {
+    const keyTask = defineTask({
+        id: 'demo-key',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: { type: 'json', schema: { type: 'object', properties: { '數據': { type: 'string' } }, required: ['數據'], additionalProperties: false } },
+        instructions: '回答。',
+    });
+    assert.deepEqual(finalizeOutput(keyTask, '{"數據":"数据"}'), { '數據': '數據' });
+    assert.throws(() => finalizeOutput(keyTask, '{"数据":"數據"}'), (err) => err.code === 'format' && err.detail === '$.數據 缺少');
 });
 
 test('finalizeOutput：任務的 check 只拿到符合 schema 的值；不通過是 format，detail 是它回傳的描述', () => {

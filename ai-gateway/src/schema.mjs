@@ -229,13 +229,14 @@ function matchingEnd(text, start) {
  * 整段吞進一個壞掉的候選；反過來，壞掉的物件裡的片段（例如其中一個陣列）也不會被當成
  * 答案，因為它不符合 schema。沒給 schema 時回傳第一個解析得了的候選（只給測試與除錯用）。
  * check(value) 檢查 schema 表達不了的規則，有 schema 時在 schema 通過之後才呼叫。它回傳 null
- * 才算通過，其他回傳值都是問題描述；不通過的候選同樣跳過。
+ * 才算通過，其他回傳值都是問題描述；不通過的候選同樣跳過。reviver 照樣交給 JSON.parse，
+ * schema 與 check 驗的是它處理過的值。
  *
  * 都不行時，丟出「最前面那個候選」的錯誤，它最可能就是模型想寫的答案。解析不了是
  * SyntaxError（訊息可能含有正文片段，呼叫端只能拿它的種類去記 log），解析得了卻不符合
  * schema 或 check 是 SchemaMismatch。check 丟出的例外是程式錯誤，照樣往外丟。
  */
-export function extractJson(text, schema, { check } = {}) {
+export function extractJson(text, schema, { reviver, check } = {}) {
     const trimmed = String(text).trim();
     const problemOf = (value) => (schema ? validate(schema, value) : null) ?? (check ? check(value) : null);
     let parseError;
@@ -244,7 +245,7 @@ export function extractJson(text, schema, { check } = {}) {
     let parsed = false;
     // try 只包住 JSON.parse，check 丟出的例外才不會被當成解析不了
     try {
-        whole = JSON.parse(trimmed);
+        whole = JSON.parse(trimmed, reviver);
         parsed = true;
     } catch (err) {
         parseError = err;
@@ -269,7 +270,7 @@ export function extractJson(text, schema, { check } = {}) {
         }
         let value;
         try {
-            value = JSON.parse(trimmed.slice(at, end + 1));
+            value = JSON.parse(trimmed.slice(at, end + 1), reviver);
         } catch (err) {
             firstError ??= err;
             continue;
