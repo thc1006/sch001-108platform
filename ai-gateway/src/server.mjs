@@ -78,6 +78,8 @@ const MESSAGES = {
     request_timeout: '傳送內容花了太久，請檢查網路後再試一次。',
     timeout: 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。',
     incomplete: 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。',
+    // 同樣是 incomplete，原因是接續的幾輪都沒有進展（generate 的 stalled），不是回答太長
+    stalled: 'AI 這次沒能把回答寫完，可以再試一次。',
     format: 'AI 回覆的格式不正確，請再試一次。',
     empty: 'AI 沒有產生內容，請換個說法再試一次。',
     unavailable: 'AI 服務暫時無法使用，請稍後再試。',
@@ -251,7 +253,11 @@ function describeError(err, { tokensSeen = true } = {}) {
     }
     if (err instanceof GenerationError) {
         if (err.code === 'timeout') return { code: 'timeout', retryable: true };
-        if (err.code === 'incomplete') return { code: 'incomplete', retryable: false };
+        if (err.code === 'incomplete') {
+            return err.stalled
+                ? { code: 'incomplete', message: MESSAGES.stalled, retryable: true, detail: err.message }
+                : { code: 'incomplete', retryable: false, detail: err.message };
+        }
         if (err.code === 'empty') return { code: 'empty', retryable: true };
         if (err.code === 'format') return { code: 'format', retryable: true, detail: err.message };
         return { code: 'unavailable', retryable: true, detail: err.message };

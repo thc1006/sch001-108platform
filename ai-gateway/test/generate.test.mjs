@@ -18,6 +18,7 @@ import {
     jsonFormatPrompt,
 } from '../src/generate.mjs';
 import { UpstreamError } from '../src/upstream.mjs';
+import { hasVisibleText } from '../src/visible-text.mjs';
 import { startFakeUpstream, testConfig } from './fake-upstream.mjs';
 
 const config = (overrides = {}) => testConfig('http://unused.invalid', overrides);
@@ -328,12 +329,14 @@ test('提早送出：接續輪的開頭不可能再形成更長的重疊時，�
 
 test('提早送出也要看「去掉開頭空白」的版本：兩者都不可能變長才送出（反例來自隨機搜尋）', async () => {
     const previous = '畫究的法究 的學的計計的學研學學法的\n\n學方';
+    // 第二輪整段都是重疊，去掉後沒有新內容，不算寫完，第三輪才接上結尾
     const { result, streamed } = await run([
         { content: [previous], finish: 'length' },
         { content: [...'\n\n計的學研學學法的\n\n學方'], finish: 'stop' },
+        { content: ['法。'], finish: 'stop' },
     ]);
-    assert.equal(result.content, previous);
-    assert.equal(streamed, previous);
+    assert.equal(result.content, `${previous}法。`);
+    assert.equal(streamed, result.content);
 });
 
 test('提早送出與「等滿窗口」結果完全相同（隨機測試）', async () => {
@@ -359,9 +362,16 @@ test('提早送出與「等滿窗口」結果完全相同（隨機測試）', as
         const { result, streamed } = await run([
             { content: [previous], finish: 'length' },
             { content: pieces, finish: 'stop' },
+            { content: ['完。'], finish: 'stop' },
         ]);
         const expectedPrevious = previous.replace(/^\s+/, '');
-        assert.equal(result.content, expectedPrevious + trimOverlap(expectedPrevious, continuation), `case ${i}: ${JSON.stringify({ previous, continuation })}`);
+        const added = trimOverlap(expectedPrevious, continuation);
+        // 去掉重疊後沒有看得見的新字，或只是把結尾連同前面的空白重寫一次（至少兩個字母或數字）：
+        // 第二輪不算寫完，第三輪接上「完。」
+        const repeated = [...added.trim()].filter((ch) => /[\p{L}\p{N}]/u.test(ch)).length >= 2
+            && expectedPrevious.trimEnd().endsWith(added.trim());
+        const ending = !hasVisibleText(added) || repeated ? '完。' : '';
+        assert.equal(result.content, expectedPrevious + added + ending, `case ${i}: ${JSON.stringify({ previous, continuation })}`);
         assert.equal(streamed, result.content, `case ${i}`);
     }
 });
@@ -1902,8 +1912,13 @@ test('continuationRetries 設成 0 就不重試；retryBaseMs／retryMaxMs 設�
 
 test('整段都是重疊、去掉後什麼都不剩：不送出空字串給 onContent', async () => {
     const pieces = [];
-    const { impl } = scripted([{ content: ['一二三四五'], finish: 'length' }, { content: ['三四五'], finish: 'stop' }]);
-    await generate(config(), { messages: baseMessages }, { streamChatImpl: impl, onContent: (t) => pieces.push(t) });
+    const { impl } = scripted([
+        { content: ['一二三四五'], finish: 'length' },
+        { content: ['三四五'], finish: 'stop' },
+        { content: ['六。'], finish: 'stop' },
+    ]);
+    const result = await generate(config(), { messages: baseMessages }, { streamChatImpl: impl, onContent: (t) => pieces.push(t) });
+    assert.equal(result.content, '一二三四五六。');
     assert.ok(pieces.every((p) => p.length > 0), JSON.stringify(pieces));
 });
 
@@ -2199,6 +2214,89 @@ test('接續強度已經是 none、接續輪卻只吐思考（下一輪的請求
     assert.equal(calls[1].reasoningEffort, 'none');
     assert.ok(!calls[1].messages[3].content.includes(DEGENERATE_NUDGE));
     assert.ok(calls[2].messages[3].content.endsWith(DEGENERATE_NUDGE));
+});
+
+test('接續正文的一輪去重疊後沒有新增看得見的字就以 stop 結束：不算寫完，用完輪數時以 incomplete 結束、附上已寫好的部分', async () => {
+    // 看不見的字元用 code point 產生：照樣送出，只是不算新增（原始碼裡不能有看不見的字元）
+    const [zwsp, hangulFiller, brailleBlank] = [0x200B, 0x3164, 0x2800].map((cp) => String.fromCodePoint(cp));
+    const cases = [
+        // [說明, 第二輪的思考, 第二輪的正文, 第二輪送出去的字]
+        ['只有空白', [], ['\n\n'], ''],
+        ['空字串', [], [], ''],
+        ['只重複結尾', [], ['二三'], ''],
+        ['只有零寬空白', [], [zwsp], zwsp],
+        ['只有韓文填充字', [], [hangulFiller], hangulFiller],
+        ['只有點字空白', [], [brailleBlank], brailleBlank],
+        ['想完什麼都沒寫', ['想'], [], ''],
+    ];
+    for (const [label, thinking, again, sent] of cases) {
+        const streamed = [];
+        const { impl, calls } = scripted([{ content: ['一二三'], finish: 'length' }, { thinking, content: again, finish: 'stop' }]);
+        await assert.rejects(generate(config({ maxRounds: 2 }), { messages: baseMessages }, { streamChatImpl: impl, onContent: (t) => streamed.push(t) }), (err) => {
+            assert.ok(err instanceof GenerationError, label);
+            assert.equal(err.code, 'incomplete', label);
+            assert.equal(err.partial, `一二三${sent}`, label);
+            assert.equal(streamed.join(''), err.partial, label);
+            assert.equal(err.rounds, 2, label);
+            return true;
+        });
+        assert.equal(calls.length, 2, label);
+    }
+});
+
+test('接續的一輪把已寫的結尾連同前面的空白或換行重寫一次就 stop：不算寫完；只補標點、圍欄、括號或新的字照常完成', async () => {
+    const head = '請先完成以下三項：\n1. 蒐集';
+    for (const again of [' 蒐集', '\n蒐集', '\n\n1. 蒐集']) {
+        await assert.rejects(run([{ content: [head], finish: 'length' }, { content: [again], finish: 'stop' }], { cfg: { maxRounds: 2 } }), (err) => {
+            assert.equal(err.code, 'incomplete', JSON.stringify(again));
+            assert.equal(err.stalled, true, JSON.stringify(again));
+            return true;
+        });
+    }
+    for (const ending of ['。', '```', '}', '資料。']) {
+        const { result } = await run([{ content: [head], finish: 'length' }, { content: [ending], finish: 'stop' }]);
+        assert.equal(result.content, head + ending, ending);
+    }
+});
+
+test('incomplete 標明是不是因為沒有進展：連兩輪沒有進展、最後一輪 stalled 是；最後一輪是被截斷就不是', async () => {
+    await assert.rejects(run([{ content: ['一二三'], finish: 'length' }, { content: [], finish: 'stop' }, { content: [], finish: 'stop' }]), { code: 'incomplete', stalled: true });
+    await assert.rejects(run([{ content: ['一二三'], finish: 'length' }, { content: [], finish: 'stop' }], { cfg: { maxRounds: 2 } }), { code: 'incomplete', stalled: true });
+    await assert.rejects(run([{ content: ['一'], finish: 'length' }, { content: ['二'], finish: 'length' }], { cfg: { maxRounds: 2 } }), { code: 'incomplete', stalled: false });
+});
+
+test('寫出來的只有看不見的字元：不論以 stop 結束、連兩輪沒有進展或用完輪數，都是 empty', async () => {
+    const zwsp = String.fromCodePoint(0x200B);
+    await assert.rejects(run([{ content: [zwsp], finish: 'stop' }]), { code: 'empty' });
+    await assert.rejects(run([{ content: [zwsp], finish: 'length' }, { content: [zwsp], finish: 'stop' }, { content: [zwsp], finish: 'stop' }]), { code: 'empty' });
+    await assert.rejects(run([{ content: [zwsp], finish: 'length' }, { content: [zwsp], finish: 'length' }], { cfg: { maxRounds: 2 } }), { code: 'empty' });
+});
+
+test('同一輪前面的嘗試已經寫出新字、斷線重試的那次什麼都沒加就 stop：不算寫完，但這一輪有進展，不累加連續沒有進展的計數', async () => {
+    const cut = new UpstreamError('unavailable', '途中中斷', { retryable: true });
+    const { result } = await run([
+        { content: ['一二三'], finish: 'length' },
+        { content: [], finish: 'stop' },
+        { content: ['四五六'], thenError: cut },
+        { content: [], finish: 'stop' },
+        { content: ['七。'], finish: 'stop' },
+    ], { cfg: { maxRounds: 5 } });
+    assert.equal(result.content, '一二三四五六七。');
+});
+
+test('接續輪斷線後，重試的那次什麼都沒加就以 stop 結束：一樣不算寫完，下一輪加提醒接著寫', async () => {
+    const cut = new UpstreamError('unavailable', '途中中斷', { retryable: true });
+    const { result, calls, streamed } = await run([
+        { content: ['開頭。'], finish: 'length' },
+        { content: ['中間寫到'], thenError: cut },
+        { content: [], finish: 'stop' },
+        { content: ['一半，結尾。'], finish: 'stop' },
+    ]);
+    assert.equal(result.content, '開頭。中間寫到一半，結尾。');
+    assert.equal(streamed, result.content);
+    assert.equal(calls.length, 4);
+    assert.ok(!calls[2].messages.at(-1).content.includes(DEGENERATE_NUDGE));
+    assert.ok(calls[3].messages.at(-1).content.endsWith(DEGENERATE_NUDGE));
 });
 
 /** 不給 usage 的假 vLLM：實際 token 數是估算的 ratio 倍；放不下就 400（訊息只給下界） */

@@ -19,7 +19,7 @@ import { createGateway, createLogger } from '../src/server.mjs';
 import { createCatalog } from '../src/tasks.mjs';
 import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { UpstreamError } from '../src/upstream.mjs';
-import { GenerationError } from '../src/generate.mjs';
+import { GenerationError, DEGENERATE_NUDGE } from '../src/generate.mjs';
 import { testConfig, startFakeUpstream } from './fake-upstream.mjs';
 
 const ORIGIN = 'https://thc1006.github.io';
@@ -124,6 +124,31 @@ async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads
         gateway,
         async stop() {
             await gateway.close({ graceMs: 0, requestWaitMs: 0 });
+        },
+    };
+}
+
+/**
+ * 用真的 generate、streamChat 與假 WinLab 啟動閘道：請求走過 HTTP 入口、生成引擎、上游串流解析
+ * 與 SSE 回應。lines 收下 createLogger 寫出的每一行 log。
+ */
+async function startRealGateway(script, llm = {}) {
+    const upstream = await startFakeUpstream(script);
+    const lines = [];
+    const gateway = createGateway({
+        llm: testConfig(upstream.origin, { taskTimeoutMs: 4_000, ...llm }),
+        server: serverConfig(),
+        tasks: TASKS,
+        log: createLogger('debug', (line) => lines.push(line)),
+    });
+    await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
+    return {
+        base: `http://127.0.0.1:${gateway.server.address().port}`,
+        upstream,
+        lines,
+        async stop() {
+            await gateway.close({ graceMs: 0, requestWaitMs: 0 });
+            await upstream.close();
         },
     };
 }
@@ -2189,5 +2214,76 @@ test('CLIENT-IP-UNTRUSTED：連線的位址不是內部位址時只記雜湊，�
         assert.doesNotMatch(JSON.stringify(gw.logs), /::1|0:0:0:0::/);
     } finally {
         await gw.stop();
+    }
+});
+
+// 第一輪被截斷在「1. 蒐集」，接續的一輪卻什麼都沒加就以 stop 結束：學生拿到的是半句話
+const CUT_HEAD = '請先完成以下三項：\n1. 蒐集';
+const deltaText = (events) => events.filter((e) => e.event === 'delta').map((e) => e.data.text).join('');
+
+test('接續正文的一輪去重疊後沒有新增看得見的字就以 stop 結束：不送 done，第二次加提醒，連兩輪就以 incomplete 結束，已送出的部分不收回', async () => {
+    // 看不見的字元用 code point 產生：照樣送出，只是不算新增（原始碼裡不能有看不見的字元）
+    const [hangulFiller, brailleBlank] = [0x3164, 0x2800].map((cp) => String.fromCodePoint(cp));
+    const cases = [
+        // [說明, 第二、三輪的正文, 這兩輪送出去的字]
+        ['只有空白', ['\n\n'], ''],
+        ['空字串', [], ''],
+        ['只重複結尾', ['蒐集'], ''],
+        ['只有韓文填充字', [hangulFiller], hangulFiller.repeat(2)],
+        ['只有點字空白', [brailleBlank], brailleBlank.repeat(2)],
+    ];
+    for (const [label, again, sent] of cases) {
+        const gw = await startRealGateway([
+            { content: [CUT_HEAD], finish: 'length' },
+            { content: again, finish: 'stop' },
+            { content: again, finish: 'stop' },
+        ]);
+        try {
+            const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+            assert.equal(deltaText(events), CUT_HEAD + sent, label);
+            assert.ok(!events.some((e) => e.event === 'done'), label);
+            const last = events.at(-1);
+            assert.equal(last.event, 'error', label);
+            // 沒寫完是因為沒有進展，不是回答太長：訊息照實說，可以再試一次；log 分得出是哪一種
+            assert.deepEqual(last.data, { code: 'incomplete', message: 'AI 這次沒能把回答寫完，可以再試一次。', retryable: true }, label);
+            assert.match(gw.lines.find((l) => / TASK-ERR /.test(l)), /code=incomplete detail="模型連續兩輪沒有任何進展，提前結束"/, label);
+            assert.equal(gw.upstream.requests.length, 3, label);
+            const lastUser = (i) => gw.upstream.requests[i].body.messages.at(-1).content;
+            assert.ok(!lastUser(1).includes(DEGENERATE_NUDGE), `${label}：第一次接續不加提醒`);
+            assert.ok(lastUser(2).endsWith(DEGENERATE_NUDGE), `${label}：第二次接續的請求原本會一模一樣，加提醒`);
+            assert.match(gw.lines.find((l) => / TASK /.test(l)), /outcome=incomplete/, label);
+        } finally {
+            await gw.stop();
+        }
+    }
+});
+
+test('接續正文有新增的字就照常完成；第一輪就只有空白、JSON 重寫只有空白，照舊是 empty', async () => {
+    const cases = [
+        ['接著寫完', 'demo-md', [{ content: [CUT_HEAD], finish: 'length' }, { content: ['蒐集資料\n2. 分析\n3. 報告'], finish: 'stop' }],
+            { event: 'done', result: `${CUT_HEAD}資料\n2. 分析\n3. 報告` }],
+        ['只補一個標點', 'demo-md', [{ content: [CUT_HEAD], finish: 'length' }, { content: ['。'], finish: 'stop' }],
+            { event: 'done', result: `${CUT_HEAD}。` }],
+        ['第一輪只有空白', 'demo-md', [{ content: ['\n\n'], finish: 'stop' }], { event: 'error', code: 'empty' }],
+        ['JSON 重寫只有空白', 'demo-json', [{ content: ['{"answer":"生'], finish: 'length' }, { content: ['\n\n'], finish: 'stop' }],
+            { event: 'error', code: 'empty' }],
+    ];
+    for (const [label, task, script, expected] of cases) {
+        const gw = await startRealGateway(script);
+        try {
+            const input = task === 'demo-md' ? { question: '怎麼做專題？' } : { topic: '生物' };
+            const events = await readEvents(await post(gw.base, task, input));
+            const last = events.at(-1);
+            assert.equal(last.event, expected.event, `${label}：${JSON.stringify(last)}`);
+            if (expected.event === 'done') {
+                assert.equal(last.data.result, expected.result, label);
+                assert.equal(deltaText(events), expected.result, label);
+            } else {
+                assert.equal(last.data.code, expected.code, label);
+            }
+            assert.equal(gw.upstream.requests.length, script.length, label);
+        } finally {
+            await gw.stop();
+        }
     }
 });
