@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 5;
+    var VERSION = 6;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -428,8 +428,12 @@
         err.requestId = extra.requestId;     // 回報問題時用來對照閘道的 log
         err.status = extra.status;
         err.field = extra.field;             // invalid_input：哪個欄位有問題
+        err.partial = extra.partial;         // error 事件之前收到的片段接起來的全文，有看得見的字才有
         return err;
     }
+
+    // 有沒有看得見的字，與閘道的 visible-text.mjs 同一個定義：零寬空白、韓文填充字、點字空白不算
+    var VISIBLE_TEXT = /(?![\u2800\uFFFC\p{Default_Ignorable_Code_Point}])[\p{L}\p{N}\p{P}\p{S}]/u;
 
     function toRetryAfter(value) {
         var seconds = Number(value);
@@ -703,7 +707,7 @@
                         throw makeAIError(
                             typeof payload.code === 'string' && payload.code ? payload.code : 'unavailable',
                             typeof payload.message === 'string' && payload.message ? payload.message : CLIENT_MESSAGES.unavailable,
-                            { retryable: payload.retryable, retryAfter: toRetryAfter(payload.retryAfter), requestId: requestId }
+                            { retryable: payload.retryable, retryAfter: toRetryAfter(payload.retryAfter), requestId: requestId, partial: VISIBLE_TEXT.test(text) ? text : undefined }
                         );
                 }
             });

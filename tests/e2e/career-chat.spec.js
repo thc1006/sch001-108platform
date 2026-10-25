@@ -252,6 +252,42 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         });
     }
 
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    const PARTIAL_ERRORS = [
+        ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
+        ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
+    ];
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到回答之後收到 ${code} → 已收到的部分標明沒有寫完、進了紀錄，紅字訊息接在後面；草稿移除，焦點回到輸入框`, async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**：'), delta('因為你')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+
+        await progress(page).getByRole('button', { name: '取消' }).focus();
+        await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
+        await expect(messages(page)).toHaveCount(4);
+        await expect(messages(page).nth(2).locator('.chat-bubble-ai span')).toHaveText('AI 的回答（沒有寫完）');
+        await expect(aiText(page, 2)).toHaveText('推薦你 資訊學群：因為你');
+        await expect(aiText(page, 2)).not.toHaveClass(/text-red-700/);
+        await expect(aiText(page, 3)).toHaveText(message);
+        await expect(aiText(page, 3)).toHaveClass(/text-red-700/);
+        await expect(draft(page)).toHaveCount(0);
+        await expect(page.locator('#chat-input')).toBeFocused();
+        for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
+    });
+
+    test('收到的片段只有看不見的字元、之後收到錯誤：錯誤不帶 partial，草稿移除，紀錄裡只有紅字訊息', async ({ page }) => {
+        const BUSY_MESSAGE = '目前使用的人比較多，請稍後再試。';
+        // 零寬空白用 code point 產生，原始碼裡不放看不見的字元
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta(String.fromCodePoint(0x200B))], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page)).toHaveCount(1);
+        await push(page, sse('error', { code: 'busy', message: BUSY_MESSAGE, retryable: true }));
+        await expect(messages(page)).toHaveCount(3);
+        await expect(aiText(page, 2)).toHaveText(BUSY_MESSAGE);
+        await expect(aiText(page, 2)).toHaveClass(/text-red-700/);
+        await expect(draft(page)).toHaveCount(0);
+    });
+
     test('回答到的時候不搬焦點：學生等待時把焦點移到別處，回答進了紀錄，焦點還在原處', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await ask(page, '我喜歡畫畫');

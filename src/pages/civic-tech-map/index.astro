@@ -761,6 +761,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 } catch (err) {
                     clearWorkspace(progress);
                     var text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(err);
+                    // 錯誤帶著已經收到的答案（沒寫完、逾時、接續輪忙線）：標明沒有寫完，放在訊息上面
+                    if (err && err.partial) {
+                        var partialBox = createResultBox(err.partial);
+                        partialBox.querySelector('h3').textContent = 'AI 推薦結果（沒有寫完）';
+                        resultsArea.appendChild(partialBox);
+                    }
                     showMessage(text, err && err.name === 'AbortError' ? 'info' : 'error');
                 } finally {
                     submitBtn.removeAttribute('aria-disabled');

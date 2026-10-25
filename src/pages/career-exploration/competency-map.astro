@@ -141,8 +141,17 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // platform-ai.js 沒載入時沒有 describeError 可用，改顯示這句，與它對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
-        function showMessage(text, tone = 'error') {
+        // partial：沒寫完的答案已經收到的部分，標明沒有寫完，放在訊息上面
+        function showMessage(text, tone = 'error', partial = '') {
             aiResultContainer.textContent = '';
+            if (partial) {
+                const box = createAnswerBox(partial);
+                const label = document.createElement('p');
+                label.className = 'not-prose text-sm font-semibold text-gray-600';
+                label.textContent = 'AI 的回答（沒有寫完）';
+                box.prepend(label);
+                aiResultContainer.appendChild(box);
+            }
             const p = document.createElement('p');
             // red-500 對白底只有 3.8:1，不到 WCAG 對一般文字要求的 4.5:1
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center font-semibold';
@@ -202,7 +211,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 if (progress) progress.finish();
                 aiWorkContainer.textContent = '';
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
-                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
+                // 錯誤帶著已經收到的答案（沒寫完、逾時、接續輪忙線）就留在畫面上；沒有的照常拿掉草稿
+                showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error', error && error.partial);
             } finally {
                 aiGenerateBtn.removeAttribute('aria-disabled');
                 aiGenerateBtn.classList.remove('opacity-50', 'cursor-not-allowed');

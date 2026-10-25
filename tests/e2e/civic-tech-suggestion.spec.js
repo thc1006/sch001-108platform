@@ -18,12 +18,13 @@ const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) =
 const hasBox = (locator) => locator.evaluate((el) => el.checkVisibility());
 // 這些角色與 <output>（隱含 role="status"）不寫 aria-live 也是 live region。
 const LIVE_REGION = '[aria-live], [role="alert"], [role="log"], [role="marquee"], [role="status"], [role="timer"], output';
-// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
+// 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。錯誤之前已經收到草稿，
+// 草稿標明沒有寫完、留在結果區，訊息接在最後。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
 const SETTLE = [
     ['收到 done', done('**最後的答案**'), (page) => expect(page.locator('#ai-results .ai-result-text')).toHaveText('最後的答案')],
     ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
-        (page) => expect(page.locator('#ai-results')).toHaveText(FORMAT_ERROR)],
+        (page) => expect(page.locator('#ai-results > div').last()).toHaveText(FORMAT_ERROR)],
 ];
 
 test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任務）', () => {
@@ -120,10 +121,10 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         expect(await page.evaluate(() => window.__xss)).toBeUndefined();
     });
 
-    test('閘道回 error 事件 → 草稿移除，結果區用紅字顯示閘道的訊息，夾帶的標籤當純文字', async ({ page }) => {
+    test('閘道回 error 事件（之前沒有片段）→ 結果區用紅字顯示閘道的訊息，夾帶的標籤當純文字', async ({ page }) => {
         const message = `AI 服務暫時無法使用 ${XSS_IMG}`;
         await installFakeGateway(page, {
-            chunks: [ACCEPTED, delta('草稿'), sse('error', { code: 'unavailable', message, retryable: true })],
+            chunks: [ACCEPTED, sse('error', { code: 'unavailable', message, retryable: true })],
         });
         await page.fill('#ai-interest-input', '假訊息');
         await page.click('#ai-submit-btn');
@@ -191,6 +192,34 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
             await expect(page.locator('#ai-results')).not.toHaveAttribute('tabindex');
         });
     }
+
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    const PARTIAL_ERRORS = [
+        ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
+        ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
+    ];
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在結果區，紅字訊息接在下面；工作區清空，焦點回到「探索推薦」按鈕`, async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**：'), delta('適合想')], hang: true });
+        await page.fill('#ai-interest-input', '假訊息');
+        await page.click('#ai-submit-btn');
+        const workspace = page.locator('#ai-workspace');
+        const results = page.locator('#ai-results');
+        const button = page.locator('#ai-submit-btn');
+        await expect(workspace.locator('.ai-result-text')).toHaveText('Cofacts 真的假的：適合想');
+
+        await workspace.getByRole('button', { name: '取消' }).focus();
+        await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
+        // 先放答案再放訊息，live region 唸的順序跟畫面一樣
+        const boxes = results.locator(':scope > div');
+        await expect(boxes).toHaveCount(2);
+        await expect(boxes.nth(0).locator('h3')).toHaveText('AI 推薦結果（沒有寫完）');
+        await expect(boxes.nth(0).locator('.ai-result-text')).toHaveText('Cofacts 真的假的：適合想');
+        await expect(boxes.nth(1)).toHaveText(message);
+        await expect(boxes.nth(1).locator('p')).toHaveClass(/text-red-700/);
+        await expect(workspace.locator('*')).toHaveCount(0);
+        await expect(button).toBeFocused();
+        for (const el of [button, workspace, results]) await expect(el).not.toHaveAttribute('tabindex');
+    });
 
     // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
     test('用鍵盤按「探索推薦」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
