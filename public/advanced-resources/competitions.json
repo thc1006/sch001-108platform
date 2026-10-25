@@ -567,7 +567,7 @@
       "registrationNote": "多在賽前數日開放 · 賽前 5 分鐘截止",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://codeforces.com/",
-      "description": "線上程式競賽平台，每月約六場 Div. 1／2／3 與 Educational 賽事，官方說明「Participating in them is free and open to everybody」，無年齡或國籍限制。報名規則逐字「The registration opens six hours before the start of the contest and closes 5 minutes before it, unless the information about the round states otherwise」，近期各場實際多在賽前數日開放（2026-10-23 賽程頁上，10/26 的 Round 1130 已可報名，10/31 的 Round 1131 標示 4 天後開放），截止仍是賽前 5 分鐘；標示「*has extra registration」的場次另可補報名，官方說明逐字「Extra registration opens 10 minutes after the contest starts and lasts 20 minutes」。官方 API 顯示賽程已排至 2026 年 11 月，平台運作正常（首頁對自動化存取回 403，屬機器人防護而非失效）。"
+      "description": "線上程式競賽平台，每月約六場 Div. 1／2／3 與 Educational 賽事，官方說明「Participating in them is free and open to everybody」，服務條款、隱私權政策與正式賽規都沒有年齡或國籍條件。報名規則逐字「The registration opens six hours before the start of the contest and closes 5 minutes before it, unless the information about the round states otherwise」，近期各場實際多在賽前數日開放（2026-10-23 賽程頁上，10/26 的 Round 1130 已可報名，10/31 的 Round 1131 標示 4 天後開放），截止仍是賽前 5 分鐘；標示「*has extra registration」的場次另可補報名，官方說明逐字「Extra registration opens 10 minutes after the contest starts and lasts 20 minutes」。"
     },
     {
       "title": "AtCoder 程式競賽",
