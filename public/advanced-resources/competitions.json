@@ -582,7 +582,7 @@
       "registrationNote": "無固定截止 · 每場賽前報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://atcoder.jp/",
-      "description": "日本 AtCoder Inc. 營運的線上程式競賽平台，每週舉辦 ABC（初級）、ARC（進階）、AGC（高階）與 AHC（啟發式）等賽事，官網 Upcoming Contests 目前排至 2026 年 11 月 14 日。參賽資格標示為 All，無年齡或國籍限制，台灣高中生可正常參賽並計 rating；但部分冠名贊助場次的獎品只給日本居住者，例如 SMBC Programming Contest #2（ABC481）的賞品條件逐字列「日本国内に在住している」，境外參賽者拿不到該場獎品。ABC、ARC、AGC 進行中適用 2026-10-14 版生成式 AI 規則，逐字「The use of generative AI is generally prohibited during ongoing ABC, ARC and AGC」，例外為題目翻譯，以及賽前已公開並附出處網址的 AI 生成程式碼，Unrated 參賽者同樣適用。"
+      "description": "日本 AtCoder Inc. 營運的線上程式競賽平台，每週舉辦 ABC（初級）、ARC（進階）、AGC（高階）與 AHC（啟發式）等賽事；2026-10-26 查證時，官網 Upcoming Contests 排至 2026 年 11 月 22 日。賽事頁的參賽資格標示為「Can Participate: All」，賽規逐字「Anyone who is interested in programming can join」，台灣高中生可正常參賽並計 rating；但部分冠名贊助場次的獎品只給日本居住者，例如 SMBC Programming Contest #2（ABC481）的賞品條件逐字列「日本国内に在住している」，境外參賽者拿不到該場獎品。ABC、ARC、AGC 進行中適用 2026-10-14 版生成式 AI 規則，逐字「The use of generative AI is generally prohibited during ongoing ABC, ARC and AGC」，例外為題目翻譯，以及賽前已公開並附出處網址的 AI 生成程式碼，Unrated 參賽者同樣適用。"
     },
     {
       "title": "CodeChef 程式競賽",
