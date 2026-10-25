@@ -86,7 +86,7 @@
  * 會零星冒出簡體字（「阶段」「数据收集」）。
  */
 import { neutralizeControlTokens } from './control-tokens.mjs';
-import { streamChat, UpstreamError } from './upstream.mjs';
+import { streamChat, UpstreamError, MAX_CHARS_PER_TOKEN } from './upstream.mjs';
 import { hasVisibleText } from './visible-text.mjs';
 
 export class GenerationError extends Error {
@@ -768,6 +768,18 @@ export async function generate(config, request, hooks = {}) {
         return value;
     };
 
+    // 上游沒照 max_tokens 停時，整個任務最多收的思考加正文（字元）。每輪最多 max_tokens 個 token、
+    // 思考也算在內，正常的輸出連同重試都遠低於「輪數 × max_tokens」個 token 換算的字元數。
+    // 一個回應的上限在 streamChat，探測也受它限制
+    const maxTaskChars = config.maxRounds * config.maxTokens * MAX_CHARS_PER_TOKEN;
+    let receivedChars = 0;
+    const receive = (text) => {
+        receivedChars += String(text).length;
+        if (receivedChars > maxTaskChars) {
+            throw new UpstreamError('protocol', `上游送來的思考與正文累計超過 ${maxTaskChars} 字元`);
+        }
+    };
+
     const minOutput = Math.min(MIN_ROUND_TOKENS, config.maxTokens);
     const estimateMessages = (msgs) => estimateTokens(msgs.map((m) => m.content).join('')) + PER_MESSAGE_TOKENS * msgs.length;
     const baseEstimate = estimateMessages(messages);
@@ -1125,11 +1137,14 @@ export async function generate(config, request, hooks = {}) {
                         responseFormat: plan.format,
                     }, {
                         signal: combined,
-                        onReasoning: () => {
+                        // 超過累計上限時丟出的錯誤，streamChat 會中止串流後原樣丟回
+                        onReasoning: (text) => {
+                            receive(text);
                             thinkingTokens++;
                             onProgress({ phase: 'thinking', round, thinkingTokens, writingTokens });
                         },
                         onContent: (text) => {
+                            receive(text);
                             writingTokens++;
                             onProgress({ phase: 'writing', round, thinkingTokens, writingTokens });
                             if (jsonMode) feedJson(text);
