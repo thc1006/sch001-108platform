@@ -864,7 +864,7 @@
       "registrationNote": "各場次報名時程分別公告",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.mlh.com/",
-      "description": "MLH 是全球學生黑客松的聯盟與認證方，本身不辦大多數活動，而是認證各校自辦的 Member Events（每年逾千場、遍及百國）。高中生並未被排除：官方 Member Event Guidelines 逐字「Student attendees can be enrolled at any level of study at a traditional (middle school, high school, university, etc.), nontraditional ... institution, or graduated in the past year」，並設有高中黑客松指南專頁；Code of Conduct 亦無年齡或學籍限制。但各場次可自訂更嚴格門檻（多數大學主辦場次實務上只收大學生），且沒有統一報名截止日，報名時程與資格請逐場查詢。"
+      "description": "MLH 是全球學生黑客松的聯盟與認證方，本身不辦大多數活動，而是認證各校自辦的 Member Events；官網首頁列出 MLH 整體的「1000+ Annual Events」「100 Countries」。高中生並未被排除：官方 Member Event Guidelines 逐字「Student attendees can be enrolled at any level of study at a traditional (middle school, high school, university, etc.), nontraditional ... institution, or graduated in the past year」，並設有給高中行政人員的黑客松指南專頁；報名 Member Event 時要同意的 MLH Contest Terms 逐字「The Contest is open to individuals who are at least eighteen years old (or minors with parental permission)」，網站使用條款要求 13 歲以上，13 至 18 歲須經家長或法定監護人同意。2026-10-25 查證時，GitHub 上 Contest Terms 的現行版是 2025-26 賽季版（Term 為 2025-07-01 至 2026-06-30），適用的 Member Events 限在墨西哥、加拿大、印度、尼泊爾、新加坡、澳洲、英國、歐盟成員國與美國舉行，沒有台灣；2026-10-19 提出、尚未合併的 2026-27 版國家清單相同。各場次可自訂更嚴格門檻，且沒有統一報名截止日，報名時程與資格請逐場查詢。"
     },
     {
       "title": "哈佛克里姆森商業個案分析賽 (HCGCC)",
