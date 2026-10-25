@@ -82,13 +82,14 @@ test('data：這一輪逐筆查證的 18 筆都必須留下查證日期（可更
 test('data：比賽日期不得再被寫成報名截止（My First CTF／iBridge／育秀盃）', () => {
     // 官網：報名「自 115 年 4 月 1 日上午 10 點至 115 年 4 月 19 日下午 5 點止」
     //       競賽「115 年 5 月 16 日(六)上午 9 時 30 分至下午 5 時 30 分」
+    // 2021 至 2025 年的報名截止是 5/6、4/26、4/26、5/15、5/12，4、5 月都有，官網只寫比賽「每年5月舉辦」。
     const ctf = find('My First CTF');
-    assert.equal(ctf.deadline, '2026-04-19');
-    assert.equal(ctf.deadlineAt, '2026-04-19T17:00:00+08:00');
-    assert.equal(ctf.opensAt, '2026-04-01T10:00:00+08:00');
+    assert.equal(ctf.deadline, '');
+    assert.equal(ctf.deadlineAt, undefined);
+    assert.equal(ctf.opensAt, undefined);
     assert.equal(ctf.eventStartsAt, '2026-05-16');
-    assert.equal(ctf.cycle.closes, '04-19', '5 月是比賽月份，不是報名截止月份');
-    assert.notEqual(ctf.cycle.closes, '05');
+    assert.equal(ctf.cycle, undefined, '報名截止 4、5 月都有，不得拿比賽月份當週期');
+    assert.ok(ctf.registrationNote?.includes('2027'));
 
     // 官網 2025 屆：報名「即日起至 11 月 28 日（五）17:00 截止」、競賽「2025 年 12 月 13 日（六）」
     // 官網只有兩屆紀錄（2023-06、2025-12），辦理時間不固定 → 不得填 cycle 推算下一屆
@@ -298,11 +299,11 @@ test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄'
         return { status: f.statusText(s), field: d.label, label: d.value };
     };
 
-    // 報名 4/19 截止、5/16 比賽：狀態列講報名，日期欄兩者都講清楚。
+    // 2026 屆報名已截止、2027 屆未公布：狀態列講報名，日期欄只講上屆的比賽日，不推下一屆。
     assert.deepEqual(card('My First CTF'), {
-        status: '本屆已截止 · 下次約 2027-04-19',
-        field: '報名截止',
-        label: '本屆 2026-04-19 已截止 · 每年約 4/19 · 上屆 2026-05-16 已結束',
+        status: '2026 屆已截止 · 2027 屆未公布',
+        field: '賽事日期',
+        label: '上屆 2026-05-16 已結束',
     });
 
     // 沒有公開報名：狀態列必須說清楚，日期欄顯示賽事日期而不是假的截止日
