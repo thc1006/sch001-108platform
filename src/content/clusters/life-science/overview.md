@@ -43,17 +43,17 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 - **食品科學系**：偏好化學、微生物與品管思維，有明確的證照路徑（食品技師等）。
 - **植物保護 / 生態相關**：田野觀察、長期記錄、對生物多樣性的實地接觸特別有說服力。
 
-## 2026 趨勢觀察：四個正在重塑生科的關鍵字
+## 2026 趨勢觀察：四個關鍵字
 
-生科是一個會「跟著科技走」的學群。以下四個方向是 2026 年各校系所與生技產業共同的焦點，也是你在備審資料中展現「了解這個領域」的好切點：
+下面四個方向各舉近年的進展，出處列在參考來源：
 
 1. **合成生物學（Synthetic Biology）**：把生物當成可設計、可組裝的「工程系統」。國際合成生物學競賽 iGEM 已成為大學生科系的指標性活動，台大、陽明交大、中興等校都有長期參賽隊伍，部分高中也開始投入。它代表生科正從「觀察生命」走向「設計生命」。
 
-2. **生物資訊與 AI + 生物**：基因定序成本大幅下降後，生物學的瓶頸從「取得資料」變成「分析資料」。會寫程式、懂統計的生科人變得稀缺而搶手。AI 輔助藥物設計、蛋白質結構預測（如 AlphaFold 後續發展）是當前最熱的交會點。
+2. **生物資訊與 AI + 生物**：基因體定序的成本大幅下降，美國國家人類基因體研究所（NHGRI）指出，定序 DNA 的能力已經遠遠超過解讀其中資訊的能力。基因體資料科學用計算與統計方法，解讀 DNA 序列裡的功能資訊。2024 年諾貝爾化學獎頒給以電腦設計蛋白質的 David Baker，以及開發 AI 模型 AlphaFold2、預測蛋白質結構的 Demis Hassabis 與 John Jumper；Baker 團隊設計的蛋白質，有些可以用作藥物或疫苗。
 
-3. **精準醫療與細胞治療**：從「一種藥治所有人」走向「依個人基因與生物標記給藥」。清大生命科學暨醫學院已設精準醫療相關學程；台灣《特管辦法》上路後，細胞治療、再生醫學成為生技產業的成長引擎。
+3. **精準醫療與細胞治療**：精準醫療在預防和治療疾病時，會考慮每個人在基因、環境與生活型態上的差異，和替一般人設計的一體適用做法不同；它在日常醫療裡的角色目前還相對有限。清大生命科學暨醫學院設有精準醫療博士學位學程。衛福部 2018 年 9 月修正《特管辦法》，開放 6 項細胞治療技術；2024 年 6 月，立法院三讀通過《再生醫療法》與《再生醫療製劑條例》。
 
-4. **基因編輯與生物製造**：CRISPR 等基因編輯技術在 2026 年更趨成熟，加上生物製造（用工程細胞生產藥品、材料、食品）的興起，農業生技、環保永續都是延伸戰場。
+4. **基因編輯與生物製造**：美國 FDA 在 2023 年 12 月核准 Casgevy，這是 FDA 核准的第一個使用 CRISPR/Cas9 基因編輯技術的療法，用來治療 12 歲以上、反覆發生血管阻塞危機的鐮刀型紅血球疾病患者。歐盟執委會 2024 年 3 月提出一系列推動生物技術與生物製造的措施，認為這兩類技術能幫助歐盟的農業、林業、能源、食品與飼料等產業現代化。
 
 > **把趨勢用在備審上的正確方式**：不是把這些名詞抄進自述充場面，而是讓它們幫你「定位自己的興趣」與「說明為何選這個系」。例如：「我對基因如何決定性狀感興趣，而貴系開設的基因體學與生物資訊課程，正是我希望深入的方向。」
 
@@ -91,6 +91,14 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 - [ColleGo! 選才育才輔助系統—生命科學學類](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=49)
 - [國立臺灣大學「生命科學系」大學申請入學第二階段甄試書面資料準備指引（國立臺灣大學教務處）](https://www.aca.ntu.edu.tw/)
 - [清華大學生命科學暨醫學院官網](https://cls.site.nthu.edu.tw/)
-- [〈2026 年生物科技產業關鍵趨勢解析〉，GeneOnline News](https://geneonline.news/)
+- [〈The Cost of Sequencing a Human Genome〉，美國國家人類基因體研究所（NHGRI）](https://www.genome.gov/about-genomics/fact-sheets/Sequencing-Human-Genome-cost)
+- [〈Genomic Data Science Fact Sheet〉，美國國家人類基因體研究所（NHGRI）](https://www.genome.gov/about-genomics/fact-sheets/Genomic-Data-Science)
+- [〈Press release: The Nobel Prize in Chemistry 2024〉，NobelPrize.org](https://www.nobelprize.org/prizes/chemistry/2024/press-release/)
+- [〈What is precision medicine?〉，MedlinePlus Genetics（美國國家醫學圖書館）](https://medlineplus.gov/genetics/understanding/precisionmedicine/definition/)
+- [〈衛福部9月正式開放細胞治療 嘉惠病人推動醫療生技發展〉，衛生福利部新聞稿](https://www.mohw.gov.tw/cp-16-43698-1.html)
+- [〈立法院三讀通過「再生醫療法」開啟再生醫療新里程〉，衛生福利部新聞稿](https://www.mohw.gov.tw/cp-16-78933-1.html)
+- [〈立法院三讀通過「再生醫療製劑條例」，嘉惠病人並促進再生醫療產業發展〉，衛生福利部新聞稿](https://www.mohw.gov.tw/cp-16-78936-1.html)
+- [〈FDA Approves First Gene Therapies to Treat Patients with Sickle Cell Disease〉，美國食品藥物管理局（FDA）](https://www.fda.gov/news-events/press-announcements/fda-approves-first-gene-therapies-treat-patients-sickle-cell-disease)
+- [〈Commission takes action to boost biotechnology and biomanufacturing in the EU〉，歐盟執委會新聞稿](https://ec.europa.eu/commission/presscorner/detail/en/ip_24_1570)
 - [〈未來的生物科技發展方向—合成生物學〉，PanSci 泛科學](https://pansci.asia/archives/85114)
 - [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
