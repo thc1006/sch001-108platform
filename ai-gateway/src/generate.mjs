@@ -97,7 +97,7 @@ export class GenerationError extends Error {
      *                       busy（上游要求等的時間超過在請求裡等的上限）
      * retryAfter 與 cause：上游要求等得太久、沒有重試時（busy 或 timeout），帶著它與上游的錯誤
      */
-    constructor(code, message, { partial, rounds, finishReason, continuations, usage, retryAfter, cause } = {}) {
+    constructor(code, message, { partial, rounds, finishReason, continuations, usage, stats, retryAfter, cause } = {}) {
         super(message, cause !== undefined ? { cause } : undefined);
         this.name = 'GenerationError';
         this.code = code;
@@ -107,6 +107,7 @@ export class GenerationError extends Error {
         this.continuations = continuations;
         // 失敗之前已經用掉的 tokens（含探測），呼叫端記 log 用
         this.usage = usage;
+        this.stats = stats;
         this.retryAfter = retryAfter;
     }
 }
@@ -632,9 +633,10 @@ function segmentRatio(tokens, text) {
  *                          這幾個 hook 可以是 async；丟出例外或 reject 都會中止任務並原樣丟回。
  *                            回傳結果前會等所有 async hook 完成（受總時限與取消約束）
  *                          streamChatImpl：測試用
- * @returns {Promise<{content: string, rounds: number, usage: object, continuations: string[]}>}
+ * @returns {Promise<{content: string, rounds: number, usage: object, continuations: string[], stats: object}>}
  *          continuations 依序記錄每次接續的原因：thinking | writing | rewrite | degenerate
- *          失敗時丟出的錯誤帶著 partial（已寫好的部分）、rounds、continuations、usage
+ *          stats：{ retries（接續輪退避後重送）, probes（max_tokens=1 的探測）, rewrites（送出過的 JSON 重寫輪）}
+ *          失敗時丟出的錯誤帶著 partial（已寫好的部分）、rounds、continuations、usage、stats
  */
 export async function generate(config, request, hooks = {}) {
     const { messages, temperature, responseFormat, acceptJson } = request;
@@ -669,6 +671,7 @@ export async function generate(config, request, hooks = {}) {
     let currentRound = 0;
     const continuations = [];
     const usage = { promptTokens: 0, completionTokens: 0, reasoningTokens: 0 };
+    const stats = { retries: 0, probes: 0, rewrites: 0 };
 
     const partial = () => {
         if (!jsonMode) return content.trim() ? content : draft;
@@ -685,7 +688,7 @@ export async function generate(config, request, hooks = {}) {
     // 錯誤可能是呼叫端自己的物件（hook 丟出的），不該改變它被列舉或序列化的樣子；凍結的就不動
     const attach = (err, round) => {
         if (err === null || typeof err !== 'object' || !Object.isExtensible(err)) return err;
-        const extra = { partial: partial(), rounds: round, continuations: [...continuations], usage: { ...usage } };
+        const extra = { partial: partial(), rounds: round, continuations: [...continuations], usage: { ...usage }, stats: { ...stats } };
         for (const [key, value] of Object.entries(extra)) {
             try {
                 if (err[key] === undefined) {
@@ -701,6 +704,7 @@ export async function generate(config, request, hooks = {}) {
         partial: partial(),
         continuations: [...continuations],
         usage: { ...usage },
+        stats: { ...stats },
         ...extra,
     });
 
@@ -767,7 +771,7 @@ export async function generate(config, request, hooks = {}) {
             }
         }
         throwIfHookFailed(round);
-        return value;
+        return { ...value, stats: { ...stats } };
     };
 
     // 上游沒照 max_tokens 停時，整個任務最多收的思考加正文（字元）。每輪最多 max_tokens 個 token、
@@ -945,6 +949,7 @@ export async function generate(config, request, hooks = {}) {
      */
     const measurePrompt = async (roundMessages, effort, format) => {
         let probe;
+        stats.probes++;
         try {
             probe = await streamChatImpl(config, {
                 messages: roundMessages,
@@ -983,6 +988,7 @@ export async function generate(config, request, hooks = {}) {
             let squeezed = false;     // 這一輪的正文中間壓過退化的空白（正文的 token 比例因此不準）
             let attempt = 0;
             let contextRetries = 0;
+            let rewriteSent = false;  // 這一輪的 JSON 重寫已經送出過（stats.rewrites 每輪只算一次）
             const caps = { carry: Infinity, maxTokens: Infinity, measured: null };
             let pending = null;       // 送出前要先探測：{ overflow, atLeast }
             let probedFresh = false;
@@ -1131,6 +1137,10 @@ export async function generate(config, request, hooks = {}) {
                         plan = planRound(round, caps);
                         assertFits(plan, round);
                     }
+                    if (plan.mode === 'rewrite' && !rewriteSent) {
+                        rewriteSent = true;
+                        stats.rewrites++;
+                    }
                     result = await streamChatImpl(config, {
                         messages: plan.roundMessages,
                         maxTokens: plan.maxTokens,
@@ -1227,6 +1237,7 @@ export async function generate(config, request, hooks = {}) {
                     } catch {
                         throw abortError(round);
                     }
+                    stats.retries++;
                     continue;
                 }
                 // 收尾：輪末的空白不是退化就照常保留，退化的一大串就丟掉；還在緩衝的開頭照常去重疊後送出
@@ -1375,7 +1386,8 @@ export async function generate(config, request, hooks = {}) {
         // context 放不下）不能把它蓋掉
         if (!hookFailed) await new Promise((resolve) => setImmediate(resolve));
         if (hookFailed && err !== hookError) throw attach(hookError, currentRound);
-        throw err;
+        // 例如 acceptJson 丟出的程式錯誤：一樣帶著輪數、用量與次數給呼叫端記 log
+        throw attach(err, currentRound);
     } finally {
         clearTimeout(deadlineTimer);
     }

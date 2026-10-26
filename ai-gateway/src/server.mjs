@@ -803,6 +803,7 @@ export function createGateway({
             // 排到逾時、排隊中離開或關機：記到這一刻為止排了多久
             if (handle.queued) queueMs = Date.now() - queuedAt;
             const usage = result?.usage ?? failedWith?.usage;
+            const stats = result?.stats ?? failedWith?.stats;
             log(outcome === 'ok' ? 'info' : 'warn', 'TASK', {
                 id: requestId,
                 task: task.id,
@@ -819,6 +820,9 @@ export function createGateway({
                 firstByte: since(firsts.byte),
                 firstThinking: since(firsts.thinking),
                 firstDelta: since(firsts.delta),
+                retries: stats?.retries,
+                probes: stats?.probes,
+                rewrites: stats?.rewrites,
                 stall: stalledBy?.reason,
                 pending: stalledBy?.pending,
             });

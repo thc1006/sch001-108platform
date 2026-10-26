@@ -39,7 +39,7 @@ const TASKS = createCatalog([
 // TASK 一行可以有的欄位。多出來的欄位要先確認它不會帶出學生的輸入或模型的輸出，再加進來
 const TASK_LOG_KEYS = [
     'id', 'task', 'client', 'outcome', 'status', 'rounds', 'cont', 'reasoning', 'completion', 'prompt',
-    'queue', 'total', 'stall', 'pending', 'firstByte', 'firstThinking', 'firstDelta',
+    'queue', 'total', 'stall', 'pending', 'firstByte', 'firstThinking', 'firstDelta', 'retries', 'probes', 'rewrites',
 ];
 
 async function startGateway(script, { llm = {}, server = {} } = {}) {
@@ -266,6 +266,164 @@ test('上游還沒回應就取消：三個時間點都不記', async () => {
     }
 });
 
+const countsOf = (fields) => [fields.retries, fields.probes, fields.rewrites];
+const CUT_HEAD = '請先完成以下三項：\n1. 蒐集';
+
+test('次數：一般完成都是 0，有開始生成才記', async () => {
+    const gw = await startGateway([{ content: ['好'], finish: 'stop' }]);
+    try {
+        await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.deepEqual(countsOf(await taskLog(gw)), ['0', '0', '0']);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：接續輪遇到 429 與 503 各重試一次，retries 是 2', async () => {
+    const gw = await startGateway([
+        { content: [CUT_HEAD], finish: 'length' },
+        { status: 429, headers: { 'retry-after': '0' }, body: { error: { message: 'busy' } } },
+        { status: 503, body: { error: { message: 'down' } } },
+        { content: ['資料'], finish: 'stop' },
+    ]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.equal(events.at(-1).event, 'done');
+        const fields = await taskLog(gw);
+        assert.deepEqual(countsOf(fields), ['2', '0', '0']);
+        assert.equal(fields.rounds, '2');
+    } finally {
+        await gw.stop();
+    }
+});
+
+const overflow = (detail) => ({ status: 400, body: { error: { message: `This model's maximum context length is 32768 tokens. However, ${detail}`, code: 400 } } });
+
+test('次數：接續輪被 context 長度拒絕、錯誤寫出精確大小，校正後重送不算 retries', async () => {
+    const gw = await startGateway([
+        { content: [CUT_HEAD], finish: 'length' },
+        overflow('your request has 25000 input tokens.'),
+        { content: ['資料'], finish: 'stop' },
+    ]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.equal(events.at(-1).event, 'done');
+        assert.equal(gw.upstream.requests.length, 3);
+        assert.deepEqual(countsOf(await taskLog(gw)), ['0', '0', '0']);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：接續輪被 context 長度拒絕、只給下界：探測後的重送不算 retries，探測回 429 後的重送算；probes 等於探測的請求數', async () => {
+    const isProbe = (req) => req.body.max_tokens === 1;
+    let probesSeen = 0;
+    const gw = await startGateway((req, i) => {
+        if (i === 0) return { content: [CUT_HEAD], finish: 'length' };
+        if (i === 1) return overflow('your prompt contains at least 24577 input tokens.');
+        if (isProbe(req)) {
+            probesSeen++;
+            if (probesSeen === 1) return { status: 429, headers: { 'retry-after': '0' }, body: { error: { message: 'busy' } } };
+            return { content: [], finish: 'length', usage: { prompt_tokens: 3000, completion_tokens: 1 } };
+        }
+        return { content: ['資料'], finish: 'stop' };
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.equal(events.at(-1).event, 'done');
+        const probes = gw.upstream.requests.filter(isProbe).length;
+        assert.ok(probes >= 2);
+        // 回 429 的探測退避後重送，那一次算 retries
+        assert.deepEqual(countsOf(await taskLog(gw)), ['1', String(probes), '0']);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：退避等待中取消，沒有重送就不算 retries', async () => {
+    const gw = await startGateway([
+        { content: [CUT_HEAD], finish: 'length' },
+        { status: 429, headers: { 'retry-after': '3' }, body: { error: { message: 'busy' } } },
+        { content: ['資料'], finish: 'stop' },
+    ]);
+    try {
+        const ctrl = new AbortController();
+        const res = await post(gw.base, 'demo-md', { question: '怎麼做專題？' }, { signal: ctrl.signal });
+        await waitFor(() => gw.upstream.requests.length === 2);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        ctrl.abort();
+        await res.text().catch(() => {});
+        const fields = await taskLog(gw);
+        assert.equal(fields.outcome, 'aborted');
+        assert.equal(gw.upstream.requests.length, 2);
+        assert.deepEqual(countsOf(fields), ['0', '0', '0']);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：題目估計放不下完整的輸出額度時先探測，probes 是 1', async () => {
+    const gw = await startGateway([
+        { content: [], finish: 'length', usage: { prompt_tokens: 60, completion_tokens: 1 } },
+        { content: ['好'], finish: 'stop' },
+    ], { llm: { contextTokens: 7_000 } });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.equal(events.at(-1).event, 'done');
+        assert.equal(gw.upstream.requests[0].body.max_tokens, 1, '第一個請求是探測');
+        const fields = await taskLog(gw);
+        assert.deepEqual(countsOf(fields), ['0', '1', '0']);
+        // 探測的回應也是上游的第一個位元組
+        assert.ok(ms(fields.firstByte) <= ms(fields.firstDelta));
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：JSON 被截斷後整份重寫，rewrites 是 1', async () => {
+    const gw = await startGateway([
+        { content: ['{"answer":"好'], finish: 'length' },
+        { content: ['{"answer":"好"}'], finish: 'stop' },
+    ]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-json', { topic: '生物' }));
+        assert.equal(events.at(-1).event, 'done');
+        const fields = await taskLog(gw);
+        assert.equal(fields.cont, 'rewrite');
+        assert.deepEqual(countsOf(fields), ['0', '0', '1']);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('次數：第一輪就失敗、生成途中取消都記 0；排隊中取消沒開始生成，不記', async () => {
+    const failed = await startGateway([{ status: 500, body: { error: { message: '壞了' } } }]);
+    try {
+        await readEvents(await post(failed.base, 'demo-md', { question: '怎麼做專題？' }));
+        assert.deepEqual(countsOf(await taskLog(failed)), ['0', '0', '0']);
+    } finally {
+        await failed.stop();
+    }
+    const gw = await startGateway([{ hangBeforeHeaders: true }], { server: { concurrency: 1 } });
+    try {
+        const running = new AbortController();
+        const first = await post(gw.base, 'demo-md', { question: '一' }, { signal: running.signal });
+        await waitFor(() => gw.upstream.requests.length === 1);
+        const waiting = new AbortController();
+        const second = await post(gw.base, 'demo-md', { question: '二' }, { signal: waiting.signal });
+        waiting.abort();
+        await second.text().catch(() => {});
+        running.abort();
+        await first.text().catch(() => {});
+        await waitFor(() => gw.lines.filter((l) => / TASK /.test(l)).length === 2);
+        const [queuedLog, runningLog] = gw.lines.filter((l) => / TASK /.test(l)).map(logFields);
+        assert.deepEqual([queuedLog.outcome, queuedLog.rounds, ...countsOf(queuedLog)], ['aborted', undefined, undefined, undefined, undefined]);
+        assert.deepEqual([runningLog.outcome, runningLog.queue, ...countsOf(runningLog)], ['aborted', '0ms', '0', '0', '0']);
+    } finally {
+        await gw.stop();
+    }
+});
+
 const CANARY = '祕密標記Q9Z4';
 
 test('新的 log 欄位不帶出學生的輸入與模型的輸出：TASK 只有允許的欄位，任何一行都沒有標記', async () => {
@@ -279,6 +437,7 @@ test('新的 log 欄位不帶出學生的輸入與模型的輸出：TASK 只有�
         assert.ok(gw.upstream.requests[0].raw.includes(CANARY), '上游收到的訊息裡有標記');
         const fields = await taskLog(gw);
         for (const key of ['firstByte', 'firstThinking', 'firstDelta']) assert.match(fields[key], /^\d+ms$/, key);
+        for (const key of ['retries', 'probes', 'rewrites']) assert.match(fields[key], /^\d+$/, key);
         assert.doesNotMatch(gw.lines.join('\n'), new RegExp(CANARY));
     } finally {
         await gw.stop();
