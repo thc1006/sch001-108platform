@@ -47,7 +47,7 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 
 下面四個方向各舉近年的進展，出處列在參考來源：
 
-1. **合成生物學（Synthetic Biology）**：把生物當成可設計、可組裝的「工程系統」。國際合成生物學競賽 iGEM 已成為大學生科系的指標性活動，台大、陽明交大、中興等校都有長期參賽隊伍，部分高中也開始投入。它代表生科正從「觀察生命」走向「設計生命」。
+1. **合成生物學（Synthetic Biology）**：把生物當成可以設計、組裝的工程系統，從觀察生命走向設計生命。國際合成生物學競賽 iGEM 有大學隊，也有高中隊。iGEM 官方的隊伍清單裡，陽明交大（含合校前的陽明、交大）從 2007 年起每年都有隊伍，清大從 2016 年、中正從 2017 年起每年參賽，台大的大學隊只有 2012、2013 與 2024 年；高中隊方面，明道中學從 2014 年起就有隊伍。
 
 2. **生物資訊與 AI + 生物**：基因體定序的成本大幅下降，美國國家人類基因體研究所（NHGRI）指出，定序 DNA 的能力已經遠遠超過解讀其中資訊的能力。基因體資料科學用計算與統計方法，解讀 DNA 序列裡的功能資訊。2024 年諾貝爾化學獎頒給以電腦設計蛋白質的 David Baker，以及開發 AI 模型 AlphaFold2、預測蛋白質結構的 Demis Hassabis 與 John Jumper；Baker 團隊設計的蛋白質，有些可以用作藥物或疫苗。
 
@@ -101,4 +101,5 @@ ColleGo! 將本學群定義為「著重於動植物生活型態、生命現象�
 - [〈FDA Approves First Gene Therapies to Treat Patients with Sickle Cell Disease〉，美國食品藥物管理局（FDA）](https://www.fda.gov/news-events/press-announcements/fda-approves-first-gene-therapies-treat-patients-sickle-cell-disease)
 - [〈Commission takes action to boost biotechnology and biomanufacturing in the EU〉，歐盟執委會新聞稿](https://ec.europa.eu/commission/presscorner/detail/en/ip_24_1570)
 - [〈未來的生物科技發展方向—合成生物學〉，PanSci 泛科學](https://pansci.asia/archives/85114)
+- [iGEM Team List（iGEM 官方隊伍清單，可依年份查詢各隊與所屬學校）](https://teams.igem.org/)
 - [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 32 題](https://nsdua.moe.edu.tw/#/qa)
