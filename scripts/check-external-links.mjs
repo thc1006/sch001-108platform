@@ -42,6 +42,9 @@
  *
  * 本機執行：  node scripts/check-external-links.mjs
  *             node scripts/check-external-links.mjs --limit 20   （只驗前 N 筆）
+ *             --inventory、--policy、--report 換掉讀寫的檔案，路徑相對於 repo 根目錄。
+ *             --record 把探測結果錄進檔案，--replay 用錄好的結果代替連網，兩者的路徑相對於目前目錄，
+ *             可以一起用。端到端測試（check-external-links.test.mjs）用 --replay 跑整支程式。
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -49,21 +52,23 @@ import path from 'node:path';
 import dns from 'node:dns';
 import { fileURLToPath } from 'node:url';
 
-import { runProbes } from './link-health.lib.mjs';
+import { runProbes, probe, staticUrlPolicy, blockedAddressReason } from './link-health.lib.mjs';
 import { validatePolicy } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 import { buildReport } from './check-external-links.lib.mjs';
 
-const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
-const INVENTORY_PATH = path.resolve(ROOT, '.reports/url-inventory.json');
-const POLICY_PATH = path.resolve(ROOT, 'scripts/link-policy.json');
-const REPORT_PATH = path.resolve(ROOT, 'external-links-report.md');
-
 const argOf = (name) => {
     const i = process.argv.indexOf(name);
     return i >= 0 ? process.argv[i + 1] : undefined;
 };
+
+const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
+const INVENTORY_PATH = path.resolve(ROOT, argOf('--inventory') ?? '.reports/url-inventory.json');
+const POLICY_PATH = path.resolve(ROOT, argOf('--policy') ?? 'scripts/link-policy.json');
+const REPORT_PATH = path.resolve(ROOT, argOf('--report') ?? 'external-links-report.md');
+const REPLAY_PATH = argOf('--replay');
+const RECORD_PATH = argOf('--record');
 
 const die = async (message) => {
     console.error(`❌ ${message}`);
@@ -77,6 +82,85 @@ const die = async (message) => {
     }
     process.exit(1);
 };
+
+/**
+ * replayProbe 回傳重播用的 probe。結果從錄製檔來，同一個網址錄成陣列時依序回傳，用完重複最後一筆。
+ * 起點與每一跳轉址的靜態位址政策、最後一跳錄下的位址、讀 body 的上限照 probe 的規則再套一次，交給 probe
+ * 的選項錯了，重播的結果也會跟著變。和連網不同的地方：中間各跳的位址沒有錄下來，不檢查；上限比錄製時
+ * 大的部分補不回來。錄製檔裡沒有的網址回 EREPLAY，歸到無法判定。
+ */
+function replayProbe(probes) {
+    const calls = new Map();
+    return async (url, _signal, opts = {}) => {
+        const blocked = (reason, at) => ({ status: 0, code: 'EBLOCKED', blocked: true, reason, url: at, redirects: [] });
+        const statik = staticUrlPolicy(url, opts);
+        if (!statik.ok) return blocked(statik.reason, url);
+        const list = [].concat(probes?.[url] ?? []);
+        const n = calls.get(url) ?? 0;
+        calls.set(url, n + 1);
+        const r = structuredClone(list[Math.min(n, list.length - 1)] ?? { status: 0, code: 'EREPLAY', finalUrl: url, redirects: [] });
+        for (const hop of r.redirects ?? []) {
+            const next = staticUrlPolicy(hop.to, opts);
+            if (!next.ok) return blocked(next.reason, hop.to);
+        }
+        const at = r.finalUrl ?? url;
+        for (const address of r.addresses ?? []) {
+            const why = blockedAddressReason(address, opts);
+            if (why) return blocked(`${new URL(at).hostname} 解析到被封鎖的位址：${why}`, at);
+        }
+        const limit = opts.readBodyBytes ?? 0;
+        if (!limit) {
+            delete r.bodyHead;
+            delete r.bodyTruncated;
+            delete r.bodySkipped;
+        } else if (r.bodyHead !== undefined && Buffer.byteLength(r.bodyHead) > limit) {
+            r.bodyHead = Buffer.from(r.bodyHead).subarray(0, limit).toString('utf8');
+            r.bodyTruncated = true;
+        }
+        return r;
+    };
+}
+
+// 錄製檔的格式是 { version: 1, probes: { 網址: probe 的結果或結果的陣列 }, ns: { 'org.': NS 清單或 { code } } }。
+// 重播與錄製都只換掉最底層的 probe 與 resolveNs，runProbes、篩選與 buildReport 照常執行。
+let probeFn = probe;
+let resolveNs = (name) => dns.promises.resolveNs(name);
+let recorded = null;
+if (REPLAY_PATH) {
+    let rec;
+    try {
+        rec = JSON.parse(await readFile(REPLAY_PATH, 'utf8'));
+    } catch (err) {
+        await die(`讀不到錄製檔 ${REPLAY_PATH}（${err.message}）。`);
+    }
+    if (rec?.version !== 1) await die(`錄製檔 ${REPLAY_PATH} 的 version 不是 1，這支程式讀不懂。`);
+    probeFn = replayProbe(rec.probes);
+    // 沒有錄到的 TLD 歸到 DNS 未答，重播不完整時報告看得出來。
+    resolveNs = async (name) => {
+        const answer = rec.ns?.[name];
+        if (Array.isArray(answer)) return answer;
+        throw Object.assign(new Error(`錄製檔裡沒有 ${name}`), { code: answer?.code ?? 'EREPLAY' });
+    };
+}
+if (RECORD_PATH) {
+    // 同一個網址探測不只一次時（判定失效前的重試）存成陣列，重播時照順序回傳。
+    recorded = { version: 1, probes: {}, ns: {} };
+    const [baseProbe, baseNs] = [probeFn, resolveNs];
+    probeFn = async (url, signal, opts) => {
+        const r = await baseProbe(url, signal, opts);
+        const prev = recorded.probes[url];
+        recorded.probes[url] = prev === undefined ? r : [].concat(prev, [r]);
+        return r;
+    };
+    resolveNs = async (name) => {
+        try {
+            return (recorded.ns[name] = await baseNs(name));
+        } catch (err) {
+            recorded.ns[name] = { code: err?.code ?? 'EDNS' };
+            throw err;
+        }
+    };
+}
 
 let inventory;
 try {
@@ -121,7 +205,7 @@ const HEAD_BYTES = 16 * 1024;
 
 const { results, skipped } = await runProbes(
     targets.map((t) => t.url),
-    { concurrency: CONCURRENCY, budgetMs: BUDGET_MS, rotateSeed: weekIndex * CONCURRENCY, readBodyBytes: HEAD_BYTES },
+    { concurrency: CONCURRENCY, budgetMs: BUDGET_MS, rotateSeed: weekIndex * CONCURRENCY, readBodyBytes: HEAD_BYTES, probeFn },
 );
 
 // 內文裸網域在盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，
@@ -145,7 +229,7 @@ const bareCandidates = limit > 0 ? bareInfo.hosts.slice(0, limit) : bareInfo.hos
 
 const screen = await screenBareDomains(
     bareCandidates.map((h) => h.host),
-    { resolveNs: (name) => dns.promises.resolveNs(name) },
+    { resolveNs },
 );
 let bareResults = [];
 let bareSkipped = 0;
@@ -155,6 +239,7 @@ if (screen.accepted.length) {
         budgetMs: BARE_BUDGET_MS,
         rotateSeed: weekIndex * CONCURRENCY,
         readBodyBytes: HEAD_BYTES,
+        probeFn,
     }));
 }
 
@@ -180,3 +265,4 @@ for (const line of out.consoleSummary) console.log(line);
 await writeFile(REPORT_PATH, out.report, 'utf8');
 if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, out.githubOutput);
 for (const line of out.consoleTail) console.log(line);
+if (recorded) await writeFile(RECORD_PATH, JSON.stringify(recorded), 'utf8');

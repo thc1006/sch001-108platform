@@ -11,23 +11,26 @@
  *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
+ *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
  * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B 到 G 六段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * B 到 H 七段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
  * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
  * 同一類假象在自己的測試上也會發生。
  *
- * 一律在副本上動手：政策與盤點寫進暫存目錄，程式碼複製到 scripts-faultcheck/。
+ * 一律在副本上動手：政策與盤點寫進暫存目錄，程式碼複製到 scripts-faultcheck-N/。
  * 原始檔案在結構上就不可能被改壞，而不是靠還原邏輯寫得夠好。
  *
  * 執行：  npm run test:link-faults
  */
 
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import os from 'node:os';
+import { promisify } from 'node:util';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, cpSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,7 +38,6 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
 const TMP = path.join(ROOT, '.faultcheck');
 const SCRIPTS = path.join(ROOT, 'scripts');
-const MUTANT_DIR = path.join(ROOT, 'scripts-faultcheck');
 
 rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
@@ -403,14 +405,49 @@ const guardMutations = [
     },
 ];
 
-const runMutantTests = (testFile = 'link-health.test.mjs') => {
+// 突變之間互不相干，同時跑幾支。每支用自己的 scripts-faultcheck-N 目錄，和 scripts 同一層：
+// 測試用相對路徑找 repo 根目錄與 .github。
+const PARALLEL = Math.min(4, os.availableParallelism());
+const execFileAsync = promisify(execFile);
+const testPasses = async (dir, testFile) => {
     try {
-        execFileSync(process.execPath, ['--test', path.join(MUTANT_DIR, testFile)], { encoding: 'utf8', stdio: 'pipe' });
-        return { code: 0 };
-    } catch (e) {
-        return { code: e.status ?? 1, out: String(e.stdout || '') };
+        await execFileAsync(process.execPath, ['--test', path.join(dir, testFile)], { encoding: 'utf8' });
+        return true;
+    } catch {
+        return false;
     }
 };
+
+/**
+ * runMutants 把 mutations 一條一條套在 scripts/file 的副本上，跑 tests，有一支紅就算擋下，照原來的順序印結果。
+ * 換行先正規化成 LF：這個 repo 的檔案在 Windows 上是 CRLF，mutation 的比對字串用 LF 寫，不正規化的話跨行比對
+ * 會靜默失敗（replace 找不到就原樣回傳），在 Windows 上等於沒測到，在 Linux CI 上卻是綠的。
+ */
+async function runMutants(title, file, mutations, tests, survived) {
+    console.log(`\n${title}`);
+    const source = readFileSync(path.join(SCRIPTS, file), 'utf8').split(/\r?\n/).join('\n');
+    const verdicts = new Array(mutations.length);
+    let next = 0;
+    await Promise.all(Array.from({ length: PARALLEL }, async (_, slot) => {
+        const dir = path.join(ROOT, `scripts-faultcheck-${slot}`);
+        while (next < mutations.length) {
+            const i = next++;
+            const mutated = mutations[i].apply(source);
+            if (mutated === source) {
+                verdicts[i] = '注入未生效（replace 沒有改到任何東西，多半是原文改了，請更新這一條）';
+                continue;
+            }
+            rmSync(dir, { recursive: true, force: true });
+            cpSync(SCRIPTS, dir, { recursive: true });
+            writeFileSync(path.join(dir, file), mutated, 'utf8');
+            let caught = false;
+            for (const t of tests) if (!caught && !(await testPasses(dir, t))) caught = true;
+            verdicts[i] = caught ? null : survived;
+            rmSync(dir, { recursive: true, force: true });
+        }
+    }));
+    mutations.forEach((m, i) => (verdicts[i] ? bad(m.name, verdicts[i]) : ok(m.name)));
+}
 
 // D 段是接管偵測的突變測試。這三個訊號的價值完全取決於誤判率：報得太兇會被當
 // 雜訊關掉，關掉之後就回到「只能堵已知主機」。所以除了「拿掉偵測會不會漏」，
@@ -963,6 +1000,115 @@ const policyLibMutations = [
     },
 ];
 
+// H 段是 check-external-links.mjs 的突變測試。主程式讀檔、探測之後把名單交給 buildReport，
+// 交錯一份或對錯位置，buildReport 的單元測試照樣全綠。
+const mainMutations = [
+    {
+        name: '重播不檢查轉址的每一跳',
+        apply: (s) => s.replace('            if (!next.ok) return blocked(next.reason, hop.to);', '            if (false) return blocked(next.reason, hop.to);'),
+    },
+    {
+        name: '重播的封鎖原因寫成起點的主機',
+        apply: (s) => s.replace('${new URL(at).hostname} 解析到被封鎖的位址', '${new URL(url).hostname} 解析到被封鎖的位址'),
+    },
+    {
+        name: '錄製檔沒有 version 也接受',
+        apply: (s) => s.replace('    if (rec?.version !== 1) await die(', '    if (rec?.version !== undefined && rec.version !== 1) await die('),
+    },
+    {
+        name: '裸網域的探測不讀 body（訊號 B、C 對裸網域失明）',
+        apply: (s) => s.replace('        readBodyBytes: HEAD_BYTES,\n        probeFn,\n    }));', '        probeFn,\n    }));'),
+    },
+    {
+        name: '盤點網址的探測開了 allowLoopback',
+        apply: (s) => s.replace('readBodyBytes: HEAD_BYTES, probeFn }', 'readBodyBytes: HEAD_BYTES, probeFn, allowLoopback: true }'),
+    },
+    {
+        name: '裸網域的探測開了 allowLoopback',
+        apply: (s) => s.replace('        readBodyBytes: HEAD_BYTES,\n        probeFn,\n    }));', '        readBodyBytes: HEAD_BYTES,\n        probeFn,\n        allowLoopback: true,\n    }));'),
+    },
+    {
+        name: '盤點網址的探測不讀 body（訊號 B、C 看不到東西）',
+        apply: (s) => s.replace('readBodyBytes: HEAD_BYTES, probeFn }', 'probeFn }'),
+    },
+    {
+        name: '頁首的讀取上限放大成 64KB',
+        apply: (s) => s.replace('const HEAD_BYTES = 16 * 1024;', 'const HEAD_BYTES = 64 * 1024;'),
+    },
+    {
+        name: '重播不套靜態位址政策',
+        apply: (s) => s.replace('        if (!statik.ok) return blocked(statik.reason, url);\n', ''),
+    },
+    {
+        name: '重播不看錄下的位址',
+        apply: (s) => s.replace('            if (why) return blocked(', '            if (false) return blocked('),
+    },
+    {
+        name: '重播不照讀取上限截斷 body',
+        apply: (s) => s.replace("            r.bodyHead = Buffer.from(r.bodyHead).subarray(0, limit).toString('utf8');\n", ''),
+    },
+    {
+        name: '錄製檔的 version 不檢查',
+        apply: (s) => s.replace('    if (rec?.version !== 1) await die(', '    if (false) await die('),
+    },
+    {
+        name: '錄製不記 NS 查詢',
+        apply: (s) => s.replace('            return (recorded.ns[name] = await baseNs(name));', '            return await baseNs(name);'),
+    },
+    {
+        name: '重播同一個網址永遠回最後一筆',
+        apply: (s) => s.replace('list[Math.min(n, list.length - 1)]', 'list[list.length - 1]'),
+    },
+    {
+        name: '錄製只留最後一次探測（重試的結果蓋掉第一次）',
+        apply: (s) => s.replace('        recorded.probes[url] = prev === undefined ? r : [].concat(prev, [r]);', '        recorded.probes[url] = r;'),
+    },
+    {
+        name: '交給 buildReport 的盤點換成整份 inventory.urls（--limit 之後名單和探測結果對不上）',
+        apply: (s) => s.replace('    targets,\n    results,', '    targets: inventory.urls,\n    results,'),
+    },
+    {
+        name: '例外名單沒交給 buildReport',
+        apply: (s) => s.replace('policy: { entries: policyEntries,', 'policy: { entries: [],'),
+    },
+    {
+        name: '接管名單沒交給 buildReport',
+        apply: (s) => s.replace('hijacked: hijackedEntries }', 'hijacked: [] }'),
+    },
+    {
+        name: '裸網域候選沒交給 buildReport（報告找不到出處）',
+        apply: (s) => s.replace('    bareCandidates,\n    screen,', '    bareCandidates: [],\n    screen,'),
+    },
+    {
+        name: '篩選結果沒用上（DNS 篩掉的候選也去探測，結果對錯主機）',
+        apply: (s) => s.replace('screen.accepted.map(probeUrlFor)', 'bareCandidates.map((h) => probeUrlFor(h.host))'),
+    },
+    {
+        name: '裸網域的探測結果換成盤點網址的',
+        apply: (s) => s.replace('    bareResults,\n    bareSkipped,', '    bareResults: results,\n    bareSkipped,'),
+    },
+    {
+        name: '--limit 沒交給 buildReport（只驗幾筆也宣稱完整覆蓋）',
+        apply: (s) => s.replace('    limit,\n    inventoryPath', '    limit: 0,\n    inventoryPath'),
+    },
+    {
+        name: 'GITHUB_OUTPUT 沒寫',
+        apply: (s) => s.replace('if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, out.githubOutput);', ''),
+    },
+    {
+        name: '致命錯誤時 GITHUB_OUTPUT 寫成不用處理',
+        apply: (s) => s.replace("'needs_attention=true\\ncoverage_complete=false\\n'", "'needs_attention=false\\ncoverage_complete=false\\n'"),
+    },
+    {
+        name: '重播沒接到盤點網址的 runProbes（改成連網探測）',
+        apply: (s) => s.replace('readBodyBytes: HEAD_BYTES, probeFn }', 'readBodyBytes: HEAD_BYTES }'),
+    },
+    {
+        name: '錄製檔裡沒有的網址當成健康',
+        apply: (s) => s.replace("{ status: 0, code: 'EREPLAY', finalUrl: url, redirects: [] }", "{ status: 200, finalUrl: url, redirects: [] }"),
+    },
+];
+
 let pass = 0;
 let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
@@ -980,6 +1126,7 @@ function runBaselineTests() {
                 // D 段的突變要跑這一支。基準也必須涵蓋它，否則「基準是綠的」這句話
                 // 對接管偵測是盲的，而這個矩陣存在的理由就是不留這種盲點。
                 path.join(SCRIPTS, 'hijack-signals.test.mjs'),
+                path.join(SCRIPTS, 'check-external-links.test.mjs'),
             ],
             { encoding: 'utf8', stdio: 'pipe' },
         );
@@ -998,13 +1145,13 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 G 六段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 H 七段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
 // 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
-    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs）');
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs／check-external-links.test.mjs）');
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
@@ -1020,136 +1167,22 @@ policyCases.forEach((c, i) => {
     ok(c.name);
 });
 
-console.log('\nB. SSRF 防護、讀 body 與無法判定分組的突變測試（link-health.test.mjs 必須紅）：');
-rmSync(MUTANT_DIR, { recursive: true, force: true });
-try {
-    // 換行一律正規化成 LF 再做字串比對。這個 repo 的檔案在 Windows 上是 CRLF，
-    // 而下面每一條 mutation 的比對字串都是用 LF 寫的。不正規化的話，跨行的比對
-    // 會靜默失敗（String.replace 找不到就原樣回傳，不會報錯），整條保護在 Windows
-    // 上等於沒有測到，在 Linux CI 上卻是綠的。
-    // mutant 只是丟棄用的副本，寫回 LF 沒有副作用。
-    const libSource = readFileSync(path.join(SCRIPTS, 'link-health.lib.mjs'), 'utf8')
-        .split(/\r?\n/)
-        .join('\n');
-    for (const m of guardMutations) {
-        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
-        const mutated = m.apply(libSource);
-        if (mutated === libSource) {
-            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
-            rmSync(MUTANT_DIR, { recursive: true, force: true });
-            continue;
-        }
-        writeFileSync(path.join(MUTANT_DIR, 'link-health.lib.mjs'), mutated, 'utf8');
-        const r = runMutantTests();
-        if (r.code === 0) bad(m.name, '拿掉這段防護之後測試竟然還是綠的——那些測試沒有在把關');
-        else ok(m.name);
-        rmSync(MUTANT_DIR, { recursive: true, force: true });
-    }
-} finally {
-    rmSync(MUTANT_DIR, { recursive: true, force: true });
-}
-
-console.log('\nC. 裸網域擷取規則的突變測試（bare-domains.test.mjs 必須紅）：');
-try {
-    // 同樣先正規化成 LF：本 repo 的檔案在 Windows 上是 CRLF，而下面每一條 mutation
-    // 的比對字串都是用 LF 寫的。不正規化的話跨行比對會靜默失敗（replace 找不到就
-    // 原樣回傳，不會報錯），整條規則在本機等於沒測到、在 Linux CI 上卻是綠的。
-    const bareSource = readFileSync(path.join(SCRIPTS, 'bare-domains.lib.mjs'), 'utf8')
-        .split(/\r?\n/)
-        .join('\n');
-    for (const m of bareDomainMutations) {
-        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
-        const mutated = m.apply(bareSource);
-        if (mutated === bareSource) {
-            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
-            rmSync(MUTANT_DIR, { recursive: true, force: true });
-            continue;
-        }
-        writeFileSync(path.join(MUTANT_DIR, 'bare-domains.lib.mjs'), mutated, 'utf8');
-        const r = runMutantTests('bare-domains.test.mjs');
-        if (r.code === 0) bad(m.name, '拿掉這條規則之後測試竟然還是綠的——那些測試沒有在把關');
-        else ok(m.name);
-        rmSync(MUTANT_DIR, { recursive: true, force: true });
-    }
-} finally {
-    rmSync(MUTANT_DIR, { recursive: true, force: true });
-}
-
-console.log('\nD. 接管偵測的突變測試（hijack-signals.test.mjs 必須紅）：');
-try {
-    const hijackSource = readFileSync(path.join(SCRIPTS, 'hijack-signals.lib.mjs'), 'utf8')
-        .split(/\r?\n/)
-        .join('\n');
-    for (const m of hijackMutations) {
-        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
-        const mutated = m.apply(hijackSource);
-        if (mutated === hijackSource) {
-            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
-            rmSync(MUTANT_DIR, { recursive: true, force: true });
-            continue;
-        }
-        writeFileSync(path.join(MUTANT_DIR, 'hijack-signals.lib.mjs'), mutated, 'utf8');
-        const r = runMutantTests('hijack-signals.test.mjs');
-        if (r.code === 0) bad(m.name, '拿掉這一段之後測試竟然還是綠的——那些測試沒有在把關');
-        else ok(m.name);
-        rmSync(MUTANT_DIR, { recursive: true, force: true });
-    }
-} finally {
-    rmSync(MUTANT_DIR, { recursive: true, force: true });
-}
-
-// E、F 兩段突變的是同一個檔案，跑法相同。
-const reportSource = readFileSync(path.join(SCRIPTS, 'check-external-links.lib.mjs'), 'utf8')
-    .split(/\r?\n/)
-    .join('\n');
-for (const [title, mutations] of [
-    ['E. 判定、通知與報告內容的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：', reportMutations],
-    ['F. buildReport 組裝的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：', assemblyMutations],
-]) {
-    console.log(`\n${title}`);
-    try {
-        for (const m of mutations) {
-            cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
-            const mutated = m.apply(reportSource);
-            if (mutated === reportSource) {
-                bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
-                rmSync(MUTANT_DIR, { recursive: true, force: true });
-                continue;
-            }
-            writeFileSync(path.join(MUTANT_DIR, 'check-external-links.lib.mjs'), mutated, 'utf8');
-            // 兩支測試有一支紅就算擋下；兩支都要跑，報告的接線有一部分在 hijack-signals.test.mjs。
-            const caught = ['link-health.test.mjs', 'hijack-signals.test.mjs'].some((f) => runMutantTests(f).code !== 0);
-            if (!caught) bad(m.name, '改壞這一段之後測試竟然還是綠的——那些測試沒有在把關');
-            else ok(m.name);
-            rmSync(MUTANT_DIR, { recursive: true, force: true });
-        }
-    } finally {
-        rmSync(MUTANT_DIR, { recursive: true, force: true });
-    }
-}
-
-console.log('\nG. 連結政策檢查、比對與到期提醒的突變測試（link-health.test.mjs 必須紅）：');
-try {
-    const policySource = readFileSync(path.join(SCRIPTS, 'link-policy.lib.mjs'), 'utf8')
-        .split(/\r?\n/)
-        .join('\n');
-    for (const m of policyLibMutations) {
-        cpSync(SCRIPTS, MUTANT_DIR, { recursive: true });
-        const mutated = m.apply(policySource);
-        if (mutated === policySource) {
-            bad(m.name, '注入未生效（replace 沒有改到任何東西——多半是原文改了，請更新這一條）');
-            rmSync(MUTANT_DIR, { recursive: true, force: true });
-            continue;
-        }
-        writeFileSync(path.join(MUTANT_DIR, 'link-policy.lib.mjs'), mutated, 'utf8');
-        const r = runMutantTests();
-        if (r.code === 0) bad(m.name, '改掉這一段之後測試竟然還是綠的——那些測試沒有在把關');
-        else ok(m.name);
-        rmSync(MUTANT_DIR, { recursive: true, force: true });
-    }
-} finally {
-    rmSync(MUTANT_DIR, { recursive: true, force: true });
-}
+const RED = (what) => `改壞${what}之後測試還是綠的，那些測試沒有在把關`;
+await runMutants('B. SSRF 防護、讀 body 與無法判定分組的突變測試（link-health.test.mjs 必須紅）：',
+    'link-health.lib.mjs', guardMutations, ['link-health.test.mjs'], RED('這段防護'));
+await runMutants('C. 裸網域擷取規則的突變測試（bare-domains.test.mjs 必須紅）：',
+    'bare-domains.lib.mjs', bareDomainMutations, ['bare-domains.test.mjs'], RED('這條規則'));
+await runMutants('D. 接管偵測的突變測試（hijack-signals.test.mjs 必須紅）：',
+    'hijack-signals.lib.mjs', hijackMutations, ['hijack-signals.test.mjs'], RED('這一段'));
+// E、F 兩段突變的是同一個檔案。兩支測試有一支紅就算擋下，報告的接線有一部分在 hijack-signals.test.mjs。
+await runMutants('E. 判定、通知與報告內容的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：',
+    'check-external-links.lib.mjs', reportMutations, ['link-health.test.mjs', 'hijack-signals.test.mjs'], RED('這一段'));
+await runMutants('F. buildReport 組裝的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：',
+    'check-external-links.lib.mjs', assemblyMutations, ['link-health.test.mjs', 'hijack-signals.test.mjs'], RED('這一段'));
+await runMutants('G. 連結政策檢查、比對與到期提醒的突變測試（link-health.test.mjs 必須紅）：',
+    'link-policy.lib.mjs', policyLibMutations, ['link-health.test.mjs'], RED('這一段'));
+await runMutants('H. 主程式交給 buildReport 的名單與交給 probe 的選項（check-external-links.test.mjs 必須紅）：',
+    'check-external-links.mjs', mainMutations, ['check-external-links.test.mjs'], RED('這一段'));
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
@@ -1158,5 +1191,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
