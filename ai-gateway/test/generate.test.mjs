@@ -1503,6 +1503,86 @@ test('onResponse 交給每一個上游請求，探測與正式的請求都是', 
     assert.ok(handed.every((fn) => typeof fn === 'function'));
 });
 
+test('stats：重試、探測與 JSON 重寫的次數，成功的結果與失敗的錯誤都帶著', async () => {
+    const down = () => new UpstreamError('unavailable', '連不上', { retryable: true });
+    const retried = await run([
+        { content: ['第一段'], finish: 'length' },
+        { error: down() },
+        { content: ['第二段'], finish: 'length' },
+        { error: down() },
+        { error: down() },
+        { content: ['完。'], finish: 'stop' },
+    ]);
+    assert.deepEqual(retried.result.stats, { retries: 3, probes: 0, rewrites: 0 });
+
+    const probed = await run([bigTask(20_000).probe, { content: ['完。'], finish: 'stop' }], { request: { messages: bigTask(20_000).messages } });
+    assert.deepEqual(probed.result.stats, { retries: 0, probes: 1, rewrites: 0 });
+
+    const rewritten = await run([
+        { content: ['{"a": 1'], finish: 'length' },
+        { content: ['{"a": '], finish: 'length' },
+        { content: ['{"a": 1}'], finish: 'stop' },
+    ], { request: { responseFormat: { type: 'json_object' } } });
+    assert.deepEqual(rewritten.result.stats, { retries: 0, probes: 0, rewrites: 2 });
+
+    await assert.rejects(run([
+        { content: ['{"a": 1'], finish: 'length' },
+        { error: down() },
+        { error: new UpstreamError('auth', 'HTTP 401', { status: 401 }) },
+    ], { request: { responseFormat: { type: 'json_object' } } }), (err) => {
+        assert.deepEqual(err.stats, { retries: 1, probes: 0, rewrites: 1 });
+        return true;
+    });
+    await assert.rejects(run([{ content: ['寫一半'], finish: 'length' }], { cfg: { maxRounds: 1 } }), (err) => {
+        assert.equal(err.code, 'incomplete');
+        assert.deepEqual(err.stats, { retries: 0, probes: 0, rewrites: 0 });
+        return true;
+    });
+});
+
+test('stats.rewrites 只算真的送出的重寫輪：用完輪數、送出前就放不下、退化重做與思考接續都不多算', async () => {
+    const json = { responseFormat: { type: 'json_object' } };
+    await assert.rejects(run([
+        { content: ['{"a": 1'], finish: 'length' },
+        { content: ['{"a": '], finish: 'length' },
+    ], { request: json, cfg: { maxRounds: 2 } }), (err) => {
+        assert.equal(err.code, 'incomplete');
+        assert.deepEqual(err.stats, { retries: 0, probes: 0, rewrites: 1 });
+        return true;
+    });
+
+    // 題目探出 1000 tokens、context 2040：第一輪寫滿 1024 被截斷，重寫輪的輸出額度不到 1024，送出前就結束
+    const messages = [{ role: 'system', content: '依主題回答。'.repeat(20) }, { role: 'user', content: '主題：生物'.repeat(20) }];
+    const unsent = scripted([probeStep(1000), { content: ['{"answer":"'], finish: 'length', usage: usageOf(1000, 5) }]);
+    await assert.rejects(generate(config({ contextTokens: 2040 }), { messages, ...json }, { streamChatImpl: unsent.impl }), (err) => {
+        assert.equal(err.code, 'incomplete');
+        assert.deepEqual(err.continuations, ['rewrite']);
+        assert.deepEqual(err.stats, { retries: 0, probes: 1, rewrites: 0 });
+        return true;
+    });
+    assert.equal(unsent.calls.length, 2);
+
+    const redone = await run([
+        { content: ['\n'.repeat(300)], finish: 'length' },
+        { thinking: ['想'], finish: 'length' },
+        { content: ['{"a": 1}'], finish: 'stop' },
+    ], { request: json });
+    assert.deepEqual(redone.result.continuations, ['degenerate', 'thinking']);
+    assert.deepEqual(redone.result.stats, { retries: 0, probes: 0, rewrites: 0 });
+});
+
+test('acceptJson 丟出例外：照樣丟出，錯誤帶著輪數、用量與次數', async () => {
+    const broken = new TypeError('check 寫錯');
+    await assert.rejects(run([{ content: ['{"a": 1'], finish: 'length' }, { content: ['{"a": 1}'], finish: 'stop' }], {
+        request: { responseFormat: { type: 'json_object' }, acceptJson: () => { throw broken; } },
+    }), (err) => {
+        assert.equal(err, broken);
+        assert.equal(err.rounds, 1);
+        assert.deepEqual(err.stats, { retries: 0, probes: 0, rewrites: 0 });
+        return true;
+    });
+});
+
 test('呼叫端的 hook 丟例外：原樣丟出（包括 undefined 這種假值），不被翻成網路錯誤', async () => {
     const boom = new TypeError('寫入已關閉的回應');
     const { impl } = scripted([{ content: ['a', 'b'] }]);
