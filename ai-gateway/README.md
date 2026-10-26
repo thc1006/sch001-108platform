@@ -58,7 +58,8 @@ WinLab 不收 vLLM 原生的 `continue_final_message`，所以接續一律在對
 - **怎樣算合格**：由呼叫端的 `acceptJson` 判斷，HTTP 服務傳入的就是交出前那一套驗證，兩邊的標準
   才不會不同：不會收下頂層欄位都在、細節卻不合規格的 JSON，也不會把包在說明文字裡的合格 JSON
   重寫到用完輪數。schema 表達不了的規則寫在任務的 check（例如 study-plan 的週次要依序），不通過
-  一樣整份重寫；check 本身丟出例外算程式錯誤，第一輪就以 `internal` 結束，不拿去重寫。
+  一樣整份重寫；check 本身丟出例外算程式錯誤，第一輪就以 `internal` 結束，不拿去重寫。`acceptJson`
+  回傳 `true` 才收下，寫完卻不收的那一輪連同它的回傳值交給 `onReject`，HTTP 服務記成 `JSON-REJECT`。
   沒給 `acceptJson` 的話只看是不是完整的 JSON（可以包在 ```` ```json ```` 圍欄裡），
   而且頂層的必填欄位都在。最後一份正文是寫完的（以 stop 結束）卻不合格時，不論是用完輪數，
   還是之後連續兩輪沒有淨進展而提前結束，都以 `format` 結束（不是 `incomplete`）。
@@ -231,6 +232,19 @@ log 一律一行一筆、跳脫控制字元與換行，不記學生的輸入與�
 | `retries` | 接續輪遇到 429、5xx（501、505 除外）、斷線、逾時，等完退避之後重送（等待中取消、context 長度被拒之後的重送不算） |
 | `probes` | 用 `max_tokens: 1` 探測輸入大小的請求 |
 | `rewrites` | 真的送出的 JSON 整份重寫輪（被截斷，或寫完卻不合格）；同一輪的重試只算一次，送出前就放不下而結束的不算 |
+
+JSON 任務寫完（以 stop 結束）卻不合格時，每一輪記一行 `JSON-REJECT`，之後整份重寫，或在用完輪數、
+連續兩輪沒有進展時以 `format` 結束。被截斷的 JSON 不記，那是正常的接續。欄位只有閘道自己產生、形狀固定的值，不記模型
+寫的內容，也不記 check 的描述：
+
+| 欄位 | 內容 |
+|---|---|
+| `id`、`task`、`round` | 同一個任務的 `TASK` 用同一個 `id`；第幾輪 |
+| `source` | `schema`（不符合 schema）、`check`（任務的 check 不通過）、`parse`（解析不了） |
+| `path` | 不合格的位置，只有 schema 裡的屬性名稱與陣列索引，例如 `path="$.weekly_plan[1].week"`。schema 不通過時由驗證本身組成；check 不通過時取描述開頭的路徑，每一段都要是 schema 裡的屬性名稱或小於 `maxItems` 的索引（`src/schema.mjs` 的 `schemaPath`），不是就不記 |
+| `rule` | schema 的規則代號（`type`、`required`、`additional`、`enum`、`min_length`、`max_length`、`pattern`、`blank`、`min_items`、`max_items`、`finite`、`safe_integer`），check 一律是 `check`，解析不了是錯誤的種類（`SyntaxError`、`RangeError`） |
+
+study-plan 的週次不合依序記成 `source=check path="$.weekly_plan[n].week" rule=check`。
 
 ## 簡轉繁（`src/s2t.mjs`）
 

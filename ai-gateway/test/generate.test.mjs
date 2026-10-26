@@ -3279,6 +3279,36 @@ test('JSON 寫完卻不合格，之後一直重寫出同一份或只吐空白：
     }
 });
 
+test('onReject：寫完（stop）卻不合格的 JSON，交出輪數與 acceptJson 的回傳值；被截斷的不算；acceptJson 回傳 true 才收下', async () => {
+    const format = { type: 'json_object' };
+    const reason = { source: 'check', path: '$.items', rule: 'check' };
+    const acceptJson = (text) => (text.includes('[1, 2, 3]') ? true : text.includes('[1]') ? reason : false);
+    const rejected = [];
+    const { impl, calls } = scripted([
+        { content: ['{"items": [1, 2'], finish: 'length' },
+        { content: ['{"items": [1]}'], finish: 'stop' },
+        { content: ['{"items": []}'], finish: 'stop' },
+        { content: ['{"items": [1, 2, 3]}'], finish: 'stop' },
+    ]);
+    const result = await generate(config(), { messages: baseMessages, responseFormat: format, acceptJson }, {
+        streamChatImpl: impl,
+        onReject: (r) => rejected.push(r),
+    });
+    assert.equal(result.content, '{"items": [1, 2, 3]}');
+    assert.equal(calls.length, 4);
+    assert.deepEqual(rejected, [{ round: 2, reason }, { round: 3, reason: false }]);
+
+    // 不是 true 的值都不收（物件、1、字串），用完輪數仍不合格是 format
+    for (const verdict of [reason, 1, 'ok']) {
+        const seen = [];
+        await assert.rejects(generate(config({ maxRounds: 1 }), { messages: baseMessages, responseFormat: format, acceptJson: () => verdict }, {
+            streamChatImpl: scripted([{ content: ['{"items": [1]}'], finish: 'stop' }]).impl,
+            onReject: (r) => seen.push(r),
+        }), { code: 'format' });
+        assert.deepEqual(seen, [{ round: 1, reason: verdict }], String(verdict));
+    }
+});
+
 test('組錯誤時 acceptJson 丟例外：當成不合格，丟出的仍是原本的錯誤', async () => {
     const refused = new UpstreamError('misconfigured', 'LLM 服務回應 HTTP 400', { status: 400 });
     const acceptJson = () => {

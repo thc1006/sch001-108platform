@@ -320,15 +320,26 @@ function describeError(err, { tokensSeen = true } = {}) {
     return { code: 'internal', retryable: true, detail: describeInternal(err) };
 }
 
-// generate 收下 JSON 的標準跟交出前的 finalizeOutput 一樣（見 generate 的 acceptJson）
+// generate 收下 JSON 的標準跟交出前的 finalizeOutput 一樣（見 generate 的 acceptJson）。
+// 不收時回傳不合格的來源、路徑與規則代號，generate 交回 onReject 記 log
 function acceptsJson(task, content) {
     try {
         finalizeOutput(task, content);
         return true;
     } catch (err) {
-        if (err instanceof TaskError) return false;
+        if (err instanceof TaskError) return { source: err.source, path: err.path, rule: err.rule };
         throw err;
     }
+}
+
+// JSON-REJECT 的欄位再以形狀把關一次。路徑本來就只有規格裡的名稱與索引（schema.mjs 的 SchemaMismatch）
+const REJECT_SOURCES = new Set(['schema', 'check', 'parse']);
+const REJECT_RULE = /^[A-Za-z_]{1,32}$/;
+const REJECT_PATH = /^\$\S{0,255}$/;
+function rejectLogFields(reason) {
+    const { source, path, rule } = reason && typeof reason === 'object' ? reason : {};
+    const shaped = (value, re) => (typeof value === 'string' && re.test(value) ? value : undefined);
+    return { source: REJECT_SOURCES.has(source) ? source : undefined, path: shaped(path, REJECT_PATH), rule: shaped(rule, REJECT_RULE) };
 }
 
 /**
@@ -733,6 +744,7 @@ export function createGateway({
                 onProgress,
                 onContent: task.output.type === 'markdown' ? (text) => sendDelta(traditional(text)) : undefined,
                 onResponse: () => { firsts.byte ??= Date.now(); },
+                onReject: ({ round, reason }) => log('info', 'JSON-REJECT', { id: requestId, task: task.id, round, ...rejectLogFields(reason) }),
             });
             clearTimeout(progressTimer);
             result = generated;

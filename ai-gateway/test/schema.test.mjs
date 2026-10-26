@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { assertSupportedSchema, validate, extractJson, toResponseFormat, anchorPattern, SchemaMismatch } from '../src/schema.mjs';
+import { assertSupportedSchema, validate, extractJson, toResponseFormat, anchorPattern, SchemaMismatch, schemaPath } from '../src/schema.mjs';
 
 const listSchema = {
     type: 'object',
@@ -271,6 +271,75 @@ test('extractJson：check 在 schema 通過後才呼叫；它不通過的候選�
         for (const result of ['', undefined]) {
             assert.throws(() => extractJson(text, answer, { check: () => result }), SchemaMismatch, `${text}：${result}`);
         }
+    }
+});
+
+test('SchemaMismatch：來源（schema 或 check）、規則的代號與路徑，路徑只有規格裡的名稱與索引', () => {
+    const schema = {
+        type: 'object',
+        properties: {
+            title: { type: 'string', minLength: 1, maxLength: 5, pattern: '[^x]*' },
+            kind: { type: 'string', enum: ['a', 'b'] },
+            n: { type: 'number' },
+            k: { type: 'integer' },
+            items: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 3 },
+        },
+        required: ['title', 'kind', 'n', 'k', 'items'],
+        additionalProperties: false,
+    };
+    const ok = { title: 't', kind: 'a', n: 1, k: 1, items: ['a', 'b'] };
+    const cases = [
+        [{ ...ok, title: 1 }, '$.title', 'type'],
+        [{ ...ok, title: '' }, '$.title', 'min_length'],
+        [{ ...ok, title: '一二三四五六' }, '$.title', 'max_length'],
+        [{ ...ok, title: 'x' }, '$.title', 'pattern'],
+        [{ ...ok, title: ' ' }, '$.title', 'blank'],
+        [{ ...ok, kind: 'c' }, '$.kind', 'enum'],
+        [{ ...ok, k: 2 ** 60 }, '$.k', 'safe_integer'],
+        [{ ...ok, items: ['a'] }, '$.items', 'min_items'],
+        [{ ...ok, items: ['a', 'b', 'c', 'd'] }, '$.items', 'max_items'],
+        [{ ...ok, items: ['a', 2] }, '$.items[1]', 'type'],
+        [{ title: 't', kind: 'a', n: 1, k: 1 }, '$.items', 'required'],
+        [{ ...ok, 學生王小明: 1 }, '$', 'additional'],
+    ];
+    for (const [value, path, rule] of cases) {
+        assert.throws(() => extractJson(JSON.stringify(value), schema), (err) => {
+            assert.ok(err instanceof SchemaMismatch);
+            assert.deepEqual([err.source, err.path, err.rule], ['schema', path, rule], err.problem);
+            return true;
+        }, rule);
+    }
+    assert.throws(() => extractJson('{"title":"t","kind":"a","n":1e400,"k":1,"items":["a","b"]}', schema), { source: 'schema', path: '$.n', rule: 'finite' });
+    // check 的描述開頭若是規格裡的路徑就記下路徑，其他一律不收；描述本身照舊放在 problem
+    for (const [problem, path] of [
+        ['$.items[1] 不能跟前一項相同', '$.items[1]'],
+        ['$.title 應為 好，實際是 模型寫的內容', '$.title'],
+        ['$.學生王小明 不對', undefined],
+        ['$.titlex 不對', undefined],
+        ['$.title.length 不對', undefined],
+        ['模型寫的內容 $.title', undefined],
+    ]) {
+        assert.throws(() => extractJson(JSON.stringify(ok), schema, { check: () => problem }), (err) => {
+            assert.deepEqual([err.source, err.path, err.rule, err.problem], ['check', path, 'check', problem]);
+            return true;
+        }, problem);
+    }
+});
+
+test('schemaPath：路徑的每一段都要是規格裡的屬性名稱或陣列索引，否則回傳 undefined', () => {
+    const schema = {
+        type: 'object',
+        properties: {
+            '數據': { type: 'string' },
+            'a.b': { type: 'string' },
+            plan: { type: 'array', maxItems: 4, items: { type: 'object', properties: { week: { type: 'string' } }, required: ['week'], additionalProperties: false } },
+        },
+        required: ['數據', 'a.b', 'plan'],
+        additionalProperties: false,
+    };
+    for (const path of ['$', '$.數據', '$.a.b', '$.plan', '$.plan[3]', '$.plan[0].week']) assert.equal(schemaPath(schema, path), path);
+    for (const path of [undefined, '', '$.', '$.a', '$.plan[4]', '$.plan[-1]', '$.plan[01]', '$.plan.week', '$.plan[0].week.x', '$.數據[0]', '$.plan[0]week', 'x$.plan', '$.plan[0] ']) {
+        assert.equal(schemaPath(schema, path), undefined, String(path));
     }
 });
 

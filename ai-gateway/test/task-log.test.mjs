@@ -29,6 +29,25 @@ const TASKS = createCatalog([
         instructions: '依主題回答。',
     },
     {
+        // check 故意把模型寫的值放進描述，也可能指向規格外的路徑：log 只能收規格裡的路徑
+        id: 'demo-checked',
+        input: { topic: { label: '主題', maxLength: 100 } },
+        output: {
+            type: 'json',
+            schema: {
+                type: 'object',
+                properties: { answer: { type: 'string', minLength: 1 } },
+                required: ['answer'],
+                additionalProperties: false,
+            },
+            check: ({ answer }) => {
+                if (answer === '好') return null;
+                return answer.startsWith('P') ? `$.${answer} 應為 好` : `$.answer 應為 好，實際是 ${answer}`;
+            },
+        },
+        instructions: '依主題回答。',
+    },
+    {
         id: 'demo-md',
         input: { question: { label: '問題', maxLength: 100 } },
         output: { type: 'markdown' },
@@ -42,7 +61,7 @@ const TASK_LOG_KEYS = [
     'queue', 'total', 'stall', 'pending', 'firstByte', 'firstThinking', 'firstDelta', 'retries', 'probes', 'rewrites',
 ];
 
-async function startGateway(script, { llm = {}, server = {} } = {}) {
+async function startGateway(script, { llm = {}, server = {}, logLevel = 'debug' } = {}) {
     const upstream = await startFakeUpstream(script);
     const lines = [];
     const gateway = createGateway({
@@ -67,7 +86,7 @@ async function startGateway(script, { llm = {}, server = {} } = {}) {
             ...server,
         },
         tasks: TASKS,
-        log: createLogger('debug', (line) => lines.push(line)),
+        log: createLogger(logLevel, (line) => lines.push(line)),
     });
     await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
     return {
@@ -424,6 +443,64 @@ test('次數：第一輪就失敗、生成途中取消都記 0；排隊中取消
     }
 });
 
+const REJECT_LOG_KEYS = ['id', 'task', 'round', 'source', 'path', 'rule'];
+const rejectLogs = (gw) => gw.lines.filter((l) => / JSON-REJECT /.test(l)).map((line) => {
+    const fields = logFields(line);
+    assert.deepEqual(Object.keys(fields).filter((k) => !REJECT_LOG_KEYS.includes(k)), []);
+    return fields;
+});
+
+test('JSON 寫完卻不通過 check：JSON-REJECT 記下任務、輪數、來源、路徑與規則，重寫之後交出', async () => {
+    const gw = await startGateway([
+        { content: ['{"answer":"壞"}'], finish: 'stop' },
+        { content: ['{"answer":"好"}'], finish: 'stop' },
+    ]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-checked', { topic: '生物' }));
+        assert.deepEqual(events.at(-1).data.result, { answer: '好' });
+        const [reject] = rejectLogs(gw);
+        const task = await taskLog(gw);
+        assert.deepEqual({ ...reject, id: undefined }, { id: undefined, task: 'demo-checked', round: '1', source: 'check', path: '$.answer', rule: 'check' });
+        assert.equal(reject.id, task.id);
+        assert.equal(task.rewrites, '1');
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('JSON-REJECT：schema 不通過、解析不了各記一筆；被截斷的不記；每一輪都不合格就以 format 結束', async () => {
+    const gw = await startGateway([
+        { content: ['{"answer":"'], finish: 'length' },
+        { content: ['{"answer":""}'], finish: 'stop' },
+        { content: ['這不是 JSON'], finish: 'stop' },
+    ], { llm: { maxRounds: 3 } });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-json', { topic: '生物' }));
+        assert.equal(events.at(-1).data.code, 'format');
+        assert.deepEqual(rejectLogs(gw).map((f) => [f.task, f.round, f.source, f.path, f.rule]), [
+            ['demo-json', '2', 'schema', '$.answer', 'min_length'],
+            ['demo-json', '3', 'parse', undefined, 'SyntaxError'],
+        ]);
+        assert.equal((await taskLog(gw)).outcome, 'format');
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('JSON-REJECT 是 info：正式環境的 LOG_LEVEL 看得到', async () => {
+    const gw = await startGateway([
+        { content: ['{"answer":""}'], finish: 'stop' },
+        { content: ['{"answer":"好"}'], finish: 'stop' },
+    ], { logLevel: 'info' });
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: '生物' }));
+        await taskLog(gw);
+        assert.equal(gw.lines.filter((l) => / info JSON-REJECT /.test(l)).length, 1);
+    } finally {
+        await gw.stop();
+    }
+});
+
 const CANARY = '祕密標記Q9Z4';
 
 test('新的 log 欄位不帶出學生的輸入與模型的輸出：TASK 只有允許的欄位，任何一行都沒有標記', async () => {
@@ -439,6 +516,27 @@ test('新的 log 欄位不帶出學生的輸入與模型的輸出：TASK 只有�
         for (const key of ['firstByte', 'firstThinking', 'firstDelta']) assert.match(fields[key], /^\d+ms$/, key);
         for (const key of ['retries', 'probes', 'rewrites']) assert.match(fields[key], /^\d+$/, key);
         assert.doesNotMatch(gw.lines.join('\n'), new RegExp(CANARY));
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('JSON-REJECT 不帶出模型的輸出：check 的描述照抄模型寫的值、或指向規格外的路徑時，只記規格裡的路徑', async () => {
+    const gw = await startGateway([
+        { thinking: [`想想${CANARY}`], content: [JSON.stringify({ answer: `壞${CANARY}` })], finish: 'stop' },
+        { content: [JSON.stringify({ answer: `P${CANARY}` })], finish: 'stop' },
+        { content: [JSON.stringify({ answer: 'Pzzz' })], finish: 'stop' },
+        { content: ['{"answer":"好"}'], finish: 'stop' },
+    ]);
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-checked', { topic: `我的${CANARY}` }));
+        assert.deepEqual(events.at(-1).data.result, { answer: '好' });
+        assert.deepEqual(rejectLogs(gw).map((f) => [f.round, f.source, f.path, f.rule]), [
+            ['1', 'check', '$.answer', 'check'],
+            ['2', 'check', undefined, 'check'],
+            ['3', 'check', undefined, 'check'],
+        ]);
+        assert.doesNotMatch(gw.lines.join('\n'), new RegExp(`${CANARY}|Pzzz|實際是`));
     } finally {
         await gw.stop();
     }

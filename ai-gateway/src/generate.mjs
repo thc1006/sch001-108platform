@@ -621,15 +621,17 @@ function segmentRatio(tokens, text) {
  * @param {object} config   loadLlmConfig() 的結果（用到 contextTokens、maxTokens、maxRounds 等）
  * @param {object} request  { messages, temperature?, responseFormat?, acceptJson? }
  *                          responseFormat 是 json_object／json_schema 時視為 JSON 輸出。
- *                          acceptJson(content)：JSON 任務的正文可以交出時回傳 true，呼叫端交出前用同一套
- *                          驗證才不會收下不合格的、或重寫其實合格的。沒給就只看是不是完整的 JSON（可包在
- *                          ``` 圍欄裡）而且頂層必填欄位都在
+ *                          acceptJson(content)：JSON 任務的正文可以交出時回傳 true（其他值都是不收），呼叫端
+ *                          交出前用同一套驗證才不會收下不合格的、或重寫其實合格的。沒給就只看是不是完整的
+ *                          JSON（可包在 ``` 圍欄裡）而且頂層必填欄位都在
  * @param {object} [hooks]  signal：呼叫端取消
  *                          onProgress({phase, round, thinkingTokens, writingTokens, reason?, attempt?, delayMs?})：
  *                            phase 為 thinking | writing | continuing | retrying；token 數是串流片段數，
  *                            只是給進度條用的近似值
  *                          onContent(text)：逐段送出最終答案的正文（只有文字任務會呼叫）
  *                          onResponse()：每次收到上游的回應標頭（含探測、重試與錯誤的回應）
+ *                          onReject({round, reason})：JSON 寫完（stop）卻不收、要整份重寫或結束時；reason 是
+ *                            acceptJson 的回傳值
  *                          這幾個 hook 可以是 async；丟出例外或 reject 都會中止任務並原樣丟回。
  *                            回傳結果前會等所有 async hook 完成（受總時限與取消約束）
  *                          streamChatImpl：測試用
@@ -642,9 +644,10 @@ export async function generate(config, request, hooks = {}) {
     const { messages, temperature, responseFormat, acceptJson } = request;
     const { signal, streamChatImpl = streamChat } = hooks;
     const jsonMode = isJsonFormat(responseFormat);
-    const acceptable = (text) => Boolean(text.trim()) && (acceptJson
-        ? Boolean(acceptJson(text))
+    const judge = (text) => Boolean(text.trim()) && (acceptJson
+        ? acceptJson(text)
         : isCompleteJson(unwrapCodeFence(text), responseFormat));
+    const acceptable = (text) => judge(text) === true;
     const deadlineAt = Date.now() + config.taskTimeoutMs;
 
     let content = '';      // 文字任務：已確定的正文（跨輪累積）；JSON 任務：這一輪的正文
@@ -744,6 +747,7 @@ export async function generate(config, request, hooks = {}) {
     const onProgress = guard(hooks.onProgress) || (() => {});
     const onContent = jsonMode ? undefined : guard(hooks.onContent);
     const onResponse = guard(hooks.onResponse);
+    const onReject = guard(hooks.onReject) || (() => {});
     const throwIfHookFailed = (round) => {
         if (hookFailed) throw attach(hookError, round);
     };
@@ -1286,7 +1290,12 @@ export async function generate(config, request, hooks = {}) {
                 // JSON 任務：拿掉 response_format 之後（退化過一次）輸出不再受約束，可能包著圍欄、
                 // 夾帶說明或根本不合法；guided decoding 也不檢查任務另外的規定。合格才收下，否則用
                 // 剩下的輪數整份重寫（下面的分支）
-                if (jsonMode && acceptable(content)) return finish({ content: unwrapCodeFence(content), rounds: round, usage, continuations }, round);
+                if (jsonMode) {
+                    const verdict = judge(content);
+                    if (verdict === true) return finish({ content: unwrapCodeFence(content), rounds: round, usage, continuations }, round);
+                    onReject({ round, reason: verdict });
+                    throwIfHookFailed(round);
+                }
             } else if (result.finishReason !== 'length') {
                 throw fail('stopped', `模型以 ${result.finishReason} 結束`, { rounds: round, finishReason: result.finishReason });
             }
