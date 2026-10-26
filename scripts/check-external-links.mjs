@@ -33,6 +33,9 @@
  * 狀態碼永遠看不出這件事，所以另外用 link-policy.json 的 hijacked 名單把它們
  * 標出來。名單不讓主機算進健康，也不放過連到它的網址；說明文字裡的警告在期限內
  * 只列出、不通知，到期前 30 天起每週通知。
+ * 另一個盲點是對任何路徑都回 200 的前端殼，頁面刪掉了狀態碼也不變。這種主機列在
+ * link-policy.json 的 contentChecks，頁面健康之後再打它寫的 API，連兩次都是 2xx 的 {} 才算 dead，
+ * 只有一次是 {} 算無法判定、不通知，見 judgeContent。
  * 另有第四種訊號（不是第四態）：被位址政策擋下。它在分類上算 unverified（我們
  * 確實沒驗到），但必須單獨大聲列出：資料檔裡出現指向 loopback／私網／雲端
  * metadata 的網址，意義是資料被動了手腳或寫錯，不是站台防爬。
@@ -56,7 +59,7 @@ import { runProbes, probe, staticUrlPolicy, blockedAddressReason } from './link-
 import { validatePolicy } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
-import { buildReport } from './check-external-links.lib.mjs';
+import { buildReport, contentProbeTargets, CONTENT_PROBE } from './check-external-links.lib.mjs';
 
 const argOf = (name) => {
     const i = process.argv.indexOf(name);
@@ -178,13 +181,15 @@ if (!Array.isArray(inventory?.urls) || inventory.urls.length === 0) {
 const todayISO = new Date().toISOString().slice(0, 10);
 let policyEntries = [];
 let hijackedEntries = [];
+let contentChecks = [];
 try {
-    const { errors, entries, hijacked } = validatePolicy(JSON.parse(await readFile(POLICY_PATH, 'utf8')), todayISO);
+    const { errors, entries, hijacked, contentChecks: checks } = validatePolicy(JSON.parse(await readFile(POLICY_PATH, 'utf8')), todayISO);
     if (errors.length) {
         await die(`link-policy.json 無效（${errors.length} 項）：${errors.join('；')}。請先修好政策檔再跑健檢。`);
     }
     policyEntries = entries;
     hijackedEntries = hijacked ?? [];
+    contentChecks = checks ?? [];
 } catch (err) {
     await die(`讀不到或無法解析 ${POLICY_PATH}（${err.message}）。`);
 }
@@ -207,6 +212,17 @@ const { results, skipped } = await runProbes(
     targets.map((t) => t.url),
     { concurrency: CONCURRENCY, budgetMs: BUDGET_MS, rotateSeed: weekIndex * CONCURRENCY, readBodyBytes: HEAD_BYTES, probeFn },
 );
+
+// contentChecks 的主機對任何路徑都回 200，頁面健康之後再打政策檔寫的 API，看內容還在不在。
+// 讀取上限、預算、併發與重打的條件都在 CONTENT_PROBE。
+const contentTargets = contentProbeTargets(targets, results, contentChecks);
+const contentResults = new Array(targets.length).fill(null);
+if (contentTargets.length) {
+    const { results: apiResults } = await runProbes(contentTargets.map((c) => c.api), { ...CONTENT_PROBE, probeFn });
+    contentTargets.forEach((c, k) => {
+        contentResults[c.index] = apiResults[k];
+    });
+}
 
 // 內文裸網域在盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，
 // 因此 Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
@@ -257,7 +273,8 @@ const out = buildReport({
     screen,
     bareResults,
     bareSkipped,
-    policy: { entries: policyEntries, hijacked: hijackedEntries },
+    contentResults,
+    policy: { entries: policyEntries, hijacked: hijackedEntries, contentChecks },
     budgetMs: BUDGET_MS,
     bareBudgetMs: BARE_BUDGET_MS,
 });
