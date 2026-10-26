@@ -99,7 +99,7 @@ school/
 # 故障注入用的暫存副本（link-health.faults.mjs 產生，跑完就刪；
 # 中途被中斷時留下的殘骸不該進版控）
 /.faultcheck/
-/scripts-faultcheck/
+/scripts-faultcheck-*/
 
 # 自架的第三方前端函式庫（scripts/vendor-assets.mjs 從 node_modules 複製）。
 # 完全由 package-lock.json 推導得出，入版控只會造成「lockfile 更新了但 vendor
