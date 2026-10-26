@@ -13,6 +13,19 @@
 /* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數：Tailwind 會把
    :root 自訂屬性剪掉，top 退回 auto、sticky 靜默失效。把關見 layout-budget.spec.js。 */
 
+/* lg 起 container 兩側至少各留 2rem，加上頁面的 px-6，內容離視窗邊緣至少 56px。xl 這條在 96rem 以上
+   也成立，又排在內建的 2xl 後面，所以寬度停在 80rem。Tailwind 把內建的 container 排在這條前面，這裡的
+   max-width 才蓋得過它。這條加上 position、z-index 這類排在 float、clear 之前的屬性，就會排到內建的
+   前面而失效，見 home-hero.spec.js。 */
+@utility container {
+  @media (width >= 64rem) {
+    max-width: min(64rem, 100% - 4rem);
+  }
+  @media (width >= 80rem) {
+    max-width: min(80rem, 100% - 4rem);
+  }
+}
+
 /* 全站共用樣式。 */
 
 body {
