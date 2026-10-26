@@ -15,6 +15,9 @@
  * 還原。這是行動裝置上熟悉的模式，且保留「稍微往上滑就能改條件」的即時性；
  * 直接取消 sticky 會逼使用者一路捲回頂端才能改篩選，在上百筆的清單上很麻煩。
  *
+ * 面板釘住之後才移走。位移量是照它釘在 header 下方的位置算的，面板還在文件流的原位時
+ * 套上去，會往上蓋住前面的內容，原位留下一塊空白。
+ *
  * 用 transform 而不是改 height／display：sticky 元素被 transform 位移時，它在
  * 文件流中佔的位置不變，所以下方內容不會跳動。（已實測確認位移 < 2px。）
  *
@@ -74,6 +77,17 @@
         p.el.style.transform = 'translateY(-' + Math.ceil(h + p.topPx + 2) + 'px)';
     }
 
+    /**
+     * pinned 判斷面板是否已釘在 header 下方。rect 含 transform，扣掉才是排版的位置，兩個值同時讀，
+     * 位移動畫進行中也對得上。CSS zoom 會放大 rect，computed top 不會，門檻要乘上 zoom。
+     * @param {{el: Element, topPx: number}} p @returns {boolean}
+     */
+    function pinned(p) {
+        var shift = new DOMMatrixReadOnly(window.getComputedStyle(p.el).transform).m42;
+        var zoom = p.el.currentCSSZoom || 1;
+        return p.el.getBoundingClientRect().top - shift <= p.topPx * zoom + 0.5;
+    }
+
     function init() {
         var nodes = document.querySelectorAll('[data-autohide-filters]');
         if (!nodes.length) return;
@@ -108,6 +122,7 @@
                 if (now - p.lastInteract < INTERACT_GRACE_MS) { reveal(p); continue; }
                 // 面板內有焦點時不可移走（可能是開著的下拉或正在輸入的搜尋框）
                 if (p.el.contains(document.activeElement)) { reveal(p); continue; }
+                if (!pinned(p)) { reveal(p); continue; }
                 if (dy > 0) conceal(p); else reveal(p);
             }
         }

@@ -528,3 +528,123 @@ test.describe('篩選面板的還原行為（360x640）', () => {
         expect(await visible(page), '桌機上面板應維持釘住').toBe(true);
     });
 });
+
+// 讓開的位移量是照面板釘在 header 下方的位置算的，面板還在文件流的原位時套上去，會往上
+// 蓋住前面的內容。公民科技地圖的導航在頁面很下方，手機上捲到標籤說明時就疊在它上面。
+test.describe('篩選面板釘住之前不讓開', () => {
+    const STEP = 120;
+    const PIN_TOP = 64; // top-16，header 的高度
+
+    /** panel 回傳面板的上下緣，以及 transform 的 Y 位移。 */
+    const panel = (page) =>
+        page.locator('[data-autohide-filters]').evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom, shift: new DOMMatrixReadOnly(getComputedStyle(el).transform).m42 };
+        });
+
+    async function scrollTo(page, y) {
+        await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+        await settleFilters(page);
+    }
+
+    /** stepDown 從 from 每次往下捲 STEP，捲到 to 為止，每一步之後呼叫 check(y)。 */
+    async function stepDown(page, from, to, check = async () => {}) {
+        for (let y = from; y < to; ) {
+            y = Math.min(y + STEP, to);
+            await scrollTo(page, y);
+            await check(y);
+        }
+    }
+
+    const CIVIC = `${BASE}/sch001-108platform/civic-tech-map/index.html`;
+
+    /** expectInPlace 檢查導航沒有位移，也沒有蓋到標籤說明。 */
+    async function expectInPlace(page, when) {
+        const nav = await panel(page);
+        const l = await page.locator('section[aria-label="標籤說明"]').evaluate((el) => el.getBoundingClientRect().toJSON());
+        expect(nav.shift, `${when}：導航沒釘住就被往上移`).toBe(0);
+        expect(nav.top >= l.bottom || nav.bottom <= l.top, `${when}：導航蓋到標籤說明`).toBe(true);
+    }
+
+    for (const viewport of [{ width: 360, height: 640 }, { width: 390, height: 844 }]) {
+        test(`civic-tech-map ${viewport.width}x${viewport.height}：導航釘住之前不蓋到標籤說明`, async ({ page }) => {
+            await page.setViewportSize(viewport);
+            await page.goto(CIVIC, { waitUntil: 'networkidle' });
+            const legend = page.locator('section[aria-label="標籤說明"]');
+            // 標籤說明捲到畫面上緣往下 80px 的位置，這時導航還沒釘住。
+            const nearLegend = await legend.evaluate((el) => el.getBoundingClientRect().top + window.scrollY - 80);
+            const pinnedAt = (await panel(page)).top - PIN_TOP;
+
+            await stepDown(page, 0, nearLegend, (y) => expectInPlace(page, `捲到 ${y}`));
+
+            await stepDown(page, nearLegend, pinnedAt + 2 * STEP);
+            expect((await panel(page)).bottom, '導航釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
+
+            await scrollTo(page, pinnedAt + STEP);
+            expect((await panel(page)).top, '往上捲時導航回到 header 下方').toBeCloseTo(PIN_TOP, 0);
+
+            // 讓開之後一次往上捲到沒釘住的位置，面板要還原；再往下捲到差 2px 才釘住，仍不能讓開。
+            await scrollTo(page, pinnedAt + 2 * STEP);
+            expect((await panel(page)).bottom).toBeLessThanOrEqual(0);
+            await scrollTo(page, pinnedAt - 150);
+            await expectInPlace(page, '讓開後往上捲到釘住點上方 150px');
+            await scrollTo(page, pinnedAt - 2);
+            await expectInPlace(page, '捲到釘住點上方 2px');
+        });
+    }
+
+    // 往上捲開始還原、位移動畫還在跑時又往下捲。rect 含動畫中的位移，不扣掉的話沒釘住的面板會被當成釘住。
+    test('civic-tech-map 360x640：位移動畫進行中也照排版位置判斷', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 640 });
+        await page.goto(CIVIC, { waitUntil: 'networkidle' });
+        const pinnedAt = (await panel(page)).top - PIN_TOP;
+        await scrollTo(page, pinnedAt + 2 * STEP);
+        expect((await panel(page)).bottom).toBeLessThanOrEqual(0);
+
+        const frames = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+        // 動畫拉長到 60 秒再停在起點，面板的位移維持在讓開時的值，不受機器快慢影響。
+        await page.locator('[data-autohide-filters]').evaluate((el) => { el.style.transition = 'transform 60s linear'; });
+        await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), pinnedAt - 50);
+        await frames();
+        const paused = await page.locator('[data-autohide-filters]').evaluate((el) => {
+            const [a] = el.getAnimations();
+            if (!a) return null;
+            a.pause();
+            a.currentTime = 0;
+            return { style: el.style.transform, shift: new DOMMatrixReadOnly(getComputedStyle(el).transform).m42 };
+        });
+        expect(paused, '前置：往上捲之後要有還原的動畫').not.toBeNull();
+        expect(paused.style).toBe('');
+        expect(paused.shift).toBeLessThan(-100);
+
+        await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), pinnedAt - 30);
+        await frames();
+        expect(await page.locator('[data-autohide-filters]').evaluate((el) => el.style.transform), '沒釘住的面板又被讓開').toBe('');
+    });
+
+    // html 設了 CSS zoom 時，rect 會放大，computed top 不會。
+    test('civic-tech-map 360x640：html 設 zoom: 1.25 時，導航釘住後照樣讓開', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 640 });
+        await page.goto(CIVIC, { waitUntil: 'networkidle' });
+        await page.evaluate(() => { document.documentElement.style.zoom = '1.25'; });
+        const pinTop = PIN_TOP * 1.25;
+        const pinnedAt = (await panel(page)).top - pinTop;
+
+        await stepDown(page, 0, pinnedAt + 2 * STEP);
+        expect((await panel(page)).bottom, '導航釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
+        await scrollTo(page, pinnedAt + STEP);
+        expect((await panel(page)).top, '往上捲時導航回到 header 下方').toBeCloseTo(pinTop, 0);
+    });
+
+    test('resource-map 360x640：面板釘住之前不位移', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 640 });
+        await page.goto(`${BASE}/sch001-108platform/autonomous-learning/resource-map.html`, { waitUntil: 'networkidle' });
+        const pinnedAt = (await panel(page)).top - PIN_TOP;
+        // sticky-filters.js 捲過 160px 才開始讓開，面板要在那之後才釘住，這一頁才測得到。
+        expect(pinnedAt).toBeGreaterThan(160 + STEP);
+
+        await stepDown(page, 0, pinnedAt - 10, async (y) => {
+            expect((await panel(page)).shift, `捲到 ${y}：面板沒釘住就被往上移`).toBe(0);
+        });
+    });
+});
