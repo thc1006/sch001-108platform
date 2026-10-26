@@ -757,6 +757,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     .comp-empty__title { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin: 0 0 .35rem; }
     .comp-empty__text { font-size: .9rem; margin: 0; }
 
+    /* lg 起和 container 一樣兩側至少留 2rem，內文左緣對齊頁首的站名。.comp-gridwrap 自帶 1.5rem 內距，
+       另外兩個在 1.5rem 內距的外框裡，所以上限少 3rem。 */
+    @media (min-width: 64rem) {
+      .comp-gridwrap { max-width: min(64rem, 100% - 4rem); }
+      .comp-hero__inner, .comp-controls__inner { max-width: min(61rem, 100% - 4rem); }
+    }
+    @media (min-width: 80rem) {
+      .comp-gridwrap { max-width: min(80rem, 100% - 4rem); }
+      .comp-hero__inner, .comp-controls__inner { max-width: min(77rem, 100% - 4rem); }
+    }
     @media (max-width: 1024px) { .comp-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 860px) { .comp-selects { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 620px) {

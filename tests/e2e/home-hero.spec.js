@@ -1,5 +1,5 @@
-// 首頁標題的斷行與字級。標題只在詞組之間換行，字級跟著文字欄寬縮放，視窗變寬時不會變小；
-// 視窗很窄或根字級放大時，標題也不能超出畫面。
+// 首頁標題的斷行與字級，以及筆電與寬螢幕上的版心寬度。標題只在詞組之間換行，字級跟著文字欄寬縮放，
+// 視窗變寬時不會變小；視窗很窄或根字級放大時，標題也不能超出畫面。
 const { test, expect } = require('@playwright/test');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
@@ -153,3 +153,25 @@ test('首頁標題的可存取名稱和切成詞組之前相同', async ({ page 
     expect(nodes[0].role.value).toBe('heading');
     expect(nodes[0].name.value).toBe('在 108 課綱的迷霧中， 為你點亮一盞燈。');
 });
+
+// global.css 讓 container 在 lg 起兩側至少留 2rem，2xl 起停在 1280px。那條覆寫要排在 Tailwind 內建的
+// container 後面才生效，排序出錯時這裡的寬度與左緣會不對。
+const CONTAINER_WIDTHS = [[1024, 960], [1100, 1024], [1280, 1216], [1300, 1236], [1440, 1280], [1600, 1280], [1920, 1280]];
+
+for (const [width, expected] of CONTAINER_WIDTHS) {
+    test(`${width}px 的版心是 ${expected}px，導覽列與首頁標題離視窗左緣至少 56px`, async ({ page }) => {
+        await openHome(page, width);
+        const m = await page.evaluate(() => {
+            const left = (selector) => document.querySelector(selector).getBoundingClientRect().left;
+            return {
+                nav: document.querySelector('header nav').getBoundingClientRect().width,
+                hero: document.querySelector('main section .container').getBoundingClientRect().width,
+                brandLeft: left('header nav a'),
+                headlineLeft: left('main h1'),
+            };
+        });
+        expect({ nav: m.nav, hero: m.hero }, '導覽列與主視覺的版心寬度').toEqual({ nav: expected, hero: expected });
+        expect(m.brandLeft, '站名的左緣').toBeGreaterThanOrEqual(56);
+        expect(m.headlineLeft, '首頁標題的左緣').toBeGreaterThanOrEqual(56);
+    });
+}

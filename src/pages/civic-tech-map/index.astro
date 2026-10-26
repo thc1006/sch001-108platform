@@ -130,17 +130,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div class="flex items-center gap-3">
                 {/* 連結本身就能聚焦，捲動區不當 Tab 停駐點：Firefox 157 會停在有溢出的 div 上，焦點框被 mask 裁掉。 */}
                 <div class="flex-1 overflow-x-auto scrollbar-hide" tabindex="-1" data-scroll-fade>
-                    {/* 上下各 4px 留給連結的焦點框（2px 寬、離 2px），捲動區會裁掉超出的部分。 */}
+                    {/* 上下各 4px 留給連結的焦點框（2px 寬、離 2px），捲動區會裁掉超出的部分。lg 的連結內距縮成
+                        px-2，1024px 時九個連結才放得下，不會切掉「參與社群」。 */}
                     <div class="flex gap-2 min-w-max px-1 py-1">
-                        <a href="#disfactory" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
-                        <a href="#cofacts" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
-                        <a href="#amis-moedict" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-violet-100 hover:text-violet-800 transition shadow-sm whitespace-nowrap">阿美語萌典</a>
-                        <a href="#thaubing" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-lime-100 hover:text-lime-800 transition shadow-sm whitespace-nowrap">透明足跡</a>
-                        <a href="#lawtrace" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-indigo-100 hover:text-indigo-800 transition shadow-sm whitespace-nowrap">立法足跡</a>
-                        <a href="#vtaiwan" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-cyan-100 hover:text-cyan-800 transition shadow-sm whitespace-nowrap">vTaiwan</a>
-                        <a href="#civil-iot" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-orange-100 hover:text-orange-800 transition shadow-sm whitespace-nowrap">民生公共物聯網</a>
-                        <a href="#national-treasure" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-rose-100 hover:text-rose-800 transition shadow-sm whitespace-nowrap">國家寶藏</a>
-                        <a href="#join-community" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">參與社群</a>
+                        <a href="#disfactory" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
+                        <a href="#cofacts" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
+                        <a href="#amis-moedict" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-violet-100 hover:text-violet-800 transition shadow-sm whitespace-nowrap">阿美語萌典</a>
+                        <a href="#thaubing" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-lime-100 hover:text-lime-800 transition shadow-sm whitespace-nowrap">透明足跡</a>
+                        <a href="#lawtrace" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-indigo-100 hover:text-indigo-800 transition shadow-sm whitespace-nowrap">立法足跡</a>
+                        <a href="#vtaiwan" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-cyan-100 hover:text-cyan-800 transition shadow-sm whitespace-nowrap">vTaiwan</a>
+                        <a href="#civil-iot" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-orange-100 hover:text-orange-800 transition shadow-sm whitespace-nowrap">民生公共物聯網</a>
+                        <a href="#national-treasure" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-white text-gray-700 hover:bg-rose-100 hover:text-rose-800 transition shadow-sm whitespace-nowrap">國家寶藏</a>
+                        <a href="#join-community" class="text-xs font-semibold px-3 lg:px-2 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">參與社群</a>
                     </div>
                 </div>
                 <div class="hidden sm:flex flex-shrink-0 gap-1">
