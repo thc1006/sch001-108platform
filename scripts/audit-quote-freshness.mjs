@@ -14,8 +14,8 @@
  *   - 引文大量來自子頁。Purple Comet 的引文在 /information，url 欄位是首頁，/rules 又掛在
  *     /information 底下，所以從 url 那一頁往下走兩層，找齊就停。
  *   - 抓取用 curl：當時 leetcode.com 對 Node 回 403、對 curl 回 200，UA、路徑、HTTP 版本排除後只剩 TLS 指紋。
- *     2026-10-23 起 curl 也回 403。10-25 實測 curl 補上 Sec-Fetch-* 是 200，再帶 Accept-Encoding（這支用
- *     --compressed）又是 403；外部連結健檢的 Node 請求補上 Sec-Fetch-* 後，根路徑大多 200、/contest/ 大多 403。
+ *     2026-10-23 起只帶 UA 的 curl 也回 403。10-26 實測帶上和外部連結健檢相同的標頭（見 curlHeaders）之後，
+ *     用 --compressed 的 curl 三個路徑都是 200；改送 identity 或 Chrome 那串 Accept-Encoding 反而是 403。
  *   - 也抓 PDF。GENIUS Olympiad 的資格引文在該站 9 個 HTML 頁面出現 0 次，disciplines.html
  *     寫的是「age between 13-18」；那句逐字在官方 GENIUS_Rules.pdf 的 ELIGIBILITY 段落裡，
  *     而 13-18 是陪同人規則的門檻，兩者不衝突。競賽規則常常就住在 PDF 裡。
@@ -33,12 +33,12 @@ import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { UA, SEC_FETCH } from './link-health.lib.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'public/advanced-resources/competitions.json');
 const TMP = path.join(ROOT, '.quote-audit-tmp');
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 const MAX_PAGES = 30;
 const MAX_PDFS = 12;
 const CONCURRENCY = 6;
@@ -94,9 +94,19 @@ const run = (cmd, args, opts = {}) => new Promise((res) =>
     execFile(cmd, args, { timeout: 60_000, maxBuffer: 24 * 1024 * 1024, ...opts },
         (e, out) => res({ err: e ? String(e.message).slice(0, 60) : null, out })));
 
+/**
+ * curlHeaders 回傳 curl 的 -H 參數，標頭和外部連結健檢相同：同一個 UA，https 才帶 Sec-Fetch-*。
+ * curl -L 跟轉址時沿用同一組標頭，轉到 http 的那一跳也會帶，健檢的 probe 不會。
+ * @param {string} url @returns {string[]}
+ */
+export function curlHeaders(url) {
+    const sec = url.startsWith('https:') ? Object.entries(SEC_FETCH).map(([k, v]) => `${k}: ${v}`) : [];
+    return [`User-Agent: ${UA}`, ...sec].flatMap((h) => ['-H', h]);
+}
+
 async function fetchHtml(url) {
     const { out } = await run('curl', ['-sS', '-L', '--max-redirs', '5', '-m', '25', '--compressed',
-        '-w', '\n@@@%{http_code}@@@%{url_effective}@@@%{content_type}', '-H', `User-Agent: ${UA}`,
+        '-w', '\n@@@%{http_code}@@@%{url_effective}@@@%{content_type}', ...curlHeaders(url),
         '-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         '-H', 'Accept-Language: zh-TW,zh;q=0.9,en;q=0.8', url], { encoding: 'buffer' });
     if (!out || !out.length) return {};
@@ -121,7 +131,7 @@ async function fetchPdf(url) {
     const id = createHash('sha1').update(url).digest('hex').slice(0, 16);
     const pdf = path.join(TMP, `${id}.pdf`);
     const txt = path.join(TMP, `${id}.txt`);
-    if ((await run('curl', ['-sS', '-L', '-m', '40', '-o', pdf, url])).err) return null;
+    if ((await run('curl', ['-sS', '-L', '-m', '40', ...curlHeaders(url), '-o', pdf, url])).err) return null;
     if ((await run('pdftotext', ['-layout', pdf, txt])).err) return null;
     try { return norm(await readFile(txt, 'utf8')); } catch { return null; }
 }

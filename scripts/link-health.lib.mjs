@@ -50,7 +50,7 @@ export const UA =
 // Chrome 直接開 https 網頁時送這四個，外部的 http 網頁不送（2026-10-25 對 Chromium 156 實測）。同一天，
 // Sec-Fetch-Mode 與 Sec-Fetch-Site 都沒有時 Facebook 回 400；四個只少 Sec-Fetch-User 時，medium.com、
 // cofacts.tw 等 8 個 Cloudflare 後面的網址回 403。
-const SEC_FETCH = {
+export const SEC_FETCH = {
     'Sec-Fetch-Dest': 'document',
     'Sec-Fetch-Mode': 'navigate',
     'Sec-Fetch-Site': 'none',
