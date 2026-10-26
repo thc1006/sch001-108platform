@@ -414,12 +414,14 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                     // 收到 end、又沒有超過上限才算讀完。超過上限的部分會被切掉；有 Content-Length 或 chunked 的
                     // 回應中途斷線時不會有 end。這兩種都算截斷，訊號 C 不拿不完整的 body 判斷。整包一次到達時，
                     // 超過上限也可能收到 end。靠關閉連線結束的回應，中途斷線和正常結束分不出來。
-                    // destroy 之後 end 不一定會觸發，close 一定會；done 本身有防重入。
+                    // destroy 之後 end 不一定會觸發，close 一定會；done 本身有防重入。沒到上限就斷的另外標 bodyAborted，
+                    // 內容 API 把它當成連不上，不是回應太大。
                     const finish = () => done({
                         status,
                         location,
                         bodyHead: Buffer.concat(chunks).subarray(0, wantBody).toString('utf8'),
                         bodyTruncated: !complete || read > wantBody,
+                        ...(!complete && read < wantBody ? { bodyAborted: true } : {}),
                     });
                     res.on('end', () => {
                         complete = true;
@@ -501,6 +503,7 @@ export async function probe(rawUrl, signal, opts = {}) {
             addresses: resolved.addresses.map((a) => a.address),
             ...(r.bodyHead !== undefined ? { bodyHead: r.bodyHead } : {}),
             ...(r.bodyTruncated ? { bodyTruncated: true } : {}),
+            ...(r.bodyAborted ? { bodyAborted: true } : {}),
             ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
         };
         if (!js && (!REDIRECT_STATUSES.has(r.status) || !r.location)) return settle(final);
@@ -571,15 +574,19 @@ export function describeResult(r) {
  *
  * 回傳 { results, skipped }：results[i] 對應 urls[i]（未檢查者為 null），
  * skipped 為因預算用盡而未檢查的筆數，大於 0 時呼叫端不能宣稱「全部正常」。
+ * retryIf 決定哪些結果要重試一次，預設是判定失效的結果。重試的結果在 previous 留著第一次的結果；
+ * 預算用完沒有重試的，結果加上 retrySkipped。
  *
  * @param {string[]} urls
- * @param {{concurrency?:number, budgetMs?:number, timeoutMs?:number, rotateSeed?:number, probeFn?:Function, allowLoopback?:boolean}} [opts]
+ * @param {{concurrency?:number, budgetMs?:number, timeoutMs?:number, rotateSeed?:number, probeFn?:Function, allowLoopback?:boolean,
+ *   retryIf?:(r: object) => boolean}} [opts]
  */
 export async function runProbes(urls, opts = {}) {
     const concurrency = opts.concurrency ?? 4; // 部分站台（如 tpmso.org）併發過高會回 5xx
     const budgetMs = opts.budgetMs ?? 8 * 60_000;
     const timeoutMs = opts.timeoutMs ?? LINK_TIMEOUT_MS;
     const probeFn = opts.probeFn ?? probe;
+    const retryIf = opts.retryIf ?? isDeadResult;
     // readBodyBytes 明確列在這裡而不是把整個 opts 攤下去：probe 的選項會影響
     // SSRF 防護（allowLoopback），逐項列出才看得出「哪些東西可以被呼叫端調整」。
     const probeOpts = {
@@ -625,8 +632,9 @@ export async function runProbes(urls, opts = {}) {
         // 判定失效前再單獨重試一次，濾掉併發造成的暫時性錯誤。
         // 被政策擋下的不重試，重試一樣會被擋。
         for (let i = 0; i < results.length; i++) {
-            if (results[i] && isDeadResult(results[i]) && !outOfBudget()) {
-                results[i] = await probeWithin(urls[i]);
+            if (results[i] && retryIf(results[i])) {
+                const first = results[i];
+                results[i] = outOfBudget() ? { ...first, retrySkipped: true } : { ...(await probeWithin(urls[i])), previous: first };
             }
         }
     } finally {

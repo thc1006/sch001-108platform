@@ -160,6 +160,52 @@ test('主程式：--replay 不連網跑完整份健檢，交給 buildReport 的�
     assert.match(r.stdout, /→ 有項目需要處理，已寫入報告。/);
 });
 
+test('主程式：contentChecks 的網址在頁面健康之後打 API，連兩次回 {} 才算失效，結果對回正確的網址', async () => {
+    const spa = 'https://spa.example.test';
+    const shell = { status: 200, redirects: [], bodyHead: '<html><head><title>SPA</title></head><body><noscript>請開啟 JavaScript</noscript><div id="root"></div></body></html>' };
+    const ids = [1, 2, 3, 4, 5, 6, 7];
+    const inv = inventory();
+    // 有內容檢查的網址夾在中間，對錯位置時會換到別的網址身上。
+    inv.urls.splice(1, 0, ...ids.slice(0, 2).map((id) => ({ url: `${spa}/item?id=${id}`, occurrences: occ(`dist/s${id}/index.html`) })));
+    inv.urls.push(...ids.slice(2).map((id) => ({ url: `${spa}/item?id=${id}`, occurrences: occ(`dist/s${id}/index.html`) })));
+    inv.total = inv.urls.length;
+    const pol = policy();
+    pol.contentChecks = [{
+        match: { host: 'spa.example.test' },
+        reason: '端到端測試：前端殼對任何路徑都回 200。',
+        evidence: '端到端測試：不存在的 id 回 {}。',
+        owner: 'e2e',
+        expires: daysFromNow(90),
+        urls: ids.map((id) => ({ url: `${spa}/item?id=${id}`, api: `${spa}/api/item?id=${id}`, expect: { id } })),
+    }];
+    const rec = recording();
+    const api = (id, bodyHead, over = {}) => ({ status: 200, finalUrl: `${spa}/api/item?id=${id}`, redirects: [], bodyHead, ...over });
+    for (const id of ids) rec.probes[`${spa}/item?id=${id}`] = { ...shell, finalUrl: `${spa}/item?id=${id}` };
+    // id=1 的回應超過頁首用的 16KB，讀取上限不對時會被截斷。
+    rec.probes[`${spa}/api/item?id=1`] = api(1, JSON.stringify({ id: 1, des: 'x'.repeat(20 * 1024) }));
+    rec.probes[`${spa}/api/item?id=2`] = [api(2, '{}'), api(2, '{}')];
+    rec.probes[`${spa}/api/item?id=3`] = api(3, '{"status":false}', { status: 401 });
+    rec.probes[`${spa}/api/item?id=4`] = [api(4, '{}'), api(4, '{"id":4}')];
+    rec.probes[`${spa}/api/item?id=5`] = api(5, '{"id":5}', { addresses: ['127.0.0.1'] });
+    // id=7 第一次 503、重打回 {}，不是連兩次 {}，不算失效。
+    rec.probes[`${spa}/api/item?id=7`] = [api(7, '', { status: 503 }), api(7, '{}')];
+    // id=6 的頁面逾時，API 不打，內容 API 那一行要列出它。
+    rec.probes[`${spa}/item?id=6`] = { status: 0, code: 'ETIMEDOUT', finalUrl: `${spa}/item?id=6`, redirects: [] };
+    const r = await run({ inventory: inv, policy: pol, recording: rec });
+    assert.equal(r.code, 0, r.stdout);
+    assert.match(r.report, /- 本次檢查 12 筆：健康 4、失效 2、位址封鎖 0、無法判定 4、已列例外 1/);
+    assert.match(r.report, /- 內容 API 檢查 6 筆：健康 2、失效 1、無法判定 3。頁面驗不到、沒打 API 的 1 筆：https:\/\/spa\.example\.test\/item\?id=6。/);
+    const dead = section(r.report, '### 🔗 連結失效');
+    assert.match(dead, /- \*\*內容 API 回 \{\}，網站上查不到這一頁\*\*：https:\/\/spa\.example\.test\/item\?id=2\n {2}- 出處：`dist\/s2\/index\.html`/);
+    assert.doesNotMatch(dead, /id=[134567]/);
+    const unv = section(r.report, '### 🧩 內容 API 驗不到');
+    assert.match(unv, /^### 🧩 內容 API 驗不到 3 筆\n[\s\S]*\n- 內容 API HTTP 401：https:\/\/spa\.example\.test\/item\?id=3\n/);
+    assert.match(unv, /\n- 內容 API 被位址政策擋下：spa\.example\.test 解析到被封鎖的位址：127\.0\.0\.1[^\n]*：https:\/\/spa\.example\.test\/item\?id=5\n/);
+    assert.equal(r.output, 'needs_attention=true\ncoverage_complete=true\n');
+    assert.match(unv, /\n- 內容 API 回 \{\}，前一次不是 \{\}（內容 API HTTP 503）：https:\/\/spa\.example\.test\/item\?id=7\n/);
+    assert.match(r.stdout, / {2}內容 API：6（健康 2、失效 1、無法判定 3；頁面驗不到、沒打 API 的 1 筆）/);
+});
+
 test('主程式：--limit 只驗前 N 筆，交給 buildReport 的 limit 讓覆蓋算成不完整', async () => {
     const r = await run({ args: ['--limit', '2'] });
     assert.equal(r.code, 0, r.stdout);

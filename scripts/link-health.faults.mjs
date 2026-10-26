@@ -356,6 +356,30 @@ const policyCases = [
 // 然後跑 link-health.test.mjs。測試必須失敗。
 const guardMutations = [
     {
+        name: '沒到上限就斷線的回應不另外標 bodyAborted',
+        apply: (s) => s.replace('                        ...(!complete && read < wantBody ? { bodyAborted: true } : {}),\n', ''),
+    },
+    {
+        name: '剛好讀到上限的回應也標 bodyAborted',
+        apply: (s) => s.replace('!complete && read < wantBody ?', '!complete && read <= wantBody ?'),
+    },
+    {
+        name: '重試的結果沒留第一次的結果（503 之後回 {} 就判失效）',
+        apply: (s) => s.replace('{ ...(await probeWithin(urls[i])), previous: first }', 'await probeWithin(urls[i])'),
+    },
+    {
+        name: 'probe 沒把 bodyAborted 傳出去',
+        apply: (s) => s.replace('            ...(r.bodyAborted ? { bodyAborted: true } : {}),\n', ''),
+    },
+    {
+        name: '預算用完沒重試的結果不標 retrySkipped',
+        apply: (s) => s.replace('outOfBudget() ? { ...first, retrySkipped: true } :', 'outOfBudget() ? first :'),
+    },
+    {
+        name: 'runProbes 不看 retryIf（內容 API 回 {} 不重打）',
+        apply: (s) => s.replace('const retryIf = opts.retryIf ?? isDeadResult;', 'const retryIf = isDeadResult;'),
+    },
+    {
         name: 'IPv4 封鎖網段清單被清空',
         // 這裡動的是「編譯後的網段表」而不是原始清單：突變若把原始清單的開頭換成
         // `const BLOCKED_IPV4 = [].concat([]) && [`，文字確實變了，語意卻沒變
@@ -787,6 +811,187 @@ const bareDomainMutations = [
 // 三態與 SSRF 防護照樣正確，只有讀報告、等通知的人會發現。
 const reportMutations = [
     {
+        name: '內容 API 的 expect 比對永遠成立',
+        apply: (s) => s.replace('        if (Object.hasOwn(data, key) && data[key] === want) continue;', '        continue;'),
+    },
+    {
+        name: '報告不寫內容 API 那一行',
+        apply: (s) => s.replace('    lines.push(\n        `- 內容 API 檢查 ${content.checked} 筆', '    if (false) lines.push(\n        `- 內容 API 檢查 ${content.checked} 筆'),
+    },
+    {
+        name: '欄位對不上算失效（網站改了格式也誤報）',
+        apply: (s) => s.replace('        return unverified(`回應格式變了：', '        return { verdict: \'dead\', reason: \'x\' }; return unverified(`回應格式變了：'),
+    },
+    {
+        name: '內容 API 被位址政策擋下時不寫「內容 API」',
+        apply: (s) => s.replace('    if (isBlockedResult(r)) return unverified(`被位址政策擋下：${r.reason}`, true);', '    if (isBlockedResult(r)) return { verdict: \'unverified\', bucket: \'other\', notify: true, reason: r.reason };'),
+    },
+    {
+        name: '內容 API 被位址政策擋下時不通知',
+        apply: (s) => s.replace('    if (isBlockedResult(r)) return unverified(`被位址政策擋下：${r.reason}`, true);', '    if (isBlockedResult(r)) return unverified(`被位址政策擋下：${r.reason}`, false);'),
+    },
+    {
+        name: 'contentRetry 不重打（403、維護頁只看一次就通知）',
+        apply: (s) => s.replace('export function contentRetry(r) {\n', 'export function contentRetry(r) {\n    if (r) return false;\n'),
+    },
+    {
+        name: 'contentRetry 把沒讀完的回應當成讀完',
+        apply: (s) => s.replace('    const read = r.status >= 200 && r.status < 300 && !r.bodyTruncated && !r.bodySkipped;', '    const read = r.status >= 200 && r.status < 300 && !r.bodySkipped;'),
+    },
+    {
+        name: '中途斷線算成回應超過讀取上限並通知',
+        apply: (s) => s.replace('    if (r.bodyAborted) return unverified(\'回應沒有收完，連線中途斷了\', false, \'unreachable\');\n', ''),
+    },
+    {
+        name: '預算用完沒重打的 {} 照樣判失效',
+        apply: (s) => s.replace('        if (r.retrySkipped) return unverified(\'回 {}，時間預算用完，沒有重打確認\', false);\n', ''),
+    },
+    {
+        name: '前一次不是 {}、重打回 {} 也判失效',
+        apply: (s) => s.replace('        if (!isEmptyObject(r.previous)) return unverified(', '        if (false) return unverified('),
+    },
+    {
+        name: '沒有重打過的 {} 判失效',
+        apply: (s) => s.replace("        if (!r.previous) return unverified('回 {}，沒有重打確認', false);\n", ''),
+    },
+    {
+        name: '前一次是 404 的 {} 也算 {}（判斷前一次不看狀態碼）',
+        apply: (s) => s.replace('    const read = r.status >= 200 && r.status < 300 && !r.bodyTruncated && !r.bodySkipped;', '    const read = !r.bodyTruncated && !r.bodySkipped;'),
+    },
+    {
+        name: 'expect 只比第一個欄位',
+        apply: (s) => s.replace('        return unverified(`回應格式變了：${key}', '        if (key !== Object.keys(entry.expect)[0]) continue;\n        return unverified(`回應格式變了：${key}'),
+    },
+    {
+        name: 'API 最後停在 3xx 也通知',
+        apply: (s) => s.replace('r.status >= 400 && r.status < 500 && r.status !== 429', 'r.status >= 300 && r.status < 500 && r.status !== 429'),
+    },
+    {
+        name: '只有一次 {} 也通知',
+        apply: (s) => s.replace('前一次不是 {}（${judgeContent(entry, r.previous).reason}）`, false)', '前一次不是 {}（${judgeContent(entry, r.previous).reason}）`, true)'),
+    },
+    {
+        name: '開頭有 BOM 的 JSON 算成不是 JSON',
+        apply: (s) => s.replace("JSON.parse((text ?? '').replace(/^\\uFEFF/, ''))", "JSON.parse(text ?? '')"),
+    },
+    {
+        name: 'API 回 400 不通知',
+        apply: (s) => s.replace('r.status >= 400 && r.status < 500 && r.status !== 429', 'r.status > 400 && r.status < 500 && r.status !== 429'),
+    },
+    {
+        name: '例外壓得下內容 API 驗不到（內容檢查壞了也不通知）',
+        apply: (s) => s.replace("    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };\n    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };\n",
+            "    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };\n    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };\n"),
+    },
+    {
+        name: '週報沒指到 link-policy.json 的 reason',
+        apply: (s) => s.replace('。怎麼在連得到的機器上檢查，見 scripts/link-policy.json 裡這些主機的 reason', ''),
+    },
+    {
+        name: 'content-encoding 的值不經 inertText、不截短',
+        apply: (s) => s.replace('${inertText(String(r.bodySkipped).slice(0, 60))}', '${r.bodySkipped}'),
+    },
+    {
+        name: 'describeValue 用 in 判斷欄位在不在（expect 鍵是 constructor 時丟 TypeError）',
+        apply: (s) => s.replace('    if (!Object.hasOwn(data, key)) return \'沒有這個欄位\';', '    if (!(key in data)) return \'沒有這個欄位\';'),
+    },
+    {
+        name: '回應的值不截短',
+        apply: (s) => s.replace('inertText(JSON.stringify(v).slice(0, 80))', 'inertText(JSON.stringify(v))'),
+    },
+    {
+        name: '頁面驗不到、沒打 API 的網址沒列出來',
+        apply: (s) => s.replace('content.pageUnverified.push(targets[i].url);', 'void 0;'),
+    },
+    {
+        name: '內容 API 的讀取上限改成頁首的 16KB',
+        apply: (s) => s.replace('readBodyBytes: 256 * 1024', 'readBodyBytes: 16 * 1024'),
+    },
+    {
+        name: '內容 API 的時間預算改成 runProbes 的預設',
+        apply: (s) => s.replace('budgetMs: 2 * 60_000, readBodyBytes', 'budgetMs: 8 * 60_000, readBodyBytes'),
+    },
+    {
+        name: '內容 API 不重打',
+        apply: (s) => s.replace('retryIf: contentRetry });', '});'),
+    },
+    {
+        name: 'judgeUrl 只在頁面回 2xx 時看 API（停在 3xx 的頁面不檢查內容）',
+        apply: (s) => s.replace("    const check = classifyLink(r) === 'healthy' ? matchContentCheck(", "    const check = r.status >= 200 && r.status < 300 ? matchContentCheck("),
+    },
+    {
+        name: '內容 API 不是 2xx 也去解析',
+        apply: (s) => s.replace('    if (!(r.status >= 200 && r.status < 300)) {\n        return unverified(describeResult(r), r.status >= 400 && r.status < 500 && r.status !== 429, unverifiedBucket(r));\n    }\n', ''),
+    },
+    {
+        name: '內容 API 沒讀完的回應照樣解析',
+        apply: (s) => s.replace('    if (r.bodyTruncated) return unverified(\'回應超過讀取上限\', true);\n', ''),
+    },
+    {
+        name: '內容 API 驗不到的混進一般的無法判定（不通知）',
+        apply: (s) => s.replace('    if (c) return { bin: \'contentUnverified\',', '    if (false) return { bin: \'contentUnverified\','),
+    },
+    {
+        name: '內容 API 回的值不經 inertText（遠端字串直接進 issue）',
+        apply: (s) => s.replace('    return `是 ${inertText(JSON.stringify(v).slice(0, 80))}`;', '    return `是 ${JSON.stringify(v).slice(0, 80)}`;'),
+    },
+    {
+        name: '分組用 item 算（item 沒有 status 與 code，全部落到其他）',
+        apply: (s) => s.replace('bucket: unverifiedBucket(r) }, signal, content };', 'bucket: unverifiedBucket(item) }, signal, content };'),
+    },
+    {
+        name: '盤點網址的接管命中放進例外那一段',
+        apply: (s) => s.replace('const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified, contentUnverified };', 'const urlBins = { blocked, hijacked: suppressed, dead, suppressed, unverified, contentUnverified };'),
+    },
+    {
+        name: '回應的物件照樣 stringify（很深的巢狀結構讓整支健檢當掉）',
+        apply: (s) => s.replace('    if (typeof v === \'object\') return Array.isArray(v) ? \'是陣列\' : \'是物件\';\n', ''),
+    },
+    {
+        name: '內容 API 回 4xx 不通知',
+        apply: (s) => s.replace('r.status >= 400 && r.status < 500 && r.status !== 429', 'false'),
+    },
+    {
+        name: '內容 API 回 5xx 也通知',
+        apply: (s) => s.replace('r.status >= 400 && r.status < 500 && r.status !== 429', 'r.status >= 400'),
+    },
+    {
+        name: '內容 API 回的不是 JSON 不通知',
+        apply: (s) => s.replace('unverified(\'回應不是 JSON\', true)', 'unverified(\'回應不是 JSON\', false)'),
+    },
+    {
+        name: '內容 API 的格式變了不通知',
+        apply: (s) => s.replace('${describeValue(data, key)}`, true)', '${describeValue(data, key)}`, false)'),
+    },
+    {
+        name: 'needsAttention 不看內容 API 驗不到的',
+        apply: (s) => s.replace('        contentUnverified.some((u) => u.notify) ||\n', ''),
+    },
+    {
+        name: '報告不寫內容 API 驗不到那一段',
+        apply: (s) => s.replace('    if (contentUnverified.length) {\n        lines.push(`### 🧩', '    if (false) {\n        lines.push(`### 🧩'),
+    },
+    {
+        name: '報告的無法判定不算內容 API 驗不到的',
+        apply: (s) => s.replace('無法判定 ${unverified.length + contentUnverified.length}、', '無法判定 ${unverified.length}、'),
+    },
+    {
+        name: 'judgeUrl 不看內容檢查（前端殼永遠算健康）',
+        apply: (s) => s.replace('    const check = classifyLink(r) === \'healthy\' ? matchContentCheck(contentChecks, target.url) : null;', '    const check = matchContentCheck([], target.url);'),
+    },
+    {
+        name: 'judgeUrl 頁面失效時也看內容 API（404 被 API 蓋過）',
+        apply: (s) => s.replace('    const check = classifyLink(r) === \'healthy\' ? matchContentCheck(contentChecks, target.url) : null;', '    const check = matchContentCheck(contentChecks, target.url);'),
+    },
+    {
+        name: '到期提醒沒算內容檢查',
+        apply: (s) => s.replace('        ...expiringWithin(contentChecks, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: \'內容檢查\' })),\n', ''),
+    },
+    {
+        name: 'contentProbeTargets 不看頁面是否健康',
+        apply: (s) => s.replace('results[index] && classifyLink(results[index]) === \'healthy\' ? matchContentCheck', 'results[index] ? matchContentCheck'),
+    },
+    {
         name: "盤點網址的接管比對被拿掉（被接管的網域回 200，算成健康）",
         apply: (s) => s.replace("    if (hijack || hop) {", "    if (false) {"),
     },
@@ -804,11 +1009,7 @@ const reportMutations = [
     },
     {
         name: "dead 也查例外政策（確定壞掉的連結被壓下去）",
-        apply: (s) => s.replace("    if (verdict === 'dead') return { bin: 'dead', item, signal };", "    if (verdict === 'dead' && !matchPolicy(entries, target.url)) return { bin: 'dead', item, signal };"),
-    },
-    {
-        name: "分組用 item 算（item 沒有 status 與 code，全部落到其他）",
-        apply: (s) => s.replace("bucket: unverifiedBucket(r)", "bucket: unverifiedBucket(item)"),
+        apply: (s) => s.replace("    if (verdict === 'dead') return { bin: 'dead', item, signal, content };", "    if (verdict === 'dead' && !matchPolicy(entries, target.url)) return { bin: 'dead', item, signal, content };"),
     },
     {
         name: "needsAttention 把跨站轉址也算進去",
@@ -892,7 +1093,7 @@ const reportMutations = [
     },
     {
         name: "報告不寫檢查未完成那一段",
-        apply: (s) => s.replace("    if (skipped || bareSkipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
+        apply: (s) => s.replace("    if (skipped || bareSkipped || content.skipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
     },
     {
         name: "EXPIRY_NOTICE_DAYS 改成 0（永遠不提醒，要等到期當天 PR 全紅才發現）",
@@ -960,12 +1161,28 @@ const reportMutations = [
 // judgeUrl、renderReport 各自都對，這裡傳錯一個值，週報照樣會錯。
 const assemblyMutations = [
     {
-        name: "judgeUrl 拿到空的接管名單（盤點網址的接管命中算成健康）",
-        apply: (s) => s.replace("{ hijacked: policy.hijacked, entries: policy.entries }", "{ hijacked: [], entries: policy.entries }"),
+        name: '內容 API 驗不到的沒交給報告',
+        apply: (s) => s.replace('        content,\n        contentUnverified,\n', '        content,\n'),
     },
     {
-        name: "盤點網址的接管命中放進例外那一段",
-        apply: (s) => s.replace("const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified };", "const urlBins = { blocked, hijacked: suppressed, dead, suppressed, unverified };"),
+        name: 'judgeUrl 沒拿到內容 API 的結果',
+        apply: (s) => s.replace('judgeUrl(targets[i], r, policy, contentResults[i])', 'judgeUrl(targets[i], r, policy)'),
+    },
+    {
+        name: '覆蓋不看沒有結果的內容 API',
+        apply: (s) => s.replace(' && content.skipped === 0', ''),
+    },
+    {
+        name: '沒有結果的內容 API 不算未檢查',
+        apply: (s) => s.replace('            if (!contentResults[i]) content.skipped++;\n', ''),
+    },
+    {
+        name: '到期提醒沒拿到內容檢查',
+        apply: (s) => s.replace('todayISO, policy.contentChecks)', 'todayISO)'),
+    },
+    {
+        name: "judgeUrl 拿到空的接管名單（盤點網址的接管命中算成健康）",
+        apply: (s) => s.replace("judgeUrl(targets[i], r, policy, contentResults[i])", "judgeUrl(targets[i], r, { ...policy, hijacked: [] }, contentResults[i])"),
     },
     {
         name: "judgeBare 拿到空的接管名單",
@@ -1017,7 +1234,7 @@ const assemblyMutations = [
     },
     {
         name: "到期提醒沒算接管警示",
-        apply: (s) => s.replace("expiringPolicyItems(policy.entries, policy.hijacked, todayISO)", "expiringPolicyItems(policy.entries, [], todayISO)"),
+        apply: (s) => s.replace("expiringPolicyItems(policy.entries, policy.hijacked, todayISO, policy.contentChecks)", "expiringPolicyItems(policy.entries, [], todayISO, policy.contentChecks)"),
     },
     {
         name: "通知條件沒拿到快到期的項目",
@@ -1114,6 +1331,18 @@ const policyLibMutations = [
 // 交錯一份或對錯位置，buildReport 的單元測試照樣全綠。
 const mainMutations = [
     {
+        name: '內容 API 沒用 CONTENT_PROBE 的設定（不重打、不讀 body、預算不對）',
+        apply: (s) => s.replace('{ ...CONTENT_PROBE, probeFn }', '{ probeFn }'),
+    },
+    {
+        name: '內容 API 沒接上重播（改成連網探測）',
+        apply: (s) => s.replace('{ ...CONTENT_PROBE, probeFn }', '{ ...CONTENT_PROBE }'),
+    },
+    {
+        name: '內容 API 的探測開了 allowLoopback',
+        apply: (s) => s.replace('{ ...CONTENT_PROBE, probeFn }', '{ ...CONTENT_PROBE, probeFn, allowLoopback: true }'),
+    },
+    {
         name: '重播不檢查轉址的每一跳',
         apply: (s) => s.replace('            if (!next.ok) return blocked(next.reason, hop.to);', '            if (false) return blocked(next.reason, hop.to);'),
     },
@@ -1174,6 +1403,18 @@ const mainMutations = [
         apply: (s) => s.replace('        recorded.probes[url] = prev === undefined ? r : [].concat(prev, [r]);', '        recorded.probes[url] = r;'),
     },
     {
+        name: 'contentChecks 沒交給 buildReport',
+        apply: (s) => s.replace('hijacked: hijackedEntries, contentChecks }', 'hijacked: hijackedEntries }'),
+    },
+    {
+        name: '內容 API 的結果沒交給 buildReport',
+        apply: (s) => s.replace('    contentResults,\n    policy:', '    policy:'),
+    },
+    {
+        name: '內容 API 的結果對錯位置',
+        apply: (s) => s.replace('contentResults[c.index] = apiResults[k];', 'contentResults[k] = apiResults[k];'),
+    },
+    {
         name: '交給 buildReport 的盤點換成整份 inventory.urls（--limit 之後名單和探測結果對不上）',
         apply: (s) => s.replace('    targets,\n    results,', '    targets: inventory.urls,\n    results,'),
     },
@@ -1183,7 +1424,7 @@ const mainMutations = [
     },
     {
         name: '接管名單沒交給 buildReport',
-        apply: (s) => s.replace('hijacked: hijackedEntries }', 'hijacked: [] }'),
+        apply: (s) => s.replace('hijacked: hijackedEntries, contentChecks }', 'hijacked: [], contentChecks }'),
     },
     {
         name: '裸網域候選沒交給 buildReport（報告找不到出處）',

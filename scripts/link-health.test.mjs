@@ -38,7 +38,7 @@ import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin, matchContentCheck, contentCheckGaps } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
-import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems } from './check-external-links.lib.mjs';
+import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems, judgeContent, contentProbeTargets, contentRetry, CONTENT_PROBE } from './check-external-links.lib.mjs';
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
@@ -120,6 +120,16 @@ before(async () => {
         if (jsShell) { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(`<html><head><title>x</title></head><body><script>${jsShell}</script></body></html>`); }
         if (u === '/js-404') { res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end('<html><body><script>window.location="https://dest.js-test.example/landing"</script></body></html>'); }
         if (u === '/forbidden') { res.writeHead(403); return res.end(); }
+        // 內容 API 第一次暫時出錯、第二次正常；/api-cut 每次都送一半就斷線。
+        const json = (code, body) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(body); };
+        if (u === '/api-403-once') return hits.get(u) === 1 ? json(403, '{}') : json(200, '{"cid":42}');
+        if (u === '/api-html-once') return hits.get(u) === 1 ? json(200, '<html><title>系統維護中</title></html>') : json(200, '{"cid":42}');
+        if (u === '/api-cut-once' || u === '/api-cut') {
+            if (u === '/api-cut-once' && hits.get(u) > 1) return json(200, '{"cid":42}');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.write(`{"cid":42,"des":"${'x'.repeat(2000)}`);
+            return setTimeout(() => res.socket.destroy(), 20);
+        }
         if (u === '/to-js-literal') { res.writeHead(302, { Location: `http://shell.js-test.example:${server.address().port}/js-literal` }); return res.end(); }
         if (u === '/landing') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<html><head><title>Landing</title></head><body>正常內容</body></html>'); }
         // SSRF 的轉址繞道：起點無害，第二跳才指向內網／metadata。
@@ -162,12 +172,14 @@ test('讀 body：完整收到的不算截斷，訊號 C 看得到只靠 JavaScri
 test('讀 body：超過上限就算截斷，body 只留上限內的前綴', async () => {
     const r = await probe(`${base}/big-body`, undefined, { ...LOOPBACK_OK, readBodyBytes: 512 });
     assert.equal(r.bodyTruncated, true);
+    assert.equal(r.bodyAborted, undefined, '讀到上限是自己切的，不是斷線');
     assert.equal(r.bodyHead, 'x'.repeat(512));
 });
 
 test('讀 body：讀到上限時後面還有資料，也算截斷', async () => {
     const r = await probe(`${base}/exact-then-more`, undefined, { ...LOOPBACK_OK, readBodyBytes: 512 });
     assert.equal(r.bodyTruncated, true);
+    assert.equal(r.bodyAborted, undefined, '剛好讀到上限是自己切的，不是斷線');
     assert.equal(r.bodyHead, 'x'.repeat(512));
 });
 
@@ -180,6 +192,7 @@ test('讀 body：chunked 回應中途斷線算截斷，同樣的殼不報訊號 
     const r = await probe(`${base}/cut-shell`, undefined, { ...LOOPBACK_OK, readBodyBytes: 1024 });
     assert.equal(r.bodyHead, SHELL);
     assert.equal(r.bodyTruncated, true);
+    assert.equal(r.bodyAborted, true, '沒到上限就斷的要另外標出來');
     assert.equal(detectHijackSignals(`${base}/cut-shell`, r)?.shell ?? null, null);
 });
 
@@ -1122,14 +1135,14 @@ test('buildReport：快到期的例外與接管警示觸發通知，報告的第
 
 test('buildReport：link-policy.json 最早的到期日前 30 天內，沒有其他待辦也會通知', (t) => {
     const policy = JSON.parse(readFileSync(new URL('./link-policy.json', import.meta.url), 'utf8'));
-    const all = [...policy.entries, ...(policy.hijacked ?? [])];
+    const all = [...policy.entries, ...(policy.hijacked ?? []), ...(policy.contentChecks ?? [])];
     if (!all.length) return t.skip('link-policy.json 沒有任何項目');
     const earliest = all.map((e) => e.expires).sort()[0];
     // 到期前 27 天：在 30 天內，又離到期日夠遠，不會碰到 validatePolicy 的「已到期」。
     const today = new Date(Date.parse(`${earliest}T00:00:00Z`) - 27 * 86_400_000).toISOString().slice(0, 10);
-    const { errors, entries, hijacked } = validatePolicy(policy, today);
+    const { errors, entries, hijacked, contentChecks } = validatePolicy(policy, today);
     assert.deepEqual(errors, []);
-    const out = buildReport(buildInput({ todayISO: today, policy: { entries, hijacked } }));
+    const out = buildReport(buildInput({ todayISO: today, policy: { entries, hijacked, contentChecks } }));
     assert.equal(out.attention, true, `${today} 起每週要通知 ${earliest} 到期的項目`);
     assert.ok(out.report.includes('### ⏰ 連結政策有'), '報告沒有到期提醒');
 });
@@ -1442,6 +1455,244 @@ test('contentChecks：contentCheckGaps 列出宣告的主機上沒有內容檢�
     ]);
     assert.deepEqual(gaps.map((g) => g.url), [`${SPA}/?lang=en`, `${SPA}/x`, 'https://SPA.example.org./site/new', 'http://spa.example.org/site/plain']);
     assert.equal(gaps[1].check.match.host, 'spa.example.org');
+});
+
+// 內容 API 的判定：頁面健康之後，用 contentChecks 寫的 API 看內容還在不在。
+
+const apiOk = (body, over = {}) => ({ status: 200, finalUrl: `${SPA}/api/Public?cid=42&first=true`, redirects: [], bodyHead: JSON.stringify(body), ...over });
+const spaPolicy = () => {
+    const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck()] }, TODAY);
+    return { entries: [], hijacked: [], contentChecks };
+};
+const spaTarget = { url: `${SPA}/site/category?root=42&cid=42`, occurrences: [{ file: 'dist/x/index.html', location: 'a[href]' }] };
+const formatChanged = (reason) => ({ verdict: 'unverified', bucket: 'other', notify: true, reason });
+
+test('內容 API：expect 的欄位都對得上才算健康，回應剛好是 {} 才算失效；不是讀完的 2xx 物件或剛好是 {} 就重打', () => {
+    const entry = validContentUrl({ expect: { cid: 42, title: '自主學習專區' } });
+    assert.equal(judgeContent(entry, apiOk({ cid: 42, title: '自主學習專區', extra: [1] })).verdict, 'healthy');
+    assert.deepEqual(judgeContent(entry, apiOk({}, { previous: apiOk({}) })), { verdict: 'dead', reason: '內容 API 回 {}，網站上查不到這一頁' });
+    // 開頭有 BOM 的 JSON 照樣解析。
+    const bom = apiOk(null, { bodyHead: `\uFEFF${JSON.stringify({ cid: 42, title: '自主學習專區' })}` });
+    assert.equal(judgeContent(entry, bom).verdict, 'healthy');
+    assert.equal(contentRetry(bom), false);
+    for (const r of [apiOk({}), apiOk({}, { status: 403 }), { status: 0, code: 'ETIMEDOUT' }, apiOk(null, { bodyHead: '<html></html>' }), apiOk([1]),
+        apiOk({ cid: 42 }, { bodyTruncated: true, bodyAborted: true }), apiOk(null, { bodyHead: undefined, bodySkipped: 'content-encoding: gzip' })]) {
+        assert.equal(contentRetry(r), true, JSON.stringify(r));
+    }
+    for (const r of [apiOk({ cid: 42 }), apiOk({ status: false }), { status: 0, code: 'EBLOCKED', blocked: true, reason: 'x' }]) {
+        assert.equal(contentRetry(r), false, JSON.stringify(r));
+    }
+});
+
+test('內容 API：CONTENT_PROBE 是主程式交給 runProbes 的設定，讀得下 108 課綱資訊網最大的回應，報告寫的預算是同一個值', () => {
+    assert.deepEqual({ ...CONTENT_PROBE }, { concurrency: 2, budgetMs: 2 * 60_000, readBodyBytes: 256 * 1024, retryIf: contentRetry });
+    assert.ok(CONTENT_PROBE.readBodyBytes > 57_836);
+    assert.ok(Object.isFrozen(CONTENT_PROBE));
+});
+
+test('內容 API：格式和 expect 對不上算無法判定並通知，原因寫出哪個欄位、回應裡是什麼', () => {
+    const entry = validContentUrl({ expect: { cid: 42 } });
+    const cases = [
+        [{ cid: '42' }, '內容 API 回應格式變了：cid 應該是 42，回應裡是 `"42"`'],
+        [{ data: { cid: 42 } }, '內容 API 回應格式變了：cid 應該是 42，回應裡沒有這個欄位'],
+        [{ cid: 43 }, '內容 API 回應格式變了：cid 應該是 42，回應裡是 `43`'],
+        [{ cid: { id: 42 } }, '內容 API 回應格式變了：cid 應該是 42，回應裡是物件'],
+        [{ cid: [42] }, '內容 API 回應格式變了：cid 應該是 42，回應裡是陣列'],
+        [{ cid: null }, '內容 API 回應格式變了：cid 應該是 42，回應裡是 null'],
+        [{ cid: '`@x`' }, "內容 API 回應格式變了：cid 應該是 42，回應裡是 `\"'@x'\"`"],
+        [{ cid: 'y'.repeat(200) }, `內容 API 回應格式變了：cid 應該是 42，回應裡是 \`"${'y'.repeat(79)}\``],
+    ];
+    for (const [body, reason] of cases) assert.deepEqual(judgeContent(entry, apiOk(body)), formatChanged(reason), JSON.stringify(body));
+    // expect 的每個欄位都要比，不只第一個。
+    assert.deepEqual(judgeContent(validContentUrl({ expect: { cid: 42, title: '自主學習專區' } }), apiOk({ cid: 42, title: '找不到網頁' })),
+        formatChanged('內容 API 回應格式變了：title 應該是 "自主學習專區"，回應裡是 `"找不到網頁"`'));
+    // 很深的巢狀結構 JSON.stringify 會丟 RangeError，原因只寫型別。
+    const deep = `{"cid":${'['.repeat(200_000)}${']'.repeat(200_000)}}`;
+    assert.deepEqual(judgeContent(entry, apiOk(null, { bodyHead: deep })), formatChanged('內容 API 回應格式變了：cid 應該是 42，回應裡是陣列'));
+    // expect 的鍵碰到 Object.prototype 上的名字，只看回應自己的欄位。
+    assert.deepEqual(judgeContent(validContentUrl({ expect: { constructor: 'x' } }), apiOk({ id: 1 })),
+        formatChanged('內容 API 回應格式變了：constructor 應該是 "x"，回應裡沒有這個欄位'));
+});
+
+test('內容 API：4xx 與讀完卻讀不懂的回應要通知；429、5xx、逾時、中途斷線、預算用完與沒有探測不通知；被位址政策擋下要通知', () => {
+    const entry = validContentUrl();
+    const cases = [
+        [{ status: 302, finalUrl: 'x', redirects: [] }, 'rejected', false, '內容 API HTTP 302'],
+        [{ status: 400, finalUrl: 'x', redirects: [] }, 'rejected', true, '內容 API HTTP 400'],
+        [{ status: 401, finalUrl: 'x', redirects: [] }, 'rejected', true, '內容 API HTTP 401'],
+        [{ status: 404, finalUrl: 'x', redirects: [] }, 'rejected', true, '內容 API HTTP 404'],
+        [{ status: 429, finalUrl: 'x', redirects: [] }, 'rejected', false, '內容 API HTTP 429'],
+        [{ status: 502, finalUrl: 'x', redirects: [] }, 'server-error', false, '內容 API HTTP 502'],
+        [{ status: 0, code: 'ETIMEDOUT', finalUrl: 'x', redirects: [] }, 'unreachable', false, '內容 API 連線逾時'],
+        [apiOk(null, { bodyHead: '<!doctype html><html></html>' }), 'other', true, '內容 API 回應不是 JSON'],
+        [apiOk([{ cid: 42 }]), 'other', true, '內容 API 回應不是 JSON 物件'],
+        [apiOk(null), 'other', true, '內容 API 回應不是 JSON 物件'],
+        [apiOk({ cid: 42 }, { bodyTruncated: true }), 'other', true, '內容 API 回應超過讀取上限'],
+        [apiOk({ cid: 42 }, { bodyTruncated: true, bodyAborted: true }), 'unreachable', false, '內容 API 回應沒有收完，連線中途斷了'],
+        [apiOk(null, { bodyHead: undefined, bodySkipped: 'content-encoding: gzip' }), 'other', true, '內容 API 回應是壓縮過的，沒有解析（`content-encoding: gzip`）'],
+        [apiOk({}, { retrySkipped: true }), 'other', false, '內容 API 回 {}，時間預算用完，沒有重打確認'],
+        [apiOk({}), 'other', false, '內容 API 回 {}，沒有重打確認'],
+        [apiOk({}, { previous: { status: 503, finalUrl: 'x', redirects: [] } }), 'other', false, '內容 API 回 {}，前一次不是 {}（內容 API HTTP 503）'],
+        [{ status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：轉址到 169.254.169.254' }, 'other', true, '內容 API 被位址政策擋下：測試：轉址到 169.254.169.254'],
+        [null, 'other', false, '內容 API 這次沒有檢查'],
+        [undefined, 'other', false, '內容 API 這次沒有檢查'],
+    ];
+    for (const [r, bucket, notify, reason] of cases) {
+        assert.deepEqual(judgeContent(entry, r), { verdict: 'unverified', bucket, notify, reason }, JSON.stringify(r));
+    }
+    // content-encoding 的值是那台主機給的：包成行內程式碼、截短，不能在 issue 裡變成連結或 @ 人。
+    const injected = judgeContent(entry, apiOk(null, { bodyHead: undefined, bodySkipped: `content-encoding: x @octocat [fix](https://evil.example/) ${'a'.repeat(500)}` }));
+    assert.match(injected.reason, /^內容 API 回應是壓縮過的，沒有解析（`[^`]{60}`）$/);
+});
+
+test('內容 API：實際探測時，403、維護頁、中途斷線第一次出現都會重打，第二次正常就算健康；每次都斷線算連不上、不通知', async () => {
+    const urls = ['/api-403-once', '/api-html-once', '/api-cut-once', '/api-cut'].map((p) => base + p);
+    const { results } = await runProbes(urls, { ...CONTENT_PROBE, allowLoopback: true });
+    const judged = results.map((r) => judgeContent(validContentUrl(), r));
+    assert.deepEqual(judged.slice(0, 3).map((j) => j.verdict), ['healthy', 'healthy', 'healthy']);
+    assert.deepEqual(judged[3], { verdict: 'unverified', bucket: 'unreachable', notify: false, reason: '內容 API 回應沒有收完，連線中途斷了' });
+    for (const u of urls) assert.equal(hits.get(new URL(u).pathname), 2, u);
+});
+
+test('內容 API：經過 runProbes 重打時，兩次都是 {} 才算失效，只有重打那次是 {} 的算無法判定、不通知', async () => {
+    const api = `${SPA}/api/Public?cid=42&first=true`;
+    const sequences = [
+        [[{ status: 503 }, apiOk({})], 'unverified', '內容 API 回 {}，前一次不是 {}（內容 API HTTP 503）'],
+        [[{ status: 0, code: 'ETIMEDOUT' }, apiOk({})], 'unverified', '內容 API 回 {}，前一次不是 {}（內容 API 連線逾時）'],
+        [[apiOk({ cid: 42 }, { bodyTruncated: true, bodyAborted: true }), apiOk({})], 'unverified', '內容 API 回 {}，前一次不是 {}（內容 API 回應沒有收完，連線中途斷了）'],
+        [[apiOk({}, { status: 404 }), apiOk({})], 'unverified', '內容 API 回 {}，前一次不是 {}（內容 API HTTP 404）'],
+        [[apiOk({}), apiOk({})], 'dead', '內容 API 回 {}，網站上查不到這一頁'],
+        [[apiOk({}), apiOk({ cid: 42 })], 'healthy', 'HTTP 200'],
+    ];
+    for (const [seq, verdict, reason] of sequences) {
+        let n = 0;
+        const probeFn = async () => ({ finalUrl: api, redirects: [], ...seq[n++] });
+        const { results } = await runProbes([api], { ...CONTENT_PROBE, probeFn });
+        assert.equal(n, 2);
+        const j = judgeContent(validContentUrl(), results[0]);
+        assert.deepEqual([j.verdict, j.reason, j.notify ?? false], [verdict, reason, false], JSON.stringify(seq));
+    }
+});
+
+test('內容 API：judgeUrl 只在頁面健康時看 API，驗不到的另列一段；例外壓不下內容 API 的結果，只壓得下頁面驗不到', () => {
+    const policy = spaPolicy();
+    const page = { status: 200, finalUrl: spaTarget.url, redirects: [] };
+    assert.equal(judgeUrl(spaTarget, page, policy, apiOk({ cid: 42 })).bin, 'healthy');
+    const gone = apiOk({}, { previous: apiOk({}) });
+    const dead = judgeUrl(spaTarget, page, policy, gone);
+    assert.deepEqual([dead.bin, dead.content, dead.item.reason], ['dead', 'dead', '內容 API 回 {}，網站上查不到這一頁']);
+    assert.equal(judgeUrl(spaTarget, { status: 302, finalUrl: spaTarget.url }, policy, gone).bin, 'dead', '最後停在 3xx 的頁面也算健康，一樣看 API');
+    const gonePage = judgeUrl(spaTarget, { status: 404, finalUrl: spaTarget.url }, policy, apiOk({ cid: 42 }));
+    assert.deepEqual([gonePage.bin, gonePage.item.reason, gonePage.content], ['dead', 'HTTP 404', null], '頁面本身失效時不看 API');
+    const unv = judgeUrl(spaTarget, page, policy, { status: 401, finalUrl: 'x', redirects: [] });
+    assert.deepEqual([unv.bin, unv.item.notify, unv.item.reason], ['contentUnverified', true, '內容 API HTTP 401']);
+    assert.equal(judgeUrl(spaTarget, page, policy, { status: 502, finalUrl: 'x', redirects: [] }).item.notify, false);
+    const blocked = judgeUrl(spaTarget, page, policy, { status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：內網' });
+    assert.deepEqual([blocked.bin, blocked.item.notify, blocked.item.reason], ['contentUnverified', true, '內容 API 被位址政策擋下：測試：內網']);
+    const waf = { match: { host: 'spa.example.org' }, reason: '測試：API 擋自動程式', owner: 'x', expires: '2026-10-01' };
+    const withWaf = { ...policy, entries: validatePolicy({ version: 1, entries: [waf] }, TODAY).entries };
+    const notSuppressed = judgeUrl(spaTarget, page, withWaf, { status: 401, finalUrl: 'x', redirects: [] });
+    assert.deepEqual([notSuppressed.bin, notSuppressed.item.notify], ['contentUnverified', true], '內容檢查壞了，例外壓不下');
+    assert.equal(judgeUrl(spaTarget, { status: 0, code: 'ETIMEDOUT', finalUrl: spaTarget.url }, withWaf, undefined).bin, 'suppressed');
+    assert.equal(judgeUrl(spaTarget, page, withWaf, gone).bin, 'dead', '例外不壓失效');
+    assert.equal(judgeUrl({ url: `${SPA}/` }, page, policy, undefined).bin, 'healthy', '沒有內容檢查的網址照舊');
+});
+
+test('內容 API：contentProbeTargets 只列頁面判成健康、又有內容檢查的網址，最後停在 3xx 的也算', () => {
+    const { contentChecks } = spaPolicy();
+    const targets = [spaTarget, { url: `${SPA}/` }, spaTarget, spaTarget, spaTarget, spaTarget];
+    const results = [{ status: 200 }, { status: 200 }, { status: 404 }, null, { status: 0, code: 'EBLOCKED', blocked: true, reason: 'x' }, { status: 302 }];
+    const api = `${SPA}/api/Public?cid=42&first=true`;
+    assert.deepEqual(contentProbeTargets(targets, results, contentChecks), [{ index: 0, api }, { index: 5, api }]);
+    assert.deepEqual(contentProbeTargets(targets, results, undefined), []);
+});
+
+test('runProbes：retryIf 決定哪些結果重試一次，預設是判定失效的結果', async () => {
+    const calls = [];
+    const probeFn = async (url) => {
+        calls.push(url);
+        return url.endsWith('gone') ? { status: 404 } : { status: 200, bodyHead: calls.filter((u) => u === url).length === 1 ? '{}' : '{"cid":42}' };
+    };
+    const { results } = await runProbes(['https://a.example/gone', 'https://a.example/api'], { probeFn, concurrency: 1 });
+    assert.deepEqual(calls.sort(), ['https://a.example/api', 'https://a.example/gone', 'https://a.example/gone']);
+    assert.equal(results[1].bodyHead, '{}');
+    calls.length = 0;
+    const retried = await runProbes(['https://a.example/gone', 'https://a.example/api'], { probeFn, concurrency: 1, retryIf: (r) => r.bodyHead === '{}' });
+    assert.deepEqual(calls.sort(), ['https://a.example/api', 'https://a.example/api', 'https://a.example/gone']);
+    assert.equal(retried.results[1].bodyHead, '{"cid":42}');
+    assert.equal(retried.results[1].previous.bodyHead, '{}', '重打的結果留著第一次的結果');
+});
+
+test('runProbes：預算用完時不重試，該重試的結果加上 retrySkipped，內容 API 回 {} 不判失效', async () => {
+    const probeFn = (url) => new Promise((resolve) => setTimeout(() => resolve({ status: 200, finalUrl: url, redirects: [], bodyHead: '{}' }), 80));
+    const { results } = await runProbes(['https://a.example/api'], { probeFn, budgetMs: 40, retryIf: contentRetry });
+    assert.equal(results[0].retrySkipped, true);
+    assert.equal(judgeContent(validContentUrl(), results[0]).verdict, 'unverified');
+});
+
+test('buildReport：內容 API 的結果照 targets 的位置對應，失效列進連結失效，驗不到的另列一段並照 notify 通知', () => {
+    const policy = spaPolicy();
+    const other = { url: `${SPA}/`, occurrences: [] };
+    const out = buildReport(buildInput({
+        targets: [other, spaTarget], results: [{ status: 200 }, { status: 200 }], inventoryTotal: 2,
+        contentResults: [undefined, apiOk({}, { previous: apiOk({}) })], policy,
+    }));
+    assert.equal(out.attention, true);
+    assert.match(out.report, /- 本次檢查 2 筆：健康 1、失效 1/);
+    assert.match(out.report, /- 內容 API 檢查 1 筆：健康 0、失效 1、無法判定 0。/);
+    assert.match(out.report, /- \*\*內容 API 回 \{\}，網站上查不到這一頁\*\*：https:\/\/spa\.example\.org\/site\/category\?root=42&cid=42\n {2}- 出處：`dist\/x\/index\.html`/);
+    assert.ok(out.consoleSummary.includes('  內容 API：1（健康 0、失效 1、無法判定 0；頁面驗不到、沒打 API 的 0 筆）'));
+    const fine = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], contentResults: [apiOk({ cid: 42 })], policy }));
+    assert.equal(fine.attention, false);
+    assert.match(fine.report, /- 內容 API 檢查 1 筆：健康 1、失效 0、無法判定 0。/);
+    assert.match(buildReport(buildInput()).report, /- 內容 API 檢查 0 筆：/, '沒有內容檢查也要寫 0，看得出有沒有接上');
+
+    for (const [r, attention] of [[{ status: 401 }, true], [apiOk({ cid: '42' }), true], [{ status: 503 }, false]]) {
+        const o = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], contentResults: [r], policy }));
+        assert.equal(o.attention, attention, JSON.stringify(r));
+        assert.match(o.report, /- 本次檢查 1 筆：健康 0、失效 0、位址封鎖 0、無法判定 1、已列例外 0/);
+        assert.match(o.report, /### 🧩 內容 API 驗不到 1 筆\n[\s\S]*\n- 內容 API [^\n]*：https:\/\/spa\.example\.org\/site\/category\?root=42&cid=42\n/);
+        assert.ok(!o.report.includes('被站台拒絕的連結') && !o.report.includes('全部外部連結正常'));
+        assert.match(o.report, /被壓縮、超過讀取上限[\s\S]*回 \{\} 卻不是連兩次都 \{\} 的，不觸發通知/);
+        assert.ok(o.consoleSummary.includes('  無法判定：1'));
+    }
+});
+
+test('buildReport：有內容檢查、頁面卻驗不到的網址沒打 API，報告與主控台寫出筆數和網址', () => {
+    const policy = spaPolicy();
+    const other = { ...spaTarget, url: `${SPA}/site/category?root=42&cid=42` };
+    const out = buildReport(buildInput({
+        targets: [{ url: `${SPA}/` }, other, spaTarget, spaTarget], inventoryTotal: 4,
+        results: [{ status: 200 }, { status: 0, code: 'ETIMEDOUT' }, null, { status: 0, code: 'EBLOCKED', blocked: true, reason: '測試：內網' }], skipped: 1, policy,
+    }));
+    const u = `${SPA}/site/category?root=42&cid=42`;
+    assert.ok(out.report.includes(`- 內容 API 檢查 0 筆：健康 0、失效 0、無法判定 0。頁面驗不到、沒打 API 的 3 筆：${u}、${u}、${u}。` +
+        '怎麼在連得到的機器上檢查，見 scripts/link-policy.json 裡這些主機的 reason。contentChecks 列的主機對任何路徑都回 200，頁面健康之後再看 API 的回應\n'), out.report);
+    assert.ok(out.consoleSummary.includes('  內容 API：0（健康 0、失效 0、無法判定 0；頁面驗不到、沒打 API 的 3 筆）'));
+    const dead = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 404 }], policy }));
+    assert.match(dead.report, /頁面驗不到、沒打 API 的 0 筆。contentChecks 列的主機/, '頁面已經判成失效的不算驗不到');
+});
+
+test('buildReport：該打的內容 API 沒有結果時算無法判定，覆蓋不完整並觸發通知', () => {
+    const out = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], contentResults: [null], policy: spaPolicy() }));
+    assert.equal(out.coverageComplete, false);
+    assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=false\n');
+    assert.match(out.report, /- 內容 API 檢查 1 筆：健康 0、失效 0、無法判定 1。/);
+    assert.match(out.report, /本次有 1 筆未檢查（逾 12 \+ 3 \+ 2 分鐘預算）/);
+    assert.match(out.report, /- 內容 API 這次沒有檢查：https:\/\/spa\.example\.org/);
+    assert.ok(out.consoleTail.some((l) => l.includes('1 筆未檢查')));
+    const noArray = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], policy: spaPolicy() }));
+    assert.equal(noArray.coverageComplete, false, '主程式沒有交 contentResults 也不能算完整');
+});
+
+test('排程：內容檢查在 30 天內到期時也列進到期提醒', () => {
+    const c = { ...validContentCheck({ expires: '2026-09-20' }) };
+    const soon = expiringPolicyItems([], [], TODAY, [c]);
+    assert.deepEqual(soon.map((e) => [e.list, e.match.host]), [['內容檢查', 'spa.example.org']]);
+    const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [c] }, TODAY);
+    const out = buildReport(buildInput({ policy: { entries: [], hijacked: [], contentChecks } }));
+    assert.ok(out.report.includes('- 內容檢查 `spa.example.org`　到期日：2026-09-20　負責人：thc1006'), out.report.slice(0, 900));
+    assert.equal(out.attention, true);
 });
 
 const bot = (number, body) => ({ number, author: { login: ACTIONS_APP_LOGIN }, body });

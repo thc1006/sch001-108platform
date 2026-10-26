@@ -3,7 +3,7 @@
 // 檢查分組、通知條件與報告內容（link-health.test.mjs、hijack-signals.test.mjs）。
 
 import { classifyLink, describeResult, isBlockedResult, unverifiedBucket } from './link-health.lib.mjs';
-import { matchPolicy, matchHijacked, matchHijackedHop, expiringWithin } from './link-policy.lib.mjs';
+import { matchPolicy, matchHijacked, matchHijackedHop, matchContentCheck, expiringWithin } from './link-policy.lib.mjs';
 import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
@@ -22,12 +22,112 @@ const ALSO_COVERED_BY = [
 export const EXPIRY_NOTICE_DAYS = 30;
 
 /**
- * judgeUrl 決定盤點的一個網址在報告裡歸到哪一段，回傳 { bin, item, signal }。bin 是 blocked、hijacked、
- * dead、suppressed、unverified 或 healthy；signal 是自動偵測的訊號，沒有就是 null。
- * @param {{url: string, occurrences?: object[]}} target 盤點的一筆 @param {object} r probe 的結果
- * @param {{hijacked: object[], entries: object[]}} policy validatePolicy 回傳的兩份名單
+ * CONTENT_PROBE 是主程式打內容 API 時交給 runProbes 的設定，報告寫的預算也從這裡來。回應讀到 256KB：
+ * 2026-10-27 量 108 課綱資訊網單篇文章的 API 回應是 57836 bytes。打的都是同一台主機，併發數放低。
  */
-export function judgeUrl(target, r, { hijacked, entries }) {
+export const CONTENT_PROBE = Object.freeze({ concurrency: 2, budgetMs: 2 * 60_000, readBodyBytes: 256 * 1024, retryIf: contentRetry });
+
+/** parseObject 把回應解析成 JSON 物件，不是 JSON 回傳 undefined，是 JSON 但不是物件回傳 null。開頭的 BOM 不算。 */
+function parseObject(text) {
+    let data;
+    try {
+        data = JSON.parse((text ?? '').replace(/^\uFEFF/, ''));
+    } catch {
+        return undefined;
+    }
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+}
+
+/** readObject 回傳讀完的 2xx 回應解析出的 JSON 物件，其餘回傳 undefined 或 null。 */
+function readObject(r) {
+    const read = r.status >= 200 && r.status < 300 && !r.bodyTruncated && !r.bodySkipped;
+    return read ? parseObject(r.bodyHead) : undefined;
+}
+
+function isEmptyObject(r) {
+    const data = readObject(r);
+    return Boolean(data) && Object.keys(data).length === 0;
+}
+
+/**
+ * contentRetry 判斷內容 API 的結果要不要重打一次：不是讀完的 2xx JSON 物件，或剛好是 {}，就重打。
+ * 403、維護頁、中途斷線常常只是一時的，只看一次就通知會多開 issue。被位址政策擋下的重打也一樣，不重打。
+ * @param {object} r 探測 API 的結果 @returns {boolean}
+ */
+export function contentRetry(r) {
+    if (isBlockedResult(r)) return false;
+    const data = readObject(r);
+    return !data || Object.keys(data).length === 0;
+}
+
+// 回應的值是那台主機給的，字串、數字包成行內程式碼，issue 裡才不會變成連結或 @ 人。物件與陣列只寫型別，
+// 很深的巢狀結構 JSON.stringify 會丟 RangeError。
+function describeValue(data, key) {
+    if (!Object.hasOwn(data, key)) return '沒有這個欄位';
+    const v = data[key];
+    if (v === null) return '是 null';
+    if (typeof v === 'object') return Array.isArray(v) ? '是陣列' : '是物件';
+    return `是 ${inertText(JSON.stringify(v).slice(0, 80))}`;
+}
+
+/**
+ * judgeContent 用內容 API 的探測結果判定 contentChecks 裡的一個網址，回傳 { verdict, reason, bucket, notify }，
+ * verdict 是 healthy、dead 或 unverified。r 是重打過的結果時，r.previous 是第一次的結果。兩次都是 2xx、剛好是 {} 才算 dead，
+ * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。其餘照最後一次判：expect 的欄位都 ===
+ * 才算 healthy，其他是 unverified，notify 表示要不要通知：4xx（429 除外）、被壓縮、超過讀取上限、不是 JSON 物件、
+ * 格式和 expect 對不上，多半是網站改了 API；被位址政策擋下也通知。3xx、429、5xx、逾時、中途斷線不通知。
+ * @param {{expect: object}} entry contentChecks 的一筆網址 @param {object|null|undefined} r 探測 API 的結果，沒有探測就是空的
+ */
+export function judgeContent(entry, r) {
+    const unverified = (why, notify, bucket = 'other') => ({ verdict: 'unverified', bucket, notify, reason: `內容 API ${why}` });
+    if (!r) return unverified('這次沒有檢查', false);
+    if (isBlockedResult(r)) return unverified(`被位址政策擋下：${r.reason}`, true);
+    if (!(r.status >= 200 && r.status < 300)) {
+        return unverified(describeResult(r), r.status >= 400 && r.status < 500 && r.status !== 429, unverifiedBucket(r));
+    }
+    // content-encoding 的值是那台主機給的，截短再包成行內程式碼。
+    if (r.bodySkipped) return unverified(`回應是壓縮過的，沒有解析（${inertText(String(r.bodySkipped).slice(0, 60))}）`, true);
+    if (r.bodyAborted) return unverified('回應沒有收完，連線中途斷了', false, 'unreachable');
+    if (r.bodyTruncated) return unverified('回應超過讀取上限', true);
+    const data = parseObject(r.bodyHead);
+    if (data === undefined) return unverified('回應不是 JSON', true);
+    if (data === null) return unverified('回應不是 JSON 物件', true);
+    if (Object.keys(data).length === 0) {
+        if (r.retrySkipped) return unverified('回 {}，時間預算用完，沒有重打確認', false);
+        if (!r.previous) return unverified('回 {}，沒有重打確認', false);
+        if (!isEmptyObject(r.previous)) return unverified(`回 {}，前一次不是 {}（${judgeContent(entry, r.previous).reason}）`, false);
+        return { verdict: 'dead', reason: '內容 API 回 {}，網站上查不到這一頁' };
+    }
+    for (const [key, want] of Object.entries(entry.expect)) {
+        if (Object.hasOwn(data, key) && data[key] === want) continue;
+        return unverified(`回應格式變了：${key} 應該是 ${JSON.stringify(want)}，回應裡${describeValue(data, key)}`, true);
+    }
+    return { verdict: 'healthy', reason: describeResult(r) };
+}
+
+/**
+ * contentProbeTargets 列出這一輪要打的內容 API：頁面判成健康、又列在 contentChecks 的網址。回傳 { index, api }，
+ * index 是在 targets 裡的位置。judgeUrl 用同樣的條件找內容檢查，該打卻沒有結果的算成沒有檢查。
+ * @param {{url: string}[]} targets @param {(object|null)[]} results probe 的結果 @param {object[]} contentChecks
+ */
+export function contentProbeTargets(targets, results, contentChecks) {
+    const out = [];
+    targets.forEach((t, index) => {
+        const hit = results[index] && classifyLink(results[index]) === 'healthy' ? matchContentCheck(contentChecks, t.url) : null;
+        if (hit) out.push({ index, api: hit.entry.api });
+    });
+    return out;
+}
+
+/**
+ * judgeUrl 決定盤點的一個網址在報告裡歸到哪一段，回傳 { bin, item, signal, content }。bin 是 blocked、hijacked、
+ * dead、suppressed、contentUnverified、unverified 或 healthy；signal 是自動偵測的訊號，沒有就是 null；content 是內容 API 的判定，
+ * 沒有看 API 就是 null。
+ * @param {{url: string, occurrences?: object[]}} target 盤點的一筆 @param {object} r probe 的結果
+ * @param {{hijacked: object[], entries: object[], contentChecks?: object[]}} policy validatePolicy 回傳的名單
+ * @param {object|null} [apiResult] 探測內容 API 的結果
+ */
+export function judgeUrl(target, r, { hijacked, entries, contentChecks }, apiResult) {
     const item = { url: target.url, occurrences: target.occurrences ?? [], reason: describeResult(r) };
     if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };
     // 接管的判定必須在三態分類之前：被接管的網域回的就是 200，
@@ -41,15 +141,22 @@ export function judgeUrl(target, r, { hijacked, entries }) {
     // 自動訊號跑在分類之外：它只是多一段報告，不動 dead/unverified/healthy。
     const sig = detectHijackSignals(target.url, r);
     const signal = sig ? { ...sig, source: 'url', occurrences: item.occurrences } : null;
-    const verdict = classifyLink(r);
+    // 頁面健康時才看內容 API。頁面本身失效或驗不到時，API 回什麼都改變不了結論。
+    const check = classifyLink(r) === 'healthy' ? matchContentCheck(contentChecks, target.url) : null;
+    const c = check ? judgeContent(check.entry, apiResult) : null;
+    const content = c?.verdict ?? null;
+    if (c) item.reason = c.reason;
+    const verdict = content ?? classifyLink(r);
     // 例外政策不會在這裡出現。404/410 與網域解析不到一律照實回報，因為
     // allowlist 只降低 unverified 的噪音，把確定壞掉的連結壓下去等於廢掉整個檢查。
-    if (verdict === 'dead') return { bin: 'dead', item, signal };
-    if (verdict === 'healthy') return { bin: 'healthy', item, signal };
+    if (verdict === 'dead') return { bin: 'dead', item, signal, content };
+    if (verdict === 'healthy') return { bin: 'healthy', item, signal, content };
+    // 內容 API 驗不到的另列一段，例外壓不下：其中有幾種代表內容檢查本身壞了，要通知。
+    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };
     const policy = matchPolicy(entries, target.url);
-    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal };
+    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };
     // item 沒有 status 與 code，報告的分組要在這裡從探測結果算好。
-    return { bin: 'unverified', item: { ...item, bucket: unverifiedBucket(r) }, signal };
+    return { bin: 'unverified', item: { ...item, bucket: unverifiedBucket(r) }, signal, content };
 }
 
 /**
@@ -70,14 +177,15 @@ export function judgeBare(target, r, { hijacked }) {
 }
 
 /**
- * expiringPolicyItems 列出 EXPIRY_NOTICE_DAYS 天以內到期的政策項目，每筆加上 list，標明是例外還是接管警示。
- * @param {object[]} entries @param {object[]} hijacked validatePolicy 回傳的兩份名單
- * @param {string} todayISO 今天（YYYY-MM-DD，UTC） @returns {object[]}
+ * expiringPolicyItems 列出 EXPIRY_NOTICE_DAYS 天以內到期的政策項目，每筆加上 list，標明是哪一份名單。
+ * @param {object[]} entries @param {object[]} hijacked @param {string} todayISO 今天（YYYY-MM-DD，UTC）
+ * @param {object[]} [contentChecks] 三份都是 validatePolicy 回傳的名單 @returns {object[]}
  */
-export function expiringPolicyItems(entries, hijacked, todayISO) {
+export function expiringPolicyItems(entries, hijacked, todayISO, contentChecks = []) {
     return [
         ...expiringWithin(entries, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: '例外' })),
         ...expiringWithin(hijacked, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: '接管警示' })),
+        ...expiringWithin(contentChecks, todayISO, EXPIRY_NOTICE_DAYS).map((e) => ({ ...e, list: '內容檢查' })),
     ];
 }
 
@@ -117,13 +225,15 @@ export function splitSignals(autoSignals) {
  * 到期前 30 天起改由 expiringSoon 通知。直接連到接管主機的網址，workflow 先跑的 check-link-policy
  * 就會擋下；轉址才經過接管主機的，check-link-policy 看不到，靠這裡通知。需處理的自動訊號也要算，
  * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
- * 否則要等到期當天所有 PR 變紅才會發現。
- * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[], coverageComplete: boolean}} s
+ * 否則要等到期當天所有 PR 變紅才會發現。內容 API 驗不到時，judgeContent 標了 notify 的要算，那代表內容檢查本身壞了。
+ * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[],
+ *   coverageComplete: boolean, contentUnverified?: object[]}} s
  * @returns {boolean}
  */
-export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiringSoon, autoSignals, coverageComplete }) {
+export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiringSoon, autoSignals, coverageComplete, contentUnverified = [] }) {
     return (
         dead.length > 0 ||
+        contentUnverified.some((u) => u.notify) ||
         blocked.length > 0 ||
         bareDead.length > 0 ||
         hijackedHits.some((h) => h.source === 'url') ||
@@ -148,6 +258,13 @@ const coveredElsewhere = (item) =>
     ALSO_COVERED_BY.filter((c) => item.occurrences.some((o) => o.file === c.file && c.location.test(o.location)));
 
 /**
+ * NO_CONTENT 是內容 API 的計數：checked 是頁面健康、有內容檢查的網址數，skipped 是該打卻沒有結果的，
+ * pageUnverified 是有內容檢查、頁面這次驗不到而沒打 API 的網址。
+ */
+const NO_CONTENT = Object.freeze({ checked: 0, healthy: 0, dead: 0, unverified: 0, skipped: 0, pageUnverified: Object.freeze([]) });
+const contentCounts = (c) => `健康 ${c.healthy}、失效 ${c.dead}、無法判定 ${c.unverified}`;
+
+/**
  * renderReport 產生週報的 markdown，第一行是 issue 的機器標記。m 是 buildReport 整理好的結果：
  * 各段的項目、數量、盤點與預算資訊，以及算好的通知條件 attention。
  * @param {object} m @returns {string}
@@ -156,14 +273,21 @@ export function renderReport(m) {
     const {
         todayISO, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
-        budgetMs, bareBudgetMs, expiringSoon, attention,
+        budgetMs, bareBudgetMs, expiringSoon, attention, content = NO_CONTENT, contentUnverified = [],
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
 
     const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
     lines.push(`- 檢查日期：${todayISO}（UTC）`);
     lines.push(`- 盤點：${inventoryTotal} 個去重外部網址，來自 check-built-site.mjs 的建置產物掃描`);
-    lines.push(`- 本次檢查 ${targetsCount} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${urlBlockedCount}、無法判定 ${unverified.length}、已列例外 ${suppressed.length}`);
+    lines.push(`- 本次檢查 ${targetsCount} 筆：健康 ${healthy}、失效 ${dead.length}、位址封鎖 ${urlBlockedCount}、無法判定 ${unverified.length + contentUnverified.length}、已列例外 ${suppressed.length}`);
+    // 頁面驗不到的那幾筆一定要寫出來：runner 連不到的主機，API 一次都沒打，只寫 0 筆會被當成沒事。
+    const notProbed = content.pageUnverified;
+    lines.push(
+        `- 內容 API 檢查 ${content.checked} 筆：${contentCounts(content)}。頁面驗不到、沒打 API 的 ${notProbed.length} 筆` +
+            (notProbed.length ? `：${notProbed.join('、')}。怎麼在連得到的機器上檢查，見 scripts/link-policy.json 裡這些主機的 reason` : '') +
+            '。contentChecks 列的主機對任何路徑都回 200，頁面健康之後再看 API 的回應',
+    );
     lines.push(
         `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHostsCount}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
     );
@@ -316,6 +440,20 @@ export function renderReport(m) {
         lines.push('');
     }
 
+    if (contentUnverified.length) {
+        lines.push(`### 🧩 內容 API 驗不到 ${contentUnverified.length} 筆`, '');
+        lines.push(
+            '這些網址的主機對任何路徑都回 200，只能靠 `scripts/link-policy.json` 的 contentChecks 打 API 確認內容。',
+            'API 回 4xx（429 除外）、回應被壓縮、超過讀取上限、不是 JSON 物件或格式和 expect 對不上，多半是網站改了 API，',
+            '請照新的寫法改 contentChecks，否則這些網址等於沒有檢查；這幾種和被位址政策擋下的會觸發通知。',
+            '3xx、429、5xx、逾時、連線中途斷了，以及回 {} 卻不是連兩次都 {} 的，不觸發通知。',
+            '回應是讀完的 2xx、{} 以外的 JSON 物件時只打一次；其他結果除了被位址政策擋下的，時間預算內會重打一次，這裡寫的是最後一次的結果。',
+            '',
+        );
+        for (const u of contentUnverified) lines.push(`- ${u.reason}：${u.url}`);
+        lines.push('');
+    }
+
     if (bareDead.length) {
         lines.push('### 🔤 說明文字裡的網域失效（請改寫內文或補上現行網址）', '');
         lines.push(
@@ -374,10 +512,10 @@ export function renderReport(m) {
         lines.push('', '</details>', '');
     }
 
-    if (skipped || bareSkipped) {
+    if (skipped || bareSkipped || content.skipped) {
         lines.push('### ⏱️ 檢查未完成（覆蓋不完整）', '');
         lines.push(
-            `本次有 ${skipped + bareSkipped} 筆未檢查（逾 ${budgetMs / 60_000} + ${bareBudgetMs / 60_000} 分鐘預算）。**未檢查不等於正常**，這批網址本次沒有被驗證過。`,
+            `本次有 ${skipped + bareSkipped + content.skipped} 筆未檢查（逾 ${budgetMs / 60_000} + ${bareBudgetMs / 60_000} + ${CONTENT_PROBE.budgetMs / 60_000} 分鐘預算）。**未檢查不等於正常**，這批網址本次沒有被驗證過。`,
             '',
             '起點每週輪替，長期覆蓋率會均勻；但若連續數週出現，代表預算或併發數需要調整。',
             '',
@@ -463,7 +601,7 @@ export function renderReport(m) {
     }
 
     // 有列出接管主機時不寫這句，免得和上面的警示互相矛盾。
-    if (!attention && !unverified.length && !bareOther.length && !hijackedHits.length) lines.push('✅ 全部外部連結正常。', '');
+    if (!attention && !unverified.length && !contentUnverified.length && !bareOther.length && !hijackedHits.length) lines.push('✅ 全部外部連結正常。', '');
 
     return lines.join('\n');
 }
@@ -473,7 +611,7 @@ function consoleLines(m) {
     const {
         inventoryPath, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
-        coverageComplete, expiringSoon, attention, limit,
+        coverageComplete, expiringSoon, attention, limit, content, contentUnverified,
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
     const summary = [];
@@ -483,9 +621,10 @@ function consoleLines(m) {
     summary.push(`  健康　　：${healthy}`);
     summary.push(`  失效　　：${dead.length}`);
     summary.push(`  位址封鎖：${urlBlockedCount}`);
-    summary.push(`  無法判定：${unverified.length}`);
+    summary.push(`  無法判定：${unverified.length + contentUnverified.length}`);
     summary.push(`  已列例外：${suppressed.length}`);
     if (skipped) summary.push(`  未檢查　：${skipped}（逾時間預算）`);
+    summary.push(`  內容 API：${content.checked}（${contentCounts(content)}；頁面驗不到、沒打 API 的 ${content.pageUnverified.length} 筆）`);
     summary.push('內文裸網域（只寫在說明文字裡的網域）');
     summary.push(`  盤點候選：${bareInfo.total}（其中 ${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋，不重複檢查）`);
     summary.push(`  DNS 篩掉：${bareRejected.length}（TLD 確定不存在＝檔名或縮寫，不是網域）`);
@@ -506,7 +645,7 @@ function consoleLines(m) {
     );
     const tail = [];
     if (limit > 0) tail.push(`→ 使用了 --limit ${limit}：只驗了一部分，coverage_complete 一律為 false。`);
-    if (!coverageComplete) tail.push(`→ 覆蓋不完整：${skipped + bareSkipped} 筆未檢查、${bareUnresolved.length} 筆未篩選，不可視為健康。`);
+    if (!coverageComplete) tail.push(`→ 覆蓋不完整：${skipped + bareSkipped + content.skipped} 筆未檢查、${bareUnresolved.length} 筆未篩選，不可視為健康。`);
     tail.push(attention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');
     return { consoleSummary: summary, consoleTail: tail };
 }
@@ -521,6 +660,7 @@ function consoleLines(m) {
  */
 export function buildReport(input) {
     const { todayISO, limit, targets, results, skipped, bareCandidates, screen, bareResults, bareSkipped, policy } = input;
+    const contentResults = input.contentResults ?? [];
     const dead = [];
     const blocked = [];
     const unverified = [];
@@ -534,11 +674,21 @@ export function buildReport(input) {
     // 去修沒壞的東西，多報一筆可疑只是多看一眼。
     const autoSignals = [];
     let healthy = 0;
-    const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified };
+    const content = { ...NO_CONTENT, pageUnverified: [] };
+    const contentUnverified = [];
+    const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified, contentUnverified };
     for (let i = 0; i < targets.length; i++) {
         const r = results[i];
+        const unchecked = !r || classifyLink(r) === 'unverified';
+        if (unchecked && matchContentCheck(policy.contentChecks, targets[i].url)) content.pageUnverified.push(targets[i].url);
         if (!r) continue; // 預算用盡，未檢查
-        const { bin, item, signal } = judgeUrl(targets[i], r, { hijacked: policy.hijacked, entries: policy.entries });
+        const judged = judgeUrl(targets[i], r, policy, contentResults[i]);
+        const { bin, item, signal } = judged;
+        if (judged.content) {
+            content.checked++;
+            content[judged.content]++;
+            if (!contentResults[i]) content.skipped++;
+        }
         if (signal) autoSignals.push(signal);
         if (bin === 'healthy') healthy++;
         else urlBins[bin].push(item);
@@ -570,8 +720,8 @@ export function buildReport(input) {
     // 問不到 TLD 答案的候選並沒有被探測過，等同「未檢查」，不可以算進完整覆蓋。
     // --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘完全沒看過；算成完整覆蓋的話，
     // 一次只驗 3 筆的執行也會宣稱「全站都查過了」。
-    const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && screen.unresolved.length === 0;
-    const expiringSoon = expiringPolicyItems(policy.entries, policy.hijacked, todayISO);
+    const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && content.skipped === 0 && screen.unresolved.length === 0;
+    const expiringSoon = expiringPolicyItems(policy.entries, policy.hijacked, todayISO, policy.contentChecks);
     const model = {
         todayISO,
         inventoryTotal: input.inventoryTotal,
@@ -595,6 +745,8 @@ export function buildReport(input) {
         bareSkipped,
         budgetMs: input.budgetMs,
         bareBudgetMs: input.bareBudgetMs,
+        content,
+        contentUnverified,
         coverageComplete,
         expiringSoon,
     };
