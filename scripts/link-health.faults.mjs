@@ -5,7 +5,7 @@
  * 這支逐一破壞一個東西，確認該紅的真的會紅：
  *
  *   A. 政策檔的每一條規則 → check-link-policy.mjs 必須以非零碼結束
- *   B. SSRF 防護、讀 body 與無法判定的分組 → link-health.test.mjs 必須失敗
+ *   B. SSRF 防護、讀 body、JS 轉址與無法判定的分組 → link-health.test.mjs 必須失敗
  *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
@@ -284,7 +284,7 @@ const policyCases = [
     },
 ];
 
-// B 段是 SSRF 防護、讀 body 與無法判定分組的突變測試：每一項都把其中一段拿掉或改掉，
+// B 段是 SSRF 防護、讀 body、JS 轉址與無法判定分組的突變測試：每一項都把其中一段拿掉或改掉，
 // 然後跑 link-health.test.mjs。測試必須失敗。
 const guardMutations = [
     {
@@ -363,6 +363,30 @@ const guardMutations = [
                 "const code = err?.code === 'ENOENT' ? 'ENOTFOUND' : err?.code || 'EDNS';",
                 "const code = err?.code === 'ENOENT' || err?.code === 'EAI_AGAIN' ? 'ENOTFOUND' : err?.code || 'EDNS';",
             ),
+    },
+    {
+        name: 'JS 轉址那一跳沒有標成 js（報告看不出經過 JS 轉址）',
+        apply: (s) => s.replace("...(js ? { via: 'js' } : {})", '...{}'),
+    },
+    {
+        name: 'JS 目的頁失敗時不回傳殼本身的結果（訊號 C 跟著消失）',
+        apply: (s) => s.replace('const settle = (res) => (shell && !(res.status >= 200 && res.status < 400) ? shell : res);', 'const settle = (res) => res;'),
+    },
+    {
+        name: 'JS 轉址不限 2xx（404 的殼也被跟走）',
+        apply: (s) => s.replace('const js = r.status >= 200 && r.status < 300 && r.bodyHead !== undefined', 'const js = r.bodyHead !== undefined'),
+    },
+    {
+        name: 'JS 轉址沒有拿到 bodyTruncated（只讀到前綴的殼也跟）',
+        apply: (s) => s.replace('jsRedirectTarget(url.href, r.bodyHead, r.bodyTruncated === true, String(rawUrl))', 'jsRedirectTarget(url.href, r.bodyHead, false, String(rawUrl))'),
+    },
+    {
+        name: 'JS 轉址那一跳跳過靜態政策（帶帳密的目標也連）',
+        apply: (s) => s.replace('const statik = staticUrlPolicy(current, opts);', "const statik = chain.at(-1)?.via === 'js' ? { ok: true, url: new URL(current) } : staticUrlPolicy(current, opts);"),
+    },
+    {
+        name: 'JS 轉址不看盤點的起點（probe 沒把 rawUrl 傳進去）',
+        apply: (s) => s.replace(', r.bodyTruncated === true, String(rawUrl))', ', r.bodyTruncated === true)'),
     },
     {
         // 下面三條守週報的分組：分組錯了，三態照樣正確，只有讀報告的人看得出來。
@@ -455,6 +479,54 @@ const hijackMutations = [
     {
         name: 'HTTP 層盲區偵測不理會截斷（只讀到前綴的頁面會被當成殼）',
         apply: (s) => s.replace('    if (truncated) return null;\n', ''),
+    },
+    {
+        name: 'JS 轉址不看同一台主機（hmun.org 那種轉回自己的殼會被跟下去）',
+        apply: (s) => s.replace("if (url.protocol !== 'https:' || url.search || url.hash || from === to) return null;", "if (url.protocol !== 'https:' || url.search || url.hash) return null;"),
+    },
+    {
+        name: 'JS 轉址不看查詢字串（帶追蹤或簽章參數的殼會被跟下去）',
+        apply: (s) => s.replace("url.protocol !== 'https:' || url.search || url.hash ||", "url.protocol !== 'https:' || url.hash ||"),
+    },
+    {
+        name: 'JS 轉址不看可註冊網域（轉去別的組織的網域也跟）',
+        apply: (s) => s.replace('return domain && domain === registrableDomain(from) && domain === registrableDomain(to) ? url.href : null;', 'return url.href;'),
+    },
+    {
+        name: '可註冊網域一律取最後兩段（a.edu.tw 與 b.edu.tw 被當成同一個網域）',
+        apply: (s) => s.replace("labels.at(-2).length <= 3 ? 3 : 2", 'false ? 3 : 2'),
+    },
+    {
+        name: 'JS 轉址不要求每一處都是同一個寫死的網址',
+        apply: (s) => s.replace('if (targets.length === 0 || targets.length !== sinks.length || new Set(targets).size !== 1) return null;', 'if (targets.length === 0) return null;'),
+    },
+    {
+        name: 'JS 轉址連 http 的目標也跟',
+        apply: (s) => s.replace('(https:\\\\/\\\\/[^', '(https?:\\\\/\\\\/[^').replace("if (url.protocol !== 'https:' || url.search", 'if (url.search'),
+    },
+    {
+        name: 'JS 轉址的字面網址後面不檢查接什麼（接 <、換行接運算子都會被當成語句結束）',
+        apply: (s) => s.replace("(?=\\\\s*(?:[;)}]|<\\\\/script\\\\b|$))`, 'g')", "`, 'g')"),
+    },
+    {
+        name: 'JS 轉址不看頁面裡別的 location 寫法',
+        apply: (s) => s.replace(' || OTHER_LOCATION.test(bodyHead)) return null;', ') return null;'),
+    },
+    {
+        name: 'JS 轉址的寫法不分大小寫',
+        apply: (s) => s.replace("location\\s*=(?!=)/g;", "location\\s*=(?!=)/gi;").replace("\\1(?=\\\\s*(?:[;)}]|<\\\\/script\\\\b|$))`, 'g')", "\\1(?=\\\\s*(?:[;)}]|<\\\\/script\\\\b|$))`, 'gi')"),
+    },
+    {
+        name: 'JS 轉址用頁面網址當 base（//host 這種目標也跟）',
+        apply: (s) => s.replace('(https:\\\\/\\\\/[^', '((?:https:)?\\\\/\\\\/[^').replace('url = new URL(targets[0]);', 'url = new URL(targets[0], pageUrl);'),
+    },
+    {
+        name: 'JS 轉址不看盤點的起點（起點 302 到別的網域，那裡的殼轉到自己的 www 也跟）',
+        apply: (s) => s.replace('const domain = registrableDomain(host(startUrl));', 'const domain = registrableDomain(from);'),
+    },
+    {
+        name: '共用主機的後綴清單失效（github.io 底下不同使用者的站被當成同一個網域）',
+        apply: (s) => s.replace('if (SHARED_SUFFIXES.some(', 'if (false && SHARED_SUFFIXES.some('),
     },
     {
         // 這一條守的是漏檢：description 的引號若改用「兩種引號都排除」的字元類別，

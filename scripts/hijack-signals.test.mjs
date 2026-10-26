@@ -16,6 +16,7 @@ import {
     contentSquatSignals,
     visibleText,
     detectHijackSignals,
+    jsRedirectTarget,
     inertText,
     SQUAT_PHRASES,
 } from './hijack-signals.lib.mjs';
@@ -422,6 +423,106 @@ test('opaqueShell：hmun.org 實測到的 JS 挑戰殼會被標出來', () => {
     assert.ok(r.bytes < 2048);
     // 沒讀完的 body 看起來也像很小的殼，不能拿來報
     assert.equal(opaqueShell(real, true), null);
+});
+
+const jsShell = (js) => `<html><head><title>x</title></head><body><script>${js}</script></body></html>`;
+
+test('jsRedirectTarget：殼頁轉去同一個可註冊網域底下另一台主機的寫死 https 網址，幾種寫法都認得', () => {
+    // 2026-10-26 實測 ctf.hitcon.org 是 4236 bytes 的殼，前面有一段讀 location.href 的追蹤程式，讀取不算轉址。
+    const target = 'https://ctf2026.hitcon.org/';
+    for (const js of [
+        'var l=w.location.href;window.location="https://ctf2026.hitcon.org";',
+        "window.location.href = 'https://ctf2026.hitcon.org'",
+        'location.replace("https://ctf2026.hitcon.org")',
+        "top.location.assign('https://ctf2026.hitcon.org');",
+    ]) {
+        assert.equal(jsRedirectTarget('https://ctf.hitcon.org/', jsShell(js)), target, js);
+    }
+    assert.equal(jsRedirectTarget('https://example.org/', jsShell('location.replace("https://www.example.org/")')), 'https://www.example.org/');
+    // 兩層後綴：com.tw 底下的 example.com.tw 才是可註冊網域。
+    assert.equal(jsRedirectTarget('https://a.example.com.tw/', jsShell('location.replace("https://b.example.com.tw/x")')), 'https://b.example.com.tw/x');
+});
+
+test('jsRedirectTarget：目標是算出來的、不只一個、http、帶查詢字串或片段、同一台主機、別的可註冊網域，或頁面不是殼，一律不跟', () => {
+    const from = 'https://ctf.hitcon.org/';
+    for (const js of [
+        'window.location="https://ctf2026.hitcon.org/?t="+Date.now()',
+        'location.href=next',
+        'location.href="https://ctf2026.hitcon.org/";location.href=u',
+        'if(x){location.replace("https://ctf2026.hitcon.org/")}else{location.replace("https://ctf2027.hitcon.org/")}',
+        'window.location="http://ctf2026.hitcon.org"',
+        // 轉去別的組織的網域，正是被接管、停放的網域常見的樣子，留給訊號 C。
+        'window.location="https://arcade.now/lp1/play"',
+    ]) {
+        assert.equal(jsRedirectTarget(from, jsShell(js)), null, js);
+    }
+    // 2026-10-26 抓的 hmun.org 殼：轉回自己，網址帶每次重簽的 token，跟下去會到廣告站。
+    const hmun = "window.location.replace('https://hmun.org/?ch=1&js=eyJhbGciOiJIUzI1NiJ9.abc&sid=4eade933');";
+    assert.equal(jsRedirectTarget('https://hmun.org/', jsShell(hmun)), null, '同一台主機');
+    assert.equal(jsRedirectTarget(from, jsShell('location.replace("https://ctf.hitcon.org/2026/")')), null, '同一台主機，沒有查詢字串');
+    // 同一個網域、不同主機，但目標帶查詢字串或片段：hmun.org 那種殼放在 www 底下就是這個形狀。
+    const www = "window.location.replace('https://example.org/?ch=1&js=eyJhbGciOiJIUzI1NiJ9.fake&sid=fake');";
+    assert.equal(jsRedirectTarget('https://www.example.org/', jsShell(www)), null, '帶查詢字串');
+    assert.equal(jsRedirectTarget(from, jsShell('location.replace("https://ctf2026.hitcon.org/#top")')), null, '帶片段');
+    for (const [a, b] of [['a.example.com.tw', 'b.other.com.tw'], ['www.ntu.edu.tw', 'www.ntnu.edu.tw'], ['a.edu.tw', 'b.edu.tw']]) {
+        assert.equal(jsRedirectTarget(`https://${a}/`, jsShell(`location.replace("https://${b}/")`)), null, `${a} → ${b}`);
+    }
+    assert.equal(jsRedirectTarget(from, jsShell('location.replace("https://ctf2026.hitcon.org/")'), true), null, 'body 沒讀完');
+    const page = '<html><body><h1>報名須知與賽程</h1><script>location.replace("https://ctf2026.hitcon.org/")</script></body></html>';
+    assert.equal(jsRedirectTarget(from, page), null, '有內容的頁面不是殼');
+});
+
+test('jsRedirectTarget：字面網址後面接了運算就不跟，瀏覽器去的可能是別的網址', () => {
+    const from = 'https://ctf.hitcon.org/';
+    for (const js of [
+        'window.location="https://ctf2026.hitcon.org"<0||"https://evil.example/x"',
+        'window.location="https://ctf2026.hitcon.org/x"\n+"?ch=1&js=TOKEN"',
+        'window.location="https://ctf2026.hitcon.org/"\n?"https://evil.example/":0',
+    ]) {
+        assert.equal(jsRedirectTarget(from, jsShell(js)), null, js);
+    }
+    assert.equal(jsRedirectTarget(from, '<html><body><script>window.location="https://ctf2026.hitcon.org"\n</script ></body></html>'), 'https://ctf2026.hitcon.org/');
+});
+
+test('jsRedirectTarget：只認幾種寫法，頁面裡有別的 location 寫入或目標不是 https:// 開頭就不跟', () => {
+    const from = 'https://ctf.hitcon.org/';
+    const real = 'window.location="https://ctf2026.hitcon.org";';
+    // 註解與字串裡的也算數：檢查器不解析 JavaScript。
+    for (const decoy of [
+        '/* x */location="https://evil.example/";',
+        '// document.location="https://evil.example/"\n',
+        '"x".length&&(location.host="evil.example");',
+        'if(0){window["location"]="https://evil.example/"}',
+        'location["href"]="https://evil.example/";',
+        'Window.Location=1;location = "https://evil.example/";',
+    ]) {
+        assert.equal(jsRedirectTarget(from, jsShell(decoy + real)), null, decoy);
+    }
+    for (const js of ['window.location="https:ctf2026.hitcon.org"', 'location.replace("//ctf2026.hitcon.org/")', 'WINDOW.LOCATION="https://ctf2026.hitcon.org"']) {
+        assert.equal(jsRedirectTarget(from, jsShell(js)), null, js);
+    }
+});
+
+test('jsRedirectTarget：起點、殼頁與目標要在同一個可註冊網域，共用主機的後綴一律不跟', () => {
+    const shell = jsShell('window.location="https://www.monetize.example/play";');
+    assert.equal(jsRedirectTarget('https://monetize.example/landing', shell), 'https://www.monetize.example/play');
+    // 盤點的網址先 302 到別的網域，那裡的殼再 JS 轉到自己的 www：起點不在同一個網域，不跟。
+    assert.equal(jsRedirectTarget('https://monetize.example/landing', shell, false, 'http://hijacked-edu.example/'), null);
+    for (const [a, b] of [['alice.github.io', 'bob.github.io'], ['a.netlify.app', 'b.netlify.app'], ['a.game.tw', 'b.game.tw'],
+        ['school.lea.sch.uk', 'other.lea.sch.uk'], ['a.nsw.edu.au', 'b.nsw.edu.au'], ['a.blogspot.com', 'b.blogspot.com']]) {
+        assert.equal(jsRedirectTarget(`https://${a}/`, jsShell(`location.replace("https://${b}/")`)), null, `${a} → ${b}`);
+    }
+});
+
+test('crossSiteRedirect：JS 轉址那一跳在 hops 裡標出來，轉回原站也要列出', () => {
+    const js = { from: 'https://ctf.hitcon.org/', status: 200, to: 'https://ctf2026.hitcon.org/', via: 'js' };
+    const r = crossSiteRedirect('https://ctf.hitcon.org/', 'https://ctf2026.hitcon.org/', [js]);
+    assert.deepEqual(r.hops, ['ctf.hitcon.org --JS 轉址--> ctf2026.hitcon.org']);
+    const back = crossSiteRedirect('https://a.example/', 'https://a.example/x', [
+        { from: 'https://a.example/', status: 200, to: 'https://b.example/', via: 'js' },
+        { from: 'https://b.example/', status: 302, to: 'https://a.example/x' },
+    ]);
+    assert.ok(back, '經過 JS 轉址又回到原站，JS 那一跳不能消失');
 });
 
 test('opaqueShell：有 meta refresh 的小殼**不算**盲區（不需要 JS 就走得下去）', () => {
