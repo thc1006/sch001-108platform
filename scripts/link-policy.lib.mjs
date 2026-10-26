@@ -34,6 +34,11 @@
  * 每一筆還要標 kind：hijacked（這台主機本身易主）或 terminus（接管鏈的終點，本來就
  * 不是教育網域）。少了這個欄位，報告只能一律稱它們「被接管的網域」，而 arcade.now
  * 並沒有被誰接管，它就是接管方。標籤不實的警示，下一個維護者不會相信。
+ *
+ * contentChecks 是第三份清單，補三態的另一個盲點：有些主機對任何路徑都回同一個前端殼和 200，
+ * 內容由 API 載入，頁面刪掉了狀態碼也不會變。每一筆宣告一台這樣的主機，列出主機上每個網址
+ * 要打哪個 API、回應裡哪些欄位要等於什麼。check-link-policy 要求這些主機上首頁以外的網址都要
+ * 列進來，紀律和 hijacked 相同：精確主機名、reason／evidence／owner／expires。
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
@@ -45,10 +50,12 @@ export const MAX_HORIZON_DAYS = 180;
 const MIN_REASON_CHARS = 10;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries', 'hijacked']);
+const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries', 'hijacked', 'contentChecks']);
 const ENTRY_KEYS = new Set(['match', 'reason', 'owner', 'expires']);
 /** hijacked 多一個 evidence：沒有原始觀察就無法在到期時比對「是否仍被接管」。 */
 const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'evidence']);
+const CONTENT_CHECK_KEYS = new Set(['match', 'reason', 'owner', 'expires', 'evidence', 'urls']);
+const CONTENT_URL_KEYS = new Set(['url', 'api', 'expect']);
 
 /**
  * 這份名單裡有兩種不同的東西，必須分清楚，否則報告會說謊：
@@ -137,7 +144,8 @@ export function normalizeUrl(raw) {
 }
 
 /**
- * 驗證整份政策檔。回傳 { errors, entries }；errors 非空時呼叫端必須讓 CI 失敗。
+ * 驗證整份政策檔。回傳 { errors, entries, hijacked, contentChecks }，三份名單只含通過驗證的項目；
+ * errors 非空時呼叫端必須讓 CI 失敗。
  *
  * @param {unknown} policy 已 parse 的 JSON
  * @param {string} todayISO 今天（YYYY-MM-DD，UTC）
@@ -148,7 +156,7 @@ export function validatePolicy(policy, todayISO) {
     const push = (m) => errors.push(m);
 
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
-        return { errors: ['政策檔最外層必須是物件'], entries };
+        return { errors: ['政策檔最外層必須是物件'], entries, hijacked: [], contentChecks: [] };
     }
     for (const k of Object.keys(policy)) {
         if (!TOP_LEVEL_KEYS.has(k)) push(`最外層含未知欄位「${k}」`);
@@ -156,11 +164,11 @@ export function validatePolicy(policy, todayISO) {
     if (policy.version !== 1) push(`version 必須是 1（目前為 ${JSON.stringify(policy.version)}）`);
     if (!Array.isArray(policy.entries)) {
         push('entries 必須是陣列');
-        return { errors, entries };
+        return { errors, entries, hijacked: [], contentChecks: [] };
     }
     if (!isRealDate(todayISO)) {
         push(`today「${todayISO}」不是合法日期`);
-        return { errors, entries };
+        return { errors, entries, hijacked: [], contentChecks: [] };
     }
     const todayMs = toUTCDay(todayISO);
 
@@ -216,11 +224,11 @@ export function validatePolicy(policy, todayISO) {
     });
 
     const hijacked = [];
+    const seenHijacked = new Set();
     if (policy.hijacked !== undefined) {
         if (!Array.isArray(policy.hijacked)) {
             push('hijacked 必須是陣列');
         } else {
-            const seenHijacked = new Set();
             policy.hijacked.forEach((e, i) => {
                 const at = `hijacked[${i}]`;
                 const errorsBefore = errors.length;
@@ -265,7 +273,91 @@ export function validatePolicy(policy, todayISO) {
         }
     }
 
-    return { errors, entries, hijacked };
+    const contentChecks = validateContentChecks(policy.contentChecks, seenHijacked, todayISO, todayMs, errors);
+    return { errors, entries, hijacked, contentChecks };
+}
+
+const isPlainObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * checkPolicyUrl 檢查政策檔裡寫的完整網址：過位址政策、寫成正規化的形式、不帶 fragment，host 不是 null 時
+ * 主機要是 host。回傳有沒有通過，原因 push 進錯誤。
+ */
+function checkPolicyUrl(raw, at, host, push) {
+    let why = null;
+    const verdict = typeof raw === 'string' && raw.trim() ? staticUrlPolicy(raw) : null;
+    if (!verdict) why = '必須是非空字串';
+    else if (raw.includes('#')) why = '不得帶 fragment';
+    else if (!verdict.ok) why = `本身就違反位址政策：${verdict.reason}`;
+    else if (normalizeUrl(raw) !== raw) why = `請改寫成正規化後的形式：${normalizeUrl(raw)}`;
+    else if (host && canonicalHost(verdict.url.hostname) !== host) why = `要在同一台主機 ${host} 上`;
+    if (why) push(`${at} ${why}`);
+    return !why;
+}
+
+/**
+ * validateContentChecks 驗證 contentChecks，回傳通過的項目，錯誤 push 進 validatePolicy 的 errors。
+ * 每一筆宣告一台對任何路徑都回 200 的主機，urls 列出這台主機上每個網址要打哪個 API、回應的 JSON
+ * 物件裡哪些欄位要等於什麼。API 限定同一台主機、不帶埠號的 https 網址：探測的範圍和頁面本身相同，
+ * 政策檔不能把請求送到別的地方。expect 只比回應最外層的欄位，值只收字串、數字與布林，比對用 ===。
+ * 鍵不能含「.」：寫成 a.b 的人想比的是巢狀欄位，這裡不支援，與其靜靜比不到不如直接報錯。
+ */
+function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
+    const push = (m) => errors.push(m);
+    const out = [];
+    if (list === undefined) return out;
+    if (!Array.isArray(list)) return push('contentChecks 必須是陣列'), out;
+    const seenHosts = new Set();
+    const seenUrls = new Set();
+    list.forEach((e, i) => {
+        const at = `contentChecks[${i}]`;
+        const errorsBefore = errors.length;
+        if (!isPlainObject(e)) return push(`${at} 必須是物件`);
+        for (const k of Object.keys(e)) if (!CONTENT_CHECK_KEYS.has(k)) push(`${at} 含未知欄位「${k}」`);
+        let host = null;
+        if (!isPlainObject(e.match) || Object.keys(e.match).join() !== 'host') {
+            push(`${at}.match 只能有 host 一個欄位：對任何路徑都回 200 是整台主機的性質`);
+        } else {
+            host = checkExactHost(e.match.host, at, push);
+        }
+        if (host) {
+            if (seenHosts.has(host)) push(`${at} 與前面的項目重複（${host}）`);
+            seenHosts.add(host);
+            if (hijackedHosts.has(host)) push(`${at} 的主機 ${host} 列在 hijacked，不可信任的主機不必驗內容`);
+        }
+        for (const field of ['reason', 'evidence']) {
+            if (typeof e[field] !== 'string' || [...e[field].trim()].length < MIN_REASON_CHARS) {
+                push(`${at}.${field} 必須寫明這台主機對不存在的路徑回什麼、內容從哪個 API 來，至少 ${MIN_REASON_CHARS} 字`);
+            }
+        }
+        if (typeof e.owner !== 'string' || !e.owner.trim()) push(`${at}.owner 必須指名負責重審的人`);
+        checkExpires(e.expires, at, todayISO, todayMs, push);
+        if (!Array.isArray(e.urls)) {
+            push(`${at}.urls 必須是陣列，只連首頁時寫空陣列`);
+        } else {
+            e.urls.forEach((u, j) => {
+                const uat = `${at}.urls[${j}]`;
+                if (!isPlainObject(u)) return push(`${uat} 必須是物件`);
+                for (const k of Object.keys(u)) if (!CONTENT_URL_KEYS.has(k)) push(`${uat} 含未知欄位「${k}」`);
+                if (checkPolicyUrl(u.url, `${uat}.url`, host, push)) {
+                    if (seenUrls.has(u.url)) push(`${uat}.url 與前面的項目重複（${u.url}）`);
+                    seenUrls.add(u.url);
+                }
+                if (typeof u.api === 'string' && !u.api.startsWith('https://')) push(`${uat}.api 必須是 https 網址`);
+                else if (checkPolicyUrl(u.api, `${uat}.api`, host, push) && new URL(u.api).port) push(`${uat}.api 不得帶埠號`);
+                const values = isPlainObject(u.expect) ? Object.values(u.expect) : [];
+                const scalar = (v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v));
+                if (!values.length || !values.every(scalar)) {
+                    push(`${uat}.expect 必須是非空的物件，值只能是字串、數字或布林（目前：${JSON.stringify(u.expect)}）`);
+                }
+                for (const key of isPlainObject(u.expect) ? Object.keys(u.expect) : []) {
+                    if (key.includes('.')) push(`${uat}.expect 的鍵「${key}」含「.」：expect 只比回應最外層的欄位`);
+                }
+            });
+        }
+        if (host && errors.length === errorsBefore) out.push({ ...e, _key: `contentChecks:${host}` });
+    });
+    return out;
 }
 
 /**
@@ -331,4 +423,40 @@ export function matchHijackedHop(hijacked, r) {
         if (policy) return { policy, url: hop.to };
     }
     return null;
+}
+
+/**
+ * matchContentCheck 用正規化後的網址精確比對 contentChecks，回傳 { check, entry }：check 是那台主機的宣告，
+ * entry 是 urls 裡的那一筆。沒有就回傳 null。
+ * @param {object[]} contentChecks validatePolicy 回傳的 contentChecks @param {string} url
+ */
+export function matchContentCheck(contentChecks, url) {
+    const normalized = normalizeUrl(url);
+    for (const check of contentChecks ?? []) {
+        const entry = check.urls.find((u) => u.url === normalized);
+        if (entry) return { check, entry };
+    }
+    return null;
+}
+
+/**
+ * contentCheckGaps 列出落在 contentChecks 宣告的主機上、卻沒有內容檢查的網址，回傳 { url, check }。
+ * 首頁（路徑是 /、沒有查詢字串）不列：站還在，首頁就在，狀態碼看得出來。盤點不含 fragment，
+ * 靠 #/ 路由的網址到這裡已經是首頁，看不到。
+ * @param {object[]} contentChecks validatePolicy 回傳的 contentChecks @param {string[]} urls
+ */
+export function contentCheckGaps(contentChecks, urls) {
+    const gaps = [];
+    for (const url of urls) {
+        let u;
+        try {
+            u = new URL(url);
+        } catch {
+            continue;
+        }
+        const check = (contentChecks ?? []).find((c) => c.match.host === canonicalHost(u.hostname));
+        if (!check || (u.pathname === '/' && !u.search) || matchContentCheck([check], url)) continue;
+        gaps.push({ url, check });
+    }
+    return gaps;
 }

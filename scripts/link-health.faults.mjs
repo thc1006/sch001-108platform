@@ -43,7 +43,7 @@ rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
 
 const realPolicy = JSON.parse(readFileSync(path.join(SCRIPTS, 'link-policy.json'), 'utf8'));
-// entries 用固定的測資：正式的例外可能一筆都不剩，entries 的規則仍要有東西可以破壞。hijacked 用正式名單。
+// entries 與 contentChecks 用固定的測資：正式名單可能一筆都不剩，規則仍要有東西可以破壞。hijacked 用正式名單。
 const fixtureExpires = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
 const policyFixture = {
     ...realPolicy,
@@ -61,6 +61,16 @@ const policyFixture = {
             expires: fixtureExpires,
         },
     ],
+    contentChecks: [
+        {
+            match: { host: 'spa.example.org' },
+            reason: '故障注入的測資：前端殼對任何路徑都回 200。',
+            evidence: '故障注入的測資：內容由 /api/item 載入。',
+            owner: 'link-faults',
+            expires: fixtureExpires,
+            urls: [{ url: 'https://spa.example.org/item?id=1', api: 'https://spa.example.org/api/item?id=1', expect: { id: 1 } }],
+        },
+    ],
 };
 
 /** 只含政策目標的最小盤點，讓「殭屍條目」以外的規則不會被誤觸發。 */
@@ -71,6 +81,8 @@ const baselineInventory = {
         { url: policyFixture.entries[0].match.url, occurrences: [{ file: 'x.html', location: 'a[href]' }] },
         { url: 'https://www.example.net/bbs/page.html', occurrences: [{ file: 'y.html', location: 'a[href]' }] },
         { url: 'https://example.com/', occurrences: [{ file: 'z.html', location: 'a[href]' }] },
+        { url: 'https://spa.example.org/item?id=1', occurrences: [{ file: 's.html', location: 'a[href]' }] },
+        { url: 'https://spa.example.org/', occurrences: [{ file: 's.html', location: 'a[href]' }] },
     ],
     // hijacked 的目標只活在說明文字裡，不是 url 欄位。少了這一段，基準狀態的
     // 殭屍檢查會把三筆接管警示全部判成「目標已消失」，整個矩陣還沒開始就是紅的。
@@ -222,6 +234,60 @@ const policyCases = [
             p.entries[1].match = { host: p.hijacked[0].match.host };
             return p;
         },
+    },
+    // contentChecks 宣告的主機上，網址都要有內容檢查。
+    {
+        name: '內容檢查的主機上多了一個沒有內容檢查的網址',
+        expect: /對任何路徑都回 200/,
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: 'https://spa.example.org/item?id=2', occurrences: [{ file: 'new.html', location: 'a[href]' }] }],
+        }),
+    },
+    {
+        name: '內容檢查的網址已經從網站上消失（殭屍條目）',
+        expect: /找不到，請刪除這一筆網址/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].url = 'https://spa.example.org/item?id=9'; p.contentChecks[0].urls[0].api = 'https://spa.example.org/api/item?id=9'; return p; },
+    },
+    {
+        name: '內容檢查的主機已經從網站上消失（殭屍條目）',
+        expect: /找不到這台主機/,
+        policy: () => { const p = clonePolicy(); p.contentChecks.push({ ...p.contentChecks[0], match: { host: 'gone.example.org' }, urls: [] }); return p; },
+    },
+    {
+        name: '內容檢查的 API 指到別台主機',
+        expect: /同一台主機/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].api = 'https://collector.example.net/api/item?id=1'; return p; },
+    },
+    {
+        name: '內容檢查的 API 用 http',
+        expect: /https/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].api = 'http://spa.example.org/api/item?id=1'; return p; },
+    },
+    {
+        name: '內容檢查的 API 指向雲端 metadata',
+        expect: /位址政策/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].api = 'https://169.254.169.254/latest/meta-data/'; return p; },
+    },
+    {
+        name: '內容檢查的 expect 是空物件（什麼都不比也算健康）',
+        expect: /expect/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].expect = {}; return p; },
+    },
+    {
+        name: '內容檢查過期',
+        expect: /到期/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].expires = yesterday; return p; },
+    },
+    {
+        name: '內容檢查沒有 evidence',
+        expect: /evidence/,
+        policy: () => { const p = clonePolicy(); delete p.contentChecks[0].evidence; return p; },
+    },
+    {
+        name: '內容檢查的主機同時列在 hijacked',
+        expect: /列在 hijacked/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].match.host = p.hijacked[0].match.host; p.contentChecks[0].urls = []; return p; },
     },
     {
         name: '接管警示的目標已經從內文消失（殭屍條目）',
@@ -997,6 +1063,50 @@ const policyLibMutations = [
     {
         name: "matchHijackedHop 永遠回 null（轉址到接管主機的連結被算成健康）",
         apply: (s) => s.replace("export function matchHijackedHop(hijacked, r) {", "export function matchHijackedHop(hijacked, r) {\n    if (true) return null;"),
+    },
+    {
+        name: 'matchContentCheck 不正規化網址（帶 fragment 的網址比不到，內容檢查靜靜跳過）',
+        apply: (s) => s.replace('    const normalized = normalizeUrl(url);\n    for (const check of contentChecks ?? []) {', '    const normalized = url;\n    for (const check of contentChecks ?? []) {'),
+    },
+    {
+        name: 'contentCheckGaps 不列任何網址（新加的網址沒有內容檢查也通過）',
+        apply: (s) => s.replace('        gaps.push({ url, check });', ''),
+    },
+    {
+        name: 'contentCheckGaps 把帶查詢字串的首頁也當成首頁放過',
+        apply: (s) => s.replace("(u.pathname === '/' && !u.search)", "u.pathname === '/'"),
+    },
+    {
+        name: 'contentCheckGaps 把只有一層路徑的網址當成首頁放過',
+        apply: (s) => s.replace("(u.pathname === '/' && !u.search)", "(u.pathname.split('/').length <= 2 && !u.search)"),
+    },
+    {
+        name: '內容檢查的 match 可以多帶其他欄位',
+        apply: (s) => s.replace("Object.keys(e.match).join() !== 'host'", '!e.match.host'),
+    },
+    {
+        name: '內容檢查的 API 不看主機（政策檔可以把請求送到別的地方）',
+        apply: (s) => s.replace("    else if (host && canonicalHost(verdict.url.hostname) !== host) why = `要在同一台主機 ${host} 上`;\n", ''),
+    },
+    {
+        name: 'expect 的值不限型別（物件、null 也收）',
+        apply: (s) => s.replace('if (!values.length || !values.every(scalar)) {', 'if (!values.length) {'),
+    },
+    {
+        name: '內容檢查的 API 可以帶埠號',
+        apply: (s) => s.replace(' && new URL(u.api).port) push(', ' && false) push('),
+    },
+    {
+        name: 'expect 的鍵可以含「.」（想比巢狀欄位的人靜靜比不到）',
+        apply: (s) => s.replace("if (key.includes('.')) push(", "if (false) push("),
+    },
+    {
+        name: 'contentCheckGaps 只看 https 的網址',
+        apply: (s) => s.replace('        const check = (contentChecks ?? []).find(', "        if (u.protocol !== 'https:') continue;\n        const check = (contentChecks ?? []).find("),
+    },
+    {
+        name: '寫錯的內容檢查照樣回傳出去',
+        apply: (s) => s.replace('        if (host && errors.length === errorsBefore) out.push', '        if (host) out.push'),
     },
 ];
 
