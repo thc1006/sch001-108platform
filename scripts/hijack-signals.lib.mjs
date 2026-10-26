@@ -30,15 +30,16 @@ export function sameSite(aHost, bHost) {
 /**
  * crossSiteRedirect 是訊號 A：轉址終點離開了起點的網域時回傳 { fromHost, toHost, hops }，否則回傳 null。
  * 只看起點與終點，使用者最後到了哪裡才是被接管的實質後果；中途的主機列在 hops 裡給人判斷，不參與判定。
+ * 例外是 JS 轉址：轉址鏈有 JS 轉址時，終點和起點同站也要回傳，那一跳才不會從報告上消失。
  */
 export function crossSiteRedirect(startUrl, finalUrl, redirects = []) {
     const from = host(startUrl);
     const to = host(finalUrl);
-    if (!from || !to || sameSite(from, to)) return null;
+    if (!from || !to || (sameSite(from, to) && !redirects.some((r) => r.via === 'js'))) return null;
     return {
         fromHost: from,
         toHost: to,
-        hops: redirects.map((r) => `${host(r.from) || '?'} --${r.status}--> ${host(r.to) || '?'}`),
+        hops: redirects.map((r) => `${host(r.from) || '?'} --${r.via === 'js' ? 'JS 轉址' : r.status}--> ${host(r.to) || '?'}`),
     };
 }
 
@@ -189,6 +190,60 @@ export function opaqueShell(bodyHead, truncated = false) {
     if (META_REFRESH.test(bodyHead)) return null;
     const { title } = extractHeadText(bodyHead);
     return { bytes, visible: visible.length, title: title.slice(0, 80) };
+}
+
+// jsRedirectTarget 只認這幾種寫法，大小寫照寫；檢查器不解析 JavaScript，註解與字串裡的也算數。
+const JS_SINKS = /\blocation\s*\.\s*(?:href\s*=(?!=)|replace\s*\(|assign\s*\()|\b(?:window|parent|top|self)\s*\.\s*location\s*=(?!=)/g;
+// 寫死的目標：引號裡是 https:// 開頭的網址，後面只接 ; ) }、</script> 或頁尾，沒有接運算。
+const LITERAL_SINK = new RegExp(`(?:${JS_SINKS.source})\\s*(["'])(https:\\/\\/[^"'\\\\\\s<>]+)\\1(?=\\s*(?:[;)}]|<\\/script\\b|$))`, 'g');
+// 頁面裡有這些別的 location 寫法就不跟：認不出它們會把頁面帶去哪裡。
+const OTHER_LOCATION =
+    /(?<![\w$.])location\s*=(?!=)|\bdocument\s*\.\s*location\b|\blocation\s*\[|\[\s*["'`]location["'`]\s*\]|\blocation\s*\.\s*(?:host|hostname|pathname|search|hash|protocol|port)\s*=(?!=)/;
+// 這些後綴底下每一台主機各屬不同的人，粗估會把它們併成同一個網域，遇到就不跟。只是常見的幾個，不是完整清單。
+const SHARED_SUFFIXES = ['github.io', 'githubusercontent.com', 'herokuapp.com', 'netlify.app', 'pages.dev', 'vercel.app', 'web.app',
+    'firebaseapp.com', 'blogspot.com', 'wordpress.com', 'carrd.co', 'game.tw', 'club.tw', 'ebiz.tw', 'tokyo.jp', 'osaka.jp',
+    'nsw.edu.au', 'vic.edu.au', 'qld.edu.au', 'sch.uk', 'seoul.kr', 'busan.kr', 'blog.br'];
+
+/**
+ * registrableDomain 粗估主機的可註冊網域（eTLD+1），估不出來或主機在 SHARED_SUFFIXES 底下時回傳 null。
+ * repo 沒有公共後綴清單：兩個字母的國碼底下、第二層只有三個字以內（com.tw、edu.tw、co.uk、go.jp）取三段，
+ * 其餘取兩段。估得太細時兩站被當成不同網域，結果是不跟；估得太粗的後綴只擋得住清單上的那幾個。
+ * @param {string|null} h 已正規化的主機名 @returns {string|null}
+ */
+function registrableDomain(h) {
+    if (!h || /^[\d.]+$/.test(h) || h.includes(':')) return null;
+    if (SHARED_SUFFIXES.some((s) => h === s || h.endsWith(`.${s}`))) return null;
+    const labels = h.split('.');
+    const n = labels.length >= 3 && labels.at(-1).length === 2 && labels.at(-2).length <= 3 ? 3 : 2;
+    return labels.length >= n ? labels.slice(-n).join('.') : null;
+}
+
+/**
+ * jsRedirectTarget 回傳殼頁（見 opaqueShell）用 JS 轉去的網址，可以當成一跳轉址跟下去時才回傳，否則回傳 null。
+ * 寫法只認 location.href=、location.replace(…)、location.assign(…) 與 window、parent、top、self 的 location=，
+ * 註解與字串裡的也算數；每一處都要是同一個 https:// 開頭、不帶查詢字串與片段的字面網址，有別的 location 寫法就不跟。
+ * 起點、殼頁與目標要在同一個可註冊網域，目標不是殼頁那台主機，例如 ctf.hitcon.org 轉到當屆的 ctf2026.hitcon.org。
+ * 轉去別的組織的網域，是被接管、停放的網域常見的樣子；2026-10-26 抓的 hmun.org 殼轉回同一台主機，查詢字串帶
+ * 每次重簽的 token。片段一樣能夾帶給目的頁 JS 讀的參數。這些都留給訊號 C。
+ * @param {string} pageUrl @param {string} bodyHead @param {boolean} [truncated]
+ * @param {string} [startUrl] 盤點的起點，預設是 pageUrl @returns {string|null}
+ */
+export function jsRedirectTarget(pageUrl, bodyHead, truncated = false, startUrl = pageUrl) {
+    if (!opaqueShell(bodyHead, truncated) || OTHER_LOCATION.test(bodyHead)) return null;
+    const sinks = bodyHead.match(JS_SINKS) ?? [];
+    const targets = [...bodyHead.matchAll(LITERAL_SINK)].map((m) => m[2]);
+    if (targets.length === 0 || targets.length !== sinks.length || new Set(targets).size !== 1) return null;
+    let url;
+    try {
+        url = new URL(targets[0]);
+    } catch {
+        return null;
+    }
+    const from = host(pageUrl);
+    const to = host(url.href);
+    if (url.protocol !== 'https:' || url.search || url.hash || from === to) return null;
+    const domain = registrableDomain(host(startUrl));
+    return domain && domain === registrableDomain(from) && domain === registrableDomain(to) ? url.href : null;
 }
 
 /**

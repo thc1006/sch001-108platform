@@ -107,6 +107,21 @@ before(async () => {
         }
         // 300 bytes 的 Latin-1：0xE9 不是合法的 UTF-8，解碼後每個位元組都變成 3 bytes 的 U+FFFD
         if (u === '/latin1') { res.writeHead(200, { 'Content-Type': 'text/html; charset=iso-8859-1' }); return res.end(Buffer.alloc(300, 0xe9)); }
+        // JS 轉址的殼與它的目的頁。https 的目的頁由 routeJsDest 改送到這台 server。
+        const jsShell = { '/js-literal': 'window.location="https://dest.js-test.example/landing"',
+            '/js-computed': 'window.location="https://dest.js-test.example/landing?t="+Date.now()',
+            '/js-http': 'window.location="http://dest.js-test.example/landing"',
+            '/js-other-org': 'window.location="https://dest.other-org.example/landing"',
+            '/js-metadata': 'window.location="https://meta.js-test.example/latest/meta-data/"',
+            '/js-to-shell': 'window.location="https://dest.js-test.example/dest-shell"',
+            '/js-to-403': 'window.location="https://dest.js-test.example/forbidden"',
+            '/js-creds': 'window.location="https://u:p@dest.js-test.example/landing"',
+            '/dest-shell': 'location.replace("https://dest.js-test.example/x?t="+Date.now())' }[u];
+        if (jsShell) { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(`<html><head><title>x</title></head><body><script>${jsShell}</script></body></html>`); }
+        if (u === '/js-404') { res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end('<html><body><script>window.location="https://dest.js-test.example/landing"</script></body></html>'); }
+        if (u === '/forbidden') { res.writeHead(403); return res.end(); }
+        if (u === '/to-js-literal') { res.writeHead(302, { Location: `http://shell.js-test.example:${server.address().port}/js-literal` }); return res.end(); }
+        if (u === '/landing') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<html><head><title>Landing</title></head><body>正常內容</body></html>'); }
         // SSRF 的轉址繞道：起點無害，第二跳才指向內網／metadata。
         if (u === '/to-metadata') { res.writeHead(302, { Location: 'http://169.254.169.254/latest/meta-data/' }); return res.end(); }
         if (u === '/to-private') { res.writeHead(302, { Location: 'http://10.1.2.3/admin' }); return res.end(); }
@@ -345,6 +360,97 @@ test('Sec-Fetch：https 的請求帶 Chrome 直接開網頁時的四個 Sec-Fetc
         'sec-fetch-site': 'none',
         'sec-fetch-user': '?1',
     });
+});
+
+/**
+ * routeJsDest 讓殼頁的主機 shell.js-test.example 解析到本機 server；dest.js-test.example 與 dest.other-org.example
+ * 解析成公開位址通過位址政策，https 請求改送到本機 server；meta.js-test.example 解析到雲端 metadata。
+ * @param {import('node:test').TestContext} t
+ */
+function routeJsDest(t) {
+    const answers = { 'shell.js-test.example': '127.0.0.1', 'start.elsewhere.example': '127.0.0.1', 'dest.js-test.example': '8.8.8.8', 'dest.other-org.example': '8.8.8.8', 'meta.js-test.example': '169.254.169.254' };
+    t.mock.method(dns.promises, 'lookup', async (host) => {
+        if (answers[host]) return [{ address: answers[host], family: 4 }];
+        throw Object.assign(new Error(`測試攔下：不查外部 DNS ${host}`), { code: 'ENOTFOUND' });
+    });
+    t.mock.method(https, 'request', (options, cb) => {
+        if (answers[options?.hostname] !== '8.8.8.8') throw Object.assign(new Error('測試攔下'), { code: 'ETEST_TRANSPORT' });
+        return http.request({ hostname: '127.0.0.1', port: server.address().port, path: options.path, headers: options.headers, agent: false }, cb);
+    });
+}
+
+const JS_BODY = { ...LOOPBACK_OK, readBodyBytes: 4096 };
+const shellBase = () => `http://shell.js-test.example:${server.address().port}`;
+
+test('JS 轉址：同一個可註冊網域底下的寫死 https 網址當成一跳，訊號看目的頁，轉址鏈標出那一跳', async (t) => {
+    routeJsDest(t);
+    const start = `${shellBase()}/js-literal`;
+    const r = await probe(start, undefined, JS_BODY);
+    assert.equal(r.status, 200, JSON.stringify(r));
+    assert.equal(r.finalUrl, 'https://dest.js-test.example/landing');
+    assert.deepEqual(r.redirects, [{ from: start, status: 200, to: 'https://dest.js-test.example/landing', via: 'js' }]);
+    const sig = detectHijackSignals(start, r);
+    assert.equal(sig?.shell, null, '目的頁有內容，不是殼');
+    assert.equal(sig?.confidence, 'browse-only');
+    assert.match(sig.cross.hops[0], /--JS 轉址-->/);
+    // 和 HTTP 轉址算同一個上限，超過時回傳殼本身的結果；不讀 body 的呼叫端（競賽看門狗）看不到殼，不跟。
+    const capped = await probe(start, undefined, { ...JS_BODY, maxRedirects: 0 });
+    assert.equal(capped.finalUrl, start);
+    assert.equal(detectHijackSignals(start, capped)?.confidence, 'actionable');
+    assert.equal((await probe(start, undefined, LOOPBACK_OK)).finalUrl, start);
+});
+
+test('JS 轉址：目標是算出來的、http 或別的可註冊網域時不跟，殼照報；目的頁是殼照報', async (t) => {
+    routeJsDest(t);
+    for (const path of ['/js-computed', '/js-http', '/js-other-org']) {
+        const r = await probe(`${shellBase()}${path}`, undefined, JS_BODY);
+        assert.equal(r.finalUrl, `${shellBase()}${path}`, path);
+        assert.equal(detectHijackSignals(`${shellBase()}${path}`, r)?.confidence, 'actionable', path);
+    }
+    const r = await probe(`${shellBase()}/js-to-shell`, undefined, JS_BODY);
+    assert.equal(r.finalUrl, 'https://dest.js-test.example/dest-shell');
+    const sig = detectHijackSignals(`${shellBase()}/js-to-shell`, r);
+    assert.ok(sig?.shell, '目的頁是殼，訊號 C 要報');
+    assert.equal(sig.confidence, 'actionable');
+});
+
+test('JS 轉址：目標被位址政策擋下時照封鎖處理', async (t) => {
+    routeJsDest(t);
+    const r = await probe(`${shellBase()}/js-metadata`, undefined, JS_BODY);
+    assert.equal(isBlockedResult(r), true, JSON.stringify(r));
+    assert.match(r.reason, /169\.254\.0\.0\/16/);
+    assert.equal(r.redirects[0]?.via, 'js');
+});
+
+test('JS 轉址：盤點的起點 302 到別的網域，那裡的殼轉到同網域的另一台主機，不跟、殼照報', async (t) => {
+    routeJsDest(t);
+    const start = `http://start.elsewhere.example:${server.address().port}/to-js-literal`;
+    const r = await probe(start, undefined, JS_BODY);
+    assert.equal(r.finalUrl, `${shellBase()}/js-literal`);
+    assert.equal(detectHijackSignals(start, r)?.confidence, 'actionable');
+});
+
+test('JS 轉址：目的頁不是 2xx／3xx 時回傳殼本身的結果，殼照報', async (t) => {
+    routeJsDest(t);
+    const r = await probe(`${shellBase()}/js-to-403`, undefined, JS_BODY);
+    assert.equal(r.status, 200);
+    assert.equal(r.finalUrl, `${shellBase()}/js-to-403`);
+    assert.deepEqual(r.redirects, []);
+    assert.equal(detectHijackSignals(`${shellBase()}/js-to-403`, r)?.confidence, 'actionable');
+});
+
+test('JS 轉址：404 的殼不跟、body 沒讀完不跟、帶帳密的目標照靜態政策擋下', async (t) => {
+    routeJsDest(t);
+    const gone = await probe(`${shellBase()}/js-404`, undefined, JS_BODY);
+    assert.equal(gone.status, 404);
+    assert.equal(gone.finalUrl, `${shellBase()}/js-404`);
+    // 讀到 </script> 為止，轉址的寫法完整，只差 </body></html> 沒讀到。
+    const cut = await probe(`${shellBase()}/js-literal`, undefined, { ...JS_BODY, readBodyBytes: 112 });
+    assert.equal(cut.bodyTruncated, true);
+    assert.equal(cut.finalUrl, `${shellBase()}/js-literal`, '只讀到前 112 bytes');
+    const creds = await probe(`${shellBase()}/js-creds`, undefined, JS_BODY);
+    assert.equal(isBlockedResult(creds), true, JSON.stringify(creds));
+    assert.match(creds.reason, /credential/);
 });
 
 test('連線：每個位址的連線嘗試時間經過 Agent 交到 net.createConnection，比 Node 的預設長', async (t) => {

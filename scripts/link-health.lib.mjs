@@ -17,13 +17,14 @@
  * （2026-10-25 在 Linux 實測：Node 24 以 { hints: dns.ADDRCONFIG, all: true } 呼叫 lookup，並接受回傳陣列。）
  *
  * fetch 的 redirect: 'follow' 也是黑箱，中途每一跳的目的地都不會經過我們
- * 手上。這裡一律手動處理轉址，每一跳都重新檢查位址。
+ * 手上。這裡一律手動處理轉址，每一跳都重新檢查位址，殼頁裡寫死的 JS 轉址也一樣。
  */
 
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
 import dns from 'node:dns';
+import { jsRedirectTarget } from './hijack-signals.lib.mjs';
 
 // 只有「網域解析不到」與 404/410 才算失效。競賽與教育網站大量使用 Cloudflare 等
 // 防爬機制，403/429/5xx/逾時在瀏覽器多半仍開得起來，一律歸入「無法判定」只做
@@ -459,6 +460,9 @@ export async function probe(rawUrl, signal, opts = {}) {
     const maxRedirects = opts.maxRedirects ?? MAX_REDIRECTS;
     const abort = signal ?? AbortSignal.timeout(LINK_TIMEOUT_MS);
     const chain = [];
+    // 跟了 JS 轉址之後，目的頁不是 2xx／3xx 時回傳殼本身的結果，訊號 C 照樣看得到殼。被位址政策擋下的照實回傳。
+    let shell = null;
+    const settle = (res) => (shell && !(res.status >= 200 && res.status < 400) ? shell : res);
 
     let current = String(rawUrl);
     for (let hop = 0; hop <= maxRedirects; hop++) {
@@ -475,7 +479,7 @@ export async function probe(rawUrl, signal, opts = {}) {
             if (resolved.code) {
                 // 解析不到不是封鎖，照錯誤碼分類：ENOTFOUND 是 dead，
                 // EAI_AGAIN 等其他錯誤碼是 unverified。
-                return { status: 0, code: resolved.code, message: resolved.reason, finalUrl: url.href, redirects: chain };
+                return settle({ status: 0, code: resolved.code, message: resolved.reason, finalUrl: url.href, redirects: chain });
             }
             return { ...blockedResult(resolved.reason, url.href), redirects: chain, hop };
         }
@@ -484,29 +488,33 @@ export async function probe(rawUrl, signal, opts = {}) {
         // 供 hijack-signals.lib.mjs 取 <title> 與 meta description（#117 的訊號 B）。
         const r = await requestOnce(url, resolved.addresses, abort, opts.readBodyBytes ?? 0);
         if (r.status === 0) {
-            return { ...r, finalUrl: url.href, redirects: chain, addresses: resolved.addresses.map((a) => a.address) };
+            return settle({ ...r, finalUrl: url.href, redirects: chain, addresses: resolved.addresses.map((a) => a.address) });
         }
-        if (!REDIRECT_STATUSES.has(r.status) || !r.location) {
-            return {
-                status: r.status,
-                finalUrl: url.href,
-                redirects: chain,
-                addresses: resolved.addresses.map((a) => a.address),
-                ...(r.bodyHead !== undefined ? { bodyHead: r.bodyHead } : {}),
-                ...(r.bodyTruncated ? { bodyTruncated: true } : {}),
-                ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
-            };
-        }
+        // 有讀 body 時，殼頁用 JS 轉去的寫死網址也可能當成一跳，規則見 jsRedirectTarget。
+        const js = r.status >= 200 && r.status < 300 && r.bodyHead !== undefined
+            ? jsRedirectTarget(url.href, r.bodyHead, r.bodyTruncated === true, String(rawUrl))
+            : null;
+        const final = {
+            status: r.status,
+            finalUrl: url.href,
+            redirects: [...chain],
+            addresses: resolved.addresses.map((a) => a.address),
+            ...(r.bodyHead !== undefined ? { bodyHead: r.bodyHead } : {}),
+            ...(r.bodyTruncated ? { bodyTruncated: true } : {}),
+            ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
+        };
+        if (!js && (!REDIRECT_STATUSES.has(r.status) || !r.location)) return settle(final);
+        if (js) shell ??= final;
         if (hop === maxRedirects) {
-            return { status: 0, code: 'ETOOMANYREDIRECTS', message: `轉址超過 ${maxRedirects} 次`, finalUrl: url.href, redirects: chain };
+            return settle({ status: 0, code: 'ETOOMANYREDIRECTS', message: `轉址超過 ${maxRedirects} 次`, finalUrl: url.href, redirects: chain });
         }
         let next;
         try {
-            next = new URL(r.location, url).href;
+            next = new URL(js ?? r.location, url).href;
         } catch {
             return { status: r.status, finalUrl: url.href, redirects: chain, message: `無法解析的 Location：${String(r.location).slice(0, 120)}` };
         }
-        chain.push({ from: url.href, status: r.status, to: next });
+        chain.push({ from: url.href, status: r.status, to: next, ...(js ? { via: 'js' } : {}) });
         current = next;
     }
     /* c8 ignore next */

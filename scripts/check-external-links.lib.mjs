@@ -277,6 +277,10 @@ export function renderReport(m) {
             '所以它只列在這裡供瀏覽，不計入待辦。真的接管會呈現這個形狀（www.sasmo.sg →',
             'arcade.now 就是），但它同時也是網路上很常見的正常行為。',
             '',
+            '標成「JS 轉址」的那一跳，是只有 JavaScript 轉址的殼頁轉去同一個網域底下另一台主機的寫死網址，',
+            '檢查器照一般轉址跟了下去，終點和起點同站時也列在這裡。目的頁沒有回 2xx／3xx 時，結果是殼本身，',
+            '殼列在上面「需要人工查證」那一段。',
+            '',
         );
         for (const a of browseOnlySignals) {
             const where = a.source === 'bare' ? `說明文字裡的裸網域 \`${a.host}\`` : `盤點的網址 \`${a.url}\``;
