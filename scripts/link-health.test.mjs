@@ -347,6 +347,27 @@ test('Sec-Fetch：https 的請求帶 Chrome 直接開網頁時的四個 Sec-Fetc
     });
 });
 
+test('連線：每個位址的連線嘗試時間經過 Agent 交到 net.createConnection，比 Node 的預設長', async (t) => {
+    // 連線嘗試真的等多久測不了：測試只能連 loopback，連不上的 loopback 位址會立刻被拒絕，不會等到逾時。
+    const connect = t.mock.method(net, 'createConnection');
+    const r = await probe(`${base}/ok`, undefined, LOOPBACK_OK);
+    assert.equal(r.status, 200);
+    assert.equal(connect.mock.callCount(), 1, '請求沒有經過 net.createConnection');
+    const attempt = connect.mock.calls[0].arguments[0]?.autoSelectFamilyAttemptTimeout;
+    assert.ok(attempt > net.getDefaultAutoSelectFamilyAttemptTimeout(), `autoSelectFamilyAttemptTimeout 是 ${attempt}`);
+});
+
+test('連線：https 的請求也帶上每個位址的連線嘗試時間', async (t) => {
+    t.mock.method(dns.promises, 'lookup', async () => [{ address: '8.8.8.8', family: 4 }]);
+    let attempt;
+    t.mock.method(https, 'request', (options) => {
+        attempt = options?.autoSelectFamilyAttemptTimeout;
+        throw Object.assign(new Error('測試攔下：不連外'), { code: 'ETEST_TRANSPORT' });
+    });
+    await probe('https://attempt.example/');
+    assert.ok(attempt > net.getDefaultAutoSelectFamilyAttemptTimeout(), `autoSelectFamilyAttemptTimeout 是 ${attempt}`);
+});
+
 // 靜態網址政策不需要 DNS，PR 階段就能確定性地跑。
 
 test('SSRF：只允許 http／https', () => {
