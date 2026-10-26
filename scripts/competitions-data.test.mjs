@@ -1039,6 +1039,29 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
     assert.ok(!/線上註冊/.test(find('HITCON CTF').registrationNote));
 });
 
+// _readme 的 region 規則：線上賽各國都能直接報名的填「全球線上」；決賽固定在一地的填那個地方所在的地區。
+test('data：線上賽與決賽固定一地的競賽，region 照 _readme 的規則填', () => {
+    // 小論文與閱讀心得只收台灣的高中生；IMMC 要先經各國提名，照實體賽的寫法填
+    const except = { 小論文寫作比賽: '台灣', 閱讀心得寫作比賽: '台灣', '國際數學建模挑戰賽 (IMMC)': '其他' };
+    const online = DATA.competitions.filter((c) => c.mode === '線上');
+    for (const k of Object.keys(except)) {
+        assert.equal(online.filter((c) => c.title.includes(k)).length, 1, k);
+    }
+    for (const c of online) {
+        const k = Object.keys(except).find((x) => c.title.includes(x));
+        assert.equal(c.region, k ? except[k] : '全球線上', c.title);
+    }
+
+    // 出題的 Senior Coordinating Country 歷任分在美洲與亞洲
+    assert.equal(find('亞太數學奧林匹亞').region, '其他');
+    // 主辦代表團會換，不在同一個地區
+    assert.equal(find('亞太資訊奧林匹亞').region, '其他');
+    // Grand Jamboree 2022 年起都在巴黎
+    assert.equal(find('iGEM').region, '歐洲');
+    // Tournament of Champions 每年在耶魯大學
+    assert.equal(find("World Scholar's Cup").region, '美國');
+});
+
 // Jamboree 官網逐字「13–16 NOVEMBER, 2026」，api.igem.org 的 startDate 也是 2026-11-13。
 test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致', () => {
     const igem = find('iGEM');
