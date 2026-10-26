@@ -125,11 +125,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- 專案快速導航（sticky）與展開／收合按鈕 -->
-        <nav class="sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-3 mb-8" aria-label="專案快速導航" data-autohide-filters>
+        {/* 640px 以下，展開／收合全部移到導航下面那一列，專案連結才有整列的寬度可以捲。 */}
+        <nav class="sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-3 mb-2 sm:mb-8" aria-label="專案快速導航" data-autohide-filters>
             <div class="flex items-center gap-3">
-                <!-- 專案連結，可橫向捲動 -->
-                <div class="flex-1 overflow-x-auto scrollbar-hide">
+                {/* 連結本身就能聚焦，捲動區不當 Tab 停駐點：Firefox 157 會停在有溢出的 div 上，焦點框被 mask 裁掉。 */}
+                <div class="flex-1 overflow-x-auto scrollbar-hide" tabindex="-1" data-scroll-fade>
                     <div class="flex gap-2 min-w-max px-1">
                         <a href="#disfactory" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
                         <a href="#cofacts" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
@@ -142,17 +142,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <a href="#join-community" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">參與社群</a>
                     </div>
                 </div>
-                <!-- 展開全部／收合全部 -->
-                <div class="flex-shrink-0 flex gap-1">
-                    <button id="expand-all-btn" type="button" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="展開全部詳情">
+                <div class="hidden sm:flex flex-shrink-0 gap-1">
+                    <button type="button" data-details-action="expand" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="展開全部詳情">
                         展開全部
                     </button>
-                    <button id="collapse-all-btn" type="button" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="收合全部詳情">
+                    <button type="button" data-details-action="collapse" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="收合全部詳情">
                         收合全部
                     </button>
                 </div>
             </div>
         </nav>
+        <div class="flex justify-end gap-1 mb-6 sm:hidden">
+            <button type="button" data-details-action="expand" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="展開全部詳情">
+                展開全部
+            </button>
+            <button type="button" data-details-action="collapse" class="text-xs font-medium px-3 py-1.5 rounded-full bg-white text-gray-600 hover:bg-gray-200 transition shadow-sm whitespace-nowrap" aria-label="收合全部詳情">
+                收合全部
+            </button>
+        </div>
 
         <!-- 專案卡片 -->
         <section id="project-list" class="space-y-8" aria-label="公民科技專案列表">
@@ -581,23 +588,46 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             button.setAttribute('aria-expanded', !isOpen);
         }
 
-        document.getElementById('expand-all-btn').addEventListener('click', function() {
-            document.querySelectorAll('.details-content').forEach(function(el) {
-                el.classList.add('open');
+        // 兩組展開／收合按鈕共用這個處理函式。
+        (function() {
+            function setAllDetails(event) {
+                var open = event.currentTarget.dataset.detailsAction === 'expand';
+                document.querySelectorAll('.details-content').forEach(function(el) {
+                    el.classList.toggle('open', open);
+                });
+                document.querySelectorAll('.details-toggle').forEach(function(btn) {
+                    btn.setAttribute('aria-expanded', String(open));
+                });
+            }
+            document.querySelectorAll('[data-details-action]').forEach(function(btn) {
+                btn.addEventListener('click', setAllDetails);
             });
-            document.querySelectorAll('.details-toggle').forEach(function(btn) {
-                btn.setAttribute('aria-expanded', 'true');
-            });
-        });
+        })();
 
-        document.getElementById('collapse-all-btn').addEventListener('click', function() {
-            document.querySelectorAll('.details-content').forEach(function(el) {
-                el.classList.remove('open');
+        // 連結沒露出的那一側標上 data-more-left／right，CSS 淡出。載入、視窗改寬、字型變寬都由 ResizeObserver 觸發。
+        (function() {
+            var scroller = document.querySelector('[data-scroll-fade]');
+            function update() {
+                var rest = scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft;
+                scroller.toggleAttribute('data-more-left', scroller.scrollLeft > 1);
+                scroller.toggleAttribute('data-more-right', rest > 1);
+            }
+            scroller.addEventListener('scroll', update, { passive: true });
+            var observer = new ResizeObserver(update);
+            observer.observe(scroller);
+            observer.observe(scroller.firstElementChild);
+
+            // Chromium 156、Firefox 157 不會把 Tab 到的半露出連結捲進來。scrollIntoView 會連整頁捲，
+            // 滑鼠點時捲動會讓點擊落空，所以只在鍵盤焦點時捲這一列。
+            scroller.addEventListener('focusin', function(event) {
+                if (event.target === scroller || !event.target.matches(':focus-visible')) return;
+                var pad = parseFloat(getComputedStyle(scroller).scrollPaddingLeft);
+                var box = scroller.getBoundingClientRect();
+                var link = event.target.getBoundingClientRect();
+                if (link.left < box.left + pad) scroller.scrollLeft -= box.left + pad - link.left;
+                else if (link.right > box.right - pad) scroller.scrollLeft += link.right - box.right + pad;
             });
-            document.querySelectorAll('.details-toggle').forEach(function(btn) {
-                btn.setAttribute('aria-expanded', 'false');
-            });
-        });
+        })();
 
         (function() {
             var backToTop = document.getElementById('back-to-top');
@@ -824,6 +854,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         .scrollbar-hide {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* scroll-padding 和淡出一樣寬，連結捲進來時停在淡出區外。Chrome 120 之前只認 -webkit-mask-image。 */
+        [data-scroll-fade] {
+            --fade: 2rem;
+            scroll-padding-inline: var(--fade);
+        }
+        [data-scroll-fade][data-more-left] { --fade-left: var(--fade); }
+        [data-scroll-fade][data-more-right] { --fade-right: var(--fade); }
+        [data-scroll-fade][data-more-left],
+        [data-scroll-fade][data-more-right] {
+            -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-left, 0px) calc(100% - var(--fade-right, 0px)), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 var(--fade-left, 0px) calc(100% - var(--fade-right, 0px)), transparent);
         }
         #back-to-top {
             opacity: 0;
