@@ -299,6 +299,38 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
    換版失敗時（`rollout status` 等了 180 秒還沒就緒，腳本就直接結束），Deployment 會停在新版的
    spec 上，要手動退回上一版：`sudo k3s kubectl -n sch001-ai rollout undo deployment/ai-gateway`，
    並用 `git checkout` 還原 `app.yaml`（腳本只改了 image 那一行）。
+   舊 pod 收到刪除之後，會把進行中的任務做完才結束，最多 920 秒。Deployment 不把收尾中的 pod
+   算進 maxSurge，這段期間再換版，舊 pod、目前的 pod 和新 pod 會同時呼叫 WinLab，合計最多 12 個
+   並行（每個 pod 4 個，`LLM_CONCURRENCY`），超過 key 的 8 個上限。所以腳本在建置之前、改
+   `app.yaml` 之前各跑一次 `ai-gateway/deploy/k3s/terminating-pods.sh`，有收尾中的 pod 就列出來
+   並停下。第二次才停下時，映像檔已經匯入 k3s、釘選，`app.yaml` 與 Deployment 還沒動：等舊 pod
+   結束後再執行一次腳本；改了 commit 的話，下次換版成功時會放掉這個映像檔的釘選。
+   `rollout restart`、`rollout undo` 不經過這個檢查，執行前自己跑一次。等不了的時候（例如線上
+   這版有問題要馬上換掉），用 `ALLOW_ROLLOUT_OVERLAP=1 ai-gateway/deploy/k3s/build-image.sh`
+   照樣換版，代價是 WinLab 可能回 429，第一輪遇到的學生看到忙線，接續輪退避重試。
+
+   換版期間的 429 要和平時分開看。重疊從新 pod 就緒開始，到舊 pod 結束為止，最多約 920 秒。舊 pod
+   收到刪除後先跑 5 秒的 preStop，然後收到 SIGTERM、記一行 `SHUTDOWN`，`inflight` 是當時還在
+   呼叫 WinLab 的任務數；之後最後一筆 `TASK` 是最後一個任務結束的時間，沒有任務的話馬上結束。
+   pod 刪除之後 log 就讀不到，要在它收尾時用 `logs -f` 留下來（舊 pod 結束時指令會自己停）。
+   `logs -f` 從容器啟動印起，所以舊 pod 只看 `SHUTDOWN` 之後，新 pod 從同一個時間看到舊 pod
+   最後一筆 `TASK` 為止，之後舊 pod 不再呼叫 WinLab。每行開頭是固定寬度的 UTC 時間，可以直接
+   比大小。preStop 的 5 秒在 `SHUTDOWN` 之前，不在這個範圍裡。`--since-time` 只取到秒，所以新 pod
+   的起點再用 awk 篩一次。
+
+   ```bash
+   sudo k3s kubectl -n sch001-ai logs -f <舊 pod 的名稱> > old-pod.log
+   sed -n '/ SHUTDOWN /,$p' old-pod.log | grep UPSTREAM-ERR | grep status=429
+   start=$(awk '$3 == "SHUTDOWN" { print $1; exit }' old-pod.log)
+   end=$(awk '$3 == "TASK" { t = $1 } END { print t }' old-pod.log)
+   sudo k3s kubectl -n sch001-ai logs <新 pod 的名稱> --since-time="$start" |
+     awk -v start="$start" -v end="$end" '$1 >= start && $1 <= end' |
+     grep UPSTREAM-ERR | grep status=429
+   ```
+
+   第一輪的 429 會記 `UPSTREAM-ERR`。接續輪的 429 會退避重試：重試用完仍是 429、`Retry-After`
+   太長，或有 `Retry-After` 但等不完時限的，也記 `status=429`；重試成功的只算進 `TASK` 的
+   `retries`，沒有 `Retry-After`、退避等不完時限的以 `timeout` 結束，這兩種不記 `UPSTREAM-ERR`。
 3. 確認：`curl http://10.43.0.87:8787/readyz` 回 200；`sudo k3s kubectl -n sch001-ai logs deployment/ai-gateway`
    的 START 一行列出設定與任務。readyz 只檢查 key 與上游網址有沒有設定、是不是正在關機，key 錯了
    或連不到 WinLab 時照樣回 200。要確認連得上，送一個學習啟動包的任務，看最後一個事件是不是

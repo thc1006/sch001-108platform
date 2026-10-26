@@ -33,6 +33,9 @@ if [ -n "$(git status --porcelain -- "$dir/namespace.yaml" "$dir/app.yaml")" ]; 
   exit 1
 fi
 
+# 舊 pod 還在收尾時不換版，理由見 ai-gateway/README.md 的「部署」
+"$dir/terminating-pods.sh"
+
 # key 的 Secret 不進 git；沒有的話 pod 會卡在 ContainerCreating，先擋下來並說明怎麼建
 sudo k3s kubectl apply -f "$dir/namespace.yaml"
 if ! sudo k3s kubectl -n "$ns" get secret ai-gateway-env >/dev/null 2>&1; then
@@ -53,6 +56,9 @@ sudo k3s ctr images label "$tag" io.cri-containerd.pinned=pinned
 
 # 換版前在跑的那版也留著釘選，rollout undo 才退得回去
 running=$(sudo k3s kubectl -n "$ns" get "deployment/$deploy" -o 'jsonpath={.spec.template.spec.containers[0].image}' 2>/dev/null || true)
+
+# 建置期間才開始收尾的也要擋。擋下時映像檔已匯入、釘選，app.yaml 與 Deployment 還沒動
+"$dir/terminating-pods.sh"
 
 # manifest 記下這次部署的版本（之後要 commit），再照 manifest 套用
 sed -i "s#image: localhost/sch001-ai-gateway:[0-9a-f]*\$#image: $tag#" "$dir/app.yaml"
