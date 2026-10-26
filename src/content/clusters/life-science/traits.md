@@ -51,7 +51,7 @@ description: 從生科系教授的審查視角拆解六大核心特質與能力�
 
 ### 特質 5：跨領域的工具意識（數理、統計、程式）
 
-**為什麼重要**：2026 年的生物學是資料密集科學。生物資訊、AI + 生物、合成生物都需要數理與運算能力。清大生命科學系的必修課甚至包含微積分、物理、程式語言。
+**為什麼重要**：美國國家人類基因體研究所（NHGRI）說，基因體學因為資料量大又複雜，現在被視為大數據領域，解讀 DNA 序列要用計算與統計方法。清大生命科學系的必修課甚至包含微積分、物理、程式語言。
 
 **怎麼證明**：若你會用 Python／Excel 處理與視覺化專題數據、能正確使用基本統計（平均、標準差、t 檢定）、或對生物資訊有初步接觸，都值得呈現。重點是「用對地方」，而非炫技。
 
@@ -96,5 +96,6 @@ description: 從生科系教授的審查視角拆解六大核心特質與能力�
 - [〈成大生科特殊選才面試考古題分享〉，拉課力 Luckerly 升學媒體](https://blog.luckertw.com/interview-archaeology/)
 - [國立成功大學生命科學系大學特殊選才面試資訊（成功大學生命科學系官網）](https://www.bio.ncku.edu.tw/)
 - [國立清華大學生命科學系官網（課程含微積分、物理、程式語言）](https://dls.site.nthu.edu.tw/)
+- [〈Genomic Data Science Fact Sheet〉，美國國家人類基因體研究所（NHGRI）](https://www.genome.gov/about-genomics/fact-sheets/Genomic-Data-Science)
 - [國立陽明交通大學生命科學系暨基因體科學研究所—學士班招生](https://dls.nycu.edu.tw/dls/ch/app/artwebsite/view?module=artwebsite&id=35367&serno=610d7c66-6255-4c7c-8ad1-3aca2b117575)
 - [〈申請入學面試常見問題大揭密〉，ColleGo! 焦點話題](https://collego.edu.tw/Media/Article/754)
