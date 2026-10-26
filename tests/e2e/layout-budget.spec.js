@@ -648,3 +648,455 @@ test.describe('篩選面板釘住之前不讓開', () => {
         });
     });
 });
+
+// 焦點移進讓開的面板時，瀏覽器照它在畫面外的位置把元素捲到畫面中間，360x740 時整頁往上跳約 400px（#202）。
+test.describe('焦點移回讓開的面板時整頁不跳', () => {
+    test.use({ viewport: { width: 360, height: 740 } });
+    const PIN_TOP = 64;
+    const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+    const PAGES = {
+        'civic-tech-map': `${BASE}/sch001-108platform/civic-tech-map/index.html`,
+        competitions: `${BASE}/sch001-108platform/advanced-resources/competitions.html`,
+    };
+
+    /** state 回傳捲動位置、面板的位置、位移、轉場長度，以及焦點是否在面板裡。 */
+    const state = (page) =>
+        page.locator('[data-autohide-filters]').evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            const cs = getComputedStyle(el);
+            return {
+                y: window.scrollY, top: r.top, bottom: r.bottom, shift: new DOMMatrixReadOnly(cs.transform).m42,
+                transition: cs.transitionDuration, inPanel: el.contains(document.activeElement),
+            };
+        });
+
+    /**
+     * conceal 捲到面板後面第一個可聚焦的元素在畫面上、面板已經讓開，焦點放在那個元素上。
+     * 用 preventScroll，模擬一路用 Tab 走到這裡的使用者。
+     */
+    async function conceal(page, url, reducedMotion = 'no-preference') {
+        await page.emulateMedia({ reducedMotion });
+        await page.goto(url, { waitUntil: 'networkidle' });
+        return concealLoaded(page);
+    }
+
+    async function concealLoaded(page) {
+        const { pinnedAt, nextTop } = await page.locator('[data-autohide-filters]').evaluate((panel, [sel, pinTop]) => {
+            const next = [...document.querySelectorAll(sel)].find(
+                (el) => el.checkVisibility() && !panel.contains(el) && panel.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING,
+            );
+            next.dataset.afterPanel = '';
+            return { pinnedAt: panel.getBoundingClientRect().top + window.scrollY - pinTop, nextTop: next.getBoundingClientRect().top + window.scrollY };
+        }, [FOCUSABLE, PIN_TOP]);
+        for (const y of [pinnedAt - 40, Math.max(nextTop - 400, pinnedAt + 40)]) {
+            await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+            await settleFilters(page);
+        }
+        expect((await state(page)).bottom, '前置：面板要讓開').toBeLessThanOrEqual(0);
+        await page.locator('[data-after-panel]').evaluate((el) => el.focus({ preventScroll: true }));
+        return state(page);
+    }
+
+    /** expectPinned 檢查頁面沒有捲動，焦點在面板裡，面板回到 header 下方。 */
+    async function expectPinned(page, before, when) {
+        const after = await state(page);
+        expect(after.inPanel, `${when}：焦點要在面板裡`).toBe(true);
+        expect(Math.abs(after.y - before.y), `${when}：整頁從 ${before.y} 捲到 ${after.y}`).toBeLessThanOrEqual(1);
+        expect(after.top, `${when}：面板要回到 header 下方`).toBeCloseTo(PIN_TOP, 0);
+        expect(after.shift).toBe(0);
+        return after;
+    }
+
+    for (const [name, url] of Object.entries(PAGES)) {
+        for (const motion of ['no-preference', 'reduce']) {
+            test(`${name}（${motion}）：Shift+Tab 從面板後面回到面板`, async ({ page }) => {
+                const before = await conceal(page, url, motion);
+                await page.keyboard.press('Shift+Tab');
+                await settleFilters(page);
+                const after = await expectPinned(page, before, 'Shift+Tab');
+                // 還原時暫時拿掉的轉場要放回去，之後往上捲時面板才會滑回來。
+                expect(after.transition).toBe(before.transition);
+            });
+        }
+
+        test(`${name}：Tab 往後走時面板不回來，頁面不往上捲`, async ({ page }) => {
+            const before = await conceal(page, url);
+            await page.keyboard.press('Tab');
+            await settleFilters(page);
+            const after = await state(page);
+            expect(after.inPanel).toBe(false);
+            expect(after.bottom, '面板要維持讓開').toBeLessThanOrEqual(0);
+            expect(after.y).toBeGreaterThanOrEqual(before.y - 1);
+        });
+
+        // 不是 Tab 造成的焦點移動也不能跳。
+        test(`${name}：用 focus() 把焦點移進面板`, async ({ page }) => {
+            const before = await conceal(page, url);
+            await page.locator('[data-autohide-filters]').evaluate((panel, sel) => [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus(), FOCUSABLE);
+            await settleFilters(page);
+            await expectPinned(page, before, 'focus()');
+        });
+    }
+
+    // 點過面板後面的文字，沒有元素有焦點，Shift+Tab 從點的位置往回找。這時不會有 focusout。
+    test('competitions：沒有元素有焦點時 Shift+Tab 回到面板', async ({ page }) => {
+        await conceal(page, PAGES.competitions);
+        // 點同一張卡片的截止日期標籤，它在連結前面，也不會被 header 蓋住。
+        const label = page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label');
+        await label.click();
+        const before = await state(page);
+        expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
+        await page.keyboard.press('Shift+Tab');
+        await settleFilters(page);
+        await expectPinned(page, before, '從空白處 Shift+Tab');
+    });
+
+    /** scrollBackToPanel 往上捲讓面板滑回來，確認還原時有動畫，等它停下來。 */
+    async function scrollBackToPanel(page) {
+        // 等 transitionrun，不逐 frame 看 getAnimations()：機器忙時 frame 間隔可能比 0.22s 的轉場還長。
+        const animated = await page.locator('[data-autohide-filters]').evaluate(
+            (el) =>
+                new Promise((resolve) => {
+                    el.addEventListener('transitionrun', () => resolve(true), { once: true });
+                    setTimeout(() => resolve(false), 2000);
+                    window.scrollBy({ top: -100, behavior: 'instant' });
+                }),
+        );
+        expect(animated, '往上捲時面板要用轉場滑回來').toBe(true);
+        await settleFilters(page);
+        return state(page);
+    }
+
+    test('competitions：往上捲讓面板回來之後，用滑鼠點搜尋框', async ({ page }) => {
+        await conceal(page, PAGES.competitions);
+        const before = await scrollBackToPanel(page);
+        await page.locator('#search-input').click();
+        await settleFilters(page);
+        await expectPinned(page, before, '點搜尋框');
+    });
+
+    /**
+     * tap 在 (x, y) 點一下。Chromium 的 touchscreen.tap 一次送出 touchStart 與 touchEnd，
+     * 中間的 timer 來不及跑，所以用 CDP 分開送，等頁面裡 50ms 的 timer 跑完再放開。
+     */
+    async function tap(page, browserName, x, y) {
+        if (browserName !== 'chromium') return page.touchscreen.tap(x, y);
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 50)));
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    }
+
+    test.describe('觸控', () => {
+        test.use({ hasTouch: true });
+
+        test('competitions：往上捲讓面板回來之後，點一下搜尋框', async ({ page, browserName }) => {
+            await conceal(page, PAGES.competitions);
+            const before = await scrollBackToPanel(page);
+            const box = await page.locator('#search-input').boundingBox();
+            await tap(page, browserName, box.x + box.width / 2, box.y + box.height / 2);
+            await settleFilters(page);
+            await expectPinned(page, before, '點一下搜尋框');
+        });
+    });
+    /** pauseAnimation 等面板的轉場開始，停在 ms 毫秒處，回傳面板的位移。 */
+    const pauseAnimation = (page, ms) =>
+        page.locator('[data-autohide-filters]').evaluate(async (el, ms) => {
+            for (let i = 0; i < 30 && !el.getAnimations().length; i++) await new Promise(requestAnimationFrame);
+            const [a] = el.getAnimations();
+            if (!a) return null;
+            a.pause();
+            a.currentTime = ms;
+            return new DOMMatrixReadOnly(getComputedStyle(el).transform).m42;
+        }, ms);
+
+    const MOVES = {
+        'Shift+Tab': (page) => page.keyboard.press('Shift+Tab'),
+        'focus()': (page) =>
+            page.locator('[data-autohide-filters]').evaluate((panel, sel) => [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus(), FOCUSABLE),
+        '沒有焦點時 Shift+Tab': async (page) => {
+            await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').click();
+            await page.keyboard.press('Shift+Tab');
+        },
+    };
+    for (const [how, move] of Object.entries(MOVES)) {
+        test(`competitions：面板正在滑回來時用 ${how} 把焦點移進面板`, async ({ page }) => {
+            await conceal(page, PAGES.competitions);
+            // 轉場拉長到 60 秒並停在起點，面板開始滑回來，位置還在畫面外。
+            await page.locator('[data-autohide-filters]').evaluate((el) => {
+                el.style.transition = 'transform 60s linear';
+                window.scrollBy({ top: -20, behavior: 'instant' });
+            });
+            expect(await pauseAnimation(page, 0), '前置：面板要停在畫面外').toBeLessThan(-100);
+            const before = await state(page);
+            await move(page);
+            await settleFilters(page);
+            await expectPinned(page, before, how);
+        });
+    }
+
+    // 點擊造成的焦點移動不放回面板，只限那一次點擊。
+    test('competitions：用滑鼠點過卡片文字之後，Shift+Tab 回到面板', async ({ page }) => {
+        await conceal(page, PAGES.competitions);
+        await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').click();
+        await page.locator('[data-after-panel]').evaluate((el) => el.focus({ preventScroll: true }));
+        const before = await state(page);
+        await page.keyboard.press('Shift+Tab');
+        await settleFilters(page);
+        await expectPinned(page, before, '點過之後 Shift+Tab');
+    });
+
+    // 主執行緒忙的時候一次送出點擊與 Shift+Tab，keydown 會排在 mousedown 的 timer 前面。
+    test('competitions：點一下面板後面的連結，馬上 Shift+Tab 回到面板', async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', '要用 CDP 不等回應地送出事件');
+        const before = await conceal(page, PAGES.competitions);
+        const at = await page.locator('[data-after-panel]').evaluate((el) => {
+            document.addEventListener('click', (e) => e.preventDefault(), true);
+            const r = el.getBoundingClientRect();
+            return { x: r.left + 8, y: r.top + r.height / 2 };
+        });
+        const cdp = await page.context().newCDPSession(page);
+        await page.evaluate(() => setTimeout(() => { for (const t = performance.now(); performance.now() - t < 150;); }, 0));
+        const mouse = { x: at.x, y: at.y, button: 'left', clickCount: 1 };
+        const tab = { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: 8 };
+        await Promise.all([
+            cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...mouse }),
+            cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...mouse }),
+            cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', ...tab }),
+            cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', ...tab }),
+        ]);
+        await settleFilters(page);
+        await expectPinned(page, before, '點擊後馬上 Shift+Tab');
+    });
+
+    // mousedown 的記號只管那一次點擊造成的焦點移動。
+    test('competitions：按住滑鼠時頁面用 focus() 把焦點移進面板', async ({ page }) => {
+        const before = await conceal(page, PAGES.competitions);
+        // 按下時焦點不動，focusout 才會發生。
+        await page.evaluate(() => document.addEventListener('mousedown', (e) => e.preventDefault()));
+        const box = await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').boundingBox();
+        await page.mouse.move(box.x + 4, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.locator('[data-autohide-filters]').evaluate(async (panel, sel) => {
+            await new Promise((r) => setTimeout(r, 0));
+            [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus();
+        }, FOCUSABLE);
+        await settleFilters(page);
+        await expectPinned(page, before, '按住滑鼠時 focus()');
+        await page.mouse.up();
+    });
+
+    /** pressWhileConcealing 在面板讓開到一半時點面板裡的按鈕，回傳 click 是否落在那個按鈕上。 */
+    async function pressWhileConcealing(page, press) {
+        await conceal(page, PAGES.competitions);
+        await scrollBackToPanel(page);
+        await page.locator('[data-autohide-filters]').evaluate((el) => {
+            el.style.transition = 'transform 60s linear';
+            window.scrollBy({ top: 60, behavior: 'instant' });
+        });
+        expect(await pauseAnimation(page, 15000), '前置：面板要讓開到一半').toBeLessThan(-50);
+        const at = await page.locator('[data-autohide-filters]').evaluate((el) => {
+            const button = [...el.querySelectorAll('button')]
+                .filter((b) => b.checkVisibility())
+                .find((b) => b.getBoundingClientRect().top > 80);
+            window.__clicked = null;
+            document.addEventListener('click', (e) => { window.__clicked = button.contains(e.target); }, { capture: true, once: true });
+            const r = button.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        });
+        await press(at);
+        return page.evaluate(() => window.__clicked);
+    }
+
+    // 焦點在 mousedown 移進面板，這時把面板放回原位，click 會落到別的元素上。
+    test('competitions：面板讓開到一半時用滑鼠點裡面的按鈕', async ({ page }) => {
+        expect(await pressWhileConcealing(page, (at) => page.mouse.click(at.x, at.y))).toBe(true);
+    });
+
+    test.describe('觸控（讓開到一半）', () => {
+        test.use({ hasTouch: true });
+
+        test('competitions：面板讓開到一半時點一下裡面的按鈕', async ({ page, browserName }) => {
+            expect(await pressWhileConcealing(page, (at) => tap(page, browserName, at.x, at.y))).toBe(true);
+        });
+    });
+
+    const READING_LIST = `${BASE}/sch001-108platform/advanced-resources/reading-list.html`;
+    const WIDE = { width: 915, height: 380 };
+
+    /** toBottom 載入頁面，html 設 CSS zoom，捲到頁底，面板要已經讓開。 */
+    async function toBottom(page, url, zoom = 1) {
+        await page.goto(url, { waitUntil: 'networkidle' });
+        await page.evaluate((zoom) => { document.documentElement.style.zoom = String(zoom); }, zoom);
+        const pinnedAt = await page.locator('[data-autohide-filters]').evaluate((el, pinTop) => el.getBoundingClientRect().top + window.scrollY - pinTop, PIN_TOP * zoom);
+        for (const top of [pinnedAt - 40, 1e7]) {
+            await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), top);
+            await settleFilters(page);
+        }
+        expect((await state(page)).bottom, '前置：面板要讓開').toBeLessThanOrEqual(0);
+    }
+
+    /** watchFocus 記下焦點移進來的當下，元素上緣在 header 下方幾 px。 */
+    const watchFocus = (page) =>
+        page.evaluate(() => {
+            window.__gap = null;
+            window.addEventListener('focusin', (e) => {
+                window.__gap = e.target.getBoundingClientRect().top - document.querySelector('header').getBoundingClientRect().bottom;
+            }, { once: true });
+        });
+
+    /** expectUncovered 檢查焦點在面板裡，移進來的當下和停下來之後都在 header 下方 8px，沒有被別的元素蓋住。 */
+    async function expectUncovered(page, when) {
+        const f = await page.evaluate(() => {
+            const a = document.activeElement;
+            const r = a.getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            const header = document.querySelector('header').getBoundingClientRect().bottom;
+            return { gap: r.top - header, atFocus: window.__gap, bottom: r.bottom, vh: window.innerHeight, hit: !!hit && a.contains(hit), inPanel: !!a.closest('[data-autohide-filters]') };
+        });
+        expect(f.inPanel, `${when}：焦點要在面板裡`).toBe(true);
+        expect(Math.abs(f.atFocus - 8), `${when}：焦點移進來時在 header 下方 ${f.atFocus}px`).toBeLessThanOrEqual(1);
+        expect(Math.abs(f.gap - 8), `${when}：焦點停在 header 下方 ${f.gap}px`).toBeLessThanOrEqual(1);
+        expect(f.bottom, `${when}：焦點在畫面下方`).toBeLessThanOrEqual(f.vh);
+        expect(f.hit, `${when}：焦點被別的元素蓋住`).toBe(true);
+    }
+
+    // 視窗矮時，頁底的面板被容器往上推，放回去以後焦點可能在 header 底下。
+    for (const zoom of [1, 1.25]) {
+        test(`reading-list 740x360（zoom ${zoom}）：頁底點頁尾文字之後 Shift+Tab 回到面板`, async ({ page }) => {
+            await page.setViewportSize({ width: 740, height: 360 });
+            await toBottom(page, READING_LIST, zoom);
+            await page.locator('footer p').first().click();
+            await watchFocus(page);
+            await page.keyboard.press('Shift+Tab');
+            await settleFilters(page);
+            await expectUncovered(page, '頁底 Shift+Tab');
+        });
+    }
+
+    test('portfolio-gallery 360x640：頁底從面板前面的按鈕 Tab 進面板', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 640 });
+        await toBottom(page, `${BASE}/sch001-108platform/learning-portfolio/portfolio-gallery.html`);
+        await page.locator('[data-autohide-filters]').evaluate((panel, sel) => {
+            const prev = [...document.querySelectorAll(sel)].filter((el) => el.checkVisibility() && panel.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING);
+            prev.at(-1).focus({ preventScroll: true });
+        }, FOCUSABLE);
+        await watchFocus(page);
+        await page.keyboard.press('Tab');
+        await settleFilters(page);
+        await expectUncovered(page, '頁底 Tab');
+    });
+
+    // 往上捲一點，面板滑回來、沒有位移，但還被容器推在 header 底下。
+    test('reading-list 740x360：頁底往上捲一點之後，從頁尾 Shift+Tab 回到面板', async ({ page }) => {
+        await page.setViewportSize({ width: 740, height: 360 });
+        await toBottom(page, READING_LIST);
+        await page.evaluate(() => window.scrollBy({ top: -20, behavior: 'instant' }));
+        await settleFilters(page);
+        const s = await state(page);
+        expect(s.shift, '前置：面板沒有位移').toBe(0);
+        expect(s.top, '前置：面板被推到 header 底下').toBeLessThan(PIN_TOP);
+        await page.locator('footer a[href]').first().evaluate((el) => el.focus({ preventScroll: true }));
+        await watchFocus(page);
+        await page.keyboard.press('Shift+Tab');
+        await settleFilters(page);
+        await expectUncovered(page, '往上捲一點後 Shift+Tab');
+    });
+
+    /**
+     * pushedTo 用桌機寬度的矮視窗捲到頁底附近，讓面板最後一個可聚焦的元素停在 header 下方 gap px，
+     * 再把焦點放在頁尾的第一個連結。桌機寬度不讓開，但容器快捲完時面板一樣被推到 header 底下。
+     */
+    async function pushedTo(page, gap) {
+        await page.setViewportSize(WIDE);
+        await page.goto(READING_LIST, { waitUntil: 'networkidle' });
+        await page.evaluate(() => window.scrollTo({ top: 1e7, behavior: 'instant' }));
+        await settleFilters(page);
+        const top = await page.locator('[data-autohide-filters]').evaluate((panel, [sel, y]) => {
+            const last = [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1);
+            last.dataset.lastInPanel = '';
+            window.scrollBy({ top: last.getBoundingClientRect().top - y, behavior: 'instant' });
+            return last.getBoundingClientRect().top;
+        }, [FOCUSABLE, PIN_TOP + gap]);
+        expect(top, '前置：元素要停在指定的位置').toBeCloseTo(PIN_TOP + gap, 0);
+        await page.locator('footer a[href]').first().evaluate((el) => el.focus({ preventScroll: true }));
+    }
+
+    for (const [gap, how] of [[3, '從頁尾的連結'], [-30, '點頁尾文字之後']]) {
+        test(`reading-list ${WIDE.width}x${WIDE.height}：元素被推到 header 下方 ${gap}px 時，${how} Shift+Tab 回到面板`, async ({ page }) => {
+            await pushedTo(page, gap);
+            if (gap < 0) {
+                const p = await page.locator('footer p').first().boundingBox();
+                await page.mouse.click(p.x + 4, p.y + p.height / 2);
+                expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
+            }
+            await watchFocus(page);
+            await page.keyboard.press('Shift+Tab');
+            await settleFilters(page);
+            await expectUncovered(page, how);
+        });
+    }
+
+    // 用滑鼠點時焦點在 mousedown 移動，這時捲動的話 click 可能落到別的元素上。
+    test(`reading-list ${WIDE.width}x${WIDE.height}：元素被推到 header 下方 3px 時用滑鼠點它，頁面不捲`, async ({ page }) => {
+        await pushedTo(page, 3);
+        const y = await page.evaluate(() => window.scrollY);
+        const box = await page.locator('[data-last-in-panel]').boundingBox();
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await settleFilters(page);
+        expect(await page.evaluate(() => document.activeElement.hasAttribute('data-last-in-panel')), '焦點要在點的元素上').toBe(true);
+        expect(await page.evaluate(() => window.scrollY)).toBe(y);
+    });
+
+    /** expectOnScreen 檢查焦點在面板裡，而且在畫面上。 */
+    async function expectOnScreen(page, when) {
+        const f = await page.evaluate(() => {
+            const r = document.activeElement.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom, vh: window.innerHeight, inPanel: !!document.activeElement.closest('[data-autohide-filters]') };
+        });
+        expect(f.inPanel, `${when}：焦點要在面板裡`).toBe(true);
+        expect(f.top >= 0 && f.bottom <= f.vh, `${when}：焦點在 ${f.top}～${f.bottom}，畫面高 ${f.vh}`).toBe(true);
+    }
+
+    // 按 Tab 時記下的捲動位置只給這次按鍵用，之後不是按 Tab 讓焦點進面板時不能捲回去。
+    test('civic-tech-map：在頁首按過 Tab，之後用 focus() 把焦點移進面板', async ({ page }) => {
+        await page.goto(PAGES['civic-tech-map'], { waitUntil: 'networkidle' });
+        await page.keyboard.press('Tab');
+        await concealLoaded(page);
+        await page.evaluate(() => document.activeElement.blur());
+        await page.locator('[data-autohide-filters]').evaluate((panel, sel) => [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus(), FOCUSABLE);
+        await settleFilters(page);
+        await expectOnScreen(page, 'focus()');
+    });
+
+    test('competitions：頁面自己的快捷鍵捲動並把焦點移進面板，不捲回按鍵當下的位置', async ({ page }) => {
+        const before = await conceal(page, PAGES.competitions);
+        await page.evaluate(() => {
+            document.activeElement.blur();
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                window.scrollBy({ top: 50, behavior: 'instant' });
+                document.getElementById('search-input').focus({ preventScroll: true });
+            });
+        });
+        await page.keyboard.press('Enter');
+        await settleFilters(page);
+        expect((await state(page)).y).toBeCloseTo(before.y + 50, 0);
+    });
+
+    // 面板還沒釘住、在畫面下方時，瀏覽器要把它捲進來，不能捲回去。
+    test('civic-tech-map：點標籤說明之後 Tab 進還在畫面下方的導航', async ({ page }) => {
+        await page.goto(PAGES['civic-tech-map'], { waitUntil: 'networkidle' });
+        // 導航在畫面下緣再往下 20px。
+        await page.locator('[data-autohide-filters]').evaluate((el) => {
+            window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - window.innerHeight - 20, behavior: 'instant' });
+        });
+        await settleFilters(page);
+        const box = await page.locator('section[aria-label="標籤說明"]').boundingBox();
+        await page.mouse.click(box.x + 4, Math.min(box.y + box.height, page.viewportSize().height) - 30);
+        expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
+        await page.keyboard.press('Tab');
+        await settleFilters(page);
+        await expectOnScreen(page, 'Tab');
+    });
+});

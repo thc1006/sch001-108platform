@@ -83,9 +83,13 @@
      * @param {{el: Element, topPx: number}} p @returns {boolean}
      */
     function pinned(p) {
-        var shift = new DOMMatrixReadOnly(window.getComputedStyle(p.el).transform).m42;
         var zoom = p.el.currentCSSZoom || 1;
-        return p.el.getBoundingClientRect().top - shift <= p.topPx * zoom + 0.5;
+        return p.el.getBoundingClientRect().top - shift(p) <= p.topPx * zoom + 0.5;
+    }
+
+    /** shift 回傳面板目前的垂直位移，含進行中的轉場。 @param {{el: Element}} p @returns {number} */
+    function shift(p) {
+        return new DOMMatrixReadOnly(window.getComputedStyle(p.el).transform).m42;
     }
 
     function init() {
@@ -104,6 +108,60 @@
         }
         applyTransition();
         if (reduce.addEventListener) reduce.addEventListener('change', applyTransition);
+
+        // 焦點移進讓開或正在滑回來的面板時，瀏覽器照它在畫面外的位置把元素捲到畫面中間，
+        // 360x740 時整頁往上跳約 400px（#202）。在瀏覽器捲動之前，先不帶動畫把面板放回去。
+        function revealNow(p) {
+            p.el.style.transition = 'none';
+            reveal(p);
+            // 讀一次樣式，位移立刻生效，接著放回轉場也不會再動畫。
+            window.getComputedStyle(p.el).transform;
+            applyTransition();
+        }
+        // 容器快捲完時面板被往上推，桌機寬度也一樣。元素被 header 蓋住時瀏覽器不捲，在畫面上方時捲到
+        // 畫面中段。要自己捲到 header 下方，多留 8px 給焦點框。
+        function uncover(p, target) {
+            var dy = target.getBoundingClientRect().top - p.topPx * (p.el.currentCSSZoom || 1);
+            if (dy < 8) window.scrollBy({ top: dy - 8, behavior: 'instant' });
+        }
+        // 用滑鼠或觸控點面板時，焦點在 mousedown 移動。這時放回面板，click 會落到別的元素上。
+        var pressing = false;
+        document.addEventListener('mousedown', function () {
+            pressing = true;
+            window.setTimeout(function () { pressing = false; }, 0);
+        }, true);
+        // 先前有焦點的話，focusout 時焦點還沒移動。
+        document.addEventListener('focusout', function (e) {
+            if (pressing) return;
+            for (var i = 0; i < panels.length; i++) {
+                var p = panels[i];
+                if (!p.el.contains(e.relatedTarget)) continue;
+                if (shift(p) < 0) revealNow(p);
+                uncover(p, e.relatedTarget);
+            }
+        }, true);
+        // 沒有元素有焦點時按 Tab 不會有 focusout，focusin 的 relatedTarget 是 null。這時 Firefox 已經捲完，
+        // Chromium 也排好了平滑捲動，要捲回按鍵當下的位置。
+        var tabY = null;
+        document.addEventListener('keydown', function (e) {
+            // 點擊後馬上按鍵時，mousedown 排的 timer 可能還沒跑。
+            pressing = false;
+            if (e.key !== 'Tab') return;
+            tabY = window.scrollY;
+            window.setTimeout(function () { tabY = null; }, 0);
+        }, true);
+        document.addEventListener('focusin', function (e) {
+            if (tabY === null || e.relatedTarget) return;
+            for (var i = 0; i < panels.length; i++) {
+                var p = panels[i];
+                if (!p.el.contains(e.target)) continue;
+                if (shift(p) < 0) {
+                    revealNow(p);
+                    window.scrollTo({ top: tabY, behavior: 'instant' });
+                }
+                uncover(p, e.target);
+            }
+        }, true);
 
         var lastY = window.scrollY || 0;
         var ticking = false;
