@@ -13,7 +13,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { norm, skeleton, selfTest, extractQuotes } from './audit-quote-freshness.mjs';
+import { norm, skeleton, selfTest, extractQuotes, curlHeaders } from './audit-quote-freshness.mjs';
+import { UA } from './link-health.lib.mjs';
 
 test('selfTest()：工具自己的健康檢查要通過', () => {
     assert.doesNotThrow(() => selfTest());
@@ -93,4 +94,16 @@ test('故障注入：把空白字元類換回會吃掉 ASCII 的那種，selfTes
         '這一行釘住事故的機制本身：壞掉的字元類會把英文整段清空');
     assert.equal('any page text'.includes(broken('International Group Leaders')), true,
         '而空字串的 includes 恆為真——所以壞掉的版本會對每一條引文印「命中」');
+});
+
+test('curlHeaders()：UA 和外部連結健檢相同，https 才帶四個 Sec-Fetch-*', () => {
+    // 2026-10-26 實測 leetcode.com 對只帶 UA 的 curl 回 403，補上這四個才是 200。
+    const pairs = (args) => args.filter((_, i) => i % 2 === 1);
+    const https = pairs(curlHeaders('https://leetcode.com/contest/'));
+    assert.ok(https.includes(`User-Agent: ${UA}`));
+    for (const h of ['Sec-Fetch-Dest: document', 'Sec-Fetch-Mode: navigate', 'Sec-Fetch-Site: none', 'Sec-Fetch-User: ?1']) {
+        assert.ok(https.includes(h), h);
+    }
+    assert.deepEqual(pairs(curlHeaders('http://example.org/')), [`User-Agent: ${UA}`]);
+    assert.ok(curlHeaders('https://a.example/').every((x, i) => i % 2 === 1 || x === '-H'));
 });
