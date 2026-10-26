@@ -120,6 +120,7 @@ before(async () => {
         if (u === '/to-creds') { res.writeHead(302, { Location: 'http://user:pass@example.com/' }); return res.end(); }
         if (u === '/to-dns-private') { res.writeHead(302, { Location: `http://${PRIVATE_DNS_HOST}/` }); return res.end(); }
         if (u === '/to-ok') { res.writeHead(302, { Location: '/ok' }); return res.end(); }
+        if (u === '/to-local-http') { res.writeHead(302, { Location: base + '/ok' }); return res.end(); }
         if (u === '/loop') { res.writeHead(302, { Location: '/loop' }); return res.end(); }
         // 一路轉到 /ok，用來確認「上限之內的多跳」仍然可行
         const chain = /^\/hop(\d+)$/.exec(u);
@@ -300,6 +301,50 @@ test('UA：送出精簡格式的 Chrome UA，主版本不低於 134', async () =
     const m = /^Mozilla\/5\.0 \([^)]+\) AppleWebKit\/537\.36 \(KHTML, like Gecko\) Chrome\/(\d+)\.0\.0\.0 Safari\/537\.36$/.exec(ua);
     assert.ok(m, `不是精簡格式的 Chrome UA：${ua}`);
     assert.ok(Number(m[1]) >= 134, `Chrome/${m[1]} 太舊`);
+});
+
+test('Sec-Fetch：轉址鏈的每一跳都送 UA，https 的每一跳都送 Sec-Fetch-*，轉到 http 的那一跳不送', async (t) => {
+    // hops.example 的 https 請求改送到本機 http server：/to-ok 302 到同站的 /ok，/to-local-http 302 到 http 的本機 server。
+    t.mock.method(dns.promises, 'lookup', async (host) => [{ address: host === 'hops.example' ? '8.8.8.8' : host, family: 4 }]);
+    t.mock.method(https, 'request', (options, cb) =>
+        http.request({ hostname: '127.0.0.1', port: server.address().port, path: options.path, headers: options.headers, agent: false }, cb));
+    const sent = (path) => headersOf.get(path) ?? {};
+    headersOf.clear();
+    assert.equal((await probe('https://hops.example/to-ok', undefined, LOOPBACK_OK)).status, 200);
+    for (const path of ['/to-ok', '/ok']) {
+        assert.equal(sent(path)['sec-fetch-mode'], 'navigate', path);
+        assert.match(sent(path)['user-agent'], /Chrome\/\d+\.0\.0\.0/, path);
+    }
+    headersOf.clear();
+    assert.equal((await probe('https://hops.example/to-local-http', undefined, LOOPBACK_OK)).status, 200);
+    assert.equal(sent('/to-local-http')['sec-fetch-mode'], 'navigate');
+    assert.equal(sent('/ok')['sec-fetch-mode'], undefined, 'http 那一跳帶了 Sec-Fetch-*');
+    assert.match(sent('/ok')['user-agent'], /Chrome\//);
+});
+
+test('Sec-Fetch：https 的請求帶 Chrome 直接開網頁時的四個 Sec-Fetch-*，http 的不帶', async (t) => {
+    const secFetch = (headers) => Object.fromEntries(
+        Object.entries(headers ?? {}).map(([k, v]) => [k.toLowerCase(), v]).filter(([k]) => k.startsWith('sec-fetch-')),
+    );
+    headersOf.clear();
+    await probe(`${base}/ok`, undefined, LOOPBACK_OK);
+    assert.deepEqual(secFetch(headersOf.get('/ok')), {}, 'http 的請求帶了 Sec-Fetch-*');
+
+    // https 的請求不連出去：DNS 給公開位址，https.request 記下標頭就丟錯。
+    t.mock.method(dns.promises, 'lookup', async () => [{ address: '8.8.8.8', family: 4 }]);
+    let sent;
+    t.mock.method(https, 'request', (options) => {
+        sent = options?.headers;
+        throw Object.assign(new Error('測試攔下：不連外'), { code: 'ETEST_TRANSPORT' });
+    });
+    await probe('https://sec-fetch.example/');
+    assert.ok(sent, 'https.request 沒有被呼叫');
+    assert.deepEqual(secFetch(sent), {
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'sec-fetch-user': '?1',
+    });
 });
 
 // 靜態網址政策不需要 DNS，PR 階段就能確定性地跑。

@@ -34,9 +34,9 @@ import dns from 'node:dns';
 //   curl + Chrome/140 UA                      → 200
 //   curl --http1.1（排除 HTTP/2 的差異）      → 200
 //   根路徑、/contest/、/problemset/ 都一樣    → 200
-// UA、路徑、HTTP 版本都排除之後，剩下的差異是 TLS 指紋：Node 的 ClientHello
-// 不是 Chrome 的，Cloudflare 的 bot management 認得出來。這不是換 header 能修的，
-// 所以這一類 403 會一直存在，只能歸進 unverified 而不是 dead，否則會長期誤報。
+// UA、路徑、HTTP 版本都排除之後，剩下的差異是 TLS 指紋：Node 的 ClientHello 不是 Chrome 的，
+// Cloudflare 的 bot management 認得出來。2026-10-25 補上 Sec-Fetch-* 後，根路徑大多回 200，
+// /contest/ 大多仍是 403。這一類 403 會一直存在，只能歸進 unverified 而不是 dead，否則會長期誤報。
 export const DEAD_STATUSES = new Set([404, 410]);
 export const LINK_TIMEOUT_MS = 20_000;
 export const MAX_REDIRECTS = 5;
@@ -45,6 +45,16 @@ export const MAX_REDIRECTS = 5;
 // 2026-10-25 用這支檢查器實測，7 個網址對 Chrome/126 斷線或回 403、520，對 Chrome/156 都回 200。
 export const UA =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36';
+
+// Chrome 直接開 https 網頁時送這四個，外部的 http 網頁不送（2026-10-25 對 Chromium 156 實測）。同一天，
+// Sec-Fetch-Mode 與 Sec-Fetch-Site 都沒有時 Facebook 回 400；四個只少 Sec-Fetch-User 時，medium.com、
+// cofacts.tw 等 8 個 Cloudflare 後面的網址回 403。
+const SEC_FETCH = {
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+};
 
 // 關掉 keepAlive：這是一次上百站的批次工作，連線池留著沒有好處；每次都重新
 // 建立連線，連的才一定是這次驗過的位址，不會沿用池中的舊 socket。
@@ -370,6 +380,7 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                         // 拿亂碼去比對詞組比不檢查更糟。
                         'Accept-Encoding': wantBody ? 'identity' : 'gzip, deflate, br',
                         Connection: 'close',
+                        ...(url.protocol === 'https:' ? SEC_FETCH : {}),
                     },
                 },
                 (res) => {
