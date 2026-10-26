@@ -1014,6 +1014,32 @@ test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致',
     assert.match(igem.description, /Grand Jamboree 2026-11-13 至 11-16/);
 });
 
+// #195 範圍一在 2026-10-25 重查改過的值。官網原文寫在各筆的 commit 訊息裡。
+test('data：#195 範圍一重查改過的週期、日期與主辦單位不得被改回去', () => {
+    // 2022 至 2026 年都在 3 月截止，日子每年不同
+    assert.deepEqual(find('生活科技學藝競賽').cycle, { closes: '03' });
+
+    const hcgcc = find('HCGCC');
+    assert.equal(hcgcc.title, '哈佛克里姆森商業個案分析賽 (HCGCC)');
+    assert.equal(hcgcc.organizer, 'Crimson Education 與 The Harvard Crimson');
+    assert.deepEqual(hcgcc.cycle, { opens: '07', closes: '10' });
+    assert.equal(hcgcc.eventStartsAt, '2026-11-29');
+
+    assert.deepEqual(find('Diamond Challenge').cycle, { opens: '09', closes: '01' });
+
+    const tisdc = find('台灣國際學生創意設計大賽');
+    assert.equal(tisdc.organizer, '教育部高等教育司');
+    assert.equal(tisdc.cycle.opens, undefined, 'TISDC 歷屆開放月份不同');
+
+    assert.equal(find('Solve for Tomorrow').eventStartsAt, '2026-11-13');
+    // 規則：「The Competition begins May 11, 2026 at 12:01 AM PDT」
+    assert.equal(find('Breakthrough').opensAt, '2026-05-11T00:01:00-07:00');
+
+    assert.equal(find('國際化學競賽').organizer, 'Edu.Harbour');
+    assert.equal(find('My First CTF').organizer, '教育部跨領域資通訊安全人才培育計畫推動辦公室');
+    assert.equal(find('GENIUS').organizer, 'Terra Science and Education / 美國 St. John Fisher University');
+});
+
 test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日期欄', () => {
     const src = readFileSync(
         new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
