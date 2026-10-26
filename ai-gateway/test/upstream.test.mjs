@@ -69,6 +69,27 @@ test('正常串流：分開收集思考與正文，回傳結束原因與用量',
     });
 });
 
+test('onResponse：收到回應標頭時呼叫一次，在任何思考與正文之前；錯誤的狀態碼也呼叫；丟出的例外原樣丟回', async () => {
+    await withUpstream([
+        { thinking: ['想'], content: ['好'], finish: 'stop' },
+        { status: 429, body: { error: { message: 'busy' } } },
+        { content: ['好'], finish: 'stop' },
+    ], async (up) => {
+        const seen = [];
+        await streamChat(testConfig(up.origin), basicPayload(), {
+            onResponse: () => seen.push('response'),
+            onReasoning: () => seen.push('thinking'),
+            onContent: () => seen.push('content'),
+        });
+        assert.deepEqual(seen, ['response', 'thinking', 'content']);
+        let calls = 0;
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload(), { onResponse: () => calls++ }), { code: 'busy' });
+        assert.equal(calls, 1);
+        const own = new Error('呼叫端的錯誤');
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload(), { onResponse: () => { throw own; } }), (err) => err === own);
+    });
+});
+
 test('送出的請求：固定路徑不帶 query、只有白名單欄位、帶 key 與標頭', async () => {
     await withUpstream([{ content: ['ok'] }], async (up) => {
         await streamChat(testConfig(up.origin), basicPayload());
