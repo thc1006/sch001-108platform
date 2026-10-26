@@ -22,6 +22,10 @@
  *   4. 盤點的網址不可以連到 hijacked 的主機。url 欄位與 href 讀者點得到；說明文字裡寫成
  *      完整網址，看起來也是要讀者去開的位址。要提醒讀者某個網域已經易主，只寫裸網域。
  *
+ *   5. contentChecks 宣告的主機對任何路徑都回 200，狀態碼看不出網址還在不在。這些主機上除了
+ *      首頁，盤點的每個網址都要在 contentChecks 寫明用哪個 API 驗內容。contentChecks 的主機與
+ *      網址也要對得上盤點，對不上就是殭屍條目。
+ *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
  * 只寫在說明文字裡的裸網域（inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
  *
@@ -36,7 +40,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { staticUrlPolicy } from './link-health.lib.mjs';
-import { validatePolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS } from './link-policy.lib.mjs';
+import { validatePolicy, matchHijacked, normalizeUrl, MAX_HORIZON_DAYS, contentCheckGaps } from './link-policy.lib.mjs';
 
 // fileURLToPath 而非手刻的 pathname 轉換：pathname 是 percent-encoded，路徑含
 // 空白或非 ASCII 時會解析錯誤（本 repo 的 worktree 就在 .claude/ 底下）。
@@ -64,7 +68,7 @@ try {
     console.error(`❌ 讀不到或無法解析 ${POLICY_PATH}：${err.message}`);
     process.exit(1);
 }
-const { errors: policyErrors, entries, hijacked } = validatePolicy(policyRaw, todayISO);
+const { errors: policyErrors, entries, hijacked, contentChecks } = validatePolicy(policyRaw, todayISO);
 errors.push(...policyErrors.map((m) => ({ where: 'link-policy.json', message: m })));
 
 // 第 2、3 項都要用到盤點。
@@ -118,6 +122,15 @@ for (const url of urls) {
     });
 }
 
+// 第 5 項。
+for (const { url, check } of contentCheckGaps(contentChecks, urls)) {
+    const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
+    errors.push({
+        where: [...new Set(occ.map((o) => o.file))].join('、') || '(未知出處)',
+        message: `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容。`,
+    });
+}
+
 const inventorySet = new Set(urls.map(normalizeUrl));
 const inventoryHosts = new Set();
 for (const u of urls) {
@@ -146,6 +159,16 @@ if (urls.length) {
             });
         }
     }
+    for (const c of contentChecks) {
+        if (!inventoryHosts.has(c.match.host)) {
+            errors.push({ where: 'link-policy.json', message: `內容檢查「${c._key}」在建置產物裡找不到這台主機，請刪除這一筆。` });
+        }
+        for (const u of c.urls) {
+            if (!inventorySet.has(u.url)) {
+                errors.push({ where: 'link-policy.json', message: `內容檢查「${c._key}」的 ${u.url} 在建置產物裡找不到，請刪除這一筆網址。` });
+            }
+        }
+    }
     for (const h of hijacked) {
         if (!inventoryHosts.has(String(h.match.host).toLowerCase())) {
             errors.push({
@@ -169,6 +192,10 @@ console.log(
 for (const h of hijacked) {
     console.log(`      ${h.match.host}  [${h.kind}]  → ${h.expires} 需重新查證（owner: ${h.owner}）`);
 }
+console.log(`  內容檢查：${contentChecks.length} 台主機、${contentChecks.reduce((n, c) => n + c.urls.length, 0)} 個網址（這些主機對任何路徑都回 200，網址改用 API 驗內容）`);
+for (const c of contentChecks) {
+    console.log(`      ${c.match.host}  ${c.urls.length} 個網址  → ${c.expires} 需重新查證（owner: ${c.owner}）`);
+}
 console.log(`  盤點的外部網址：${urls.length}（另有 ${bareHosts.length} 個只寫在說明文字裡的裸網域）`);
 console.log(`  錯誤：${errors.length}`);
 
@@ -178,4 +205,4 @@ if (errors.length) {
     console.error(`\n共 ${errors.length} 項錯誤。`);
     process.exit(1);
 }
-console.log('\n✅ 例外與接管警示全部有效，盤點內沒有違反位址政策、也沒有連到接管主機的網址。');
+console.log('\n✅ 例外、接管警示與內容檢查全部有效，盤點內沒有違反位址政策、也沒有連到接管主機的網址。');

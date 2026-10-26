@@ -36,7 +36,7 @@ import {
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
-import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin } from './link-policy.lib.mjs';
+import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin, matchContentCheck, contentCheckGaps } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems } from './check-external-links.lib.mjs';
 
@@ -1330,6 +1330,118 @@ test('hijacked：repo 內的 link-policy.json 的 hijacked 現在就是有效的
     for (const h of hijacked) {
         assert.ok(/20\d\d-\d\d-\d\d/.test(h.evidence), `${h.match.host} 的 evidence 必須寫明實測日期`);
     }
+});
+
+// contentChecks 列出對任何路徑都回 200 的主機，以及這些主機上每個網址要用哪個 API 驗內容。
+
+const SPA = 'https://spa.example.org';
+const validContentUrl = (over = {}) => ({
+    url: `${SPA}/site/category?root=42&cid=42`,
+    api: `${SPA}/api/Public?cid=42&first=true`,
+    expect: { cid: 42 },
+    ...over,
+});
+const validContentCheck = (over = {}) => ({
+    match: { host: 'spa.example.org' },
+    reason: '前端殼對任何路徑都回 200，內容由 API 載入',
+    evidence: '2026-08-27 實測 /this/path/does/not/exist 也回同一個殼',
+    owner: 'thc1006',
+    expires: '2026-10-01',
+    urls: [validContentUrl()],
+    ...over,
+});
+const contentErrors = (over, extra = {}) =>
+    validatePolicy({ version: 1, entries: [], hijacked: [], contentChecks: [validContentCheck(over)], ...extra }, TODAY).errors;
+
+test('contentChecks：合法的一筆通過驗證；只連首頁的主機 urls 可以是空陣列', () => {
+    const { errors, contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck()] }, TODAY);
+    assert.deepEqual(errors, []);
+    assert.equal(contentChecks.length, 1);
+    assert.equal(contentChecks[0]._key, 'contentChecks:spa.example.org');
+    assert.deepEqual(contentErrors({ urls: [] }), []);
+    // 最外層就寫錯時也回傳三份空名單，呼叫端不必另外判斷。
+    for (const bad of ['x', { version: 1 }]) {
+        const r = validatePolicy(bad, TODAY);
+        assert.ok(r.errors.length > 0);
+        assert.deepEqual([r.hijacked, r.contentChecks], [[], []]);
+    }
+});
+
+test('contentChecks：缺 reason／evidence／owner／expires、過期或超過期限上限都拒絕，寫錯的不回傳', () => {
+    for (const field of ['reason', 'evidence', 'owner', 'expires']) {
+        const c = validContentCheck();
+        delete c[field];
+        const { errors, contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [c] }, TODAY);
+        assert.ok(errors.some((m) => m.includes(field)), `缺 ${field} 必須報錯，實際：${errors.join('；')}`);
+        assert.deepEqual(contentChecks, []);
+    }
+    assert.ok(contentErrors({ expires: TODAY }).some((m) => /到期/.test(m)));
+    assert.ok(contentErrors({ expires: '2099-12-31' }).some((m) => /無期限/.test(m)));
+    assert.ok(contentErrors({ urls: undefined }).some((m) => m.includes('urls')));
+    assert.ok(contentErrors({ extra: 1 }).some((m) => m.includes('未知欄位')));
+});
+
+test('contentChecks：match 只接受精確主機名，同一台主機不能重複，也不能同時列在 hijacked', () => {
+    assert.ok(contentErrors({ match: { url: `${SPA}/` } }).some((m) => m.includes('match')));
+    assert.ok(contentErrors({ match: { host: 'spa.example.org', url: `${SPA}/` } }).some((m) => m.includes('match')));
+    assert.ok(contentErrors({ match: { host: '*.example.org' } }).some((m) => m.includes('萬用字元')));
+    assert.ok(contentErrors({ match: { host: 'SPA.example.org' } }).some((m) => m.includes('要寫成網址裡的主機名')));
+    const dup = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck(), validContentCheck({ urls: [] })] }, TODAY);
+    assert.ok(dup.errors.some((m) => m.includes('重複')));
+    const hijack = { match: { host: 'spa.example.org' }, kind: 'hijacked', reason: '測試：已經易主的網域', evidence: '測試：2026-08-27 首頁是博弈站', owner: 'x', expires: '2026-10-01' };
+    assert.deepEqual(validatePolicy({ version: 1, entries: [], hijacked: [hijack] }, TODAY).errors, []);
+    assert.deepEqual(contentErrors({}, { hijacked: [hijack] }), ['contentChecks[0] 的主機 spa.example.org 列在 hijacked，不可信任的主機不必驗內容']);
+});
+
+test('contentChecks：網址要在宣告的主機上、寫成正規化的形式、不帶 fragment，也不能重複', () => {
+    assert.ok(contentErrors({ urls: [validContentUrl({ url: 'https://other.example.org/x' })] }).some((m) => m.includes('要在同一台主機')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ url: 'HTTPS://spa.example.org/x' })] }).some((m) => m.includes('正規化')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ url: `${SPA}/x#top` })] }).some((m) => m.includes('fragment')));
+    assert.ok(contentErrors({ urls: [validContentUrl(), validContentUrl()] }).some((m) => m.includes('重複')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ note: 'x' })] }).some((m) => m.includes('未知欄位')));
+});
+
+test('contentChecks：API 要用 https、和頁面同一台主機、不帶埠號，本身也要過位址政策', () => {
+    assert.ok(contentErrors({ urls: [validContentUrl({ api: 'http://spa.example.org/api/Public?cid=42' })] }).some((m) => m.includes('https')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://api.example.net/Public?cid=42' })] }).some((m) => m.includes('同一台主機')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://169.254.169.254/latest/meta-data/' })] }).some((m) => m.includes('位址政策')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ api: `${SPA}/api/Public?cid=42#x` })] }).some((m) => m.includes('fragment')));
+    assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://spa.example.org:8443/api/Public?cid=42' })] }).some((m) => m.includes('埠號')));
+});
+
+test('contentChecks：expect 是非空的物件，只比最外層的欄位，值只能是字串、有限的數字或布林', () => {
+    for (const expect of [undefined, {}, [], { cid: { id: 42 } }, { cid: null }, { cid: Number.NaN }, { cid: [42] }]) {
+        assert.ok(contentErrors({ urls: [validContentUrl({ expect })] }).some((m) => m.includes('expect')), `${JSON.stringify(expect)} 必須報錯`);
+    }
+    assert.deepEqual(contentErrors({ urls: [validContentUrl({ expect: { cid: 42, title: '自主學習專區', hide: false } })] }), []);
+    assert.ok(contentErrors({ urls: [validContentUrl({ expect: { 'data.cid': 42 } })] }).some((m) => m.includes('最外層')), '巢狀欄位不支援，要報錯');
+});
+
+test('contentChecks：matchContentCheck 照正規化後的網址精確比對，回傳那一台主機的宣告與那一筆網址', () => {
+    const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck()] }, TODAY);
+    const hit = matchContentCheck(contentChecks, `${SPA}/site/category?root=42&cid=42#main`);
+    assert.equal(hit.check.match.host, 'spa.example.org');
+    assert.deepEqual(hit.entry.expect, { cid: 42 });
+    assert.equal(matchContentCheck(contentChecks, `${SPA}/site/category?root=42&cid=4`), null);
+    assert.equal(matchContentCheck(contentChecks, `${SPA}/site/category?root=42&cid=42&x=1`), null);
+    assert.equal(matchContentCheck(contentChecks, 'https://spa.example.org.evil.test/site/category?root=42&cid=42'), null);
+    assert.equal(matchContentCheck(contentChecks, 'not a url'), null);
+});
+
+test('contentChecks：contentCheckGaps 列出宣告的主機上沒有內容檢查的網址，首頁與其他主機不列', () => {
+    const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck()] }, TODAY);
+    const gaps = contentCheckGaps(contentChecks, [
+        `${SPA}/site/category?root=42&cid=42`,
+        `${SPA}/`,
+        `${SPA}/#top`,
+        `${SPA}/?lang=en`,
+        `${SPA}/x`,
+        'https://SPA.example.org./site/new',
+        'http://spa.example.org/site/plain',
+        'https://other.example.org/site/new',
+    ]);
+    assert.deepEqual(gaps.map((g) => g.url), [`${SPA}/?lang=en`, `${SPA}/x`, 'https://SPA.example.org./site/new', 'http://spa.example.org/site/plain']);
+    assert.equal(gaps[1].check.match.host, 'spa.example.org');
 });
 
 const bot = (number, body) => ({ number, author: { login: ACTIONS_APP_LOGIN }, body });
