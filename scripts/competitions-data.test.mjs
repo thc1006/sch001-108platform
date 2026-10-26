@@ -1015,6 +1015,30 @@ test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => 
     assert.deepEqual(marked, [], '描述不得含 ** 或反引號');
 });
 
+// #70 分類表 B 區與 VEX 在 2026-10-25 改寫的描述，HITCON CTF 2026-10-26 改的狀態列。原文寫在各筆的 commit 訊息裡。
+test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊說法', () => {
+    const old = [
+        ['Codeforces', /首頁對自動化存取回 403/],
+        ['Advent of Code', /免費、無需報名/],
+        ['Major League Hacking', /多數大學主辦場次實務上只收大學生|遍及百國/],
+        ['Cambridge Re:Think', /唯一連結/],
+        ['全美高中生影展', /官網只列日期，未標時刻與時區/],
+        ['倫敦國際青年科學論壇', /「By 30th May latest」/],
+        ['國際天文與天文物理競賽', /線上商業競賽/],
+        ['VEX 機器人世界錦標賽', /HTTP 200 空殼/],
+    ];
+    for (const [needle, re] of old) assert.ok(!re.test(find(needle).description), needle);
+    // 改寫成查過哪幾份文件與原文
+    for (const needle of ['Codeforces', 'AtCoder', 'Project Euler']) {
+        assert.ok(!/無年齡或國籍限制/.test(find(needle).description), needle);
+    }
+
+    // 要先用 GitHub、Google、Twitter 或 Reddit 帳號登入才拿得到題目輸入
+    assert.ok(!/無需報名/.test(find('Advent of Code').registrationNote));
+    // 2026 屆 10/25 22:00（UTC+8）已結束
+    assert.ok(!/線上註冊/.test(find('HITCON CTF').registrationNote));
+});
+
 // Jamboree 官網逐字「13–16 NOVEMBER, 2026」，api.igem.org 的 startDate 也是 2026-11-13。
 test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致', () => {
     const igem = find('iGEM');
