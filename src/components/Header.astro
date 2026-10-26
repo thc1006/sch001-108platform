@@ -24,8 +24,8 @@ const navItems = [
       <a href={`${base}/index.html`}>台灣教育處方籤</a>
     </div>
 
-    <!-- 桌機選單 -->
-    <div class="hidden md:flex space-x-8 items-center font-semibold">
+    {/* 桌機選單。768～1023px 的版心只有 720px，選項間距 32px 時站名和選單只隔 8px，所以 lg 以下用 24px。 */}
+    <div class="hidden md:flex space-x-6 lg:space-x-8 items-center font-semibold">
       {navItems.map((item) => (
         <a
           href={item.href}
