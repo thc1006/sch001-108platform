@@ -139,12 +139,16 @@ GPU；讓任務做指令以外的事（prompt injection），或讓它對任意 
   該套件只存在於建置期相依、不隨站台發布。
   **上游釋出修正版時 Dependabot 會重新開啟，屆時照常升版即可。**
 
-- **`postcss-selector-parser` 的 GHSA-rj75-hqrm-r3gf（Dependabot alert #37）**：
-  已關閉為 `tolerable_risk`。這個漏洞要在請求流程中解析攻擊者送來的選擇器才會觸發；
-  本站只在建置時由 `@tailwindcss/typography` 解析它自己內建的選擇器，GHSA 也寫明
-  建置期處理可信來源不受影響。typography 最新的 0.5.20 固定相依 6.0.10，修正版 7.1.6
-  只能用 overrides 強制跨 major 升級，所以先不升。6.x 的修正版 6.1.5 收進 GHSA、
-  而且發布滿 7 天（2026-10-26 23:02 以後），就改用同 major 的 override 升級。
+- **`postcss-selector-parser` 的 GHSA-rj75-hqrm-r3gf**：
+  2026-10-26 時 `@tailwindcss/typography` 最新的 0.5.20 固定相依 6.0.10，在受影響範圍內。
+  `package.json` 的 overrides 只在相依方要求的範圍含 6.1.5 以前的版本時改用 `^6.1.5`，
+  目前裝的是 6.1.5。6.1.5 由維護者發布，內容是 7.1.6 修正的 backport
+  （postcss/postcss-selector-parser#346）；維護者的 repository advisory 列它為 6.x 的修正版，
+  GitHub Advisory Database 在 2026-10-26 的更新也列入。7.1.6 在另一個 major，所以不用它。
+  這個漏洞要在請求流程中解析攻擊者送來的選擇器才會觸發；本站只在建置時由 typography
+  解析它自己內建的選擇器，GHSA 也寫明建置期處理可信來源不受影響。2026-10-26 時 npm 的
+  audit 資料仍只寫 `<7.1.6`，`npm audit` 照樣把 6.1.5 列為有漏洞；OSV 判 6.1.5 不受影響。
+  typography 改成相依修正版之後，這個 override 不再套用，可以拿掉。
 
 - **缺少安全性 response header**：GitHub Pages 不支援自訂 response header，
   這是平台限制。但 CSP 不受此限——Astro 7 可以把政策寫成
