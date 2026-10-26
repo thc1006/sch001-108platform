@@ -628,7 +628,8 @@ function segmentRatio(tokens, text) {
  *                            phase 為 thinking | writing | continuing | retrying；token 數是串流片段數，
  *                            只是給進度條用的近似值
  *                          onContent(text)：逐段送出最終答案的正文（只有文字任務會呼叫）
- *                          兩個 hook 可以是 async；丟出例外或 reject 都會中止任務並原樣丟回。
+ *                          onResponse()：每次收到上游的回應標頭（含探測、重試與錯誤的回應）
+ *                          這幾個 hook 可以是 async；丟出例外或 reject 都會中止任務並原樣丟回。
  *                            回傳結果前會等所有 async hook 完成（受總時限與取消約束）
  *                          streamChatImpl：測試用
  * @returns {Promise<{content: string, rounds: number, usage: object, continuations: string[]}>}
@@ -738,6 +739,7 @@ export async function generate(config, request, hooks = {}) {
     } : undefined);
     const onProgress = guard(hooks.onProgress) || (() => {});
     const onContent = jsonMode ? undefined : guard(hooks.onContent);
+    const onResponse = guard(hooks.onResponse);
     const throwIfHookFailed = (round) => {
         if (hookFailed) throw attach(hookError, round);
     };
@@ -950,7 +952,7 @@ export async function generate(config, request, hooks = {}) {
                 reasoningEffort: effort,
                 temperature,
                 responseFormat: format,
-            }, { signal: combined });
+            }, { signal: combined, onResponse });
         } catch (err) {
             if (parseContextOverflow(err)) return Infinity;
             throw err;
@@ -1137,6 +1139,7 @@ export async function generate(config, request, hooks = {}) {
                         responseFormat: plan.format,
                     }, {
                         signal: combined,
+                        onResponse,
                         // 超過累計上限時丟出的錯誤，streamChat 會中止串流後原樣丟回
                         onReasoning: (text) => {
                             receive(text);

@@ -470,11 +470,12 @@ const PRINTABLE_ASCII = /^[\x21-\x7e]+$/;
  * @param {object} payload  { messages, maxTokens, reasoningEffort, temperature?, responseFormat? }
  * @param {object} [hooks]  signal：呼叫端取消；onReasoning(text)／onContent(text)：逐段回報，
  *                          丟出的例外（或 async 回呼的 reject）會中止這一輪並原樣丟回；
- *                          串流已經收完之後才 reject 的不影響結果。fetchImpl：測試用
+ *                          串流已經收完之後才 reject 的不影響結果。onResponse()：收到回應標頭時呼叫，
+ *                          不論狀態碼，丟出的例外原樣丟回。fetchImpl：測試用
  * @returns {Promise<{reasoning: string, content: string, finishReason: string,
  *                    usage: object|null, reasoningChunks: number, contentChunks: number}>}
  */
-export async function streamChat(config, payload, { signal, onReasoning, onContent, fetchImpl = fetch } = {}) {
+export async function streamChat(config, payload, { signal, onReasoning, onContent, onResponse, fetchImpl = fetch } = {}) {
     if (!config.apiKey) {
         throw new UpstreamError('auth', '沒有設定 LLM API key（LLM_API_KEY_FILE／LLM_API_KEY）');
     }
@@ -602,6 +603,14 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
             throw translate(err);
         }
         armIdle();
+        if (onResponse) {
+            try {
+                onResponse();
+            } catch (err) {
+                res.body?.cancel().catch(() => {});
+                throw err;
+            }
+        }
         headerId = upstreamToken(res.headers.get('x-request-id'), secrets) ?? upstreamToken(res.headers.get('x-litellm-call-id'), secrets);
 
         if (!res.ok) {

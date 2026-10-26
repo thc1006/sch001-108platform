@@ -640,6 +640,10 @@ export function createGateway({
         // 判定用戶端不收資料的那一道門檻（pending 或 drain_timeout）與當時待送的位元組，記進 TASK
         let stalledBy;
         let queueMs = 0;
+        let queuedAt;
+        // 上游第一次回應、第一個思考 token、第一個 delta 事件的時刻，跟 total 一樣從請求進來算
+        const firsts = { byte: undefined, thinking: undefined, delta: undefined };
+        const since = (at) => (at === undefined ? undefined : `${at - started}ms`);
         let outcome = 'ok';
         let result;
         let failedWith;
@@ -677,7 +681,7 @@ export function createGateway({
             heartbeat = setInterval(() => write(': ping\n\n'), cfg.heartbeatMs);
 
             handle.queued = entry.queued;
-            const queuedAt = Date.now();
+            queuedAt = Date.now();
             release = await entry.ready;
             handle.queued = false;
             queueMs = Date.now() - queuedAt;
@@ -697,6 +701,7 @@ export function createGateway({
             };
             const onProgress = (p) => {
                 if (p.phase === 'thinking' || p.phase === 'writing') tokensSeen = true;
+                if (p.phase === 'thinking') firsts.thinking ??= Date.now();
                 pendingProgress = p;
                 if (p.phase !== lastPhase || Date.now() - lastSentAt >= PROGRESS_INTERVAL_MS) {
                     lastPhase = p.phase;
@@ -711,8 +716,9 @@ export function createGateway({
             // 才會等於 done 的結果。轉換器記得上一段的最後一個字，切在兩段之間的字也轉得對
             const traditional = createTraditionalStream();
             const sendDelta = (text) => {
-                const converted = traditional(text);
-                if (converted) send('delta', { text: converted });
+                if (!text) return;
+                firsts.delta ??= Date.now();
+                send('delta', { text });
             };
             generationStarted = true;
             // 任務自己的時限比較短時用它（tasks.mjs 的 timeoutMs）
@@ -725,13 +731,13 @@ export function createGateway({
             }, {
                 signal: abort.signal,
                 onProgress,
-                onContent: task.output.type === 'markdown' ? sendDelta : undefined,
+                onContent: task.output.type === 'markdown' ? (text) => sendDelta(traditional(text)) : undefined,
+                onResponse: () => { firsts.byte ??= Date.now(); },
             });
             clearTimeout(progressTimer);
             result = generated;
             if (task.output.type === 'markdown') {
-                const rest = traditional.flush();
-                if (rest) send('delta', { text: rest });
+                sendDelta(traditional.flush());
             }
             const output = finalizeOutput(task, generated.content);
             send('done', {
@@ -794,6 +800,8 @@ export function createGateway({
                 drainTimer.unref();
                 res.once('close', () => clearTimeout(drainTimer));
             }
+            // 排到逾時、排隊中離開或關機：記到這一刻為止排了多久
+            if (handle.queued) queueMs = Date.now() - queuedAt;
             const usage = result?.usage ?? failedWith?.usage;
             log(outcome === 'ok' ? 'info' : 'warn', 'TASK', {
                 id: requestId,
@@ -808,6 +816,9 @@ export function createGateway({
                 prompt: usage?.promptTokens,
                 queue: `${queueMs}ms`,
                 total: `${Date.now() - started}ms`,
+                firstByte: since(firsts.byte),
+                firstThinking: since(firsts.thinking),
+                firstDelta: since(firsts.delta),
                 stall: stalledBy?.reason,
                 pending: stalledBy?.pending,
             });

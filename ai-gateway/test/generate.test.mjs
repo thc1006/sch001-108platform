@@ -1487,6 +1487,22 @@ test('失敗時錯誤帶著已經用掉的 tokens（呼叫端記 log 用）：Ge
     });
 });
 
+test('onResponse 交給每一個上游請求，探測與正式的請求都是', async () => {
+    const { impl, calls } = scripted([probeStep(20_000), { content: ['完。'], finish: 'stop' }]);
+    const handed = [];
+    const counting = (cfg, payload, hooks) => {
+        handed.push(hooks.onResponse);
+        hooks.onResponse();
+        return impl(cfg, payload, hooks);
+    };
+    let responses = 0;
+    await generate(config(), { messages: bigTask(20_000).messages }, { streamChatImpl: counting, onResponse: () => responses++ });
+    assert.equal(calls[0].maxTokens, 1, '第一個請求是探測');
+    assert.equal(calls.length, 2);
+    assert.equal(responses, 2);
+    assert.ok(handed.every((fn) => typeof fn === 'function'));
+});
+
 test('呼叫端的 hook 丟例外：原樣丟出（包括 undefined 這種假值），不被翻成網路錯誤', async () => {
     const boom = new TypeError('寫入已關閉的回應');
     const { impl } = scripted([{ content: ['a', 'b'] }]);
