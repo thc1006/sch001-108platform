@@ -2155,9 +2155,10 @@ test('JSON 任務把交出前的驗證交給 generate（acceptJson）：包在�
         const accept = gw.calls[0].request.acceptJson;
         assert.equal(accept('以下是結果：\n{"answer":"好"}'), true);
         assert.equal(accept('```json\n{"answer":"好"}\n```'), true);
-        assert.equal(accept('{"answer":"好","extra":1}'), false);
-        assert.equal(accept('{"answer":""}'), false);
-        assert.equal(accept('不是 JSON'), false);
+        // 不收時回傳不合格的來源、路徑與規則代號（generate 只把 true 當成收下）
+        assert.deepEqual(accept('{"answer":"好","extra":1}'), { source: 'schema', path: '$', rule: 'additional' });
+        assert.deepEqual(accept('{"answer":""}'), { source: 'schema', path: '$.answer', rule: 'min_length' });
+        assert.deepEqual(accept('不是 JSON'), { source: 'parse', path: undefined, rule: 'SyntaxError' });
         assert.equal(gw.calls[1].request.acceptJson, undefined);
     } finally {
         await gw.stop();
@@ -2173,6 +2174,7 @@ test('study-plan 的週次重複：generate 不收下，照寫完卻不合格的
         expected_outcome: ['一份行銷策略分析報告。', '一份五分鐘的簡報。'],
     });
     const good = plan(['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8']);
+    const logs = [];
     const upstream = await startFakeUpstream([
         { content: [JSON.stringify(plan(['Week 1-2', 'Week 1-2', 'Week 1-2', 'Week 1-2']))], finish: 'stop' },
         { content: [JSON.stringify(good)], finish: 'stop' },
@@ -2181,7 +2183,7 @@ test('study-plan 的週次重複：generate 不收下，照寫完卻不合格的
         llm: testConfig(upstream.origin),
         server: serverConfig(),
         tasks: createCatalog(TASK_DEFINITIONS.filter((def) => def.id === 'study-plan')),
-        log: () => {},
+        log: (level, tag, fields) => logs.push({ tag, fields }),
     });
     await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
     try {
@@ -2192,9 +2194,43 @@ test('study-plan 的週次重複：generate 不收下，照寫完卻不合格的
         assert.equal(upstream.requests.length, 2);
         // 重寫用的是 REFORMAT_JSON_PROMPT（寫完卻不合格），不是說被截斷的 REWRITE_JSON_PROMPT
         assert.match(upstream.requests[1].body.messages.at(-1).content, /^你上一則的回覆不是一份符合要求的 JSON/);
+        const reject = logs.find((l) => l.tag === 'JSON-REJECT')?.fields;
+        assert.deepEqual([reject?.round, reject?.source, reject?.path, reject?.rule], [1, 'check', '$.weekly_plan[1].week', 'check']);
     } finally {
         await gateway.close({ graceMs: 0, requestWaitMs: 0 });
         await upstream.close();
+    }
+});
+
+test('JSON-REJECT 只收固定形狀的來源、路徑與規則代號，其他值（含 generate 交回的任意物件）都不記', async () => {
+    const reasons = [
+        { source: 'check', path: '$.answer', rule: 'check' },
+        { source: `check ${LEAK}`, path: `${LEAK} $.answer`, rule: `rule ${LEAK}` },
+        { source: 'schema', path: `$.answer ${LEAK}`, rule: 'undefined'.repeat(5) },
+        false,
+        undefined,
+        `$.answer ${LEAK}`,
+    ];
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            reasons.forEach((reason, i) => hooks.onReject({ round: i + 1, reason }));
+            return OK_RESULT;
+        },
+    });
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'x' }));
+        const rejects = gw.logs.filter((l) => l.tag === 'JSON-REJECT').map(({ fields }) => {
+            const { id, ...rest } = fields;
+            assert.match(id, /^[0-9a-f-]{36}$/);
+            return Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined));
+        });
+        assert.deepEqual(rejects, [
+            { task: 'demo-json', round: 1, source: 'check', path: '$.answer', rule: 'check' },
+            ...[2, 3, 4, 5, 6].map((round) => ({ task: 'demo-json', round, ...(round === 3 ? { source: 'schema' } : {}) })),
+        ]);
+        assert.doesNotMatch(JSON.stringify(gw.logs), new RegExp(LEAK));
+    } finally {
+        await gw.stop();
     }
 });
 

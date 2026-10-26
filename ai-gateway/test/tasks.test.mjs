@@ -466,6 +466,27 @@ test('finalizeOutput：任務的 check 只拿到符合 schema 的值；不通過
     assert.deepEqual(finalizeOutput(distinctTask, drafts), { title: 't', items: ['a', 'b'] });
 });
 
+test('finalizeOutput：format 錯誤帶著可以進 log 的來源、路徑與規則代號（解析不了的是錯誤的種類）', () => {
+    const checkedTask = defineTask({
+        id: 'demo-checked',
+        input: { topic: { label: '主題', maxLength: 10 } },
+        output: { type: 'json', schema: listSchema, check: (value) => `$.items[0] 應為 好，實際是 ${value.items[0]}` },
+        instructions: '依主題列出重點。',
+    });
+    const fieldsOf = (fn) => {
+        try {
+            fn();
+        } catch (err) {
+            assert.equal(err.code, 'format');
+            return [err.source, err.path, err.rule];
+        }
+        throw new Error('沒有丟出錯誤');
+    };
+    assert.deepEqual(fieldsOf(() => finalizeOutput(jsonTask, '{"title":"t","items":["a"]}')), ['schema', '$.items', 'min_items']);
+    assert.deepEqual(fieldsOf(() => finalizeOutput(checkedTask, '{"title":"t","items":["我的病史","b"]}')), ['check', '$.items[0]', 'check']);
+    assert.deepEqual(fieldsOf(() => finalizeOutput(jsonTask, '{"title": 我的病史}')), ['parse', undefined, 'SyntaxError']);
+});
+
 // 當成 format 的話，生成階段會一直重寫到用完輪數，log 也只看得到格式錯誤
 test('finalizeOutput：check 丟出的例外是程式錯誤，原樣丟出，不是 format', () => {
     const brokenTask = defineTask({
