@@ -48,13 +48,15 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 </div>
 
                 <div class="flex gap-2">
-                    <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
+                    <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" aria-describedby="chat-input-hint" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
                     <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
                         <span class="hidden sm:inline">發送</span>
                         {/* 窄螢幕上文字隱藏，按鈕的名稱只能來自圖示。 */}
                         <ion-icon name="send-outline" aria-label="發送" class="sm:hidden text-xl"></ion-icon>
                     </button>
                 </div>
+                {/* career-chat 每次只送這一題，不帶先前的對話（ai-gateway/src/task-catalog.mjs）。 */}
+                <p id="chat-input-hint" class="mt-2 text-sm text-gray-500">每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 200 字。</p>
                 <div id="chat-progress"></div>
             </div>
         </section>

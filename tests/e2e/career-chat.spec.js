@@ -19,6 +19,9 @@ const messages = (page) => page.locator('#chat-log > div');
 const aiText = (page, n) => messages(page).nth(n).locator('.chat-bubble-ai p');
 const draft = (page) => page.locator('#chat-log ~ *');
 const progress = (page) => page.locator('#chat-progress .platform-ai-progress');
+// 元素本身或它的祖先是不是 live region。
+const LIVE = '[aria-live]:not([aria-live="off"]), [role="log"], [role="status"], [role="alert"]';
+const inLiveRegion = (locator) => locator.evaluate((el, selector) => el.closest(selector) !== null, LIVE);
 
 // 回答與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
 const BUSY = '目前使用的人很多，請稍後再試。';
@@ -335,6 +338,39 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(button).toHaveAccessibleName('發送');
     });
 
+    // career-chat 每次只送這一題，頁面卻排成對話。placeholder 一打字就消失，說明要寫在輸入框外面。
+    test('輸入框下方寫著每一題分開回答，是輸入框的描述，不在 live region 裡；窄螢幕上也看得到、不超出版面', async ({ page }) => {
+        const input = page.locator('#chat-input');
+        const max = await input.getAttribute('maxlength');
+        const HINT = `每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 ${max} 字。`;
+        await expect(input).toHaveAccessibleDescription(HINT);
+        const hint = page.locator(`#${await input.getAttribute('aria-describedby')}`);
+        await expect(hint).toHaveText(HINT);
+        expect(await inLiveRegion(hint)).toBe(false);
+        for (const width of [1280, 375, 320]) {
+            await page.setViewportSize({ width, height: 800 });
+            // toBeVisible 只要求大於 0×0，sr-only 的 1×1 也算看得見，所以另外量大小。
+            await expect(hint).toBeVisible();
+            const m = await hint.evaluate((el) => {
+                const input = document.getElementById('chat-input');
+                const box = (node) => node.getBoundingClientRect().toJSON();
+                return {
+                    box: box(el),
+                    lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+                    input: box(input),
+                    row: box(input.parentElement),
+                    card: box(el.closest('#ai-advisor > div')),
+                    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                };
+            });
+            expect(m.box.top, `${width}px 寬時說明不在輸入框下方`).toBeGreaterThanOrEqual(m.input.bottom);
+            expect(m.box.height, `${width}px 寬時說明不到一行高`).toBeGreaterThanOrEqual(m.lineHeight);
+            expect(m.box.width, `${width}px 寬時說明比輸入列窄`).toBeGreaterThanOrEqual(m.row.width - 1);
+            expect(m.box.right, `${width}px 寬時說明超出卡片`).toBeLessThanOrEqual(m.card.right);
+            expect(m.overflow, `${width}px 寬時頁面可以橫向捲動`).toBe(0);
+        }
+    });
+
     // 草稿每收到一段就重畫，放進 live region 會一路重唸。Safari 連 aria-live="off" 子樹裡的變化都算進
     // 外層的 live region，所以草稿與進度區塊（含計時器、取消鈕）不能有身為 live region 的祖先。
     test('對話紀錄是 role="log"；草稿與進度區塊不在任何 live region 裡，完成的回答加進紀錄，頭像不給螢幕閱讀器', async ({ page }) => {
@@ -347,8 +383,6 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await ask(page, '我喜歡電腦');
         await expect(draft(page)).toHaveText('草稿');
         await expect(progress(page)).toHaveCount(1);
-        const LIVE = '[aria-live]:not([aria-live="off"]), [role="log"], [role="status"], [role="alert"]';
-        const inLiveRegion = (locator) => locator.evaluate((el, selector) => el.closest(selector) !== null, LIVE);
         expect(await inLiveRegion(draft(page))).toBe(false);
         expect(await inLiveRegion(progress(page))).toBe(false);
 
