@@ -126,6 +126,23 @@ test.describe('公民科技地圖：專案快速導航', () => {
         expect(r.after).toBe(r.before);
     });
 
+    test('Tab 到連結時焦點框上下都在捲動區裡，不被裁掉', async ({ page }) => {
+        await page.setViewportSize(PHONES[0]);
+        await page.goto(PAGE);
+        await page.keyboard.press('Tab');
+        await scroller(page).locator('a').first().focus();
+        const r = await scroller(page).evaluate((el) => {
+            const a = document.activeElement;
+            const cs = getComputedStyle(a);
+            const ring = parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset);
+            const box = el.getBoundingClientRect(), link = a.getBoundingClientRect();
+            return { style: cs.outlineStyle, top: link.top - ring - box.top, bottom: box.bottom - (link.bottom + ring) };
+        });
+        expect(r.style, '前置：連結畫出焦點框').not.toBe('none');
+        expect(r.top, '焦點框上緣被裁掉').toBeGreaterThanOrEqual(-0.5);
+        expect(r.bottom, '焦點框下緣被裁掉').toBeGreaterThanOrEqual(-0.5);
+    });
+
     // 只改一邊的斷點，639 或 640px 兩組按鈕會同時出現或同時消失。
     for (const width of [639, 640]) {
         test(`${width}px：展開／收合全部只出現一組`, async ({ page }) => {

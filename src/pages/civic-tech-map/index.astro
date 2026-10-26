@@ -126,11 +126,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
 
         {/* 640px 以下，展開／收合全部移到導航下面那一列，專案連結才有整列的寬度可以捲。 */}
-        <nav class="sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-3 mb-2 sm:mb-8" aria-label="專案快速導航" data-autohide-filters>
+        <nav class="sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-2 mb-2 sm:mb-8" aria-label="專案快速導航" data-autohide-filters>
             <div class="flex items-center gap-3">
                 {/* 連結本身就能聚焦，捲動區不當 Tab 停駐點：Firefox 157 會停在有溢出的 div 上，焦點框被 mask 裁掉。 */}
                 <div class="flex-1 overflow-x-auto scrollbar-hide" tabindex="-1" data-scroll-fade>
-                    <div class="flex gap-2 min-w-max px-1">
+                    {/* 上下各 4px 留給連結的焦點框（2px 寬、離 2px），捲動區會裁掉超出的部分。 */}
+                    <div class="flex gap-2 min-w-max px-1 py-1">
                         <a href="#disfactory" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-emerald-100 hover:text-emerald-800 transition shadow-sm whitespace-nowrap">Disfactory</a>
                         <a href="#cofacts" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-sky-100 hover:text-sky-800 transition shadow-sm whitespace-nowrap">Cofacts</a>
                         <a href="#amis-moedict" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-white text-gray-700 hover:bg-violet-100 hover:text-violet-800 transition shadow-sm whitespace-nowrap">阿美語萌典</a>
