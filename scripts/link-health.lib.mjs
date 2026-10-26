@@ -363,6 +363,8 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                     path: `${url.pathname}${url.search}`,
                     method: 'GET',
                     agent: AGENTS[url.protocol],
+                    // 位址不只一個時，Node 每個位址只等 250 ms 就換下一個；2026-10-25 本機到 www.iypt.org 往返約 320 ms，連不上。
+                    autoSelectFamilyAttemptTimeout: 2000,
                     signal,
                     // 這一行就是 DNS 釘選：把已驗證的位址原封不動交給 net.connect，
                     // 不再查一次 DNS，因此不存在「驗完到連線之間被換掉」的窗口。
