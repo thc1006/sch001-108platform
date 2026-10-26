@@ -1001,6 +1001,15 @@ test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => 
     // APhO 的常設網站還在（只有 http，2018 年之後沒更新）
     assert.ok(!/沒有常設官網/.test(find('亞洲物理奧林匹亞').description));
 
+    // A 區：要點與簡章沒有「不受理／不接受個人報名」這句，改引原文寫的報名管道
+    for (const needle of ['袋鼠數學競賽', '全國資訊奧林匹亞', '國際資訊奧林匹亞 (IOI)', '全國語文競賽']) {
+        assert.ok(!/不受理個人報名|不接受個人報名/.test(find(needle).description), needle);
+    }
+    assert.ok(!/台灣不開放個人報名/.test(find('亞洲物理奧林匹亞').description));
+    assert.ok(!/不再有早鳥/.test(find('FIRST 機器人競賽').description), 'FRC 仍分初始與加報賽事兩段付款期限');
+    assert.equal(find('全國中小學科學展覽會').registrationNote, '經地方科展選拔 · 無個人報名管道');
+    assert.equal(find('全國資訊奧林匹亞').registrationNote, '須由學校或主管機關報名');
+
     // 卡片用 escapeHtml 顯示描述，Markdown 記號會原樣出現在畫面上
     const marked = DATA.competitions.filter((c) => /\*\*|`/.test(c.description)).map((c) => c.title);
     assert.deepEqual(marked, [], '描述不得含 ** 或反引號');
