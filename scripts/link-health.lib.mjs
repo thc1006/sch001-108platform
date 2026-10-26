@@ -14,7 +14,7 @@
  * 正是 DNS rebinding 的攻擊面：第一次回公網 IP 通過檢查，第二次回 169.254.169.254。
  * node:http / node:https 的 request options 支援自訂 `lookup`，可以把驗證過的
  * 位址「原封不動」交給 net.connect，連的就是驗過的那個 IP，窗口不存在。
- * （已實測：Node 24 會以 { hints: 0, all: true } 呼叫 lookup，並接受回傳陣列。）
+ * （2026-10-25 在 Linux 實測：Node 24 以 { hints: dns.ADDRCONFIG, all: true } 呼叫 lookup，並接受回傳陣列。）
  *
  * fetch 的 redirect: 'follow' 也是黑箱，中途每一跳的目的地都不會經過我們
  * 手上。這裡一律手動處理轉址，每一跳都重新檢查位址。
