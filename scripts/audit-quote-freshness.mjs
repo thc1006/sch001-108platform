@@ -13,8 +13,9 @@
  * 抓取方式依 2026-08-29 對全庫 155 條引文／70 個條目的實測決定：
  *   - 引文大量來自子頁。Purple Comet 的引文在 /information，url 欄位是首頁，/rules 又掛在
  *     /information 底下，所以從 url 那一頁往下走兩層，找齊就停。
- *   - 抓取用 curl。leetcode.com 對 Node 回 403、對 curl 回 200：UA、路徑、HTTP 版本全部
- *     排除之後，剩下的差異是 TLS 指紋，Cloudflare 認得出 Node 的 ClientHello，換 header 修不掉。
+ *   - 抓取用 curl：當時 leetcode.com 對 Node 回 403、對 curl 回 200，UA、路徑、HTTP 版本排除後只剩 TLS 指紋。
+ *     2026-10-23 起 curl 也回 403。10-25 實測 curl 補上 Sec-Fetch-* 是 200，再帶 Accept-Encoding（這支用
+ *     --compressed）又是 403；外部連結健檢的 Node 請求補上 Sec-Fetch-* 後，根路徑大多 200、/contest/ 大多 403。
  *   - 也抓 PDF。GENIUS Olympiad 的資格引文在該站 9 個 HTML 頁面出現 0 次，disciplines.html
  *     寫的是「age between 13-18」；那句逐字在官方 GENIUS_Rules.pdf 的 ELIGIBILITY 段落裡，
  *     而 13-18 是陪同人規則的門檻，兩者不衝突。競賽規則常常就住在 PDF 裡。
