@@ -6,10 +6,11 @@
 //   4. 是否有競賽報名截止日「已過期」（資料過時，需要更新）
 //   5. 哪些競賽「即將截止」（僅列入報告參考，不觸發提醒）
 //   6. url 是否還連得上（競賽官網常改版或換網域，連結會無聲失效）
+//   7. 有 recheckOn 的競賽是否到了預定重查日
 // 也檢查 public/learning-portfolio/activity-database.json，判斷在 activity-watchdog.lib.mjs：
-//   7. 精選活動是否 14 天內截止或已經截止
-//   8. 有 recheckOn 的活動是否到了預定重查日
-//   9. 其他截止日已過或沒有截止日的活動，上次查證是否太久以前
+//   8. 精選活動是否 14 天內截止或已經截止
+//   9. 有 recheckOn 的活動是否到了預定重查日
+//  10. 其他截止日已過或沒有截止日的活動，上次查證是否太久以前
 //
 // 由 .github/workflows/competitions-check.yml 每週執行；有 needsAttention 列出的項目時，
 // workflow 會自動開 / 更新一個 issue 提醒維護者。
@@ -265,6 +266,8 @@ for (const comp of list) {
 // 腳本這邊只負責分級與輸出。
 const needsRecheck = selectNeedsRecheck(list, todayUTC, RECHECK_DAYS);
 const recheckUrgent = needsRecheck.filter((r) => r.days >= RECHECK_URGENT_DAYS);
+// 判斷和多元表現資料庫共用 activity-watchdog.lib.mjs 的 selectRecheckDue。
+const competitionRecheckDue = selectRecheckDue(list, todayUTC);
 
 // 讀不到多元表現資料庫時寫進報告並通知，競賽的檢查照樣做完，不走 fail()。
 let activityData = null;
@@ -347,6 +350,7 @@ const needsAttention =
     deadLinks.length > 0 ||
     blockedLinks.length > 0 ||
     staleCycle.length > 0 ||
+    competitionRecheckDue.length > 0 ||
     activityError !== null ||
     featured !== null ||
     recheckDue.length > 0 ||
@@ -367,6 +371,7 @@ console.log(
     `  狀態未知且逾 ${RECHECK_DAYS} 天未重查：${needsRecheck.length}`
     + `（其中逾 ${RECHECK_URGENT_DAYS} 天：${recheckUrgent.length}）`,
 );
+console.log(`  到了預定重查日：${competitionRecheckDue.length}`);
 console.log(`  連結失效：${deadLinks.length}`);
 console.log(`  無法判定：${unverifiedLinks.length}`);
 if (blockedLinks.length) console.log(`  位址封鎖：${blockedLinks.length}（SSRF 政策擋下，必須處理）`);
@@ -437,6 +442,22 @@ if (unverifiedLinks.length) {
     for (const e of unverifiedLinks) lines.push(`- ${e.label}　${e.reason}：${e.url}`);
     lines.push('', '</details>', '');
 }
+if (competitionRecheckDue.length) {
+    lines.push(
+        `### 📅 競賽到了預定重查日：${competitionRecheckDue.length} 筆`,
+        '',
+        'recheckOn 是編輯者照官網寫的時間或上一屆的日期定下的回來查的日子，不是競賽日期。'
+        + '看門狗每週一跑一次，通知會出現在 recheckOn 當天或之後的第一份週報。',
+        '',
+        '重查之後把 sourceCheckedAt 改成當天的日期。查到下一屆的日期，照 _readme 補上 deadline 或 cycle，'
+        + '再把 recheckOn 和 recheckNote 拿掉；還沒公布的，照上一屆的日期設一個近一點的 recheckOn。',
+        '',
+    );
+    for (const r of competitionRecheckDue) {
+        lines.push(`- ${r.label}　預定重查日 ${r.recheckOn}，上次查證 ${r.checked}。依據：${r.note}`);
+    }
+    lines.push('');
+}
 if (needsRecheck.length) {
     const urgent = recheckUrgent.length;
     lines.push(
@@ -445,7 +466,7 @@ if (needsRecheck.length) {
         '',
     );
     lines.push(
-        '這一桶是**沒有可行動的截止日、也沒有年度週期**的條目。它們不在上面任何一段的',
+        '這一桶是**沒有可行動的截止日、年度週期和預定重查日**的條目。它們不在上面任何一段的',
         '覆蓋範圍內：🔴 那一段只看已過期的 deadline，🔁 那一段第一行就是「沒有 cycle 就跳過」。',
         '',
         '這裡不推算任何日期——官網說「尚未公布」時，那句話本身就是查證過的事實。',

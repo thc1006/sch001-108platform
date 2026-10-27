@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { sourceCheckedProblem } from './check-competitions.lib.mjs';
+import { recheckProblem, sourceCheckedProblem } from './check-competitions.lib.mjs';
 
 const DATA = JSON.parse(
     readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
@@ -71,18 +71,8 @@ test('欄位：照 _readme 的規定填', () => {
 
 test('預定重查日：附上依據，晚於上次查證，但不晚於它一年後', () => {
     for (const a of DATA.activities) {
-        if (!('recheckOn' in a) && !('recheckNote' in a)) continue;
-        // 沒有依據的日子就是猜的，兩個欄位要一起填。
-        assert.ok('recheckOn' in a && 'recheckNote' in a, `「${a.title}」的 recheckOn 和 recheckNote 要一起填`);
-        const note = a.recheckNote;
-        assert.ok(typeof note === 'string' && note && note.trim() === note, `「${a.title}」的 recheckNote 是空的或前後有空白`);
-        assert.ok(isDate(a.recheckOn), `「${a.title}」的 recheckOn 不是 YYYY-MM-DD 格式的日期：${a.recheckOn}`);
-        // recheckOn 停在查證當天或更早，代表重查後忘了設下一個。
-        assert.ok(a.recheckOn > a.sourceCheckedAt, `「${a.title}」的 recheckOn 沒有晚於 sourceCheckedAt，重查後要設下一個或拿掉`);
-        // 有 recheckOn 的不套 180 天的規則，設得太遠就一直不會被提醒。
-        const checked = String(a.sourceCheckedAt);
-        const limit = `${Number(checked.slice(0, 4)) + 1}${checked.slice(4)}`;
-        assert.ok(a.recheckOn <= limit, `「${a.title}」的 recheckOn 晚於上次查證一年後的 ${limit}`);
+        const why = recheckProblem(a);
+        assert.equal(why, null, `「${a.title}」的 ${why}`);
     }
 });
 

@@ -306,6 +306,29 @@ test('schedule：registrationNote 有長度上限', () => {
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
 });
 
+test('schedule：recheckOn 和 recheckNote 一起填，晚於 sourceCheckedAt，不晚於它一年後', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+    const ok = { sourceCheckedAt: '2026-10-27', recheckOn: '2027-01-15', recheckNote: '依據' };
+    assert.deepEqual(bad(ok), []);
+    assert.deepEqual(bad({ ...ok, recheckOn: '2027-10-27' }), [], '剛好一年後可以');
+    const cases = [
+        [{ ...ok, recheckNote: undefined }, '要一起填'],
+        [{ sourceCheckedAt: ok.sourceCheckedAt, recheckNote: '依據' }, '要一起填'],
+        [{ ...ok, recheckNote: ' 依據' }, '前後有空白'],
+        [{ ...ok, recheckOn: '2027/01/15' }, '不是 YYYY-MM-DD'],
+        [{ ...ok, recheckOn: '2027-02-29' }, '不是 YYYY-MM-DD'],
+        [{ ...ok, recheckOn: '2026-10-27' }, '沒有晚於'],
+        [{ ...ok, recheckOn: '2026-10-01' }, '沒有晚於'],
+        [{ recheckOn: '2027-01-15', recheckNote: '依據' }, '沒有晚於'],
+        [{ ...ok, recheckOn: '2027-10-28' }, '一年後'],
+    ];
+    for (const [comp, want] of cases) {
+        // 鍵在但值是 undefined 時 JSON 裡不會有這個欄位，這裡照樣刪掉。
+        const c = Object.fromEntries(Object.entries(comp).filter(([, v]) => v !== undefined));
+        assert.ok(bad(c).some((m) => m.includes(want)), `${JSON.stringify(c)} 應報「${want}」，實際：${bad(c)}`);
+    }
+});
+
 // 前端狀態的時區行為。Breakthrough 官方截止 2026-09-15 23:59 PDT ＝ 台灣
 // 9/16 14:59。只存日期的話，台灣 9/15 凌晨就顯示「今日截止」（實際還有 39 小時），
 // 9/16 00:00 起顯示「已截止」（實際還有近 15 小時）。
@@ -701,6 +724,14 @@ test('recheck：門檻是「大於等於」，剛好到門檻的那天就要被�
     const list = [{ title: '剛好 90 天', sourceCheckedAt: ago(90) }];
     assert.equal(selectNeedsRecheck(list, TODAY, 90).length, 1);
     assert.equal(selectNeedsRecheck([{ title: 'x', sourceCheckedAt: ago(89) }], TODAY, 90).length, 0);
+});
+
+test('recheck：有 recheckOn 的照預定日提醒，不在這一桶；格式壞掉的照天數列出', () => {
+    const list = [
+        { title: '有預定日', sourceCheckedAt: ago(300), recheckOn: ago(-30), recheckNote: '依據' },
+        { title: '日期壞掉', sourceCheckedAt: ago(300), recheckOn: '2027/01/15', recheckNote: '依據' },
+    ];
+    assert.deepEqual(selectNeedsRecheck(list, TODAY, 90).map((r) => r.label), ['日期壞掉']);
 });
 
 test('recheck：壞掉的輸入不得讓看門狗爆掉', () => {

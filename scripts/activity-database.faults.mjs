@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// 多元表現資料庫那幾項檢查的故障注入，一次弄壞一處，確認該通知的會通知、該紅的會紅：
+// 多元表現資料庫那幾項檢查和競賽的預定重查日的故障注入，一次弄壞一處，確認該通知的會通知、該紅的會紅：
 //   A. 資料：精選的截止日、查證日期和預定重查日放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
 //   B. 判斷：改壞 activity-watchdog.lib.mjs，activity-watchdog.test.mjs 必須失敗
 //   C. 串接：改壞 check-competitions.mjs 算今天的方式和接上判斷的地方，A 段至少要有一項失敗
 //   D. 查證日期：sourceCheckedAt 或 recheckOn 缺漏、不可信時，activity-database.test.mjs 必須失敗
+//   E. 競賽：預定重查日放到門檻兩側，看門狗要跟著變；recheckOn 不可信時 --strict 必須失敗；
+//      改壞 check-competitions.lib.mjs 的判斷，E 段至少要有一項失敗
 // 子行程一律用固定的時鐘，見 NOW。scripts/ 和資料複製到 .activity-faultcheck/ 再動手，
 // 版控裡的檔案不會被改到。
 //
@@ -17,6 +19,7 @@ const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
 const WORK = path.join(ROOT, '.activity-faultcheck');
 const SCRIPTS = path.join(WORK, 'scripts');
 const ACTIVITY_JSON = path.join(WORK, 'public/learning-portfolio/activity-database.json');
+const COMPETITIONS_JSON = path.join(WORK, 'public/advanced-resources/competitions.json');
 const REPORT = path.join(WORK, 'competition-report.md');
 const OUTPUT = path.join(WORK, 'github-output');
 
@@ -49,6 +52,30 @@ const baseline = () => ({
         entry('預定重查', { deadline: day(-30), recheckOn: day(30), recheckNote: '故障注入用的依據' }),
     ],
 });
+// 競賽只放一筆有預定重查日的，其他競賽的規則不在這支的範圍。
+const competitions = () => ({
+    competitions: [{
+        title: '競賽預定重查',
+        organizer: '主辦單位',
+        category: '科學',
+        level: '國際',
+        form: '個人',
+        region: '全球線上',
+        eligibility: '公開報名',
+        mode: '線上',
+        description: '說明',
+        url: 'https://example.com/',
+        deadline: '',
+        sourceCheckedAt: day(0),
+        recheckOn: day(30),
+        recheckNote: '競賽的依據',
+    }],
+});
+/** setComp 回傳一個函式，把那一筆競賽的 field 改成 value，value 是 undefined 時刪掉這個欄位。 */
+const setComp = (field, value) => (d) => {
+    if (value === undefined) delete d.competitions[0][field];
+    else d.competitions[0][field] = value;
+};
 /** set 回傳一個函式，把 title 那一筆的 field 改成 value，value 是 undefined 時刪掉這個欄位。 */
 const set = (title, field, value) => (d) => {
     const a = d.activities.find((x) => x.title === title);
@@ -61,8 +88,6 @@ cpSync(path.join(ROOT, 'scripts'), SCRIPTS, { recursive: true });
 for (const dir of ['public/learning-portfolio', 'public/advanced-resources', 'src/pages/learning-portfolio']) {
     mkdirSync(path.join(WORK, dir), { recursive: true });
 }
-// 競賽清單是空的，needs_attention 就只看多元表現資料庫。
-writeFileSync(path.join(WORK, 'public/advanced-resources/competitions.json'), '{"competitions": []}');
 // activity-database.test.mjs 要從頁面抽 getActivityStatus。
 const PAGE = 'src/pages/learning-portfolio/activity-database.astro';
 cpSync(path.join(ROOT, PAGE), path.join(WORK, PAGE));
@@ -78,15 +103,16 @@ writeFileSync(CLOCK, [
 ].join('\n'));
 const withClock = ['--import', pathToFileURL(CLOCK).href];
 const writeData = (data) => writeFileSync(ACTIVITY_JSON, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+const writeCompetitions = (data) => writeFileSync(COMPETITIONS_JSON, JSON.stringify(data, null, 2));
 
 /** watchdog 跑沙盒裡的看門狗，回傳結束碼、有沒有 needs_attention 和報告。 */
-function watchdog() {
+function watchdog(...flags) {
     rmSync(OUTPUT, { force: true });
     rmSync(REPORT, { force: true });
     let code = 0;
     try {
         // GITHUB_OUTPUT 換成沙盒裡的檔案，CI 上不會把故障注入的結果寫進真正的 step output。
-        execFileSync(process.execPath, [...withClock, path.join(SCRIPTS, 'check-competitions.mjs'), '--no-link-check'], {
+        execFileSync(process.execPath, [...withClock, path.join(SCRIPTS, 'check-competitions.mjs'), '--no-link-check', ...flags], {
             cwd: WORK,
             stdio: 'pipe',
             env: { ...process.env, GITHUB_OUTPUT: OUTPUT },
@@ -184,11 +210,64 @@ const dataCases = [
     { name: '沒有 activities 陣列：通知', attention: true, report: /需包含 activities 陣列/, data: '{}' },
 ];
 
-/** dataProblem 跑一個 A 段的案例，結果符合預期時回傳 null，否則回傳哪裡不對。 */
+const competitionCases = [
+    {
+        name: '競賽的預定重查日是今天：通知',
+        attention: true,
+        report: new RegExp(`### 📅 競賽到了預定重查日：1 筆\n[\\s\\S]*- 競賽預定重查　預定重查日 ${day(0)}，上次查證 ${day(-100)}。依據：競賽的依據`),
+        mutateComp: (d) => { setComp('sourceCheckedAt', day(-100))(d); setComp('recheckOn', day(0))(d); },
+    },
+    {
+        name: '競賽的預定重查日是明天：還不通知',
+        attention: false,
+        absent: /競賽到了預定重查日/,
+        mutateComp: setComp('recheckOn', day(1)),
+    },
+    {
+        name: '有預定重查日的競賽 200 天沒查：照預定日，不套 180 天',
+        attention: false,
+        absent: /競賽到了預定重查日|狀態未知/,
+        mutateComp: (d) => { setComp('sourceCheckedAt', day(-200))(d); setComp('recheckOn', day(30))(d); },
+    },
+    {
+        name: '沒有預定重查日的競賽 180 天沒查：照天數通知',
+        attention: true,
+        report: /\| 競賽預定重查 \| \S+ \| 180 天 \|/,
+        mutateComp: (d) => { setComp('sourceCheckedAt', day(-180))(d); setComp('recheckOn', undefined)(d); setComp('recheckNote', undefined)(d); },
+    },
+];
+// 每一項都要讓 --strict 以非零碼結束。
+const competitionChecks = [
+    ['競賽有 recheckOn 沒有 recheckNote', setComp('recheckNote', undefined)],
+    ['競賽有 recheckNote 沒有 recheckOn', setComp('recheckOn', undefined)],
+    ['競賽的 recheckNote 是空字串', setComp('recheckNote', '')],
+    ['競賽的 recheckOn 不是 YYYY-MM-DD', setComp('recheckOn', '2027/05/01')],
+    ['競賽的 recheckOn 早於 sourceCheckedAt', setComp('recheckOn', day(-1))],
+    ['競賽的 recheckOn 和 sourceCheckedAt 同一天', setComp('recheckOn', day(0))],
+    ['競賽的 recheckOn 晚於上次查證一年後', setComp('recheckOn', day(400))],
+    ['競賽沒有 sourceCheckedAt 卻有 recheckOn', setComp('sourceCheckedAt', undefined)],
+];
+const competitionLibMutations = [
+    ['有預定重查日的競賽照樣套天數規則', '        if (isDateString(comp.recheckOn)) continue;\n', ''],
+    ['競賽的欄位驗證沒有接上預定重查日', '    if (recheck) errors.push(', '    if (false) errors.push('],
+    ['只有 recheckNote 時不擋', 'if (!hasOn && !hasNote) return null;', 'if (!hasOn) return null;'],
+    ['recheckOn 和查證同一天也放行', 'if (!(entry.recheckOn > checked))', 'if (!(entry.recheckOn >= checked))'],
+    ['上限放寬成兩年', 'Number(checked.slice(0, 4)) + 1}', 'Number(checked.slice(0, 4)) + 2}'],
+];
+const competitionScriptMutations = [
+    ['競賽的預定重查沒有接上通知', '    competitionRecheckDue.length > 0 ||\n', ''],
+    ['報告少了競賽預定重查那一段', 'if (competitionRecheckDue.length) {', 'if (false) {'],
+    ['競賽清單沒有傳進預定重查的判斷', 'selectRecheckDue(list, todayUTC)', 'selectRecheckDue([], todayUTC)'],
+];
+
+/** dataProblem 跑一個 A 段或 E 段的案例，結果符合預期時回傳 null，否則回傳哪裡不對。 */
 function dataProblem(c) {
     const data = baseline();
     c.mutate?.(data);
     writeData(c.data ?? data);
+    const comps = competitions();
+    c.mutateComp?.(comps);
+    writeCompetitions(comps);
     const r = watchdog();
     if (r.code !== 0) return `看門狗以 ${r.code} 結束`;
     if (r.attention !== c.attention) return c.attention ? '沒有通知' : '不該通知卻通知了';
@@ -249,8 +328,9 @@ const bad = (name, why) => { fail++; console.log(`  ❌ ${name} → ${why}`); };
 /** baselineOk 確認沒有注入時看門狗不通知、兩支測試都通過。 */
 function baselineOk() {
     writeData(baseline());
-    const r = watchdog();
-    const quiet = r.code === 0 && !r.attention && !/多元表現資料庫(的精選|逾|無法|到了)/.test(r.report);
+    writeCompetitions(competitions());
+    const r = watchdog('--strict');
+    const quiet = r.code === 0 && !r.attention && !/多元表現資料庫(的精選|逾|無法|到了)|競賽到了|狀態未知/.test(r.report);
     return quiet && passes('activity-watchdog.test.mjs') && passes('activity-database.test.mjs');
 }
 
@@ -306,9 +386,42 @@ for (const [name, change] of checkedCases) {
     else ok(name);
 }
 
+/** competitionsCaught 回傳 E 段是否至少有一項不符合預期。 */
+function competitionsCaught() {
+    if (competitionCases.some((c) => dataProblem(c) !== null)) return true;
+    return competitionChecks.some(([, change]) => {
+        const comps = competitions();
+        change(comps);
+        writeCompetitions(comps);
+        return watchdog('--strict').code === 0;
+    });
+}
+
+console.log('\nE. 競賽的預定重查日：');
+for (const c of competitionCases) {
+    const why = dataProblem(c);
+    if (why) bad(c.name, why);
+    else ok(c.name);
+}
+writeData(baseline());
+for (const [name, change] of competitionChecks) {
+    const comps = competitions();
+    change(comps);
+    writeCompetitions(comps);
+    if (watchdog('--strict').code === 0) bad(name, '--strict 還是以 0 結束');
+    else ok(name);
+}
+for (const m of competitionLibMutations) {
+    mutate('check-competitions.lib.mjs', m, () => !competitionsCaught(), 'E 段全部照樣通過');
+}
+for (const m of competitionScriptMutations) {
+    mutate('check-competitions.mjs', m, () => !competitionsCaught(), 'E 段全部照樣通過');
+}
+
 const after = baselineOk();
 console.log(after ? '\n還原後仍為綠燈 ✅' : '\n❌ 還原後仍是紅的，沙盒沒有復原乾淨');
 rmSync(WORK, { recursive: true, force: true });
-const total = dataCases.length + libMutations.length + scriptMutations.length + checkedCases.length;
+const total = dataCases.length + libMutations.length + scriptMutations.length + checkedCases.length
+    + competitionCases.length + competitionChecks.length + competitionLibMutations.length + competitionScriptMutations.length;
 console.log(`故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${total} 項）`);
 process.exit(fail === 0 && after ? 0 : 1);
