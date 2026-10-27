@@ -186,21 +186,25 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             const controller = new AbortController();
             // mountProgress 放在 try 裡：PlatformAI 沒載入時它會丟 ReferenceError，按鈕仍要靠 finally 恢復。
             let progress = null;
+            let drawDraft = null;
             try {
                 progress = PlatformAI.mountProgress(aiWorkContainer, {
                     onCancel: () => controller.abort(),
                     focusTarget: aiGenerateBtn,
                 });
                 let draft = null;
+                const draw = (_, text) => {
+                    const box = createAnswerBox(text);
+                    if (draft) draft.replaceWith(box);
+                    else aiWorkContainer.appendChild(box);
+                    draft = box;
+                };
+                // 部署後十分鐘內，瀏覽器快取裡的 platform-ai.js 可能還是沒有 perFrame 的舊版，那時每段都畫。
+                drawDraft = PlatformAI.perFrame ? PlatformAI.perFrame(draw) : Object.assign(draw, { cancel() {} });
                 const { result } = await PlatformAI.runTask('competency-analysis', { experience }, {
                     signal: controller.signal,
                     onProgress: progress.update,
-                    onDelta: (_, text) => {
-                        const box = createAnswerBox(text);
-                        if (draft) draft.replaceWith(box);
-                        else aiWorkContainer.appendChild(box);
-                        draft = box;
-                    },
+                    onDelta: drawDraft,
                 });
                 // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它交給按鈕，直接清空會掉回 <body>。
                 progress.finish();
@@ -214,6 +218,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 // 錯誤帶著已經收到的答案（沒寫完、逾時、接續輪忙線）就留在畫面上；沒有的照常拿掉草稿
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error', error && error.partial);
             } finally {
+                if (drawDraft) drawDraft.cancel();
                 aiGenerateBtn.removeAttribute('aria-disabled');
                 aiGenerateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 aiBtnLabel.textContent = originalLabel;

@@ -1,7 +1,7 @@
 // 素養地圖頁「AI 素養分析師」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
 // 8001 埠服務的是 .link-root，要先建置。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/career-exploration/competency-map.html`;
@@ -201,6 +201,77 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(work).toBeEmpty();
         await expect(button).toBeFocused();
         for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
+    });
+
+    test('一次收到 200 段：草稿畫的次數不超過畫面數，畫出來的是最新的全文', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const work = page.locator('#ai-work');
+        await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
+        await watchDraws(page);
+        await push(page, ...Array.from({ length: 200 }, (_, i) => delta(`第 ${i + 1} 段。`)));
+        await expect(work.locator('.prose')).toContainText('第 200 段。');
+        const { renders, frames } = await drawStats(page);
+        expect(renders).toBeLessThanOrEqual(frames);
+    });
+
+    // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
+    const ENDS = [
+        ['done', done('* 最後的答案'), '• 最後的答案'],
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), 'AI 的回答（沒有寫完）• 最後'],
+    ];
+    for (const [code, end, expected] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → #ai-result 是最後的答案，之後的畫面不再畫出草稿`, async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const work = page.locator('#ai-work');
+        await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
+        await push(page, delta('* 最'), delta('後'), end);
+        await expect(page.locator('#ai-result .prose')).toHaveText(expected);
+        await afterFrames(page);
+        await expect(work).toBeEmpty();
+    });
+
+    test('片段送達、還沒畫出來就取消 → 顯示「已取消。」，之後的畫面不再畫出草稿', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const work = page.locator('#ai-work');
+        await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
+        // 這個 requestAnimationFrame 排在頁面畫草稿的前面，取消發生在同一個畫面裡、草稿畫出來之前。
+        await page.evaluate((chunk) => {
+            window.__stream.push(chunk);
+            requestAnimationFrame(() => document.querySelector('#ai-work button').click());
+        }, delta('* 草稿'));
+        await expect(page.locator('#ai-result')).toHaveText('已取消。');
+        await afterFrames(page);
+        await expect(work).toBeEmpty();
+    });
+
+    test('platform-ai.js 是沒有 perFrame 的舊版 → 照樣送出請求、邊收邊畫草稿，收到 done 把答案放進 #ai-result；按鈕恢復，第二次照常', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(String(error)));
+        await reloadWithoutPerFrame(page);
+        await stubBuiltInGateway(page);
+        expect(await page.evaluate(() => typeof PlatformAI.perFrame)).toBe('undefined');
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草'), delta('稿')], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const work = page.locator('#ai-work');
+        await expect(work.locator('.prose')).toHaveText('• 草稿');
+        await push(page, done('* 最後的答案'));
+        await expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案');
+        await expect(work).toBeEmpty();
+        const button = page.locator('#ai-generate-btn');
+        await expect(button).not.toHaveAttribute('aria-disabled');
+        await expect(button).toHaveText('開始分析');
+        await button.click();
+        await expect(work.locator('.prose')).toHaveText('• 草稿');
+        await push(page, done('* 第二次的答案'));
+        await expect(page.locator('#ai-result .prose')).toHaveText('• 第二次的答案');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+        expect(errors).toEqual([]);
     });
 
     test('用鍵盤按「開始分析」→ 進行中焦點留在按鈕上，再按 Enter 不會再送一次；完成後焦點仍在按鈕上', async ({ page }) => {

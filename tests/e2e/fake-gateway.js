@@ -84,4 +84,40 @@ async function installFakeGateway(page, { chunks = [], hang = false, withMeta = 
     }, { chunks, hang, withMeta });
 }
 
-module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway };
+/**
+ * watchDraws 從現在起數 PlatformAI.renderMarkdown 被呼叫幾次、瀏覽器畫了幾個畫面，用 drawStats 讀出。
+ * @param {import('@playwright/test').Page} page
+ */
+async function watchDraws(page) {
+    await page.evaluate(() => {
+        const stats = window.__draws = { renders: 0, frames: 0 };
+        const render = PlatformAI.renderMarkdown;
+        PlatformAI.renderMarkdown = (text) => { stats.renders++; return render(text); };
+        const tick = () => { stats.frames++; requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+    });
+}
+
+/** drawStats 讀出 watchDraws 數到的 { renders, frames }。 @param {import('@playwright/test').Page} page */
+const drawStats = (page) => page.evaluate(() => window.__draws);
+
+/** afterFrames 等瀏覽器再畫 n 個畫面。 @param {import('@playwright/test').Page} page @param {number} [n] */
+const afterFrames = (page, n = 3) => page.evaluate((n) => new Promise((resolve) => {
+    const tick = () => (--n > 0 ? requestAnimationFrame(tick) : resolve());
+    requestAnimationFrame(tick);
+}), n);
+
+/**
+ * reloadWithoutPerFrame 重新載入頁面，platform-ai.js 換成沒有匯出 perFrame 的版本，跟快取裡還是舊版時一樣。
+ * @param {import('@playwright/test').Page} page
+ */
+async function reloadWithoutPerFrame(page) {
+    await page.route('**/shared/platform-ai.js', async (route) => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace('perFrame: perFrame,', '');
+        await route.fulfill({ response, body });
+    });
+    await page.reload();
+}
+
+module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame };
