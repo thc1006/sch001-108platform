@@ -87,6 +87,12 @@ const cases = [
     undo: () => renameSync(`${DIST}/advanced-resources/index.html.bak`, `${DIST}/advanced-resources/index.html`),
   },
   {
+    name: '競賽頁的描述寫死成 130＋ 項',
+    expect: /應寫 competitions\.json 的 \d+ 筆/,
+    file: `${DIST}/advanced-resources/competitions.html`,
+    mutate: (t) => t.replace(/(<meta name="description" content="彙整 )\d+ 項/, (_, head) => `${head}130＋ 項`),
+  },
+  {
     name: 'fragment 目標 id 被改名',
     expect: /沒有 id="main-content"/,
     file: `${DIST}/about.html`,

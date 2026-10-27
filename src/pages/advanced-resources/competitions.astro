@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+// 只在建置時讀，筆數跟著資料走。頁面上的卡片仍由瀏覽器 fetch 同一份檔案。
+import data from '../../../public/advanced-resources/competitions.json';
 ---
 
 <BaseLayout
   title="國內外競賽資訊 - 台灣教育處方籤"
-  description="彙整 130＋ 項國內外高中生競賽，依報名狀態智慧排序，即時標示即將截止與開放報名的機會，並可依領域、地區、級別、形式篩選。"
+  description={`彙整 ${data.competitions.length} 項國內外高中生競賽，依報名狀態智慧排序，即時標示即將截止與開放報名的機會，並可依領域、地區、級別、形式篩選。`}
   currentSection="advanced-resources"
   bodyClass="bg-white text-gray-800"
 >
