@@ -90,6 +90,100 @@
       "owner": "thc1006",
       "expires": "2027-01-31",
       "urls": []
+    },
+    {
+      "match": {
+        "host": "www.aesea.org"
+      },
+      "reason": "亞太能源科學教育協會（Next.js）。不存在的頁面回 HTTP 200，<head> 裡沒有標題，<title> 在 body 裡，是首頁的標題。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/competitions/ibridge 回 200，<title>「iBridge橋梁設計與載重競賽 - AESEA 亞太能源與科學教育協會」在第 1806 byte。/competitions/sch001-linkcheck-…、/competitions/no-such-race、/sch001-linkcheck-… 都回 200、約 30 KB，</head> 在第 1879 byte，<title>「亞太能源科學教育協會 AESEA」在第 29 KB 左右（隨路徑長度變，量到 28999 到 29351 byte），body 裡另有「找不到頁面」。首頁 / 的標題也是「亞太能源科學教育協會 AESEA」。robots.txt 只擋 /admin、/portal。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "亞太能源科學教育協會 AESEA"
+      ]
+    },
+    {
+      "match": {
+        "host": "www.shu.edu.tw"
+      },
+      "reason": "世新大學。Spotlight.aspx 的 sID 不存在時回 HTTP 200 和首頁的標題，不存在的路徑也一樣。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/Spotlight.aspx?from=06&sID=28523 回 200，標題「企管系學的東西太廣？深入瞭解企管系課程與優勢，創造多元職場出路」。sID=28524、99999998、99999999、只帶 from=06，以及 /sch001-linkcheck-… 都回 200，標題「歡迎來到世新大學」，和首頁相同。robots.txt 擋 /bin/、/demo/、/shu-tfee.aspx。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "歡迎來到世新大學"
+      ]
+    },
+    {
+      "match": {
+        "host": "www.designwant.com"
+      },
+      "reason": "設計王 DesignWant（Nuxt）。文章不存在時回 HTTP 200，整頁沒有 <title>，瀏覽器再用 JavaScript 轉到 /error404。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/article/10561 回 200，<title>「校園巡禮｜國立臺北科技大學 工業設計系 X 理論與實作的完美搭配 不僅獨一無二更要出類拔萃｜設計王DesignWant」在第 119 byte。/article/99999998、/article/99999999、/article/sch001-linkcheck-… 回 200、約 151 KB，</head> 在第 139889 byte，整頁沒有 <title>，og:title 是空的。根目錄的 /sch001-linkcheck-… 回 200，標題是首頁的「設計王DesignWant｜室內設計、空間設計、裝潢裝修、商業空間、生活風格」。robots.txt 沒有擋任何路徑。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        ""
+      ]
+    },
+    {
+      "match": {
+        "host": "www.unews.com.tw"
+      },
+      "reason": "大學問。/Group/Index/、/News/Info/ 底下不存在的編號回 HTTP 200 和首頁的標題。/School/Department/ 底下不存在時轉到 /Newschool/Department/、回 500，健檢列在無法判定、不通知；/School/Department/3/ 與 /School/Department/7/ 的隨機路徑每週列在沒有比對。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：站上連的 7 個網址都回 200，標題是「<頁名> | 大學問 - 升大學 找大學問」，/School/Department/ 的兩個轉到 /Newschool/Department/。/Group/Index/99999、/News/Info/99999998、/News/Info/99999999，以及這兩個目錄的 sch001-linkcheck-… 都回 200，標題「大學問 - 升大學 找大學問」，和首頁相同。/School/Department/3/99999 和 /School/Department/3/sch001-linkcheck-… 轉到 /Newschool/Department/… 回 500。robots.txt 回 404。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "大學問 - 升大學 找大學問"
+      ]
+    },
+    {
+      "match": {
+        "host": "www.public.com.tw"
+      },
+      "reason": "公職王。/exam-study/ 底下，現有文章代碼後面多接字元的路徑回 HTTP 200、標題只剩「-公職王」；其他不存在的路徑轉到 /Error，標題「找不到頁面-公職王」。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/exam-study/dept-univfinance-science 回 200，標題「會計系、經濟系等財經學群考公職出路指南-公職王」。/exam-study/dept-univfinance-sciencex、dept-univfinance-sciencez、dept-univlaw-science9 回 200，標題「-公職王」；/exam-study/sch001-linkcheck-…、/exam-study/dept-sch001-linkcheck-…、/exam-study/ 轉到 /Error，回 200，標題「找不到頁面-公職王」。robots.txt 擋 /Exception/、/login/、/IRecording/、/Iclick/。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "-公職王",
+        "找不到頁面-公職王"
+      ]
+    },
+    {
+      "match": {
+        "host": "collego.edu.tw"
+      },
+      "reason": "大學選才與高中育才輔助系統 ColleGo!。不存在的學群、系所、文章編號轉到 /Login/Error500，不存在的路徑轉到 /Login/Error404，都回 HTTP 200、標題「Error」；不存在的學類回 200、124 bytes 的 alert 殼、沒有標題；/Media/Article/ 底下不是編號的路徑轉到 /Media/Portfolio，標題「焦點話題」。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：站上連的 24 個網址都回 200，標題是學群、學類、系所或文章名稱，CollegeList 是「認識學群」。CollegeIntro?current_college_id=99、9999，DepartmentIntro?dept_id=001999、999999、abc，Media/Article/99999、9999999 都轉到 /Login/Error500，標題「Error」；/Highschool/sch001-linkcheck-… 轉到 /Login/Error404，標題「Error」。MajorIntro?current_major_id=999、99998、99999 回 200、124 bytes、沒有 <title>。/Media/Article/sch001-linkcheck-… 轉到 /Media/Portfolio，標題「焦點話題」。DepartmentIntro 不帶 dept_id 時轉到 /Highschool/MajorList，標題「認識學類」，站上沒有這種網址，沒有列。沒有 robots.txt（轉到 /Login/Error404）。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "Error",
+        "",
+        "焦點話題"
+      ]
+    },
+    {
+      "match": {
+        "host": "www.eden.org.tw"
+      },
+      "reason": "伊甸社會福利基金會。不存在的路徑以 301 補上結尾的斜線，再回 HTTP 200，標題和首頁相同，網址保留原路徑。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/participate/become-a-volunteer/volunteer-needs/ 回 200，標題「伊甸社會福利基金會-志工需求」。/participate/become-a-volunteer/sch001-linkcheck-…/、/participate/become-a-volunteer/volunteer-needs-sch001-linkcheck-…/、/participate/become-a-volunteer/no-such-page/ 都回 200，標題「伊甸社會福利基金會」，和首頁相同。沒有 robots.txt（/robots.txt 以 301 轉到 /robots.txt/，標題和首頁相同）。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "伊甸社會福利基金會"
+      ]
     }
   ]
 }
