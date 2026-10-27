@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // check-admission-cycle.mjs 的故障注入，一次改一處，確認該紅的會紅、該放行的放行：
-//   A. 內容、keep、設定：寫進舊年度、殭屍 keep、cycle 過期的 keep、next 和 remindAfter 不合規則、
-//      內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
+//   A. 內容、keep、設定：寫進舊年度、西元年當申請年度、殭屍 keep、cycle 過期的 keep、next 和 remindAfter
+//      不合規則、內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
+//      時程日期和別人文章的標題只列出來；
 //      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0；--remind 要寫出報告和 needs_attention
 //   B. 判斷：改壞 admission-cycle.lib.mjs，admission-cycle.test.mjs 必須失敗
 //   C. 串接：改壞 check-admission-cycle.mjs，A 段至少要有一項失敗
@@ -163,6 +164,22 @@ const cases = [
         code: 1,
         expect: /2 個檔案裡找不到任何學年度或甄選會網址/,
     },
+    { name: '西元年當申請年度：「2026 升學趨勢」', inject: append(PAGE_B, '## 2026 升學趨勢'), code: 1, expect: /application\.md:7 「2026 升學」用西元年當申請年度/ },
+    { name: '西元年當申請年度：粗體的「**2026 年**的選才」', inject: append(PAGE_B, '**2026 年**的選才標準'), code: 1, expect: /application\.md:7 「2026 年 的選才」用西元年當申請年度/ },
+    { name: '「2026 產業趨勢」不是申請年度，放行', inject: append(PAGE_B, '## 2026 產業趨勢'), code: 0, expect: /沒有問題/ },
+    {
+        name: '別人文章的標題寫「2026 大學申請」：放行，列成提醒',
+        inject: append(PAGE_B, '- [Cheers「2026 大學申請全攻略」](https://example.com/)'),
+        code: 0,
+        expect: /有 1 處，換屆時要對照簡章看，不算錯誤：\n {2}src\/content\/clusters\/b\/application\.md：標題 7 行\n/,
+    },
+    {
+        name: '時程日期：放行，列成提醒',
+        inject: append(PAGE_B, '| 一階篩選放榜 | 2026 年 3 月 31 日 |'),
+        code: 0,
+        expect: /寫著 115 這一屆的時程日期和別人文章的標題有 1 處[^]*application\.md：時程 7 行/,
+    },
+    { name: '沒有時程日期和標題：不印提醒', code: 0, absent: /換屆時要對照簡章看/ },
     { name: '「115 年度」不算學年度，放行', inject: append(PAGE_B, '114 年度預算和 115 年度預算'), code: 0, expect: /沒有問題/ },
     { name: '「113 至 115 學年度」的結尾是 cycle，放行', inject: append(PAGE_B, '113 至 115 學年度的統計'), code: 0, expect: /沒有問題/ },
     { name: '「113 學年度至 115 學年度」也是區間，放行', inject: append(PAGE_B, '113 學年度至 115 學年度'), code: 0, expect: /沒有問題/ },
@@ -197,6 +214,15 @@ const cases = [
         code: 0,
         attention: true,
         report: /^<!-- admission-cycle-watchdog:v1 -->\n[^]*### 該換屆了\n\n.*remindAfter 的依據：故障注入的測資，日期落在 116 學年度的範圍裡。\n[^]*cycle 改成 116 之後不放行的有 8 處，在 1 個檔案，其中 2 處現在由 keep 放行：\n\n- `src\/content\/clusters\/a\/overview\.md`：第 2、3、6、8、10、12 行\n/,
+    },
+    {
+        name: '--remind 過了 remindAfter：時程日期和標題也列在報告裡',
+        args: ['--remind'],
+        env: { ADMISSION_CYCLE_TODAY: '2026-12-16' },
+        inject: append(PAGE_B, '| 一階篩選放榜 | 2026 年 3 月 31 日 |'),
+        code: 0,
+        attention: true,
+        report: /### 該換屆了[^]*寫著 115 這一屆的時程日期和別人文章的標題有 1 處，換屆時要對照簡章看，不算錯誤：\n\n- `src\/content\/clusters\/b\/application\.md`：時程 7 行\n/,
     },
     { name: '--remind remindAfter 當天：不通知', args: ['--remind'], env: { ADMISSION_CYCLE_TODAY: '2026-12-15' }, code: 0, attention: false, report: /沒有需要處理的事/ },
     {
@@ -287,6 +313,22 @@ const libMutations = [
     ['今天用 UTC 的日期', "timeZone: 'Asia/Taipei'", "timeZone: 'UTC'"],
     ['沒有檔案也算通過', 'if (files.length === 0) return', 'if (false) return'],
     ['一個學年度都沒找到也算通過', 'if (found === 0) errors.push', 'if (false) errors.push'],
+    ['西元年寫法不報錯', 'for (const h of findFraming(f.text)) {', 'for (const h of []) {'],
+    ['連結文字也算西元年寫法', '.replace(LINK_TEXT, blank).replace(', '.replace('],
+    ['《》〈〉裡也算西元年寫法', ".replace(/[《〈][^》〉\\n]*[》〉]/g, blank)", ''],
+    ['西元年寫法的間隔可以有標點和符號', "[^\\\\s\\\\d\\\\p{P}\\\\p{S}]){0,6}?", "[^\\\\s\\\\d]){0,6}?"],
+    ['西元年寫法的間隔可以有符號', "\\\\p{P}\\\\p{S}]", "\\\\p{P}]"],
+    ['西元年寫法的間隔可以換行', "(?:[^\\\\S\\\\n]*[^\\\\s", "(?:\\\\s*[^\\\\s"],
+    ['連結文字不必接網址', "const LINK_TEXT = /\\[([^\\]\\n]*)\\](?=\\()/g;", "const LINK_TEXT = /\\[([^\\]\\n]*)\\]/g;"],
+    ['西元年寫法的間隔放寬到 9 個字', '{0,6}?[^', '{0,9}?[^'],
+    ['西元年寫法的間隔收緊到 5 個字', '{0,6}?[^', '{0,5}?[^'],
+    ['西元年寫法少了審查', "|備審|審查|選才|", "|備審|選才|"],
+    ['時程日期放寬到 9 月', 'const SCHEDULE_LAST_MONTH = 8;', 'const SCHEDULE_LAST_MONTH = 9;'],
+    ['時程日期收緊到 7 月', 'const SCHEDULE_LAST_MONTH = 8;', 'const SCHEDULE_LAST_MONTH = 7;'],
+    ['時程日期不看同一行的字', ' && SCHEDULE_WORD.test(lines[line - 1])', ''],
+    ['時程日期也看連結文字', 'const body = masked.replace(LINK_TEXT,', 'const body = masked.replace(/$^/g,'],
+    ['標題寫「115 學年度」也列', '(?:年|學年度|[至到', '(?:年|[至到'],
+    ['標題只看民國年', ' || western.test(m[1])', ''],
     ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
 ];
 // 每一條都是曾經讓單元測試照樣通過的改法。
@@ -313,6 +355,8 @@ const cliMutations = [
     ['報告沒有機器標記', "[ADMISSION_CYCLE_MARKER, '',", "['',"],
     ['needs_attention 一律寫 false', 'needs_attention=${attention}', 'needs_attention=false'],
     ['有錯時不寫報告', 'if (remind) {', 'if (false) {'],
+    ['不印提醒', 'if (hints.size) {', 'if (false) {'],
+    ['換屆報告不列提醒', '...(hints.size ? [hintHead', '...(false ? [hintHead'],
     ['換屆清單不算 keep 放行的', 'pending.filter((h) => h.by.length).length', '0'],
 ];
 
