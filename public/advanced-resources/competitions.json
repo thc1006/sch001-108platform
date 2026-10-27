@@ -154,6 +154,8 @@
       "opensAt": "2026-11-23T09:00:00+08:00",
       "eventStartsAt": "2027-01-10",
       "sourceCheckedAt": "2026-10-25",
+      "recheckOn": "2026-12-12",
+      "recheckNote": "1/10 檢測報名 12/11 18:00 截止，官網重要日程寫 3/14 檢測報名 12/07 至 12/25，之後把 deadline 與 deadlineAt 改成 12/25 18:00、opensAt 改成 12/07 09:00、eventStartsAt 改成 2027-03-14。",
       "url": "https://apcs.csie.ntnu.edu.tw/",
       "description": "由教育部高中職程式設計適性精進計畫指導、臺灣師範大學資訊工程學系執行的程式設計能力檢測，官網逐字「APCS成績除了是申請入學APCS組必要成績外，也是多校特殊選才等多元入學管道重要參考資料」。報名資格逐字「欲檢測程式設計能力者皆可報名」、推廣期間免費，學生可自行報名不需經學校。2026 年場次：10/4 檢測（報名 8/3 至 8/21）、11/1 檢測（報名 8/3 至 9/11）；每日報名時間 9:00 至 18:00。2027 年場次：1/10 檢測（報名 2026-11-23 至 12-11）、3/14 檢測（報名 2026-12-07 至 12-25）、6/13 檢測（報名 2027-04-12 至 04-30）、7/4 檢測（報名 2027-04-12 至 04-30）——檢測日不是報名截止日，請對照上列各場次的報名期間。"
     },
@@ -671,6 +673,8 @@
       "deadline": "",
       "registrationNote": "12 月起每日開放 · 須以第三方帳號登入",
       "sourceCheckedAt": "2026-10-23",
+      "recheckOn": "2026-12-01",
+      "recheckNote": "官網寫謎題 12 月 1 日開始，2026-10-27 的 /2026 仍回 404，12 月第一週回來查 2026 年有沒有照辦。",
       "url": "https://adventofcode.com/",
       "description": "由 Eric Wastl 個人營運的 12 月程式解謎活動，官網逐字「Advent of Code is free to use, not free to copy」。不用另外註冊，但要拿到個人的題目輸入與提交答案，須先用 GitHub、Google、Twitter 或 Reddit 帳號登入，登入頁逐字「To play, please identify yourself via one of these services」；About 頁與登入頁都沒有年齡條件。2025 年起已改制：官方逐字「The puzzles still start on December 1st ... and puzzles come out every day (ending mid-December)」，2025 年實際只到第 12 題（12/1 至 12/12），不再是 12/1 至 12/25；官網並逐字載明「Advent of Code 2025 doesn't have a global leaderboard」，全球排行榜已取消；FAQ 也寫「Should I use AI to solve Advent of Code puzzles? No.」。2026-10-25 查證時，官網 /2026 仍回 404，首頁仍是 2025 年的日曆，首頁與 About 頁都沒有停辦公告。"
     },
@@ -1040,6 +1044,8 @@
       "deadline": "",
       "registrationNote": "2027 年截止日 11 月初公布",
       "sourceCheckedAt": "2026-10-23",
+      "recheckOn": "2026-11-05",
+      "recheckNote": "官網 2026-10-27 仍寫「The deadline for 2027 will be announced by early November」，11 月上旬回來查 2027 年的截止日。",
       "url": "https://www.thewha.org/prizes-awarded-by-the-wha",
       "description": "世界歷史學會（WHA）主辦的中學生歷史論文獎，逐字「an international competition open to students enrolled in grades K–12 in public, private, and parochial schools, and those in home-study programs」，不須具 WHA 會員資格，台灣學生可投稿。論文約 1000 字，須從官網題目中擇一並說明它與自己及世界史的關係，題目逐字「Your view of a family story related to a historical event or your personal family cultural background, or an issue of personal relevance or specific regional history/knowledge」；決選作品會經 AI 檢測。首獎 500 美元並附一年 WHA 會員資格。2027 年截止日尚未公布，官網逐字「The deadline for 2027 will be announced by early November」，投稿前請先確認當屆日期。"
     },
@@ -1255,6 +1261,8 @@
       "deadline": "2026-11-21",
       "eventStartsAt": "2026-12-05",
       "sourceCheckedAt": "2026-10-23",
+      "recheckOn": "2026-11-22",
+      "recheckNote": "台北場報名 11/21 截止，之後改成當時還能報名的線上場，官網 2026-10-27 列的是 Online Fall（報名到 12/5，Gamma 題組）、Online History Bee Gold Set（報名到 2027-02-22）與 Online Spring（報名到 2027-03-31，Alpha 題組）。",
       "url": "https://iacompetitionsasia.com/",
       "description": "由 International Academic Competitions 亞洲暨大洋洲分部主辦的歷史知識搶答競賽（History Bee 個人賽／History Bowl 團體賽），面向國小至高中學生。2026-27 賽季台北場（Taipei Fall History Bee and Bowl）2026 年 12 月 5 日於康橋國際學校舉行，報名截止 2026 年 11 月 21 日。官網已確認的亞洲與線上場次自 2026 年 10 月 24 日延續至 2027 年 4 月 10 至 11 日，各場次報名截止日不同（2026-10-10 至 2027-03-31）。規則逐字「Schools may only play each question set ONCE (Gamma, Beta, and Alpha), meaning each school can play a maximum of three Regionals each year」。"
     },
@@ -1451,6 +1459,8 @@
       "deadline": "",
       "registrationNote": "報名平台未開放 · 2027-03-11 截止",
       "sourceCheckedAt": "2026-10-27",
+      "recheckOn": "2026-11-10",
+      "recheckNote": "官網寫報名 2026-10-11 開放，但 2026-10-27 報名平台 my.technovation.org 呼叫的 season-status API，doors 裡 student 的 open 仍是 false；已比官網日期晚兩週，兩週後再看。開放後補 deadline 2027-03-11 與 deadlineAt 2027-03-11T23:59:00Z，拿掉 registrationNote。",
       "url": "https://technovationchallenge.org/",
       "description": "由美國非營利組織 Technovation 主辦，賽事網站 technovationchallenge.org 現在以 Technovation Challenge 為名。2026-27 賽季起分兩組，官網逐字「The Technovation Challenge competition is free and open to all youth 8-18. The competition has two tracks. The Girls Track involves teams of girls as well as nonbinary, gender-fluid, and transgender participants who want to be part of a female-identified environment. The Mixed Track involves teams that are co-ed or boys.」，兩組分開評選，男生可參加混合組；World Summit 決賽只限女生組（逐字「girl-track only」）。每隊 1 至 5 人，依隊上年紀最長者分 Beginner（8–12）、Junior（13–15）、Senior（16–18）三組，年齡以 2027 年 8 月 1 日計。賽季時程逐字：「Registration Opens: October 11, 2026」「Registration Deadline (Students and Mentors): March 11, 2027 at 23:59 UTC.」「Submission Deadline: May 5, 2027 at 5pm PDT」，World Summit 日期 TBD。報名平台已搬到 my.technovation.org；2026-10-27 查證時新平台的報名頁顯示「Season 2027 · Registration closed」，Get Involved 頁也寫「Student registration is closed.」。官網首頁逐字「Technovation's refreshed brand and broadened mission are live at technovation.org. Your curriculum and competition resources stay right here.」，賽事資訊以 technovationchallenge.org 為準。"
     },
@@ -1740,6 +1750,8 @@
       "eventStartsAt": "2027-02-03",
       "registrationNote": "須由學校或主管機關報名 · 不接受個人報名",
       "sourceCheckedAt": "2026-10-23",
+      "recheckOn": "2027-01-04",
+      "recheckNote": "2027 屆筆試訂在 2027-02-03，報名簡章到 2026-10-27 仍未公告，2026 屆的報名期是 1/12 至 1/20，在報名開始前回來查。",
       "url": "https://tpmso.k12ea.gov.tw/tmo/",
       "description": "我國 IMO 國手選拔的一環，由教育部國教署委託臺灣師範大學數學系「數學奧林匹亞辦公室」承辦。2026 屆簡章逐字「本競賽擇優錄取約30名進入本年度IMO第一階段選訓決賽營」，報名資格限歷屆亞太數學奧林匹亞研習營（APMOC）學員（依年度另有推薦或結訓條件）與曾獲選 IMO／APMO 我國代表選手者，應屆 APMOC 學員無須另行報名、直接赴試。2026 屆報名公告逐字「一律採網路報名，須由就讀學校或主管機關統一報名，不接受個人報名」；教育部遴選學生參加國際數理學科奧林匹亞競賽作業要點第四點規定「擬參加本競賽之學生，應經由就讀學校於各學科選訓計畫所定期間內，向承辦大學或機構報名」，未取得學籍的非學校型態實驗教育學生則經由直轄市、縣（市）主管機關報名。官網 2026-08-28 公告 2027 年度預定行事曆：TMO 訂於 2027-02-03 在臺北考區（臺師大公館校區）筆試，TMO 報名簡章尚未公告（2026 屆的報名期是 1/12 09:00 至 1/20 17:00）；同體系 EGMO 初選 2026-09-19 已辦畢，APMO 初選 2026-11-14（報名已於 10/14 17:00 截止），APMO 複選 2027-01-27（原名 APMO 初選考試第二階段）。行事曆逐字註明「本行事曆所列日期皆為預定時程，僅供參考；各項活動實際辦理日期，以本辦公室正式公告之簡章為準」。原 tpmso.org 已成轉址空殼，現行網域為 tpmso.k12ea.gov.tw。"
     },
@@ -1956,6 +1968,8 @@
         "note": "每年 10–11 月舉行全球黑客松"
       },
       "sourceCheckedAt": "2026-10-23",
+      "recheckOn": "2026-11-16",
+      "recheckNote": "2026 屆 11/14–15 舉行、報名到活動結束，結束後改成 2027 屆的資訊。",
       "url": "https://www.spaceappschallenge.org/",
       "description": "全球最大的公開資料黑客松，兩天內以 NASA 開放資料解決真實地球與太空問題，不限科系與經驗、免費參加。隊伍最多 6 人；參加在地活動（Local Event）可單人成隊，線上 Universal Event 的隊伍至少 2 人才能進入全球評選。未滿 18 歲須由家長或法定監護人代為報名並全程陪同，FAQ 逐字「If under the age of 18, participants must be registered for the event by a parent or legal guardian and must be accompanied by a parent or legal guardian at all times during the event」。2026 年於 11 月 14–15 日舉行，可報名至 11/15 活動結束；全球設有 450 個以上實體會場，台灣有臺北、臺中、高雄三個在地活動，官網皆標示為線上（Virtual）。"
     },

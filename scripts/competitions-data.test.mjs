@@ -1047,6 +1047,20 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
     assert.ok(!/線上註冊/.test(find('HITCON CTF').registrationNote));
 });
 
+// #195 範圍三：要等官網更新或報名期換場的條目，看門狗在這些日期之後的第一份週報通知。
+test('data：#195 範圍三的條目設了預定重查日', () => {
+    const due = {
+        世界歷史學家論文獎: '2026-11-05', // 官網：「The deadline for 2027 will be announced by early November」
+        Technovation: '2026-11-10', // season-status API 的 doors 裡 student 的 open 2026-10-27 仍是 false
+        'NASA Space Apps': '2026-11-16', // 2026 屆 11/14–15 舉行
+        'IHBB Asia': '2026-11-22', // 台北場報名 11/21 截止
+        'Advent of Code': '2026-12-01', // 謎題 12 月 1 日開始
+        APCS: '2026-12-12', // 1/10 檢測報名 12/11 18:00 截止，3/14 檢測報名到 12/25
+        臺灣數學奧林匹亞競賽: '2027-01-04', // 2026 屆報名期 1/12 至 1/20
+    };
+    for (const [needle, on] of Object.entries(due)) assert.equal(find(needle).recheckOn, on, needle);
+});
+
 // _readme 的 region 規則：線上賽各國都能直接報名的填「全球線上」；決賽固定在一地的填那個地方所在的地區。
 test('data：線上賽與決賽固定一地的競賽，region 照 _readme 的規則填', () => {
     // 小論文與閱讀心得只收台灣的高中生；IMMC 要先經各國提名，照實體賽的寫法填
