@@ -13,13 +13,14 @@
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
+ *   J. contentChecks 的主機層宣告（expect 的 JSON pointer 等）→ link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
  * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B 到 I 八段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * B 到 J 九段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
  * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
  * 同一類假象在自己的測試上也會發生。
  *
@@ -813,7 +814,7 @@ const bareDomainMutations = [
 const reportMutations = [
     {
         name: '內容 API 的 expect 比對永遠成立',
-        apply: (s) => s.replace('        if (Object.hasOwn(data, key) && data[key] === want) continue;', '        continue;'),
+        apply: (s) => s.replace('        if (got.found && got.value === want) continue;', '        continue;'),
     },
     {
         name: '報告不寫內容 API 那一行',
@@ -893,8 +894,8 @@ const reportMutations = [
         apply: (s) => s.replace('${inertText(String(r.bodySkipped).slice(0, 60))}', '${r.bodySkipped}'),
     },
     {
-        name: 'describeValue 用 in 判斷欄位在不在（expect 鍵是 constructor 時丟 TypeError）',
-        apply: (s) => s.replace('    if (!Object.hasOwn(data, key)) return \'沒有這個欄位\';', '    if (!(key in data)) return \'沒有這個欄位\';'),
+        name: 'expect 的鍵用 in 判斷欄位在不在（鍵是 constructor 時取到原型鏈上的函式）',
+        apply: (s) => s.replace("    if (!key.startsWith('/')) return Object.hasOwn(data, key)", "    if (!key.startsWith('/')) return key in data"),
     },
     {
         name: '回應的值不截短',
@@ -962,7 +963,7 @@ const reportMutations = [
     },
     {
         name: '內容 API 的格式變了不通知',
-        apply: (s) => s.replace('${describeValue(data, key)}`, true)', '${describeValue(data, key)}`, false)'),
+        apply: (s) => s.replace('${describeValue(got)}`, true)', '${describeValue(got)}`, false)'),
     },
     {
         name: 'needsAttention 不看內容 API 驗不到的',
@@ -1316,7 +1317,7 @@ const policyLibMutations = [
     },
     {
         name: 'expect 的鍵可以含「.」（想比巢狀欄位的人靜靜比不到）',
-        apply: (s) => s.replace("if (key.includes('.')) push(", "if (false) push("),
+        apply: (s) => s.replace("} else if (key.includes('.')) {", '} else if (false) {'),
     },
     {
         name: 'contentCheckGaps 只看 https 的網址',
@@ -1694,6 +1695,36 @@ const mainMutations = [
     },
 ];
 
+// J 段是 contentChecks 主機層宣告的突變測試，宣告寫錯或判定改壞時，內容檢查會靜靜比不到。
+const hostPolicyMutations = [
+    {
+        name: 'expect 的 JSON pointer 不檢查寫法（/a//b 這種比不到的鍵也通過）',
+        apply: (s) => s.replace('if (!JSON_POINTER.test(key)) push(', 'if (false) push('),
+    },
+];
+const hostJudgeMutations = [
+    {
+        name: 'expect 的 JSON pointer 當成最外層的欄位名',
+        apply: (s) => s.replace("    if (!key.startsWith('/')) return Object.hasOwn(data, key)", '    if (true) return Object.hasOwn(data, key)'),
+    },
+    {
+        name: 'JSON pointer 對陣列不看索引的寫法（/list/length 也取得到）',
+        apply: (s) => s.replace(' && (!Array.isArray(cur) || /^(0|[1-9]\\d*)$/.test(token))', ''),
+    },
+    {
+        name: 'JSON pointer 不解開 ~1',
+        apply: (s) => s.replace(".map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))", ".map((t) => t.replace(/~0/g, '~'))"),
+    },
+    {
+        name: 'JSON pointer 取到原型鏈上的欄位',
+        apply: (s) => s.replace('&& Object.hasOwn(cur, token);', '&& token in cur;'),
+    },
+    {
+        name: 'JSON pointer 先解 ~0 再解 ~1（~01 被解成 /）',
+        apply: (s) => s.replace(".map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))", ".map((t) => t.replace(/~0/g, '~').replace(/~1/g, '/'))"),
+    },
+];
+
 let pass = 0;
 let fail = 0;
 const ok = (name) => { pass++; console.log(`  ✅ ${name}`); };
@@ -1734,7 +1765,7 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 I 八段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 J 九段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
 // 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
@@ -1776,6 +1807,10 @@ await runMutants('I. 軟 404 的規則、隨機路徑與重打（soft404.test.mj
     'soft404.lib.mjs', soft404Mutations, ['soft404.test.mjs'], RED('這條規則'));
 await runMutants('I. 軟 404 在報告裡的分組（soft404.test.mjs 必須紅）：',
     'check-external-links.lib.mjs', soft404ReportMutations, ['soft404.test.mjs'], RED('這一段'));
+await runMutants('J. contentChecks 主機層宣告的檢查（link-health.test.mjs 必須紅）：',
+    'link-policy.lib.mjs', hostPolicyMutations, ['link-health.test.mjs'], RED('這一段'));
+await runMutants('J. contentChecks 主機層宣告的判定（link-health.test.mjs 必須紅）：',
+    'check-external-links.lib.mjs', hostJudgeMutations, ['link-health.test.mjs'], RED('這一段'));
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
@@ -1784,5 +1819,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length + hostPolicyMutations.length + hostJudgeMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
