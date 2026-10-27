@@ -61,11 +61,25 @@ export function contentRetry(r) {
     return !data || Object.keys(data).length === 0;
 }
 
+/**
+ * lookup 取出 expect 的一個鍵在回應裡的值，回傳 { found, value }。/ 開頭的鍵照 JSON pointer 一層一層取，
+ * 陣列的那一段要是索引；其他的鍵取最外層的欄位。只看物件自己的欄位。
+ */
+export function lookup(data, key) {
+    if (!key.startsWith('/')) return Object.hasOwn(data, key) ? { found: true, value: data[key] } : { found: false };
+    let cur = data;
+    for (const token of key.slice(1).split('/').map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))) {
+        const ok = cur !== null && typeof cur === 'object' && (!Array.isArray(cur) || /^(0|[1-9]\d*)$/.test(token)) && Object.hasOwn(cur, token);
+        if (!ok) return { found: false };
+        cur = cur[token];
+    }
+    return { found: true, value: cur };
+}
+
 // 回應的值是那台主機給的，字串、數字包成行內程式碼，issue 裡才不會變成連結或 @ 人。物件與陣列只寫型別，
 // 很深的巢狀結構 JSON.stringify 會丟 RangeError。
-function describeValue(data, key) {
-    if (!Object.hasOwn(data, key)) return '沒有這個欄位';
-    const v = data[key];
+function describeValue({ found, value: v }) {
+    if (!found) return '沒有這個欄位';
     if (v === null) return '是 null';
     if (typeof v === 'object') return Array.isArray(v) ? '是陣列' : '是物件';
     return `是 ${inertText(JSON.stringify(v).slice(0, 80))}`;
@@ -74,7 +88,7 @@ function describeValue(data, key) {
 /**
  * judgeContent 用內容 API 的探測結果判定 contentChecks 裡的一個網址，回傳 { verdict, reason, bucket, notify }，
  * verdict 是 healthy、dead 或 unverified。r 是重打過的結果時，r.previous 是第一次的結果。兩次都是 2xx、剛好是 {} 才算 dead，
- * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。其餘照最後一次判：expect 的欄位都 ===
+ * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。其餘照最後一次判：expect 的欄位（見 lookup）都 ===
  * 才算 healthy，其他是 unverified，notify 表示要不要通知：4xx（429 除外）、被壓縮、超過讀取上限、不是 JSON 物件、
  * 格式和 expect 對不上，多半是網站改了 API；被位址政策擋下也通知。3xx、429、5xx、逾時、中途斷線不通知。
  * @param {{expect: object}} entry contentChecks 的一筆網址 @param {object|null|undefined} r 探測 API 的結果，沒有探測就是空的
@@ -100,8 +114,9 @@ export function judgeContent(entry, r) {
         return { verdict: 'dead', reason: '內容 API 回 {}，網站上查不到這一頁' };
     }
     for (const [key, want] of Object.entries(entry.expect)) {
-        if (Object.hasOwn(data, key) && data[key] === want) continue;
-        return unverified(`回應格式變了：${key} 應該是 ${JSON.stringify(want)}，回應裡${describeValue(data, key)}`, true);
+        const got = lookup(data, key);
+        if (got.found && got.value === want) continue;
+        return unverified(`回應格式變了：${key} 應該是 ${JSON.stringify(want)}，回應裡${describeValue(got)}`, true);
     }
     return { verdict: 'healthy', reason: describeResult(r) };
 }

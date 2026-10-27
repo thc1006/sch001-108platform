@@ -38,7 +38,7 @@ import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
 import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin, matchContentCheck, contentCheckGaps } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
-import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems, judgeContent, contentProbeTargets, contentRetry, CONTENT_PROBE } from './check-external-links.lib.mjs';
+import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems, judgeContent, contentProbeTargets, contentRetry, CONTENT_PROBE, lookup } from './check-external-links.lib.mjs';
 
 /** 允許 loopback＝單元測試模式；正式執行走預設的嚴格模式。 */
 const LOOPBACK_OK = { allowLoopback: true };
@@ -1422,12 +1422,46 @@ test('contentChecks：API 要用 https、和頁面同一台主機、不帶埠號
     assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://spa.example.org:8443/api/Public?cid=42' })] }).some((m) => m.includes('埠號')));
 });
 
-test('contentChecks：expect 是非空的物件，只比最外層的欄位，值只能是字串、有限的數字或布林', () => {
+test('contentChecks：expect 是非空的物件，值只能是字串、有限的數字或布林', () => {
     for (const expect of [undefined, {}, [], { cid: { id: 42 } }, { cid: null }, { cid: Number.NaN }, { cid: [42] }]) {
         assert.ok(contentErrors({ urls: [validContentUrl({ expect })] }).some((m) => m.includes('expect')), `${JSON.stringify(expect)} 必須報錯`);
     }
     assert.deepEqual(contentErrors({ urls: [validContentUrl({ expect: { cid: 42, title: '自主學習專區', hide: false } })] }), []);
-    assert.ok(contentErrors({ urls: [validContentUrl({ expect: { 'data.cid': 42 } })] }).some((m) => m.includes('最外層')), '巢狀欄位不支援，要報錯');
+    assert.ok(contentErrors({ urls: [validContentUrl({ expect: { 'data.cid': 42 } })] }).some((m) => m.includes('JSON pointer')), '寫成 a.b 的巢狀欄位要報錯');
+});
+
+test('contentChecks：expect 的鍵可以是 JSON pointer，每段不能是空的，~ 只能寫成 ~0 或 ~1', () => {
+    const ok = ['/data/contentRoute/resolvedPath', '/a~1b/~0c', '/items/0/id', '/v1.2'];
+    assert.deepEqual(contentErrors({ urls: [validContentUrl({ expect: Object.fromEntries(ok.map((k) => [k, 'x'])) })] }), []);
+    for (const key of ['/', '/a//b', '/a/', '/a~2', '/a~']) {
+        assert.ok(contentErrors({ urls: [validContentUrl({ expect: { [key]: 1 } })] }).some((m) => m.includes('不是 JSON pointer')), key);
+    }
+});
+
+test('內容 API：JSON pointer 一層一層取值，陣列要用索引，只看物件自己的欄位；沒有 / 開頭的鍵照舊比最外層', () => {
+    // ~01 要解成 ~1：先解 ~1 再解 ~0。
+    const body = { data: { contentRoute: { resolvedPath: '/math/calculus-1' }, list: [{ id: 7 }], 'a/b': { '~c': true }, 'x~1': 2, 'x/': 3 }, 'data.x': 1 };
+    const cases = [
+        ['/data/contentRoute/resolvedPath', { found: true, value: '/math/calculus-1' }],
+        ['/data/list/0/id', { found: true, value: 7 }],
+        ['/data/a~1b/~0c', { found: true, value: true }],
+        ['/data/list/00/id', { found: false }],
+        ['/data/list/length', { found: false }],
+        ['/data/contentRoute/resolvedPath/x', { found: false }],
+        ['/data/constructor', { found: false }],
+        ['/data/missing', { found: false }],
+        ['data.x', { found: true, value: 1 }],
+        ['/data/x~01', { found: true, value: 2 }],
+        ['data', { found: true, value: body.data }],
+    ];
+    for (const [key, want] of cases) assert.deepEqual(lookup(body, key), want, key);
+    const entry = validContentUrl({ expect: { '/data/contentRoute/resolvedPath': '/math/calculus-1' } });
+    assert.equal(judgeContent(entry, apiOk(body)).verdict, 'healthy');
+    assert.deepEqual(judgeContent(entry, apiOk({ data: { contentRoute: { resolvedPath: null } } })),
+        formatChanged('內容 API 回應格式變了：/data/contentRoute/resolvedPath 應該是 "/math/calculus-1"，回應裡是 null'));
+    assert.deepEqual(judgeContent(entry, apiOk({ data: { contentRoute: null } })),
+        formatChanged('內容 API 回應格式變了：/data/contentRoute/resolvedPath 應該是 "/math/calculus-1"，回應裡沒有這個欄位'));
+    assert.deepEqual(judgeContent(validContentUrl({ expect: { '/data': 1 } }), apiOk(body)), formatChanged('內容 API 回應格式變了：/data 應該是 1，回應裡是物件'));
 });
 
 test('contentChecks：matchContentCheck 照正規化後的網址精確比對，回傳那一台主機的宣告與那一筆網址', () => {

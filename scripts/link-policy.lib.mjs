@@ -280,6 +280,9 @@ export function validatePolicy(policy, todayISO) {
     return { errors, entries, hijacked, contentChecks };
 }
 
+// JSON_POINTER 是 expect 接受的 JSON pointer：至少一段，每段不是空的，~ 只能寫成 ~0 或 ~1。
+const JSON_POINTER = /^(\/([^/~]|~[01])+)+$/;
+
 const isPlainObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
 
 /**
@@ -302,8 +305,8 @@ function checkPolicyUrl(raw, at, host, push) {
  * validateContentChecks 驗證 contentChecks，回傳通過的項目，錯誤 push 進 validatePolicy 的 errors。
  * 每一筆宣告一台對任何路徑都回 200 的主機，urls 列出這台主機上每個網址要打哪個 API、回應的 JSON
  * 物件裡哪些欄位要等於什麼。API 限定同一台主機、不帶埠號的 https 網址：探測的範圍和頁面本身相同，
- * 政策檔不能把請求送到別的地方。expect 只比回應最外層的欄位，值只收字串、數字與布林，比對用 ===。
- * 鍵不能含「.」：寫成 a.b 的人想比的是巢狀欄位，這裡不支援，與其靜靜比不到不如直接報錯。
+ * 政策檔不能把請求送到別的地方。expect 的鍵是最外層的欄位名，或 / 開頭的 JSON pointer（RFC 6901），
+ * 值只收字串、數字與布林，比對用 ===。不是 JSON pointer 的鍵不能含「.」：寫成 a.b 的人想比的是巢狀欄位。
  */
 function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
     const push = (m) => errors.push(m);
@@ -354,7 +357,11 @@ function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
                     push(`${uat}.expect 必須是非空的物件，值只能是字串、數字或布林（目前：${JSON.stringify(u.expect)}）`);
                 }
                 for (const key of isPlainObject(u.expect) ? Object.keys(u.expect) : []) {
-                    if (key.includes('.')) push(`${uat}.expect 的鍵「${key}」含「.」：expect 只比回應最外層的欄位`);
+                    if (key.startsWith('/')) {
+                        if (!JSON_POINTER.test(key)) push(`${uat}.expect 的鍵「${key}」不是 JSON pointer：每一段不能是空的，~ 後面只能接 0 或 1`);
+                    } else if (key.includes('.')) {
+                        push(`${uat}.expect 的鍵「${key}」含「.」：巢狀欄位要寫成 JSON pointer，例如 /data/id`);
+                    }
                 }
             });
         }
