@@ -13,7 +13,8 @@
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
- *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API、deadStatus、missingTitles）→ link-health.test.mjs 必須失敗
+ *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API、deadStatus、missingTitles）→ link-health.test.mjs、
+ *      missing-titles.test.mjs 或 check-external-links.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -285,6 +286,15 @@ const policyCases = [
         name: '內容檢查的 missingTitles 是空陣列（宣告了等於沒宣告，網址卻不必寫 API）',
         expect: /missingTitles/,
         policy: () => { const p = clonePolicy(); p.contentChecks[0].missingTitles = []; return p; },
+    },
+    {
+        name: 'missingTitles 的主機上多了一個路徑是首頁、帶查詢字串的網址',
+        expect: /路徑是首頁、又帶查詢字串，標題檢查不看它/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].missingTitles = ['首頁']; return p; },
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: 'https://spa.example.org/index.php?id=5', occurrences: [{ file: 'new.html', location: 'a[href]' }] }],
+        }),
     },
     {
         name: '內容檢查過期',
@@ -892,8 +902,8 @@ const reportMutations = [
     },
     {
         name: '例外壓得下內容 API 驗不到（內容檢查壞了也不通知）',
-        apply: (s) => s.replace("    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };\n    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };\n",
-            "    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };\n    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };\n"),
+        apply: (s) => s.replace("    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content, title };\n    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content, title };\n",
+            "    const policy = matchPolicy(entries, target.url);\n    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content, title };\n    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content, title };\n"),
     },
     {
         name: '週報沒指到 link-policy.json 的 reason',
@@ -949,7 +959,7 @@ const reportMutations = [
     },
     {
         name: '分組用 item 算（item 沒有 status 與 code，全部落到其他）',
-        apply: (s) => s.replace('bucket: unverifiedBucket(r) }, signal, content };', 'bucket: unverifiedBucket(item) }, signal, content };'),
+        apply: (s) => s.replace('bucket: unverifiedBucket(r) }, signal, content, title };', 'bucket: unverifiedBucket(item) }, signal, content, title };'),
     },
     {
         name: '盤點網址的接管命中放進例外那一段',
@@ -1021,7 +1031,7 @@ const reportMutations = [
     },
     {
         name: "dead 也查例外政策（確定壞掉的連結被壓下去）",
-        apply: (s) => s.replace("    if (verdict === 'dead') return { bin: 'dead', item, signal, content };", "    if (verdict === 'dead' && !matchPolicy(entries, target.url)) return { bin: 'dead', item, signal, content };"),
+        apply: (s) => s.replace("    if (verdict === 'dead') return { bin: 'dead', item, signal, content, title };", "    if (verdict === 'dead' && !matchPolicy(entries, target.url)) return { bin: 'dead', item, signal, content, title };"),
     },
     {
         name: "needsAttention 把跨站轉址也算進去",
@@ -1105,7 +1115,7 @@ const reportMutations = [
     },
     {
         name: "報告不寫檢查未完成那一段",
-        apply: (s) => s.replace("    if (urlSkipped || soft404Run.randomsSkipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
+        apply: (s) => s.replace("    if (urlSkipped || soft404Run.randomsSkipped || titleRandomsSkipped(titleRun)) {\n        lines.push(", "    if (false) {\n        lines.push("),
     },
     {
         name: "EXPIRY_NOTICE_DAYS 改成 0（永遠不提醒，要等到期當天 PR 全紅才發現）",
@@ -1464,11 +1474,19 @@ const soft404Mutations = [
     },
     {
         name: 'contentChecks 的主機也套規則',
-        apply: (s) => s.replace('        if (contentHosts.has(canonicalHost(new URL(url).hostname))) return;\n', ''),
+        apply: (s) => s.replace('        if (apiHosts.has(host)) return;\n', ''),
+    },
+    {
+        name: 'missingTitles 的主機也打隨機路徑',
+        apply: (s) => s.replace('const needRandom = !titleHosts.has(host) && (', 'const needRandom = ('),
+    },
+    {
+        name: 'missingTitles 的主機不套規則',
+        apply: (s) => s.replace("const apiHosts = new Set((policy.contentChecks ?? []).filter((c) => !c.missingTitles)", 'const apiHosts = new Set((policy.contentChecks ?? [])'),
     },
     {
         name: '可見文字很少的網址不打隨機路徑（前端殼看不到）',
-        apply: (s) => s.replace('const needRandom = redirected(r) || Boolean(f?.complete && f.visible < MIN_VISIBLE);', 'const needRandom = redirected(r);'),
+        apply: (s) => s.replace('(redirected(r) || Boolean(f?.complete && f.visible < MIN_VISIBLE));', 'redirected(r);'),
     },
     {
         name: '前端殼不看狀態碼（202 的驗證頁被當成殼）',
@@ -1516,15 +1534,19 @@ const soft404ReportMutations = [
     },
     {
         name: '只命中一次的軟 404 算健康',
-        apply: (s) => s.replace("if (soft.verdict === 'unverified') return { bin: 'soft404Unverified', item: s, signal, content };", ''),
+        apply: (s) => s.replace("if (soft.verdict === 'unverified') return { bin: 'soft404Unverified', item: s, signal, content, title };", ''),
+    },
+    {
+        name: '看標題的網址不用軟 404 的判定',
+        apply: (s) => s.replace("if (verdict === 'healthy' && (!c || title) && soft) {", "if (verdict === 'healthy' && !c && soft) {"),
     },
     {
         name: '內容檢查的網址也用軟 404 的判定',
-        apply: (s) => s.replace("if (verdict === 'healthy' && !c && soft) {", "if (verdict === 'healthy' && soft) {"),
+        apply: (s) => s.replace("if (verdict === 'healthy' && (!c || title) && soft) {", "if (verdict === 'healthy' && soft) {"),
     },
     {
         name: '沒打的隨機路徑不算進覆蓋不完整',
-        apply: (s) => s.replace('soft404Run.randomsSkipped === 0 && soft404Run.recheckSkipped === 0;', 'true;'),
+        apply: (s) => s.replace('soft404Run.randomsSkipped === 0 && soft404Run.recheckSkipped === 0 && ', ''),
     },
     {
         name: '精確網址的例外也壓得下只命中一次的軟 404',
@@ -1532,7 +1554,7 @@ const soft404ReportMutations = [
     },
     {
         name: '沒重打完的網址不算進覆蓋不完整',
-        apply: (s) => s.replace(' && soft404Run.recheckSkipped === 0;', ';'),
+        apply: (s) => s.replace(' && soft404Run.recheckSkipped === 0 && ', ' && '),
     },
     {
         name: '週報的隨機路徑數不扣沒打的',
@@ -1540,7 +1562,7 @@ const soft404ReportMutations = [
     },
     {
         name: '只有隨機路徑沒打時不出覆蓋不完整一段',
-        apply: (s) => s.replace('if (urlSkipped || soft404Run.randomsSkipped) {', 'if (urlSkipped) {'),
+        apply: (s) => s.replace('if (urlSkipped || soft404Run.randomsSkipped || titleRandomsSkipped(titleRun)) {', 'if (urlSkipped || titleRandomsSkipped(titleRun)) {'),
     },
     {
         name: '只命中一次的軟 404 不擋「全部正常」',
@@ -1548,11 +1570,11 @@ const soft404ReportMutations = [
     },
     {
         name: '主控台的未檢查筆數不算沒重打的網址',
-        apply: (s) => s.replace('    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped;\n    if (!coverageComplete)', '    const urlSkipped = skipped + bareSkipped + content.skipped;\n    if (!coverageComplete)'),
+        apply: (s) => s.replace('    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped + titles.skipped;\n    const randomsText', '    const urlSkipped = skipped + bareSkipped + content.skipped + titles.skipped;\n    const randomsText'),
     },
     {
         name: '只有隨機路徑沒打時也寫 0 筆未檢查',
-        apply: (s) => s.replace("[urls || !randoms ? `${urls} 筆未檢查` : ''", "[`${urls} 筆未檢查`"),
+        apply: (s) => s.replace("        urls || !(randoms || titleRandoms) ? `${urls} 筆未檢查` : '',", "        `${urls} 筆未檢查`,"),
     },
     {
         name: '軟 404 的原因不經 inertText（那台主機給的標題在 issue 裡會渲染）',
@@ -1697,7 +1719,7 @@ const mainMutations = [
     },
     {
         name: '軟 404 的結果沒交給 buildReport',
-        apply: (s) => s.replace('    soft404,\n    policy:', '    policy:'),
+        apply: (s) => s.replace('    soft404,\n    titles,', '    titles,'),
     },
     {
         name: '錄製檔裡沒有的網址當成健康',
@@ -1745,7 +1767,11 @@ const hostPolicyMutations = [
     },
     {
         name: '宣告了 missingTitles 的主機，網址照樣要逐筆寫 API',
-        apply: (s) => s.replace('if (!check || check.missingTitles || (u.pathname', 'if (!check || (u.pathname'),
+        apply: (s) => s.replace('        if (check.missingTitles && !(HOME_PATH.test(u.pathname) && u.search)) continue;\n', ''),
+    },
+    {
+        name: 'missingTitles 的主機上，路徑是首頁又帶查詢字串的網址也不必寫 API（標題檢查不看它，沒有任何檢查）',
+        apply: (s) => s.replace('if (check.missingTitles && !(HOME_PATH.test(u.pathname) && u.search)) continue;', 'if (check.missingTitles) continue;'),
     },
     {
         name: '內容檢查的網址也只要同站（頁面可以寫在子網域上）',
@@ -1778,6 +1804,10 @@ const hostJudgeMutations = [
         apply: (s) => s.replace(' && (!Array.isArray(cur) || /^(0|[1-9]\\d*)$/.test(token))', ''),
     },
     {
+        name: 'JSON pointer 先解 ~0 再解 ~1（~01 被解成 /）',
+        apply: (s) => s.replace(".map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))", ".map((t) => t.replace(/~0/g, '~').replace(/~1/g, '/'))"),
+    },
+    {
         name: 'JSON pointer 不解開 ~1',
         apply: (s) => s.replace(".map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))", ".map((t) => t.replace(/~0/g, '~'))"),
     },
@@ -1785,10 +1815,64 @@ const hostJudgeMutations = [
         name: 'JSON pointer 取到原型鏈上的欄位',
         apply: (s) => s.replace('&& Object.hasOwn(cur, token);', '&& token in cur;'),
     },
-    {
-        name: 'JSON pointer 先解 ~0 再解 ~1（~01 被解成 /）',
-        apply: (s) => s.replace(".map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'))", ".map((t) => t.replace(/~0/g, '~').replace(/~1/g, '/'))"),
-    },
+];
+
+// missingTitles 的判定、重讀與隨機路徑。標題讀錯會把好網址判成失效，重讀或隨機路徑改壞時名單過期也看不出來。
+const titleMutations = [
+    { name: 'pageTitle 不跳過 script、svg 裡的 <title>', apply: (s) => s.replace("const html = r.bodyHead.replace(SKIP, ' ');", 'const html = r.bodyHead;') },
+    { name: 'pageTitle 不跳過 style', apply: (s) => s.replace('|<(script|style|svg)(?=', '|<(script|svg)(?=') },
+    { name: 'SKIP 把 <svg-icon> 當成 svg', apply: (s) => s.replace('|<(script|style|svg)(?=[\\s>/])', '|<(script|style|svg)\\b') },
+    { name: 'SKIP 不認 <svg/>', apply: (s) => s.replace('|<svg(?=[\\s/])[^>]*\\/>', '') },
+    { name: '沒有結尾的註解不吃到最後', apply: (s) => s.replace('/<!--[\\s\\S]*?(?:-->|$)|', '/<!--[\\s\\S]*?-->|') },
+    { name: '<title> 貪婪比對到最後一個 </title>', apply: (s) => s.replace('>([\\s\\S]*?)<\\/title\\s*>/i', '>([\\s\\S]*)<\\/title\\s*>/i') },
+    { name: '</title > 帶空白就認不出來', apply: (s) => s.replace('<\\/title\\s*>/i', '<\\/title>/i') },
+    { name: '具名參照分大小寫', apply: (s) => s.replace('NAMED[e.toLowerCase()]', 'NAMED[e]') },
+    { name: '數字參照不檢查範圍（&#99999999; 丟 RangeError）', apply: (s) => s.replace('return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m;', 'return String.fromCodePoint(n);') },
+    { name: '不看 Content-Type（PDF、JSON 沒有 <title> 也比 ""）', apply: (s) => s.replace("const isHtml = (r) => /html/i.test(r?.contentType ?? '');", 'const isHtml = () => true;') },
+    { name: '不是 HTML 的 2xx 也重讀', apply: (s) => s.replace('export const needsReread = (check, r) => !offList(check, r) && !notHtml(r);', 'export const needsReread = (check, r) => !offList(check, r);') },
+    { name: '重讀時不是 HTML 的不另外說明', apply: (s) => s.replace("    if (notHtml(x)) return unverified(", '    if (false) return unverified(') },
+    { name: '確認那一輪不用 recheck.budgetMs', apply: (s) => s.replace('{ ...cfg, budgetMs: recheck.budgetMs }', '{ ...cfg, budgetMs: TITLE_RECHECK.budgetMs }') },
+    { name: '頁面不健康的網址也打隨機路徑', apply: (s) => s.replace("        if (!check || !r || classifyLink(r) !== 'healthy') return;", '        if (!check) return;') },
+    { name: 'pageTitle 不認帶屬性的 <title>', apply: (s) => s.replace('<title\\b[^>]*>([', '<title>([') },
+    { name: 'pageTitle 把空的回應當成沒有標題', apply: (s) => s.replace(' || !r.bodyHead.trim() || !isHtml(r)) return null;', ' || !isHtml(r)) return null;') },
+    { name: '空的回應也判失效', apply: (s) => s.replace("    if (!x.bodyTruncated && !(x.bodyHead ?? '').trim()) return unverified('回應是空的', false);\n", '') },
+    { name: '只解開 6 個具名參照', apply: (s) => s.replace("ndash: '–', ", '') },
+    { name: 'pageTitle 沒讀完也當成沒有標題（aesea 刪掉的頁面看不到）', apply: (s) => s.replace("return r.bodyTruncated || /<title\\b/i.test(html) ? null : '';", "return '';") },
+    { name: 'pageTitle 不解開字元參照', apply: (s) => s.replace('return normalizeTitle(decode(m[1]));', 'return normalizeTitle(m[1]);') },
+    { name: '16KB 讀不到標題也不重讀', apply: (s) => s.replace('export const needsReread = (check, r) => !offList(check, r) && !notHtml(r);', 'export const needsReread = () => false;') },
+    { name: '名單裡的標題一次就判失效', apply: (s) => s.replace("    if (!x.previous) return once('沒有重讀確認');\n    if (!listed(check, x.previous)) return once(", '    if (false) return once(') },
+    { name: '不看前一次的標題', apply: (s) => s.replace('    if (!listed(check, x.previous)) return once(', '    if (false) return once(') },
+    { name: '讀到上限還沒讀完 <title> 不通知', apply: (s) => s.replace('還沒讀完 <title>`, true)', '還沒讀完 <title>`, false)') },
+    { name: '回應被壓縮不通知', apply: (s) => s.replace('沒有解析（${inertText(String(x.bodySkipped).slice(0, 60))}）`, true)', '沒有解析（${inertText(String(x.bodySkipped).slice(0, 60))}）`, false)') },
+    { name: '隨機路徑確認時沒再讀到不算沒做完', apply: (s) => s.replace("return { state: 'other', skipped: true, reason: `${describeOnce(check, r)}，不在名單裡，時間預算用完", "return { state: 'other', reason: `${describeOnce(check, r)}，不在名單裡，時間預算用完") },
+    { name: '隨機路徑一次不在名單裡就算過期', apply: (s) => s.replace('if (offList(check, r) && offList(check, r.previous)) return', 'if (offList(check, r)) return') },
+    { name: '隨機路徑不在名單裡不再讀一次', apply: (s) => s.replace('(randoms.has(urls[k]) ? offList : listed)', '(randoms.has(urls[k]) ? () => false : listed)') },
+    { name: '名單裡的網址不再讀一次', apply: (s) => s.replace('(randoms.has(urls[k]) ? offList : listed)', '(randoms.has(urls[k]) ? offList : () => false)') },
+    { name: '再讀之前不等', apply: (s) => s.replace('        await sleep(recheck.delayMs);\n', '') },
+    { name: '再讀時預算用完不算進 skipped', apply: (s) => s.replace('            if (!again[j]) confirmSkipped++;\n', '') },
+    { name: '再讀沒讀到時拿第一次的結果當確認', apply: (s) => s.replace(': { ...rr[k], retrySkipped: true };', ': { ...rr[k], previous: rr[k] };') },
+    { name: '首頁也看標題', apply: (s) => s.replace('return check && !HOME_PATH.test(u.pathname) && !matchContentCheck', 'return check && !matchContentCheck') },
+    { name: '帶查詢字串的首頁也看標題', apply: (s) => s.replace('return check && !HOME_PATH.test(u.pathname) && !matchContentCheck', "return check && !(u.pathname === '/' && !u.search) && !matchContentCheck") },
+    { name: '寫了 API 的網址也看標題', apply: (s) => s.replace(' && !matchContentCheck([check], url) ? check : null;', ' ? check : null;') },
+    { name: '重讀只讀 16KB', apply: (s) => s.replace('readBodyBytes: 256 * 1024 });', 'readBodyBytes: 16 * 1024 });') },
+    { name: '不打隨機路徑', apply: (s) => s.replace('        randoms.set(randomSibling(url, token), check);\n', '') },
+];
+const titleReportMutations = [
+    { name: 'needsAttention 不看過期的名單', apply: (s) => s.replace('        titleStale.length > 0 ||\n', '') },
+    { name: '隨機路徑沒打完也算完整覆蓋', apply: (s) => s.replace(' && titleRun.skipped === 0;', ';') },
+    { name: 'judgeUrl 不用重讀的結果', apply: (s) => s.replace('judgeTitle(titleCheck, r, reread)', 'judgeTitle(titleCheck, r, null)') },
+    { name: 'buildReport 沒把重讀的結果交給 judgeUrl', apply: (s) => s.replace('soft404Run.verdicts[i], titleRun.rereads[i]);', 'soft404Run.verdicts[i], null);') },
+    { name: '頁面不健康也看標題', apply: (s) => s.replace("const titleCheck = !check && classifyLink(r) === 'healthy' ? titleCheckFor", 'const titleCheck = !check ? titleCheckFor') },
+    { name: '報告不寫名單過期那一段', apply: (s) => s.replace('    if (titleStale.length) {', '    if (false) {') },
+    { name: '沒重讀的網址不算未檢查', apply: (s) => s.replace('            if ((!reread || reread.retrySkipped) && needsReread(', '            if (false && needsReread(') },
+    { name: '確認時沒再讀到的網址不算未檢查', apply: (s) => s.replace('if ((!reread || reread.retrySkipped) && needsReread(', 'if (!reread && needsReread(') },
+];
+const probeTypeMutations = [
+    { name: 'probe 不帶回 Content-Type', apply: (s) => s.replace('            ...(r.contentType !== undefined ? { contentType: r.contentType } : {}),\n', '') },
+];
+const titleMainMutations = [
+    { name: '標題檢查的結果沒交給 buildReport', apply: (s) => s.replace('    titles,\n    policy:', '    policy:') },
+    { name: '標題檢查沒接上重播的 probe', apply: (s) => s.replace('randomToken, { probeFn, ...(REPLAY_PATH', 'randomToken, { ...(REPLAY_PATH') },
 ];
 
 let pass = 0;
@@ -1811,6 +1895,7 @@ function runBaselineTests() {
                 path.join(SCRIPTS, 'hijack-signals.test.mjs'),
                 path.join(SCRIPTS, 'check-external-links.test.mjs'),
                 path.join(SCRIPTS, 'soft404.test.mjs'),
+                path.join(SCRIPTS, 'missing-titles.test.mjs'),
             ],
             { encoding: 'utf8', stdio: 'pipe' },
         );
@@ -1837,7 +1922,7 @@ if (base.code !== 0) {
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
-    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs／check-external-links.test.mjs／soft404.test.mjs）');
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs／check-external-links.test.mjs／soft404.test.mjs／missing-titles.test.mjs）');
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
@@ -1877,6 +1962,14 @@ await runMutants('J. contentChecks 主機層宣告的檢查（link-health.test.m
     'link-policy.lib.mjs', hostPolicyMutations, ['link-health.test.mjs'], RED('這一段'));
 await runMutants('J. contentChecks 主機層宣告的判定（link-health.test.mjs 必須紅）：',
     'check-external-links.lib.mjs', hostJudgeMutations, ['link-health.test.mjs'], RED('這一段'));
+await runMutants('J. missingTitles 的判定、重讀與隨機路徑（missing-titles.test.mjs 必須紅）：',
+    'missing-titles.lib.mjs', titleMutations, ['missing-titles.test.mjs'], RED('這一段'));
+await runMutants('J. missingTitles 在報告裡的分組（missing-titles.test.mjs 必須紅）：',
+    'check-external-links.lib.mjs', titleReportMutations, ['missing-titles.test.mjs'], RED('這一段'));
+await runMutants('J. probe 帶回 Content-Type（missing-titles.test.mjs 必須紅）：',
+    'link-health.lib.mjs', probeTypeMutations, ['missing-titles.test.mjs'], RED('這一段'));
+await runMutants('J. 主程式接上標題檢查（check-external-links.test.mjs 必須紅）：',
+    'check-external-links.mjs', titleMainMutations, ['check-external-links.test.mjs'], RED('這一段'));
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
@@ -1885,5 +1978,6 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length + hostPolicyMutations.length + hostJudgeMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length + hostPolicyMutations.length + hostJudgeMutations.length +
+    titleMutations.length + titleReportMutations.length + titleMainMutations.length + probeTypeMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);

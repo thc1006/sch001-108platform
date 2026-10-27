@@ -1463,13 +1463,13 @@ test('內容 API：JSON pointer 一層一層取值，陣列要用索引，只看
         ['/data/contentRoute/resolvedPath', { found: true, value: '/math/calculus-1' }],
         ['/data/list/0/id', { found: true, value: 7 }],
         ['/data/a~1b/~0c', { found: true, value: true }],
+        ['/data/x~01', { found: true, value: 2 }],
         ['/data/list/00/id', { found: false }],
         ['/data/list/length', { found: false }],
         ['/data/contentRoute/resolvedPath/x', { found: false }],
         ['/data/constructor', { found: false }],
         ['/data/missing', { found: false }],
         ['data.x', { found: true, value: 1 }],
-        ['/data/x~01', { found: true, value: 2 }],
         ['data', { found: true, value: body.data }],
     ];
     for (const [key, want] of cases) assert.deepEqual(lookup(body, key), want, key);
@@ -1515,7 +1515,9 @@ test('contentChecks：missingTitles 是不重複、空白正規化過的字串�
         assert.ok(contentErrors({ missingTitles }).some((m) => m.includes('missingTitles')), JSON.stringify(missingTitles));
     }
     const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck({ missingTitles: ['首頁'] })] }, TODAY);
-    assert.deepEqual(contentCheckGaps(contentChecks, [`${SPA}/x`, `${SPA}/?lang=en`, 'https://other.example.org/x']), []);
+    // 路徑是首頁又帶查詢字串的網址不看標題，照舊要寫 API。
+    const urls = [`${SPA}/x`, `${SPA}/`, `${SPA}/index.html`, `${SPA}/?lang=en`, `${SPA}/index.php?id=5`, `${SPA}/a/index.php?id=5`, 'https://other.example.org/x'];
+    assert.deepEqual(contentCheckGaps(contentChecks, urls).map((g) => g.url), [`${SPA}/?lang=en`, `${SPA}/index.php?id=5`]);
     assert.equal(normalizeTitle('  a \n\t b  '), 'a b');
 });
 
@@ -1738,7 +1740,7 @@ test('buildReport：內容 API 的結果照 targets 的位置對應，失效列�
         const o = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], contentResults: [r], policy }));
         assert.equal(o.attention, attention, JSON.stringify(r));
         assert.match(o.report, /- 本次檢查 1 筆：健康 0、失效 0、位址封鎖 0、無法判定 1、已列例外 0/);
-        assert.match(o.report, /### 🧩 內容 API 驗不到 1 筆\n[\s\S]*\n- 內容 API [^\n]*：https:\/\/spa\.example\.org\/site\/category\?root=42&cid=42\n/);
+        assert.match(o.report, /### 🧩 內容檢查驗不到 1 筆\n[\s\S]*\n- 內容 API [^\n]*：https:\/\/spa\.example\.org\/site\/category\?root=42&cid=42\n/);
         assert.ok(!o.report.includes('被站台拒絕的連結') && !o.report.includes('全部外部連結正常'));
         assert.match(o.report, /被壓縮、超過讀取上限[\s\S]*回 \{\} 或 deadStatus 列的狀態碼卻不是連兩次的，不觸發通知/);
         assert.ok(o.consoleSummary.includes('  無法判定：1'));
@@ -1765,7 +1767,7 @@ test('buildReport：該打的內容 API 沒有結果時算無法判定，覆蓋�
     assert.equal(out.coverageComplete, false);
     assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=false\n');
     assert.match(out.report, /- 內容 API 檢查 1 筆：健康 0、失效 0、無法判定 1。/);
-    assert.match(out.report, /本次有 1 筆未檢查（逾 12 \+ 3 \+ 2 \+ 3.5 分鐘預算）/);
+    assert.match(out.report, /本次有 1 筆未檢查（逾 12 \+ 3 \+ 2 \+ 3.5 \+ 2 分鐘預算）/);
     assert.match(out.report, /- 內容 API 這次沒有檢查：https:\/\/spa\.example\.org/);
     assert.ok(out.consoleTail.some((l) => l.includes('1 筆未檢查')));
     const noArray = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], policy: spaPolicy() }));

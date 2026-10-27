@@ -415,10 +415,12 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                     // 回應中途斷線時不會有 end。這兩種都算截斷，訊號 C 不拿不完整的 body 判斷。整包一次到達時，
                     // 超過上限也可能收到 end。靠關閉連線結束的回應，中途斷線和正常結束分不出來。
                     // destroy 之後 end 不一定會觸發，close 一定會；done 本身有防重入。沒到上限就斷的另外標 bodyAborted，
-                    // 內容 API 把它當成連不上，不是回應太大。
+                    // 內容 API 把它當成連不上，不是回應太大。有 Content-Type 時一起帶回，標題檢查要分 HTML 與其他類型。
+                    const type = res.headers?.['content-type'];
                     const finish = () => done({
                         status,
                         location,
+                        ...(type ? { contentType: String(type).slice(0, 100) } : {}),
                         bodyHead: Buffer.concat(chunks).subarray(0, wantBody).toString('utf8'),
                         bodyTruncated: !complete || read > wantBody,
                         ...(!complete && read < wantBody ? { bodyAborted: true } : {}),
@@ -505,6 +507,7 @@ export async function probe(rawUrl, signal, opts = {}) {
             ...(r.bodyTruncated ? { bodyTruncated: true } : {}),
             ...(r.bodyAborted ? { bodyAborted: true } : {}),
             ...(r.bodySkipped !== undefined ? { bodySkipped: r.bodySkipped } : {}),
+            ...(r.contentType !== undefined ? { contentType: r.contentType } : {}),
         };
         if (!js && (!REDIRECT_STATUSES.has(r.status) || !r.location)) return settle(final);
         if (js) shell ??= final;

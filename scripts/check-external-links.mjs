@@ -36,6 +36,7 @@
  * 另一個盲點是對任何路徑都回 200 的前端殼，頁面刪掉了狀態碼也不變。這種主機列在
  * link-policy.json 的 contentChecks，頁面健康之後再打它寫的 API，連兩次都是 2xx 的 {} 才算 dead，
  * 只有一次是 {} 算無法判定、不通知，見 judgeContent。
+ * contentChecks 宣告了 missingTitles 的主機改看頁面標題，並打同目錄的隨機路徑確認名單沒有過期，見 missing-titles.lib.mjs。
  * 頁面健康、內容卻是錯誤頁或首頁的軟 404 另外套規則，必要時打同目錄的隨機路徑比對落點，見 soft404.lib.mjs。
  * 另有第四種訊號（不是第四態）：被位址政策擋下。它在分類上算 unverified（我們
  * 確實沒驗到），但必須單獨大聲列出：資料檔裡出現指向 loopback／私網／雲端
@@ -49,7 +50,7 @@
  *             --inventory、--policy、--report 換掉讀寫的檔案，路徑相對於 repo 根目錄。
  *             --record 把探測結果錄進檔案，--replay 用錄好的結果代替連網，兩者的路徑相對於目前目錄，
  *             可以一起用。端到端測試（check-external-links.test.mjs）用 --replay 跑整支程式。
- *             錄製檔另外記下軟 404 隨機路徑用的字串，重播時打同樣的網址。
+ *             錄製檔另外記下軟 404 與標題檢查的隨機路徑用的字串，重播時打同樣的網址。
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -63,6 +64,7 @@ import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 import { buildReport, contentProbeTargets, CONTENT_PROBE } from './check-external-links.lib.mjs';
 import { runSoft404, newToken } from './soft404.lib.mjs';
+import { runMissingTitles } from './missing-titles.lib.mjs';
 
 const argOf = (name) => {
     const i = process.argv.indexOf(name);
@@ -235,6 +237,10 @@ const soft404 = await runSoft404(targets, results, { hijacked: hijackedEntries, 
     ...(REPLAY_PATH ? { sleep: async () => {} } : {}),
 });
 
+// missingTitles 的主機：16KB 讀不到標題或標題在名單裡的重讀，另外打同目錄的隨機路徑。設定在 TITLE_PROBE、TITLE_RECHECK。
+// 重播時不等再讀的間隔。
+const titles = await runMissingTitles(targets, results, contentChecks, randomToken, { probeFn, ...(REPLAY_PATH ? { sleep: async () => {} } : {}) });
+
 // 內文裸網域在盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，
 // 因此 Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
 // 這裡用 DNS 根區把它們篩掉：查 TLD 的 NS 記錄，自我維護、不必養一份 TLD 清單。
@@ -286,6 +292,7 @@ const out = buildReport({
     bareSkipped,
     contentResults,
     soft404,
+    titles,
     policy: { entries: policyEntries, hijacked: hijackedEntries, contentChecks },
     budgetMs: BUDGET_MS,
     bareBudgetMs: BARE_BUDGET_MS,

@@ -7,6 +7,7 @@ import { matchPolicy, matchHijacked, matchHijackedHop, matchContentCheck, expiri
 import { detectHijackSignals, inertText } from './hijack-signals.lib.mjs';
 import { probeUrlFor } from './bare-domains.lib.mjs';
 import { SOFT404_PROBE, RECHECK } from './soft404.lib.mjs';
+import { judgeTitle, titleCheckFor, needsReread, TITLE_BUDGET_MIN } from './missing-titles.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 
 /** 這個資料檔另有專屬看門狗；重疊是刻意的縱深防禦，但報告要講清楚免得重複處理。競賽看門狗只探測 url 欄位。 */
@@ -88,8 +89,8 @@ function describeValue({ found, value: v }) {
 /**
  * judgeContent 用內容 API 的探測結果判定 contentChecks 裡的一個網址，回傳 { verdict, reason, bucket, notify }，
  * verdict 是 healthy、dead 或 unverified。r 是重打過的結果時，r.previous 是第一次的結果。兩次都是 2xx、剛好是 {} 才算 dead，
- * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。entry.deadStatus 列的狀態碼也一樣，兩次都是才算 dead。其餘照最後一次判：expect 的欄位（見 lookup）都 ===
- * 才算 healthy，其他是 unverified，notify 表示要不要通知：4xx（429 除外）、被壓縮、超過讀取上限、不是 JSON 物件、
+ * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。entry.deadStatus 列的狀態碼也一樣，兩次都是
+ * 才算 dead。其餘照最後一次判：expect 的欄位（見 lookup）都 === 才算 healthy，其他是 unverified，notify 表示要不要通知：4xx（429 除外）、被壓縮、超過讀取上限、不是 JSON 物件、
  * 格式和 expect 對不上，多半是網站改了 API；被位址政策擋下也通知。3xx、429、5xx、逾時、中途斷線不通知。
  * @param {{expect: object}} entry contentChecks 的一筆網址 @param {object|null|undefined} r 探測 API 的結果，沒有探測就是空的
  */
@@ -144,14 +145,16 @@ export function contentProbeTargets(targets, results, contentChecks) {
 }
 
 /**
- * judgeUrl 決定盤點的一個網址在報告裡歸到哪一段，回傳 { bin, item, signal, content, hint }。bin 是 blocked、hijacked、
+ * judgeUrl 決定盤點的一個網址在報告裡歸到哪一段，回傳 { bin, item, signal, content, title, hint }。bin 是 blocked、hijacked、
  * dead、soft404、suppressed、contentUnverified、soft404Unverified、unverified 或 healthy；signal 是自動偵測的訊號，沒有就是 null；
- * content 是內容 API 的判定，沒有看 API 就是 null；hint 是只列進報告的軟 404 提示，沒有就是 null。
+ * content 是內容 API 的判定，沒有看 API 就是 null；title 是看 missingTitles 的判定，沒有看就是 null（見 judgeTitle）；
+ * hint 是只列進報告的軟 404 提示，沒有就是 null。
  * @param {{url: string, occurrences?: object[]}} target 盤點的一筆 @param {object} r probe 的結果
  * @param {{hijacked: object[], entries: object[], contentChecks?: object[]}} policy validatePolicy 回傳的名單
  * @param {object|null} [apiResult] 探測內容 API 的結果 @param {object|null} [soft] runSoft404 對這個網址的判定
+ * @param {object|null} [reread] runMissingTitles 重讀這個網址的結果
  */
-export function judgeUrl(target, r, { hijacked, entries, contentChecks }, apiResult, soft) {
+export function judgeUrl(target, r, { hijacked, entries, contentChecks }, apiResult, soft, reread) {
     const item = { url: target.url, occurrences: target.occurrences ?? [], reason: describeResult(r) };
     if (isBlockedResult(r)) return { bin: 'blocked', item: { ...item, reason: r.reason }, signal: null };
     // 接管的判定必須在三態分類之前：被接管的網域回的就是 200，
@@ -167,29 +170,32 @@ export function judgeUrl(target, r, { hijacked, entries, contentChecks }, apiRes
     const signal = sig ? { ...sig, source: 'url', occurrences: item.occurrences } : null;
     // 頁面健康時才看內容 API。頁面本身失效或驗不到時，API 回什麼都改變不了結論。
     const check = classifyLink(r) === 'healthy' ? matchContentCheck(contentChecks, target.url) : null;
-    const c = check ? judgeContent(check.entry, apiResult) : null;
-    const content = c?.verdict ?? null;
+    const titleCheck = !check && classifyLink(r) === 'healthy' ? titleCheckFor(contentChecks, target.url) : null;
+    const c = check ? judgeContent(check.entry, apiResult) : titleCheck ? judgeTitle(titleCheck, r, reread) : null;
+    const content = check ? c.verdict : null;
+    const title = titleCheck ? c.verdict : null;
     if (c) item.reason = c.reason;
-    const verdict = content ?? classifyLink(r);
+    const verdict = c?.verdict ?? classifyLink(r);
     // 例外政策不會在這裡出現。404/410 與網域解析不到一律照實回報，因為
     // allowlist 只降低 unverified 的噪音，把確定壞掉的連結壓下去等於廢掉整個檢查。
-    if (verdict === 'dead') return { bin: 'dead', item, signal, content };
-    if (verdict === 'healthy' && !c && soft) {
+    if (verdict === 'dead') return { bin: 'dead', item, signal, content, title };
+    // 看標題的網址標題健康時，軟 404 的第 1 到 3 條照樣算。
+    if (verdict === 'healthy' && (!c || title) && soft) {
         const s = { ...item, reason: soft.reason, rules: soft.rules };
         // 軟 404 是推論，不是 404，只有精確網址的例外壓得下；主機層的例外壓不下。
         const policy = soft.verdict === 'dead' ? matchPolicy(entries.filter((e) => e.match.url !== undefined), target.url) : null;
-        if (policy) return { bin: 'suppressed', item: { ...s, policy }, signal, content };
-        if (soft.verdict === 'dead') return { bin: 'soft404', item: s, signal, content };
-        if (soft.verdict === 'unverified') return { bin: 'soft404Unverified', item: s, signal, content };
-        if (soft.verdict === 'hint') return { bin: 'healthy', item, signal, content, hint: s };
+        if (policy) return { bin: 'suppressed', item: { ...s, policy }, signal, content, title };
+        if (soft.verdict === 'dead') return { bin: 'soft404', item: s, signal, content, title };
+        if (soft.verdict === 'unverified') return { bin: 'soft404Unverified', item: s, signal, content, title };
+        if (soft.verdict === 'hint') return { bin: 'healthy', item, signal, content, title, hint: s };
     }
-    if (verdict === 'healthy') return { bin: 'healthy', item, signal, content };
+    if (verdict === 'healthy') return { bin: 'healthy', item, signal, content, title };
     // 內容 API 驗不到的另列一段，例外壓不下：其中有幾種代表內容檢查本身壞了，要通知。
-    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content };
+    if (c) return { bin: 'contentUnverified', item: { ...item, notify: c.notify }, signal, content, title };
     const policy = matchPolicy(entries, target.url);
-    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content };
+    if (policy) return { bin: 'suppressed', item: { ...item, policy }, signal, content, title };
     // item 沒有 status 與 code，報告的分組要在這裡從探測結果算好。
-    return { bin: 'unverified', item: { ...item, bucket: unverifiedBucket(r) }, signal, content };
+    return { bin: 'unverified', item: { ...item, bucket: unverifiedBucket(r) }, signal, content, title };
 }
 
 /**
@@ -259,14 +265,15 @@ export function splitSignals(autoSignals) {
  * 就會擋下；轉址才經過接管主機的，check-link-policy 看不到，靠這裡通知。需處理的自動訊號也要算，
  * 偵測到了卻不開 issue 的話，報告會躺在 job summary 裡沒人看，等於沒偵測。快到期的政策項目也要算，
  * 否則要等到期當天所有 PR 變紅才會發現。內容 API 驗不到時，judgeContent 標了 notify 的要算，那代表內容檢查本身壞了。
- * 軟 404 兩次都命中的要算；只命中一次的和提示不算。
+ * 軟 404 兩次都命中的要算；只命中一次的和提示不算。missingTitles 的隨機路徑兩次標題都不在名單裡（titleStale）要算。
  * @param {{dead: object[], blocked: object[], bareDead: object[], hijackedHits: object[], expiringSoon: object[], autoSignals: object[],
- *   coverageComplete: boolean, contentUnverified?: object[], soft404?: object[]}} s
+ *   coverageComplete: boolean, contentUnverified?: object[], soft404?: object[], titleStale?: object[]}} s
  * @returns {boolean}
  */
-export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiringSoon, autoSignals, coverageComplete, contentUnverified = [], soft404 = [] }) {
+export function needsAttention({ dead, blocked, bareDead, hijackedHits, expiringSoon, autoSignals, coverageComplete, contentUnverified = [], soft404 = [], titleStale = [] }) {
     return (
         dead.length > 0 ||
+        titleStale.length > 0 ||
         soft404.length > 0 ||
         contentUnverified.some((u) => u.notify) ||
         blocked.length > 0 ||
@@ -299,14 +306,23 @@ const coveredElsewhere = (item) =>
 const NO_CONTENT = Object.freeze({ checked: 0, healthy: 0, dead: 0, unverified: 0, skipped: 0, pageUnverified: Object.freeze([]) });
 const contentCounts = (c) => `健康 ${c.healthy}、失效 ${c.dead}、無法判定 ${c.unverified}`;
 
+/** NO_TITLES 是 runMissingTitles 沒有跑時的結果，欄位見 runMissingTitles。 */
+const NO_TITLES = Object.freeze({ rereads: Object.freeze([]), reads: 0, selfChecks: Object.freeze([]), skipped: 0 });
+const NO_TITLE_COUNT = Object.freeze({ checked: 0, healthy: 0, dead: 0, unverified: 0, skipped: 0 });
+
 /** NO_SOFT404 是 runSoft404 沒有跑時的結果，欄位見 runSoft404。 */
 const NO_SOFT404 = Object.freeze({ verdicts: Object.freeze([]), randoms: 0, randomsSkipped: 0, randomsFailed: 0, recheckSkipped: 0 });
 // probedRandoms 是實際打了的隨機路徑數，週報和主控台都印這個。
 const probedRandoms = (run) => run.randoms - run.randomsSkipped;
 // skippedText 寫覆蓋不完整的數量。只有隨機路徑沒打時不寫「0 筆未檢查」。
-const skippedText = (urls, randoms) =>
-    [urls || !randoms ? `${urls} 筆未檢查` : '', randoms ? `軟 404 的隨機路徑 ${randoms} 個沒打` : ''].filter(Boolean).join('、');
+const skippedText = (urls, randoms, titleRandoms = 0) =>
+    [
+        urls || !(randoms || titleRandoms) ? `${urls} 筆未檢查` : '',
+        randoms ? `軟 404 的隨機路徑 ${randoms} 個沒打` : '',
+        titleRandoms ? `標題檢查的隨機路徑 ${titleRandoms} 個沒做完` : '',
+    ].filter(Boolean).join('、');
 const SOFT404_BUDGET_MIN = (SOFT404_PROBE.budgetMs + RECHECK.delayMs + RECHECK.budgetMs) / 60_000;
+const titleRandomsSkipped = (run) => run.selfChecks.filter((x) => x.skipped).length;
 
 /**
  * renderReport 產生週報的 markdown，第一行是 issue 的機器標記。m 是 buildReport 整理好的結果：
@@ -318,10 +334,12 @@ export function renderReport(m) {
         todayISO, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
         budgetMs, bareBudgetMs, expiringSoon, attention, content = NO_CONTENT, contentUnverified = [],
-        soft404 = [], soft404Unverified = [], soft404Hints = [], soft404Run = NO_SOFT404,
+        soft404 = [], soft404Unverified = [], soft404Hints = [], soft404Run = NO_SOFT404, titles = NO_TITLE_COUNT, titleRun = NO_TITLES,
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
-    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped;
+    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped + titles.skipped;
+    const titleStale = titleRun.selfChecks.filter((x) => x.state === 'stale');
+    const titleOther = titleRun.selfChecks.filter((x) => x.state === 'other');
 
     const lines = [EXTERNAL_LINKS_MARKER, '', '## 全站外部連結檢查報告', ''];
     lines.push(`- 檢查日期：${todayISO}（UTC）`);
@@ -337,6 +355,11 @@ export function renderReport(m) {
         `- 內容 API 檢查 ${content.checked} 筆：${contentCounts(content)}。頁面驗不到、沒打 API 的 ${notProbed.length} 筆` +
             (notProbed.length ? `：${notProbed.join('、')}。怎麼在連得到的機器上檢查，見 scripts/link-policy.json 裡這些主機的 reason` : '') +
             '。contentChecks 列的主機對任何路徑都回 200，頁面健康之後再看 API 的回應',
+    );
+    lines.push(
+        `- 標題檢查 ${titles.checked} 筆：${contentCounts(titles)}，重讀 ${titleRun.reads} 筆。同目錄的隨機路徑 ${titleRun.selfChecks.length} 個：` +
+            `標題在名單裡 ${titleRun.selfChecks.length - titleStale.length - titleOther.length}、不在名單裡 ${titleStale.length}、沒有比對 ${titleOther.length}。` +
+            'contentChecks 宣告了 missingTitles 的主機，網址的標題是不存在的頁面的標題就判失效',
     );
     lines.push(
         `- 內文裸網域：盤點候選 ${bareInfo.total}（${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋）、DNS 篩掉 ${bareRejected.length}、DNS 未答 ${bareUnresolved.length}、實際探測 ${bareHostsCount}（健康 ${bareHealthy}、失效 ${bareDead.length}、無法判定 ${bareOther.length}）`,
@@ -508,16 +531,28 @@ export function renderReport(m) {
     }
 
     if (contentUnverified.length) {
-        lines.push(`### 🧩 內容 API 驗不到 ${contentUnverified.length} 筆`, '');
+        lines.push(`### 🧩 內容檢查驗不到 ${contentUnverified.length} 筆`, '');
         lines.push(
-            '這些網址的主機對任何路徑都回 200，只能靠 `scripts/link-policy.json` 的 contentChecks 打 API 確認內容。',
+            '這些網址的主機對任何路徑都回 200，只能靠 `scripts/link-policy.json` 的 contentChecks 打 API 或看標題確認內容。',
             'API 回 4xx（429 除外）、回應被壓縮、超過讀取上限、不是 JSON 物件或格式和 expect 對不上，多半是網站改了 API，',
             '請照新的寫法改 contentChecks，否則這些網址等於沒有檢查；這幾種和被位址政策擋下的會觸發通知。',
             '3xx、429、5xx、逾時、連線中途斷了，以及回 {} 或 deadStatus 列的狀態碼卻不是連兩次的，不觸發通知。',
             '回應是讀完的 2xx、{} 以外的 JSON 物件時只打一次；其他結果除了被位址政策擋下的，時間預算內會重打一次，這裡寫的是最後一次的結果。',
+            '看標題（missingTitles）的網址：回應被壓縮、讀到上限還沒讀完 <title>、被位址政策擋下會觸發通知；標題在名單裡卻只有一次的不觸發通知。',
             '',
         );
         for (const u of contentUnverified) lines.push(`- ${u.reason}：${u.url}`);
+        lines.push('');
+    }
+
+    if (titleStale.length) {
+        lines.push(`### 🏷️ 不存在的頁面標題變了 ${titleStale.length} 個`, '');
+        lines.push(
+            '這些主機在 `scripts/link-policy.json` 的 contentChecks 宣告了 missingTitles。同目錄的隨機路徑讀了兩次都回 2xx，標題都不在名單裡，',
+            '名單可能過期了，這些主機上刪掉的頁面會被判成健康。請用瀏覽器打開隨機路徑，把不存在的頁面現在的標題加進 missingTitles，或改用 API。',
+            '',
+        );
+        for (const x of titleStale) lines.push(`- **${x.host}**：${x.reason}，隨機路徑 ${x.url}`);
         lines.push('');
     }
 
@@ -579,10 +614,11 @@ export function renderReport(m) {
         lines.push('', '</details>', '');
     }
 
-    if (urlSkipped || soft404Run.randomsSkipped) {
+    if (urlSkipped || soft404Run.randomsSkipped || titleRandomsSkipped(titleRun)) {
         lines.push('### ⏱️ 檢查未完成（覆蓋不完整）', '');
         lines.push(
-            `本次有${skippedText(urlSkipped, soft404Run.randomsSkipped).replace(/^\d/, ' $&')}（逾 ${budgetMs / 60_000} + ${bareBudgetMs / 60_000} + ${CONTENT_PROBE.budgetMs / 60_000} + ${SOFT404_BUDGET_MIN} 分鐘預算）。` +
+            `本次有${skippedText(urlSkipped, soft404Run.randomsSkipped, titleRandomsSkipped(titleRun)).replace(/^\d/, ' $&')}` +
+                `（逾 ${budgetMs / 60_000} + ${bareBudgetMs / 60_000} + ${CONTENT_PROBE.budgetMs / 60_000} + ${SOFT404_BUDGET_MIN} + ${TITLE_BUDGET_MIN} 分鐘預算）。` +
                 '**未檢查不等於正常**，這批網址本次沒有被驗證過。',
             '',
             '起點每週輪替，長期覆蓋率會均勻；但若連續數週出現，代表預算或併發數需要調整。',
@@ -671,6 +707,17 @@ export function renderReport(m) {
         lines.push('', '</details>', '');
     }
 
+    if (titleOther.length) {
+        lines.push(
+            `<details><summary>🏷️ 標題檢查的隨機路徑沒有比對 ${titleOther.length} 個（不通知）</summary>`,
+            '',
+            '這一次沒有確認 missingTitles 還對不對。回 404 的目錄，刪掉的頁面狀態碼看得出來；回 5xx 的只列在無法判定。',
+            '',
+        );
+        for (const x of titleOther) lines.push(`- ${x.reason}：${x.url}`);
+        lines.push('', '</details>', '');
+    }
+
     if (suppressed.length) {
         lines.push(
             `<details><summary>📋 已列入例外政策的連結 ${suppressed.length} 筆（scripts/link-policy.json）</summary>`,
@@ -707,6 +754,7 @@ function consoleLines(m) {
         inventoryPath, inventoryTotal, targetsCount, healthy, dead, blocked, urlBlockedCount, unverified, suppressed, hijackedHits,
         autoSignals, bareInfo, bareRejected, bareUnresolved, bareHostsCount, bareHealthy, bareDead, bareOther, skipped, bareSkipped,
         coverageComplete, expiringSoon, attention, limit, content, contentUnverified, soft404, soft404Unverified, soft404Hints, soft404Run,
+        titles, titleRun,
     } = m;
     const { actionable: actionableSignals, browseOnly: browseOnlySignals } = splitSignals(autoSignals);
     const summary = [];
@@ -721,6 +769,8 @@ function consoleLines(m) {
     summary.push(`  軟 404　：${soft404.length}（只命中一次 ${soft404Unverified.length}、提示 ${soft404Hints.length}、隨機路徑 ${probedRandoms(soft404Run)}）`);
     if (skipped) summary.push(`  未檢查　：${skipped}（逾時間預算）`);
     summary.push(`  內容 API：${content.checked}（${contentCounts(content)}；頁面驗不到、沒打 API 的 ${content.pageUnverified.length} 筆）`);
+    const stale = titleRun.selfChecks.filter((x) => x.state === 'stale').length;
+    summary.push(`  標題檢查：${titles.checked}（${contentCounts(titles)}；重讀 ${titleRun.reads}、隨機路徑 ${titleRun.selfChecks.length}、標題不在名單裡 ${stale}）`);
     summary.push('內文裸網域（只寫在說明文字裡的網域）');
     summary.push(`  盤點候選：${bareInfo.total}（其中 ${bareInfo.alreadyCoveredByUrls} 個已由盤點的網址涵蓋，不重複檢查）`);
     summary.push(`  DNS 篩掉：${bareRejected.length}（TLD 確定不存在＝檔名或縮寫，不是網域）`);
@@ -741,8 +791,9 @@ function consoleLines(m) {
     );
     const tail = [];
     if (limit > 0) tail.push(`→ 使用了 --limit ${limit}：只驗了一部分，coverage_complete 一律為 false。`);
-    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped;
-    if (!coverageComplete) tail.push(`→ 覆蓋不完整：${skippedText(urlSkipped, soft404Run.randomsSkipped)}、${bareUnresolved.length} 筆未篩選，不可視為健康。`);
+    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped + titles.skipped;
+    const randomsText = skippedText(urlSkipped, soft404Run.randomsSkipped, titleRandomsSkipped(titleRun));
+    if (!coverageComplete) tail.push(`→ 覆蓋不完整：${randomsText}、${bareUnresolved.length} 筆未篩選，不可視為健康。`);
     tail.push(attention ? '→ 有項目需要處理，已寫入報告。' : '→ 無待辦項目。');
     return { consoleSummary: summary, consoleTail: tail };
 }
@@ -752,13 +803,16 @@ function consoleLines(m) {
  * 探測之後把資料原樣交進來；通知條件只算一次，報告、GITHUB_OUTPUT 與主控台都用同一份。
  * @param {object} input 盤點與探測結果（targets、results、skipped）、裸網域的候選、篩選與探測結果
  *   （bareInfo、bareCandidates、screen、bareResults、bareSkipped）、policy（entries 與 hijacked）、
- *   todayISO、limit、inventoryPath、inventoryTotal、budgetMs、bareBudgetMs、contentResults，以及 runSoft404 的回傳值 soft404
+ *   todayISO、limit、inventoryPath、inventoryTotal、budgetMs、bareBudgetMs、contentResults，以及 runSoft404 的回傳值 soft404、
+ *   runMissingTitles 的回傳值 titles
  * @returns {{report: string, attention: boolean, coverageComplete: boolean, githubOutput: string, consoleSummary: string[], consoleTail: string[]}}
  */
 export function buildReport(input) {
     const { todayISO, limit, targets, results, skipped, bareCandidates, screen, bareResults, bareSkipped, policy } = input;
     const contentResults = input.contentResults ?? [];
     const soft404Run = input.soft404 ?? NO_SOFT404;
+    const titleRun = input.titles ?? NO_TITLES;
+    const titles = { ...NO_TITLE_COUNT };
     const dead = [];
     const blocked = [];
     const unverified = [];
@@ -783,12 +837,18 @@ export function buildReport(input) {
         const unchecked = !r || classifyLink(r) === 'unverified';
         if (unchecked && matchContentCheck(policy.contentChecks, targets[i].url)) content.pageUnverified.push(targets[i].url);
         if (!r) continue; // 預算用盡，未檢查
-        const judged = judgeUrl(targets[i], r, policy, contentResults[i], soft404Run.verdicts[i]);
+        const judged = judgeUrl(targets[i], r, policy, contentResults[i], soft404Run.verdicts[i], titleRun.rereads[i]);
         const { bin, item, signal } = judged;
         if (judged.content) {
             content.checked++;
             content[judged.content]++;
             if (!contentResults[i]) content.skipped++;
+        }
+        if (judged.title) {
+            titles.checked++;
+            titles[judged.title]++;
+            const reread = titleRun.rereads[i];
+            if ((!reread || reread.retrySkipped) && needsReread(titleCheckFor(policy.contentChecks, targets[i].url), r)) titles.skipped++;
         }
         if (signal) autoSignals.push(signal);
         if (judged.hint) soft404Hints.push(judged.hint);
@@ -823,7 +883,7 @@ export function buildReport(input) {
     // --limit 同理：它是本機除錯用的旗標，只驗前 N 筆，其餘完全沒看過；算成完整覆蓋的話，
     // 一次只驗 3 筆的執行也會宣稱「全站都查過了」。
     const coverageComplete = limit <= 0 && skipped === 0 && bareSkipped === 0 && content.skipped === 0 && screen.unresolved.length === 0 &&
-        soft404Run.randomsSkipped === 0 && soft404Run.recheckSkipped === 0;
+        soft404Run.randomsSkipped === 0 && soft404Run.recheckSkipped === 0 && titleRun.skipped === 0;
     const expiringSoon = expiringPolicyItems(policy.entries, policy.hijacked, todayISO, policy.contentChecks);
     const model = {
         todayISO,
@@ -854,6 +914,9 @@ export function buildReport(input) {
         soft404Unverified,
         soft404Hints,
         soft404Run,
+        titles,
+        titleRun,
+        titleStale: titleRun.selfChecks.filter((x) => x.state === 'stale'),
         coverageComplete,
         expiringSoon,
     };
