@@ -2,14 +2,14 @@
  * deploy/k3s/terminating-pods.sh：舊 pod 還在收尾時擋下換版。PATH 最前面放一個假的 sudo，
  * 記下收到的參數，印出 kubectl jsonpath 會印的那幾行（名稱|phase|deletionTimestamp|deletionGracePeriodSeconds），
  * 或像連不到 API 時一樣失敗。jsonpath 由 kubectl 套用，要 kubectl 和一個（假的）apiserver，這裡不測。
- * build-image.sh 則在暫時的 git repo 裡用假的 sudo、buildah 整支執行，看它在哪兩處呼叫檢查。
+ * build-image.sh 在哪兩處呼叫它，見 build-image.test.mjs。
  *
  * 執行：npm run test:ai-gateway
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,94 +130,4 @@ test('查的命名空間與 label 等於 app.yaml 裡 Deployment 的', () => {
     const [, key, value] = manifest.match(/^ {4}matchLabels:\n {6}(\S+): (\S+)\n {2}\S/m);
     const { args } = run([]);
     assert.ok(args.includes(`-n ${ns} get pods -l ${key}=${value} `), args);
-});
-
-const BUILD_SUDO = `#!/bin/sh
-dir=$(dirname "$0")
-printf 'sudo %s\n' "$*" >> "$dir/calls"
-case "$*" in
-  'k3s kubectl -n sch001-ai get pods '*) n=$(grep -c '^sudo k3s kubectl -n sch001-ai get pods ' "$dir/calls"); cat "$dir/pods-$n" 2>/dev/null ;;
-  'k3s kubectl -n sch001-ai get deployment/'* | 'k3s ctr images ls -q') echo localhost/sch001-ai-gateway:aaaaaaaaaaaa ;;
-esac
-exit 0
-`;
-
-/**
- * runBuild 在暫時的 git repo 裡執行 build-image.sh。pods[i] 是第 i+1 次查收尾中的 pod 時 kubectl 的輸出。
- * 回傳結束碼、依序的 sudo／buildah 呼叫，以及 app.yaml 有沒有被改。
- */
-function runBuild(pods, env = {}) {
-    const dir = mkdtempSync(path.join(tmpdir(), 'build-image-'));
-    try {
-        const repo = path.join(dir, 'repo');
-        const bin = path.join(dir, 'bin');
-        cpSync(K3S, path.join(repo, 'ai-gateway/deploy/k3s'), { recursive: true });
-        for (const sub of ['src', 'licenses']) {
-            mkdirSync(path.join(repo, 'ai-gateway', sub));
-            writeFileSync(path.join(repo, 'ai-gateway', sub, 'x'), '');
-        }
-        mkdirSync(bin);
-        writeFileSync(path.join(bin, 'sudo'), BUILD_SUDO);
-        writeFileSync(path.join(bin, 'buildah'), `#!/bin/sh\nprintf 'buildah %s\\n' "$*" >> "$(dirname "$0")/calls"\n`);
-        chmodSync(path.join(bin, 'sudo'), 0o755);
-        chmodSync(path.join(bin, 'buildah'), 0o755);
-        pods.forEach((lines, i) => writeFileSync(path.join(bin, `pods-${i + 1}`), lines.map((l) => `${l}\n`).join('')));
-        const git = (...args) => {
-            const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t', '-c', 'commit.gpgsign=false', ...args], { cwd: repo, encoding: 'utf8' });
-            assert.equal(r.status, 0, r.stderr);
-            return r.stdout;
-        };
-        git('init', '-q');
-        git('add', '.');
-        git('commit', '-qm', 'x');
-        const { ALLOW_ROLLOUT_OVERLAP, ...base } = process.env;
-        const result = spawnSync('bash', [path.join(repo, 'ai-gateway/deploy/k3s/build-image.sh')], {
-            env: { ...base, PATH: `${bin}:${process.env.PATH}`, TMPDIR: dir, ...env },
-            encoding: 'utf8',
-        });
-        let calls = [];
-        try {
-            calls = readFileSync(path.join(bin, 'calls'), 'utf8').trimEnd().split('\n');
-        } catch {}
-        const appChanged = git('status', '--porcelain', '--', 'ai-gateway/deploy/k3s/app.yaml') !== '';
-        return { ...result, calls, appChanged };
-    } finally {
-        rmSync(dir, { recursive: true, force: true });
-    }
-}
-
-const CHECK = 'sudo k3s kubectl -n sch001-ai get pods ';
-const APPLY_APP = 'sudo k3s kubectl apply -f ai-gateway/deploy/k3s/app.yaml';
-const TERMINATING = `${OLD}|Running|${at(600)}|920`;
-
-test('build-image.sh：碰叢集之前查一次，匯入映像檔之後、改 app.yaml 之前再查一次', () => {
-    const r = runBuild([]);
-    assert.equal(r.status, 0, r.stderr);
-    assert.ok(r.appChanged);
-    const checks = r.calls.flatMap((c, i) => (c.startsWith(CHECK) ? [i] : []));
-    assert.equal(checks.length, 2, r.calls.join('\n'));
-    assert.equal(checks[0], 0, '第一個呼叫就是檢查');
-    const pinned = r.calls.findIndex((c) => /^sudo k3s ctr images label \S+ io\.cri-containerd\.pinned=pinned$/.test(c));
-    assert.ok(pinned > 0 && pinned < checks[1], r.calls.join('\n'));
-    assert.ok(checks[1] < r.calls.indexOf(APPLY_APP), r.calls.join('\n'));
-});
-
-test('build-image.sh：第一次查到收尾中的 pod 就停下，不建置、不碰叢集', () => {
-    const r = runBuild([[TERMINATING]]);
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, new RegExp(`${OLD}：已收尾`));
-    assert.deepEqual(r.calls, [r.calls[0]]);
-    assert.ok(r.calls[0].startsWith(CHECK));
-    assert.ok(!r.appChanged);
-});
-
-test('build-image.sh：建置期間才開始收尾的，第二次查到就停下，映像檔已匯入、app.yaml 沒改', () => {
-    const r = runBuild([[], [TERMINATING]]);
-    assert.equal(r.status, 1);
-    assert.ok(r.calls.some((c) => c.startsWith('sudo k3s ctr images import ')));
-    assert.ok(!r.calls.includes(APPLY_APP));
-    assert.ok(!r.appChanged);
-    const ok = runBuild([[], [TERMINATING]], { ALLOW_ROLLOUT_OVERLAP: '1' });
-    assert.equal(ok.status, 0, ok.stderr);
-    assert.ok(ok.calls.includes(APPLY_APP));
 });
