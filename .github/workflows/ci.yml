@@ -37,10 +37,12 @@ jobs:
     outputs:
       artifact_name: ${{ steps.artifact.outputs.name }}
     steps:
+      # 深度 2：PR 和 merge queue 的 HEAD 是合併 commit，HEAD^1 是目標分支，寫作檢查拿它比對。
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 2
 
       # cache 只存 npm 的下載快取，不存 node_modules：每次都先過閘門，再由 npm ci
       # 在 strict-allow-scripts 下重新安裝相依。
@@ -63,6 +65,9 @@ jobs:
       - name: Run site-contract unit tests
         run: npm run test:site-integrity
 
+      - name: Run writing-check unit tests
+        run: npm run test:writing
+
       - name: Build the deployable artifact
         # 閘道網址來自 repository variable，不寫進 repo。BaseLayout.astro 把它寫進
         # 每頁的 meta，沒設定時不寫，改走閘道的 AI 功能會回報尚未設定。
@@ -76,6 +81,29 @@ jobs:
         env:
           PUBLIC_AI_GATEWAY_URL: ${{ vars.AI_GATEWAY_URL }}
         run: npm run check:site
+
+      # 基準只能往下，和目標分支的 writing-policy.json 比。push 到 main 時沒有目標分支，跳過。
+      - name: Verify the writing baseline did not loosen
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+        run: npm run check:writing -- --verify HEAD^1
+
+      # annotation 只標這次改到的行，完整結果在 step summary 和 artifact。
+      - name: Check writing on the built site
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] || [ "$GITHUB_EVENT_NAME" = merge_group ]; then
+            npm run check:writing -- --annotate HEAD^1
+          else
+            npm run check:writing
+          fi
+
+      - name: Upload the writing report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: writing-report-${{ github.run_attempt }}
+          path: .reports/writing.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       # link-policy 讀 check:site 寫出的 .reports/url-inventory.json，要排在它後面。
       - name: Verify external URL policy (deterministic, no network)
@@ -180,7 +208,7 @@ jobs:
             test-results/
           retention-days: 7
 
-  # 這三組故障測試要先建置。這裡自己建一份，和 site 平行跑，瀏覽器測試不必等它們。
+  # 這四組故障測試要先建置。這裡自己建一份，和 site 平行跑，瀏覽器測試不必等它們。
   # 相依樹與安裝閘門的故障測試用不到建置產物，在 Validate Data 跑。
   faults:
     name: Built-Site Fault Injection
@@ -221,6 +249,9 @@ jobs:
 
       - name: Prove the vendor size budget actually blocks (fault injection)
         run: npm run test:vendor-size-faults
+
+      - name: Prove the writing check actually blocks (fault injection)
+        run: npm run test:writing-faults
 
   data:
     name: Validate Data
