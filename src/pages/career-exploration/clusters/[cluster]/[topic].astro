@@ -116,12 +116,14 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
     /* Markdown 表格在窄視窗會把整頁撐寬（實測 360px 視窗下溢出 27px，手機上會
        左右晃）。內容來自 src/content/clusters 底下的 Markdown，作者無法逐一控制欄寬，
        所以在渲染層讓表格自己橫向捲動，而不是讓它撐破版面。
-       表格要設成 display: block 才有捲動軸，直接對 table 設 overflow 在多數瀏覽器無效。 */
+       表格要設成 display: block 才有捲動軸，直接對 table 設 overflow 在多數瀏覽器無效。
+       寬度用 fit-content 加 margin auto，比內文欄窄的表格才會置中；寬的表格仍以 100% 為上限。 */
     .md-content > table,
     .md-content table {
       display: block;
-      width: 100%;
+      width: fit-content;
       max-width: 100%;
+      margin-inline: auto;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }

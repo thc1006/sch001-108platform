@@ -39,3 +39,38 @@ for (const width of [1024, 1280]) {
         expect(m.lastRight, `「${m.text}」被切掉`).toBeLessThanOrEqual(m.stripRight + 0.5);
     });
 }
+
+// 學群主題頁的 Markdown 表格：比內文欄窄的置中，比內文欄寬的在表格內捲動。
+const tableLayout = (page, path) =>
+    page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/${path}`).then(() =>
+        page.evaluate(() => {
+            const col = document.querySelector('.md-content').getBoundingClientRect();
+            return [...document.querySelectorAll('.md-content table')].map((table) => {
+                const rows = [...table.rows].map((row) => row.getBoundingClientRect());
+                return {
+                    left: Math.min(...rows.map((r) => r.left)) - col.left,
+                    right: col.right - Math.max(...rows.map((r) => r.right)),
+                    boxRight: table.getBoundingClientRect().right - col.right,
+                    scrolls: table.scrollWidth > table.clientWidth,
+                    pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                };
+            });
+        }),
+    );
+
+for (const width of [768, 1280]) {
+    test(`${width}px：比內文欄窄的表格左右留白相等`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        const [t] = await tableLayout(page, 'social-psychology/myths.html');
+        expect(t.left, '表格比內文欄窄').toBeGreaterThan(100);
+        expect(t.left).toBeCloseTo(t.right, 0);
+    });
+}
+
+test('360px：比內文欄寬的表格在表格內捲動，不撐寬頁面', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    const t = (await tableLayout(page, 'info/overview.html'))[1];
+    expect(t.scrolls).toBe(true);
+    expect(t.boxRight).toBeLessThanOrEqual(0.5);
+    expect(t.pageOverflow).toBeLessThanOrEqual(0);
+});
