@@ -23,7 +23,7 @@
     {
       "title": "freeCodeCamp — 互動式網頁開發學習",
       "provider": "freeCodeCamp",
-      "platform": "g0v / 開源社群",
+      "platform": "freeCodeCamp",
       "category": "公民科技與開源",
       "difficulty": "入門",
       "language": "英文",
@@ -35,7 +35,7 @@
         "JavaScript",
         "開源"
       ],
-      "description": "全球最大的開源學習平台，透過互動式挑戰從零學習網頁開發。完成課程後可獲得免費證書，是開源社群精神的最佳體現。",
+      "description": "freeCodeCamp 是美國的非營利組織，網站程式碼在 GitHub 以 BSD-3-Clause 授權開源。透過瀏覽器裡的互動練習與專案從零學習網頁開發，課程與證書都免費。",
       "url": "https://www.freecodecamp.org/",
       "thumbnail_url": "img/courses/freecodecamp.png"
     },
