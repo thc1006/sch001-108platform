@@ -59,9 +59,15 @@
 
 [關於我們](https://thc1006.github.io/sch001-108platform/about.html)寫了專案的由來，[網站地圖](https://thc1006.github.io/sch001-108platform/sitemap.html)列出所有頁面。
 
-## 參與
+## 如何貢獻
 
-使用上的問題和建議，請到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 回報。想參與開發，見 [CONTRIBUTING.md](CONTRIBUTING.md)。
+這是一個開源專案，歡迎任何形式的貢獻：
+
+* **學生** — 分享你的學習經驗，或對網站功能提出建議。
+* **開發者 / 設計師** — 透過 GitHub 提交 Pull Request 或 Issue。
+* **教育工作者** — 與我們交流，提供更多元的觀點。
+
+請先到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 看看有沒有可以協助的地方。提交程式碼前，建議先在本機執行 `npm run build` 確認站台可正常建置。程式碼註解的寫法見 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 特別感謝
 
