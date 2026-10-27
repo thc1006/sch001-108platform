@@ -253,6 +253,9 @@ jobs:
       - name: Run per-entry verified-data regression tests
         run: npm run test:competitions-data
 
+      - name: Check online-course platform filter options against the data
+        run: npm run test:online-courses-data
+
       - name: Check activity-database fields and status badges
         run: npm run test:activity-database
 
