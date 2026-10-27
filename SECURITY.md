@@ -105,7 +105,8 @@ private／link-local／metadata 位址、每一跳 redirect 都重新驗證、�
 
 網站的 AI 功能都走自架的閘道（`ai-gateway/`）。它跑在實驗室主機的 k3s 上，
 經 Tailscale Funnel 對外公開 `POST /v1/tasks/<任務>`，手上有 WinLab 的 API key，背後是有限的
-GPU。架構、限流與部署方式見 `ai-gateway/README.md`。
+GPU。架構與部署方式見 `ai-gateway/README.md`；限流與排隊見 `ai-gateway/src/limits.mjs`，各項上限的
+設定見 `ai-gateway/src/config.mjs`，請求的資源上限見 `ai-gateway/src/server.mjs`。
 
 下面這些屬於漏洞，請用上面的私密管道回報：key 外洩或推得出來；繞過限流或排隊，長時間佔住
 GPU；讓任務做指令以外的事（prompt injection），或讓它對任意 prompt 回答；讓閘道當掉，例如
@@ -113,7 +114,8 @@ GPU；讓任務做指令以外的事（prompt injection），或讓它對任意 
 
 已知的取捨，不算漏洞：限流依來源 IP 計算，擋不住握有很多 IP 的人，同一間學校的學生也共用
 一份額度。閘道閒著時，一個來源可以拿走全部名額，每個最長佔到任務的時限；任務的時限比排隊
-上限（`QUEUE_TIMEOUT_MS`）長時，其他人會排到逾時。主機上的任何程序與 hostNetwork 的 pod 都能
+上限（`QUEUE_TIMEOUT_MS`）長時，其他人會排到逾時。同時在收 body 的請求有上限，約 50 個來源一直
+慢慢上傳，就能讓新任務都拿到 503。主機上的任何程序與 hostNetwork 的 pod 都能
 偽造 `X-Forwarded-For`，閘道分不出它們和 Funnel（見 `ai-gateway/README.md` 的「部署」）。
 
 學生在改走閘道的 AI 功能裡輸入的文字，會經閘道送到 WinLab 的模型服務產生回答。閘道不儲存
