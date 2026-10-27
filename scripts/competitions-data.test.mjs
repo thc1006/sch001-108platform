@@ -703,13 +703,17 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.equal(ari.deadline, '');
     assert.ok(ari.registrationNote?.includes('TBD'));
 
-    // 官網時程寫報名到 2027-03-11 23:59 UTC，但報名平台逐字「Registration is currently closed」、
+    // 官網時程寫報名到 2027-03-11 23:59 UTC，但報名平台 my.technovation.org 逐字「Registration closed」、
     // Get Involved 頁逐字「Student registration is closed」。填了截止日卡片就會顯示「報名中」，
     // 所以截止日留空，用 registrationNote 說明。
     const techno = find('Technovation');
     assert.equal(techno.deadline, '');
     assert.equal(techno.deadlineAt, undefined);
     assert.ok(techno.registrationNote?.includes('2027-03-11'));
+    // 舊平台 my.technovationchallenge.org 已改成轉介頁，描述不能再寫舊平台的狀態
+    assert.ok(techno.description.includes('報名平台已搬到 my.technovation.org'));
+    assert.ok(!techno.description.includes('仍沿用 Technovation Girls'));
+    assert.ok(!techno.description.includes('Registration is currently closed'));
 
     // Purple Comet 全站查無報名截止日，只有 2027-04-06 至 04-15 的競賽視窗
     const purple = find('Purple Comet');
