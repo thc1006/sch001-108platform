@@ -18,6 +18,7 @@ import {
     resolveInternalPath,
     collectAnchors,
     collectTextNodes,
+    strayBoldMarkers,
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
@@ -149,6 +150,24 @@ test('文字節點不含 script、style、template 裡的內容', () => {
             '<template><p>https://t.org/</p></template><p>看得到的字</p>',
     );
     assert.deepEqual(collectTextNodes($), ['看得到的字']);
+});
+
+test('沒轉成粗體的 ** 回傳上下文，code、pre、script 裡的不算', () => {
+    const $ = cheerio.load(
+        '<ul><li>**模擬聯合國（MUN）**已是 108 課綱後的「社團首選」之一</li><li><strong>粗體</strong>（括號）</li></ul>' +
+            '<p>用 <code>**kwargs</code> 傳參數</p><pre>**raw**</pre><script>a ** 2</script>',
+    );
+    assert.deepEqual(strayBoldMarkers($), ['**模擬聯合國（MUN）**已是 108 課綱後的「社團首選」之一']);
+});
+
+test('一頁兩處沒轉成粗體的 ** 都要回報', () => {
+    const $ = cheerio.load('<p>**甲（乙）**丙</p><p>正常</p><p>**丁(戊)**己</p>');
+    assert.deepEqual(strayBoldMarkers($), ['**甲（乙）**丙', '**丁(戊)**己']);
+});
+
+test('上下文從第一個 ** 前 20 個字元到最後一個 ** 後 20 個字元，空白併成一格', () => {
+    const $ = cheerio.load(`<p>${'前'.repeat(30)}\n**甲**\n${'後'.repeat(30)}</p>`);
+    assert.deepEqual(strayBoldMarkers($), [`${'前'.repeat(19)} **甲** ${'後'.repeat(19)}`]);
 });
 
 test('javascript: 與 vbscript: 一律視為錯誤', () => {

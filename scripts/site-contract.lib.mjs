@@ -166,19 +166,34 @@ export function collectAnchors($) {
 }
 
 /**
- * 逐個列出文字節點（實體已解碼），不含 script、style、template 裡的內容。整段 text() 會把相鄰的區塊
- * 接成一串，網址就連上下一段的字。
+ * 逐個列出文字節點（實體已解碼），不含 script、style、template 和 skip 列出的元素裡的內容。整段 text()
+ * 會把相鄰的區塊接成一串，網址就連上下一段的字。
  */
-export function collectTextNodes($) {
+export function collectTextNodes($, skip = []) {
     const texts = [];
+    const skipped = new Set(['script', 'style', 'template', ...skip]);
     // template 的內容在另一個 fragment 底下，選擇器排除不掉，所以自己走樹
     const walk = (node) => {
         if (node.type === 'text') return texts.push(node.data);
-        if (['script', 'style', 'template'].includes(node.name)) return;
+        if (skipped.has(node.name)) return;
         for (const child of node.children ?? []) walk(child);
     };
     walk($.root().get(0));
     return texts;
+}
+
+/**
+ * 頁面文字裡沒有轉成粗體的 **，每個文字節點回傳一段含記號的上下文。code、pre 裡的不算。
+ * CommonMark 的 ** 前面是標點時，後面要是空白或標點才能結束粗體，「**模擬聯合國（MUN）**已是」
+ * 會原樣輸出。
+ */
+export function strayBoldMarkers($) {
+    return collectTextNodes($, ['code', 'pre'])
+        .filter((text) => text.includes('**'))
+        .map((text) => {
+            const start = Math.max(0, text.indexOf('**') - 20);
+            return text.slice(start, text.lastIndexOf('**') + 22).replace(/\s+/g, ' ').trim();
+        });
 }
 
 /** srcset="a.png 1x, b.png 2x" → ['a.png','b.png'] */

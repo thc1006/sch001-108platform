@@ -13,6 +13,7 @@
  *   5. search-index.json 產生的 url 與 anchor
  *   6. 每頁自我一致性：canonical 指向自己、恰好一個 main#main-content、id 不重複
  *   7. 競賽頁的 meta description 寫的筆數和 competitions.json 相同
+ *   8. 頁面文字沒有原樣露出 Markdown 的 **
  *
  * 外部網址只輸出 inventory，不在此處連線：外部站台的可用性屬於非確定性，
  * 不該讓無關的 PR 因為某間大學今天連不上而變紅。
@@ -31,6 +32,7 @@ import {
     resolveInternalPath,
     collectAnchors,
     collectTextNodes,
+    strayBoldMarkers,
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
@@ -181,6 +183,8 @@ for (const rel of htmlFiles) {
             gatewayUrls.get(value).push(rel);
         }
     }
+
+    for (const snippet of strayBoldMarkers($)) addError(rel, '內文', `Markdown 的 ** 沒有轉成粗體：${snippet}`);
 
     for (const [sel, attr] of REF_ATTRS) {
         $(sel).each((_, el) => {

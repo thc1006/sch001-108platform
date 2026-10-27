@@ -241,6 +241,18 @@ const cases = [
     file: `${DIST}/about.html`,
     mutate: (t) => t.replace('<main id="main-content"', '<main id="other"'),
   },
+  {
+    name: '內文露出沒轉成粗體的 **',
+    expect: /\*\* 沒有轉成粗體：\*\*模擬聯合國（MUN）\*\*已是/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</main>', '<ul><li>**模擬聯合國（MUN）**已是</li></ul></main>'),
+  },
+  {
+    name: 'code、pre 裡的 ** 不算',
+    expectGreen: true,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</main>', '<p><code>**kwargs</code></p><pre>a ** 2</pre></main>'),
+  },
   // 自架函式庫的 ES module import 圖（#94）。
   //
   // 下面三項把 vendor 的 ES module 進入點所 import 的檔刪掉，或讓它 import bare
