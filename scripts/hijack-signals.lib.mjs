@@ -210,7 +210,7 @@ const SHARED_SUFFIXES = ['github.io', 'githubusercontent.com', 'herokuapp.com', 
  * 其餘取兩段。估得太細時兩站被當成不同網域，結果是不跟；估得太粗的後綴只擋得住清單上的那幾個。
  * @param {string|null} h 已正規化的主機名 @returns {string|null}
  */
-function registrableDomain(h) {
+export function registrableDomain(h) {
     if (!h || /^[\d.]+$/.test(h) || h.includes(':')) return null;
     if (SHARED_SUFFIXES.some((s) => h === s || h.endsWith(`.${s}`))) return null;
     const labels = h.split('.');
