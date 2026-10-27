@@ -369,10 +369,12 @@ function requestOnce(url, addresses, signal, wantBody = 0) {
                     signal,
                     // 這一行就是 DNS 釘選：把已驗證的位址原封不動交給 net.connect，
                     // 不再查一次 DNS，因此不存在「驗完到連線之間被換掉」的窗口。
-                    lookup: (_hostname, lookupOpts, cb) => {
+                    // 跟 dns.lookup 一樣非同步回呼。同步回呼時，每個位址都當下連不上會讓 https.request 丟出
+                    // TypeError，socket 的 error 沒人接，整支程式崩潰（nodejs/node#65624，Node 26.11 修正）。
+                    lookup: (_hostname, lookupOpts, cb) => setImmediate(() => {
                         if (lookupOpts && lookupOpts.all) return cb(null, addresses);
                         cb(null, addresses[0].address, addresses[0].family);
-                    },
+                    }),
                     headers: {
                         Host: url.host,
                         'User-Agent': UA,

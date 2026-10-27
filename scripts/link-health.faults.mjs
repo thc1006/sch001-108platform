@@ -425,6 +425,10 @@ const guardMutations = [
         apply: (s) => s.replace('if (url.username || url.password) {', 'if (false) {'),
     },
     {
+        name: '釘選位址的 lookup 改回同步回呼（每個位址都同步連線失敗時，https 的 socket error 沒人接）',
+        apply: (s) => s.replace('lookup: (_hostname, lookupOpts, cb) => setImmediate(() => {', 'lookup: (_hostname, lookupOpts, cb) => ((f) => f())(() => {'),
+    },
+    {
         name: '讀 body 不再標截斷（只讀到前綴的頁面會被當成很小的殼）',
         apply: (s) => s.replace('bodyTruncated: !complete || read > wantBody,', 'bodyTruncated: false,'),
     },
