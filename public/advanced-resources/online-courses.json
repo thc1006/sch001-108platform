@@ -1,6 +1,6 @@
 {
   "_readme": "線上課程資料來源檔。online-courses.html 會在載入時 fetch() 此檔並渲染。新增或修改課程請直接編輯下方 courses 陣列，不需要動 HTML。欄位：title / provider / platform / category / difficulty / language（中文 或 英文）/ certificate（true 或 false）/ tags（字串陣列）/ description / url / thumbnail_url。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-10-27",
   "courses": [
     {
       "title": "李宏毅 — 生成式 AI 與機器學習",
@@ -178,20 +178,20 @@
       "thumbnail_url": "img/courses/google-data-analytics.jpeg"
     },
     {
-      "title": "經濟學原理",
-      "provider": "國立清華大學",
+      "title": "可汗學院經濟學：個體與總體",
+      "provider": "可汗學院",
       "platform": "Khan Academy",
       "category": "商業管理",
       "difficulty": "入門",
-      "language": "中文",
+      "language": "英文",
       "certificate": false,
       "tags": [
         "經濟學",
         "個體經濟",
         "總體經濟"
       ],
-      "description": "清大與可汗學院合作，提供完整的經濟學原理課程，幫助你建立分析社會經濟現象的基礎框架。",
-      "url": "https://www.khanacademy.org/science/economics",
+      "description": "可汗學院經濟學的總覽頁，包括個體經濟學、總體經濟學（各有 AP 版）、金融與資本市場、個人理財等課程。個體經濟學 9 個單元，講供需、彈性、消費者理論、市場結構與市場失靈；總體經濟學 8 個單元，講經濟指標與景氣循環、國民所得、金融部門與開放經濟。",
+      "url": "https://www.khanacademy.org/economics-finance-domain",
       "thumbnail_url": "img/courses/khan-economics.png"
     }
   ]
