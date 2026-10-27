@@ -1,6 +1,6 @@
 {
   "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，以台灣時間計算，當天結束才算截止，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆，截止後區塊會收起來；url=官方網站連結，用 https；sourceCheckedAt=最後一次開官網逐項查證這一筆的日期，用 YYYY-MM-DD，每一筆都要填，重查之後改成當天的日期；recheckOn=預定回來查證的日期，用 YYYY-MM-DD，選填，填法見下；recheckNote=recheckOn 的依據。deadline 的填法：本屆還能報名的，填本屆的截止日。同一屆有好幾個報名管道的，填一般報名管道的截止日，其他管道的期限寫進 description。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。recheckOn 的填法：官網寫了時間或有上一屆的日期可參考才填，填要回來看的日子，不是猜的活動日期，依據寫進 recheckNote；要晚於 sourceCheckedAt，不能晚於它一年後。重查時下一屆還沒公告，照上一屆的日期設近一點的 recheckOn；已經公告、還沒開放報名，照 deadline 的填法先不填截止日，只設 recheckOn；填上下一屆的截止日後才拿掉這兩個欄位。沒有截止日的活動，查到下一屆的日期後照它設下一個 recheckOn。所有純文字欄位在頁面上都會先經過 escapeHtml。",
-  "lastUpdated": "2026-10-24",
+  "lastUpdated": "2026-10-27",
   "activities": [
     {
       "title": "TRML 台灣區高中數學競賽",
@@ -87,6 +87,18 @@
       "featured": false,
       "sourceCheckedAt": "2026-10-24",
       "url": "https://www.tcapo.gov.taipei/cp.aspx?n=64E92A82C8BB7529"
+    },
+    {
+      "title": "AI 開源新勢力行動方案（TAIONE Fellowship Program）",
+      "organizer": "財團法人開源基金會",
+      "category": "培育計畫",
+      "form": "個人",
+      "description": "參與開源專案的計畫，填報名表、加入 vLLM 等 11 個專案的社群即可，不必有開源經驗。Fellow 經提名審核，限中華民國國籍、30 歲以下（含）、具備基礎程式能力（不限語言），每月獎勵金 20,000 元，當月貢獻具體且顯著，經評估可加發 10,000 元，每三個月評估續任；不符資格者仍可參與社群，未滿 18 歲能否成為 Fellow，官方資料沒有寫。",
+      "deadline": null,
+      "rolling": true,
+      "featured": false,
+      "sourceCheckedAt": "2026-10-27",
+      "url": "https://taione.org/fellowship/about"
     }
   ]
 }
