@@ -1,233 +1,78 @@
 # 台灣教育處方籤
 
-> 高中生 108 課綱教育資源整合平台 — Taiwan K-12 Education Resource Integration Platform
-
 [![專案狀態: 持續開發中](https://img.shields.io/badge/status-in%20progress-brightgreen.svg)](https://thc1006.github.io/sch001-108platform/)
 [![授權: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![g0v jothon](https://img.shields.io/badge/g0v-jothon-blue.svg)](https://g0v.hackmd.io/@jothon/SyZRnFqQj)
 
 > 「沒有歹小孩，只有歹命小孩。」
 
----
+台灣教育處方籤是給高中生的 108 課綱學習資源網站。自主學習、學習歷程檔案、大學學群、競賽和線上課程的資料原本散在各處，這裡把它們整理在一起，讓偏鄉和資源較少的學生也找得到。
 
-## 專案簡介
+專案從 g0v 零時小學校的提案開始，是零時小學校 2021 年度的獲獎團隊之一。
 
-**台灣教育處方籤** 是一個專為台灣高中生打造的 **108 課綱教育資源整合平台**。我們相信學生的潛力不應被出身或地區所限制，因此將原本散落各處、卻乏人問津的學術與升學資源加以梳理、整合，協助偏鄉與資源弱勢的高中生在自主學習、學習歷程與生涯探索上少走冤枉路。
+* 網站：<https://thc1006.github.io/sch001-108platform/>
+* g0v 提案頁：[零時小學校 2021 年度獲獎團隊（Internet Archive 2026-03-28 存檔）](https://web.archive.org/web/20260328115517/https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
+* 介紹影片：[YouTube](https://youtu.be/BxKFVSTmiYI)
 
-本平台由 g0v 零時小學校提案社群發起，是一個 **開源、靜態、可長期維護** 的公共資源網站。
+標有 AI 的功能會把你輸入的文字送到另外部署的 [AI 閘道](ai-gateway/README.md)，由自架的語言模型回答。
 
-* **專案網站**：<https://thc1006.github.io/sch001-108platform/>
-* **g0v 提案連結**：[零時小學校 2021 年度獲獎團隊（Internet Archive 2026-03-28 存檔）](https://web.archive.org/web/20260328115517/https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
-* **專案介紹影片**：[YouTube](https://youtu.be/BxKFVSTmiYI)
-* **原始碼**：[GitHub Repository](https://github.com/thc1006/sch001-108platform)
+## 網站內容
 
----
+[網站首頁](https://thc1006.github.io/sch001-108platform/)有全站搜尋，查得到各頁的內容和資料頁裡的每一筆項目。
 
-## 技術棧
+### [自主學習](https://thc1006.github.io/sch001-108platform/autonomous-learning/)
 
-| 類別 | 採用技術 |
-| --- | --- |
-| 靜態網站框架 | [Astro 6](https://astro.build/) |
-| 樣式 | [Tailwind CSS v4](https://tailwindcss.com/)（透過 PostCSS 套用） |
-| 內容管理 | Astro Content Collections（十大學群內容以 Markdown 撰寫） |
-| 資料驅動頁 | `public/**/*.json` 資料檔 + 建置後處理腳本 |
-| 站內搜尋 | Fuse.js + 建置時產生的 `search-index.json` |
-| 部署 | GitHub Pages（GitHub Actions 自動建置與部署） |
+自主學習區首頁的 AI 自主學習教練依你的初步想法，給一份學習啟動包。
 
-設計重點：
+* [主題靈感產生器](https://thc1006.github.io/sch001-108platform/autonomous-learning/topic-ideas.html)：從學科和研究方法的組合、全球趨勢議題與社會議題範例找研究主題，也可以讓 AI 依興趣關鍵字發想。
+* [計畫範本庫](https://thc1006.github.io/sch001-108platform/autonomous-learning/plan-templates.html)：自主學習計畫的範本。輸入主題，AI 會草擬一份 8 週的計畫。
+* [學習資源地圖](https://thc1006.github.io/sch001-108platform/autonomous-learning/resource-map.html)：線上學習資源的清單。輸入學習主題，AI 會排出學習步驟。
+* [研究方法工具箱](https://thc1006.github.io/sch001-108platform/autonomous-learning/methodology.html)：文獻探討、問卷調查、訪談、個案研究、內容分析和創作實踐六種方法的做法。
 
-* 網站本身是 **靜態輸出**，部署成本低、易於長期維運；逐步改走自架 LLM 的 AI 功能由另外部署的 `ai-gateway/` 服務處理（見 `ai-gateway/README.md`）。
-* `astro.config.mjs` 設定 `build.format: 'preserve'`，輸出的目錄結構與 `src/pages/` 一對一對應，完整保留既有網址、書籤與 SEO。
-* 部署於 GitHub Pages 專案頁，網址含 `/sch001-108platform` 前綴（`base` 設定）。
-* `sitemap.xml` 由 `@astrojs/sitemap` 於建置時自動產生（`dist/sitemap-index.xml`、`dist/sitemap-0.xml`），無需手動維護。
+### [學習歷程](https://thc1006.github.io/sch001-108platform/learning-portfolio/)
 
----
+學習歷程區首頁的 AI 學習歷程健檢依 STAR（情境、任務、行動、結果）檢查你寫的心得。
 
-## 本機開發與建置
+* [優質範例藝廊](https://thc1006.github.io/sch001-108platform/learning-portfolio/portfolio-gallery.html)：學習歷程檔案的範例與分析。
+* [反思引導提問集](https://thc1006.github.io/sch001-108platform/learning-portfolio/reflection-guide.html)：STAR 敘事法的說明和情境式提問，頁面上也有 AI 學習歷程健檢。
+* [多元表現資料庫](https://thc1006.github.io/sch001-108platform/learning-portfolio/activity-database.html)：課堂外可以參加的競賽、社會服務、研討會等活動，每一筆附報名狀態和官方連結。
+* [線上製作工具箱](https://thc1006.github.io/sch001-108platform/learning-portfolio/tools.html)：簡報排版、心智圖、數據視覺化、筆記寫作、影音剪輯和團隊協作的線上工具。
 
-### 環境需求
+### [生涯探索](https://thc1006.github.io/sch001-108platform/career-exploration/)
 
-* Node.js 24（見 `.node-version`）
-* npm
+生涯探索區首頁的 AI 學涯導師回答升學和生涯的問題。每次只看當下這一題，不會參考先前的對話。
 
-### 安裝與啟動
+* [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政十個學群。每個學群分六個主題：科系風向標、教授看重的特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
+* [學長姐真心話](https://thc1006.github.io/sch001-108platform/career-exploration/senior-interviews.html)：學長姐的升學經驗。人物都用化名，內容綜合升學制度、公開數據和經驗分享寫成。
+* [核心素養對照表](https://thc1006.github.io/sch001-108platform/career-exploration/competency-map.html)：108 課綱三面九項素養的說明，可以依學群篩選。貼上活動經驗，AI 會找出其中對應的素養。
 
-```bash
-# 安裝相依套件
-npm install
+### [進階資源](https://thc1006.github.io/sch001-108platform/advanced-resources/)
 
-# 啟動本機開發伺服器（預設 http://localhost:4321）
-npm run dev
+* [線上課程精選](https://thc1006.github.io/sch001-108platform/advanced-resources/online-courses.html)：Coursera、edX、Khan Academy、freeCodeCamp 等平台上適合高中生的課程。
+* [開放教育資源](https://thc1006.github.io/sch001-108platform/advanced-resources/open-education.html)：AI 實驗室、開放科學、開放課程和國際科學社群的免費資源。
+* [國內外競賽資訊](https://thc1006.github.io/sch001-108platform/advanced-resources/competitions.html)：高中生可以參加的競賽，標出開放報名和即將截止的項目，可以依領域、地區、級別、形式篩選。
+* [主題書單推薦](https://thc1006.github.io/sch001-108platform/advanced-resources/reading-list.html)：十二個主題的書單，附推薦理由。
 
-# 建置正式版靜態檔（輸出到 dist/）
-npm run build
-```
+### [公民科技](https://thc1006.github.io/sch001-108platform/civic-tech-map/)
 
-### 搜尋索引
+台灣公民科技專案和 108 課綱核心素養、SDGs 的對照，專案多數來自 g0v 社群。頁面也整理了 g0v Summit、g0v 雙月大松、零時小學校和 SITCON 的參與方式。寫下你的興趣或關心的議題，AI 會推薦可以投入的專案。
 
-站內搜尋使用的 `search-index.json` 是 **建置後製產物**，並非由 Astro 直接產生。建置流程如下：
+[關於我們](https://thc1006.github.io/sch001-108platform/about.html)寫了專案的由來，[網站地圖](https://thc1006.github.io/sch001-108platform/sitemap.html)列出所有頁面。
 
-```bash
-# 1. 先建置，產出 dist/
-npx astro build
+## 參與
 
-# 2. 掃描 dist/ 內所有 HTML 與資料 JSON，重建搜尋索引
-node build-search-index.js
-```
-
-`build-search-index.js` 會掃描 `dist/` 下的所有頁面，擷取標題、描述、關鍵字與內文，並讀取資料驅動頁對應的 JSON（競賽、線上課程、學長姐訪談等），輸出 `dist/search-index.json` 隨網站一起部署。
-
-#### 素養與 SDGs 分類標籤
-
-來源 JSON 上的 `competencies`（108 課綱核心素養代碼 A1–C3）、`sdgs`（1–17 整數）與 `tags`（議題關鍵字，如「環保」「假訊息」）三個**選填**欄位，會被展開成搜尋索引的三個欄位：
-
-| 索引欄位 | 內容 | 使用者打什麼會命中 |
-| --- | --- | --- |
-| `competencies` | `["A2", "C1"]` | `A2` |
-| `sdgs` | `["SDG11", "SDG15"]` | `SDG`、`SDG11` |
-| `taxonomy` | `["A2 系統思考與解決問題", "自主行動", "SDG 11 永續城鄉", …]` | `系統思考`、`永續城鄉`、`社會參與` |
-
-代碼與中文標籤的唯一來源是 `scripts/taxonomy.json`（`build-search-index.js` 是 CommonJS、`scripts/*.mjs` 是 ESM，共用設定只能走 JSON）。這些欄位**選填，但填了就必須合法**：非法代碼會讓建置直接失敗，而不是靜默略過——被丟掉的標籤只會表現成「搜尋找不到」，那種症狀不會有人回報。
-
-同理，資料頁若用 `anchorField` 指定逐項錨點（見 `scripts/data-pages.json`），該錨點必須真的存在於建置後的頁面，否則建置失敗。指向不存在的錨點不會讓連結壞掉，只會讓「跳到該項目」這個承諾靜默失效。
-
-> GitHub Actions（`.github/workflows/ci.yml`）已自動串接「`astro build` → `build-search-index.js` → 站台契約檢查 → 上傳 Pages artifact → 瀏覽器測試 → 部署」，推送到 `main` 後即自動部署，毋需手動操作。
->
-> 檢查與部署放在同一個 workflow，部署的是通過檢查的那一份 artifact，不另外建置。`Site and Browser Integrity` 建置並上傳 artifact 後，再下載同一份跑瀏覽器測試；`deploy` job 等 `CI Required` 通過才部署這一份。瀏覽器測試失敗時，run 裡仍留著這份 artifact，但不會部署。需要手動重新部署時，在 Actions 頁對 `CI` 執行 workflow_dispatch。
->
-> AI 功能呼叫的本地 LLM 閘道（`ai-gateway/`）網址不寫進 repo，而是由 repository variable `AI_GATEWAY_URL`（Settings → Secrets and variables → Actions → Variables）在建置時寫進每頁的 `<meta name="ai-gateway-url">`；本機建置時用環境變數 `PUBLIC_AI_GATEWAY_URL`。沒有設定時，改走閘道的 AI 功能會顯示「尚未設定」。網址必須是 https，而且不能指向本機或內部網路（前端為了本機開發接受的 `http://localhost` 也會被擋）；站台契約檢查會擋下不合格、只出現在部分頁面、或與建置時的設定不一致的值。改了 variable 之後要照上一段的方式手動重新部署才會生效；這時 commit 沒變，部署驗證改比 `build-info.json` 的 run 編號與閘道網址，等到這次建的那一份上線才算數；同一個 commit 較新的 run 建的那一份先上線，也算數。Re-run failed jobs 只重跑失敗的 job，`Site and Browser Integrity` 原本成功的話，部署的仍是它當時建好的那一份，網址不會更新。不要把網址寫進 `.env.production` 之類的檔案：建置會讀它，但它不該進 repo（已列入 `.gitignore`）。
-
----
-
-## 專案結構
-
-```
-.
-├── astro.config.mjs          # Astro 設定（base、sitemap serialize 規則）
-├── build-search-index.js     # 建置後製：掃描 dist/ 產生搜尋索引
-├── postcss.config.mjs        # Tailwind v4 透過 PostCSS 套用
-├── public/                   # 靜態資產，原樣複製到 dist/
-│   ├── picture/              # 圖片
-│   ├── shared/               # 共用前端資源
-│   ├── robots.txt
-│   └── **/*.json             # 資料驅動頁的資料檔
-├── scripts/
-│   ├── check-competitions.mjs  # 競賽與多元表現活動資料看門狗（截止日／欄位／查證日期）
-│   ├── check-civic-tech.mjs    # 公民科技專案資料看門狗
-│   ├── data-pages.json         # 資料頁 → 來源 JSON 的單一設定來源
-│   ├── taxonomy.json           # 素養代碼／SDGs 的代碼與中文標籤（CJS 與 ESM 共用）
-│   ├── taxonomy.lib.mjs        # 分類欄位的共用驗證
-│   └── *.faults.mjs            # 故障注入：證明各檢查真的會擋，而不是裝飾品
-├── src/
-│   ├── components/           # Header、Footer 等共用元件
-│   ├── layouts/              # BaseLayout.astro
-│   ├── pages/                # 頁面路由（與輸出網址一對一）
-│   ├── content/              # Content Collections
-│   │   └── clusters/         # 十大學群的 Markdown 內容
-│   ├── content.config.ts     # Content Collections schema
-│   ├── data/
-│   │   └── clusters.ts       # 十大學群與主題的中繼資料
-│   └── styles/               # 全域樣式
-├── tests/                    # Playwright E2E 測試
-└── .github/workflows/        # CI：部署、競賽／公民科技資料看門狗、連結檢查
-```
-
----
-
-## 主要功能區
-
-平台依高中生的需求劃分為五大功能區：
-
-### 自主學習啟航站（`autonomous-learning/`）
-
-協助學生找到並規劃自主學習主題：
-
-* **主題靈感產生器** — 透過策展與 AI 協助發想研究主題。
-* **計畫範本庫** — 自主學習計畫的優質範本。
-* **學習資源地圖** — 精選全球線上學習資源。
-* **研究方法工具箱** — 文獻探討、問卷、訪談等研究方法。
-
-### 學習歷程煉金室（`learning-portfolio/`）
-
-聚焦學習歷程檔案的製作與反思：
-
-* **優質範例藝廊** — 跨學科的學習歷程檔案範例與亮點分析。
-* **反思引導提問集** — 深化學習心得的提問框架。
-* **多元表現資料庫** — 全台營隊、競賽、志工資訊。
-* **線上製作工具箱** — 簡報、心智圖、筆記等實用工具。
-
-### 未來生涯 GPS（`career-exploration/`）
-
-協助學生探索升學方向，核心是 **十大學群探索系統**：
-
-* **十大學群升學指南** — 涵蓋工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政等十大學群。每個學群皆有 6 個固定主題：科系風向標、教授看重的特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
-* **學長姐真心話** — 各校系學長姐的真實升學經驗。
-* **核心素養對照表** — 108 課綱三面九項素養的內涵與實踐方法。
-
-### 進階資源探索區（`advanced-resources/`）
-
-為學有餘力的學生提供延伸資源：
-
-* **線上課程精選** — Coursera、edX 等頂尖線上課程。
-* **國內外競賽資訊** — 指標性競賽資訊。
-* **主題書單推薦** — 建立知識體系的經典書單。
-* **開放教育資源** — AI 實驗室、開放科學、開放課程與國際科學社群的開放資源。
-
-### 公民科技專案地圖（`civic-tech-map/`）
-
-* **專案與課綱對照表** — 將 g0v 公民科技專案對應到 108 課綱素養與聯合國 SDGs，作為自主學習與議題探究的素材。
-
-此外還有 **關於我們**（`about.astro`）與 **網站地圖**（`sitemap.astro`）等頁面。
-
----
-
-## 資料驅動頁的維護方式
-
-部分頁面的內容並未寫死在 `.astro` 檔內，而是從 `public/` 下的 JSON 資料檔載入。要新增、修改或下架這類內容，**只需編輯對應的 JSON 檔**，無需改動頁面程式碼：
-
-| 頁面 | 資料檔 |
-| --- | --- |
-| 國內外競賽資訊 | `public/advanced-resources/competitions.json` |
-| 線上課程精選 | `public/advanced-resources/online-courses.json` |
-| 開放教育資源 | `public/advanced-resources/open-education.json` |
-| 研究方法工具箱 | `public/autonomous-learning/methodology.json` |
-| 學長姐真心話 | `public/career-exploration/senior-interviews.json` |
-| 優質範例藝廊 | `public/learning-portfolio/portfolio-gallery.json` |
-| 線上製作工具箱 | `public/learning-portfolio/tools.json` |
-| 公民科技專案地圖 | `public/civic-tech-map/projects.json`（頁面內容寫在 `.astro` 內，此檔是同一份資料的結構化副本，供看門狗與搜尋索引使用，兩處需同步更新；AI 閘道的 `civic-tech-suggestion` 任務也抄了專案名稱與狀態，`npm run test:ai-gateway` 會比對） |
-
-十大學群的內容則以 Markdown 維護於 `src/content/clusters/<學群>/<主題>.md`，學群與主題的清單（slug、名稱）集中定義於 `src/data/clusters.ts`。
-
-> 修改資料檔後，記得重新執行 `astro build` 與 `build-search-index.js`，站內搜尋索引才會同步更新；推送到 `main` 後 CI 會自動處理。
-
----
-
-## 如何貢獻
-
-這是一個開源專案，歡迎任何形式的貢獻：
-
-* **學生** — 分享你的學習經驗，或對網站功能提出建議。
-* **開發者 / 設計師** — 透過 GitHub 提交 Pull Request 或 Issue。
-* **教育工作者** — 與我們交流，提供更多元的觀點。
-
-請先到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 看看有沒有可以協助的地方。提交程式碼前，建議先在本機執行 `npm run build` 確認站台可正常建置。程式碼註解的寫法見 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
----
+使用上的問題和建議，請到 [GitHub Issues](https://github.com/thc1006/sch001-108platform/issues) 回報。想參與開發，見 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 特別感謝
 
-這個專案的成長，要感謝許多人與組織的幫助：
+* g0v 零時小學校
+* 林奇葦（島島阿學），啟發我們向零時小學校提案
+* 戴賢文老師
+* 創夢客，在地的協力組織
+* 參加過工作坊和訪談、給過回饋的學生與老師
 
-* **g0v 零時小學校** — 讓我們看見只要有心，全世界都會來幫你。
-* **林奇葦（「島島阿學」專案）** — 啟發我們向零時小學校提案的前輩。
-* **戴賢文老師** — 看見創辦人長才的伯樂。
-* **創夢客** — 在地的協力組織。
-* 以及所有參與過工作坊、訪談並給予回饋的學生與老師們。
+## 授權
 
----
-
-## 授權方式
-
-本專案採用 [MIT License](LICENSE) 授權。
+[MIT License](LICENSE)
 
 聯絡信箱：`hctsai@linux.com`
