@@ -296,6 +296,12 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
 2. 建映像檔並換版：`ai-gateway/deploy/k3s/build-image.sh`。用到的檔案與 manifest 都要先 commit；
    腳本會把 `app.yaml` 的 image 換成這次的 tag 再套用。腳本不會 commit，換版成功後自己把那一行
    commit，否則下一次執行會因為 manifest 有沒 commit 的改動而停下。
+   換版成功後，腳本印一行「換版成功」，再刪掉 k3s 與 buildah 裡其他版本的映像檔，只留這次的、
+   Deployment 各 ReplicaSet 用的，以及 `sch001-ai` 裡還有 pod 在用的；這一步失敗時腳本以非 0 結束，
+   但新版已經上線。腳本在換版前停下或清到一半失敗時，舊版可能以 `<none>` 留著，用
+   `sudo k3s crictl images` 與 `buildah images` 找出來手動刪。Deployment 只留一個舊的 ReplicaSet
+   （`revisionHistoryLimit: 1`），`rollout undo` 只退得回它：`rollout restart` 之後它是 restart 前的
+   同一版；換版逾時、沒有 undo 就再換版的話，它是逾時的那一版。
    換版失敗時（`rollout status` 等了 180 秒還沒就緒，腳本就直接結束），Deployment 會停在新版的
    spec 上，要手動退回上一版：`sudo k3s kubectl -n sch001-ai rollout undo deployment/ai-gateway`，
    並用 `git checkout` 還原 `app.yaml`（腳本只改了 image 那一行）。
@@ -304,7 +310,7 @@ pod 都連得進閘道，它們送的 `X-Forwarded-For` 會被採信，能繞過
    並行（每個 pod 4 個，`LLM_CONCURRENCY`），超過 key 的 8 個上限。所以腳本在建置之前、改
    `app.yaml` 之前各跑一次 `ai-gateway/deploy/k3s/terminating-pods.sh`，有收尾中的 pod 就列出來
    並停下。第二次才停下時，映像檔已經匯入 k3s、釘選，`app.yaml` 與 Deployment 還沒動：等舊 pod
-   結束後再執行一次腳本；改了 commit 的話，下次換版成功時會放掉這個映像檔的釘選。
+   結束後再執行一次腳本；改了 commit 的話，下次換版成功時會刪掉這個映像檔。
    `rollout restart`、`rollout undo` 不經過這個檢查，執行前自己跑一次。等不了的時候（例如線上
    這版有問題要馬上換掉），用 `ALLOW_ROLLOUT_OVERLAP=1 ai-gateway/deploy/k3s/build-image.sh`
    照樣換版，代價是 WinLab 可能回 429，第一輪遇到的學生看到忙線，接續輪退避重試。

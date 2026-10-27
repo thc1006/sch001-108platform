@@ -9,7 +9,7 @@ ns=sch001-ai
 deploy=ai-gateway
 dir=ai-gateway/deploy/k3s
 
-# 同時跑兩個會互相把對方的版本解除釘選
+# 同時跑兩個會互相刪掉對方的版本
 exec 9>"$(git rev-parse --git-common-dir)/build-image-ai-gateway.lock"
 flock -n 9 || { echo "另一個 build-image.sh 還在跑" >&2; exit 1; }
 
@@ -43,19 +43,21 @@ if ! sudo k3s kubectl -n "$ns" get secret ai-gateway-env >/dev/null 2>&1; then
   exit 1
 fi
 
-tag="localhost/sch001-ai-gateway:$(git rev-parse --short=12 HEAD)"
+repo=localhost/sch001-ai-gateway
+tag="$repo:$(git rev-parse --short=12 HEAD)"
+# 同一個 commit 重建時，舊的那份會失去 tag，換版成功後一起刪
+old_id=$(buildah images --format '{{.ID}} {{.Name}}:{{.Tag}}' | awk -v t="$tag" '$2 == t { print $1 }')
 buildah build --pull=missing -f "$dir/Containerfile" --ignorefile "$dir/.containerignore" -t "$tag" .
 
 # buildah 跟 k3s 各有自己的映像檔倉庫：先匯出成檔案，再匯入 k3s 的 containerd
 archive=$(mktemp)
 trap 'rm -f "$archive"' EXIT
 buildah push "$tag" "docker-archive:$archive:$tag"
+# 同樣地，重新匯入時舊的那份只剩 sha256 參照
+old_digest=$(sudo k3s ctr images ls "name==$tag" | awk 'NR > 1 { print $3 }')
 sudo k3s ctr images import "$archive"
 # 釘選，免得磁碟吃緊時被 kubelet 清掉（Never 拉不回來）
 sudo k3s ctr images label "$tag" io.cri-containerd.pinned=pinned
-
-# 換版前在跑的那版也留著釘選，rollout undo 才退得回去
-running=$(sudo k3s kubectl -n "$ns" get "deployment/$deploy" -o 'jsonpath={.spec.template.spec.containers[0].image}' 2>/dev/null || true)
 
 # 建置期間才開始收尾的也要擋。擋下時映像檔已匯入、釘選，app.yaml 與 Deployment 還沒動
 "$dir/terminating-pods.sh"
@@ -66,9 +68,39 @@ sed -i "s#image: localhost/sch001-ai-gateway:[0-9a-f]*\$#image: $tag#" "$dir/app
 grep -qx " *image: $tag" "$dir/app.yaml" || { echo "app.yaml 的 image 沒換成 $tag，沒有套用" >&2; exit 1; }
 sudo k3s kubectl apply -f "$dir/app.yaml"
 sudo k3s kubectl -n "$ns" rollout status "deployment/$deploy" --timeout=180s
+echo "換版成功：$tag。接著刪掉其他版本，這之後失敗不影響已經上線的版本" >&2
 
-# 換版成功才放掉更舊版本的釘選，之後磁碟吃緊時 kubelet 就清得掉；ctr 失敗要讓腳本停下來
-images=$(sudo k3s ctr images ls -q)
-for old in $(printf '%s\n' "$images" | grep '^localhost/sch001-ai-gateway:'); do
-  [ "$old" = "$tag" ] || [ "$old" = "$running" ] || sudo k3s ctr images label "$old" io.cri-containerd.pinned=
-done
+# 只放掉釘選的話，kubelet 要到磁碟用了 85% 才清。留下這次的、各 ReplicaSet 的（rollout undo
+# 退得回去）和還有 pod 在用的。kubectl、ctr、buildah 失敗都要讓腳本停下來
+rs=$(sudo k3s kubectl -n "$ns" get rs -l app=ai-gateway -o 'jsonpath={range .items[*].spec.template.spec.containers[*]}{.image}{"\n"}{end}')
+pods=$(sudo k3s kubectl -n "$ns" get pods -o 'jsonpath={range .items[*].spec.containers[*]}{.image}{"\n"}{end}')
+keep=$(printf '%s\n' "$tag" "$rs" "$pods")
+
+# 匯入時 containerd 另外建一個以 config digest 命名的參照（sha256:…），指向同一個 manifest。
+# 只刪 tag 的話它以 <none> 留著，所以記下刪掉的與被取代的 manifest，再刪指向它們、又不是保留版本
+# 指著的 sha256 參照
+refs=$(sudo k3s ctr images ls | awk 'NR > 1 { print $1, $3 }')
+kept=" " gone=" $old_digest "
+while read -r ref digest; do
+  [[ $ref == "$repo":* ]] || continue
+  if grep -qxF "$ref" <<<"$keep"; then
+    kept+="$digest "
+  else
+    gone+="$digest "
+    sudo k3s ctr images rm "$ref"
+  fi
+done <<<"$refs"
+while read -r ref digest; do
+  if [[ $ref == sha256:* && $gone == *" $digest "* && $kept != *" $digest "* ]]; then
+    sudo k3s ctr images rm "$ref"
+  fi
+done <<<"$refs"
+
+images=$(buildah images --format '{{.ID}} {{.Name}}:{{.Tag}}')
+while read -r id name; do
+  if [[ $name == "$repo":* ]] && ! grep -qxF "$name" <<<"$keep"; then
+    buildah rmi "$name"
+  elif [[ -n $old_id && $id == "$old_id" && $name == '<none>:<none>' ]]; then
+    buildah rmi "$id"
+  fi
+done <<<"$images"
