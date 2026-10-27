@@ -203,6 +203,21 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => typeof window.PlatformAI.perFrame)).toBe('function');
         });
 
+        // 頁面上已經有 v7 時，版號沒升的話這一份會提早返回，排隊時不會出現分批送出的提醒。
+        test('v7 已經在頁面上時，這一份照樣載入，排隊時有分批送出的提醒', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 7 };
+            });
+            await gotoFixture(page);
+            const text = await page.evaluate(() => {
+                const box = document.createElement('div');
+                document.body.appendChild(box);
+                PlatformAI.mountProgress(box).update({ phase: 'queued', position: 2 });
+                return box.textContent;
+            });
+            expect(text).toContain('請分批送出');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1661,6 +1676,31 @@ test.describe('PlatformAI 共用 module', () => {
                 return { writes: records.length, text: status.textContent };
             });
             expect(r).toEqual({ writes: 1, text: 'AI 正在思考…' });
+        });
+
+        // 排隊的名次一變，status 就重唸一次；提醒放在裡面的話每次都會跟著唸
+        test('第一次排隊時在 role=status 外加一行分批送出的提醒，只加一次，finish 後移除', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                window.__progress = PlatformAI.mountProgress(box);
+            });
+            await page.clock.runFor(100);
+            const hint = page.locator('#box').getByText('同一個網路同時使用的人多時，請分批送出。');
+            await page.evaluate(() => window.__progress.update({ phase: 'accepted' }));
+            await expect(hint).toHaveCount(0);
+            for (const position of [3, 2, 1]) {
+                await page.evaluate((p) => window.__progress.update({ phase: 'queued', position: p }), position);
+            }
+            await page.evaluate(() => window.__progress.update({ phase: 'started' }));
+            await expect(hint).toHaveCount(1);
+            await expect(hint).toBeVisible();
+            await expect(page.locator('#box [role="status"]')).toHaveText('輪到你了，等待 AI 開始回應…');
+            await expect(page.locator('#box :is([aria-live], [role=status], [role=alert], [role=log], [role=timer])', { hasText: '分批' })).toHaveCount(0);
+            await page.evaluate(() => window.__progress.finish());
+            await expect(hint).toHaveCount(0);
         });
 
         test('每秒更新的計時器：finish() 立刻停；頁面自己清掉 container 時，下一秒就停', async ({ page }) => {

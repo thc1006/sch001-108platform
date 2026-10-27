@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 7;
+    var VERSION = 8;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -830,10 +830,12 @@
     // 這個 status 插入時是空的，約 100 毫秒後才填入第一句：多數螢幕閱讀器不唸插入當下就
     // 已經在裡面的內容，只唸之後的變化。
     // 每秒跳動的「已等待幾秒」用 role="timer" 加 aria-live="off"，看得到也讀得到，但不會每秒插話。
+    // 第一次排隊時在 status 外加一行分批送出的提醒，名次變動時 status 重唸也不會唸到它。
     // 用到的樣式自己注入，不依賴頁面的 CSS（Tailwind 不會掃描 public/ 底下的 JS）。
     //
     var INITIAL_PROGRESS_TEXT = '正在連線 AI 服務…';
     var RETRYING_NOW_TEXT = 'AI 服務有點忙，正在重新嘗試…';
+    var QUEUED_HINT_TEXT = '同一個網路同時使用的人多時，請分批送出。';
     var STATUS_FILL_DELAY_MS = 100;
 
     function retrySeconds(p) {
@@ -919,6 +921,7 @@
             status.textContent = pendingText;
         }, STATUS_FILL_DELAY_MS);
         var retryTimer = null;
+        var hint = null;
         function show(text) {
             if (!filled) {
                 pendingText = text;
@@ -945,6 +948,12 @@
                 if (text === null) return;
                 clearTimeout(retryTimer);
                 show(text);
+                if (progress.phase === 'queued' && !hint) {
+                    hint = document.createElement('p');
+                    hint.textContent = QUEUED_HINT_TEXT;
+                    hint.style.cssText = 'flex-basis:100%;margin:0;text-align:center;font-size:0.875em;color:#4b5563';
+                    root.appendChild(hint);
+                }
                 // 倒數到了就改口：重試送出之後，要等上游的第一個 token 才有下一個進度
                 if (progress.phase === 'retrying') {
                     retryTimer = setTimeout(function () { show(RETRYING_NOW_TEXT); }, retrySeconds(progress) * 1000);

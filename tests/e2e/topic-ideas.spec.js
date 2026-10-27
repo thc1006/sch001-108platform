@@ -230,6 +230,20 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
     });
 });
 
+test('選題靈感頁：閘道回報排隊時，進度區塊提醒分批送出，status 只唸名次', async ({ page }) => {
+    await page.goto(PAGE);
+    await stubBuiltInGateway(page);
+    await installFakeGateway(page, { chunks: [ACCEPTED, sse('progress', { phase: 'queued', position: 2 })], hang: true });
+    await page.fill('#ideaInput', '旅行');
+    await page.click('#generateIdeaBtn');
+    const workspace = page.locator('#ideaWorkspace');
+    await expect(workspace.getByRole('status')).toHaveText('排隊中，前面還有 1 位…');
+    await expect(workspace.getByText('同一個網路同時使用的人多時，請分批送出。')).toBeVisible();
+    await page.evaluate((chunk) => window.__stream.push(chunk), sse('progress', { phase: 'queued', position: 1 }));
+    await expect(workspace.getByRole('status')).toHaveText('排隊中，下一個就輪到你…');
+    await expect(workspace.getByText('請分批送出')).toHaveCount(1);
+});
+
 // 檔案回 404 或連線中斷時 PlatformAI 都不存在，頁面的處理相同。
 test.describe('選題靈感頁：共用腳本 platform-ai.js 沒載入成功', () => {
     const FAILURES = [
