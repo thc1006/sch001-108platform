@@ -31,7 +31,7 @@ export interface TopicMeta {
 // 每個學群統一的 6 個主題(對應 src/content/clusters/<slug>/<topic>.md)。
 export const TOPICS: TopicMeta[] = [
   { slug: 'overview', name: '科系風向標', short: '風向標', order: 1 },
-  { slug: 'traits', name: '教授看重的特質與能力', short: '特質與能力', order: 2 },
+  { slug: 'traits', name: '特質與能力', short: '特質與能力', order: 2 },
   { slug: 'highlights', name: '多元表現亮點策略', short: '多元表現', order: 3 },
   { slug: 'inquiry', name: '自主學習與探究專題方向', short: '自主學習', order: 4 },
   { slug: 'myths', name: '常見迷思破解', short: '迷思破解', order: 5 },

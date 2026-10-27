@@ -42,7 +42,7 @@
 
 生涯探索區首頁的 AI 學涯導師回答升學和生涯的問題。每次只看當下這一題，不會參考先前的對話。
 
-* [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政十個學群。每個學群分六個主題：科系風向標、教授看重的特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
+* [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政十個學群。每個學群分六個主題：科系風向標、特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
 * [學長姐真心話](https://thc1006.github.io/sch001-108platform/career-exploration/senior-interviews.html)：學長姐的升學經驗。人物都用化名，內容綜合升學制度、公開數據和經驗分享寫成。
 * [核心素養對照表](https://thc1006.github.io/sch001-108platform/career-exploration/competency-map.html)：108 課綱三面九項素養的說明，可以依學群篩選。貼上活動經驗，AI 會找出其中對應的素養。
 
