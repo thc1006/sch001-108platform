@@ -1144,7 +1144,7 @@ test('同一來源的佔用上限只在名額全滿時生效：GPU 有空就讓�
         assert.equal(third.status, 429);
         const body = await third.json();
         assert.equal(body.error.code, 'too_many_inflight');
-        assert.match(body.error.message, /網路（例如學校）/);
+        assert.match(body.error.message, /同一個網路（例如學校）.*分批送出/);
     } finally {
         gate.resolve();
         await gw.stop();
