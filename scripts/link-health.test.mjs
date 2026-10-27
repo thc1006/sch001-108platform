@@ -1678,7 +1678,7 @@ test('buildReport：該打的內容 API 沒有結果時算無法判定，覆蓋�
     assert.equal(out.coverageComplete, false);
     assert.equal(out.githubOutput, 'needs_attention=true\ncoverage_complete=false\n');
     assert.match(out.report, /- 內容 API 檢查 1 筆：健康 0、失效 0、無法判定 1。/);
-    assert.match(out.report, /本次有 1 筆未檢查（逾 12 \+ 3 \+ 2 分鐘預算）/);
+    assert.match(out.report, /本次有 1 筆未檢查（逾 12 \+ 3 \+ 2 \+ 3.5 分鐘預算）/);
     assert.match(out.report, /- 內容 API 這次沒有檢查：https:\/\/spa\.example\.org/);
     assert.ok(out.consoleTail.some((l) => l.includes('1 筆未檢查')));
     const noArray = buildReport(buildInput({ targets: [spaTarget], results: [{ status: 200 }], policy: spaPolicy() }));

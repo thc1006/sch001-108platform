@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 
 import { runProbes } from './link-health.lib.mjs';
 import { judgeSoft404, runSoft404, soft404Candidates, randomSibling, landing, ancestorOf, pageFacts, isHome, newToken, MIN_VISIBLE } from './soft404.lib.mjs';
+import { buildReport, judgeUrl } from './check-external-links.lib.mjs';
 
 const TOKEN = 'sch001-linkcheck-000000000000';
 const LONG = '這一頁有正常的內容。'.repeat(40);
@@ -310,4 +311,64 @@ test('pageFacts：壓縮或沒有 body 時回 null，截斷的標成不完整', 
     assert.ok(f.visible >= MIN_VISIBLE);
     const c = pageFacts({ status: 200, finalUrl: 'https://x.test/a', bodyHead: page('T', '', '<link rel="canonical" href="/a?x=1&amp;y=2">') });
     assert.equal(c.canonical, 'https://x.test/a?x=1&y=2');
+});
+
+const softItem = (verdict, rules, reason = '落點和同目錄的隨機路徑相同：https://x.test/notice/') => ({ verdict, rules, reason });
+
+test('報告：兩次都命中的軟 404 觸發通知，精確網址的例外壓得下，主機層的例外壓不下', () => {
+    const url = 'https://x.test/a/b';
+    const target = { url, occurrences: [{ file: 'a.html', location: 'a[href]' }] };
+    const input = (entries, verdict = softItem('dead', [4])) => ({
+        todayISO: '2026-10-27', limit: 0, inventoryPath: 'inv.json', inventoryTotal: 1, targets: [target], results: [{ status: 200 }], skipped: 0,
+        bareInfo: { total: 0, alreadyCoveredByUrls: 0 }, bareCandidates: [], screen: { accepted: [], rejected: [], unresolved: [] },
+        bareResults: [], bareSkipped: 0, policy: { entries, hijacked: [] }, budgetMs: 1, bareBudgetMs: 1,
+        soft404: { verdicts: [verdict], randoms: 1, randomsSkipped: 0, recheckSkipped: 0 },
+    });
+    const out = buildReport(input([]));
+    assert.equal(out.attention, true);
+    assert.match(out.report, /### 🪤 .*軟 404）1 筆/);
+    assert.ok(out.report.includes(`- **第 4 條**：${url}`));
+    assert.ok(out.report.includes('`落點和同目錄的隨機路徑相同：https://x.test/notice/`'), '原因要經過 inertText');
+    const entry = (match) => ({ match, reason: '測試：這個網址確認是誤判。', owner: 't', expires: '2026-12-01' });
+    const byUrl = buildReport(input([entry({ url })]));
+    assert.equal(byUrl.attention, false);
+    assert.match(byUrl.report, /已列入例外政策的連結 1 筆/);
+    assert.ok(byUrl.report.includes('- 軟 404 第 4 條，`'));
+    assert.equal(buildReport(input([entry({ host: 'x.test' })])).attention, true, '主機層的例外壓下了軟 404');
+    const once = buildReport(input([], softItem('unverified', [1], 'x，重打一次沒有再命中')));
+    assert.equal(once.attention, false);
+    assert.match(once.report, /無法判定 1、已列例外 0、軟 404 0/);
+    assert.match(once.report, /軟 404 只命中一次的連結 1 筆/);
+    assert.ok(!once.report.includes('全部外部連結正常'), '只命中一次的要擋掉全部正常那句');
+    const hint = buildReport(input([], softItem('hint', [6], '可見文字只有 0 字')));
+    assert.equal(hint.attention, false);
+    assert.match(hint.report, /健康 1、/);
+    assert.match(hint.report, /可能是軟 404，只列出、不通知 1 筆/);
+    assert.ok(hint.report.includes('✅ 全部外部連結正常。'));
+    assert.equal(buildReport(input([entry({ url })], softItem('unverified', [4], 'x'))).report.includes('已列入例外'), false, '例外壓下了只命中一次的');
+    const run = (over) => buildReport({ ...input([], null), soft404: { verdicts: [], randoms: 3, randomsSkipped: 0, randomsFailed: 0, recheckSkipped: 0, ...over } });
+    const skipped = run({ randomsSkipped: 1, recheckSkipped: 1 });
+    assert.equal(skipped.coverageComplete, false);
+    assert.match(skipped.report, /本次有 1 筆未檢查、軟 404 的隨機路徑 1 個沒打（逾/);
+    const recheckOnly = run({ recheckSkipped: 1 });
+    assert.equal(recheckOnly.coverageComplete, false, '只有重打沒做完也要算覆蓋不完整');
+    assert.ok(recheckOnly.consoleTail.some((l) => l.startsWith('→ 覆蓋不完整：1 筆未檢查、0 筆未篩選')), recheckOnly.consoleTail.join('\n'));
+    const randomsOnly = run({ randomsSkipped: 2 });
+    assert.match(randomsOnly.report, /### ⏱️ 檢查未完成[\s\S]*本次有軟 404 的隨機路徑 2 個沒打（逾/);
+    assert.ok(randomsOnly.consoleTail.some((l) => l.startsWith('→ 覆蓋不完整：軟 404 的隨機路徑 2 個沒打、')), randomsOnly.consoleTail.join('\n'));
+    assert.equal(run({}).coverageComplete, true);
+    const counted = run({ randomsSkipped: 1, randomsFailed: 1 });
+    assert.match(counted.report, /打了同目錄的隨機路徑 2 個（逾時、連不上或 5xx 的 1 個）/);
+    assert.ok(counted.consoleSummary.some((l) => l.includes('隨機路徑 2）')), '主控台要印實際打的數量');
+});
+
+test('報告：頁面不健康或有內容檢查時，軟 404 的判定不用', () => {
+    const t = { url: 'https://x.test/a', occurrences: [] };
+    const p = { entries: [], hijacked: [] };
+    assert.equal(judgeUrl(t, { status: 404 }, p, null, softItem('dead', [1])).bin, 'dead');
+    assert.equal(judgeUrl(t, { status: 403 }, p, null, softItem('dead', [1])).bin, 'unverified');
+    assert.equal(judgeUrl(t, { status: 200 }, p, null, softItem('dead', [1])).bin, 'soft404');
+    const contentChecks = [{ match: { host: 'x.test' }, urls: [{ url: t.url, api: 'https://x.test/api', expect: { id: 1 } }] }];
+    const api = { status: 200, bodyHead: '{"id":1}' };
+    assert.equal(judgeUrl(t, { status: 200 }, { ...p, contentChecks }, api, softItem('dead', [1])).bin, 'healthy');
 });
