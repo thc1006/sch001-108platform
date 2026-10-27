@@ -41,7 +41,7 @@ description: 資訊學群多元表現規劃指南，涵蓋 APCS 與競賽地圖�
 ## 展現社群參與
 
 - **技術部落格** — 在 Medium、HackMD 或個人網站記錄專案開發日誌、學習筆記、技術觀念釐清。持續更新的部落格是證明自主學習熱情與書面溝通能力最有力的證據。
-- **開源貢獻** — 不一定要寫核心程式碼。翻譯文件、完善過時說明、提交清晰可重現的 Bug Report，都是受社群重視的協作能力。
+- **開源貢獻** — 不一定要寫核心程式碼。翻譯文件、完善過時說明、提交清晰可重現的 Bug Report，都是受社群重視的協作能力。財團法人開源基金會的「AI 開源新勢力行動方案」，填報名表、加入 vLLM、Kubernetes 等 11 個開源專案的社群就能參加，在社群裡認領 Issue、送 PR，不必先有開源經驗。Fellow 由 Track Lead 依貢獻提名、基金會審核，限中華民國國籍、30 歲以下（含）、具備基礎程式能力（不限語言），每月獎勵金 20,000 元，每月要做約 10 分鐘的技術分享，每三個月評估是否續任；不符資格的人仍可參與社群。未滿 18 歲能否成為 Fellow，官方資料沒有寫。
 - **學生計算機年會（SITCON）** — 完全由學生自發籌辦的年度技術研討會（2026 年於 3 月 28 日在中央研究院舉行，主題「Jam the Chaos」）。從「會眾」到「志工」再到「閃電講講者」，參與層次越深，越能證明你已融入本地科技社群。議程徵稿與索票時程通常於前一年秋冬至當年初開放，建議及早關注官網。
 
 ## 多元表現地雷
@@ -63,3 +63,6 @@ description: 資訊學群多元表現規劃指南，涵蓋 APCS 與競賽地圖�
 - [政治大學資管系 — ColleGo!](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006026)
 - [陽明交通大學資工系書審指引](https://aa.nycu.edu.tw/userfiles/aach/files/20240220093038883.pdf)
 - [學生計算機年會 SITCON 官網](https://sitcon.org/)
+- [AI 開源新勢力行動方案計畫介紹，財團法人開源基金會](https://taione.org/fellowship/about)
+- [AI 開源新勢力行動方案開源專案（11 個 Track），財團法人開源基金會](https://taione.org/fellowship/tracks)
+- [TAIONE Fellowship Program 常見問題，財團法人開源基金會](https://taione.org/fellowship/faq)
