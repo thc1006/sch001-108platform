@@ -12,6 +12,7 @@
  *      相對「消費它的頁面」解析，而不是 JSON 自己的位置
  *   5. search-index.json 產生的 url 與 anchor
  *   6. 每頁自我一致性：canonical 指向自己、恰好一個 main#main-content、id 不重複
+ *   7. 競賽頁的 meta description 寫的筆數和 competitions.json 相同
  *
  * 外部網址只輸出 inventory，不在此處連線：外部站台的可用性屬於非確定性，
  * 不該讓無關的 PR 因為某間大學今天連不上而變紅。
@@ -236,6 +237,17 @@ for (const rel of htmlFiles) {
         else if (c.path !== fromUrl) addError(rel, 'canonical', `canonical 指向 ${c.path}，但本頁的部署網址是 ${fromUrl}`);
         const ogUrl = $('meta[property="og:url"]').attr('content');
         if (ogUrl && ogUrl !== canon.attr('href')) addError(rel, 'og:url', `og:url 與 canonical 不一致：${ogUrl}`);
+    }
+}
+
+// 競賽頁的描述在建置時從 competitions.json 算筆數，改回寫死的數字時這裡會擋下。
+{
+    const rel = 'advanced-resources/competitions.html';
+    const count = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8')).competitions.length;
+    const $ = cheerio.load(await readFile(path.join(DIST, rel), 'utf8'));
+    const description = $('meta[name="description"]').attr('content') ?? '';
+    if (!description.includes(`彙整 ${count} 項`)) {
+        addError(rel, 'meta[name=description]', `應寫 competitions.json 的 ${count} 筆，實際：${description}`);
     }
 }
 
