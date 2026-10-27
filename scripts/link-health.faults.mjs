@@ -13,7 +13,7 @@
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
- *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API、deadStatus 等）→ link-health.test.mjs 必須失敗
+ *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API、deadStatus、missingTitles）→ link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -280,6 +280,11 @@ const policyCases = [
         name: '內容檢查的 deadStatus 列了 5xx',
         expect: /deadStatus/,
         policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].deadStatus = [500]; return p; },
+    },
+    {
+        name: '內容檢查的 missingTitles 是空陣列（宣告了等於沒宣告，網址卻不必寫 API）',
+        expect: /missingTitles/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].missingTitles = []; return p; },
     },
     {
         name: '內容檢查過期',
@@ -1733,6 +1738,14 @@ const hostPolicyMutations = [
     {
         name: 'deadStatus 可以列 429（限流被當成頁面不存在）',
         apply: (s) => s.replace(' && n !== 408 && n !== 429;', ' && n !== 408;'),
+    },
+    {
+        name: 'missingTitles 不檢查空白（多一個空白的標題永遠比不到）',
+        apply: (s) => s.replace("typeof t === 'string' && t === normalizeTitle(t)))) {", "typeof t === 'string'))) {"),
+    },
+    {
+        name: '宣告了 missingTitles 的主機，網址照樣要逐筆寫 API',
+        apply: (s) => s.replace('if (!check || check.missingTitles || (u.pathname', 'if (!check || (u.pathname'),
     },
     {
         name: '內容檢查的網址也只要同站（頁面可以寫在子網域上）',

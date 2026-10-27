@@ -36,7 +36,7 @@ import {
 } from './link-health.lib.mjs';
 import { probe as competitionsProbe } from './check-competitions.lib.mjs';
 import { detectHijackSignals } from './hijack-signals.lib.mjs';
-import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin, matchContentCheck, contentCheckGaps } from './link-policy.lib.mjs';
+import { validatePolicy, matchPolicy, matchHijacked, matchHijackedHop, normalizeUrl, MAX_HORIZON_DAYS, expiringWithin, matchContentCheck, contentCheckGaps, normalizeTitle } from './link-policy.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, EXTERNAL_LINKS_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
 import { judgeUrl, judgeBare, needsAttention, renderReport, buildReport, expiringPolicyItems, judgeContent, contentProbeTargets, contentRetry, CONTENT_PROBE, lookup } from './check-external-links.lib.mjs';
 
@@ -1507,6 +1507,16 @@ test('contentChecks：contentCheckGaps 列出宣告的主機上沒有內容檢�
     ]);
     assert.deepEqual(gaps.map((g) => g.url), [`${SPA}/?lang=en`, `${SPA}/x`, 'https://SPA.example.org./site/new', 'http://spa.example.org/site/plain']);
     assert.equal(gaps[1].check.match.host, 'spa.example.org');
+});
+
+test('contentChecks：missingTitles 是不重複、空白正規化過的字串；宣告了的主機，網址不必逐筆寫 API', () => {
+    assert.deepEqual(contentErrors({ missingTitles: ['歡迎來到世新大學', '', 'Error'] }), []);
+    for (const missingTitles of [[], 'Error', [1], [null], ['Error', 'Error'], [' Error'], ['a  b'], ['a\nb']]) {
+        assert.ok(contentErrors({ missingTitles }).some((m) => m.includes('missingTitles')), JSON.stringify(missingTitles));
+    }
+    const { contentChecks } = validatePolicy({ version: 1, entries: [], contentChecks: [validContentCheck({ missingTitles: ['首頁'] })] }, TODAY);
+    assert.deepEqual(contentCheckGaps(contentChecks, [`${SPA}/x`, `${SPA}/?lang=en`, 'https://other.example.org/x']), []);
+    assert.equal(normalizeTitle('  a \n\t b  '), 'a b');
 });
 
 // 內容 API 的判定：頁面健康之後，用 contentChecks 寫的 API 看內容還在不在。

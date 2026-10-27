@@ -23,8 +23,8 @@
  *      完整網址，看起來也是要讀者去開的位址。要提醒讀者某個網域已經易主，只寫裸網域。
  *
  *   5. contentChecks 宣告的主機對任何路徑都回 200，狀態碼看不出網址還在不在。這些主機上除了
- *      首頁，盤點的每個網址都要在 contentChecks 寫明用哪個 API 驗內容。contentChecks 的主機與
- *      網址也要對得上盤點，對不上就是殭屍條目。
+ *      首頁，盤點的每個網址都要在 contentChecks 寫明用哪個 API 驗內容，宣告了 missingTitles 的主機除外。
+ *      contentChecks 的主機與網址也要對得上盤點，對不上就是殭屍條目。
  *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
  * 只寫在說明文字裡的裸網域（inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
@@ -127,7 +127,7 @@ for (const { url, check } of contentCheckGaps(contentChecks, urls)) {
     const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
     errors.push({
         where: [...new Set(occ.map((o) => o.file))].join('、') || '(未知出處)',
-        message: `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容。`,
+        message: `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或替這台主機宣告 missingTitles。`,
     });
 }
 
@@ -192,9 +192,10 @@ console.log(
 for (const h of hijacked) {
     console.log(`      ${h.match.host}  [${h.kind}]  → ${h.expires} 需重新查證（owner: ${h.owner}）`);
 }
-console.log(`  內容檢查：${contentChecks.length} 台主機、${contentChecks.reduce((n, c) => n + c.urls.length, 0)} 個網址（這些主機對任何路徑都回 200，網址改用 API 驗內容）`);
+console.log(`  內容檢查：${contentChecks.length} 台主機、${contentChecks.reduce((n, c) => n + c.urls.length, 0)} 個網址（這些主機對任何路徑都回 200，網址改用 API 或標題驗內容）`);
 for (const c of contentChecks) {
-    console.log(`      ${c.match.host}  ${c.urls.length} 個網址  → ${c.expires} 需重新查證（owner: ${c.owner}）`);
+    const titles = c.missingTitles ? `、不存在的頁面標題 ${c.missingTitles.length} 個` : '';
+    console.log(`      ${c.match.host}  ${c.urls.length} 個網址${titles}  → ${c.expires} 需重新查證（owner: ${c.owner}）`);
 }
 console.log(`  盤點的外部網址：${urls.length}（另有 ${bareHosts.length} 個只寫在說明文字裡的裸網域）`);
 console.log(`  錯誤：${errors.length}`);
