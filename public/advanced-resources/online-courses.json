@@ -70,7 +70,7 @@
         "AI素養",
         "吳恩達"
       ],
-      "description": "由AI大師吳恩達親授的非技術 AI 通識課，用最直觀的方式說明 AI 能做什麼、不能做什麼，以及如何在組織與生活中應用，是建立 AI 素養的最佳第一門課。",
+      "description": "吳恩達（Andrew Ng）主講的非技術 AI 通識課，4 個單元，說明 AI 能做什麼、不能做什麼，如何在組織中找到應用 AI 的機會，以及 AI 帶來的倫理與社會議題。",
       "url": "https://www.coursera.org/learn/ai-for-everyone",
       "thumbnail_url": "img/courses/ai-for-everyone.jpeg"
     },
@@ -87,7 +87,7 @@
         "程式設計",
         "資料處理"
       ],
-      "description": "全球最受歡迎的Python入門課之一，從零開始，教你用Python處理數據，為後續的學習打下堅實基礎。",
+      "description": "密西根大學 Charles Severance 主講的 5 門課系列，不需要程式基礎，用 Python 學資料結構、網路 API 與資料庫，最後做一個擷取、處理並視覺化資料的專題。",
       "url": "https://www.coursera.org/specializations/python",
       "thumbnail_url": "img/courses/python-for-everybody.jpeg"
     },
@@ -96,7 +96,7 @@
       "provider": "哈佛大學",
       "platform": "edX",
       "category": "程式基礎",
-      "difficulty": "中階",
+      "difficulty": "入門",
       "language": "英文",
       "certificate": true,
       "tags": [
@@ -104,7 +104,7 @@
         "C語言",
         "演算法"
       ],
-      "description": "哈佛大學最經典的計算機科學入門課，內容紮實，挑戰性高，能讓你對電腦的運作有更深刻的理解。",
+      "description": "哈佛大學 David J. Malan 主講的計算機科學與程式設計入門課，教演算法思維、抽象化、資料結構等概念。edX 標示約 12 週、每週 6 到 18 小時，可以自訂進度。",
       "url": "https://www.edx.org/course/introduction-computer-science-harvardx-cs50x",
       "thumbnail_url": "img/courses/cs50.png"
     },
@@ -121,7 +121,7 @@
         "幸福感",
         "正向心理學"
       ],
-      "description": "耶魯大學史上最受歡迎的課程！用科學的方法，探討如何提升自己的幸福感與建立正向習慣。",
+      "description": "耶魯大學 Laurie Santos 教授的線上課程，改編自校內的「Psychology and the Good Life」。耶魯新聞 2018 年稱那門課是耶魯史上最受歡迎的課，開課第一年近四分之一的大學部學生選修。課程用心理學研究探討如何提升自己的幸福感與建立正向習慣。",
       "url": "https://www.coursera.org/learn/the-science-of-well-being",
       "thumbnail_url": "img/courses/science-of-well-being.jpeg"
     },
@@ -146,16 +146,16 @@
       "provider": "Google",
       "platform": "Coursera",
       "category": "AI與數據科學",
-      "difficulty": "中階",
+      "difficulty": "入門",
       "language": "英文",
       "certificate": true,
       "tags": [
         "數據分析",
         "SQL",
         "Tableau",
-        "R語言"
+        "Python"
       ],
-      "description": "Google官方推出的數據分析系列課程，從零開始，帶你學習數據分析師必備的實務技能。",
+      "description": "Google 推出的數據分析系列課程，共 9 門，不需要相關經驗，學初階數據分析師工作上用到的資料清理、分析與視覺化，工具包括試算表、SQL、Python 與 Tableau。",
       "url": "https://www.coursera.org/professional-certificates/google-data-analytics",
       "thumbnail_url": "img/courses/google-data-analytics.jpeg"
     },
