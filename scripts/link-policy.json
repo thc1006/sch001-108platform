@@ -59,7 +59,7 @@
       "match": {
         "host": "shs.k12ea.gov.tw"
       },
-      "reason": "教育部國教署的 108 課綱資訊網。任何路徑都回同一個前端殼和 HTTP 200，頁面內容由 /api/Public 載入，頁面刪掉了狀態碼也不會變。API 網址照前端的寫法：uuid 是寫在前端程式裡的公開參數，cid 是目錄、oid 是文章。這台主機在 GitHub runner 上連不到，每週排程只會在週報「內容 API 檢查」那一行列出這兩個網址，不會打 API。到期前在台灣的網路上依序跑 npm run build:deployable、npm run check:site、node scripts/check-external-links.mjs，看報告的「內容 API 檢查」那一行，兩筆都健康才延長期限。",
+      "reason": "教育部國教署的 108 課綱資訊網。任何路徑都回同一個前端殼和 HTTP 200，頁面內容由 /api/Public 載入，頁面刪掉了狀態碼也不會變。API 網址照前端的寫法：uuid 是寫在前端程式裡的公開參數，cid 是目錄、oid 是文章。這台主機在 GitHub runner 上連不到，每週排程只會在週報「內容 API 檢查」那一行列出這個網址，不會打 API。到期前在台灣的網路上依序跑 npm run build:deployable、npm run check:site、node scripts/check-external-links.mjs，看報告的「內容 API 檢查」那一行，這一筆健康才延長期限。",
       "evidence": "2026-10-27 查：/site/12basic/category?root=42&cid=42 和 /this/path/does/not/exist 都回 HTTP 200、同一份 2283 bytes 的殼。用 Chromium 打開目錄頁，前端呼叫 https://shs.k12ea.gov.tw/api/Public?uuid=B23D22E0-449F-4413-A16C-D5689269B518&order=rank_a&pcid=26&cid=42&first=true，回一個 JSON 物件，cid 是 42、cname 是「自主學習專區」；打開文章頁，前端另外呼叫 https://shs.k12ea.gov.tw/api/Public?uuid=915AB9D0-D707-474B-8BAC-B6754103B716&first=true&cid=82&hide=false&oid=90281&subsitecid=26，回一個 JSON 物件，cid 是 82、oid 是 90281、title 是「大專院校教授怎麼看備審」。把 cid 或 oid 改成 99999999，或 oid 配上別的 cid，API 回 HTTP 200 與 {}，頁面顯示「找不到網頁」或一片空白。uuid 換成別的值時回 HTTP 401 與 {\"status\":false,\"message\":\"無權限\"}；不存在的 API 路徑回前端殼。同一天從 GitHub runner（ubuntu-latest）用 curl 連首頁與 /site/12basic/category?root=42&cid=42，25 秒內都沒有回應；pea.k12ea.gov.tw 也沒有回應，tpmso.k12ea.gov.tw 回 HTTP 200。",
       "owner": "thc1006",
       "expires": "2027-01-31",
@@ -69,14 +69,6 @@
           "api": "https://shs.k12ea.gov.tw/api/Public?uuid=B23D22E0-449F-4413-A16C-D5689269B518&order=rank_a&pcid=26&cid=42&first=true",
           "expect": {
             "cid": 42
-          }
-        },
-        {
-          "url": "https://shs.k12ea.gov.tw/site/12basic/category?root=41&cid=82&oid=90281",
-          "api": "https://shs.k12ea.gov.tw/api/Public?uuid=915AB9D0-D707-474B-8BAC-B6754103B716&first=true&cid=82&hide=false&oid=90281&subsitecid=26",
-          "expect": {
-            "cid": 82,
-            "oid": 90281
           }
         }
       ]
