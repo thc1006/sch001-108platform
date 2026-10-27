@@ -194,6 +194,15 @@ test.describe('PlatformAI 共用 module', () => {
             expect(after.hasRunTask).toBe(true);
         });
 
+        // 頁面上已經有沒有 perFrame 的 v6 時，版號沒升的話這一份會提早返回，頁面拿不到 perFrame。
+        test('沒有 perFrame 的 v6 已經在頁面上時，這一份照樣載入，perFrame 可用', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 6 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => typeof window.PlatformAI.perFrame)).toBe('function');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1443,6 +1452,72 @@ test.describe('PlatformAI 共用 module', () => {
             // 程式錯誤的細節（英文、變數名）不給學生看
             expect(r.other).toBe('抱歉，AI 服務發生錯誤，請稍後再試。');
             expect(r.nothing).toBe('發生未知的錯誤，請稍後再試。');
+        });
+    });
+
+    test.describe('perFrame', () => {
+        test.beforeEach(async ({ page }) => { await gotoFixture(page); });
+
+        test('同一個畫面裡呼叫 100 次，fn 只在下一個畫面執行一次，拿到最後一次的參數', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+                const calls = [];
+                const draw = PlatformAI.perFrame((...args) => calls.push(args));
+                for (let i = 1; i <= 100; i++) draw('片段', i);
+                const before = calls.length;
+                await nextFrame();
+                await nextFrame();
+                draw('片段', 101);
+                await nextFrame();
+                return { before, calls };
+            });
+            expect(r.before).toBe(0);
+            expect(r.calls).toEqual([['片段', 100], ['片段', 101]]);
+        });
+
+        // 每次呼叫各在不同的 task 裡：setTimeout 或 microtask 合併的話，fn 會跟著呼叫次數執行。
+        test('每次呼叫各在不同的 task：fn 執行的次數不超過畫面數，最後拿到最後一次的參數', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+                let frames = 0;
+                let counting = true;
+                const tick = () => { frames++; if (counting) requestAnimationFrame(tick); };
+                requestAnimationFrame(tick);
+                const calls = [];
+                const draw = PlatformAI.perFrame((i) => calls.push(i));
+                for (let i = 1; i <= 100; i++) {
+                    draw(i);
+                    await new Promise((resolve) => setTimeout(resolve, 1));
+                }
+                await nextFrame();
+                await nextFrame();
+                counting = false;
+                return { calls, frames };
+            });
+            expect(r.calls.length).toBeLessThanOrEqual(r.frames);
+            expect(r.calls.at(-1)).toBe(100);
+        });
+
+        test('cancel() 之後還沒執行的那次不執行，之後照常排程；fn 丟錯只記 log', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+                const calls = [];
+                const draw = PlatformAI.perFrame((text) => {
+                    calls.push(text);
+                    if (text === '壞掉') throw new Error('畫不出來');
+                });
+                draw('取消的');
+                draw.cancel();
+                draw.cancel();
+                await nextFrame();
+                draw('壞掉');
+                await nextFrame();
+                draw('之後');
+                await nextFrame();
+                return { calls, warnings: PlatformAI.getLogs().filter((l) => l.level === 'warn').map((l) => l.message) };
+            });
+            expect(r.calls).toEqual(['壞掉', '之後']);
+            expect(r.warnings).toEqual(['AI 任務的回呼函式出錯：Error: 畫不出來']);
         });
     });
 

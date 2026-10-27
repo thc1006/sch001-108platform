@@ -769,23 +769,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 var controller = new AbortController();
                 // mountProgress 也在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
                 var progress = null;
+                var drawDraft = null;
                 try {
                     progress = PlatformAI.mountProgress(workspace, {
                         onCancel: function() { controller.abort(); },
                         focusTarget: submitBtn
                     });
                     var draft = null;
+                    var draw = function(_, text) {
+                        if (draft) {
+                            setResultText(draft, text);
+                        } else {
+                            draft = createResultBox(text);
+                            workspace.appendChild(draft);
+                        }
+                    };
+                    // 部署後十分鐘內，瀏覽器快取裡的 platform-ai.js 可能還是沒有 perFrame 的舊版，那時每段都畫。
+                    drawDraft = PlatformAI.perFrame ? PlatformAI.perFrame(draw) : Object.assign(draw, { cancel: function() {} });
                     var outcome = await PlatformAI.runTask('civic-tech-suggestion', { interest: interest }, {
                         signal: controller.signal,
                         onProgress: progress.update,
-                        onDelta: function(_, text) {
-                            if (draft) {
-                                setResultText(draft, text);
-                            } else {
-                                draft = createResultBox(text);
-                                workspace.appendChild(draft);
-                            }
-                        }
+                        onDelta: drawDraft
                     });
                     clearWorkspace(progress);
                     // 以 done 的結果為準，片段接起來的只是草稿。
@@ -801,6 +805,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     }
                     showMessage(text, err && err.name === 'AbortError' ? 'info' : 'error');
                 } finally {
+                    if (drawDraft) drawDraft.cancel();
                     submitBtn.removeAttribute('aria-disabled');
                     submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                     submitLabel.textContent = originalLabel;

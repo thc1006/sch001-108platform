@@ -3,7 +3,7 @@
  *
  * 暴露為 window.PlatformAI = {
  *   runTask, describeError, mountProgress, getGatewayUrl,
- *   formatError, renderMarkdown,
+ *   formatError, renderMarkdown, perFrame,
  *   log, getLogs, clearLogs, mountDebugPanel
  * }
  *
@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 6;
+    var VERSION = 7;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -969,6 +969,33 @@
         };
     }
 
+    /**
+     * perFrame 包住 fn：回傳的函式呼叫幾次都可以，fn 每個畫面最多執行一次，拿到最後一次的參數。
+     * 邊收邊顯示的草稿每次都重畫全文，片段一次到好幾段或頁面忙的時候，多畫的那些看不到。
+     * 結束時要呼叫 cancel()，否則排著的那次會在最後的答案換上之後又畫出草稿。
+     * @param {Function} fn @returns {Function & { cancel: () => void }}
+     */
+    function perFrame(fn) {
+        var frame = 0;
+        var args = null;
+        function run() {
+            var latest = args;
+            frame = 0;
+            args = null;
+            notify.apply(null, [fn].concat(latest));
+        }
+        function schedule() {
+            args = Array.prototype.slice.call(arguments);
+            if (!frame) frame = global.requestAnimationFrame(run);
+        }
+        schedule.cancel = function () {
+            if (frame) global.cancelAnimationFrame(frame);
+            frame = 0;
+            args = null;
+        };
+        return schedule;
+    }
+
     // renderMarkdown 把 AI 回應的 markdown 子集安全地轉成 HTML。
     //
     // 安全模型（順序不可顛倒）：
@@ -1064,6 +1091,7 @@
         describeError: describeError,
         mountProgress: mountProgress,
         renderMarkdown: renderMarkdown,
+        perFrame: perFrame,
         log: log,
         getLogs: getLogs,
         clearLogs: clearLogs,

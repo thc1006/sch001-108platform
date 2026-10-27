@@ -363,6 +363,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             // mountProgress 也要放在 try 裡：PlatformAI 不存在時它會丟 ReferenceError。
             let progress = null;
             let draft = null;
+            let drawDraft = null;
             // 拿掉草稿，把完成的訊息加進紀錄，螢幕閱讀器唸一次。學生往上捲去看舊訊息時不拉回底部。
             const settle = (message) => {
                 const follow = isScrolledToBottom();
@@ -377,21 +378,24 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                     onCancel: () => controller.abort(),
                     focusTarget: chatInput,
                 });
+                // 草稿接在紀錄後面，不在 live region 裡，否則每收到一段就重唸一次。Safari 連
+                // aria-live="off" 子樹裡的變化也算進外層的 live region，放在紀錄裡再關掉沒有用。
+                const draw = (_, text) => {
+                    const follow = isScrolledToBottom();
+                    if (!draft) {
+                        draft = createMessage('ai');
+                        chatWindow.appendChild(draft.row);
+                    }
+                    // renderMarkdown 先 HTML escape 再套 markdown，AI 的輸出塞不進可執行的 HTML。
+                    draft.text.innerHTML = PlatformAI.renderMarkdown(text);
+                    if (follow) scrollToBottom();
+                };
+                // 部署後十分鐘內，瀏覽器快取裡的 platform-ai.js 可能還是沒有 perFrame 的舊版，那時每段都畫。
+                drawDraft = PlatformAI.perFrame ? PlatformAI.perFrame(draw) : Object.assign(draw, { cancel() {} });
                 const { result } = await PlatformAI.runTask('career-chat', { question }, {
                     signal: controller.signal,
                     onProgress: progress.update,
-                    // 草稿接在紀錄後面，不在 live region 裡，否則每收到一段就重唸一次。Safari 連
-                    // aria-live="off" 子樹裡的變化也算進外層的 live region，放在紀錄裡再關掉沒有用。
-                    onDelta: (_, text) => {
-                        const follow = isScrolledToBottom();
-                        if (!draft) {
-                            draft = createMessage('ai');
-                            chatWindow.appendChild(draft.row);
-                        }
-                        // renderMarkdown 先 HTML escape 再套 markdown，AI 的輸出塞不進可執行的 HTML。
-                        draft.text.innerHTML = PlatformAI.renderMarkdown(text);
-                        if (follow) scrollToBottom();
-                    },
+                    onDelta: drawDraft,
                 });
                 progress.finish();
                 // 以 done 的結果為準，片段接起來的只是草稿。
@@ -415,6 +419,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 notice.text.textContent = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 settle(notice);
             } finally {
+                if (drawDraft) drawDraft.cancel();
                 chatBusy = false;
                 chatSubmit.removeAttribute('aria-disabled');
                 chatSubmit.classList.remove('opacity-50', 'cursor-not-allowed');

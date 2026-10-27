@@ -3,7 +3,7 @@
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/career-exploration/index.html`;
@@ -289,6 +289,69 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(aiText(page, 2)).toHaveText(BUSY_MESSAGE);
         await expect(aiText(page, 2)).toHaveClass(/text-red-700/);
         await expect(draft(page)).toHaveCount(0);
+    });
+
+    test('一次收到 200 段：草稿畫的次數不超過畫面數，畫出來的是最新的全文', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(progress(page)).toHaveCount(1);
+        await watchDraws(page);
+        await push(page, ...Array.from({ length: 200 }, (_, i) => delta(`第 ${i + 1} 段。`)));
+        await expect(draft(page)).toContainText('第 200 段。');
+        const { renders, frames } = await drawStats(page);
+        expect(renders).toBeLessThanOrEqual(frames);
+    });
+
+    // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
+    const ENDS = [
+        ['done', done('推薦你 **資訊學群**。'), '推薦你 資訊學群。'],
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), '推薦你 **資訊'],
+    ];
+    for (const [code, end, expected] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → 紀錄裡是最後的回答，之後的畫面不再畫出草稿`, async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(progress(page)).toHaveCount(1);
+        await push(page, delta('推薦你 **資'), delta('訊'), end);
+        await expect(aiText(page, 2)).toHaveText(expected);
+        await afterFrames(page);
+        await expect(draft(page)).toHaveCount(0);
+    });
+
+    test('片段送達、還沒畫出來就取消 → 紀錄裡是「已取消。」，之後的畫面不再畫出草稿', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(progress(page)).toHaveCount(1);
+        // 這個 requestAnimationFrame 排在頁面畫草稿的前面，取消發生在同一個畫面裡、草稿畫出來之前。
+        await page.evaluate((chunk) => {
+            window.__stream.push(chunk);
+            requestAnimationFrame(() => document.querySelector('#chat-progress button').click());
+        }, delta('推薦你 **資訊學群**'));
+        await expect(aiText(page, 2)).toHaveText('已取消。');
+        await afterFrames(page);
+        await expect(draft(page)).toHaveCount(0);
+    });
+
+    test('platform-ai.js 是沒有 perFrame 的舊版 → 照樣送出請求、邊收邊畫草稿，收到 done 換成紀錄裡的回答；按鈕恢復，第二題照常', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(String(error)));
+        await reloadWithoutPerFrame(page);
+        await stubBuiltInGateway(page);
+        expect(await page.evaluate(() => typeof PlatformAI.perFrame)).toBe('undefined');
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資'), delta('訊學群**')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+        await push(page, done('推薦你 **資訊學群**。'));
+        await expect(aiText(page, 2)).toHaveText('推薦你 資訊學群。');
+        await expect(draft(page)).toHaveCount(0);
+        const button = page.locator('#chat-submit');
+        await expect(button).not.toHaveAttribute('aria-disabled');
+        await expect(button).toHaveText('發送');
+        await ask(page, '我也喜歡數學');
+        await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
+        await push(page, done('也可以看看 **數理化學群**。'));
+        await expect(aiText(page, 4)).toHaveText('也可以看看 數理化學群。');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+        expect(errors).toEqual([]);
     });
 
     test('回答到的時候不搬焦點：學生等待時把焦點移到別處，回答進了紀錄，焦點還在原處', async ({ page }) => {
