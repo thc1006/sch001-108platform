@@ -5,6 +5,7 @@
 //   node scripts/check-admission-cycle.mjs [--remind]
 //     設定或內容有錯就以 1 結束。過了 remindAfter、keep 過了 recheckAfter 只印警告，結束碼不看日期，
 //     CI 才不會哪天突然變紅。
+//     寫著 cycle 這一屆的時程日期和別人文章的標題只列出來，不算錯誤。
 //     --remind 給每週排程用：另外寫出 admission-cycle-report.md，有錯誤或該提醒的事時在 GITHUB_OUTPUT
 //     寫 needs_attention=true，admission-cycle-check.yml 拿報告開 issue。
 //
@@ -15,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
     checkContent,
+    cycleHints,
     dueKeeps,
     isPast,
     isRealDate,
@@ -90,6 +92,22 @@ const { errors, found, kept } = checkContent(files, config);
 console.log(`學年度檢查：cycle ${cycle}、next ${next}，今天 ${today}（台灣時間），remindAfter ${remindAfter}`);
 console.log(`  ${rel(CONTENT)} 底下 ${files.length} 個 .md 檔，找到 ${found} 處學年度和甄選會網址，keep ${config.keep.length} 筆放行 ${kept} 處`);
 
+// 一個檔案一行：「時程 19、20 行；標題 179 行」。
+const hints = new Map();
+for (const f of files) {
+    const found = cycleHints(f.text, cycle);
+    if (!found.length) continue;
+    const by = (kind) => [...new Set(found.filter((h) => h.kind === kind).map((h) => h.line))].join('、');
+    const parts = [['date', '時程'], ['title', '標題']].filter(([k]) => by(k)).map(([k, name]) => `${name} ${by(k)} 行`);
+    hints.set(f.path, { count: found.length, text: parts.join('；') });
+}
+const hintTotal = [...hints.values()].reduce((n, h) => n + h.count, 0);
+const hintHead = `寫著 ${cycle} 這一屆的時程日期和別人文章的標題有 ${hintTotal} 處，換屆時要對照簡章看，不算錯誤：`;
+if (hints.size) {
+    console.log(`\n${hintHead}`);
+    for (const [file, h] of hints) console.log(`  ${file}：${h.text}`);
+}
+
 const sections = [];
 if (isPast(remindAfter, today)) {
     warn('學年度還沒換屆', `今天 ${today} 已經過了 remindAfter（${remindAfter}），cycle 還是 ${cycle}。內容改成 ${next} 學年度之後，把 cycle 改成 ${next}。`);
@@ -110,6 +128,7 @@ if (isPast(remindAfter, today)) {
         '',
         ...[...lines].map(([file, set]) => `- \`${file}\`：第 ${[...set].join('、')} 行`),
         '',
+        ...(hints.size ? [hintHead, '', ...[...hints].map(([file, h]) => `- \`${file}\`：${h.text}`), ''] : []),
     ]);
 }
 const due = dueKeeps(config, today);
@@ -129,7 +148,8 @@ if (errors.length) {
     fail(
         errors,
         `內容以 ${cycle} 學年度申請入學為準：學年度要寫 ${cycle} 或 ${next}，區間要包含其中一個。確定要保留的舊年度，` +
-            `在 ${rel(CONFIG)} 的 keep 加一筆，文字寫 file、text、cycle、reason，網址寫 url、cycle、reason。`,
+            `在 ${rel(CONFIG)} 的 keep 加一筆，文字寫 file、text、cycle、reason，網址寫 url、cycle、reason。` +
+            '「2026 升學趨勢」這類西元年寫法沒有 keep，拿掉年份或寫成學年度。',
         sections,
     );
 }

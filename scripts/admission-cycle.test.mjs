@@ -6,7 +6,9 @@ import { readFileSync } from 'node:fs';
 
 import {
     checkContent,
+    cycleHints,
     dueKeeps,
+    findFraming,
     findYears,
     isPast,
     isRealDate,
@@ -262,6 +264,103 @@ test('checkContent：網址 keep 只放行完全相同的網址', () => {
 test('checkContent：沒有檔案，或一個學年度都找不到，都不能算通過', () => {
     assert.match(errorsOf([], cfg()).join('\n'), /沒有任何 \.md 檔/);
     assert.match(errorsOf(doc('沒有年度的內容'), cfg()).join('\n'), /1 個檔案裡找不到任何學年度或甄選會網址/);
+});
+
+test('findFraming：西元年當申請年度的寫法', () => {
+    const hits = [
+        ['## 2026 升學風向：從「軍備競賽」到「個人成長史」', '2026 升學'],
+        ['### APCS 自 114 學年度起改制（2026 考生必讀）', '2026 考生'],
+        ['title: 管理學群科系風向標：學群定位、各學類與 2026 升學趨勢', '2026 升學'],
+        ['## 三、2026 招生管道全解析', '2026 招生'],
+        ['以權威資料還原 2026 申請的真實規則。', '2026 申請'],
+        ['2026 年備審多採「自製 PDF 上傳」', '2026 年備審'],
+        ['但 2026 年的選才標準正在發生結構性位移', '2026 年的選才'],
+        ['| 舊思維 | 2026 的審查風向 |', '2026 的審查'],
+        ['2026 年大傳學群的審查核心', '2026 年大傳學群的審查'],
+        ['## 一、2026 三大風向', '2026 三大風向'],
+        ['## 2026 產業趨勢與選才方向', '2026 產業趨勢與選才'],
+        ['**2026** 升學趨勢', '2026 升學'],
+        ['２０２６ 升學趨勢', '2026 升學'],
+        ['2027 年的申請', '2027 年的申請'],
+        ['[2026 升學趨勢] 不是連結', '2026 升學'],
+    ];
+    for (const [src, phrase] of hits) assert.deepEqual(findFraming(src).map((h) => h.phrase), [phrase], src);
+    const misses = [
+        '2026 產業趨勢：工程的語言正在改變',
+        '## 2026 傳播產業五大趨勢（直接影響面試與備審）',
+        '在 AI 能流暢代寫的 2026 年，這條紅線延伸至「用 AI 代寫」',
+        '一階篩選於 2026 年 3 月 31 日放榜',
+        '> 對應 2026 年／115 學年度大學申請入學',
+        '以 115 學年度（2026 年）申請入學為例',
+        '2026/115 學年度三大趨勢',
+        '本頁以 2026 年、即 115 學年度個人申請現況為準。',
+        '甄選會 2026 年 10 月 27 日公告的 116 學年度參採科目一覽表',
+        '2026 年傑出生技產業獎的審查',
+        '收件 2026/4/27–7/6，報名',
+        '- [Cheers「2026 大學申請全攻略」](https://example.com/)',
+        '- [2026 大學「個人申請」面試必勝秘笈](https://example.com/2026-申請)',
+        '依《2026 大學申請入學簡章》辦理',
+        '<!-- 2026 升學趨勢 -->',
+        'https://example.com/2026升學趨勢',
+        '12026 升學',
+        '2026\n升學',
+        '2026\n年的升學',
+        '2026 年—升學',
+        '2026 年·升學',
+        '2026 年～升學',
+        '2026 年 - 升學',
+    ];
+    for (const src of misses) assert.deepEqual(findFraming(src), [], src);
+});
+
+test('checkContent：西元年當申請年度要報錯，附上位置和前後文', () => {
+    const files = doc('115 學年度', '## 2026 升學趨勢', '2026 年 3 月 31 日放榜');
+    const errors = errorsOf(files, cfg());
+    assert.equal(errors.length, 1, errors.join('\n'));
+    assert.equal(errors[0], 'src/content/a.md:2 「2026 升學」用西元年當申請年度，一年後就過期。拿掉年份，或寫成「NNN 學年度」\n    ## 2026 升學趨勢');
+    // keep 放不行。
+    const kept = errorsOf(files, cfg({ keep: [textKeep(FILE, '2026 升學趨勢')] }));
+    assert.match(kept.join('\n'), /a\.md:2 「2026 升學」用西元年當申請年度/);
+});
+
+test('cycleHints：cycle 這一屆的時程日期，申請入學那幾個月、同一行有時程的字才算', () => {
+    const dates = (...lines) => cycleHints(lines.join('\n'), 115).filter((h) => h.kind === 'date').map((h) => `${h.line}:${h.phrase}`);
+    assert.deepEqual(dates(
+        '| 115 年 3 月 31 日（二）9 時 | 一階篩選結果公告 |',
+        '| 一階篩選放榜 | 2026 年 3 月 31 日 |',
+        '- **二階指定項目甄試**落在 **2026 年 5 月 14 日至 5 月 31 日**之間',
+        '分發入學 2026 年 8 月放榜',
+    ), ['1:115 年 3 月', '2:2026 年 3 月', '3:2026 年 5 月', '4:2026 年 8 月']);
+    assert.deepEqual(dates(
+        '甄選會 2026 年 9 月公告的一覽表',
+        '台灣社會學會 2026 年 5 月舉行年會',
+        '114 年 3 月 31 日放榜',
+        '2025 年 3 月 31 日放榜',
+        '2116 年 3 月 31 日放榜',
+        '- [115 年 6 月簡則公告](https://example.com/)',
+    ), []);
+});
+
+test('cycleHints：連結文字裡寫著 cycle 這一屆的標題', () => {
+    const titles = (...lines) => cycleHints(lines.join('\n'), 115).filter((h) => h.kind === 'title').map((h) => `${h.line}:${h.phrase}`);
+    assert.deepEqual(titles(
+        '- [115 備審資料準備指引一覽 — TKB](https://example.com/a)',
+        '- [64 校 115 二階審查資料準備指引(今周刊)](https://example.com/b)',
+        '- [【115審查資料準備指引】](https://example.com/c)',
+        '- [Cheers「2026 大學申請全攻略」](https://example.com/d)',
+    ), ['1:115 備審資料準備指引一覽 — TKB', '2:64 校 115 二階審查資料準備指引(今周刊)', '3:【115審查資料準備指引】', '4:Cheers「2026 大學申請全攻略」']);
+    assert.deepEqual(titles(
+        '- [115 學年度申請入學統計資料](https://example.com/a)',
+        '- [適用115至119學年度入學](https://example.com/b)',
+        '- [113-115 年重點產業人才供需調查](https://example.com/c)',
+        '- [寫於 115 年 6 月簡則公告前](https://example.com/d)',
+        '- [114 備審資料準備指引](https://example.com/e)',
+        '- [1150 個名額](https://example.com/f)',
+        '- [2026 暑假高中生營隊總覽](https://example.com/g)',
+        '- [TISF 2026 臺灣國際科學展覽會](https://example.com/h)',
+        '115 備審資料準備指引',
+        '- [指引](https://example.com/115-備審)',
+    ), []);
 });
 
 test('pendingForNext：換成 next 之後不放行的年度，keep 也列出來', () => {

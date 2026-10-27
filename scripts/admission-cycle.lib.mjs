@@ -124,6 +124,62 @@ export function findYears(src) {
     return out.sort((a, b) => a.start - b.start);
 }
 
+// 西元年當申請年度的寫法（#192），像「2026 升學趨勢」「2026 年的選才標準」，一年後就過期，學年度又看不到。
+// 年份後面隔 6 個字以內接到升學、申請這類字才算，中間不能換行，也不能有數字、標點或符號：「2026 年 3 月
+// 31 日放榜」和「2026 年／115 學年度申請入學」不算，「2026 產業趨勢」也不算。空白不算字數，粗體的 ** 遮掉
+// 之後是空白。
+const FRAMING_GAP = '(?:[^\\S\\n]*[^\\s\\d\\p{P}\\p{S}]){0,6}?[^\\S\\n]*';
+const FRAMING_WORD = '(?:升學|申請|考生|招生|備審|審查|選才|甄選|入學|學測|繁星|風向)';
+const FRAMING = new RegExp(`(?<!\\d)20\\d{2}(?!\\d)${FRAMING_GAP}${FRAMING_WORD}`, 'gu');
+const LINK_TEXT = /\[([^\]\n]*)\](?=\()/g;
+// 時程日期只看申請入學那幾個月：學測在 1 月，分發入學 8 月放榜。同一年 9 月以後的日期是下一屆的事，
+// 例如「2026 年 10 月 27 日公告的 116 學年度一覽表」。
+const SCHEDULE_LAST_MONTH = 8;
+const SCHEDULE_WORD = /放榜|篩選|甄試|上傳|錄取|公告|簡章|報名|學測|申請/;
+
+/**
+ * findFraming 找出 src 裡用西元年當申請年度的寫法。別人文章的標題不能改，Markdown 連結的文字和
+ * 《》〈〉裡的不算。
+ * @param {string} src @returns {Array<{start: number, end: number, line: number, phrase: string}>}
+ */
+export function findFraming(src) {
+    const blank = (m) => m.replace(/[^\n]/g, ' ');
+    const text = maskForText(src).replace(LINK_TEXT, blank).replace(/[《〈][^》〉\n]*[》〉]/g, blank);
+    return [...text.matchAll(FRAMING)].map((m) => ({
+        start: m.index,
+        end: m.index + m[0].length,
+        line: src.slice(0, m.index).split('\n').length,
+        phrase: m[0].replace(/\s+/g, ' '),
+    }));
+}
+
+/**
+ * cycleHints 列出寫著 cycle 這一屆、但不是「NNN 學年度」的地方，換屆時要對照簡章看，不算錯誤：
+ * 申請入學那幾個月的時程日期（「115 年 3 月」「2026 年 3 月」，同一行要有放榜、甄試這類字），
+ * 以及連結文字裡的「115 備審」「2026 大學申請」這類別人文章的標題。沒寫年份的日期和統計找不到。
+ * @param {string} src @param {number} cycle
+ * @returns {Array<{kind: 'date'|'title', line: number, phrase: string}>}
+ */
+export function cycleHints(src, cycle) {
+    const masked = maskForText(src);
+    const lineOf = (pos) => src.slice(0, pos).split('\n').length;
+    const out = [];
+    const body = masked.replace(LINK_TEXT, (m) => m.replace(/[^\n]/g, ' '));
+    const lines = body.split('\n');
+    const date = new RegExp(`(?<!\\d)(?:${cycle}|${cycle + 1911})${SP}年${SP}(\\d{1,2})${SP}月`, 'g');
+    for (const m of body.matchAll(date)) {
+        const line = lineOf(m.index);
+        if (Number(m[1]) <= SCHEDULE_LAST_MONTH && SCHEDULE_WORD.test(lines[line - 1])) out.push({ kind: 'date', line, phrase: m[0] });
+    }
+    // 「113-115 年」「115 至 119 學年度」和「115 學年度」不算，後兩種學年度檢查已經看得到。
+    const roc = new RegExp(`(?<![\\d\\-–~～])${cycle}(?!\\d)(?!${SP}(?:年|學年度|[至到~～\\-–、／/]))`);
+    const western = new RegExp(`(?<!\\d)${cycle + 1911}(?!\\d)[^｜|\\n]{0,8}?(?:升學|申請|考生|招生|備審|學測|放榜)`);
+    for (const m of masked.matchAll(LINK_TEXT)) {
+        if (roc.test(m[1]) || western.test(m[1])) out.push({ kind: 'title', line: lineOf(m.index), phrase: m[1].trim() });
+    }
+    return out.sort((a, b) => a.line - b.line);
+}
+
 /**
  * validateConfig 檢查 admission-cycle.json 本身，回傳錯誤訊息，空陣列表示沒問題。
  * 不讀內容，也不看今天日期，同一份設定在哪一天跑結果都一樣。
@@ -251,6 +307,11 @@ export function checkContent(files, config) {
     const { found, hits, spans, keepErrors } = classify(files, keep, allowed);
     const errors = [...keepErrors];
     if (found === 0) errors.push(`${files.length} 個檔案裡找不到任何學年度或甄選會網址，比對規則可能壞了`);
+    for (const f of files) {
+        for (const h of findFraming(f.text)) {
+            errors.push(`${f.path}:${h.line} 「${h.phrase}」用西元年當申請年度，一年後就過期。拿掉年份，或寫成「NNN 學年度」\n    ${excerpt(f.text, h.start, h.end)}`);
+        }
+    }
     const used = new Set();
     for (const h of hits) {
         if (h.by.length === 1) {
