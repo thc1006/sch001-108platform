@@ -1,5 +1,41 @@
 # 貢獻指南
 
+## 開發
+
+### 本機開發
+
+需要 Node.js 24 和 npm 11.16 以上。
+
+```bash
+npm ci
+npm run dev
+npm run verify:site
+```
+
+瀏覽器測試要先裝 Chromium，再照 GitHub Pages 的路徑放一份建置結果：
+
+```bash
+npx playwright install chromium
+rm -rf .link-root && mkdir -p .link-root/sch001-108platform && cp -a dist/. .link-root/sch001-108platform/
+npm test
+```
+
+### 內容放在哪裡
+
+十大學群的文章在 `src/content/clusters/<學群>/<主題>.md`，學群和主題的清單在 `src/data/clusters.ts`。
+
+競賽、線上課程、書單這類資料頁，內容從 `public/` 底下的 JSON 載入，改資料只要改 JSON。頁面和 JSON 的路徑相同，例如 `advanced-resources/competitions.html` 讀 `public/advanced-resources/competitions.json`，每一頁的對照在 `scripts/data-pages.json`。
+
+公民科技專案地圖是例外：頁面內容寫在 `src/pages/civic-tech-map/index.astro`，`public/civic-tech-map/projects.json` 是同一份資料的副本，給資料檢查和搜尋索引用。建置只確認每個專案的 id 在頁面上有錨點，名稱、說明和標籤沒有比對，改專案時要一起改。AI 閘道的 `civic-tech-suggestion` 任務也抄了專案名稱和狀態，這部分 `npm run test:ai-gateway` 會比對。
+
+其他頁面的內容直接寫在 `src/pages/` 的 `.astro`。
+
+### 部署
+
+推到 `main` 後，`.github/workflows/ci.yml` 建置、檢查，再部署到 GitHub Pages。
+
+建置時由環境變數 `PUBLIC_AI_GATEWAY_URL` 帶入 AI 閘道的網址。本機要試 AI 功能，先用 `ALLOWED_ORIGINS=http://localhost:4321 LLM_API_KEY=<key> node ai-gateway/src/server.mjs` 跑閘道（預設埠 8787；WinLab 的 key 只接受校內網段的來源 IP），再帶 `PUBLIC_AI_GATEWAY_URL=http://localhost:8787` 跑 `npm run dev`；這種網址過不了 `verify:site`，跑檢查前要拿掉。CI 用的值是 repository variable `AI_GATEWAY_URL`，在 Settings → Secrets and variables → Actions → Variables 設定。改了之後要等下一次部署才會生效，不推新 commit 的話就在 Actions 對 `CI` 手動執行 workflow_dispatch。閘道本身的部署見 [ai-gateway/README.md](ai-gateway/README.md)。
+
 ## 程式碼註解
 
 註解寫給下一個讀程式的人。它回答程式碼回答不了的問題：為什麼這樣寫，有什麼前提，哪裡容易出錯。
