@@ -42,6 +42,7 @@
  * 內容由 API 載入，頁面刪掉了狀態碼也不會變。每一筆宣告一台這樣的主機，列出主機上每個網址
  * 要打哪個 API、回應裡哪些欄位要等於什麼。check-link-policy 要求這些主機上首頁以外的網址都要
  * 列進來，紀律和 hijacked 相同：精確主機名、reason／evidence／owner／expires。
+ * 不存在的頁面回 200、標題固定的主機，可以改宣告 missingTitles（那些標題），網址就不必逐筆寫 API。
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
@@ -58,7 +59,7 @@ const TOP_LEVEL_KEYS = new Set(['_readme', 'version', 'entries', 'hijacked', 'co
 const ENTRY_KEYS = new Set(['match', 'reason', 'owner', 'expires']);
 /** hijacked 多一個 evidence：沒有原始觀察就無法在到期時比對「是否仍被接管」。 */
 const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'evidence']);
-const CONTENT_CHECK_KEYS = new Set(['match', 'reason', 'owner', 'expires', 'evidence', 'urls']);
+const CONTENT_CHECK_KEYS = new Set(['match', 'reason', 'owner', 'expires', 'evidence', 'urls', 'missingTitles']);
 const CONTENT_URL_KEYS = new Set(['url', 'api', 'expect', 'deadStatus']);
 
 /**
@@ -133,6 +134,9 @@ function checkExactHost(raw, at, push) {
     }
     return raw;
 }
+
+/** normalizeTitle 把標題的空白正規化：頭尾去掉，連續的空白收成一個。missingTitles 照這個形式寫，比對時也一樣。 */
+export const normalizeTitle = (t) => t.replace(/\s+/g, ' ').trim();
 
 /**
  * 把網址正規化成與 .reports/url-inventory.json 相同的形式。
@@ -350,8 +354,13 @@ function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
         }
         for (const field of ['reason', 'evidence']) {
             if (typeof e[field] !== 'string' || [...e[field].trim()].length < MIN_REASON_CHARS) {
-                push(`${at}.${field} 必須寫明這台主機對不存在的路徑回什麼、內容從哪個 API 來，至少 ${MIN_REASON_CHARS} 字`);
+                push(`${at}.${field} 必須寫明這台主機對不存在的路徑回什麼、內容從哪個 API 來或不存在的頁面標題是什麼，至少 ${MIN_REASON_CHARS} 字`);
             }
+        }
+        const titles = e.missingTitles;
+        if (titles !== undefined && !(Array.isArray(titles) && titles.length && new Set(titles).size === titles.length &&
+            titles.every((t) => typeof t === 'string' && t === normalizeTitle(t)))) {
+            push(`${at}.missingTitles 必須是不重複的字串，頭尾沒有空白、連續的空白寫成一個，沒有標題的頁面寫 ""（目前：${JSON.stringify(titles)}）`);
         }
         if (typeof e.owner !== 'string' || !e.owner.trim()) push(`${at}.owner 必須指名負責重審的人`);
         checkExpires(e.expires, at, todayISO, todayMs, push);
@@ -472,7 +481,7 @@ export function matchContentCheck(contentChecks, url) {
 
 /**
  * contentCheckGaps 列出落在 contentChecks 宣告的主機上、卻沒有內容檢查的網址，回傳 { url, check }。
- * 首頁（路徑是 /、沒有查詢字串）不列：站還在，首頁就在，狀態碼看得出來。盤點不含 fragment，
+ * 首頁（路徑是 /、沒有查詢字串）不列：站還在，首頁就在，狀態碼看得出來。宣告了 missingTitles 的主機不列，網址看標題。盤點不含 fragment，
  * 靠 #/ 路由的網址到這裡已經是首頁，看不到。
  * @param {object[]} contentChecks validatePolicy 回傳的 contentChecks @param {string[]} urls
  */
@@ -486,7 +495,7 @@ export function contentCheckGaps(contentChecks, urls) {
             continue;
         }
         const check = (contentChecks ?? []).find((c) => c.match.host === canonicalHost(u.hostname));
-        if (!check || (u.pathname === '/' && !u.search) || matchContentCheck([check], url)) continue;
+        if (!check || check.missingTitles || (u.pathname === '/' && !u.search) || matchContentCheck([check], url)) continue;
         gaps.push({ url, check });
     }
     return gaps;
