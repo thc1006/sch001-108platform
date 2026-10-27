@@ -1706,6 +1706,7 @@ function runBaselineTests() {
             process.execPath,
             [
                 '--test',
+                '--test-reporter=spec',
                 path.join(SCRIPTS, 'link-health.test.mjs'),
                 path.join(SCRIPTS, 'bare-domains.test.mjs'),
                 // D 段的突變要跑這一支。基準也必須涵蓋它，否則「基準是綠的」這句話
@@ -1718,6 +1719,8 @@ function runBaselineTests() {
         );
         return 0;
     } catch (e) {
+        // 失敗時印出完整輸出；測試結束後才丟的例外不在最後的失敗清單裡。
+        console.error(`${e.stdout ?? ''}${e.stderr ?? ''}\nstatus=${e.status} signal=${e.signal} code=${e.code}`);
         return e.status ?? 1;
     }
 }
