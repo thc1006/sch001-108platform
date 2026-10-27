@@ -1597,6 +1597,31 @@ test('內容 API：4xx 與讀完卻讀不懂的回應要通知；429、5xx、逾
     assert.match(injected.reason, /^內容 API 回應是壓縮過的，沒有解析（`[^`]{60}`）$/);
 });
 
+test('contentChecks：deadStatus 是不重複的 4xx 狀態碼，408、429 除外', () => {
+    assert.deepEqual(contentErrors({ urls: [validContentUrl({ deadStatus: [404] })] }), []);
+    assert.deepEqual(contentErrors({ urls: [validContentUrl({ deadStatus: [400, 404, 410, 499] })] }), []);
+    for (const deadStatus of [[], 404, ['404'], [404, 404], [200], [302], [500], [408], [429], [404.5], null]) {
+        assert.ok(contentErrors({ urls: [validContentUrl({ deadStatus })] }).some((m) => m.includes('deadStatus')), JSON.stringify(deadStatus));
+    }
+});
+
+test('內容 API：deadStatus 列的狀態碼兩次都回才算失效，只有一次的不通知；沒列的照舊', () => {
+    const entry = validContentUrl({ deadStatus: [404, 410] });
+    const st = (status, over = {}) => ({ status, finalUrl: 'x', redirects: [], bodyHead: '{"name":"HHNotFoundError"}', ...over });
+    assert.deepEqual(judgeContent(entry, st(404, { previous: st(410) })), { verdict: 'dead', reason: '內容 API 回 HTTP 404，網站上查不到這一頁' });
+    const cases = [
+        [st(404), '內容 API HTTP 404，沒有重打確認'],
+        [st(404, { retrySkipped: true }), '內容 API HTTP 404，時間預算用完，沒有重打確認'],
+        [st(404, { previous: st(503) }), '內容 API HTTP 404，前一次不是（內容 API HTTP 503）'],
+        [st(404, { previous: { status: 0, code: 'EBLOCKED', blocked: true, reason: 'x' } }), '內容 API HTTP 404，前一次不是（內容 API 被位址政策擋下：x）'],
+    ];
+    for (const [r, reason] of cases) assert.deepEqual(judgeContent(entry, r), { verdict: 'unverified', bucket: 'rejected', notify: false, reason }, reason);
+    assert.equal(judgeContent(entry, apiOk({ cid: 42 }, { previous: st(404) })).verdict, 'healthy');
+    assert.deepEqual(judgeContent(entry, st(403, { previous: st(404) })), { verdict: 'unverified', bucket: 'rejected', notify: true, reason: '內容 API HTTP 403' });
+    assert.deepEqual(judgeContent(validContentUrl(), st(404, { previous: st(404) })), { verdict: 'unverified', bucket: 'rejected', notify: true, reason: '內容 API HTTP 404' });
+    assert.equal(contentRetry(st(404)), true, '回 deadStatus 的狀態碼要重打');
+});
+
 test('內容 API：實際探測時，403、維護頁、中途斷線第一次出現都會重打，第二次正常就算健康；每次都斷線算連不上、不通知', async () => {
     const urls = ['/api-403-once', '/api-html-once', '/api-cut-once', '/api-cut'].map((p) => base + p);
     const { results } = await runProbes(urls, { ...CONTENT_PROBE, allowLoopback: true });
@@ -1705,7 +1730,7 @@ test('buildReport：內容 API 的結果照 targets 的位置對應，失效列�
         assert.match(o.report, /- 本次檢查 1 筆：健康 0、失效 0、位址封鎖 0、無法判定 1、已列例外 0/);
         assert.match(o.report, /### 🧩 內容 API 驗不到 1 筆\n[\s\S]*\n- 內容 API [^\n]*：https:\/\/spa\.example\.org\/site\/category\?root=42&cid=42\n/);
         assert.ok(!o.report.includes('被站台拒絕的連結') && !o.report.includes('全部外部連結正常'));
-        assert.match(o.report, /被壓縮、超過讀取上限[\s\S]*回 \{\} 卻不是連兩次都 \{\} 的，不觸發通知/);
+        assert.match(o.report, /被壓縮、超過讀取上限[\s\S]*回 \{\} 或 deadStatus 列的狀態碼卻不是連兩次的，不觸發通知/);
         assert.ok(o.consoleSummary.includes('  無法判定：1'));
     }
 });
