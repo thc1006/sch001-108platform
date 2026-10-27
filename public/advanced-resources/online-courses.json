@@ -109,23 +109,6 @@
       "thumbnail_url": "img/courses/cs50.png"
     },
     {
-      "title": "行銷入門：帶你快速成為實戰派的行銷人",
-      "provider": "Frank Chiu",
-      "platform": "Hahow",
-      "category": "商業管理",
-      "difficulty": "入門",
-      "language": "中文",
-      "certificate": true,
-      "tags": [
-        "行銷",
-        "市場分析",
-        "品牌"
-      ],
-      "description": "台灣本土的熱門行銷課程，內容貼近實務，教你如何進行市場分析、定位與規劃行銷活動。",
-      "url": "https://hahow.in/courses/59649c2e5344340700c511a8",
-      "thumbnail_url": "img/courses/hahow-marketing.png"
-    },
-    {
       "title": "The Science of Well-Being",
       "provider": "耶魯大學",
       "platform": "Coursera",
