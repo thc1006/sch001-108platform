@@ -248,6 +248,18 @@ const cases = [
     mutate: (t) => t.replace('</main>', '<ul><li>**模擬聯合國（MUN）**已是</li></ul></main>'),
   },
   {
+    name: '** 配錯對，產生巢狀的 strong',
+    expect: /配錯對：<strong> 裡有 <strong>：甲（乙）丙丁/,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</main>', '<p><strong>甲（乙）<strong>丙</strong>丁</strong></p></main>'),
+  },
+  {
+    name: '粗體裡的斜體、斜體裡的粗體不算巢狀',
+    expectGreen: true,
+    file: `${DIST}/about.html`,
+    mutate: (t) => t.replace('</main>', '<p><em><strong>粗斜</strong></em><strong>粗 <em>斜</em></strong></p></main>'),
+  },
+  {
     name: 'code、pre 裡的 ** 不算',
     expectGreen: true,
     file: `${DIST}/about.html`,
