@@ -264,6 +264,26 @@ test('三態：逾時 → unverified', async () => {
     assert.equal(classifyLink(slow), 'unverified');
 });
 
+// 沒有 IPv6 路由的機器連 IPv6 位址，connect 當下就回 ENETUNREACH。這裡用 net.BlockList 讓每個位址同步失敗，
+// 結果不看機器的路由表；兩個位址的那組走 Happy Eyeballs。
+for (const answers of [['127.0.0.1'], ['::1', '127.0.0.1']]) {
+    test(`https 每個位址都同步連線失敗（${answers.join('、')}）→ 回傳錯誤，不崩潰`, async (t) => {
+        t.mock.method(dns.promises, 'lookup', async () => answers.map((address) => ({ address, family: net.isIP(address) })));
+        const blockList = new net.BlockList();
+        blockList.addSubnet('0.0.0.0', 0, 'ipv4');
+        blockList.addSubnet('::', 0, 'ipv6');
+        const connect = net.Socket.prototype.connect;
+        t.mock.method(net.Socket.prototype, 'connect', function (...args) {
+            this.blockList = blockList;
+            return connect.apply(this, args);
+        });
+        const r = await probe('https://sync-fail.example/', undefined, LOOPBACK_OK);
+        assert.equal(r.status, 0);
+        assert.equal(r.code, 'ERR_IP_BLOCKED', JSON.stringify(r));
+        assert.equal(classifyLink(r), 'unverified');
+    });
+}
+
 test('轉址上限之內可以一路跟到底，超過上限才放棄', async () => {
     const ok = await probe(`${base}/hop3`, undefined, LOOPBACK_OK);
     assert.equal(ok.status, 200, '3 跳應在上限之內');
