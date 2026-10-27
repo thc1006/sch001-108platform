@@ -59,7 +59,7 @@ const ENTRY_KEYS = new Set(['match', 'reason', 'owner', 'expires']);
 /** hijacked 多一個 evidence：沒有原始觀察就無法在到期時比對「是否仍被接管」。 */
 const HIJACKED_KEYS = new Set(['match', 'kind', 'reason', 'owner', 'expires', 'evidence']);
 const CONTENT_CHECK_KEYS = new Set(['match', 'reason', 'owner', 'expires', 'evidence', 'urls']);
-const CONTENT_URL_KEYS = new Set(['url', 'api', 'expect']);
+const CONTENT_URL_KEYS = new Set(['url', 'api', 'expect', 'deadStatus']);
 
 /**
  * 這份名單裡有兩種不同的東西，必須分清楚，否則報告會說謊：
@@ -284,6 +284,9 @@ export function validatePolicy(policy, todayISO) {
 // JSON_POINTER 是 expect 接受的 JSON pointer：至少一段，每段不是空的，~ 只能寫成 ~0 或 ~1。
 const JSON_POINTER = /^(\/([^/~]|~[01])+)+$/;
 
+// isDeadStatus 判斷 deadStatus 能不能列這個狀態碼：4xx，408 與 429 除外，那兩個是逾時與限流。
+const isDeadStatus = (n) => Number.isInteger(n) && n >= 400 && n <= 499 && n !== 408 && n !== 429;
+
 const isPlainObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
 
 // siteBase 是 API 可以放的網域：host 去掉開頭的 www.，去掉之後比可註冊網域短（www.edu.tw 去掉變成 edu.tw）就不去。
@@ -320,6 +323,7 @@ function checkPolicyUrl(raw, at, host, push, site = false) {
  * 物件裡哪些欄位要等於什麼。API 限定在頁面的主機（去掉 www.）或它的子網域、不帶埠號的 https 網址：hahow.in 的
  * 課程內容從 api.hahow.in 載入，但政策檔不能把請求送到別的網站。expect 的鍵是最外層的欄位名，或 / 開頭的 JSON pointer（RFC 6901），
  * 值只收字串、數字與布林，比對用 ===。不是 JSON pointer 的鍵不能含「.」：寫成 a.b 的人想比的是巢狀欄位。
+ * deadStatus 可省略，列 API 對不存在的項目回的 4xx，例如 api.hahow.in 的 404。
  */
 function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
     const push = (m) => errors.push(m);
@@ -368,6 +372,10 @@ function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
                 const scalar = (v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v));
                 if (!values.length || !values.every(scalar)) {
                     push(`${uat}.expect 必須是非空的物件，值只能是字串、數字或布林（目前：${JSON.stringify(u.expect)}）`);
+                }
+                const ds = u.deadStatus;
+                if (ds !== undefined && !(Array.isArray(ds) && ds.length && new Set(ds).size === ds.length && ds.every(isDeadStatus))) {
+                    push(`${uat}.deadStatus 必須是不重複的 4xx 狀態碼，408、429 除外（目前：${JSON.stringify(ds)}）`);
                 }
                 for (const key of isPlainObject(u.expect) ? Object.keys(u.expect) : []) {
                     if (key.startsWith('/')) {

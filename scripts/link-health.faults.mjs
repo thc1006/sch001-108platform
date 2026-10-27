@@ -13,7 +13,7 @@
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
- *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API 等）→ link-health.test.mjs 必須失敗
+ *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API、deadStatus 等）→ link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -275,6 +275,11 @@ const policyCases = [
         name: '內容檢查的 expect 是空物件（什麼都不比也算健康）',
         expect: /expect/,
         policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].expect = {}; return p; },
+    },
+    {
+        name: '內容檢查的 deadStatus 列了 5xx',
+        expect: /deadStatus/,
+        policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].deadStatus = [500]; return p; },
     },
     {
         name: '內容檢查過期',
@@ -1722,11 +1727,35 @@ const hostPolicyMutations = [
         apply: (s) => s.replace('    else if (site && verdict.url.hostname !== canonicalHost(verdict.url.hostname)) why =', '    else if (false) why ='),
     },
     {
+        name: 'deadStatus 不檢查狀態碼（列 500 也通過）',
+        apply: (s) => s.replace(' && ds.every(isDeadStatus))', ')'),
+    },
+    {
+        name: 'deadStatus 可以列 429（限流被當成頁面不存在）',
+        apply: (s) => s.replace(' && n !== 408 && n !== 429;', ' && n !== 408;'),
+    },
+    {
         name: '內容檢查的網址也只要同站（頁面可以寫在子網域上）',
         apply: (s) => s.replace('function checkPolicyUrl(raw, at, host, push, site = false) {', 'function checkPolicyUrl(raw, at, host, push, site = true) {'),
     },
 ];
 const hostJudgeMutations = [
+    {
+        name: 'deadStatus 的狀態碼一次就判失效',
+        apply: (s) => s.replace("        if (!r.previous) return once('沒有重打確認');\n        if (!deadStatus(r.previous)) return once(", "        if (false) return once("),
+    },
+    {
+        name: 'deadStatus 不看前一次的狀態碼',
+        apply: (s) => s.replace('        if (!deadStatus(r.previous)) return once(', '        if (false) return once('),
+    },
+    {
+        name: 'deadStatus 的狀態碼預算用完也判失效',
+        apply: (s) => s.replace("        if (r.retrySkipped) return once('時間預算用完，沒有重打確認');\n", ''),
+    },
+    {
+        name: '沒有 deadStatus 的網址，API 連兩次 404 也判失效',
+        apply: (s) => s.replace('(entry.deadStatus ?? []).includes(x.status)', '(entry.deadStatus ?? [404]).includes(x.status)'),
+    },
     {
         name: 'expect 的 JSON pointer 當成最外層的欄位名',
         apply: (s) => s.replace("    if (!key.startsWith('/')) return Object.hasOwn(data, key)", '    if (true) return Object.hasOwn(data, key)'),

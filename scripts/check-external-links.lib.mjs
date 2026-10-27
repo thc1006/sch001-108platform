@@ -88,7 +88,7 @@ function describeValue({ found, value: v }) {
 /**
  * judgeContent 用內容 API 的探測結果判定 contentChecks 裡的一個網址，回傳 { verdict, reason, bucket, notify }，
  * verdict 是 healthy、dead 或 unverified。r 是重打過的結果時，r.previous 是第一次的結果。兩次都是 2xx、剛好是 {} 才算 dead，
- * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。其餘照最後一次判：expect 的欄位（見 lookup）都 ===
+ * 108 課綱資訊網對不存在的 cid、oid 回的就是 {}；只有一次是 {} 的不通知。entry.deadStatus 列的狀態碼也一樣，兩次都是才算 dead。其餘照最後一次判：expect 的欄位（見 lookup）都 ===
  * 才算 healthy，其他是 unverified，notify 表示要不要通知：4xx（429 除外）、被壓縮、超過讀取上限、不是 JSON 物件、
  * 格式和 expect 對不上，多半是網站改了 API；被位址政策擋下也通知。3xx、429、5xx、逾時、中途斷線不通知。
  * @param {{expect: object}} entry contentChecks 的一筆網址 @param {object|null|undefined} r 探測 API 的結果，沒有探測就是空的
@@ -97,6 +97,14 @@ export function judgeContent(entry, r) {
     const unverified = (why, notify, bucket = 'other') => ({ verdict: 'unverified', bucket, notify, reason: `內容 API ${why}` });
     if (!r) return unverified('這次沒有檢查', false);
     if (isBlockedResult(r)) return unverified(`被位址政策擋下：${r.reason}`, true);
+    const deadStatus = (x) => Boolean(x) && !isBlockedResult(x) && (entry.deadStatus ?? []).includes(x.status);
+    if (deadStatus(r)) {
+        const once = (why) => unverified(`HTTP ${r.status}，${why}`, false, unverifiedBucket(r));
+        if (r.retrySkipped) return once('時間預算用完，沒有重打確認');
+        if (!r.previous) return once('沒有重打確認');
+        if (!deadStatus(r.previous)) return once(`前一次不是（${judgeContent(entry, r.previous).reason}）`);
+        return { verdict: 'dead', reason: `內容 API 回 HTTP ${r.status}，網站上查不到這一頁` };
+    }
     if (!(r.status >= 200 && r.status < 300)) {
         return unverified(describeResult(r), r.status >= 400 && r.status < 500 && r.status !== 429, unverifiedBucket(r));
     }
@@ -505,7 +513,7 @@ export function renderReport(m) {
             '這些網址的主機對任何路徑都回 200，只能靠 `scripts/link-policy.json` 的 contentChecks 打 API 確認內容。',
             'API 回 4xx（429 除外）、回應被壓縮、超過讀取上限、不是 JSON 物件或格式和 expect 對不上，多半是網站改了 API，',
             '請照新的寫法改 contentChecks，否則這些網址等於沒有檢查；這幾種和被位址政策擋下的會觸發通知。',
-            '3xx、429、5xx、逾時、連線中途斷了，以及回 {} 卻不是連兩次都 {} 的，不觸發通知。',
+            '3xx、429、5xx、逾時、連線中途斷了，以及回 {} 或 deadStatus 列的狀態碼卻不是連兩次的，不觸發通知。',
             '回應是讀完的 2xx、{} 以外的 JSON 物件時只打一次；其他結果除了被位址政策擋下的，時間預算內會重打一次，這裡寫的是最後一次的結果。',
             '',
         );
