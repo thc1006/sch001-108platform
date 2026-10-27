@@ -5,7 +5,7 @@
     {
       "title": "李宏毅 — 生成式 AI 與機器學習",
       "provider": "台灣大學 李宏毅教授",
-      "platform": "g0v / 開源社群",
+      "platform": "教師個人網站",
       "category": "AI與數據科學",
       "difficulty": "中階",
       "language": "中文",
@@ -16,7 +16,7 @@
         "Deep Learning",
         "LLM"
       ],
-      "description": "台大電機系李宏毅老師的公開課程（2026 最新版），被譽為華語圈最好的 AI 課程。內容涵蓋 LLM、RAG、AI Agent 等最新技術，講解深入淺出且幽默風趣。",
+      "description": "台大電機系李宏毅老師的公開課程。個人網站列出 2026 年春季在內的歷年課程網頁，有投影片、作業與上課影片。內容涵蓋 LLM、RAG、AI Agent 等技術。",
       "url": "https://speech.ee.ntu.edu.tw/~hylee/index.php",
       "thumbnail_url": "img/courses/ntu-hylee.jpg"
     },
