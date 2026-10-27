@@ -127,18 +127,17 @@
     },
     {
       "title": "基礎微積分",
-      "provider": "國立台灣大學",
+      "provider": "可汗學院",
       "platform": "Khan Academy",
       "category": "自然科學",
       "difficulty": "入門",
-      "language": "中文",
+      "language": "英文",
       "certificate": false,
       "tags": [
         "微積分",
-        "數學",
-        "台大"
+        "數學"
       ],
-      "description": "由台大數學系合作開設，透過可汗學院的平台，提供免費且高品質的微積分教學影片與習題。",
+      "description": "可汗學院的 Calculus 1 課程，8 個單元：極限與連續、導數的定義與基本規則、連鎖律等進階微分、導數的應用、函數分析、積分、微分方程、積分的應用。有教學影片與練習題，免費。",
       "url": "https://www.khanacademy.org/math/calculus-1",
       "thumbnail_url": "img/courses/khan-calculus.png"
     },
