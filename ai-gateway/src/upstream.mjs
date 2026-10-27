@@ -237,8 +237,10 @@ export function redact(text, { secrets = [], limit = 500, truncated = false } = 
 const UPSTREAM_TOKEN = /^[A-Za-z0-9_.:-]{1,64}$/;
 
 /**
- * upstreamToken 回傳可以進 log 的上游代號，不合格就是 undefined。句子進不來；key 與內部位址符合形狀，
- * 但遮罩前後不同，也不收。 @param {unknown} value @param {string[]} secrets @returns {string|undefined}
+ * upstreamToken 回傳可以進 log 的上游代號（錯誤的 type、code、param，request id 與 finish_reason），
+ * 不合格就是 undefined。句子進不來；key 與內部位址符合形狀，但遮罩前後不同，也不收。上游把剛好
+ * 符合形狀的輸入值（例如一個英文單字）放進這些欄位時，仍會進 log。
+ * @param {unknown} value @param {string[]} secrets @returns {string|undefined}
  */
 function upstreamToken(value, secrets) {
     if (typeof value !== 'string' && !Number.isInteger(value)) return undefined;

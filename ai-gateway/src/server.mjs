@@ -46,9 +46,8 @@ const SHUTDOWN_FLUSH_MS = 1_000;
 const REQUEST_WAIT_MS = 5_000;
 // 回應寫完之後，用戶端遲遲不把資料收走（不讀的連線），最多再等這麼久就斷開
 const DRAIN_TIMEOUT_MS = 30_000;
-// 生成期間用戶端不把資料收走：待送的資料超過這麼多，或 write() 回 false 之後這麼久都沒有 drain，
-// 就中止上游並關掉連線。模型一秒只寫幾十個 token，正常的用戶端收得比它快，待送量接近 0；
-// 不設限的話，不讀的連線會讓整份回答（累計上限見 generate.mjs）都排在記憶體裡
+// 生成期間待送的資料超過這麼多，或 write() 回 false 之後這麼久都沒有 drain，就中止上游並關掉連線。
+// 模型一秒只寫幾十個 token，正常的用戶端收得比它快，待送量接近 0；不設限的話整份回答都排在記憶體裡
 const MAX_PENDING_BYTES = 1024 * 1024;
 const STALL_TIMEOUT_MS = 30_000;
 // 用戶端 IP 標頭只看最後這麼多個字元：最右邊的值就在最後面，前面再長都與我們無關
@@ -63,9 +62,9 @@ const MAX_BODY_DEPTH = 3;
 // Node 檢查 headersTimeout／requestTimeout 的間隔。預設 30 秒，設定的逾時實際上要多等最多
 // 30 秒才生效（2026-10-22 實測：20 秒的標頭期限 30 秒才切、30 秒的 body 期限 60 秒才切）
 const CONNECTIONS_CHECK_MS = 5_000;
-// 同時在收 body 的任務請求上限，超過就立刻 503 並關掉連線。Funnel 收完標頭就轉送，body 邊收邊送，
-// 慢慢上傳的連線每條約 50 KiB。依記憶體選：2026-10-22 在 256 MiB 的 cgroup 裡持續灌慢速上傳，
-// RSS 最高 162 MiB（上限 2000 時 204 MiB）。滿了新任務一律 503，取捨見 README 的「資源上限」
+// 同時在收 body 的任務請求上限，超過就 503 並關連線。Funnel 邊收邊轉送 body，慢速上傳每條約 50 KiB；
+// 2026-10-22 在 256 MiB 的 cgroup 實測 RSS 最高 162 MiB（上限 2000 時 204 MiB）。代價：照預設的每分鐘
+// 請求上限與 BODY_TIMEOUT_MS，每個 IPv4 來源平均佔 20 個，約 50 個來源就能佔滿，期間新任務都拿到 503
 const MAX_BODY_READS = 1000;
 // 連線數的最後防線（net.Server 的 maxConnections：到了上限，新連線直接關掉）。比 MAX_BODY_READS
 // 大，留給進行中的 SSE、閒置的 keep-alive 與還在送標頭的連線
@@ -816,6 +815,8 @@ export function createGateway({
             if (handle.queued) queueMs = Date.now() - queuedAt;
             const usage = result?.usage ?? failedWith?.usage;
             const stats = result?.stats ?? failedWith?.stats;
+            // queue 從送出 SSE 標頭算起。firstByte 含探測與錯誤的回應；WinLab 開始處理才送標頭，
+            // 所以也含它的排隊
             log(outcome === 'ok' ? 'info' : 'warn', 'TASK', {
                 id: requestId,
                 task: task.id,
@@ -846,7 +847,8 @@ export function createGateway({
         }
 
         // 寫進回應，用戶端不把資料收走時中止任務（見 MAX_PENDING_BYTES）。超過上限是在寫之前檢查：
-        // 一次寫入大的 done 不算，要上一筆還沒收走才算
+        // 一次寫入大的 done 不算，要上一筆還沒收走才算。writableLength 只算閘道自己排著的：經過反向代理
+        // 時代理會一直讀走，2026-10-26 本機實測閘道要送出約 13～16 MB 才判定，在那之前名額照樣佔著
         function write(chunk) {
             if (!res.headersSent || res.writableEnded || res.destroyed) return;
             if (res.writableLength > maxPendingBytes) {
