@@ -90,6 +90,8 @@ test('data：比賽日期不得再被寫成報名截止（My First CTF／iBridge
     assert.equal(ctf.eventStartsAt, '2026-05-16');
     assert.equal(ctf.cycle, undefined, '報名截止 4、5 月都有，不得拿比賽月份當週期');
     assert.ok(ctf.registrationNote?.includes('2027'));
+    // 沒有 cycle 時看門狗到查證滿 180 天的 2027-04-23 才通知，可能已過 2027 屆的報名（#208）。
+    assert.equal(ctf.recheckOn, '2027-03-01', '2027 屆公布前要在 4 月報名開放前回來查');
 
     // 官網 2025 屆：報名「即日起至 11 月 28 日（五）17:00 截止」、競賽「2025 年 12 月 13 日（六）」
     // 官網只有兩屆紀錄（2023-06、2025-12），辦理時間不固定 → 不得填 cycle 推算下一屆
@@ -214,6 +216,7 @@ test('data：官網未公布截止日的競賽不得被補上一個猜出來的�
     assert.equal(ichc.deadlineAt, undefined);
     assert.equal(ichc.cycle, undefined, '只查得到 2026 一屆的截止日');
     assert.ok(ichc.registrationNote?.includes('2027'));
+    assert.equal(ichc.recheckOn, '2027-01-15', '2027 屆公布前要在 3 月底之前回來查');
 
     // Foyle 官網 Rules：「Deadline: Midnight 31st July 2026 (BST)」。
     // midnight 究竟指 00:00 或 23:59 官網未界定 → 不得自行補一個 deadlineAt。
@@ -261,6 +264,7 @@ test('data：本輪查證到的賽事日期與週期', () => {
     assert.equal(bee.eventEndsAt, '2026-06-27');
     assert.equal(bee.cycle, undefined, '2025 屆 3/20、2026 屆 5/9 截止，沒有固定月份');
     assert.ok(bee.registrationNote?.includes('2027'));
+    assert.equal(bee.recheckOn, '2027-01-15', '2027 屆公布前要在 3 月之前回來查');
 });
 
 // 資料對了不等於畫面對了。#82 修掉的正是「資料是賽事日期、卡片寫成報名截止」，
