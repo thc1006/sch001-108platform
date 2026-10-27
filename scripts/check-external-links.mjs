@@ -36,6 +36,7 @@
  * 另一個盲點是對任何路徑都回 200 的前端殼，頁面刪掉了狀態碼也不變。這種主機列在
  * link-policy.json 的 contentChecks，頁面健康之後再打它寫的 API，連兩次都是 2xx 的 {} 才算 dead，
  * 只有一次是 {} 算無法判定、不通知，見 judgeContent。
+ * 頁面健康、內容卻是錯誤頁或首頁的軟 404 另外套規則，必要時打同目錄的隨機路徑比對落點，見 soft404.lib.mjs。
  * 另有第四種訊號（不是第四態）：被位址政策擋下。它在分類上算 unverified（我們
  * 確實沒驗到），但必須單獨大聲列出：資料檔裡出現指向 loopback／私網／雲端
  * metadata 的網址，意義是資料被動了手腳或寫錯，不是站台防爬。
@@ -48,6 +49,7 @@
  *             --inventory、--policy、--report 換掉讀寫的檔案，路徑相對於 repo 根目錄。
  *             --record 把探測結果錄進檔案，--replay 用錄好的結果代替連網，兩者的路徑相對於目前目錄，
  *             可以一起用。端到端測試（check-external-links.test.mjs）用 --replay 跑整支程式。
+ *             錄製檔另外記下軟 404 隨機路徑用的字串，重播時打同樣的網址。
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
@@ -60,6 +62,7 @@ import { validatePolicy } from './link-policy.lib.mjs';
 import { screenBareDomains, probeUrlFor } from './bare-domains.lib.mjs';
 import { EXTERNAL_LINKS_MARKER } from './watchdog-issue.lib.mjs';
 import { buildReport, contentProbeTargets, CONTENT_PROBE } from './check-external-links.lib.mjs';
+import { runSoft404, newToken } from './soft404.lib.mjs';
 
 const argOf = (name) => {
     const i = process.argv.indexOf(name);
@@ -124,11 +127,12 @@ function replayProbe(probes) {
     };
 }
 
-// 錄製檔的格式是 { version: 1, probes: { 網址: probe 的結果或結果的陣列 }, ns: { 'org.': NS 清單或 { code } } }。
+// 錄製檔的格式是 { version: 1, probes: { 網址: probe 的結果或結果的陣列 }, ns: { 'org.': NS 清單或 { code } }, randomToken }。
 // 重播與錄製都只換掉最底層的 probe 與 resolveNs，runProbes、篩選與 buildReport 照常執行。
 let probeFn = probe;
 let resolveNs = (name) => dns.promises.resolveNs(name);
 let recorded = null;
+let randomToken = newToken();
 if (REPLAY_PATH) {
     let rec;
     try {
@@ -138,6 +142,7 @@ if (REPLAY_PATH) {
     }
     if (rec?.version !== 1) await die(`錄製檔 ${REPLAY_PATH} 的 version 不是 1，這支程式讀不懂。`);
     probeFn = replayProbe(rec.probes);
+    randomToken = rec.randomToken ?? randomToken;
     // 沒有錄到的 TLD 歸到 DNS 未答，重播不完整時報告看得出來。
     resolveNs = async (name) => {
         const answer = rec.ns?.[name];
@@ -147,7 +152,7 @@ if (REPLAY_PATH) {
 }
 if (RECORD_PATH) {
     // 同一個網址探測不只一次時（判定失效前的重試）存成陣列，重播時照順序回傳。
-    recorded = { version: 1, probes: {}, ns: {} };
+    recorded = { version: 1, probes: {}, ns: {}, randomToken };
     const [baseProbe, baseNs] = [probeFn, resolveNs];
     probeFn = async (url, signal, opts) => {
         const r = await baseProbe(url, signal, opts);
@@ -224,6 +229,12 @@ if (contentTargets.length) {
     });
 }
 
+// 重播時不等重打的間隔，錄製檔裡已經是隔了這段時間的結果。
+const soft404 = await runSoft404(targets, results, { hijacked: hijackedEntries, contentChecks }, randomToken, {
+    probeFn,
+    ...(REPLAY_PATH ? { sleep: async () => {} } : {}),
+});
+
 // 內文裸網域在盤點裡存的是「候選」：擷取是純字串規則，跑在不能連網的確定性檢查裡，
 // 因此 Node.js／fuse.min.js／competitions.html 這類形態相符但不是網域的東西也在裡面。
 // 這裡用 DNS 根區把它們篩掉：查 TLD 的 NS 記錄，自我維護、不必養一份 TLD 清單。
@@ -274,6 +285,7 @@ const out = buildReport({
     bareResults,
     bareSkipped,
     contentResults,
+    soft404,
     policy: { entries: policyEntries, hijacked: hijackedEntries, contentChecks },
     budgetMs: BUDGET_MS,
     bareBudgetMs: BARE_BUDGET_MS,

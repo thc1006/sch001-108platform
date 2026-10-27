@@ -12,7 +12,7 @@
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
- *   I. 軟 404 的規則、隨機路徑與重打 → soft404.test.mjs 必須失敗
+ *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -942,7 +942,7 @@ const reportMutations = [
     },
     {
         name: '盤點網址的接管命中放進例外那一段',
-        apply: (s) => s.replace('const urlBins = { blocked, hijacked: hijackedHits, dead, suppressed, unverified, contentUnverified };', 'const urlBins = { blocked, hijacked: suppressed, dead, suppressed, unverified, contentUnverified };'),
+        apply: (s) => s.replace('const urlBins = { blocked, hijacked: hijackedHits, dead,', 'const urlBins = { blocked, hijacked: suppressed, dead,'),
     },
     {
         name: '回應的物件照樣 stringify（很深的巢狀結構讓整支健檢當掉）',
@@ -974,7 +974,7 @@ const reportMutations = [
     },
     {
         name: '報告的無法判定不算內容 API 驗不到的',
-        apply: (s) => s.replace('無法判定 ${unverified.length + contentUnverified.length}、', '無法判定 ${unverified.length}、'),
+        apply: (s) => s.replace('無法判定 ${unverified.length + contentUnverified.length + soft404Unverified.length}、', '無法判定 ${unverified.length + soft404Unverified.length}、'),
     },
     {
         name: 'judgeUrl 不看內容檢查（前端殼永遠算健康）',
@@ -1094,7 +1094,7 @@ const reportMutations = [
     },
     {
         name: "報告不寫檢查未完成那一段",
-        apply: (s) => s.replace("    if (skipped || bareSkipped || content.skipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
+        apply: (s) => s.replace("    if (urlSkipped || soft404Run.randomsSkipped) {\n        lines.push(", "    if (false) {\n        lines.push("),
     },
     {
         name: "EXPIRY_NOTICE_DAYS 改成 0（永遠不提醒，要等到期當天 PR 全紅才發現）",
@@ -1134,7 +1134,7 @@ const reportMutations = [
     },
     {
         name: "列出接管主機時仍寫「全部外部連結正常」",
-        apply: (s) => s.replace(" && !hijackedHits.length) lines.push", ") lines.push"),
+        apply: (s) => s.replace(" && !bareOther.length && !hijackedHits.length) {", " && !bareOther.length) {"),
     },
     {
         name: "報告的來源標籤對調",
@@ -1167,7 +1167,7 @@ const assemblyMutations = [
     },
     {
         name: 'judgeUrl 沒拿到內容 API 的結果',
-        apply: (s) => s.replace('judgeUrl(targets[i], r, policy, contentResults[i])', 'judgeUrl(targets[i], r, policy)'),
+        apply: (s) => s.replace('judgeUrl(targets[i], r, policy, contentResults[i],', 'judgeUrl(targets[i], r, policy, undefined,'),
     },
     {
         name: '覆蓋不看沒有結果的內容 API',
@@ -1183,7 +1183,7 @@ const assemblyMutations = [
     },
     {
         name: "judgeUrl 拿到空的接管名單（盤點網址的接管命中算成健康）",
-        apply: (s) => s.replace("judgeUrl(targets[i], r, policy, contentResults[i])", "judgeUrl(targets[i], r, { ...policy, hijacked: [] }, contentResults[i])"),
+        apply: (s) => s.replace("judgeUrl(targets[i], r, policy, contentResults[i],", "judgeUrl(targets[i], r, { ...policy, hijacked: [] }, contentResults[i],"),
     },
     {
         name: "judgeBare 拿到空的接管名單",
@@ -1195,7 +1195,7 @@ const assemblyMutations = [
     },
     {
         name: "盤點網址的自動訊號沒收",
-        apply: (s) => s.replace("        if (signal) autoSignals.push(signal);\n        if (bin === 'healthy') healthy++;", "        if (bin === 'healthy') healthy++;"),
+        apply: (s) => s.replace("        if (signal) autoSignals.push(signal);\n        if (judged.hint)", "        if (judged.hint)"),
     },
     {
         name: "裸網域的自動訊號沒收",
@@ -1215,7 +1215,7 @@ const assemblyMutations = [
     },
     {
         name: "覆蓋不看 DNS 沒答的候選",
-        apply: (s) => s.replace(" && screen.unresolved.length === 0;", ";"),
+        apply: (s) => s.replace(" && screen.unresolved.length === 0 &&", " &&"),
     },
     {
         name: "GITHUB_OUTPUT 寫死 coverage_complete=true",
@@ -1493,6 +1493,62 @@ const soft404Mutations = [
     },
 ];
 
+// 軟 404 在報告裡的分組也在 I 段，測試在 soft404.test.mjs。
+const soft404ReportMutations = [
+    {
+        name: '軟 404 不觸發通知',
+        apply: (s) => s.replace('        soft404.length > 0 ||\n', ''),
+    },
+    {
+        name: '主機層的例外也壓得下軟 404',
+        apply: (s) => s.replace('matchPolicy(entries.filter((e) => e.match.url !== undefined), target.url)', 'matchPolicy(entries, target.url)'),
+    },
+    {
+        name: '只命中一次的軟 404 算健康',
+        apply: (s) => s.replace("if (soft.verdict === 'unverified') return { bin: 'soft404Unverified', item: s, signal, content };", ''),
+    },
+    {
+        name: '內容檢查的網址也用軟 404 的判定',
+        apply: (s) => s.replace("if (verdict === 'healthy' && !c && soft) {", "if (verdict === 'healthy' && soft) {"),
+    },
+    {
+        name: '沒打的隨機路徑不算進覆蓋不完整',
+        apply: (s) => s.replace('soft404Run.randomsSkipped === 0 && soft404Run.recheckSkipped === 0;', 'true;'),
+    },
+    {
+        name: '精確網址的例外也壓得下只命中一次的軟 404',
+        apply: (s) => s.replace("const policy = soft.verdict === 'dead' ? matchPolicy", "const policy = soft.verdict !== 'hint' ? matchPolicy"),
+    },
+    {
+        name: '沒重打完的網址不算進覆蓋不完整',
+        apply: (s) => s.replace(' && soft404Run.recheckSkipped === 0;', ';'),
+    },
+    {
+        name: '週報的隨機路徑數不扣沒打的',
+        apply: (s) => s.replace('const probedRandoms = (run) => run.randoms - run.randomsSkipped;', 'const probedRandoms = (run) => run.randoms;'),
+    },
+    {
+        name: '只有隨機路徑沒打時不出覆蓋不完整一段',
+        apply: (s) => s.replace('if (urlSkipped || soft404Run.randomsSkipped) {', 'if (urlSkipped) {'),
+    },
+    {
+        name: '只命中一次的軟 404 不擋「全部正常」',
+        apply: (s) => s.replace(' && !soft404Unverified.length && !bareOther.length', ' && !bareOther.length'),
+    },
+    {
+        name: '主控台的未檢查筆數不算沒重打的網址',
+        apply: (s) => s.replace('    const urlSkipped = skipped + bareSkipped + content.skipped + soft404Run.recheckSkipped;\n    if (!coverageComplete)', '    const urlSkipped = skipped + bareSkipped + content.skipped;\n    if (!coverageComplete)'),
+    },
+    {
+        name: '只有隨機路徑沒打時也寫 0 筆未檢查',
+        apply: (s) => s.replace("[urls || !randoms ? `${urls} 筆未檢查` : ''", "[`${urls} 筆未檢查`"),
+    },
+    {
+        name: '軟 404 的原因不經 inertText（那台主機給的標題在 issue 裡會渲染）',
+        apply: (s) => s.replace('lines.push(`  - ${inertText(d.reason)}`);', 'lines.push(`  - ${d.reason}`);'),
+    },
+];
+
 // H 段是 check-external-links.mjs 的突變測試。主程式讀檔、探測之後把名單交給 buildReport，
 // 交錯一份或對錯位置，buildReport 的單元測試照樣全綠。
 const mainMutations = [
@@ -1570,11 +1626,11 @@ const mainMutations = [
     },
     {
         name: 'contentChecks 沒交給 buildReport',
-        apply: (s) => s.replace('hijacked: hijackedEntries, contentChecks }', 'hijacked: hijackedEntries }'),
+        apply: (s) => s.replace('policy: { entries: policyEntries, hijacked: hijackedEntries, contentChecks }', 'policy: { entries: policyEntries, hijacked: hijackedEntries }'),
     },
     {
         name: '內容 API 的結果沒交給 buildReport',
-        apply: (s) => s.replace('    contentResults,\n    policy:', '    policy:'),
+        apply: (s) => s.replace('    contentResults,\n    soft404,', '    soft404,'),
     },
     {
         name: '內容 API 的結果對錯位置',
@@ -1590,7 +1646,7 @@ const mainMutations = [
     },
     {
         name: '接管名單沒交給 buildReport',
-        apply: (s) => s.replace('hijacked: hijackedEntries, contentChecks }', 'hijacked: [], contentChecks }'),
+        apply: (s) => s.replace('policy: { entries: policyEntries, hijacked: hijackedEntries, contentChecks }', 'policy: { entries: policyEntries, hijacked: [], contentChecks }'),
     },
     {
         name: '裸網域候選沒交給 buildReport（報告找不到出處）',
@@ -1619,6 +1675,18 @@ const mainMutations = [
     {
         name: '重播沒接到盤點網址的 runProbes（改成連網探測）',
         apply: (s) => s.replace('readBodyBytes: HEAD_BYTES, probeFn }', 'readBodyBytes: HEAD_BYTES }'),
+    },
+    {
+        name: '重播時不用錄製檔記下的隨機字串',
+        apply: (s) => s.replace('    randomToken = rec.randomToken ?? randomToken;\n', ''),
+    },
+    {
+        name: '錄製檔沒有記下隨機字串',
+        apply: (s) => s.replace('recorded = { version: 1, probes: {}, ns: {}, randomToken };', 'recorded = { version: 1, probes: {}, ns: {} };'),
+    },
+    {
+        name: '軟 404 的結果沒交給 buildReport',
+        apply: (s) => s.replace('    soft404,\n    policy:', '    policy:'),
     },
     {
         name: '錄製檔裡沒有的網址當成健康',
@@ -1703,6 +1771,8 @@ await runMutants('H. 主程式交給 buildReport 的名單與交給 probe 的選
     'check-external-links.mjs', mainMutations, ['check-external-links.test.mjs'], RED('這一段'));
 await runMutants('I. 軟 404 的規則、隨機路徑與重打（soft404.test.mjs 必須紅）：',
     'soft404.lib.mjs', soft404Mutations, ['soft404.test.mjs'], RED('這條規則'));
+await runMutants('I. 軟 404 在報告裡的分組（soft404.test.mjs 必須紅）：',
+    'check-external-links.lib.mjs', soft404ReportMutations, ['soft404.test.mjs'], RED('這一段'));
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
@@ -1711,5 +1781,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);

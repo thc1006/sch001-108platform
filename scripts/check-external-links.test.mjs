@@ -298,7 +298,11 @@ test('主程式：--record 把探測與 NS 查詢的結果照錄製檔的格式�
     const out = JSON.parse(r.recorded);
     const rec = recording();
     assert.equal(out.version, 1);
-    assert.deepEqual(Object.keys(out.probes).sort(), Object.keys(rec.probes).sort());
+    // ok2 的 /x 可見文字很少，要打同目錄的隨機路徑；錄製檔沒有它，重播回 EREPLAY，照樣錄下來。
+    assert.match(out.randomToken, /^sch001-linkcheck-[0-9a-f]{12}$/);
+    const random = `https://ok2.example.test/${out.randomToken}`;
+    assert.deepEqual(Object.keys(out.probes).sort(), [...Object.keys(rec.probes), random].sort());
+    assert.equal(out.probes[random].code, 'EREPLAY');
     assert.deepEqual(out.probes['https://gone.example.test/page'], [rec.probes['https://gone.example.test/page'], rec.probes['https://gone.example.test/page']]);
     assert.deepEqual(out.probes['https://waf.example.test/doc'], rec.probes['https://waf.example.test/doc']);
     assert.deepEqual(out.ns, rec.ns);
@@ -312,6 +316,31 @@ test('主程式：同一個網址錄成陣列時，重播照順序回傳，第�
     const r = await run({ recording: rec });
     assert.equal(r.code, 0, r.stdout);
     assert.match(r.report, /- 本次檢查 5 筆：健康 3、失效 0、位址封鎖 0、無法判定 0、已列例外 1/);
+});
+
+test('主程式：軟 404 的隨機路徑用錄製檔記下的字串重播，兩次都落在同一個維修頁才判軟 404', async () => {
+    const token = 'sch001-linkcheck-0123456789ab';
+    const url = 'https://maint.example.test/map/dept?code=1';
+    const notice = (from) => ({
+        ...ok('https://maint.example.test/notice/'),
+        bodyHead: `<html><head><title>系統維修公告</title></head><body>${'維修中。'.repeat(80)}</body></html>`,
+        redirects: [{ from, status: 302, to: 'https://maint.example.test/notice/' }],
+    });
+    const rec = recording();
+    rec.randomToken = token;
+    rec.probes[url] = notice(url);
+    rec.probes[`https://maint.example.test/map/${token}`] = notice(`https://maint.example.test/map/${token}`);
+    const inv = inventory();
+    inv.urls = [...inv.urls, { url, occurrences: occ('dist/m/index.html') }];
+    const r = await run({ recording: rec, inventory: inv, args: ['--record', '$RECORD'] });
+    assert.equal(r.code, 0, r.stdout);
+    assert.match(r.report, /- 本次檢查 6 筆：健康 2、失效 1、位址封鎖 0、無法判定 0、已列例外 1、軟 404 1/);
+    assert.ok(r.report.includes(`- **第 4 條**：${url}`), r.report);
+    assert.equal(r.output, 'needs_attention=true\ncoverage_complete=true\n');
+    const out = JSON.parse(r.recorded);
+    assert.equal(out.randomToken, token, '重播時要沿用錄製檔的字串');
+    assert.equal(out.probes[url].length, 2, '命中之後要重打網址');
+    assert.equal(out.probes[`https://maint.example.test/map/${token}`].length, 2, '第 4 條要連隨機路徑一起重打');
 });
 
 test('主程式：錄製檔的 version 不是 1 或沒有寫時不重播，寫出致命錯誤', async () => {
