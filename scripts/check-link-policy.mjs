@@ -23,7 +23,8 @@
  *      完整網址，看起來也是要讀者去開的位址。要提醒讀者某個網域已經易主，只寫裸網域。
  *
  *   5. contentChecks 宣告的主機對任何路徑都回 200，狀態碼看不出網址還在不在。這些主機上除了
- *      首頁，盤點的每個網址都要在 contentChecks 寫明用哪個 API 驗內容，宣告了 missingTitles 的主機除外。
+ *      首頁，盤點的每個網址都要在 contentChecks 寫明用哪個 API 驗內容；宣告了 missingTitles 的主機只要求路徑是首頁、
+ *      又帶查詢字串的網址。
  *      contentChecks 的主機與網址也要對得上盤點，對不上就是殭屍條目。
  *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
@@ -127,7 +128,9 @@ for (const { url, check } of contentCheckGaps(contentChecks, urls)) {
     const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
     errors.push({
         where: [...new Set(occ.map((o) => o.file))].join('、') || '(未知出處)',
-        message: `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或替這台主機宣告 missingTitles。`,
+        message: check.missingTitles
+            ? `${url} 的路徑是首頁、又帶查詢字串，標題檢查不看它。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或改連不帶查詢字串的網址。`
+            : `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或替這台主機宣告 missingTitles。`,
     });
 }
 

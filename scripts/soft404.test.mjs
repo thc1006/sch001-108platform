@@ -195,6 +195,9 @@ test('contentChecks 與 hijacked 的主機、首頁、不是 2xx 的網址不套
     for (const policy of [{ ...POLICY, hijacked: [{ match: { host } }] }, { ...POLICY, contentChecks: [{ match: { host }, urls: [] }] }]) {
         assert.deepEqual(soft404Candidates(targets, results, policy, TOKEN), []);
     }
+    // missingTitles 的主機照樣套規則，但不打隨機路徑；寫了 API 的網址不套。
+    const titled = { ...POLICY, contentChecks: [{ match: { host }, missingTitles: ['x'], urls: [{ url: targets[1].url }] }] };
+    assert.deepEqual(soft404Candidates(targets, results, titled, TOKEN), [{ index: 0, url: targets[0].url, random: null }]);
     assert.deepEqual(soft404Candidates([{ url: `${base}/` }], [{ status: 200, finalUrl: `${base}/` }], POLICY, TOKEN), []);
     assert.deepEqual(soft404Candidates([{ url: `${base}/a` }], [{ status: 404 }], POLICY, TOKEN), []);
 });
@@ -371,4 +374,10 @@ test('報告：頁面不健康或有內容檢查時，軟 404 的判定不用', 
     const contentChecks = [{ match: { host: 'x.test' }, urls: [{ url: t.url, api: 'https://x.test/api', expect: { id: 1 } }] }];
     const api = { status: 200, bodyHead: '{"id":1}' };
     assert.equal(judgeUrl(t, { status: 200 }, { ...p, contentChecks }, api, softItem('dead', [1])).bin, 'healthy');
+    // 看標題的網址標題健康，軟 404 照樣算；標題判失效時列在連結失效。
+    const titled = [{ match: { host: 'x.test' }, missingTitles: ['首頁'], urls: [] }];
+    const page = { status: 200, contentType: 'text/html', bodyHead: '<title>文章</title>' };
+    assert.equal(judgeUrl(t, page, { ...p, contentChecks: titled }, null, softItem('dead', [1])).bin, 'soft404');
+    const gone = { status: 200, contentType: 'text/html', bodyHead: '<title>首頁</title>' };
+    assert.equal(judgeUrl(t, gone, { ...p, contentChecks: titled }, null, softItem('dead', [1]), { ...gone, previous: gone }).bin, 'dead');
 });

@@ -479,10 +479,14 @@ export function matchContentCheck(contentChecks, url) {
     return null;
 }
 
+// HOME_PATH 是首頁的路徑：/，以及 index、default、home 檔。這些網址的標題常和首頁相同，missingTitles 又常列首頁的標題，
+// 標題檢查不看它們。
+export const HOME_PATH = /^\/((index|default|home)(\.\w+)?)?$/i;
+
 /**
  * contentCheckGaps 列出落在 contentChecks 宣告的主機上、卻沒有內容檢查的網址，回傳 { url, check }。
- * 首頁（路徑是 /、沒有查詢字串）不列：站還在，首頁就在，狀態碼看得出來。宣告了 missingTitles 的主機不列，網址看標題。盤點不含 fragment，
- * 靠 #/ 路由的網址到這裡已經是首頁，看不到。
+ * 首頁（路徑是 /、沒有查詢字串）不列：站還在，首頁就在，狀態碼看得出來。宣告了 missingTitles 的主機上，網址看標題，
+ * 只列路徑是 HOME_PATH、帶查詢字串的網址，例如 /index.php?id=5。盤點不含 fragment，靠 #/ 路由的網址到這裡已經是首頁，看不到。
  * @param {object[]} contentChecks validatePolicy 回傳的 contentChecks @param {string[]} urls
  */
 export function contentCheckGaps(contentChecks, urls) {
@@ -495,7 +499,8 @@ export function contentCheckGaps(contentChecks, urls) {
             continue;
         }
         const check = (contentChecks ?? []).find((c) => c.match.host === canonicalHost(u.hostname));
-        if (!check || check.missingTitles || (u.pathname === '/' && !u.search) || matchContentCheck([check], url)) continue;
+        if (!check || (u.pathname === '/' && !u.search) || matchContentCheck([check], url)) continue;
+        if (check.missingTitles && !(HOME_PATH.test(u.pathname) && u.search)) continue;
         gaps.push({ url, check });
     }
     return gaps;

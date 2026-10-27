@@ -168,20 +168,23 @@ export function judgeSoft404(url, r, random, token) {
 }
 
 /**
- * soft404Candidates 列出要套規則的網址：頁面回 2xx、不是首頁，主機不在 hijacked 或 contentChecks。回傳 { index, url, random }，
- * random 是要打的隨機路徑，只有轉址過或可見文字很少的網址才打，其餘是 null。
+ * soft404Candidates 列出要套規則的網址：頁面回 2xx、不是首頁，主機不在 hijacked，也不是 contentChecks 裡寫了 API 的網址或
+ * 沒有 missingTitles 的主機。回傳 { index, url, random }，random 是要打的隨機路徑，只有轉址過或可見文字很少的網址才打，
+ * 其餘是 null。missingTitles 的主機不打，隨機路徑由 missing-titles.lib.mjs 打，這裡只套第 1 到 3 條。
  * @param {{url: string}[]} targets @param {(object|null)[]} results @param {{hijacked?: object[], contentChecks?: object[]}} policy
  * @param {string} token
  */
 export function soft404Candidates(targets, results, policy, token) {
-    const contentHosts = new Set((policy.contentChecks ?? []).map((c) => c.match.host));
+    const apiHosts = new Set((policy.contentChecks ?? []).filter((c) => !c.missingTitles).map((c) => c.match.host));
+    const titleHosts = new Set((policy.contentChecks ?? []).filter((c) => c.missingTitles).map((c) => c.match.host));
     const out = [];
     targets.forEach(({ url }, index) => {
         const r = results[index];
         if (!ok2(r) || isHome(url) || matchHijacked(policy.hijacked, url) || matchContentCheck(policy.contentChecks, url)) return;
-        if (contentHosts.has(canonicalHost(new URL(url).hostname))) return;
+        const host = canonicalHost(new URL(url).hostname);
+        if (apiHosts.has(host)) return;
         const f = pageFacts(r);
-        const needRandom = redirected(r) || Boolean(f?.complete && f.visible < MIN_VISIBLE);
+        const needRandom = !titleHosts.has(host) && (redirected(r) || Boolean(f?.complete && f.visible < MIN_VISIBLE));
         out.push({ index, url, random: needRandom ? randomSibling(url, token) : null });
     });
     return out;

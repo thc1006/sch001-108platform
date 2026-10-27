@@ -203,8 +203,8 @@ test('主程式：contentChecks 的網址在頁面健康之後打 API，連兩�
     assert.match(dead, /- \*\*內容 API 回 \{\}，網站上查不到這一頁\*\*：https:\/\/spa\.example\.test\/item\?id=2\n {2}- 出處：`dist\/s2\/index\.html`/);
     assert.match(dead, /- \*\*內容 API 回 HTTP 404，網站上查不到這一頁\*\*：https:\/\/spa\.example\.test\/item\?id=8\n {2}- 出處：`dist\/s8\/index\.html`/);
     assert.doesNotMatch(dead, /id=[134567]/);
-    const unv = section(r.report, '### 🧩 內容 API 驗不到');
-    assert.match(unv, /^### 🧩 內容 API 驗不到 3 筆\n[\s\S]*\n- 內容 API HTTP 401：https:\/\/spa\.example\.test\/item\?id=3\n/);
+    const unv = section(r.report, '### 🧩 內容檢查驗不到');
+    assert.match(unv, /^### 🧩 內容檢查驗不到 3 筆\n[\s\S]*\n- 內容 API HTTP 401：https:\/\/spa\.example\.test\/item\?id=3\n/);
     assert.match(unv, /\n- 內容 API 被位址政策擋下：spa\.example\.test 解析到被封鎖的位址：127\.0\.0\.1[^\n]*：https:\/\/spa\.example\.test\/item\?id=5\n/);
     assert.equal(r.output, 'needs_attention=true\ncoverage_complete=true\n');
     assert.match(unv, /\n- 內容 API 回 \{\}，前一次不是 \{\}（內容 API HTTP 503）：https:\/\/spa\.example\.test\/item\?id=7\n/);
@@ -346,6 +346,48 @@ test('主程式：軟 404 的隨機路徑用錄製檔記下的字串重播，兩
     assert.equal(out.randomToken, token, '重播時要沿用錄製檔的字串');
     assert.equal(out.probes[url].length, 2, '命中之後要重打網址');
     assert.equal(out.probes[`https://maint.example.test/map/${token}`].length, 2, '第 4 條要連隨機路徑一起重打');
+});
+
+test('主程式：missingTitles 的主機看標題，16KB 讀不到標題的重讀，打同目錄的隨機路徑，錄製檔記下這些請求', async () => {
+    const token = 'sch001-linkcheck-0123456789ab';
+    const site = 'https://news.example.test';
+    const home = '新聞站 - 首頁';
+    const html = (title, before = '') => `<html><head></head><body>${before}<title>${title}</title><p>${'內容。'.repeat(80)}</p></body></html>`;
+    const page = (path, body) => ({ status: 200, finalUrl: `${site}${path}`, redirects: [], contentType: 'text/html', bodyHead: body });
+    const rec = recording();
+    rec.randomToken = token;
+    // /news/1 健康；/news/2 的標題在 16KB 之後，重讀兩次都是首頁的標題；/topic/3 健康，但隨機路徑的標題換了。
+    rec.probes[`${site}/news/1`] = page('/news/1', html('第一篇'));
+    rec.probes[`${site}/news/2`] = page('/news/2', html(home, `<div>${'x'.repeat(20 * 1024)}</div>`));
+    rec.probes[`${site}/topic/3`] = page('/topic/3', html('主題'));
+    rec.probes[`${site}/news/${token}`] = page(`/news/${token}`, html(home));
+    rec.probes[`${site}/topic/${token}`] = page(`/topic/${token}`, html('Oops'));
+    const inv = inventory();
+    inv.urls.push(...['/news/1', '/news/2', '/topic/3', '/'].map((p) => ({ url: `${site}${p}`, occurrences: occ(`dist${p}x/index.html`) })));
+    rec.probes[`${site}/`] = page('/', html(home));
+    const pol = policy();
+    pol.contentChecks = [{
+        match: { host: 'news.example.test' },
+        reason: '端到端測試：不存在的文章回 200 和首頁的標題。',
+        evidence: '端到端測試：/news/99999 回 200，標題是首頁的。',
+        owner: 'e2e',
+        expires: daysFromNow(90),
+        urls: [],
+        missingTitles: [home],
+    }];
+    const r = await run({ recording: rec, inventory: inv, policy: pol, args: ['--record', '$RECORD'] });
+    assert.equal(r.code, 0, r.stdout);
+    assert.match(r.report, /- 標題檢查 3 筆：健康 2、失效 1、無法判定 0，重讀 1 筆。同目錄的隨機路徑 2 個：標題在名單裡 1、不在名單裡 1、沒有比對 0。/);
+    assert.ok(r.report.includes(`- **頁面標題是 \`${home}\`，是這台主機不存在的頁面的標題**：${site}/news/2`), r.report);
+    assert.match(r.report, /### 🏷️ 不存在的頁面標題變了 1 個[\s\S]*- \*\*news\.example\.test\*\*：標題是 `Oops`，隨機路徑 https:\/\/news\.example\.test\/topic\/sch001-linkcheck-0123456789ab/);
+    assert.match(r.stdout, / {2}標題檢查：3（健康 2、失效 1、無法判定 0；重讀 1、隨機路徑 2、標題不在名單裡 1）/);
+    assert.equal(r.output, 'needs_attention=true\ncoverage_complete=true\n');
+    const out = JSON.parse(r.recorded);
+    assert.equal(out.probes[`${site}/news/2`].length, 3, '主程式一次、重讀兩次');
+    assert.ok(Buffer.byteLength(out.probes[`${site}/news/2`][1].bodyHead) > 16 * 1024, '重讀用 TITLE_PROBE 的上限');
+    assert.equal(out.probes[`${site}/topic/${token}`].length, 2, '標題不在名單裡的隨機路徑再讀一次');
+    assert.ok(!Array.isArray(out.probes[`${site}/news/${token}`]));
+    assert.ok(!Array.isArray(out.probes[`${site}/news/1`]), '16KB 讀得到標題的不重讀');
 });
 
 test('主程式：錄製檔的 version 不是 1 或沒有寫時不重播，寫出致命錯誤', async () => {

@@ -110,10 +110,10 @@ jobs:
       - name: Validate the exception policy
         run: npm run check:link-policy
 
-      # 各段的時間預算加起來是 20.5 分鐘：盤點網址 12、內容 API 2、裸網域 3、軟 404 3.5。
+      # 各段的時間預算加起來是 22.5 分鐘：盤點網址 12、內容 API 2、裸網域 3、軟 404 3.5、標題檢查 2。
       - name: Run the external link health check
         id: check
-        timeout-minutes: 24
+        timeout-minutes: 26
         run: npm run check:external-links
 
       # 沒有待辦項目時不會開 issue，報告內容就無處可見（連「無法判定」清單也看不到）。
