@@ -11,6 +11,7 @@
     "test": "playwright test",
     "test:watchdog": "node --test scripts/check-competitions.probe.test.mjs scripts/activity-watchdog.test.mjs",
     "test:competitions-data": "node --test scripts/competitions-data.test.mjs",
+    "test:online-courses-data": "node --test scripts/online-courses-data.test.mjs",
     "test:activity-database": "node --test scripts/activity-database.test.mjs",
     "test:activity-faults": "node scripts/activity-database.faults.mjs",
     "check:competitions": "node scripts/check-competitions.mjs --no-link-check --strict",
