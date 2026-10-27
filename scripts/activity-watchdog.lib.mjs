@@ -1,4 +1,5 @@
 // 競賽看門狗對多元表現資料庫做的判斷：精選活動快截止或已截止，以及該回官網重查的活動。
+// selectRecheckDue 也用在競賽。
 // 判斷放在這裡給 activity-watchdog.test.mjs 測試，分級與寫報告在 check-competitions.mjs。
 import { DATE_ONLY_RE } from './check-competitions.lib.mjs';
 
@@ -32,9 +33,9 @@ export function featuredAlert(activities, todayUTC, soonDays) {
 }
 
 /**
- * selectRecheckDue 列出 recheckOn 已到的活動，當天就算到，預定日最早的排前面。recheckOn 是編輯者
+ * selectRecheckDue 列出 recheckOn 已到的活動或競賽，當天就算到，預定日最早的排前面。recheckOn 是編輯者
  * 照官網寫的時間或上一屆的日期定下的回來查的日子，不是活動日期，所以不看截止日。
- * recheckOn 不是存在的日期時當成沒填，由 selectActivityRecheck 照天數處理。
+ * recheckOn 不是存在的日期時當成沒填，由 selectActivityRecheck 或 selectNeedsRecheck 照天數處理。
  * @param {unknown} activities @param {number} todayUTC 台灣日曆日的 UTC 零點
  * @returns {Array<{label: string, recheckOn: string, checked: string, note: string}>}
  */

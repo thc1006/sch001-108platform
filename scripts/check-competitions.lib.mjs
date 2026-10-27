@@ -45,6 +45,9 @@ export const ALLOWED_COMPETITION_FIELDS = new Set([
     'eventEndsAt',
     'registrationNote',
     'sourceCheckedAt',
+    // 預定重查日與依據（選填，見 recheckProblem）
+    'recheckOn',
+    'recheckNote',
 ]);
 
 // 連結健檢的實作在 link-health.lib.mjs。競賽看門狗與全站外部連結健檢都會在 runner 上、
@@ -125,6 +128,13 @@ function isRealDate(y, mo, d) {
     return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
 }
 
+/** isDateString 判斷 value 是不是存在的 YYYY-MM-DD 日期。 */
+function isDateString(value) {
+    if (typeof value !== 'string' || !DATE_ONLY_RE.test(value)) return false;
+    const [y, mo, d] = value.split('-').map(Number);
+    return isRealDate(y, mo, d);
+}
+
 /** 驗證 YYYY-MM-DD 欄位（選填）。回傳是否有效。 */
 export function validateDateOnly(value, field, label, errors) {
     if (value === undefined) return true;
@@ -174,6 +184,8 @@ export function validateSchedule(comp, label, errors) {
     validateDateOnly(comp.eventStartsAt, 'eventStartsAt', label, errors);
     validateDateOnly(comp.eventEndsAt, 'eventEndsAt', label, errors);
     validateDateOnly(comp.sourceCheckedAt, 'sourceCheckedAt', label, errors);
+    const recheck = recheckProblem(comp);
+    if (recheck) errors.push(`「${label}」的 ${recheck}`);
 
     if (comp.registrationNote !== undefined) {
         if (typeof comp.registrationNote !== 'string' || comp.registrationNote.trim() === '') {
@@ -296,6 +308,8 @@ export function selectNeedsRecheck(list, todayUTC, minDays) {
     for (const comp of Array.isArray(list) ? list : []) {
         if (comp === null || typeof comp !== 'object') continue;
         if (comp.cycle?.closes) continue;
+        // 有 recheckOn 的照預定日提醒，見 activity-watchdog.lib.mjs 的 selectRecheckDue。
+        if (isDateString(comp.recheckOn)) continue;
         const label = typeof comp.title === 'string' && comp.title.trim() ? comp.title : '（未命名）';
         if (typeof comp.deadline === 'string' && DATE_ONLY_RE.test(comp.deadline)) {
             // 有確切日期就不屬於這一桶：未來的＝狀態已知，已過的由 🔴 那一段負責
@@ -400,5 +414,27 @@ export function sourceCheckedProblem(
     // 未來的日期是「不用真的查也能讓測試永遠綠」的後門：寫成 2099-01-01 之後，
     // 它永遠不早於任何基準日，任何人都不必再開一次官網。
     if (value > notAfter) return `是 ${value}，那一天還沒到——未來的日期不可能是「已經開過官網」的憑證`;
+    return null;
+}
+
+/**
+ * recheckProblem 檢查預定重查日 recheckOn 和依據 recheckNote，競賽和多元表現資料庫共用。
+ * 兩欄都沒填或沒有問題時回傳 null，否則回傳原因。沒有依據的日子是猜的，所以兩欄要一起填。
+ * recheckOn 要晚於 sourceCheckedAt，停在查證當天或更早，代表重查後忘了設下一個。
+ * 有 recheckOn 的不套天數規則，所以也不能晚於上次查證一年後，設得太遠就一直不會被提醒。
+ * @param {object} entry @returns {string|null}
+ */
+export function recheckProblem(entry) {
+    const hasOn = 'recheckOn' in entry;
+    const hasNote = 'recheckNote' in entry;
+    if (!hasOn && !hasNote) return null;
+    if (!hasOn || !hasNote) return 'recheckOn 和 recheckNote 要一起填';
+    const note = entry.recheckNote;
+    if (typeof note !== 'string' || !note || note.trim() !== note) return 'recheckNote 是空的或前後有空白';
+    if (!isDateString(entry.recheckOn)) return `recheckOn 不是 YYYY-MM-DD 格式的日期：${entry.recheckOn}`;
+    const checked = String(entry.sourceCheckedAt);
+    if (!(entry.recheckOn > checked)) return 'recheckOn 沒有晚於 sourceCheckedAt，重查後要設下一個或拿掉';
+    const limit = `${Number(checked.slice(0, 4)) + 1}${checked.slice(4)}`;
+    if (entry.recheckOn > limit) return `recheckOn 晚於上次查證一年後的 ${limit}`;
     return null;
 }
