@@ -12,13 +12,14 @@
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
+ *   I. 軟 404 的規則、隨機路徑與重打 → soft404.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
  * screenBareDomains 一旦改用「解析得到才算網域」，已經停用的網域就會被當成
  * 「不是網域」丟掉，檢查器對它唯一該偵測的目標永久失明，而所有測試照樣全綠。
  *
- * B 到 H 七段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
+ * B 到 I 八段是刻意做的突變測試：拿掉一段防護或規則之後，如果測試還是綠的，
  * 那些測試就是裝飾品。#72 的起因正是「lychee 看起來有在檢查、實際一個連結都沒驗」，
  * 同一類假象在自己的測試上也會發生。
  *
@@ -1327,6 +1328,171 @@ const policyLibMutations = [
     },
 ];
 
+// I 段是軟 404 的突變測試。規則放寬會把好網址判成失效，收緊會漏掉 collego、coursemap 這類網站，
+// 隨機路徑或重打的處理改壞時，逾時、5xx、兩次落點不同的結果會被當成證據。
+const soft404Mutations = [
+    {
+        name: '比對落點時去掉查詢字串（iymc 的語系頁、hch 的分頁會誤判）',
+        apply: (s) => s.replace("${u.search ? swap(u.search) : ''}", ''),
+    },
+    {
+        name: '隨機路徑落在防火牆頁也拿來比',
+        apply: (s) => s.replace(' && !CHALLENGE_TITLE.test(f.title);', ';'),
+    },
+    {
+        name: '隨機路徑的可見文字很少也拿來比（驗證頁）',
+        apply: (s) => s.replace('f.visible >= MIN_VISIBLE &&', ''),
+    },
+    {
+        name: '隨機路徑沒有轉址也拿來比',
+        apply: (s) => s.replace('if (!ok2(random) || !redirected(random)) return false;', 'if (!ok2(random)) return false;'),
+    },
+    {
+        name: '網址沒有轉址也套第 4 條',
+        apply: (s) => s.replace('if (redirected(r) && comparable(random)', 'if (comparable(random)'),
+    },
+    {
+        name: '隨機路徑一律打根目錄',
+        apply: (s) => s.replace("parts[parts[last] === '' && last > 1 ? last - 1 : last] = token;", "parts.splice(1, parts.length - 1, token);"),
+    },
+    {
+        name: '第 1 條不看是否轉址',
+        apply: (s) => s.replace('if (redirected(r) && ((ERROR_PATH.test(decode(fu.pathname))', 'if (((ERROR_PATH.test(decode(fu.pathname))'),
+    },
+    {
+        name: '第 3 條不排除落點就是 canonical',
+        apply: (s) => s.replace(' && dirPath(fu.pathname) !== dirPath(new URL(f.canonical).pathname)) {', ') {'),
+    },
+    {
+        name: '可見文字的下限從 200 改成 20',
+        apply: (s) => s.replace('export const MIN_VISIBLE = 200;', 'export const MIN_VISIBLE = 20;'),
+    },
+    {
+        name: '第 1 條不豁免起點本來就有的錯誤頁那一段',
+        apply: (s) => s.replace(' && !fromStart) ||', ') ||'),
+    },
+    {
+        name: '第 1 條只要起點像錯誤頁就豁免',
+        apply: (s) => s.replace('errSeg(su.pathname) !== undefined && errSeg(su.pathname) === errSeg(fu.pathname);', 'errSeg(su.pathname) !== undefined;'),
+    },
+    {
+        name: '第 1 條的豁免也套到查詢字串',
+        apply: (s) => s.replace('&& !fromStart) || ERROR_PATH.test(decode(fu.search)))', '|| ERROR_PATH.test(decode(fu.search))) && !fromStart)').replace('if (redirected(r) && ((ERROR_PATH', 'if (redirected(r) && (((ERROR_PATH'),
+    },
+    {
+        name: '標題的 404 不看前面接什麼（課號、房號也算）',
+        apply: (s) => s.replace('const ERROR_TITLE = /(?:^|[^\\w\\s]\\s*|(?:error|錯誤|status)\\s*[:：]?\\s*)404\\b|', 'const ERROR_TITLE = /\\b404\\b|'),
+    },
+    {
+        name: '標題的 not found 不看前面接什麼',
+        apply: (s) => s.replace('|(?:^|[^\\w\\s]\\s*|(?:page|file)\\s+)not\\s*found\\b|', '|not found|'),
+    },
+    {
+        name: '查無不限網頁或頁面',
+        apply: (s) => s.replace('查無(?:此|該)?(?:網頁|頁面|頁)', '查無'),
+    },
+    {
+        name: '網頁錯誤不要求代碼',
+        apply: (s) => s.replace('網頁錯誤\\s*[:：(（]?\\s*\\d{3}', '網頁錯誤'),
+    },
+    {
+        name: '只寫 Error 的 h1 也算',
+        apply: (s) => s.replace('ERROR_TITLE.test(f.h1)', 'ERROR_TITLE.test(f.h1) || ERROR_TITLE_ONLY.test(f.h1)'),
+    },
+    {
+        name: '只寫 Error 的標題不算',
+        apply: (s) => s.replace(' || ERROR_TITLE_ONLY.test(f.title)', ''),
+    },
+    {
+        name: '第 2 條的 canonical 指向自己也算錯誤頁',
+        apply: (s) => s.replace(' && dirPath(new URL(f.canonical).pathname) !== dirPath(su.pathname)) {', ') {'),
+    },
+    {
+        name: '標題的「找不到」不限網頁或頁面',
+        apply: (s) => s.replace('找不到(?:此|該|這個|您要的|你要的)?(?:網頁|頁面)', '找不到'),
+    },
+    {
+        name: '重打只要有任何一條命中就算',
+        apply: (s) => s.replace('const sameRules = (a, b) => a.filter((x) => b.some((y) => y.rule === x.rule));', 'const sameRules = (a, b) => (b.length ? a : []);'),
+    },
+    {
+        name: '重打時隨機路徑沒打到，沿用第一次的結果',
+        apply: (s) => s.replace('if (!r2 || (reRandom.has(c.random) && !random2)) {', 'if (!r2) {'),
+    },
+    {
+        name: '隨機路徑失敗的數量不算',
+        apply: (s) => s.replace('(x.status === 0 || x.status >= 500)', 'false'),
+    },
+    {
+        name: '命中之後不等就重打',
+        apply: (s) => s.replace('    await sleep(recheck.delayMs);\n', ''),
+    },
+    {
+        name: '不重打確認，第一次命中就判失效',
+        apply: (s) => s.replace('const both = sameRules(judgeSoft404(c.url, r2, random2, token).dead, j.dead);', 'const both = j.dead;'),
+    },
+    {
+        name: '第 4 條重打時不打隨機路徑',
+        apply: (s) => s.replace('const againRandoms = [...new Set(hits.filter((h) => h.j.dead.some((d) => d.rule === 4)).map((h) => h.c.random))];', 'const againRandoms = [];'),
+    },
+    {
+        name: '隨機路徑回 404 也重試',
+        apply: (s) => s.replace(', retryIf: () => false })', ' })'),
+    },
+    {
+        name: '沒打的隨機路徑不回報',
+        apply: (s) => s.replace('return { verdicts, randoms: randomUrls.length, randomsSkipped, randomsFailed, recheckSkipped };', 'return { verdicts, randoms: randomUrls.length, randomsSkipped: 0, randomsFailed, recheckSkipped };'),
+    },
+    {
+        name: '沒重打的網址不回報',
+        apply: (s) => s.replace('            recheckSkipped++;\n', ''),
+    },
+    {
+        name: 'hijacked 的主機也套規則',
+        apply: (s) => s.replace(' || matchHijacked(policy.hijacked, url) ||', ' ||'),
+    },
+    {
+        name: 'contentChecks 的主機也套規則',
+        apply: (s) => s.replace('        if (contentHosts.has(canonicalHost(new URL(url).hostname))) return;\n', ''),
+    },
+    {
+        name: '可見文字很少的網址不打隨機路徑（前端殼看不到）',
+        apply: (s) => s.replace('const needRandom = redirected(r) || Boolean(f?.complete && f.visible < MIN_VISIBLE);', 'const needRandom = redirected(r);'),
+    },
+    {
+        name: '前端殼不看狀態碼（202 的驗證頁被當成殼）',
+        apply: (s) => s.replace('if (r.status === 200 && f?.complete', 'if (f?.complete'),
+    },
+    {
+        name: '前端殼不看網址本身是不是驗證頁',
+        apply: (s) => s.replace(' && !CHALLENGE_TITLE.test(f.title) && random?.status === 200', ' && random?.status === 200'),
+    },
+    {
+        name: '前端殼不看隨機路徑的狀態碼',
+        apply: (s) => s.replace(' && random?.status === 200 && !random.blocked', ' && random && !random.blocked'),
+    },
+    {
+        name: '前端殼不看截斷（只讀到前綴的頁面被當成殼）',
+        apply: (s) => s.replace('if (r.status === 200 && f?.complete &&', 'if (r.status === 200 &&'),
+    },
+    {
+        name: '不看 h1',
+        apply: (s) => s.replace(' || ERROR_TITLE.test(f.h1)', ''),
+    },
+    {
+        name: 'canonical 不照落點解析（相對網址的 canonical 看不到）',
+        apply: (s) => s.replace("new URL(a.href.replace(/&amp;/g, '&'), r.finalUrl)", "new URL(a.href.replace(/&amp;/g, '&'))"),
+    },
+    {
+        name: '帶查詢字串的 canonical 也算上層目錄',
+        apply: (s) => s.replace('    if (o.search) return false;\n', ''),
+    },
+    {
+        name: '首頁也套規則',
+        apply: (s) => s.replace('if (!ok2(r) || isHome(url) || matchHijacked', 'if (!ok2(r) || matchHijacked'),
+    },
+];
+
 // H 段是 check-external-links.mjs 的突變測試。主程式讀檔、探測之後把名單交給 buildReport，
 // 交錯一份或對錯位置，buildReport 的單元測試照樣全綠。
 const mainMutations = [
@@ -1478,6 +1644,7 @@ function runBaselineTests() {
                 // 對接管偵測是盲的，而這個矩陣存在的理由就是不留這種盲點。
                 path.join(SCRIPTS, 'hijack-signals.test.mjs'),
                 path.join(SCRIPTS, 'check-external-links.test.mjs'),
+                path.join(SCRIPTS, 'soft404.test.mjs'),
             ],
             { encoding: 'utf8', stdio: 'pipe' },
         );
@@ -1496,13 +1663,13 @@ if (base.code !== 0) {
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
-// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 H 七段的
+// 單元測試也要一起驗，而且必須在注入之前。否則 lib 本身已經壞掉時，B 到 I 八段的
 // 每一條 mutation 都只是「在紅底上再變一次紅」，會全部被記成「✅ 擋下來了」，
 // 要等收尾那道檢查才抓得到，摘要照樣印出「0 漏掉」。例如讓
 // extractBareDomainCandidates 永遠回 []，只跑政策檢查的話基準仍是綠的。
 const baseTests = runBaselineTests();
 if (baseTests !== 0) {
-    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs／check-external-links.test.mjs）');
+    console.error('  ❌ 基準單元測試已經是紅的，無法進行故障注入（請先修好 link-health.test.mjs／bare-domains.test.mjs／hijack-signals.test.mjs／check-external-links.test.mjs／soft404.test.mjs）');
     rmSync(TMP, { recursive: true, force: true });
     process.exit(1);
 }
@@ -1534,6 +1701,8 @@ await runMutants('G. 連結政策檢查、比對與到期提醒的突變測試�
     'link-policy.lib.mjs', policyLibMutations, ['link-health.test.mjs'], RED('這一段'));
 await runMutants('H. 主程式交給 buildReport 的名單與交給 probe 的選項（check-external-links.test.mjs 必須紅）：',
     'check-external-links.mjs', mainMutations, ['check-external-links.test.mjs'], RED('這一段'));
+await runMutants('I. 軟 404 的規則、隨機路徑與重打（soft404.test.mjs 必須紅）：',
+    'soft404.lib.mjs', soft404Mutations, ['soft404.test.mjs'], RED('這條規則'));
 
 console.log('\n最後確認基準仍為綠：');
 const after = runPolicyCheck(basePolicy, baseInv);
@@ -1542,5 +1711,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 
 rmSync(TMP, { recursive: true, force: true });
 
-console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length} 項）`);
+console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);
