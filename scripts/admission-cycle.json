@@ -12,6 +12,12 @@
       "reason": "這句說坊間的數字出自 111 學年度的舊統計，所以本頁不引用，年份是在交代出處。"
     },
     {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "一篇 113 學年度清大資工特殊選才的面試心得",
+      "cycle": 115,
+      "reason": "交代這篇面試心得是哪一屆寫的，年份不隨換屆改變。"
+    },
+    {
       "file": "src/content/clusters/engineering/overview.md",
       "text": "APCS 自 114 學年度起改制",
       "cycle": 115,
