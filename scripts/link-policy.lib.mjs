@@ -45,6 +45,7 @@
  */
 
 import { staticUrlPolicy, canonicalHost } from './link-health.lib.mjs';
+import { registrableDomain } from './hijack-signals.lib.mjs';
 
 /** 一筆例外最長可以活多久。超過就等於「無期限」，那正是要禁止的東西。 */
 export const MAX_HORIZON_DAYS = 180;
@@ -285,18 +286,30 @@ const JSON_POINTER = /^(\/([^/~]|~[01])+)+$/;
 
 const isPlainObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
 
+// siteBase 是 API 可以放的網域：host 去掉開頭的 www.，去掉之後比可註冊網域短（www.edu.tw 去掉變成 edu.tw）就不去。
+const siteBase = (host) => {
+    const stripped = host.replace(/^www\./, '');
+    const domain = registrableDomain(host);
+    return domain && stripped.endsWith(domain) ? stripped : host;
+};
+// underSite 判斷 apiHost 是不是 siteBase(host) 或它的子網域。不收上層網域：edu.tw 不是 a.edu.tw 的同站。
+const underSite = (apiHost, host) => apiHost === siteBase(host) || apiHost.endsWith(`.${siteBase(host)}`);
+
 /**
  * checkPolicyUrl 檢查政策檔裡寫的完整網址：過位址政策、寫成正規化的形式、不帶 fragment，host 不是 null 時
- * 主機要是 host。回傳有沒有通過，原因 push 進錯誤。
+ * 主機要是 host；site 是 true 時，主機是 siteBase(host) 或它的子網域就好，主機名要寫成正規化的形式。
+ * 回傳有沒有通過，原因 push 進錯誤。
  */
-function checkPolicyUrl(raw, at, host, push) {
+function checkPolicyUrl(raw, at, host, push, site = false) {
     let why = null;
     const verdict = typeof raw === 'string' && raw.trim() ? staticUrlPolicy(raw) : null;
     if (!verdict) why = '必須是非空字串';
     else if (raw.includes('#')) why = '不得帶 fragment';
     else if (!verdict.ok) why = `本身就違反位址政策：${verdict.reason}`;
     else if (normalizeUrl(raw) !== raw) why = `請改寫成正規化後的形式：${normalizeUrl(raw)}`;
-    else if (host && canonicalHost(verdict.url.hostname) !== host) why = `要在同一台主機 ${host} 上`;
+    else if (host && !site && canonicalHost(verdict.url.hostname) !== host) why = `要在同一台主機 ${host} 上`;
+    else if (site && verdict.url.hostname !== canonicalHost(verdict.url.hostname)) why = `的主機名要寫成 ${canonicalHost(verdict.url.hostname)}`;
+    else if (host && site && !underSite(verdict.url.hostname, host)) why = `要在 ${siteBase(host)} 或它的子網域上`;
     if (why) push(`${at} ${why}`);
     return !why;
 }
@@ -304,8 +317,8 @@ function checkPolicyUrl(raw, at, host, push) {
 /**
  * validateContentChecks 驗證 contentChecks，回傳通過的項目，錯誤 push 進 validatePolicy 的 errors。
  * 每一筆宣告一台對任何路徑都回 200 的主機，urls 列出這台主機上每個網址要打哪個 API、回應的 JSON
- * 物件裡哪些欄位要等於什麼。API 限定同一台主機、不帶埠號的 https 網址：探測的範圍和頁面本身相同，
- * 政策檔不能把請求送到別的地方。expect 的鍵是最外層的欄位名，或 / 開頭的 JSON pointer（RFC 6901），
+ * 物件裡哪些欄位要等於什麼。API 限定在頁面的主機（去掉 www.）或它的子網域、不帶埠號的 https 網址：hahow.in 的
+ * 課程內容從 api.hahow.in 載入，但政策檔不能把請求送到別的網站。expect 的鍵是最外層的欄位名，或 / 開頭的 JSON pointer（RFC 6901），
  * 值只收字串、數字與布林，比對用 ===。不是 JSON pointer 的鍵不能含「.」：寫成 a.b 的人想比的是巢狀欄位。
  */
 function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
@@ -350,7 +363,7 @@ function validateContentChecks(list, hijackedHosts, todayISO, todayMs, errors) {
                     seenUrls.add(u.url);
                 }
                 if (typeof u.api === 'string' && !u.api.startsWith('https://')) push(`${uat}.api 必須是 https 網址`);
-                else if (checkPolicyUrl(u.api, `${uat}.api`, host, push) && new URL(u.api).port) push(`${uat}.api 不得帶埠號`);
+                else if (checkPolicyUrl(u.api, `${uat}.api`, host, push, true) && new URL(u.api).port) push(`${uat}.api 不得帶埠號`);
                 const values = isPlainObject(u.expect) ? Object.values(u.expect) : [];
                 const scalar = (v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v));
                 if (!values.length || !values.every(scalar)) {

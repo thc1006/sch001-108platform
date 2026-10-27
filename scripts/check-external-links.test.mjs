@@ -178,11 +178,13 @@ test('主程式：contentChecks 的網址在頁面健康之後打 API，連兩�
         expires: daysFromNow(90),
         urls: ids.map((id) => ({ url: `${spa}/item?id=${id}`, api: `${spa}/api/item?id=${id}`, expect: { id } })),
     }];
+    // id=1 的 API 在子網域上。
+    pol.contentChecks[0].urls[0].api = 'https://api.spa.example.test/item?id=1';
     const rec = recording();
     const api = (id, bodyHead, over = {}) => ({ status: 200, finalUrl: `${spa}/api/item?id=${id}`, redirects: [], bodyHead, ...over });
     for (const id of ids) rec.probes[`${spa}/item?id=${id}`] = { ...shell, finalUrl: `${spa}/item?id=${id}` };
     // id=1 的回應超過頁首用的 16KB，讀取上限不對時會被截斷。
-    rec.probes[`${spa}/api/item?id=1`] = api(1, JSON.stringify({ id: 1, des: 'x'.repeat(20 * 1024) }));
+    rec.probes['https://api.spa.example.test/item?id=1'] = api(1, JSON.stringify({ id: 1, des: 'x'.repeat(20 * 1024) }), { finalUrl: 'https://api.spa.example.test/item?id=1' });
     rec.probes[`${spa}/api/item?id=2`] = [api(2, '{}'), api(2, '{}')];
     rec.probes[`${spa}/api/item?id=3`] = api(3, '{"status":false}', { status: 401 });
     rec.probes[`${spa}/api/item?id=4`] = [api(4, '{}'), api(4, '{"id":4}')];

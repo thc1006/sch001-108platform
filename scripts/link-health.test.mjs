@@ -1414,9 +1414,27 @@ test('contentChecks：網址要在宣告的主機上、寫成正規化的形式�
     assert.ok(contentErrors({ urls: [validContentUrl({ note: 'x' })] }).some((m) => m.includes('未知欄位')));
 });
 
-test('contentChecks：API 要用 https、和頁面同一台主機、不帶埠號，本身也要過位址政策', () => {
+test('contentChecks：API 要用 https、在頁面的主機或它的子網域、不帶埠號，本身也要過位址政策', () => {
     assert.ok(contentErrors({ urls: [validContentUrl({ api: 'http://spa.example.org/api/Public?cid=42' })] }).some((m) => m.includes('https')));
-    assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://api.example.net/Public?cid=42' })] }).some((m) => m.includes('同一台主機')));
+    const bad = ['https://api.example.net/Public?cid=42', 'https://api.example.org/Public?cid=42', 'https://evilspa.example.org/api',
+        'https://spa.example.org.evil.test/api', 'https://example.org/api?cid=42', 'https://org/api'];
+    for (const api of bad) assert.ok(contentErrors({ urls: [validContentUrl({ api })] }).some((m) => m.includes('或它的子網域上')), api);
+    assert.deepEqual(contentErrors({ urls: [validContentUrl({ api: 'https://api.spa.example.org/Public?cid=42' })] }), []);
+    // www. 開頭的主機，API 可以在去掉 www. 之後的子網域：www.hahow.in 配 api.hahow.in。
+    const www = (api) => contentErrors({ match: { host: 'www.spa.example.org' }, urls: [validContentUrl({ url: 'https://www.spa.example.org/x', api })] });
+    for (const api of ['https://api.spa.example.org/x', 'https://spa.example.org/x', 'https://www.spa.example.org/x']) assert.deepEqual(www(api), [], api);
+    assert.ok(www('https://example.org/x').some((m) => m.includes('要在 spa.example.org 或它的子網域上')));
+    // 去掉 www. 變成公共後綴時不去：www.edu.tw 的 API 不能是任意的 *.edu.tw。github.io 這類共用後綴也一樣。
+    const at = (host, api) => contentErrors({ match: { host }, urls: [validContentUrl({ url: `https://${host}/x`, api })] });
+    assert.ok(at('www.edu.tw', 'https://foo.edu.tw/x').some((m) => m.includes('要在 www.edu.tw 或它的子網域上')));
+    assert.deepEqual(at('www.edu.tw', 'https://api.www.edu.tw/x'), []);
+    assert.ok(at('www.github.io', 'https://evil.github.io/x').some((m) => m.includes('要在 www.github.io 或它的子網域上')));
+    assert.deepEqual(at('www.shu.edu.tw', 'https://api.shu.edu.tw/x'), []);
+    // 結尾帶點的主機名要寫成正規化的形式。
+    assert.ok(at('www.shu.edu.tw', 'https://api.shu.edu.tw./x').some((m) => m.includes('的主機名要寫成 api.shu.edu.tw')));
+    // 上層網域不算：頁面在子網域上，API 不能在上層。
+    assert.ok(contentErrors({ match: { host: 'api.spa.example.org' }, urls: [validContentUrl({ url: 'https://api.spa.example.org/x', api: `${SPA}/api/x` })] })
+        .some((m) => m.includes('或它的子網域上')));
     assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://169.254.169.254/latest/meta-data/' })] }).some((m) => m.includes('位址政策')));
     assert.ok(contentErrors({ urls: [validContentUrl({ api: `${SPA}/api/Public?cid=42#x` })] }).some((m) => m.includes('fragment')));
     assert.ok(contentErrors({ urls: [validContentUrl({ api: 'https://spa.example.org:8443/api/Public?cid=42' })] }).some((m) => m.includes('埠號')));

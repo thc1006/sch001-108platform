@@ -13,7 +13,7 @@
  *   G. 連結政策的檢查、比對與到期提醒 → link-health.test.mjs 必須失敗
  *   H. 主程式交給 buildReport 的名單與交給 probe 的選項 → check-external-links.test.mjs 必須失敗
  *   I. 軟 404 的規則、隨機路徑與重打，以及它們在報告裡的分組 → soft404.test.mjs 必須失敗
- *   J. contentChecks 的主機層宣告（expect 的 JSON pointer 等）→ link-health.test.mjs 必須失敗
+ *   J. contentChecks 的主機層宣告（JSON pointer、子網域的 API 等）→ link-health.test.mjs 必須失敗
  *
  * C 是為了守住兩個「看起來對、其實已經退化」的方向：擷取規則被放寬之後會把
  * 檔名當網域（噪音），或被收緊之後悄悄漏掉真的網域（失明）。特別是
@@ -257,8 +257,8 @@ const policyCases = [
         policy: () => { const p = clonePolicy(); p.contentChecks.push({ ...p.contentChecks[0], match: { host: 'gone.example.org' }, urls: [] }); return p; },
     },
     {
-        name: '內容檢查的 API 指到別台主機',
-        expect: /同一台主機/,
+        name: '內容檢查的 API 指到別的網站',
+        expect: /或它的子網域上/,
         policy: () => { const p = clonePolicy(); p.contentChecks[0].urls[0].api = 'https://collector.example.net/api/item?id=1'; return p; },
     },
     {
@@ -1304,8 +1304,8 @@ const policyLibMutations = [
         apply: (s) => s.replace("Object.keys(e.match).join() !== 'host'", '!e.match.host'),
     },
     {
-        name: '內容檢查的 API 不看主機（政策檔可以把請求送到別的地方）',
-        apply: (s) => s.replace("    else if (host && canonicalHost(verdict.url.hostname) !== host) why = `要在同一台主機 ${host} 上`;\n", ''),
+        name: '內容檢查的 API 不看主機（政策檔可以把請求送到別的網站）',
+        apply: (s) => s.replace("    else if (host && site && !underSite(verdict.url.hostname, host)) why =", '    else if (false) why ='),
     },
     {
         name: 'expect 的值不限型別（物件、null 也收）',
@@ -1700,6 +1700,30 @@ const hostPolicyMutations = [
     {
         name: 'expect 的 JSON pointer 不檢查寫法（/a//b 這種比不到的鍵也通過）',
         apply: (s) => s.replace('if (!JSON_POINTER.test(key)) push(', 'if (false) push('),
+    },
+    {
+        name: '內容檢查的 API 只能在同一台主機（api.hahow.in 這種子網域被拒絕）',
+        apply: (s) => s.replace('checkPolicyUrl(u.api, `${uat}.api`, host, push, true)', 'checkPolicyUrl(u.api, `${uat}.api`, host, push)'),
+    },
+    {
+        name: 'API 可以在上層網域（a.edu.tw 的 API 寫成 edu.tw）',
+        apply: (s) => s.replace('const underSite = (apiHost, host) => apiHost === siteBase(host) || apiHost.endsWith(`.${siteBase(host)}`);', 'const underSite = (apiHost, host) => apiHost === siteBase(host) || apiHost.endsWith(`.${siteBase(host)}`) || siteBase(host).endsWith(`.${apiHost}`);'),
+    },
+    {
+        name: 'API 的主機不去掉 www.（www.hahow.in 配不了 api.hahow.in）',
+        apply: (s) => s.replace("    const stripped = host.replace(/^www\\./, '');", '    const stripped = host;'),
+    },
+    {
+        name: 'www. 後面是公共後綴也去掉（www.edu.tw 的 API 可以是任意的 *.edu.tw）',
+        apply: (s) => s.replace('    return domain && stripped.endsWith(domain) ? stripped : host;', '    return stripped;'),
+    },
+    {
+        name: 'API 的主機名結尾帶點也通過',
+        apply: (s) => s.replace('    else if (site && verdict.url.hostname !== canonicalHost(verdict.url.hostname)) why =', '    else if (false) why ='),
+    },
+    {
+        name: '內容檢查的網址也只要同站（頁面可以寫在子網域上）',
+        apply: (s) => s.replace('function checkPolicyUrl(raw, at, host, push, site = false) {', 'function checkPolicyUrl(raw, at, host, push, site = true) {'),
     },
 ];
 const hostJudgeMutations = [
