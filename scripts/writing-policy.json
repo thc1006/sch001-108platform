@@ -1,0 +1,200 @@
+{
+ "_readme": "check:writing 的棘輪基準。規則的嚴重度以 writing.lib.mjs 的 RULES 為準，這裡只存 block 規則每個原始檔（回推不到的記 page:頁面路徑）目前允許的筆數。超過就失敗；少於基準時執行 npm run check:writing -- --update-baseline 下修。一類清完後 baseline 是空物件，規則鍵留著。",
+ "rules": {
+  "W01-hen-duo": {
+   "baseline": {
+    "public/career-exploration/senior-interviews.json": 24,
+    "src/content/clusters/finance/myths.md": 1,
+    "src/pages/career-exploration/competency-map.astro": 1
+   }
+  },
+  "W04-filler-signpost": {
+   "baseline": {
+    "public/advanced-resources/competitions.json": 1,
+    "src/content/clusters/engineering/overview.md": 1
+   }
+  },
+  "W06-puffery": {
+   "baseline": {
+    "public/advanced-resources/reading-list.json": 1,
+    "src/content/clusters/engineering/application.md": 1,
+    "src/content/clusters/engineering/highlights.md": 1,
+    "src/content/clusters/engineering/myths.md": 1,
+    "src/content/clusters/engineering/overview.md": 1,
+    "src/content/clusters/engineering/traits.md": 2,
+    "src/content/clusters/life-science/myths.md": 1,
+    "src/content/clusters/management/inquiry.md": 1,
+    "src/content/clusters/management/overview.md": 3,
+    "src/content/clusters/medicine/application.md": 1,
+    "src/content/clusters/medicine/myths.md": 1,
+    "src/content/clusters/medicine/overview.md": 1,
+    "src/pages/career-exploration/index.astro": 1,
+    "src/pages/career-exploration/senior-interviews.astro": 1,
+    "src/pages/index.astro": 1,
+    "src/pages/sitemap.astro": 1
+   }
+  },
+  "P01-double-dash": {
+   "baseline": {
+    "public/advanced-resources/competitions.json": 23,
+    "public/career-exploration/senior-interviews.json": 62,
+    "src/content/clusters/design/application.md": 7,
+    "src/content/clusters/design/highlights.md": 6,
+    "src/content/clusters/design/inquiry.md": 4,
+    "src/content/clusters/design/myths.md": 3,
+    "src/content/clusters/design/overview.md": 2,
+    "src/content/clusters/design/traits.md": 2,
+    "src/content/clusters/engineering/application.md": 3,
+    "src/content/clusters/engineering/highlights.md": 2,
+    "src/content/clusters/engineering/inquiry.md": 8,
+    "src/content/clusters/engineering/myths.md": 2,
+    "src/content/clusters/engineering/overview.md": 9,
+    "src/content/clusters/finance/application.md": 2,
+    "src/content/clusters/finance/highlights.md": 1,
+    "src/content/clusters/finance/inquiry.md": 11,
+    "src/content/clusters/finance/myths.md": 1,
+    "src/content/clusters/finance/overview.md": 2,
+    "src/content/clusters/finance/traits.md": 2,
+    "src/content/clusters/info/application.md": 3,
+    "src/content/clusters/info/inquiry.md": 1,
+    "src/content/clusters/info/myths.md": 1,
+    "src/content/clusters/info/overview.md": 1,
+    "src/content/clusters/law/application.md": 2,
+    "src/content/clusters/law/highlights.md": 1,
+    "src/content/clusters/law/inquiry.md": 2,
+    "src/content/clusters/law/myths.md": 3,
+    "src/content/clusters/law/traits.md": 2,
+    "src/content/clusters/life-science/application.md": 13,
+    "src/content/clusters/life-science/highlights.md": 10,
+    "src/content/clusters/life-science/inquiry.md": 5,
+    "src/content/clusters/life-science/myths.md": 7,
+    "src/content/clusters/life-science/overview.md": 5,
+    "src/content/clusters/life-science/traits.md": 8,
+    "src/content/clusters/management/application.md": 2,
+    "src/content/clusters/management/highlights.md": 5,
+    "src/content/clusters/management/inquiry.md": 3,
+    "src/content/clusters/management/myths.md": 1,
+    "src/content/clusters/management/overview.md": 2,
+    "src/content/clusters/management/traits.md": 6,
+    "src/content/clusters/mass-comm/application.md": 13,
+    "src/content/clusters/mass-comm/highlights.md": 8,
+    "src/content/clusters/mass-comm/inquiry.md": 2,
+    "src/content/clusters/mass-comm/myths.md": 21,
+    "src/content/clusters/mass-comm/overview.md": 13,
+    "src/content/clusters/mass-comm/traits.md": 2,
+    "src/content/clusters/medicine/application.md": 5,
+    "src/content/clusters/medicine/highlights.md": 7,
+    "src/content/clusters/medicine/inquiry.md": 3,
+    "src/content/clusters/medicine/myths.md": 5,
+    "src/content/clusters/medicine/overview.md": 3,
+    "src/content/clusters/medicine/traits.md": 3,
+    "src/content/clusters/social-psychology/application.md": 4,
+    "src/content/clusters/social-psychology/highlights.md": 7,
+    "src/content/clusters/social-psychology/inquiry.md": 5,
+    "src/content/clusters/social-psychology/myths.md": 2,
+    "src/content/clusters/social-psychology/overview.md": 1,
+    "src/content/clusters/social-psychology/traits.md": 1,
+    "src/pages/advanced-resources/open-education.astro": 1,
+    "src/pages/autonomous-learning/index.astro": 1,
+    "src/pages/civic-tech-map/index.astro": 1
+   }
+  },
+  "P02-single-dash": {
+   "baseline": {
+    "src/content/clusters/design/application.md": 1,
+    "src/content/clusters/info/application.md": 18,
+    "src/content/clusters/info/highlights.md": 17,
+    "src/content/clusters/info/inquiry.md": 15,
+    "src/content/clusters/info/traits.md": 8,
+    "src/content/clusters/law/application.md": 19,
+    "src/content/clusters/law/highlights.md": 19,
+    "src/content/clusters/law/inquiry.md": 15,
+    "src/content/clusters/law/traits.md": 8,
+    "src/content/clusters/life-science/application.md": 1,
+    "src/content/clusters/mass-comm/highlights.md": 1,
+    "src/content/clusters/medicine/application.md": 1,
+    "src/content/clusters/medicine/highlights.md": 1,
+    "src/content/clusters/medicine/inquiry.md": 1,
+    "src/content/clusters/medicine/myths.md": 1,
+    "src/content/clusters/medicine/overview.md": 1,
+    "src/content/clusters/medicine/traits.md": 2,
+    "src/content/clusters/social-psychology/traits.md": 1
+   }
+  },
+  "P04-halfwidth-punct": {
+   "baseline": {
+    "public/advanced-resources/open-education.json": 87,
+    "public/career-exploration/senior-interviews.json": 24,
+    "src/content/clusters/management/application.md": 93,
+    "src/content/clusters/management/highlights.md": 57,
+    "src/content/clusters/management/inquiry.md": 66,
+    "src/content/clusters/management/myths.md": 68,
+    "src/content/clusters/management/overview.md": 40,
+    "src/content/clusters/management/traits.md": 61,
+    "src/data/clusters.ts": 22,
+    "src/pages/advanced-resources/open-education.astro": 10,
+    "src/pages/career-exploration/clusters/[cluster]/index.astro": 1,
+    "src/pages/career-exploration/clusters/index.astro": 5,
+    "src/pages/sitemap.astro": 1
+   }
+  },
+  "P05-halfwidth-paren": {
+   "baseline": {
+    "public/advanced-resources/competitions.json": 3,
+    "public/advanced-resources/open-education.json": 3,
+    "public/autonomous-learning/methodology.json": 9,
+    "public/career-exploration/senior-interviews.json": 2,
+    "src/content/clusters/finance/myths.md": 1,
+    "src/content/clusters/life-science/application.md": 2,
+    "src/content/clusters/management/application.md": 9,
+    "src/content/clusters/management/highlights.md": 7,
+    "src/content/clusters/management/inquiry.md": 14,
+    "src/content/clusters/management/myths.md": 3,
+    "src/content/clusters/management/overview.md": 13,
+    "src/content/clusters/management/traits.md": 14,
+    "src/content/clusters/mass-comm/overview.md": 2,
+    "src/content/clusters/mass-comm/traits.md": 1,
+    "src/pages/autonomous-learning/plan-templates.astro": 3,
+    "src/pages/autonomous-learning/resource-map.astro": 1,
+    "src/pages/autonomous-learning/topic-ideas.astro": 1,
+    "src/pages/career-exploration/competency-map.astro": 1,
+    "src/pages/career-exploration/index.astro": 4,
+    "src/pages/civic-tech-map/index.astro": 4,
+    "src/pages/index.astro": 1,
+    "src/pages/learning-portfolio/reflection-guide.astro": 4
+   }
+  },
+  "P07-emoji": {
+   "baseline": {
+    "public/career-exploration/senior-interviews.json": 20,
+    "src/content/clusters/medicine/highlights.md": 2,
+    "src/content/clusters/medicine/traits.md": 2,
+    "src/pages/autonomous-learning/index.astro": 1,
+    "src/pages/autonomous-learning/methodology.astro": 1,
+    "src/pages/autonomous-learning/plan-templates.astro": 1,
+    "src/pages/autonomous-learning/resource-map.astro": 2,
+    "src/pages/autonomous-learning/topic-ideas.astro": 4,
+    "src/pages/learning-portfolio/index.astro": 4,
+    "src/pages/learning-portfolio/reflection-guide.astro": 1
+   }
+  },
+  "P09-quote-nesting": {
+   "baseline": {
+    "public/career-exploration/senior-interviews.json": 39,
+    "src/content/clusters/design/myths.md": 2
+   }
+  },
+  "P10-curly-quote": {
+   "baseline": {
+    "page:career-exploration/senior-interviews.html": 2
+   }
+  },
+  "K01-chat-residue": {
+   "baseline": {
+    "src/pages/autonomous-learning/index.astro": 1,
+    "src/pages/autonomous-learning/methodology.astro": 1,
+    "src/pages/learning-portfolio/reflection-guide.astro": 2
+   }
+  }
+ }
+}

@@ -112,3 +112,5 @@ school/
 .deptree-faultcheck/
 .installgate-faultcheck/
 /.admission-cycle-faultcheck/
+/.writing-faultcheck/
+/scripts/.check-writing.faultcheck-*.mjs

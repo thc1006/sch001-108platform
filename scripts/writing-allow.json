@@ -1,0 +1,41 @@
+{
+  "_readme": "check:writing 放行的條目，欄位與規則見 CONTRIBUTING.md 的「網站內容」與 writing.lib.mjs 的 allowProblems。只收三類：kind 為 quote（照抄的外部原文）或 name（官方名稱）時要附 source 網址，而且只能依畫面上看得到的寫法；counterexample 是當反例引用的句子。text 要帶前後文，在該檔或頁面只出現一次。其他命中一律留在 writing-policy.json 的基準裡清。",
+  "entries": [
+    {
+      "file": "src/content/clusters/finance/highlights.md",
+      "text": "全是「我學到很多」「收穫滿滿」",
+      "rule": "W01-hen-duo",
+      "kind": "counterexample",
+      "reason": "引號裡是要學生避開的空話原句，當反例引用，不是本站自己的用語。"
+    },
+    {
+      "file": "src/content/clusters/finance/inquiry.md",
+      "text": "或只寫「我學到很多」",
+      "rule": "W01-hen-duo",
+      "kind": "counterexample",
+      "reason": "引號裡是要學生避開的空話原句，當反例引用，不是本站自己的用語。"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/highlights.md",
+      "text": "「很有收穫」「我學到很多」",
+      "rule": "W01-hen-duo",
+      "kind": "counterexample",
+      "reason": "引號裡是要學生避開的空話原句，當反例引用，不是本站自己的用語。"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/myths.md",
+      "text": "「我必須在備審資料中展現我已經懂很多專業理論。」",
+      "rule": "W01-hen-duo",
+      "kind": "counterexample",
+      "reason": "迷思頁的標題，引號裡是要破解的學生想法。"
+    },
+    {
+      "file": "src/content/clusters/life-science/highlights.md",
+      "text": "「科學探究競賽—這樣教我就懂」、各類探究",
+      "rule": "P02-single-dash",
+      "kind": "name",
+      "source": "https://sciexplore2026.colife.org.tw/",
+      "reason": "競賽的正式名稱，名稱照同頁參考資料連到的官網寫。"
+    }
+  ]
+}
