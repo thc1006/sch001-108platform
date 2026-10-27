@@ -19,6 +19,7 @@ import {
     collectAnchors,
     collectTextNodes,
     strayBoldMarkers,
+    nestedEmphasis,
     parseSrcset,
     parseCssUrls,
     walkJsonStrings,
@@ -163,6 +164,32 @@ test('沒轉成粗體的 ** 回傳上下文，code、pre、script 裡的不算',
 test('一頁兩處沒轉成粗體的 ** 都要回報', () => {
     const $ = cheerio.load('<p>**甲（乙）**丙</p><p>正常</p><p>**丁(戊)**己</p>');
     assert.deepEqual(strayBoldMarkers($), ['**甲（乙）**丙', '**丁(戊)**己']);
+});
+
+test('同類強調的巢狀要回報，粗體裡的斜體不算', () => {
+    const $ = cheerio.load(
+        '<p><strong>甲（乙）<strong>丙</strong>丁</strong></p><p><em>戊<i>己</i></em></p><p><b>庚<strong>辛</strong></b></p>' +
+            '<p><em><strong>粗斜</strong></em><strong>粗 <em>斜</em></strong></p>',
+    );
+    assert.deepEqual(nestedEmphasis($), [
+        '<strong> 裡有 <strong>：甲（乙）丙丁',
+        '<em> 裡有 <i>：戊己',
+        '<b> 裡有 <strong>：庚辛',
+    ]);
+});
+
+test('隔一層的巢狀也要回報', () => {
+    // satteri 對 **甲（乙）**丙[**丁**](u)戊** 的輸出
+    const $ = cheerio.load('<p>**甲（乙）<strong>丙<a href="u"><strong>丁</strong></a>戊</strong></p>');
+    assert.deepEqual(nestedEmphasis($), ['<strong> 裡有 <strong>：丙丁戊']);
+});
+
+test('script、style、template、code、pre 裡的巢狀不回報', () => {
+    const $ = cheerio.load(
+        '<template><p><strong>甲<strong>乙</strong></strong></p></template><pre><b>丙<b>丁</b></b></pre>' +
+            '<p><code><em>戊<i>己</i></em></code></p>',
+    );
+    assert.deepEqual(nestedEmphasis($), []);
 });
 
 test('上下文從第一個 ** 前 20 個字元到最後一個 ** 後 20 個字元，空白併成一格', () => {

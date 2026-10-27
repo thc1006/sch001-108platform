@@ -165,13 +165,17 @@ export function collectAnchors($) {
     return ids;
 }
 
+const NOT_TEXT = ['script', 'style', 'template'];
+// 頁面上的程式碼範例照原樣顯示，不檢查 Markdown 記號
+const CODE = ['code', 'pre'];
+
 /**
  * 逐個列出文字節點（實體已解碼），不含 script、style、template 和 skip 列出的元素裡的內容。整段 text()
  * 會把相鄰的區塊接成一串，網址就連上下一段的字。
  */
 export function collectTextNodes($, skip = []) {
     const texts = [];
-    const skipped = new Set(['script', 'style', 'template', ...skip]);
+    const skipped = new Set([...NOT_TEXT, ...skip]);
     // template 的內容在另一個 fragment 底下，選擇器排除不掉，所以自己走樹
     const walk = (node) => {
         if (node.type === 'text') return texts.push(node.data);
@@ -188,11 +192,34 @@ export function collectTextNodes($, skip = []) {
  * 會原樣輸出。
  */
 export function strayBoldMarkers($) {
-    return collectTextNodes($, ['code', 'pre'])
+    return collectTextNodes($, CODE)
         .filter((text) => text.includes('**'))
         .map((text) => {
             const start = Math.max(0, text.indexOf('**') - 20);
             return text.slice(start, text.lastIndexOf('**') + 22).replace(/\s+/g, ' ').trim();
+        });
+}
+
+/**
+ * strong、b 裡又有 strong、b，或 em、i 裡又有 em、i。沒結束的 ** 會和同段後面的 ** 配對，
+ * 「**甲（乙）**丙**丁**」輸出 <strong>甲（乙）<strong>丙</strong>丁</strong>，頁面不留 **。
+ * 每個內層元素回傳外層與內層的標籤和外層的文字。跳過的元素和 strayBoldMarkers 相同。
+ */
+export function nestedEmphasis($) {
+    const group = { strong: 'strong, b', b: 'strong, b', em: 'em, i', i: 'em, i' };
+    const skipped = new Set([...NOT_TEXT, ...CODE]);
+    // template 的內容不是 template 的子元素，用 parent 往上找才找得到
+    const isSkipped = (el) => {
+        for (let node = el.parent; node; node = node.parent) if (skipped.has(node.name)) return true;
+        return false;
+    };
+    return $(':is(strong, b) :is(strong, b), :is(em, i) :is(em, i)')
+        .toArray()
+        .filter((el) => !isSkipped(el))
+        .map((el) => {
+            const outer = $(el).parents(group[el.name]).first();
+            const text = outer.text().replace(/\s+/g, ' ').trim().slice(0, 60);
+            return `<${outer.get(0).name}> 裡有 <${el.name}>：${text}`;
         });
 }
 
