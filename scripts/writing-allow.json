@@ -44,6 +44,14 @@
       "kind": "name",
       "source": "https://regional-revitalization-film.tw/document/2026青春還鄉地方創生微電影競賽_競賽辦法(115年6月9日修正).pdf",
       "reason": "競賽的正式名稱，照主辦單位競賽辦法第一頁的標題寫。"
+    },
+    {
+      "file": "src/pages/autonomous-learning/index.astro",
+      "text": "論壇「彈性學制——學習的多重樣貌」",
+      "rule": "P01-double-dash",
+      "kind": "name",
+      "source": "https://www.youtube.com/watch?v=4w6ytmFCi7g",
+      "reason": "影片標題【】裡的講題，照臺灣大學 EDU 頻道在 YouTube 上的標題寫。"
     }
   ]
 }
