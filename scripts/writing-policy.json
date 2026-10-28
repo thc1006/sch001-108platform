@@ -82,7 +82,7 @@
     "src/content/clusters/management/inquiry.md": 66,
     "src/content/clusters/management/myths.md": 68,
     "src/content/clusters/management/overview.md": 36,
-    "src/content/clusters/management/traits.md": 61,
+    "src/content/clusters/management/traits.md": 58,
     "src/data/clusters.ts": 22,
     "src/pages/advanced-resources/open-education.astro": 10,
     "src/pages/career-exploration/clusters/[cluster]/index.astro": 1,
@@ -92,7 +92,7 @@
   },
   "P05-halfwidth-paren": {
    "baseline": {
-    "public/advanced-resources/competitions.json": 3,
+    "public/advanced-resources/competitions.json": 1,
     "public/advanced-resources/open-education.json": 3,
     "public/autonomous-learning/methodology.json": 9,
     "public/career-exploration/senior-interviews.json": 2,
@@ -103,7 +103,7 @@
     "src/content/clusters/management/inquiry.md": 14,
     "src/content/clusters/management/myths.md": 3,
     "src/content/clusters/management/overview.md": 12,
-    "src/content/clusters/management/traits.md": 14,
+    "src/content/clusters/management/traits.md": 13,
     "src/content/clusters/mass-comm/overview.md": 2,
     "src/content/clusters/mass-comm/traits.md": 1,
     "src/pages/autonomous-learning/plan-templates.astro": 3,
