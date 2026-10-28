@@ -7,10 +7,7 @@
    }
   },
   "W04-filler-signpost": {
-   "baseline": {
-    "public/advanced-resources/competitions.json": 1,
-    "src/content/clusters/engineering/overview.md": 1
-   }
+   "baseline": {}
   },
   "W06-puffery": {
    "baseline": {
