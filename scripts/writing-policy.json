@@ -3,9 +3,7 @@
  "rules": {
   "W01-hen-duo": {
    "baseline": {
-    "public/career-exploration/senior-interviews.json": 24,
-    "src/content/clusters/finance/myths.md": 1,
-    "src/pages/career-exploration/competency-map.astro": 1
+    "public/career-exploration/senior-interviews.json": 24
    }
   },
   "W04-filler-signpost": {
