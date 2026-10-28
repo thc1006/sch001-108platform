@@ -22,7 +22,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- AI 學習路徑規劃師 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
-            <h2 class="text-2xl font-bold mb-2">✨ AI 學習路徑規劃師</h2>
+            <h2 class="text-2xl font-bold mb-2">AI 學習路徑規劃師</h2>
             <p class="text-gray-600 mb-6">輸入你想學習的主題，AI 將為你生成一份從入門到進階的學習步驟，並推薦合適的資源類型。</p>
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="pathInput" maxlength="100" aria-label="你想學習的主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：我想學 Python 爬蟲">
@@ -288,7 +288,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 actionContainer.className = 'bg-white p-3 rounded-lg';
                 const actionLabel = document.createElement('p');
                 actionLabel.className = 'text-sm font-semibold text-gray-700 mb-1';
-                actionLabel.textContent = '💡 下一步行動：';
+                actionLabel.textContent = '下一步行動：';
                 // 行動建議為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 const actionText = document.createElement('p');
                 actionText.className = 'text-sm text-gray-800';

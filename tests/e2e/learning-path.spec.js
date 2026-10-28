@@ -89,7 +89,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
             await expect(item.locator('h4')).toHaveText(step.title);
             await expect(item).toContainText(step.description);
             await expect(item).toContainText(`建議資源：${step.resource_type}`);
-            await expect(item).toContainText(`💡 下一步行動：${step.actionable_suggestion}`);
+            await expect(item).toContainText(`下一步行動：${step.actionable_suggestion}`);
         }
         await expect(page.locator('#pathWork > *')).toHaveCount(0);
 
