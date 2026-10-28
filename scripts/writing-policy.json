@@ -20,8 +20,7 @@
   "P01-double-dash": {
    "baseline": {
     "public/advanced-resources/competitions.json": 23,
-    "public/career-exploration/senior-interviews.json": 62,
-    "src/pages/civic-tech-map/index.astro": 1
+    "public/career-exploration/senior-interviews.json": 62
    }
   },
   "P02-single-dash": {
