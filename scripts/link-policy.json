@@ -111,19 +111,6 @@
     },
     {
       "match": {
-        "host": "www.designwant.com"
-      },
-      "reason": "設計王 DesignWant（Nuxt）。文章不存在時回 HTTP 200，整頁沒有 <title>，瀏覽器再用 JavaScript 轉到 /error404。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
-      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/article/10561 回 200，<title>「校園巡禮｜國立臺北科技大學 工業設計系 X 理論與實作的完美搭配 不僅獨一無二更要出類拔萃｜設計王DesignWant」在第 119 byte。/article/99999998、/article/99999999、/article/sch001-linkcheck-… 回 200、約 151 KB，</head> 在第 139889 byte，整頁沒有 <title>，og:title 是空的。根目錄的 /sch001-linkcheck-… 回 200，標題是首頁的「設計王DesignWant｜室內設計、空間設計、裝潢裝修、商業空間、生活風格」。robots.txt 沒有擋任何路徑。",
-      "owner": "thc1006",
-      "expires": "2027-01-31",
-      "urls": [],
-      "missingTitles": [
-        ""
-      ]
-    },
-    {
-      "match": {
         "host": "www.unews.com.tw"
       },
       "reason": "大學問。/Group/Index/、/News/Info/ 底下不存在的編號回 HTTP 200 和首頁的標題。/School/Department/ 底下不存在時轉到 /Newschool/Department/、回 500，健檢列在無法判定、不通知；/School/Department/3/ 與 /School/Department/7/ 的隨機路徑每週列在沒有比對。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
@@ -161,6 +148,32 @@
       "urls": [],
       "missingTitles": [
         "伊甸社會福利基金會"
+      ]
+    },
+    {
+      "match": {
+        "host": "arch.thu.edu.tw"
+      },
+      "reason": "東海大學建築學系。/about/ 底下不存在的編號回 HTTP 200，標題只剩「| 東海大學建築學系」。設計學群科系風向標連 /about/1/。",
+      "evidence": "2026-10-29 在台灣用健檢的 UA 查：/about/1/ 回 200，標題「歷史沿革 | 東海大學建築學系」。/about/99999/ 回 200，標題「| 東海大學建築學系」。根目錄的 /sch001-linkcheck-x 回 404。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "| 東海大學建築學系"
+      ]
+    },
+    {
+      "match": {
+        "host": "www.arch.ncku.edu.tw"
+      },
+      "reason": "成功大學建築學系。/cht/article/ 底下不存在的頁面回 HTTP 200 和首頁的標題。設計學群科系風向標連 /cht/article/undergraduate-programs.html。",
+      "evidence": "2026-10-29 在台灣用健檢的 UA 查：/cht/article/undergraduate-programs.html 回 200，標題「大學部-國立成功大學建築學系」。/cht/article/sch001-linkcheck-x.html 回 200，標題「國立成功大學建築學系」，和首頁相同。根目錄的 /sch001-linkcheck-x 回 404。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "國立成功大學建築學系"
       ]
     }
   ]
