@@ -38,12 +38,6 @@
     "src/content/clusters/management/myths.md": 1,
     "src/content/clusters/management/overview.md": 2,
     "src/content/clusters/management/traits.md": 6,
-    "src/content/clusters/medicine/application.md": 5,
-    "src/content/clusters/medicine/highlights.md": 7,
-    "src/content/clusters/medicine/inquiry.md": 3,
-    "src/content/clusters/medicine/myths.md": 5,
-    "src/content/clusters/medicine/overview.md": 3,
-    "src/content/clusters/medicine/traits.md": 3,
     "src/content/clusters/social-psychology/application.md": 4,
     "src/content/clusters/social-psychology/highlights.md": 7,
     "src/content/clusters/social-psychology/inquiry.md": 5,
@@ -57,12 +51,6 @@
   },
   "P02-single-dash": {
    "baseline": {
-    "src/content/clusters/medicine/application.md": 1,
-    "src/content/clusters/medicine/highlights.md": 1,
-    "src/content/clusters/medicine/inquiry.md": 1,
-    "src/content/clusters/medicine/myths.md": 1,
-    "src/content/clusters/medicine/overview.md": 1,
-    "src/content/clusters/medicine/traits.md": 2,
     "src/content/clusters/social-psychology/traits.md": 1
    }
   },
