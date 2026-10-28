@@ -6,12 +6,6 @@
   "remindReason": "116 學年度申請入學招生簡章在 2026-11-03 公告（招聯會行事曆）。換屆要對照簡章逐頁改，到 2026-12-15 約六週。",
   "keep": [
     {
-      "file": "src/content/clusters/design/inquiry.md",
-      "text": "多可回溯到 111 學年度的舊統計",
-      "cycle": 115,
-      "reason": "這句說坊間的數字出自 111 學年度的舊統計，所以本頁不引用，年份是在交代出處。"
-    },
-    {
       "file": "src/content/clusters/engineering/application.md",
       "text": "一篇 113 學年度清大資工特殊選才的面試心得",
       "cycle": 115,
