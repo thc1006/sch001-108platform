@@ -259,7 +259,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         fetch(searchPath)
           .then((response) => {
             if (!response.ok) {
-              throw new Error(`網路回應錯誤 (${response.status})，無法載入 ${searchPath}`);
+              throw new Error(`網路回應錯誤（${response.status}），無法載入 ${searchPath}`);
             }
             return response.json();
           })
