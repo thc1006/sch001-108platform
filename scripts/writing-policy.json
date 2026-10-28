@@ -61,12 +61,6 @@
     "src/content/clusters/management/myths.md": 1,
     "src/content/clusters/management/overview.md": 2,
     "src/content/clusters/management/traits.md": 6,
-    "src/content/clusters/mass-comm/application.md": 13,
-    "src/content/clusters/mass-comm/highlights.md": 8,
-    "src/content/clusters/mass-comm/inquiry.md": 2,
-    "src/content/clusters/mass-comm/myths.md": 21,
-    "src/content/clusters/mass-comm/overview.md": 13,
-    "src/content/clusters/mass-comm/traits.md": 2,
     "src/content/clusters/medicine/application.md": 5,
     "src/content/clusters/medicine/highlights.md": 7,
     "src/content/clusters/medicine/inquiry.md": 3,
@@ -87,7 +81,6 @@
   "P02-single-dash": {
    "baseline": {
     "src/content/clusters/life-science/application.md": 1,
-    "src/content/clusters/mass-comm/highlights.md": 1,
     "src/content/clusters/medicine/application.md": 1,
     "src/content/clusters/medicine/highlights.md": 1,
     "src/content/clusters/medicine/inquiry.md": 1,
