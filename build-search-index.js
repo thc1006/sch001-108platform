@@ -193,7 +193,7 @@ const ITEM_TITLE_FIELDS = ['title', 'name', 'question'];
 const ITEM_TEXT_FIELDS = ['organizer', 'provider', 'platform', 'major', 'university', 'quote', 'description', 'author', 'original_title', 'recommendation'];
 const ITEM_HTML_FIELDS = dataPagesConfig.htmlFields;
 // 會被攤平成搜尋標籤的陣列欄位。tags 是議題關鍵字（環保、假訊息…），
-// subjects 是學科領域（地理 (GIS)、公民與社會…），兩者都是使用者會直接打進搜尋框的字。
+// subjects 是學科領域（地理（GIS）、公民與社會…），兩者都是使用者會直接打進搜尋框的字。
 const ITEM_TAG_ARRAY_FIELDS = ['tags', 'subjects'];
 
 /**
