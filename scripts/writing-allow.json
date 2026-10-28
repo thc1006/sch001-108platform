@@ -48,6 +48,14 @@
       "reason": "引號裡照抄中原大學財務金融學系 115 學年度申請入學校系分則的備註，原文就是半形括號。"
     },
     {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "這個系的分則寫「修業年限七年(含雙主修)」",
+      "rule": "P05-halfwidth-paren",
+      "kind": "quote",
+      "source": "https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_030022.htm",
+      "reason": "引號裡照抄長庚大學中醫學系 115 學年度申請入學校系分則的備註，原文就是半形括號。"
+    },
+    {
       "file": "src/content/clusters/life-science/application.md",
       "text": "台大大氣系寫「多元表現(N.綜整心得)：500字內」",
       "rule": "P05-halfwidth-paren",
