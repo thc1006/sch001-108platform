@@ -118,16 +118,7 @@
   },
   "P07-emoji": {
    "baseline": {
-    "public/career-exploration/senior-interviews.json": 20,
-    "src/content/clusters/medicine/highlights.md": 2,
-    "src/content/clusters/medicine/traits.md": 2,
-    "src/pages/autonomous-learning/index.astro": 1,
-    "src/pages/autonomous-learning/methodology.astro": 1,
-    "src/pages/autonomous-learning/plan-templates.astro": 1,
-    "src/pages/autonomous-learning/resource-map.astro": 2,
-    "src/pages/autonomous-learning/topic-ideas.astro": 4,
-    "src/pages/learning-portfolio/index.astro": 4,
-    "src/pages/learning-portfolio/reflection-guide.astro": 1
+    "public/career-exploration/senior-interviews.json": 20
    }
   },
   "P09-quote-nesting": {

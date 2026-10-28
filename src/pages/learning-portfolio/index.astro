@@ -22,7 +22,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- AI 學習歷程健檢工具 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
-             <h2 class="text-2xl font-bold mb-2">✨ AI 學習歷程健檢工具</h2>
+             <h2 class="text-2xl font-bold mb-2">AI 學習歷程健檢工具</h2>
              <p class="text-gray-600 mb-6">將你寫好的「心得與反思」文字貼入下方，AI 將根據 STAR 原則（情境、任務、行動、結果）分析你的內容，並提供具體的修改建議，讓你的故事更具說服力！</p>
              <div>
                 <textarea id="reflectionInput" maxlength="2000" aria-label="你的心得反思" aria-describedby="reflectionLimit" class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="在這裡貼上你的心得反思文字..."></textarea>
@@ -159,7 +159,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 總評標題
             const overallTitle = document.createElement('h3');
             overallTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
-            overallTitle.textContent = '📋 健檢總評';
+            overallTitle.textContent = '健檢總評';
 
             // 總評內容（AI 純文字，可能含 markdown）
             // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
@@ -170,7 +170,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // STAR 分析標題
             const starTitle = document.createElement('h3');
             starTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
-            starTitle.textContent = '⭐ STAR 分析與建議';
+            starTitle.textContent = 'STAR 分析與建議';
 
             // STAR 分析容器
             const analysisContainer = document.createElement('div');
@@ -227,7 +227,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 修改範例標題
             const exampleTitle = document.createElement('h3');
             exampleTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
-            exampleTitle.textContent = '✨ 修改範例';
+            exampleTitle.textContent = '修改範例';
 
             // 修改範例內容
             const exampleBox = document.createElement('div');
