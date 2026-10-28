@@ -27,10 +27,8 @@
   },
   "P04-halfwidth-punct": {
    "baseline": {
-    "public/advanced-resources/open-education.json": 87,
     "public/career-exploration/senior-interviews.json": 24,
     "src/data/clusters.ts": 22,
-    "src/pages/advanced-resources/open-education.astro": 9,
     "src/pages/career-exploration/clusters/[cluster]/index.astro": 1,
     "src/pages/career-exploration/clusters/index.astro": 5,
     "src/pages/sitemap.astro": 1
@@ -39,7 +37,6 @@
   "P05-halfwidth-paren": {
    "baseline": {
     "public/advanced-resources/competitions.json": 1,
-    "public/advanced-resources/open-education.json": 3,
     "public/autonomous-learning/methodology.json": 9,
     "public/career-exploration/senior-interviews.json": 2,
     "src/content/clusters/finance/myths.md": 1,
