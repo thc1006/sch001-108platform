@@ -168,7 +168,7 @@ const inPage = (html) => (b) => b.edit('about.html', (t) => t.replace('</main>',
 const W01_ENTRY = '或只寫「我學到很多」';
 const clearMains = (count) => (b) => { for (const f of b.html.slice(0, count)) b.edit(f, (t) => t.replace(/(<main[^>]*>)[\s\S]*<\/main>/, '$1</main>')); };
 const hitWith = (r, text) => r?.hits.find((h) => h.context.includes(text));
-const FINANCE_MYTHS = 'src/content/clusters/finance/myths.md';
+const FINANCE_APPLICATION = 'src/content/clusters/finance/application.md';
 
 // [說明, 改動, 參數, 預期結束碼, 另外的檢查 (報表, 跑完的基準, 輸出) => boolean]
 const cases = [
@@ -184,8 +184,8 @@ const cases = [
         (r) => hitWith(r, '注入的欄位很多')?.file === 'page:public/career-exploration/senior-interviews.json'],
     // 同一行原始碼、同樣前後文的內文命中各算一筆，只有屬性跨頁才合併。結束碼也會因放行片段出現兩次而是 1，
     // 所以另外確認有一筆內文命中變成兩筆。
-    ['內文重複一次', (b) => b.edit('career-exploration/clusters/finance/myths.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), [], 1,
-        (r) => !!r?.hits.some((h) => h.file === FINANCE_MYTHS && r.hits.filter((x) => x.file === h.file && x.rule === h.rule && x.line === h.line && x.match === h.match && x.context === h.context).length === 2)],
+    ['內文重複一次', (b) => b.edit('career-exploration/clusters/finance/application.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), [], 1,
+        (r) => !!r?.hits.some((h) => h.file === FINANCE_APPLICATION && r.hits.filter((x) => x.file === h.file && x.rule === h.rule && x.line === h.line && x.match === h.match && x.context === h.context).length === 2)],
     ['清空每頁的 <main>', clearMains(Infinity), [], 1, (r) => r === null],
     ['清空一頁的 <main>', clearMains(1), [], 1, (r) => r === null],
     ['放行條目的 kind 寫錯', editAllow((e) => { e[0].kind = 'other'; }), [], 1],
@@ -215,8 +215,8 @@ const cases = [
     ['--verify 目標分支的基準壞掉', () => {}, ['--verify', BROKEN], 1],
     ['--annotate 乾淨的副本', () => {}, ['--annotate', 'HEAD'], 0],
     // BASE 裡只有基準檔，src 的每一行都算改到；重複的內文讓那個檔超過基準，annotation 要是 error。
-    ['--annotate 超過基準的檔案是 error', (b) => b.edit('career-exploration/clusters/finance/myths.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), ['--annotate', BASE], 1,
-        (r, p, out) => /^::error file=src\/content\/clusters\/finance\/myths\.md,/m.test(out)],
+    ['--annotate 超過基準的檔案是 error', (b) => b.edit('career-exploration/clusters/finance/application.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), ['--annotate', BASE], 1,
+        (r, p, out) => /^::error file=src\/content\/clusters\/finance\/application\.md,/m.test(out)],
     // 只改 public/ 的資料檔時也要標到那一行。
     ['--annotate 標到 public 的資料檔', (b) => b.edit('career-exploration/senior-interviews.json', (t) => t.replace('"content_html": "', '"content_html": "<p>注入的很多</p>')), ['--annotate', BASE], 1,
         (r, p, out) => /^::error file=public\/career-exploration\/senior-interviews\.json,line=\d+/m.test(out)],
