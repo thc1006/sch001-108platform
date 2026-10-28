@@ -142,11 +142,7 @@
    }
   },
   "K01-chat-residue": {
-   "baseline": {
-    "src/pages/autonomous-learning/index.astro": 1,
-    "src/pages/autonomous-learning/methodology.astro": 1,
-    "src/pages/learning-portfolio/reflection-guide.astro": 2
-   }
+   "baseline": {}
   }
  }
 }
