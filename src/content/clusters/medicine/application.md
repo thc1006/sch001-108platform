@@ -73,7 +73,7 @@ description: 醫藥衛生學群第二階段甄試完整攻略，涵蓋備審資�
 
 ## 四、MMI 多站式迷你面試完整攻略
 
-MMI（Multiple Mini-Interview）是台灣醫學系（及部分醫衛科系）廣泛採用的面試形式，理解它對申請者至關重要。
+MMI（Multiple Mini-Interview）是台灣醫學系（及部分醫衛科系）廣泛採用的面試形式。
 
 ### MMI 是什麼
 
