@@ -38,12 +38,6 @@
    "baseline": {
     "public/advanced-resources/competitions.json": 23,
     "public/career-exploration/senior-interviews.json": 62,
-    "src/content/clusters/design/application.md": 7,
-    "src/content/clusters/design/highlights.md": 6,
-    "src/content/clusters/design/inquiry.md": 4,
-    "src/content/clusters/design/myths.md": 3,
-    "src/content/clusters/design/overview.md": 2,
-    "src/content/clusters/design/traits.md": 2,
     "src/content/clusters/engineering/application.md": 3,
     "src/content/clusters/engineering/highlights.md": 2,
     "src/content/clusters/engineering/inquiry.md": 8,
@@ -92,7 +86,6 @@
   },
   "P02-single-dash": {
    "baseline": {
-    "src/content/clusters/design/application.md": 1,
     "src/content/clusters/life-science/application.md": 1,
     "src/content/clusters/mass-comm/highlights.md": 1,
     "src/content/clusters/medicine/application.md": 1,
