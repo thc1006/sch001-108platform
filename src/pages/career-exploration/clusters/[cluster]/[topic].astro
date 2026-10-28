@@ -127,5 +127,11 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
+    /* prose 的儲存格垂直對齊是 baseline，同一列有一格換行時，短的那格會貼在上緣。 */
+    .md-content th,
+    .md-content td {
+      text-align: start;
+      vertical-align: middle;
+    }
   </style>
 </BaseLayout>
