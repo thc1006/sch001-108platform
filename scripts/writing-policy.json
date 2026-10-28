@@ -21,7 +21,6 @@
    "baseline": {
     "public/advanced-resources/competitions.json": 23,
     "public/career-exploration/senior-interviews.json": 62,
-    "src/pages/advanced-resources/open-education.astro": 1,
     "src/pages/autonomous-learning/index.astro": 1,
     "src/pages/civic-tech-map/index.astro": 1
    }
@@ -40,7 +39,7 @@
     "src/content/clusters/management/overview.md": 36,
     "src/content/clusters/management/traits.md": 58,
     "src/data/clusters.ts": 22,
-    "src/pages/advanced-resources/open-education.astro": 10,
+    "src/pages/advanced-resources/open-education.astro": 9,
     "src/pages/career-exploration/clusters/[cluster]/index.astro": 1,
     "src/pages/career-exploration/clusters/index.astro": 5,
     "src/pages/sitemap.astro": 1
