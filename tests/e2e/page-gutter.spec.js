@@ -74,3 +74,37 @@ test('360px：比內文欄寬的表格在表格內捲動，不撐寬頁面', asy
     expect(t.boxRight).toBeLessThanOrEqual(0.5);
     expect(t.pageOverflow).toBeLessThanOrEqual(0);
 });
+
+// 儲存格文字靠左、上下置中：同一列裡只有一行的那格，文字上下的留白相等。
+test('768px：表格儲存格文字靠左、上下置中', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/overview.html`);
+    const m = await page.evaluate(() => {
+        const cells = [...document.querySelectorAll('.md-content th, .md-content td')];
+        const styles = cells.map((c) => getComputedStyle(c));
+        const gaps = [];
+        const textBox = (cell) => {
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            return range.getBoundingClientRect();
+        };
+        for (const row of document.querySelectorAll('.md-content tr')) {
+            const cs = [...row.cells].filter((c) => c.textContent.trim());
+            const texts = cs.map(textBox);
+            const heights = texts.map((t) => t.height);
+            const i = heights.indexOf(Math.min(...heights));
+            if (Math.max(...heights) - heights[i] < 20) continue;
+            const box = cs[i].getBoundingClientRect();
+            gaps.push(Math.abs((texts[i].top - box.top) - (box.bottom - texts[i].bottom)));
+        }
+        return {
+            align: [...new Set(styles.map((s) => s.textAlign))],
+            valign: [...new Set(styles.map((s) => s.verticalAlign))],
+            gaps,
+        };
+    });
+    expect(m.align).toEqual(['start']);
+    expect(m.valign).toEqual(['middle']);
+    expect(m.gaps.length, '至少有一列的儲存格高度不同').toBeGreaterThan(0);
+    for (const gap of m.gaps) expect(gap).toBeLessThanOrEqual(2);
+});
