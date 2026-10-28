@@ -137,20 +137,6 @@
     },
     {
       "match": {
-        "host": "www.public.com.tw"
-      },
-      "reason": "公職王。/exam-study/ 底下，現有文章代碼後面多接字元的路徑回 HTTP 200、標題只剩「-公職王」；其他不存在的路徑轉到 /Error，標題「找不到頁面-公職王」。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
-      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/exam-study/dept-univfinance-science 回 200，標題「會計系、經濟系等財經學群考公職出路指南-公職王」。/exam-study/dept-univfinance-sciencex、dept-univfinance-sciencez、dept-univlaw-science9 回 200，標題「-公職王」；/exam-study/sch001-linkcheck-…、/exam-study/dept-sch001-linkcheck-…、/exam-study/ 轉到 /Error，回 200，標題「找不到頁面-公職王」。robots.txt 擋 /Exception/、/login/、/IRecording/、/Iclick/。",
-      "owner": "thc1006",
-      "expires": "2027-01-31",
-      "urls": [],
-      "missingTitles": [
-        "-公職王",
-        "找不到頁面-公職王"
-      ]
-    },
-    {
-      "match": {
         "host": "collego.edu.tw"
       },
       "reason": "大學選才與高中育才輔助系統 ColleGo!。不存在的學群、系所、文章編號轉到 /Login/Error500，不存在的路徑轉到 /Login/Error404，都回 HTTP 200、標題「Error」；不存在的學類回 200、124 bytes 的 alert 殼、沒有標題；/Media/Article/ 底下不是編號的路徑轉到 /Media/Portfolio，標題「焦點話題」。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
