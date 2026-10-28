@@ -123,8 +123,7 @@
   },
   "P09-quote-nesting": {
    "baseline": {
-    "public/career-exploration/senior-interviews.json": 39,
-    "src/content/clusters/design/myths.md": 2
+    "public/career-exploration/senior-interviews.json": 39
    }
   },
   "P10-curly-quote": {
