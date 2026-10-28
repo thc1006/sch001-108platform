@@ -168,6 +168,7 @@ const inPage = (html) => (b) => b.edit('about.html', (t) => t.replace('</main>',
 const W01_ENTRY = '或只寫「我學到很多」';
 const clearMains = (count) => (b) => { for (const f of b.html.slice(0, count)) b.edit(f, (t) => t.replace(/(<main[^>]*>)[\s\S]*<\/main>/, '$1</main>')); };
 const hitWith = (r, text) => r?.hits.find((h) => h.context.includes(text));
+const FINANCE_MYTHS = 'src/content/clusters/finance/myths.md';
 
 // [說明, 改動, 參數, 預期結束碼, 另外的檢查 (報表, 跑完的基準, 輸出) => boolean]
 const cases = [
@@ -181,8 +182,10 @@ const cases = [
     // 原始檔沒有這個欄位，pointer 找不到行，命中只能記成頁面路徑。
     ['資料 JSON 多一個原始檔沒有的欄位', (b) => b.edit('career-exploration/senior-interviews.json', (t) => { const d = JSON.parse(t); d.interviews[0].faultNote = '注入的欄位很多'; return JSON.stringify(d); }), [], 1,
         (r) => hitWith(r, '注入的欄位很多')?.file === 'page:public/career-exploration/senior-interviews.json'],
-    // 同一行原始碼、同樣前後文的內文命中各算一筆，只有屬性跨頁才合併。
-    ['內文重複一次', (b) => b.edit('career-exploration/clusters/finance/myths.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), [], 1],
+    // 同一行原始碼、同樣前後文的內文命中各算一筆，只有屬性跨頁才合併。結束碼也會因放行片段出現兩次而是 1，
+    // 所以另外確認有一筆內文命中變成兩筆。
+    ['內文重複一次', (b) => b.edit('career-exploration/clusters/finance/myths.html', (t) => t.replace(/(<main[^>]*>)([\s\S]*)<\/main>/, '$1$2$2</main>')), [], 1,
+        (r) => !!r?.hits.some((h) => h.file === FINANCE_MYTHS && r.hits.filter((x) => x.file === h.file && x.rule === h.rule && x.line === h.line && x.match === h.match && x.context === h.context).length === 2)],
     ['清空每頁的 <main>', clearMains(Infinity), [], 1, (r) => r === null],
     ['清空一頁的 <main>', clearMains(1), [], 1, (r) => r === null],
     ['放行條目的 kind 寫錯', editAllow((e) => { e[0].kind = 'other'; }), [], 1],
