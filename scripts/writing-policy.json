@@ -55,10 +55,6 @@
     "src/content/clusters/finance/myths.md": 1,
     "src/content/clusters/finance/overview.md": 2,
     "src/content/clusters/finance/traits.md": 2,
-    "src/content/clusters/info/application.md": 3,
-    "src/content/clusters/info/inquiry.md": 1,
-    "src/content/clusters/info/myths.md": 1,
-    "src/content/clusters/info/overview.md": 1,
     "src/content/clusters/life-science/application.md": 13,
     "src/content/clusters/life-science/highlights.md": 10,
     "src/content/clusters/life-science/inquiry.md": 5,
@@ -97,10 +93,6 @@
   "P02-single-dash": {
    "baseline": {
     "src/content/clusters/design/application.md": 1,
-    "src/content/clusters/info/application.md": 18,
-    "src/content/clusters/info/highlights.md": 17,
-    "src/content/clusters/info/inquiry.md": 15,
-    "src/content/clusters/info/traits.md": 8,
     "src/content/clusters/life-science/application.md": 1,
     "src/content/clusters/mass-comm/highlights.md": 1,
     "src/content/clusters/medicine/application.md": 1,
