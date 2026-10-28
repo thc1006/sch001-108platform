@@ -175,6 +175,19 @@
       "missingTitles": [
         "國立成功大學建築學系"
       ]
+    },
+    {
+      "match": {
+        "host": "web.arte.gov.tw"
+      },
+      "reason": "國立臺灣藝術教育館。/nsac/ 底下不存在的 .aspx 回 HTTP 200，標題「全國學生美術比賽-Error」。設計學群多元表現頁連 /nsac/rules.aspx。",
+      "evidence": "2026-10-29 在台灣用健檢的 UA 查：/nsac/rules.aspx 回 200，標題「全國學生美術比賽全國學生美術比賽-實施要點」。/nsac/sch001-linkcheck-x.aspx 回 200、約 200 bytes，標題「全國學生美術比賽-Error」。根目錄的 /sch001-linkcheck-x 回 404。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "全國學生美術比賽-Error"
+      ]
     }
   ]
 }
