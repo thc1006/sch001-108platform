@@ -21,7 +21,6 @@
    "baseline": {
     "public/advanced-resources/competitions.json": 23,
     "public/career-exploration/senior-interviews.json": 62,
-    "src/pages/autonomous-learning/index.astro": 1,
     "src/pages/civic-tech-map/index.astro": 1
    }
   },
