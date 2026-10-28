@@ -27,11 +27,7 @@
   },
   "P04-halfwidth-punct": {
    "baseline": {
-    "public/career-exploration/senior-interviews.json": 24,
-    "src/data/clusters.ts": 22,
-    "src/pages/career-exploration/clusters/[cluster]/index.astro": 1,
-    "src/pages/career-exploration/clusters/index.astro": 5,
-    "src/pages/sitemap.astro": 1
+    "public/career-exploration/senior-interviews.json": 24
    }
   },
   "P05-halfwidth-paren": {
