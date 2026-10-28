@@ -36,6 +36,14 @@
       "kind": "name",
       "source": "https://sciexplore2026.colife.org.tw/",
       "reason": "競賽的正式名稱，名稱照同頁參考資料連到的官網寫。"
+    },
+    {
+      "file": "src/content/clusters/mass-comm/highlights.md",
+      "text": "如「青春還鄉—2026 地方創生微電影競賽」設有",
+      "rule": "P02-single-dash",
+      "kind": "name",
+      "source": "https://regional-revitalization-film.tw/document/2026青春還鄉地方創生微電影競賽_競賽辦法(115年6月9日修正).pdf",
+      "reason": "競賽的正式名稱，照主辦單位競賽辦法第一頁的標題寫。"
     }
   ]
 }
