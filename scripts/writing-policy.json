@@ -21,11 +21,6 @@
    "baseline": {
     "public/advanced-resources/competitions.json": 23,
     "public/career-exploration/senior-interviews.json": 62,
-    "src/content/clusters/engineering/application.md": 3,
-    "src/content/clusters/engineering/highlights.md": 2,
-    "src/content/clusters/engineering/inquiry.md": 8,
-    "src/content/clusters/engineering/myths.md": 1,
-    "src/content/clusters/engineering/overview.md": 9,
     "src/content/clusters/finance/application.md": 2,
     "src/content/clusters/finance/highlights.md": 1,
     "src/content/clusters/finance/inquiry.md": 11,
