@@ -33,16 +33,11 @@
   "P05-halfwidth-paren": {
    "baseline": {
     "public/advanced-resources/competitions.json": 1,
-    "public/autonomous-learning/methodology.json": 9,
     "public/career-exploration/senior-interviews.json": 2,
-    "src/pages/autonomous-learning/plan-templates.astro": 3,
-    "src/pages/autonomous-learning/resource-map.astro": 1,
-    "src/pages/autonomous-learning/topic-ideas.astro": 1,
     "src/pages/career-exploration/competency-map.astro": 1,
     "src/pages/career-exploration/index.astro": 4,
     "src/pages/civic-tech-map/index.astro": 4,
-    "src/pages/index.astro": 1,
-    "src/pages/learning-portfolio/reflection-guide.astro": 4
+    "src/pages/index.astro": 1
    }
   },
   "P07-emoji": {
