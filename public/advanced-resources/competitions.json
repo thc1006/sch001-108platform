@@ -1,6 +1,6 @@
 {
   "_readme": "競賽資料來源檔。competitions.html 會在載入時 fetch() 此檔並渲染。新增或修改競賽請直接編輯下方 competitions 陣列，不需要動 HTML。除 deadline 外所有欄位皆為必填、不可為空字串（看門狗 check-competitions.mjs 會驗證）。欄位說明：title=競賽名稱；organizer=主辦單位；category 限「科學」「數理」「資訊」「語文人文」「商業管理」「藝術設計」「社會永續」「跨領域」八選一；level 限「校際/地區」「全國」「國際」三選一；form 限「個人」「團體」「個人/團體」三選一；region=競賽主要所屬地區，限「台灣」「美國」「英國」「歐洲」「東亞」「全球線上」「其他」七選一，英國的競賽填「英國」，不填「歐洲」，「東亞」包含東南亞。各國在本地實體應考的競賽，填出題、訂規則的國際主辦單位所在的地區。決賽每年換主辦國的填「其他」，但歷屆都在同一個地區輪辦的填那個地區（例如 EGMO、EGOI 填「歐洲」）。決賽固定在同一地舉行的，填那個地方所在的地區。mode 是「線上」的競賽，各國學生都能直接報名參賽的填「全球線上」（由指導老師或家長代為報名、獎項或選拔另限某國的也算），即使決賽在固定地點也一樣；只收某一國學生的，填那一國所屬的地區；要先經各國選拔才能進國際賽的，照上面實體賽的寫法填；eligibility=參賽門檻，限「公開報名」「國家隊選拔」「邀請制」三選一；mode=辦理形式，限「線上」「實體」「混合」三選一；deadline 用 YYYY-MM-DD 格式，僅「已查到確切日期」才填；cycle=年度固定週期（選填物件，{opens,closes,note}，opens/closes 為 MM 或 MM-DD）。截止日過了不要清空 deadline——只要補上 cycle，頁面就會顯示「本屆已截止・下次約 YYYY-MM-DD」，比一律顯示「依官網」有用，看門狗也不會再重複警告（改為下屆逼近時才提醒查確切日期）。兩者皆無才留空字串（頁面顯示「依官網」）。查不到固定週期的（只有一屆的資料，或歷屆截止月份不同），截止日過了可以清空 deadline、不填 cycle，改在 registrationNote 寫本屆狀態（例如「2026 屆已截止 · 2027 屆未公布」）；這種條目看門狗不會在下屆截止前提醒，只在 sourceCheckedAt 逾 90 天時列出、逾 180 天時通知，下屆截止可能更早的要設 recheckOn；description=1–2 句繁體中文簡介，可含台灣參賽方式與風險提示。deadlineAt=帶時區位移的精確報名截止時刻（選填，例 2026-09-15T23:59:00-07:00）；opensAt=精確報名開放時刻（選填，同格式）；eventStartsAt/eventEndsAt=賽事日期（選填 YYYY-MM-DD，與報名截止是兩回事，不可混填）；registrationNote=沒有固定截止日時的報名規則（選填短句，例如 NASA Space Apps 依所在地活動時間）；sourceCheckedAt=本筆最後逐項查證官網的日期（選填 YYYY-MM-DD）。recheckOn=預定回官網重查的日期（選填 YYYY-MM-DD），recheckNote=定這一天的依據（一句），兩欄要一起填，recheckOn 要晚於 sourceCheckedAt、不晚於它一年後；到了這天看門狗會通知，有 recheckOn 的不套 90／180 天的規則，查到下一屆的日期後拿掉兩欄。時刻欄位一律必須帶時區位移，省略時區會被 CI 擋下——沒有時區的時刻在不同使用者眼中是不同的時刻。頂層 lastUpdated 是「這個檔案最後被修改的日期」，不代表每一筆都在那天查證過；逐筆的查證日期看 sourceCheckedAt。",
-  "lastUpdated": "2026-10-28",
+  "lastUpdated": "2026-10-29",
   "competitions": [
     {
       "title": "全國中小學科學展覽會",
@@ -310,7 +310,7 @@
       "registrationNote": "須由就讀學校報名 · 不接受個人報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://tpmso.k12ea.gov.tw/ieso/",
-      "description": "中學生地球科學競賽，由 International Geoscience Education Organisation (IGEO) 主辦。IGEO 原網站 www.igeoscied.org 最晚 2026-09-25 起連不上（2026-10-25 仍是如此）；IGEO 在 2026-10-23（台灣時間）於官方 Facebook 粉絲專頁公告臨時網站 https://sites.google.com/view/igeoscied ，說明原網域移轉期間先用這個網址。2026-10-25 查證時，臨時網站還沒有 IESO 的章程與歷屆試題，國際賽資訊以臺灣選訓網站為準。重要警告：原先登記的 ieso-info.org 網域已被轉作澳洲線上博弈網站（標題「Best Online Pokies in Australia 2026」），與 IESO 完全無關，切勿再連過去。台灣選訓由教育部國教署委託臺師大地球科學系辦理：第 19 屆全國初選報名 2026-01-05 至 01-12、初選 3/7、選訓決賽營 4/8 至 4/19、國家代表隊選拔營 5/5 至 5/17、輔導營 6 至 8 月，國際賽 2026 年 8 月 20 至 27 日於義大利杜林（Torino）舉行，已結束；第 20 屆 2027 年 8 月 22 至 28 日於日本島根舉行。須由就讀學校報名，不接受個人報名。"
+      "description": "中學生地球科學競賽，由 International Geoscience Education Organisation (IGEO) 主辦。IGEO 原網站 www.igeoscied.org 最晚 2026-09-25 起連不上（2026-10-29 仍是如此）；IGEO 在 2026-10-23（台灣時間）於官方 Facebook 粉絲專頁公告臨時網站 https://sites.google.com/view/igeoscied ，說明原網域移轉期間先用這個網址。2026-10-29 查證時，臨時網站還沒有 IESO 的章程與歷屆試題，國際賽資訊以臺灣選訓網站為準。重要警告：原先登記的 ieso-info.org 網域已被轉作澳洲線上博弈網站（標題「Best Online Pokies in Australia 2026」），與 IESO 完全無關，切勿再連過去。台灣選訓由教育部國教署委託臺師大地球科學系辦理：第 19 屆全國初選報名 2026-01-05 至 01-12、初選 3/7、選訓決賽營 4/8 至 4/19、國家代表隊選拔營 5/5 至 5/17、輔導營 6 至 8 月，國際賽 2026 年 8 月 20 至 27 日於義大利杜林（Torino）舉行，已結束；第 20 屆 2027 年 8 月 22 至 28 日於日本島根舉行。須由就讀學校報名，不接受個人報名。"
     },
     {
       "title": "國際語言學奧林匹亞 (IOL)",
