@@ -70,6 +70,46 @@
       "kind": "quote",
       "source": "https://tpmso.k12ea.gov.tw/toi/wp-content/uploads/2025/10/%E5%9C%8B%E9%9A%9B%E8%B3%87%E8%A8%8A%E5%A5%A7%E6%9E%97%E5%8C%B9%E4%BA%9E%E7%AB%B6%E8%B3%BD%E5%9C%8B%E5%AE%B6%E4%BB%A3%E8%A1%A8%E9%9A%8A%E9%81%B4%E9%81%B8%E4%BD%9C%E6%A5%AD%E8%A6%81%E9%BB%9E_20250402%E4%BF%AE%E6%AD%A3%E9%80%9A%E9%81%8E.pdf",
       "reason": "引號裡引國際資訊奧林匹亞競賽國家代表隊遴選作業要點第八點，括號照原文用半形。"
+    },
+    {
+      "file": "src/pages/career-exploration/index.astro",
+      "text": "處理組織系統內外人事物的各種問題",
+      "rule": "W02-vague-quantity",
+      "kind": "quote",
+      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=16",
+      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
+    },
+    {
+      "file": "src/pages/career-exploration/index.astro",
+      "text": "以收最大效益",
+      "rule": "W08-superlative",
+      "kind": "quote",
+      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=16",
+      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
+    },
+    {
+      "file": "src/pages/career-exploration/index.astro",
+      "text": "並且提供各種助人專業訓練",
+      "rule": "W02-vague-quantity",
+      "kind": "quote",
+      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10",
+      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
+    },
+    {
+      "file": "src/pages/career-exploration/index.astro",
+      "text": "以各種媒體將訊息",
+      "rule": "W02-vague-quantity",
+      "kind": "quote",
+      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=11",
+      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
+    },
+    {
+      "file": "src/pages/career-exploration/index.astro",
+      "text": "數據統計",
+      "rule": "C01-vague-attribution",
+      "kind": "name",
+      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=1",
+      "reason": "ColleGo! 資訊學群列的學類名稱。"
     }
   ]
 }
