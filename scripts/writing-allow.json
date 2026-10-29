@@ -10,13 +10,6 @@
       "reason": "暨大社工系錄取者面試心得的原句，照頁面上的寫法引用。"
     },
     {
-      "file": "src/content/clusters/social-psychology/highlights.md",
-      "text": "「很有收穫」「我學到很多」",
-      "rule": "W01-hen-duo",
-      "kind": "counterexample",
-      "reason": "引號裡是要學生避開的空話原句，當反例引用，不是本站自己的用語。"
-    },
-    {
       "file": "src/content/clusters/social-psychology/myths.md",
       "text": "「我必須在備審資料中展現我已經懂很多專業理論。」",
       "rule": "W01-hen-duo",
