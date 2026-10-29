@@ -394,6 +394,14 @@ const guardMutations = [
         apply: (s) => s.replace('            ...(r.bodyAborted ? { bodyAborted: true } : {}),\n', ''),
     },
     {
+        name: '預算用完只看 Date.now（被預算中止的探測回來後又起跑下一筆）',
+        apply: (s) => s.replace('const outOfBudget = () => globalAbort.signal.aborted || Date.now() >= budgetEnd;', 'const outOfBudget = () => Date.now() >= budgetEnd;'),
+    },
+    {
+        name: '單筆逾時又截到剩餘預算（比全域 abort 早觸發時又起跑下一筆）',
+        apply: (s) => s.replace('AbortSignal.timeout(timeoutMs)]', 'AbortSignal.timeout(Math.max(1, Math.min(timeoutMs, budgetEnd - Date.now())))]'),
+    },
+    {
         name: '預算用完沒重試的結果不標 retrySkipped',
         apply: (s) => s.replace('outOfBudget() ? { ...first, retrySkipped: true } :', 'outOfBudget() ? first :'),
     },
