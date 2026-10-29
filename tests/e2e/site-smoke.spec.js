@@ -44,6 +44,23 @@ test('測試瀏覽器解析不到外部主機（playwright.config.js 的 host-re
 });
 
 test.describe('部署產物 smoke test', () => {
+    test('導覽列只在選項就是這一頁時標 aria-current="page"，同區段的子頁標 "true"', async ({ page }) => {
+        for (const [path, value, href] of [
+            ['/career-exploration/index.html', 'page', '/career-exploration/index.html'],
+            ['/career-exploration/clusters/law/index.html', 'true', '/career-exploration/index.html'],
+            ['/about.html', 'page', '/about.html'],
+            ['/index.html', null],
+        ]) {
+            await page.goto(P(path));
+            const marked = page.locator('header a[aria-current]');
+            await expect(marked, path).toHaveCount(value ? 2 : 0); // 桌機與手機選單各一個
+            for (const a of await marked.all()) {
+                await expect(a, path).toHaveAttribute('aria-current', value);
+                await expect(a, path).toHaveAttribute('href', `/sch001-108platform${href}`);
+            }
+        }
+    });
+
     test('首頁載入且無錯誤', async ({ page }) => {
         const errors = watchForErrors(page);
         await page.goto(P('/'), { waitUntil: 'networkidle' });
