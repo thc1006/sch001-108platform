@@ -147,7 +147,7 @@ test.describe('部署產物 smoke test', () => {
         for (let i = 0; i < Object.keys(CLUSTER_CARDS).length; i++) {
             await buttons.nth(i).click();
             const details = page.locator('#cluster-details');
-            const guide = await details.locator('a', { hasText: '查看完整升學指南' }).getAttribute('href');
+            const guide = await details.locator('a', { hasText: '查看升學指南' }).getAttribute('href');
             const slug = guide.match(/^clusters\/([^/]+)\/index\.html$/)?.[1];
             expect(slug, guide).toBeTruthy();
             const url = new URL(await details.locator('a', { hasText: '前往 ColleGo!' }).getAttribute('href'));
