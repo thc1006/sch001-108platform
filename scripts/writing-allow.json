@@ -10,13 +10,6 @@
       "reason": "暨大社工系錄取者面試心得的原句，照頁面上的寫法引用。"
     },
     {
-      "file": "src/content/clusters/social-psychology/myths.md",
-      "text": "備審要展現自己懂很多專業理論？",
-      "rule": "W01-hen-duo",
-      "kind": "counterexample",
-      "reason": "迷思頁的標題，問句是要破解的學生想法。"
-    },
-    {
       "file": "src/content/clusters/life-science/highlights.md",
       "text": "「科學探究競賽—這樣教我就懂」的官網寫",
       "rule": "P02-single-dash",
