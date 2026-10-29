@@ -202,6 +202,32 @@
         "國立陽明交通大學教務處",
         "錯誤訊息頁面"
       ]
+    },
+    {
+      "match": {
+        "host": "www.hhsh.chc.edu.tw"
+      },
+      "reason": "國立溪湖高中的檔案下載 resource/openfid.php?id=…。檔案不存在時回 HTTP 200、text/html、沒有 <title>，內容只有「檔案不存在(2103)」，狀態碼看不出檔案還在不在。",
+      "evidence": "2026-10-30 在台灣用瀏覽器 UA 查：id=2873 回 200、application/pdf、約 1 MB；id=99999999 回 200、text/html、21 byte，沒有 <title>，內容是「檔案不存在(2103)」。同目錄的隨機路徑 /resource/sch001-linkcheck-… 回 404。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        ""
+      ]
+    },
+    {
+      "match": {
+        "host": "www.108epo.com"
+      },
+      "reason": "作伙學（教育部學習歷程檔案審議計畫）的文章 results-detail.php?Key=…。不存在的 Key 回 HTTP 200，頁面只是一段 SweetAlert 提示的殼，沒有 <title>，狀態碼看不出文章還在不在。",
+      "evidence": "2026-10-30 在台灣用瀏覽器 UA 查：Key=30 回 200、約 26 KB，<title> 是「課程學習成果作品呈現建議（四）—— 獨特性與真實性（含範例） | 成果展示 | 作伙學」；Key=99999 回 200、569 byte，沒有 <title>，內容是呼叫 Swal.fire 的 script。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        ""
+      ]
     }
   ]
 }
