@@ -48,6 +48,12 @@
       "reason": "交代這兩篇面試心得是哪一屆特殊選才的經驗，年份不隨換屆改變。"
     },
     {
+      "file": "src/content/clusters/life-science/myths.md",
+      "text": "清大生命科學系 114 學年度入學的必修",
+      "cycle": 115,
+      "reason": "系網站上最新的必修科目表是 114 學年度入學那一份，年份交代表的版本。換屆時看系上有沒有新的表。"
+    },
+    {
       "file": "src/content/clusters/management/overview.md",
       "text": "84.2% 是 111 學年度以來最高",
       "cycle": 115,
