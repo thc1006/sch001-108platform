@@ -13,7 +13,7 @@
     },
     {
       "file": "src/content/clusters/info/overview.md",
-      "text": "114 學年度為 53 校系、177 個名額",
+      "text": "114 學年度是 38 校、53 校系、177 個名額",
       "cycle": 115,
       "reason": "和前一屆比較 APCS 組的校系數與名額。換屆時要換成新一屆和它前一屆的數字。"
     },
@@ -21,7 +21,7 @@
       "file": "src/content/clusters/info/overview.md",
       "text": "114 學年度大學申請入學招生統計資料",
       "cycle": 115,
-      "reason": "同一頁和前一屆比較的那句（114 學年度為 53 校系、177 個名額）引用的就是這份統計，114 學年度是頁名的一部分。換屆時和那句一起換。"
+      "reason": "同一頁和前一屆比較的那句（114 學年度是 38 校、53 校系、177 個名額）引用的就是這份統計，114 學年度是頁名的一部分。換屆時和那句一起換。"
     },
     {
       "file": "src/content/clusters/life-science/application.md",

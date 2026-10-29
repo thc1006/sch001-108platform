@@ -69,7 +69,7 @@ for (const width of [768, 1280]) {
 
 test('360px：比內文欄寬的表格在表格內捲動，不撐寬頁面', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
-    const t = (await tableLayout(page, 'info/overview.html'))[1];
+    const t = (await tableLayout(page, 'finance/traits.html'))[1];
     expect(t.scrolls).toBe(true);
     expect(t.boxRight).toBeLessThanOrEqual(0.5);
     expect(t.pageOverflow).toBeLessThanOrEqual(0);
@@ -152,7 +152,7 @@ const tableEdges = async (page, table) => {
 // 放不下的表格在還能捲的那一側有陰影：一開始右緣比左緣暗，捲到最右邊後反過來。
 test('360px：可以橫滑的表格在還能捲的那一側有陰影', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
-    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/info/overview.html`);
+    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
     const table = page.locator('.md-content table').nth(1);
     expect(await table.evaluate((t) => t.scrollWidth > t.clientWidth)).toBe(true);
     const start = await tableEdges(page, table);
