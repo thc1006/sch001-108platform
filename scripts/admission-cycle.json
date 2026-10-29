@@ -36,12 +36,6 @@
       "reason": "系網站上最新的必修科目表是 114 學年度入學那一份，年份交代表的版本。換屆時看系上有沒有新的表。"
     },
     {
-      "file": "src/content/clusters/management/overview.md",
-      "text": "84.2% 是 111 學年度以來最高",
-      "cycle": 115,
-      "reason": "111 學年度是比較歷年第一階段通過率的起點。換屆時要用新一屆的統計重算這句。"
-    },
-    {
       "file": "src/content/clusters/mass-comm/application.md",
       "text": "這是 112 學年度的觀察",
       "cycle": 115,
