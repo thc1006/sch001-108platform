@@ -8,7 +8,7 @@
         "host": "ieso-info.org"
       },
       "kind": "hijacked",
-      "reason": "國際地球科學奧林匹亞（IESO）原先登記的網域已被第三方取得，轉作澳洲線上博弈站，與 IESO 完全無關。它回 HTTP 200，三態分類會把它算成「健康」——這正是狀態碼健康但內容被接管的盲點。本站資料只在說明文字裡提到它（作為警告），沒有做成連結。IESO 國際主辦單位 IGEO 的原網站 www.igeoscied.org 最晚 2026-09-25 起連不上（2026-10-25 仍是如此），IGEO 2026-10-23（台灣時間）公告的臨時網站是 https://sites.google.com/view/igeoscied；台灣的選訓資訊在 tpmso.k12ea.gov.tw/ieso/。",
+      "reason": "國際地球科學奧林匹亞（IESO）原先登記的網域已被第三方取得，轉作澳洲線上博弈站，與 IESO 完全無關。它回 HTTP 200，三態分類會把它算成「健康」——這正是狀態碼健康但內容被接管的盲點。本站資料只在說明文字裡提到它（作為警告），沒有做成連結。IESO 國際主辦單位 IGEO 的原網站 www.igeoscied.org 最晚 2026-09-25 起連不上（2026-10-29 仍是如此），IGEO 2026-10-23（台灣時間）公告的臨時網站是 https://sites.google.com/view/igeoscied；台灣的選訓資訊在 tpmso.k12ea.gov.tw/ieso/。",
       "evidence": "2026-10-23 重測，與 2026-08-28 首次記錄相同：https://ieso-info.org/ 以 301 轉至 https://www.ieso-info.org/（HTTP 200，server: cloudflare），<title> 為「Best Online Pokies in Australia 2026 - Play For Real Money」，meta description 為「Enjoy the best real money pokies in Australia at trusted casinos. Claim free spins, grab exclusive bonuses…」。",
       "owner": "thc1006",
       "expires": "2027-01-31"
