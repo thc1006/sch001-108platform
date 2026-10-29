@@ -127,13 +127,43 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    /* prose 的儲存格垂直對齊是 baseline，同一列有一格換行時，短的那格會貼在上緣。 */
-    /* 窄視窗下，欄位會先被壓到一字一行才輪到表格捲動；最小寬度讓放不下的表格改成捲動。 */
+    /* 還能捲的那一側顯示陰影，讀者才知道表格可以橫滑。data-more-left／right 由下方的 script 依捲動位置標上。 */
+    .md-content table[data-more-left] {
+      background: radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 0.75rem 100% no-repeat;
+    }
+    .md-content table[data-more-right] {
+      background: radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 0.75rem 100% no-repeat;
+    }
+    .md-content table[data-more-left][data-more-right] {
+      background:
+        radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 0.75rem 100% no-repeat,
+        radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 0.75rem 100% no-repeat;
+    }
+    /* prose 的儲存格垂直對齊是 baseline，同一列有一格換行時短的那格會貼在上緣。
+       窄視窗下欄位會先被壓到一字一行才輪到表格捲動，最小寬度讓放不下的表格改成捲動；
+       4.875em 讓四欄表在 360px 的內文欄（312px）剛好放得下，不會只超出幾 px。 */
     .md-content th,
     .md-content td {
-      min-width: 5em;
+      min-width: 4.875em;
       text-align: start;
       vertical-align: middle;
     }
   </style>
+  <script is:inline>
+    // 表格沒露出的那一側標上 data-more-left／right。載入、視窗改寬、字型變寬都由 ResizeObserver 觸發，
+    // 表格寬度被限制在 100% 時只有內容變寬，所以兩者都觀察。不支援的瀏覽器維持沒有陰影。
+    if (window.ResizeObserver) {
+      document.querySelectorAll('.md-content table').forEach(function (table) {
+        function update() {
+          var rest = table.scrollWidth - table.clientWidth - table.scrollLeft;
+          table.toggleAttribute('data-more-left', table.scrollLeft > 1);
+          table.toggleAttribute('data-more-right', rest > 1);
+        }
+        table.addEventListener('scroll', update, { passive: true });
+        var observer = new ResizeObserver(update);
+        observer.observe(table);
+        if (table.firstElementChild) observer.observe(table.firstElementChild);
+      });
+    }
+  </script>
 </BaseLayout>
