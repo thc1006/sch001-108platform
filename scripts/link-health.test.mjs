@@ -1739,6 +1739,30 @@ test('runProbes：預算用完時不重試，該重試的結果加上 retrySkipp
     assert.equal(judgeContent(validContentUrl(), results[0]).verdict, 'unverified');
 });
 
+test('runProbes：預算到期中止探測後不再起跑下一筆，Date.now 和計時器不同步也一樣', async () => {
+    const realNow = Date.now;
+    const called = [];
+    const probeFn = (url, signal) => {
+        called.push(url);
+        if (url.endsWith('/ok')) {
+            Date.now = () => realNow() + 100;
+            return { status: 200, finalUrl: url, redirects: [] };
+        }
+        Date.now = () => realNow() - 60_000;
+        const aborted = { status: 0, code: 'ABORT_ERR', finalUrl: url, redirects: [] };
+        return signal.aborted ? aborted : new Promise((resolve) => signal.addEventListener('abort', () => resolve(aborted)));
+    };
+    try {
+        const urls = ['https://a.example/ok', 'https://a.example/hang', 'https://a.example/next'];
+        const { results, skipped } = await runProbes(urls, { probeFn, concurrency: 1, budgetMs: 200 });
+        assert.deepEqual(called, urls.slice(0, 2));
+        assert.equal(results[2], null);
+        assert.equal(skipped, 1);
+    } finally {
+        Date.now = realNow;
+    }
+});
+
 test('buildReport：內容 API 的結果照 targets 的位置對應，失效列進連結失效，驗不到的另列一段並照 notify 通知', () => {
     const policy = spaPolicy();
     const other = { url: `${SPA}/`, occurrences: [] };

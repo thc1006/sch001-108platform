@@ -602,20 +602,13 @@ export async function runProbes(urls, opts = {}) {
     const results = new Array(urls.length).fill(null);
     if (urls.length === 0) return { results, skipped: 0 };
 
+    // 硬截止：預算到期時全域 abort 中止進行中的探測。是否用完也看這個 abort，單筆逾時不截到
+    // 剩餘預算，計時器和 Date.now 差 1ms 時，被預算中止的探測回來後才不會再起跑下一筆。
     const budgetEnd = Date.now() + budgetMs;
-    const remaining = () => budgetEnd - Date.now();
-    const outOfBudget = () => remaining() <= 0;
-
-    // 硬截止：單筆逾時取「剩餘預算」與 timeoutMs 的較小值，並疊上全域 abort，避免
-    // 最後一筆在預算末端才起跑、又獨自跑滿逾時而超出預算。
     const globalAbort = new AbortController();
     const budgetTimer = setTimeout(() => globalAbort.abort(), budgetMs);
-    const probeWithin = (url) =>
-        probeFn(
-            url,
-            AbortSignal.any([globalAbort.signal, AbortSignal.timeout(Math.max(1, Math.min(timeoutMs, remaining())))]),
-            probeOpts,
-        );
+    const outOfBudget = () => globalAbort.signal.aborted || Date.now() >= budgetEnd;
+    const probeWithin = (url) => probeFn(url, AbortSignal.any([globalAbort.signal, AbortSignal.timeout(timeoutMs)]), probeOpts);
 
     // 每次從不同位置起跑。若 runner 網路變差而經常用完預算，固定從 0 開始會讓清單
     // 尾端永遠檢查不到；輪替起點可讓覆蓋率長期均勻。
