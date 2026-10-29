@@ -50,9 +50,11 @@ ColleGo! 把世新幾個傳播科系分在這五個學類：新聞學系列在�
 
 ColleGo! 寫，系上以跨媒體整合為核心，兼顧影視製作、新聞與資訊傳播、廣告公關與行銷傳播、傳播研究。大三在中正E報、中正之聲校內實習，暑期到校外實習。
 
-## 新聞業的變化
+## 產業的變化
 
 《卓越新聞電子報》陳曦的文章（關鍵評論網 2026 年 1 月 5 日轉載）整理哈佛大學尼曼新聞實驗室（Nieman Lab）邀集專家對 2026 年新聞業的預測。紐約市立大學克雷格紐馬克新聞研究所的瑪麗・吉洛（Marie Gilot）預測，讀者改向 AI 查詢解釋性的內容後，人類記者要專注在 AI 無法或不會總結的內容，例如超本地新聞（大型媒體因為微小、瑣碎而不報導的社區新聞）、突發新聞、獨家消息、值得注意的第一人稱敘事與調查報導。
+
+勤業眾信（Deloitte）2025 年 11 月發布的 2026 年科技、媒體與電信產業預測報告寫，2026 年應用程式內微短劇的收入會成長一倍以上，達到 78 億美元；全球播客與視訊播客的年廣告收入會達到約 50 億美元，比前一年成長將近 20%。《北美智權報》編輯部李淑蓮整理這份報告的文章（聯合新聞網 2026 年 1 月 4 日刊出）說，微短劇是每集只有幾分鐘、為手機觀看製作的連續劇，獨立工作室用生成式人工智慧工具，「能以傳統片廠幾分之一的成本生產出高水準的視訊片段」。
 
 ## 參考來源
 
@@ -77,3 +79,6 @@ ColleGo! 寫，系上以跨媒體整合為核心，兼顧影視製作、新聞�
 - [ColleGo!「輔仁大學廣告傳播學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=020009)
 - [ColleGo!「中正大學傳播學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=041014)
 - [陳曦，關鍵評論網轉載《卓越新聞電子報》「2026新聞業展望：人工智慧消滅人類記者？AI在媒體機構的階級鴻溝與應用創新」（2026-01-05）](https://www.thenewslens.com/article/263147)
+- [李淑蓮，《北美智權報》「AI 規模化元年：2026 全球科技、媒體與電信產業深度洞察」，聯合新聞網（2026-01-04）](https://udn.com/news/story/6871/9240833)
+- [Deloitte Insights〈Tiny episodes, massive appeal: Short-form serials are gaining viewers and empowering independent studios〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/short-form-video-series.html)
+- [Deloitte Insights〈Video podcasts dominate: Opportunity for brands, competition for traditional video〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/video-podcasts-reach.html)
