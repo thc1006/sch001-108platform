@@ -32,6 +32,8 @@ ColleGo! 的學類關係圖以社會工作、輔導諮商兩個學類為重心�
 
 心理學類頁列的大學生活，有學統計學與心理學實驗方法，並和同學一起設計、做心理學實驗。
 
+中研院社會學研究所的謝國雄 2018 年在巷仔口社會學寫，美國社會學家米爾斯所說的「社會學想像」，具體操作「是嘗試連結個人困境與公共議題」：一般人很少把個人的困境和制度的安排與變遷連在一起，社會學的任務之一就是把兩者連起來。
+
 ## 參考來源
 
 - [ColleGo! 大學選才與高中育才輔助系統「社會心理學群」](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10)
@@ -44,3 +46,4 @@ ColleGo! 的學類關係圖以社會工作、輔導諮商兩個學類為重心�
 - [ColleGo!「輔導諮商學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=81)
 - [ColleGo!「犯罪防治學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=82)
 - [ColleGo!「勞工關係學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=83)
+- [巷仔口社會學「從『幸福路上』來到社會與社會學」（謝國雄，2018-01-26）](https://twstreetcorner.org/2018/01/26/shiehgwoshyong-2/)
