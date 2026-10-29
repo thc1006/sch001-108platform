@@ -1,6 +1,6 @@
 {
   "_readme": "公民科技專案地圖資料檔。彙整台灣公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔同時是看門狗 check-civic-tech.mjs 的結構化資料來源、以及 build-search-index.js 的搜尋索引來源（見 scripts/data-pages.json），與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號，必須真的存在於建置後的頁面，否則搜尋結果會指向不存在的錨點，建置會直接失敗）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3，合法代碼見 scripts/taxonomy.json）；sdgs=對應 SDG 編號陣列（1-17 整數）；tags=議題關鍵字陣列（使用者會直接打進搜尋框的字，如「環保」「假訊息」；選填但填了就必須是非空字串陣列）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，maintenance 代表專案以維護方式運作（既有服務持續、但新進度放緩），dormant 代表近期幾無活動、需提醒讀者查證最新狀態。AI 閘道的 civic-tech-suggestion 任務指令另外抄了一份專案名稱與狀態（閘道的映像檔裡沒有這個檔案），由 ai-gateway/test/task-catalog.test.mjs 比對兩邊是否一致。",
-  "lastUpdated": "2026-10-25",
+  "lastUpdated": "2026-10-29",
   "projects": [
     {
       "id": "disfactory",
@@ -53,14 +53,14 @@
     {
       "id": "national-treasure",
       "name": "國家寶藏 (National Treasure)",
-      "org": "g0v 社群專案（2017 年發起）",
-      "url": "https://github.com/national-treasures-tw",
+      "org": "g0v 社群專案（2016 年發起）",
+      "url": "https://www.nationaltreasure.tw/",
       "subjects": ["歷史", "英文"],
       "competencies": ["C3", "A3"],
       "sdgs": [],
       "tags": ["數位典藏", "歷史檔案", "群眾外包", "台灣史"],
-      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，透過 App 讓志工翻拍檔案並建立資料庫。2026 年 10 月 25 日查，官網與檔案資料庫都無法使用，也查不到專案方的說明。",
-      "status": "dormant"
+      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，志工翻拍檔案後建立資料庫。2026 年 10 月 29 日查，檔案資料庫可以瀏覽、搜尋，也可以直接校正辨識文字；官網寫明實地翻拍從 2020 年起暫停。",
+      "status": "maintenance"
     },
     {
       "id": "lawtrace",
