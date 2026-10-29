@@ -7,7 +7,7 @@
   "keep": [
     {
       "file": "src/content/clusters/engineering/application.md",
-      "text": "一篇 113 學年度清大資工特殊選才的面試心得",
+      "text": "記下 113 學年度清大資工特殊選才的面試",
       "cycle": 115,
       "reason": "交代這篇面試心得是哪一屆寫的，年份不隨換屆改變。"
     },
