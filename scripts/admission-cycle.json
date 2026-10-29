@@ -42,6 +42,12 @@
       "reason": "111 學年度是比較歷年第一階段通過率的起點。換屆時要用新一屆的統計重算這句。"
     },
     {
+      "file": "src/content/clusters/mass-comm/application.md",
+      "text": "這是 112 學年度的觀察",
+      "cycle": 115,
+      "reason": "交代 ColleGo! 小福袋那段口試比例的說法寫於 112 學年度，年份不隨換屆改變。"
+    },
+    {
       "file": "src/content/clusters/medicine/overview.md",
       "text": "大專校院各校科系別概況（114 學年度科系名稱",
       "cycle": 115,
