@@ -201,6 +201,20 @@
       "missingTitles": [
         "全國學生美術比賽-Error"
       ]
+    },
+    {
+      "match": {
+        "host": "aa.nycu.edu.tw"
+      },
+      "reason": "陽明交通大學教務處。/aa/ch/app/data/view 的 id 不存在時以 303 轉到 /aa/ch/index，回 HTTP 200，標題和首頁相同；serno 不對時轉到 /aa/ch/error，標題「錯誤訊息頁面」。/userfiles/ 底下不存在的檔案回 404。runner 上讀到的標題沒有另外實測。",
+      "evidence": "2026-10-29 在台灣用瀏覽器 UA 查：/aa/ch/app/data/view?module=nycu0073&id=4476&serno=300f531d-… 回 200，標題「申請入學書審指引-【申請入學】115學年度各學系書面審查資料準備指引-國立陽明交通大學教務處」。同一網址把 id 換成 99999999 轉到 /aa/ch/index，回 200，標題「國立陽明交通大學教務處」，和首頁相同；serno 換成全 0 轉到 /aa/ch/error，標題「錯誤訊息頁面」。/aa/ch/app/data/sch001-linkcheck-x、/userfiles/aach/files/20990101000000000.pdf、/robots.txt 都回 404 JSON。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "國立陽明交通大學教務處",
+        "錯誤訊息頁面"
+      ]
     }
   ]
 }
