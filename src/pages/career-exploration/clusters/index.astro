@@ -7,19 +7,16 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 <BaseLayout
   title="十大學群探索 - 台灣教育處方籤"
-  description="十大學群完整升學指南：科系風向標、特質與能力、多元表現策略、自主學習方向、常見迷思與備審面試要點，陪你找到方向。"
+  description={`${CLUSTERS.map((c) => c.shortName).join('、')} ${CLUSTERS.length} 個學群的簡介，每個學群有 ${TOPICS.length} 個主題。`}
   keywords="學群, 十大學群, 升學, 選系, 大學科系, 108課綱, 學習歷程"
   currentSection="career-exploration"
 >
   <main id="main-content" class="container mx-auto px-6 py-12">
     <!-- Hero -->
     <section class="text-center mb-14">
-      <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
+      <h1 class="text-4xl md:text-5xl font-black text-gray-800">
         十大學群<span class="gradient-text">探索</span>
       </h1>
-      <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-        每個學群一份完整升學指南，從科系定位、特質與能力，到多元表現、自主學習與備審面試，都整理成可逐步閱讀的主題。選一個學群開始吧。
-      </p>
     </section>
 
     <!-- 每個學群涵蓋的 6 主題 -->
@@ -47,5 +44,8 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
         </a>
       ))}
     </section>
+    <p class="mt-8 text-center text-sm text-gray-500">
+      以上學群簡介改寫自 <a href="https://collego.edu.tw/Highschool/CollegeList" class="text-blue-600 hover:underline">ColleGo! 各學群的介紹</a>
+    </p>
   </main>
 </BaseLayout>

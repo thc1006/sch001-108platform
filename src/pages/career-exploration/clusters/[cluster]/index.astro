@@ -25,7 +25,7 @@ if (entries.length !== TOPICS.length) {
 
 <BaseLayout
   title={`${cluster.name}升學指南 - 台灣教育處方籤`}
-  description={`${cluster.name}完整升學指南：涵蓋科系定位、特質與能力、多元表現策略、自主學習方向、常見迷思與備審面試要點。`}
+  description={`${cluster.name}：${cluster.description}`}
   keywords={`${cluster.name}, ${cluster.shortName}, 升學, 選系, 備審, 學習歷程`}
   currentSection="career-exploration"
 >
@@ -43,6 +43,10 @@ if (entries.length !== TOPICS.length) {
         {cluster.name}<span class="gradient-text">升學指南</span>
       </h1>
       <p class="text-lg text-gray-600 max-w-3xl mx-auto">{cluster.description}</p>
+      <p class="text-sm text-gray-500 mt-2">
+        簡介改寫自
+        <a href={`https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=${cluster.collegoId}`} class="text-blue-600 hover:underline">ColleGo!「{cluster.collegoName}」的介紹</a>
+      </p>
     </section>
 
     <!-- 6 主題卡片 -->
