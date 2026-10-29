@@ -11,10 +11,10 @@
     },
     {
       "file": "src/content/clusters/social-psychology/myths.md",
-      "text": "「我必須在備審資料中展現我已經懂很多專業理論。」",
+      "text": "備審要展現自己懂很多專業理論？",
       "rule": "W01-hen-duo",
       "kind": "counterexample",
-      "reason": "迷思頁的標題，引號裡是要破解的學生想法。"
+      "reason": "迷思頁的標題，問句是要破解的學生想法。"
     },
     {
       "file": "src/content/clusters/life-science/highlights.md",
