@@ -121,6 +121,44 @@ test.describe('部署產物 smoke test', () => {
         expect(Array.isArray(items)).toBe(true);
         expect(items.length).toBeGreaterThan(0);
     });
+
+    // ColleGo! 只認 current_college_id，寫成別的參數名稱會被轉到學群列表。代碼是 2026-10-29 逐一開
+    // CollegeIntro?current_college_id=N 讀頁面標題對出來的，鍵是卡片升學指南連結裡的學群資料夾，後面是卡片標題。
+    const CLUSTER_CARDS = {
+        engineering: [2, '工程學群'],
+        info: [1, '資訊學群'],
+        management: [16, '管理學群'],
+        finance: [17, '財經學群'],
+        'social-psychology': [10, '社會與心理學群'], // ColleGo! 叫社會心理學群
+        'mass-comm': [11, '大眾傳播學群'],
+        design: [8, '設計學群'], // ColleGo! 叫建築設計學群
+        'life-science': [5, '生命科學學群'],
+        medicine: [4, '醫藥衛生學群'],
+    };
+
+    test('科系羅盤每張學群卡片的 ColleGo! 連結都指到同一個學群', async ({ page }) => {
+        const errors = watchForErrors(page);
+        await page.goto(P('/career-exploration/index.html'), { waitUntil: 'networkidle' });
+        const buttons = page.locator('#cluster-list .cluster-btn');
+        await expect(buttons).toHaveCount(Object.keys(CLUSTER_CARDS).length);
+
+        const seen = [];
+        for (let i = 0; i < Object.keys(CLUSTER_CARDS).length; i++) {
+            await buttons.nth(i).click();
+            const details = page.locator('#cluster-details');
+            const guide = await details.locator('a', { hasText: '查看完整升學指南' }).getAttribute('href');
+            const slug = guide.match(/^clusters\/([^/]+)\/index\.html$/)?.[1];
+            expect(slug, guide).toBeTruthy();
+            const url = new URL(await details.locator('a', { hasText: '前往 ColleGo!' }).getAttribute('href'));
+            expect(`${url.origin}${url.pathname}`).toBe('https://collego.edu.tw/Highschool/CollegeIntro');
+            expect([...url.searchParams.keys()], url.href).toEqual(['current_college_id']);
+            expect(url.searchParams.get('current_college_id'), slug).toBe(String(CLUSTER_CARDS[slug][0]));
+            await expect(details.locator('h3')).toHaveText(CLUSTER_CARDS[slug][1]);
+            seen.push(slug);
+        }
+        expect(seen.sort()).toEqual(Object.keys(CLUSTER_CARDS).sort());
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
 });
 
 /**
