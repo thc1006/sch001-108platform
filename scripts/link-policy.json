@@ -98,19 +98,6 @@
     },
     {
       "match": {
-        "host": "www.shu.edu.tw"
-      },
-      "reason": "世新大學。Spotlight.aspx 的 sID 不存在時回 HTTP 200 和首頁的標題，不存在的路徑也一樣。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
-      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/Spotlight.aspx?from=06&sID=28523 回 200，標題「企管系學的東西太廣？深入瞭解企管系課程與優勢，創造多元職場出路」。sID=28524、99999998、99999999、只帶 from=06，以及 /sch001-linkcheck-… 都回 200，標題「歡迎來到世新大學」，和首頁相同。robots.txt 擋 /bin/、/demo/、/shu-tfee.aspx。",
-      "owner": "thc1006",
-      "expires": "2027-01-31",
-      "urls": [],
-      "missingTitles": [
-        "歡迎來到世新大學"
-      ]
-    },
-    {
-      "match": {
         "host": "www.unews.com.tw"
       },
       "reason": "大學問。/Group/Index/、/News/Info/ 底下不存在的編號回 HTTP 200 和首頁的標題。/School/Department/ 底下不存在時轉到 /Newschool/Department/、回 500，健檢列在無法判定、不通知；/School/Department/3/ 與 /School/Department/7/ 的隨機路徑每週列在沒有比對。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
