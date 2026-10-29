@@ -124,6 +124,19 @@
     },
     {
       "match": {
+        "host": "taione.org"
+      },
+      "reason": "財團法人開源基金會。任何路徑都回 HTTP 200；站上連的頁面各有自己的 <title>，不存在的路徑回首頁的標題「開源基金會｜Taione Open Source Foundation」。站上只連 /fellowship/ 底下的頁面，沒有連首頁。",
+      "evidence": "2026-10-29 在台灣用健檢的 UA 查：/fellowship/about、/fellowship/tracks、/fellowship/faq、/fellowship/apply 都回 200，標題分別是「計畫介紹｜開源基金會」「開源專案｜開源基金會」「常見問題｜開源基金會」「計畫申請｜開源基金會」。/、/sch001-linkcheck-…、/fellowship/sch001-linkcheck-… 都回 200，<title>「開源基金會｜Taione Open Source Foundation」在第 538 byte。robots.txt 回 200。",
+      "owner": "thc1006",
+      "expires": "2027-01-31",
+      "urls": [],
+      "missingTitles": [
+        "開源基金會｜Taione Open Source Foundation"
+      ]
+    },
+    {
+      "match": {
         "host": "collego.edu.tw"
       },
       "reason": "大學選才與高中育才輔助系統 ColleGo!。不存在的學群、系所、文章編號轉到 /Login/Error500，不存在的路徑轉到 /Login/Error404，都回 HTTP 200、標題「Error」；不存在的學類回 200、124 bytes 的 alert 殼、沒有標題；/Media/Article/ 底下不是編號的路徑轉到 /Media/Portfolio，標題「焦點話題」。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
