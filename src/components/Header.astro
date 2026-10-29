@@ -16,6 +16,11 @@ const navItems = [
   { key: 'civic-tech-map', label: '公民科技', href: `${base}/civic-tech-map/index.html` },
   { key: 'about', label: '關於我們', href: `${base}/about.html` },
 ];
+// 選項就是這一頁才用 aria-current="page"；只是在同一區段（例如學群頁之於生涯探索）用 "true"。
+const pagePath = (p: string) => p.replace(/(\/index)?\.html$|\/$/, '');
+const samePage = (href: string) => pagePath(href) === pagePath(Astro.url.pathname);
+const current = (item: (typeof navItems)[number]) =>
+  item.key === currentSection ? (samePage(item.href) ? 'page' : 'true') : undefined;
 ---
 
 <header class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
@@ -29,7 +34,7 @@ const navItems = [
       {navItems.map((item) => (
         <a
           href={item.href}
-          aria-current={item.key === currentSection ? 'page' : undefined}
+          aria-current={current(item)}
           class:list={[
             'transition duration-300',
             item.key === currentSection
@@ -60,7 +65,7 @@ const navItems = [
     {navItems.map((item) => (
       <a
         href={item.href}
-        aria-current={item.key === currentSection ? 'page' : undefined}
+        aria-current={current(item)}
         class:list={[
           'block px-6 py-3 font-semibold border-b border-gray-50',
           item.key === currentSection
