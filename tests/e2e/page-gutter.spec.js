@@ -108,3 +108,20 @@ test('768px：表格儲存格文字靠左、上下置中', async ({ page }) => {
     expect(m.gaps.length, '至少有一列的儲存格高度不同').toBeGreaterThan(0);
     for (const gap of m.gaps) expect(gap).toBeLessThanOrEqual(2);
 });
+
+// 窄視窗下欄位不會被壓成一字一行：每格至少五個字寬，放不下的表格在表格內捲動。
+test('390px：表格欄位至少五個字寬', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
+    const m = await page.evaluate(() => {
+        const cells = [...document.querySelectorAll('.md-content th, .md-content td')];
+        const em = parseFloat(getComputedStyle(cells[0]).fontSize);
+        return {
+            narrowest: Math.min(...cells.map((c) => c.getBoundingClientRect().width)) / em,
+            pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+    });
+    expect(m.narrowest).toBeGreaterThanOrEqual(5);
+    expect(m.pageOverflow).toBeLessThanOrEqual(0);
+});
+

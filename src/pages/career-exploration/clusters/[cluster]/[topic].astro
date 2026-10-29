@@ -128,8 +128,10 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
       -webkit-overflow-scrolling: touch;
     }
     /* prose 的儲存格垂直對齊是 baseline，同一列有一格換行時，短的那格會貼在上緣。 */
+    /* 窄視窗下，欄位會先被壓到一字一行才輪到表格捲動；最小寬度讓放不下的表格改成捲動。 */
     .md-content th,
     .md-content td {
+      min-width: 5em;
       text-align: start;
       vertical-align: middle;
     }
