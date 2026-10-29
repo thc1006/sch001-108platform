@@ -2,6 +2,14 @@
   "_readme": "check:writing 放行的條目，欄位與規則見 CONTRIBUTING.md 的「網站內容」與 writing.lib.mjs 的 allowProblems。只收三類：kind 為 quote（照抄的外部原文）或 name（官方名稱）時要附 source 網址，而且只能依畫面上看得到的寫法；counterexample 是當反例引用的句子。text 要帶前後文，在該檔或頁面只出現一次。其他命中一律留在 writing-policy.json 的基準裡清。",
   "entries": [
     {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "「我當時很多問題都沒回答很好，但最後還是有錄取」",
+      "rule": "W01-hen-duo",
+      "kind": "quote",
+      "source": "https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=350706",
+      "reason": "暨大社工系錄取者面試心得的原句，照頁面上的寫法引用。"
+    },
+    {
       "file": "src/content/clusters/social-psychology/highlights.md",
       "text": "「很有收穫」「我學到很多」",
       "rule": "W01-hen-duo",
