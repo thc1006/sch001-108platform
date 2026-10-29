@@ -61,8 +61,8 @@ const tableLayout = (page, path) =>
 for (const width of [768, 1280]) {
     test(`${width}px：比內文欄窄的表格左右留白相等`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
-        const [t] = await tableLayout(page, 'social-psychology/myths.html');
-        expect(t.left, '表格比內文欄窄').toBeGreaterThan(100);
+        const [t] = await tableLayout(page, 'finance/traits.html');
+        expect(t.left, '表格比內文欄窄').toBeGreaterThan(50);
         expect(t.left).toBeCloseTo(t.right, 0);
     });
 }
@@ -192,7 +192,7 @@ test('768px：表格只超出 2px 也有陰影', async ({ page }) => {
 
 test('768px：放得下的表格兩側沒有陰影', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 });
-    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/social-psychology/myths.html`);
+    await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
     const table = page.locator('.md-content table').first();
     expect(await table.evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
     const e = await tableEdges(page, table);

@@ -165,7 +165,7 @@ const editPolicy = (fn) => (b) => { const p = JSON.parse(policyText); fn(p.rules
 const editAllow = (fn) => (b) => { const a = JSON.parse(allowText); fn(a.entries); writeFileSync(b.allow, JSON.stringify(a)); };
 const firstKey = (rules, id) => Object.keys(rules[id].baseline)[0];
 const inPage = (html) => (b) => b.edit('about.html', (t) => t.replace('</main>', `${html}</main>`));
-const W01_ENTRY = '「我必須在備審資料中展現我已經懂很多專業理論。」';
+const W01_ENTRY = '備審要展現自己懂很多專業理論？';
 const clearMains = (count) => (b) => { for (const f of b.html.slice(0, count)) b.edit(f, (t) => t.replace(/(<main[^>]*>)[\s\S]*<\/main>/, '$1</main>')); };
 const hitWith = (r, text) => r?.hits.find((h) => h.context.includes(text));
 const FINANCE_APPLICATION = 'src/content/clusters/finance/application.md';
