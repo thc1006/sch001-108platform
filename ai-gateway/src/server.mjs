@@ -35,7 +35,7 @@ import { loadLlmConfig, loadServerConfig, configProblems } from './config.mjs';
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
 import { SlotGate, ClientLimiter, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
-import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, TaskError } from './tasks.mjs';
+import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, TaskError } from './tasks.mjs';
 import { createTraditionalStream } from './s2t.mjs';
 
 // 進度事件最多每 500ms 一次；階段改變時立刻送
@@ -768,8 +768,9 @@ export function createGateway({
                 }
             };
 
-            // 文字任務的片段同樣先轉成台灣繁體（跟 finalizeOutput 用同一張表），送出去的片段接起來
-            // 才會等於 done 的結果。轉換器記得上一段的最後一個字，切在兩段之間的字也轉得對
+            // 文字任務的片段跟 finalizeOutput 一樣先清字元、再轉成台灣繁體，送出去的片段接起來才會等於
+            // done 的結果。兩個轉換器都記得上一段的結尾，切在兩段之間的字也處理得對
+            const clean = createCleanStream();
             const traditional = createTraditionalStream();
             const sendDelta = (text) => {
                 if (!text) return;
@@ -788,14 +789,14 @@ export function createGateway({
             }, {
                 signal: abort.signal,
                 onProgress,
-                onContent: task.output.type === 'markdown' ? (text) => sendDelta(traditional(text)) : undefined,
+                onContent: task.output.type === 'markdown' ? (text) => sendDelta(traditional(clean(text))) : undefined,
                 onResponse: () => { firsts.byte ??= Date.now(); },
                 onReject: ({ round, reason }) => log('info', 'JSON-REJECT', { id: requestId, task: task.id, round, ...rejectLogFields(reason) }),
             });
             clearTimeout(progressTimer);
             result = generated;
             if (task.output.type === 'markdown') {
-                sendDelta(traditional.flush());
+                sendDelta(traditional(clean.flush()) + traditional.flush());
             }
             const output = finalizeOutput(task, generated.content);
             send('done', {

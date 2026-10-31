@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import {
     defineTask, createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit,
-    countChars, createLengthGuard, neutralizeDataMarkers, TaskError, SYSTEM_PROMPT,
+    countChars, createLengthGuard, cleanText, createCleanStream, neutralizeDataMarkers, TaskError, SYSTEM_PROMPT,
 } from '../src/tasks.mjs';
 
 // 特殊字元一律用 code point 產生：原始碼裡不出現看不見的字元，也不怕編輯工具把跳脫序列轉成實際字元
@@ -316,8 +316,46 @@ test('finalizeOutput：只有看不見的字元（零寬空白、BOM、WORD JOIN
         assert.throws(() => finalizeOutput(markdownTask, blank), { code: 'empty' }, JSON.stringify(blank));
         assert.throws(() => finalizeOutput(jsonTask, JSON.stringify({ title: blank, items: ['a', 'b'] })), { code: 'format' }, JSON.stringify(blank));
     }
-    // 表情符號組合裡的 ZWJ 與異體字選擇符看不見，前後的表情符號看得見
-    for (const text of ['a\u200Bb', '👩\u200D💻', '❤\uFE0F']) assert.equal(finalizeOutput(markdownTask, text), text);
+    // 表情符號組合裡的 ZWJ 與異體字選擇符看不見，前後的表情符號看得見；零寬空白照輸入的規則拿掉
+    for (const [text, out] of [['a\u200Bb', 'ab'], ['👩\u200D💻', '👩\u200D💻'], ['❤\uFE0F', '❤\uFE0F']]) assert.equal(finalizeOutput(markdownTask, text), out);
+});
+
+// 模型的輸出用輸入的規則清理（cleanText）；文字任務的片段用 createCleanStream，接起來要跟整段相同
+const DIRTY = [
+    '甲\r\n乙\r丙', cp(0x0B), '丁', cp(0x2028), '戊', cp(0x202E), 'evil', cp(0x202C), cp(0xE0041, 0xE0042),
+    '👩', cp(0x200D), '💻', cp(0x200B), '❤', cp(0xFE0F, 0xFE0F), ' ', cp(0xFE0F), '葛', cp(0xE0100, 0xE0101),
+    cp(0x3164), '尾\r',
+].join('');
+
+test('cleanText：validateInput 用的就是它；雙向覆寫、Tags 區塊、零寬空白拿掉，ZWJ 與每個字的第一個選擇符留著', () => {
+    assert.equal(cleanText(DIRTY), `甲\n乙\n丙\n丁\n戊evil👩${cp(0x200D)}💻❤${cp(0xFE0F)} 葛${cp(0xE0100)}尾\n`);
+    assert.equal(validateInput(markdownTask, { question: DIRTY, context: '背景' }).question, cleanText(DIRTY).trim());
+});
+
+test('createCleanStream：不論切在哪裡（\\r\\n、代理對、選擇符前面），片段與 flush 接起來都等於整段 cleanText', () => {
+    // 第二個以選擇符開頭：開頭的選擇符要刪掉
+    for (const dirty of [DIRTY, cp(0xFE0F) + DIRTY]) {
+        const units = dirty.split('');
+        const expected = cleanText(dirty);
+        // 切成兩段：每個 UTF-16 位置都試
+        for (let cut = 0; cut <= units.length; cut++) {
+            const clean = createCleanStream();
+            const out = clean(units.slice(0, cut).join('')) + clean(units.slice(cut).join('')) + clean.flush();
+            assert.equal(out, expected, `cut=${cut}`);
+        }
+        // 每個 UTF-16 單位一段
+        const clean = createCleanStream();
+        assert.equal(units.map((u) => clean(u)).join('') + clean.flush(), expected);
+    }
+    assert.equal(cleanText(cp(0xFE0F) + DIRTY), cleanText(DIRTY));
+});
+
+test('finalizeOutput：模型輸出裡看不見的字元照輸入的規則拿掉，文字任務與 JSON 的字串值都是', () => {
+    const hidden = cp(0x202E, 0xE0041, 0x200B);
+    assert.equal(finalizeOutput(markdownTask, `答${hidden}案`), '答案');
+    assert.deepEqual(finalizeOutput(jsonTask, JSON.stringify({ title: `標${hidden}題`, items: [`a${hidden}`, 'b'] })), { title: '標題', items: ['a', 'b'] });
+    // 寫成跳脫序列的也一樣（解析之後才清）
+    assert.deepEqual(finalizeOutput(jsonTask, '{"title":"\\u202e標題","items":["a","b"]}'), { title: '標題', items: ['a', 'b'] });
 });
 
 test('finalizeOutput：JSON 任務回傳驗證過的物件', () => {
