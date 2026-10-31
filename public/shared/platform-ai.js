@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 13;
+    var VERSION = 14;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -864,6 +864,8 @@
     // 排隊名次在同一個排隊階段裡變化時，畫面照常更新，status 最多每 15 秒寫一次，期間只留最新
     // 的名次；輪到下一個（position <= 1）或換了階段就立刻寫。閘道在名次每次變動時都送一次，
     // status 每寫一次，螢幕閱讀器就唸一次。所以 status 裡的名次可能比畫面上的慢最多 15 秒，這是刻意的。
+    // 階段與名次都沒變、status 已經 60 秒沒寫的時候，寫一句「仍在處理，已等 N 分鐘…」：一個任務可能要
+    // 好幾分鐘，一直沒有聲音的話，用螢幕閱讀器的人分不出是還在處理還是停住了。這一句不改畫面上的文字。
     // 每秒跳動的「已等待幾秒」用 role="timer" 加 aria-live="off"，看得到也讀得到，但不會每秒插話。
     // 第一次排隊時在 status 外加一行分批送出的提醒，名次變動時 status 重唸也不會唸到它。
     // 用到的樣式自己注入，不依賴頁面的 CSS（Tailwind 不會掃描 public/ 底下的 JS）。
@@ -873,6 +875,7 @@
     var QUEUED_HINT_TEXT = '同一個網路同時使用的人多時，請分批送出。';
     var STATUS_FILL_DELAY_MS = 100;
     var QUEUE_ANNOUNCE_INTERVAL_MS = 15 * 1000;
+    var STILL_WORKING_INTERVAL_MS = 60 * 1000;
 
     function retrySeconds(p) {
         return Math.max(1, Math.ceil((Number(p.delayMs) || 0) / 1000));
@@ -977,10 +980,13 @@
         // queue 表示這一句是排隊名次（還沒輪到下一個），寫進 status 的間隔受 QUEUE_ANNOUNCE_INTERVAL_MS 限制
         var announcedAt = 0;
         var announcedQueue = false;
+        var announcedText = '';   // 最後寫進 status 的階段文字，不含「仍在處理」
+        var writtenAt = 0;        // 最後一次寫 status 的時間，含「仍在處理」
         function announce(text, queue) {
             status.textContent = text;
-            announcedAt = performance.now();
+            announcedAt = writtenAt = performance.now();
             announcedQueue = queue;
+            announcedText = text;
         }
 
         // 填入之前收到的進度只記下最新的一句，時間到再一次填進去
@@ -1002,8 +1008,9 @@
                 pendingQueue = queue;
                 return;
             }
-            // 文字沒變就不要重寫，否則螢幕閱讀器會把同一句再唸一次
-            if (status.textContent === text) return;
+            // 文字沒變就不要重寫，否則螢幕閱讀器會把同一句再唸一次。比的是上一句階段文字：中間唸過
+            // 「仍在處理」之後，同一個階段再送來也不重唸
+            if (announcedText === text) return;
             var wait = queue && announcedQueue ? announcedAt + QUEUE_ANNOUNCE_INTERVAL_MS - performance.now() : 0;
             if (wait > 0) {
                 announceTimer = setTimeout(function () { announce(text, queue); }, wait);
@@ -1021,6 +1028,10 @@
                 return;
             }
             elapsed.textContent = '已等待 ' + formatSeconds(Math.floor((Date.now() - startedAt) / 1000));
+            if (filled && performance.now() - writtenAt >= STILL_WORKING_INTERVAL_MS) {
+                status.textContent = '仍在處理，已等 ' + Math.floor((Date.now() - startedAt) / 60000) + ' 分鐘…';
+                writtenAt = performance.now();
+            }
         }, 1000);
 
         return {
