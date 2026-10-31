@@ -25,29 +25,29 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <h2 class="text-2xl font-bold mb-2">我該用哪種方法？</h2>
             <p class="text-gray-600 mb-6">最多回答三個問題，下方會依你的答案列出適合的研究方法。</p>
             <div class="space-y-6">
-                <div>
-                    <label class="font-semibold">1. 你的研究主要是想了解「人們的想法或經驗」嗎？</label>
+                <fieldset>
+                    <legend class="font-semibold">1. 你的研究主要是想了解「人們的想法或經驗」嗎？</legend>
                     <div class="flex gap-4 mt-2">
                         <button onclick="recommendMethod('qualitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
                         <button onclick="recommendMethod('other1')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
                     </div>
-                </div>
-                 <div class="hidden" id="q2">
-                    <label class="font-semibold">2. 你的研究主要是想驗證「數字或數據」的關係嗎？</label>
+                </fieldset>
+                 <fieldset class="hidden" id="q2" tabindex="-1">
+                    <legend class="font-semibold">2. 你的研究主要是想驗證「數字或數據」的關係嗎？</legend>
                     <div class="flex gap-4 mt-2">
                         <button onclick="recommendMethod('quantitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
                         <button onclick="recommendMethod('other2')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
                     </div>
-                </div>
-                 <div class="hidden" id="q3">
-                    <label class="font-semibold">3. 你的研究主要是想「創造出一個作品」嗎？</label>
+                </fieldset>
+                 <fieldset class="hidden" id="q3" tabindex="-1">
+                    <legend class="font-semibold">3. 你的研究主要是想「創造出一個作品」嗎？</legend>
                     <div class="flex gap-4 mt-2">
                         <button onclick="recommendMethod('creative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
                         <button onclick="recommendMethod('other3')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">不完全是</button>
                     </div>
-                </div>
+                </fieldset>
             </div>
-            <div id="recommendation-result" class="mt-6"></div>
+            <div id="recommendation-result" role="status" class="mt-6"></div>
         </section>
 
         <!-- 研究方法卡片網格 -->
@@ -97,11 +97,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     recommendedTypes = ['creative'];
                     resultText = '聽起來你的研究偏向「創作實踐」，建議你從以下方法著手：';
                     break;
+                // 下一題出現在按鈕下方，焦點移過去，報讀器才會念出題目。
                 case 'other1':
                     q2.classList.remove('hidden');
+                    q2.focus();
                     return;
                 case 'other2':
                     q3.classList.remove('hidden');
+                    q3.focus();
                     return;
                 case 'other3':
                     recommendedTypes = ['other3'];
@@ -110,12 +113,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
 
             const recommendedMethods = methodsData.filter(m => m.type.some(t => recommendedTypes.includes(t)));
-            let methodsHtml = recommendedMethods.map(m => `<button type="button" onclick="showModal('${escapeHtml(m.id)}', this)" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${escapeHtml(m.title)}</button>`).join('');
+            // 每個方法一個 <li>，報讀器念 role="status" 的內容時，方法名稱才不會連成一串。
+            let methodsHtml = recommendedMethods.map(m => `<li><button type="button" onclick="showModal('${escapeHtml(m.id)}', this)" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${escapeHtml(m.title)}</button></li>`).join('');
 
             recommendationResult.innerHTML = `
                 <div class="bg-orange-50 p-4 rounded-lg">
                     <p class="font-semibold">${escapeHtml(resultText)}</p>
-                    <div class="flex flex-wrap gap-3 mt-3">${methodsHtml}</div>
+                    <ul class="flex flex-wrap gap-3 mt-3">${methodsHtml}</ul>
                 </div>
             `;
         }
