@@ -346,10 +346,18 @@ jobs:
         with:
           persist-credentials: false
 
+      # 測試的 Node 版本跟映像檔一樣，只寫在 Containerfile 的 FROM
+      - name: Read Node.js version from Containerfile
+        id: node
+        run: |
+          version=$(sed -nE 's#^FROM docker\.io/library/node:([0-9]+\.[0-9]+\.[0-9]+)-.*#\1#p' ai-gateway/deploy/k3s/Containerfile)
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Containerfile 讀不出 Node 版本：$version" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version-file: '.node-version'
+          node-version: ${{ steps.node.outputs.version }}
           package-manager-cache: false
 
       # source-hygiene 被移出清單時，它對清單的比對也跟著消失。這裡不經清單直接執行，
