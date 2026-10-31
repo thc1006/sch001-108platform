@@ -2419,6 +2419,52 @@ test('一個任務收到的思考加正文累計超過「輪數 × max_tokens ×
     assert.equal(calls.length, 3);
 });
 
+test('文字任務的正文超過 maxContentChars：超過的那一段不收也不送，中止上游、不開下一輪，以 incomplete（tooLong）結束，partial 等於送出的片段', async () => {
+    const emitted = [];
+    const { impl, calls } = scripted([
+        { content: ['一二三'], finish: 'length' },
+        { content: ['四五六', '七八九', '十'], finish: 'length' },
+        { content: ['不該送出'], finish: 'stop' },
+    ], { onEmit: (round, kind, text) => emitted.push(text) });
+    const streamed = [];
+    await assert.rejects(generate(config({ maxRounds: 3 }), { messages: baseMessages, maxContentChars: 5 }, {
+        streamChatImpl: impl,
+        onContent: (t) => streamed.push(t),
+    }), (err) => {
+        assert.ok(err instanceof GenerationError);
+        assert.equal(err.code, 'incomplete');
+        assert.equal(err.tooLong, true);
+        assert.equal(err.stalled, undefined);
+        assert.equal(err.rounds, 2);
+        assert.match(err.message, /5 字/);
+        assert.equal(err.partial, '一二三');
+        return true;
+    });
+    assert.equal(streamed.join(''), '一二三');
+    assert.equal(calls.length, 2);
+    // onEmit 在 onContent 之後呼叫：onContent 收下「四五六」時就丟出，同一輪後面的片段都沒有送
+    assert.deepEqual(emitted, ['一二三']);
+});
+
+test('maxContentChars：剛好用滿之後只多了結尾的換行不算超過；換行後面再有字才算', async () => {
+    const trailing = await run([{ content: ['一二三', '四五', '\n'], finish: 'stop' }], { request: { maxContentChars: 5 } });
+    assert.equal(trailing.result.content, '一二三四五\n');
+    await assert.rejects(run([{ content: ['一二三', '四五', '\n', '六'], finish: 'stop' }], { request: { maxContentChars: 5 } }), (err) => {
+        assert.equal(err.tooLong, true);
+        assert.equal(err.partial, '一二三四五\n');
+        return true;
+    });
+});
+
+test('maxContentChars：剛好用滿照常完成；JSON 任務不受它影響', async () => {
+    const exact = await run([{ content: ['一二三', '四五'], finish: 'stop' }], { request: { maxContentChars: 5 } });
+    assert.equal(exact.result.content, '一二三四五');
+    const json = await run([{ content: ['{"a":"一二三四五六七八"}'], finish: 'stop' }], {
+        request: { maxContentChars: 5, responseFormat: { type: 'json_object' } },
+    });
+    assert.equal(json.result.content, '{"a":"一二三四五六七八"}');
+});
+
 test('上游送來的思考不是字串（例如數字）：照轉成字串的長度算進累計上限，不會讓計數失效', async () => {
     // max_tokens 1、1 輪：上限 128 字元
     const { impl } = scripted([{ thinking: Array(20).fill(1234567890), finish: 'length' }]);

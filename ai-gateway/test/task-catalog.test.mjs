@@ -34,6 +34,18 @@ test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
     for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
 });
 
+// 依據見 task-catalog.mjs 的 TASK_DEFINITIONS：指令寫了字數的是它的 4 倍
+test('文字任務都有 maxOutputChars：指令寫了字數的是 4 倍，competency-analysis 是 1000；JSON 任務沒有', () => {
+    const caps = Object.fromEntries([...catalog.values()].filter((t) => t.output.type === 'markdown').map((t) => [t.id, t.maxOutputChars]));
+    assert.deepEqual(caps, { 'competency-analysis': 1000, 'career-chat': 800, 'civic-tech-suggestion': 1600 });
+    for (const [id, limit] of [['career-chat', 200], ['civic-tech-suggestion', 400]]) {
+        assert.match(catalog.get(id).instructions, new RegExp(`超過 ${limit} 字`), id);
+    }
+    for (const task of catalog.values()) {
+        if (task.output.type === 'json') assert.equal(task.maxOutputChars, undefined, task.id);
+    }
+});
+
 test('starter-pack：初步想法最多 200 字（頁面的輸入框同樣限制 200）', () => {
     const task = catalog.get('starter-pack');
     assert.equal(validateInput(task, { topic: '貓'.repeat(200) }).topic.length, 200);
@@ -266,7 +278,7 @@ test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的
     assert.throws(() => finalizeOutput(task, ' \n '), { code: 'empty' });
 });
 
-// 文字任務沒有 maxLength 可以當保險，長度全靠指令。
+// 文字任務沒有 schema 的 maxLength，長度靠指令；maxOutputChars 只擋遠超過指令的回答。
 test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句、建議 1～2 句、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦', () => {
     const { instructions } = catalog.get('civic-tech-suggestion');
     assert.match(instructions, /推薦 1 至 3 個/);

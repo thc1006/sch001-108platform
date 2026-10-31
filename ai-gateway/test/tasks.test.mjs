@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import {
     defineTask, createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit,
-    countChars, neutralizeDataMarkers, TaskError, SYSTEM_PROMPT,
+    countChars, createLengthGuard, neutralizeDataMarkers, TaskError, SYSTEM_PROMPT,
 } from '../src/tasks.mjs';
 
 // 特殊字元一律用 code point 產生：原始碼裡不出現看不見的字元，也不怕編輯工具把跳脫序列轉成實際字元
@@ -74,9 +74,13 @@ test('defineTask：定義寫錯在啟動時就失敗', () => {
         [{ ...base, output: { type: 'json', schema: { type: 'object', properties: {}, required: [] } } }, /additionalProperties/],
         [{ ...base, output: { type: 'json', schema: listSchema, check: '依序' } }, /output\.check/],
         [{ ...base, output: { type: 'markdown', check: () => null } }, /output\.check/],
+        [{ ...base, maxOutputChars: 0 }, /maxOutputChars/],
+        [{ ...base, maxOutputChars: 1.5 }, /maxOutputChars/],
+        [{ ...base, maxOutputChars: '800' }, /maxOutputChars/],
+        [{ ...base, output: { type: 'json', schema: listSchema }, maxOutputChars: 800 }, /maxOutputChars/],
     ];
     for (const [def, pattern] of cases) assert.throws(() => defineTask(def), pattern);
-    assert.doesNotThrow(() => defineTask({ ...base, id: 'a'.repeat(64), temperature: 0, timeoutMs: 60_000 }));
+    assert.doesNotThrow(() => defineTask({ ...base, id: 'a'.repeat(64), temperature: 0, timeoutMs: 60_000, maxOutputChars: 800 }));
 });
 
 test('createCatalog：id 重複時失敗', () => {
@@ -197,6 +201,50 @@ test('countChars：數到超過 stopAfter 就停；超過上限兩倍時訊息�
     assert.throws(() => validateInput(jsonTask, { topic: '字'.repeat(20) }), (err) => /主題最多 10 字（目前 20 字）/.test(err.message));
     assert.throws(() => validateInput(jsonTask, { topic: '字'.repeat(21) }), (err) => /主題最多 10 字（目前超過 20 字）/.test(err.message));
     assert.throws(() => validateInput(jsonTask, { topic: 'a'.repeat(300_000) }), (err) => /主題最多 10 字（目前超過 20 字）/.test(err.message));
+});
+
+// 逐段收下時只重新切最後一個字：國旗、家庭表情、組合符號被切在兩段之間也要跟整段 countChars 一樣
+test('createLengthGuard：逐段累計的字數與整段 countChars 相同，切在字的中間也一樣；剛好用滿不算超過', () => {
+    const text = `🇹🇼🇯🇵👨\u200D👩\u200D👧e\u0301中文${'字'.repeat(10)}❤\uFE0F`;
+    const total = countChars(text);
+    const units = [...text];
+    for (let cut = 1; cut < units.length; cut++) {
+        for (const max of [total, total - 1]) {
+            const over = createLengthGuard(max);
+            const pieces = [units.slice(0, cut).join(''), ...units.slice(cut)];
+            const results = pieces.map((piece) => over(piece));
+            assert.equal(results.at(-1), max < total, `cut=${cut} max=${max}`);
+        }
+    }
+    // 一個字的兩個 UTF-16 單位分在兩段
+    const over = createLengthGuard(1);
+    assert.equal(over('\u{1F600}'.slice(0, 1)), false);
+    assert.equal(over('\u{1F600}'.slice(1)), false);
+    assert.equal(over('a'), true);
+});
+
+test('createLengthGuard：代理對切在兩段之間時，code point 不會多算', () => {
+    // 1 個字、3 個 code point（👍 加兩個膚色修飾符），每個 UTF-16 單位一段；上限 1 字 → 4 個 code point
+    const over = createLengthGuard(1);
+    assert.deepEqual('👍\u{1F3FB}\u{1F3FB}'.split('').map((unit) => over(unit)), Array(6).fill(false));
+    assert.equal(over('\u{1F3FB}\u{1F3FB}'), true);
+});
+
+test('createLengthGuard：一個字疊上大量組合符號，超過 maxChars × 4 個 code point 也算超過', () => {
+    const over = createLengthGuard(10);
+    assert.equal(over(`a${'\u0301'.repeat(39)}`), false);
+    assert.equal(over('\u0301'), true);
+});
+
+test('finalizeOutput：文字任務的回答超過 maxOutputChars 是 too_long，剛好用滿照常交出；detail 不含回答的內容', () => {
+    const capped = defineTask({ ...base, maxOutputChars: 5 });
+    assert.equal(finalizeOutput(capped, '\n一二三四五\n'), '一二三四五');
+    assert.throws(() => finalizeOutput(capped, '一二三四五六'), (err) => {
+        assert.ok(err instanceof TaskError);
+        assert.equal(err.code, 'too_long');
+        assert.doesNotMatch(err.detail, /[一二三四五六]/);
+        return true;
+    });
 });
 
 test('validateInput：code point 上限（整欄 maxLength × 4）一眼可知與需要逐一數的情況都對', () => {

@@ -15,6 +15,9 @@
  *                 check(value) 檢查 schema 表達不了的規則，schema 通過才呼叫；回傳 null 才算通過，
  *                 否則回傳問題描述。描述會進 log，只能寫路徑與規格，不能寫模型寫的內容；以路徑開頭
  *                 （$.weekly_plan[1].week），JSON-REJECT 才記得到是哪裡。丟出例外算程式錯誤，HTTP 服務回 internal
+ *   maxOutputChars 選填，只用在文字任務：回答最多幾個字（算法同 maxLength，另外最多 maxOutputChars × 4
+ *                 個 code point）。指令裡的長度模型不一定照做，被輸入誘導時可以一路續寫到用完輪數。
+ *                 生成時超過就中止，以 incomplete 結束。正常的回答碰不到：設成指令字數的 4 倍
  *   instructions  任務指令（可信），放進 system 訊息；用欄位的 label 指稱學生提供的資料
  *   temperature   選填
  *   timeoutMs     選填：這個任務的總時限（毫秒），比 LLM_TASK_TIMEOUT_MS 短才有作用。一個來源趁
@@ -40,7 +43,7 @@ export const SYSTEM_PROMPT = [
 
 export class TaskError extends Error {
     /**
-     * @param {string} code  invalid_input | format | empty
+     * @param {string} code  invalid_input | format | empty | too_long（文字任務的回答超過 maxOutputChars）
      * @param {string} message
      * @param {object} [extra]  field；detail 只給 log，不可含使用者或模型寫的內容；
      *                           source、path、rule：輸出不合格的來源、路徑與規則代號（見 schema.mjs 的 SchemaMismatch）
@@ -105,6 +108,41 @@ function exceedsCodePoints(text, limit) {
 }
 
 /**
+ * 文字任務的回答是否超過 maxChars 字（countChars 的算法）或 maxChars × 4 個 code point。
+ * 回傳的函式逐段收下正文，累計超過就回傳 true。每次只重新切最後一個字加上新的一段：加在後面的
+ * 字只會改變最後一個字的邊界，前面的不會變。結尾的半個代理對留到下一段再數。code point 的上限
+ * 也讓最後一個字長不過 maxChars × 8 個 UTF-16 單位。
+ */
+export function createLengthGuard(maxChars) {
+    let counted = 0;    // 最後一個字之前的字數
+    let tail = '';      // 最後一個字
+    let carry = '';
+    let codePoints = 0;
+    return (text) => {
+        let input = carry + text;
+        carry = '';
+        if (/[\uD800-\uDBFF]$/.test(input)) {
+            carry = input.slice(-1);
+            input = input.slice(0, -1);
+        }
+        for (const _ of input) codePoints++;
+        tail += input;
+        let segments = 0;
+        let lastStart = 0;
+        for (const { index } of segmenter.segment(tail)) {
+            segments++;
+            lastStart = index;
+        }
+        const total = counted + segments;
+        if (segments > 0) {
+            counted = total - 1;
+            tail = tail.slice(lastStart);
+        }
+        return total > maxChars || codePoints > maxChars * MAX_CODE_POINTS_PER_CHAR;
+    };
+}
+
+/**
  * 中和我們自己的資料標記：學生的輸入裡寫不出 <資料…> 或 </資料…>。標記的隨機部分本來就
  * 猜不到，這一道是多一層保險，讓模型連「長得像標記」的東西都看不到。
  * chat template 的控制符號由 control-tokens.mjs 處理（續寫時的模型輸出也要用到）。
@@ -128,6 +166,9 @@ export function defineTask(def) {
     }
     if (def.timeoutMs !== undefined && !(Number.isInteger(def.timeoutMs) && def.timeoutMs > 0)) {
         throw new Error(`${def.id}：timeoutMs 要是正整數（毫秒）`);
+    }
+    if (def.maxOutputChars !== undefined && !(def.output?.type === 'markdown' && Number.isInteger(def.maxOutputChars) && def.maxOutputChars > 0)) {
+        throw new Error(`${def.id}：maxOutputChars 只能用在文字任務，而且要是正整數`);
     }
     let responseFormat;
     if (def.output?.type === 'json') {
@@ -248,6 +289,10 @@ export function finalizeOutput(task, content) {
     if (task.output.type === 'markdown') {
         const text = toTraditional(content).trim();
         if (!hasVisibleText(text)) throw new TaskError('empty', 'AI 沒有產生內容');
+        // generate 拿到同一個上限、超過就中止，這裡只是保險
+        if (task.maxOutputChars && createLengthGuard(task.maxOutputChars)(text)) {
+            throw new TaskError('too_long', 'AI 的回答超過長度上限', { detail: `超過 ${task.maxOutputChars} 字` });
+        }
         return text;
     }
     try {
