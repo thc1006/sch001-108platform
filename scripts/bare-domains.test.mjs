@@ -116,10 +116,9 @@ test('反例：與副檔名撞名的 TLD 一律不從內文擷取（確定性，
 
 test('.ai 刻意不遮蔽——遮了會漏掉本站內文推薦的真實網站', () => {
     // 把 .ai 當成 Adobe Illustrator 遮掉的話，online-courses.json 的課程提供者
-    // 「DeepLearning.AI」、methodology.json 推薦的「Otter.ai (AI語音轉文字)」這兩個
-    // 真實網站永遠不會被檢查。.ai 現在是 AI 產品的主流網域，內文裡出現真網域的機率遠高於
+    // 「DeepLearning.AI」這種真實網站永遠不會被檢查。.ai 現在是 AI 產品的主流網域，內文裡出現真網域的機率遠高於
     // 出現 Illustrator 檔名，因此不遮。代價是 logo.ai 這種檔名會被探測，
-    // 拿到的結果只是一筆無害的噪音，遠比永久漏檢兩個真網站好。
+    // 拿到的結果只是一筆無害的噪音，遠比永久漏檢真網站好。
     assert.ok(!SHADOWED_BY_FILE_EXT.has('ai'), '.ai 不可以在遮蔽清單裡');
     assert.deepEqual(hostsOf('課程由 DeepLearning.AI 提供'), ['deeplearning.ai']);
     assert.deepEqual(hostsOf('可使用 Otter.ai (AI語音轉文字) 協助整理逐字稿'), ['otter.ai']);
