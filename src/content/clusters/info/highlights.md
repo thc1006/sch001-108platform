@@ -26,7 +26,9 @@ APCS 是程式能力的檢定，申請入學 APCS 組的級分規定詳見〈科
 
 財團法人開源基金會的「AI 開源新勢力行動方案」（TAIONE Fellowship Program）不用提案也不是競賽，沒有開源經驗也能參加。有興趣的人填官網上的報名表，加入 vLLM、Kubernetes 等 11 個開源專案裡自己選的社群；常見問題頁寫，不用等基金會確認報名資料就能先加入討論，從文件、測試、小型 Bug 或 Good First Issue 開始。
 
-Fellow 由各專案的技術嚮導（Track Lead）依實際貢獻提名，學生優先，通過基金會審核後簽約。Fellow 要具中華民國國籍、30 歲以下（含）、具備基礎程式能力（不限語言）。Fellow 從通過審核的次月起每月領 20,000 元，按季發放；當月完成功能優化、API 擴充，或挑戰 Hard Bug 這類貢獻並通過審查，有機會再加 10,000 元（卓越貢獻獎勵）。每月要做約 10 分鐘的技術分享，每三個月評估一次是否續任，同一個專案的 Fellow 資格最長兩年。不符資格的人仍可用社群共學員的身分參與。未滿 18 歲能否成為 Fellow，官方資料沒有寫。
+Fellow 由各專案的技術嚮導（Track Lead）依實際貢獻提名，學生優先，通過基金會審核後簽約。Fellow 要具中華民國國籍、30 歲以下（含）、具備基礎程式能力（不限語言）。不符資格的人仍可用社群共學員的身分參與。未滿 18 歲能否成為 Fellow，官方資料沒有寫。
+
+Fellow 從通過審核的次月起每月領 20,000 元，按季發放；當月完成功能優化、API 擴充，或挑戰 Hard Bug 這類貢獻並通過審查，有機會再加 10,000 元（卓越貢獻獎勵）。每月要做約 10 分鐘的技術分享；每三個月為一期，期滿前由技術嚮導評估是否續任，同一個專案最多兩年。
 
 ## 學生計算機年會
 
@@ -41,5 +43,5 @@ Fellow 由各專案的技術嚮導（Track Lead）依實際貢獻提名，學生
 - [AI 開源新勢力行動方案申請資訊，財團法人開源基金會](https://taione.org/fellowship/apply)
 - [AI 開源新勢力行動方案開源專案（11 個 Track），財團法人開源基金會](https://taione.org/fellowship/tracks)
 - [TAIONE Fellowship Program 常見問題，財團法人開源基金會](https://taione.org/fellowship/faq)
-- [TAIONE Fellowship Program 報名簡章（肆、Fellow 培育期間與續任機制），財團法人開源基金會](https://drive.google.com/file/d/1JYP9tU7mFIYhoExSJpWOYGdQpdoR7GXk/view)
+- [TAIONE Fellowship Program 報名簡章，財團法人開源基金會](https://drive.google.com/file/d/1JYP9tU7mFIYhoExSJpWOYGdQpdoR7GXk/view)
 - [SITCON 2027 徵稿頁](https://sitcon.org/2027/cfp/)、[關於 SITCON](https://sitcon.org/2027/cfp/about/)
