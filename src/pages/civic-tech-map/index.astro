@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import data from '../../../public/civic-tech-map/projects.json';
 
 const { projects } = data;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const workshop = 'https://hackmd.io/MJw8iyS9TSaQ7Sfi83umJw';
 const portfolioRules = 'https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916';
 const link = 'text-blue-600 underline hover:text-blue-700';
@@ -17,10 +18,16 @@ const formatDate = (iso: string) => {
 <BaseLayout
   title="公民科技專案 - 台灣教育處方籤"
   description={`${projects.length} 個台灣公民科技專案公開的資料與工具，每個附一個自主學習或探究與實作的題目例子和做法。`}
-  currentSection="civic-tech-map"
+  currentSection="autonomous-learning"
   bodyClass="bg-gray-100 text-gray-800"
 >
   <main id="main-content" class="container mx-auto px-6 py-12">
+    <nav class="text-sm text-gray-600 mb-6" aria-label="麵包屑">
+      <a href={`${base}/autonomous-learning/topic-ideas.html`} class="underline hover:text-blue-600">主題靈感產生器</a>
+      <span class="mx-2" aria-hidden="true">/</span>
+      <span class="text-gray-700" aria-current="page">公民科技專案</span>
+    </nav>
+
     <section class="text-center mb-12">
       <h1 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">
         公民科技<span class="gradient-text">專案</span>

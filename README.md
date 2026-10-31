@@ -28,6 +28,7 @@
 * [計畫範本庫](https://thc1006.github.io/sch001-108platform/autonomous-learning/plan-templates.html)：自主學習計畫的範本。輸入主題，AI 會草擬一份 8 週的計畫。
 * [學習資源地圖](https://thc1006.github.io/sch001-108platform/autonomous-learning/resource-map.html)：線上學習資源的清單。輸入學習主題，AI 會排出學習步驟。
 * [研究方法工具箱](https://thc1006.github.io/sch001-108platform/autonomous-learning/methodology.html)：文獻探討、問卷調查、訪談、個案研究、內容分析和創作實踐六種方法的做法。
+* [公民科技專案](https://thc1006.github.io/sch001-108platform/civic-tech-map/)：8 個台灣公民科技專案公開的資料與工具，每個附一個題目例子和做法。寫下你的興趣或關心的議題，AI 會推薦適合的專案。
 
 ### [學習歷程](https://thc1006.github.io/sch001-108platform/learning-portfolio/)
 
@@ -52,10 +53,6 @@
 * [開放教育資源](https://thc1006.github.io/sch001-108platform/advanced-resources/open-education.html)：AI 實驗室、開放科學、開放課程和國際科學社群的免費資源。
 * [國內外競賽資訊](https://thc1006.github.io/sch001-108platform/advanced-resources/competitions.html)：高中生可以參加的競賽，標出開放報名和即將截止的項目，可以依領域、地區、級別、形式篩選。
 * [主題書單推薦](https://thc1006.github.io/sch001-108platform/advanced-resources/reading-list.html)：十二個主題的書單，附推薦理由。
-
-### [公民科技](https://thc1006.github.io/sch001-108platform/civic-tech-map/)
-
-8 個台灣公民科技專案公開的資料與工具，每個附一個自主學習或探究與實作的題目例子和做法。寫下你的興趣或關心的議題，AI 會推薦適合的專案。
 
 [關於我們](https://thc1006.github.io/sch001-108platform/about.html)寫了專案的由來，[網站地圖](https://thc1006.github.io/sch001-108platform/sitemap.html)列出所有頁面。
 

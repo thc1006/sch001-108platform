@@ -48,6 +48,7 @@ test.describe('部署產物 smoke test', () => {
         for (const [path, value, href] of [
             ['/career-exploration/index.html', 'page', '/career-exploration/index.html'],
             ['/career-exploration/clusters/law/index.html', 'true', '/career-exploration/index.html'],
+            ['/civic-tech-map/index.html', 'true', '/autonomous-learning/index.html'],
             ['/about.html', 'page', '/about.html'],
             ['/index.html', null],
         ]) {

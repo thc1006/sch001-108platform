@@ -26,7 +26,7 @@ for (const width of [768, 820, 1023, 1024, 1280]) {
             };
         });
 
-        expect(m.links.length).toBe(6);
+        expect(m.links.length).toBe(5);
         const gaps = m.links.slice(1).map((l, i) => l.left - m.links[i].right);
         const brandGap = m.links[0].left - m.brandRight;
         expect(brandGap, `站名和「${m.links[0].text}」隔 ${brandGap}px，選項之間是 ${gaps.join('／')}px`).toBeGreaterThanOrEqual(Math.max(...gaps));
