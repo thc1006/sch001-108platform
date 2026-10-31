@@ -243,6 +243,101 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
+    test('閘道說忙線、要等 30 秒 → 問題留在紀錄、也放回輸入框；等待期間按鈕停用、寫著「請稍候」，連按、按住 Enter 都不送出也不加訊息，30 秒到了才恢復', async ({ page }) => {
+        await page.clock.install({ time: 0 });
+        await page.clock.pauseAt(10_000);
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        // 不多等隨機的秒數，等待時間就是 30 秒
+        await page.evaluate(() => { Math.random = () => 0; });
+        await ask(page, '我喜歡電腦');
+        await push(page, sse('error', { code: 'busy', message: BUSY, retryable: true, retryAfter: 30 }));
+        await expect(aiText(page, 2)).toHaveText(BUSY.replace(/。$/, '（大約 30 秒後可以再試）。'));
+        await expect(messages(page).nth(1)).toHaveText('我喜歡電腦');
+        const input = page.locator('#chat-input');
+        const button = page.locator('#chat-submit');
+        await expect(input).toHaveValue('我喜歡電腦');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).toHaveText('請稍候');
+
+        for (let i = 0; i < 10; i++) await input.press('Enter');
+        for (let i = 0; i < 20; i++) await page.keyboard.down('Enter');
+        await page.keyboard.up('Enter');
+        await button.click({ force: true });
+        await expect(messages(page)).toHaveCount(3);
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+
+        await page.clock.runFor(29_000);
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await page.clock.runFor(1_000);
+        await expect(button).not.toHaveAttribute('aria-disabled');
+        await expect(button).toHaveText('發送');
+        await input.press('Enter');
+        await expect(messages(page).nth(3)).toHaveText('我喜歡電腦');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(2);
+    });
+
+    test('接續的一輪碰到忙線、要等 30 秒 → 沒寫完的答案留在紀錄，問題不放回輸入框；按鈕停用到 30 秒後', async ({ page }) => {
+        await page.clock.install({ time: 0 });
+        await page.clock.pauseAt(10_000);
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
+        await page.evaluate(() => { Math.random = () => 0; });
+        await ask(page, '我喜歡電腦');
+        // 時鐘暫停時草稿不會畫出來（每個畫面才畫一次），直接等錯誤
+        await push(page, sse('error', { code: 'busy', message: BUSY, retryable: true, retryAfter: 30 }));
+        await expect(messages(page).nth(2).locator('.chat-bubble-ai span')).toHaveText('AI 的回答（沒有寫完）');
+        await expect(aiText(page, 2).locator('strong')).toHaveText(['資訊學群']);
+        await expect(aiText(page, 3)).toHaveText(BUSY.replace(/。$/, '（大約 30 秒後可以再試）。'));
+        const button = page.locator('#chat-submit');
+        await expect(page.locator('#chat-input')).toHaveValue('');
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await page.clock.runFor(29_000);
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await page.clock.runFor(1_000);
+        await expect(button).not.toHaveAttribute('aria-disabled');
+    });
+
+    test('不是要等的代號（timeout）即使帶著 retryAfter → 按鈕馬上恢復，問題不放回輸入框', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡電腦');
+        await push(page, sse('error', { code: 'timeout', message: 'AI 思考的時間超過上限了，請稍後再試。', retryable: true, retryAfter: 30 }));
+        await expect(aiText(page, 2)).toContainText('AI 思考的時間超過上限了');
+        await expect(page.locator('#chat-submit')).not.toHaveAttribute('aria-disabled');
+        await expect(page.locator('#chat-submit')).toHaveText('發送');
+        await expect(page.locator('#chat-input')).toHaveValue('');
+    });
+
+    test('等待期間學生已經打了下一題 → 輸入框留著下一題；只打了空白就放回原來的問題', async ({ page }) => {
+        const input = page.locator('#chat-input');
+        for (const [typed, expected] of [['那數學呢？', '那數學呢？'], ['   ', '我喜歡電腦']]) {
+            await page.goto(PAGE);
+            await stubBuiltInGateway(page);
+            await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+            await ask(page, '我喜歡電腦');
+            await input.fill(typed);
+            await push(page, sse('error', { code: 'busy', message: BUSY, retryable: true, retryAfter: 30 }));
+            await expect(aiText(page, 2)).toContainText('秒後可以再試');
+            await expect(input).toHaveValue(expected);
+        }
+    });
+
+    // 失敗得很快（連不上、輸入不合格）時按鈕馬上能按，問題不放回輸入框，連按 Enter 才不會一直重送
+    test('連不上閘道 → 問題不放回輸入框；之後連按 10 次 Enter 不再送出，紀錄不增加', async ({ page }) => {
+        await installFakeGateway(page);
+        await page.evaluate(() => {
+            const realFetch = window.fetch;
+            window.fetch = (url, init) => (String(url).startsWith('https://gateway.example/')
+                ? (window.__calls.push({ url: String(url) }), Promise.reject(new TypeError('Failed to fetch')))
+                : realFetch(url, init));
+        });
+        const input = page.locator('#chat-input');
+        await input.fill('我喜歡電腦');
+        for (let i = 0; i < 10; i++) await input.press('Enter');
+        await expect(aiText(page, 2)).toHaveText('暫時連不上 AI 服務（可能是網路不穩，或服務正在維護），請稍後再試。');
+        await expect(messages(page)).toHaveCount(3);
+        await expect(input).toHaveValue('');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     for (const [when, chunk, expectSettled] of SETTLE) {
         test(`焦點停在「取消」上時${when} → 焦點交給輸入框，#chat-progress 不留 tabindex`, async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
@@ -277,6 +372,8 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(aiText(page, 3)).toHaveClass(/text-red-700/);
         await expect(draft(page)).toHaveCount(0);
         await expect(page.locator('#chat-input')).toBeFocused();
+        // 答案已經留在紀錄裡，問題不放回輸入框
+        await expect(page.locator('#chat-input')).toHaveValue('');
         for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
     });
 
