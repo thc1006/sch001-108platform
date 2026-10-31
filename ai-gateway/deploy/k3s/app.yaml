@@ -79,6 +79,9 @@ spec:
               value: "900000"
             - name: LOG_LEVEL
               value: info
+            # IPv6 用戶端取多長的前綴當成同一個來源（預設 64，範圍 32～128）
+            # - name: AI_V6_PREFIX
+            #   value: "48"
           ports:
             - name: http
               containerPort: 8787

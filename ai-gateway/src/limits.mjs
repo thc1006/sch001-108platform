@@ -248,38 +248,57 @@ function expandIPv6(address) {
     return [...headParts, ...zeros, ...tailParts].map((part) => parseInt(part, 16));
 }
 
-/**
- * 把用戶端位址正規化成限流用的鍵。
- *   - IPv4 原樣；任何寫法的 IPv4 對應位址（::ffff:a.b.c.d、::ffff:cb00:7105、0:0:0:0:0:ffff:…）還原成 IPv4
- *   - IPv6 取 /64：一個用戶通常握有整段 /64，只看完整位址的話換個位址就繞過限制。
- *     握有 /56、/48 的用戶仍可輪流換用不同的 /64；改取更大的前綴，又會把同一家 ISP
- *     的不同用戶併成一個桶。維持 /64，真正擋住 GPU 被吃光的是 SlotGate
- *   - 6to4（2002::/16）取內嵌的 IPv4：一個 IPv4 位址就握有整段 2002:a.b.c.d::/48，取 /64 的話
- *     可以換出 65536 個桶。Teredo（2001:0::/32）同理，用戶端的 IPv4 是最後 32 位元逐位元反相
- *   - 帶埠、方括號、zone id 的寫法先剝掉；剝完仍不是 IP 就一律歸到 'invalid'
- *     （鍵的長度因此有上限，偽造的怪值也不會各自成為一個桶）
- */
-export function clientKey(address) {
+// 帶埠、方括號、zone id 的寫法先剝掉，剝完不是 IP 就回傳 null。只看前 100 個字元
+function parseAddress(address) {
     let raw = String(address || '').trim().slice(0, 100);
     const bracketed = /^\[([^\]]+)\](?::\d+)?$/.exec(raw);
     if (bracketed) raw = bracketed[1];
     else if (/^\d{1,3}(\.\d{1,3}){3}:\d+$/.test(raw)) raw = raw.slice(0, raw.lastIndexOf(':'));
     raw = raw.replace(/%[\w.-]*$/, '');
     const version = isIP(raw);
-    if (version === 4) return raw;
-    if (version !== 6) return 'invalid';
-    const groups = expandIPv6(raw);
-    if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) {
-        return [groups[6] >> 8, groups[6] & 0xff, groups[7] >> 8, groups[7] & 0xff].join('.');
-    }
-    if (groups[0] === 0x2002) {
-        return [groups[1] >> 8, groups[1] & 0xff, groups[2] >> 8, groups[2] & 0xff].join('.');
-    }
-    if (groups[0] === 0x2001 && groups[1] === 0) {
-        const [hi, lo] = [groups[6] ^ 0xffff, groups[7] ^ 0xffff];
-        return [hi >> 8, hi & 0xff, lo >> 8, lo & 0xff].join('.');
-    }
-    return `${groups.slice(0, 4).map((g) => g.toString(16)).join(':')}::/64`;
+    if (version === 4) return { v4: raw };
+    return version === 6 ? { groups: expandIPv6(raw) } : null;
+}
+
+// IPv6 位址裡用戶端的 IPv4（32 位元無號整數）：IPv4 對應位址、6to4（2002::/16）、Teredo（2001:0::/32，
+// 最後 32 位元逐位元反相）。都不是就回傳 null
+function embeddedIPv4(groups) {
+    const join = (hi, lo) => ((hi << 16) | lo) >>> 0;
+    if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) return join(groups[6], groups[7]);
+    if (groups[0] === 0x2002) return join(groups[1], groups[2]);
+    if (groups[0] === 0x2001 && groups[1] === 0) return join(groups[6] ^ 0xffff, groups[7] ^ 0xffff);
+    return null;
+}
+
+const intToIPv4 = (n) => [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
+
+// IPv6 的前 bits 位元寫成「2001:db8:1:2::/64」：寫到涵蓋 bits 的那一組，後面的位元補 0
+function ipv6Prefix(groups, bits) {
+    const used = Math.ceil(bits / 16);
+    const kept = groups.slice(0, used).map((g, i) => {
+        const left = bits - i * 16;
+        return (left >= 16 ? g : g & (0xffff << (16 - left))).toString(16);
+    });
+    return `${kept.join(':')}${used < 8 ? '::' : ''}/${bits}`;
+}
+
+/**
+ * 把用戶端位址正規化成限流用的鍵。
+ *   - IPv4 原樣；任何寫法的 IPv4 對應位址（::ffff:a.b.c.d、::ffff:cb00:7105、0:0:0:0:0:ffff:…）還原成 IPv4
+ *   - IPv6 取前 v6Prefix 位元（預設 /64，AI_V6_PREFIX）：一個用戶通常握有整段 /64，只看完整位址的話
+ *     換個位址就繞過限制。握有 /56、/48 的用戶仍可輪流換用不同的 /64；改取更大的前綴，又會把同一家
+ *     ISP 的不同用戶併成一個桶。預設維持 /64，GPU 不被吃光靠的是 SlotGate
+ *   - 6to4（2002::/16）取內嵌的 IPv4：一個 IPv4 位址就握有整段 2002:a.b.c.d::/48，取 /64 的話
+ *     可以換出 65536 個桶。Teredo（2001:0::/32）同理，用戶端的 IPv4 是最後 32 位元逐位元反相
+ *   - 帶埠、方括號、zone id 的寫法先剝掉；剝完仍不是 IP 就一律歸到 'invalid'
+ *     （鍵的長度因此有上限，偽造的怪值也不會各自成為一個桶）
+ */
+export function clientKey(address, v6Prefix = 64) {
+    const ip = parseAddress(address);
+    if (!ip) return 'invalid';
+    if (ip.v4) return ip.v4;
+    const v4 = embeddedIPv4(ip.groups);
+    return v4 === null ? ipv6Prefix(ip.groups, v6Prefix) : intToIPv4(v4);
 }
 
 /**

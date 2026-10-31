@@ -1351,6 +1351,22 @@ test('CLIENT_IP_HEADER：連線來自信任的代理時才採用，只看最右�
     }
 });
 
+test('AI_V6_PREFIX：IPv6 用戶端照設定的前綴併成同一個來源，限流的鍵跟著改', async () => {
+    const xff = (value) => ({ headers: { 'x-forwarded-for': value } });
+    const gw = await startGateway({ server: { rateLimitMax: 1, clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'], v6Prefix: 48 } });
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }, xff('2001:db8:1:2::1')));
+        // 同一段 /48 裡的另一個 /64：預設會是不同的來源，這裡是同一個
+        assert.equal((await post(gw.base, 'demo-json', { topic: 'b' }, xff('2001:db8:1:3::1'))).status, 429);
+        const other = await post(gw.base, 'demo-json', { topic: 'c' }, xff('2001:db8:2:3::1'));
+        assert.equal(other.status, 200);
+        await other.text();
+        assert.deepEqual([...gw.gateway.limiter.clients.keys()], ['2001:db8:1::/48', '2001:db8:2::/48']);
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('CLIENT_IP_HEADER：連線不是來自信任的代理時，自己填的標頭沒有用', async () => {
     const gw = await startGateway({ server: { rateLimitMax: 1, clientIpHeader: 'x-forwarded-for', trustedProxies: ['10.42.0.1/32'] } });
     try {

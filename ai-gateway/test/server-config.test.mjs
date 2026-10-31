@@ -29,6 +29,7 @@ test('loadServerConfig：預設值', () => {
         rateLimitMax: 100,
         requestLimitPerMinute: 120,
         clientMaxInflight: 6,
+        v6Prefix: 64,
         bodyTimeoutMs: 10_000,
         heartbeatMs: 15_000,
         shutdownGraceMs: 900_000,
@@ -154,4 +155,15 @@ test('數值設定超出範圍：退回預設並警告', () => {
     assert.equal(config.concurrency, 4);
     assert.equal(config.port, 8787);
     assert.equal(warnings.length, 4);
+});
+
+test('AI_V6_PREFIX：32～128 的整數；超出範圍或不是整數就用 64 並警告', () => {
+    assert.equal(load({ AI_V6_PREFIX: '48' }).config.v6Prefix, 48);
+    assert.equal(load({ AI_V6_PREFIX: ' 128 ' }).config.v6Prefix, 128);
+    for (const raw of ['31', '129', '/48', '48.5', 'abc']) {
+        const { config, warnings } = load({ AI_V6_PREFIX: raw });
+        assert.equal(config.v6Prefix, 64, raw);
+        assert.equal(warnings.length, 1, raw);
+        assert.match(warnings[0], /AI_V6_PREFIX/, raw);
+    }
 });
