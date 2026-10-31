@@ -183,8 +183,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     tagsDiv.appendChild(langTag);
                     tagsDiv.appendChild(bestForTag);
 
+                    const newTab = document.createElement('span');
+                    newTab.className = 'sr-only';
+                    newTab.textContent = '（另開新分頁）';
+
                     card.appendChild(contentDiv);
                     card.appendChild(tagsDiv);
+                    card.appendChild(newTab);
                     resourceGrid.appendChild(card);
                 });
             } else {

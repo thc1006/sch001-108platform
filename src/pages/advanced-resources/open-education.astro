@@ -138,7 +138,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <div class="flex flex-wrap gap-1.5 mt-3">${tagsHtml}</div>
           <a href="${encodeURI(r.url)}" target="_blank" rel="noopener noreferrer"
              class="mt-4 inline-flex items-center justify-center bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition">
-            前往資源 &rarr;
+            <span>前往資源<span aria-hidden="true"> &rarr;</span></span><span class="sr-only">：${escapeHtml(r.name)}（另開新分頁）</span>
           </a>
         `;
         grid.appendChild(card);

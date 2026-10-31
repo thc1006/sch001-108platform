@@ -169,7 +169,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${escapeHtml(deadlineText(featured))}</span>
                     </div>
                     <a href="${encodeURI(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
-                        查看活動詳情 &rarr;
+                        查看活動詳情<span class="sr-only">：${escapeHtml(featured.title)}（另開新分頁）</span> <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
             `;
@@ -216,7 +216,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                                 <p class="font-semibold text-gray-700">${escapeHtml(deadlineText(activity))}</p>
                             </div>
                             <a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
-                                查看詳情
+                                查看詳情<span class="sr-only">：${escapeHtml(activity.title)}（另開新分頁）</span>
                             </a>
                         </div>
                     `;

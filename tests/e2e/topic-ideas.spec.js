@@ -83,9 +83,11 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await page.click('#generateIdeaBtn');
 
         await expectIdeas(page, RESULT.ideas);
-        const links = page.locator('#ideaResult').getByRole('link', { name: '用 Google 深入研究 →' });
+        // 看得到的字三個連結都一樣，報讀器念的名稱帶著題目；箭頭不念。
+        const links = page.locator('#ideaResult a');
         await expect(links).toHaveCount(3);
         for (const [i, { title }] of RESULT.ideas.entries()) {
+            await expect(links.nth(i)).toHaveAccessibleName(new RegExp(`^用 Google 深入研究\\s?：${title}（另開新分頁）$`));
             await expect(links.nth(i)).toHaveAttribute('href', `https://www.google.com/search?q=${encodeURIComponent(title)}`);
         }
         await expect(page.locator('#ideaWorkspace > *')).toHaveCount(0);
