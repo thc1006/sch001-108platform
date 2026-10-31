@@ -50,7 +50,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <p id="result-count" class="text-sm text-gray-500 mb-4 text-center"></p>
       <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       <div id="no-results" class="hidden text-center py-16">
-        <h3 class="text-lg font-medium text-gray-900">找不到符合的資源</h3>
+        <h2 class="text-lg font-medium text-gray-900">找不到符合的資源</h2>
         <p class="mt-1 text-sm text-gray-500">試著換個關鍵字，或選擇其他分類。</p>
       </div>
     </section>
@@ -132,7 +132,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${levelBadge}">${escapeHtml(r.level)}</span>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">${escapeHtml(r.lang)}</span>
           </div>
-          <h3 class="text-lg font-bold text-gray-900">${escapeHtml(r.name)}</h3>
+          <h2 class="text-lg font-bold text-gray-900">${escapeHtml(r.name)}</h2>
           <p class="text-sm text-gray-500 mb-2">${escapeHtml(r.org)}</p>
           <p class="text-sm text-gray-700 flex-grow">${escapeHtml(r.description)}</p>
           <div class="flex flex-wrap gap-1.5 mt-3">${tagsHtml}</div>
@@ -173,7 +173,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         grid.innerHTML = '';
         resultCount.textContent = '';
         noResults.classList.remove('hidden');
-        noResults.querySelector('h3').textContent = '資源載入失敗';
+        noResults.querySelector('h2').textContent = '資源載入失敗';
         noResults.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
       }
     }

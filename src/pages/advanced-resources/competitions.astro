@@ -132,7 +132,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       </div>
       <div id="no-results" class="comp-empty" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
-        <h3 class="comp-empty__title">找不到符合的競賽</h3>
+        <h2 class="comp-empty__title">找不到符合的競賽</h2>
         <p class="comp-empty__text">試著放寬篩選條件，或清除全部篩選重新探索。</p>
       </div>
     </section>
@@ -405,7 +405,7 @@ import data from '../../../public/advanced-resources/competitions.json';
                 '<span class="comp-cat">' + escapeHtml(c.category) + '</span>' +
                 '<span class="comp-status">' + escapeHtml(statusText(s)) + '</span>' +
               '</div>' +
-              '<h3 class="comp-card__title">' + escapeHtml(c.title) + '</h3>' +
+              '<h2 class="comp-card__title">' + escapeHtml(c.title) + '</h2>' +
               '<p class="comp-card__org">' + escapeHtml(c.organizer) + '</p>' +
               '<ul class="comp-meta">' + meta + '</ul>' +
               '<p class="comp-elig">' + escapeHtml(c.eligibility) + ' · ' + escapeHtml(c.mode) + '</p>' +
