@@ -47,14 +47,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Filters -->
         <section class="mb-12 flex justify-center">
-            <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-4 bg-white p-3 rounded-full shadow-sm">
-                <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-category="all">全部工具</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="簡報排版">簡報排版</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="心智圖">心智圖</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="數據視覺化">數據視覺化</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="筆記寫作">筆記寫作</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="影音剪輯">影音剪輯</button>
-                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="團隊協作">團隊協作</button>
+            <div id="category-filters" role="group" aria-label="依分類篩選" class="flex flex-wrap justify-center gap-2 md:gap-4 bg-white p-3 rounded-full shadow-sm">
+                <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition" data-category="all" aria-pressed="true">全部工具</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="簡報排版" aria-pressed="false">簡報排版</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="心智圖" aria-pressed="false">心智圖</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="數據視覺化" aria-pressed="false">數據視覺化</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="筆記寫作" aria-pressed="false">筆記寫作</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="影音剪輯" aria-pressed="false">影音剪輯</button>
+                <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-category="團隊協作" aria-pressed="false">團隊協作</button>
             </div>
         </section>
 
@@ -127,8 +127,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         filters.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
-                filters.querySelector('.active').classList.remove('active');
+                const current = filters.querySelector('.active');
+                current.classList.remove('active');
+                current.setAttribute('aria-pressed', 'false');
                 e.target.classList.add('active');
+                e.target.setAttribute('aria-pressed', 'true');
                 const category = e.target.dataset.category;
                 renderTools(category);
                 announceCount();

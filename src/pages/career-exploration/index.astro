@@ -78,7 +78,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         <ion-icon name="search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
                     </div>
                     <p id="result-status" role="status" class="sr-only"></p>
-                    <div id="cluster-list" class="space-y-2 overflow-y-auto max-h-[60vh] pr-2">
+                    <div id="cluster-list" role="group" aria-label="學群清單" class="space-y-2 overflow-y-auto max-h-[60vh] pr-2">
                         </div>
                 </div>
 
@@ -199,11 +199,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 </div>
 
                 <div class="border-b border-gray-200 mb-4">
-                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <button class="tab-btn active" data-tab="competencies">核心素養</button>
-                        <button class="tab-btn" data-tab="careers">生涯發展</button>
-                        <button class="tab-btn" data-tab="portfolio">歷程建議</button>
-                    </nav>
+                    <div class="tab-list -mb-px flex space-x-6" role="group" aria-label="${escapeHtml(cluster.name)}的資訊">
+                        <button class="tab-btn active" data-tab="competencies" aria-pressed="true" aria-controls="tab-competencies">核心素養</button>
+                        <button class="tab-btn" data-tab="careers" aria-pressed="false" aria-controls="tab-careers">生涯發展</button>
+                        <button class="tab-btn" data-tab="portfolio" aria-pressed="false" aria-controls="tab-portfolio">歷程建議</button>
+                    </div>
                 </div>
 
                 <div id="tab-content-area" class="text-gray-700">
@@ -256,8 +256,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             if (!button) return;
 
             const currentActive = clusterListContainer.querySelector('.active');
-            if (currentActive) currentActive.classList.remove('active');
+            if (currentActive) {
+                currentActive.classList.remove('active');
+                currentActive.setAttribute('aria-pressed', 'false');
+            }
             button.classList.add('active');
+            button.setAttribute('aria-pressed', 'true');
 
             const clusterId = button.dataset.id;
             renderClusterDetails(clusterId);
@@ -278,7 +282,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 button.className = 'cluster-btn w-full text-left px-4 py-3 rounded-lg font-semibold flex items-center gap-3';
                 button.dataset.id = cluster.id;
                 button.innerHTML = `<ion-icon name="${escapeHtml(cluster.icon)}" class="text-xl"></ion-icon> <span>${escapeHtml(cluster.name)}</span>`;
-                if(cluster.id === currentActiveId) button.classList.add('active');
+                const isActive = cluster.id === currentActiveId;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', String(isActive));
                 clusterListContainer.appendChild(button);
             });
         }
@@ -290,6 +296,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 const firstButton = clusterListContainer.querySelector('.cluster-btn');
                 if (firstButton) {
                     firstButton.classList.add('active');
+                    firstButton.setAttribute('aria-pressed', 'true');
                     renderClusterDetails(majorData[0].id);
                 }
             }
@@ -299,15 +306,17 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
 
         function addTabEventListeners() {
-            const tabContainer = clusterDetailsContainer.querySelector('[aria-label="Tabs"]');
+            const tabContainer = clusterDetailsContainer.querySelector('.tab-list');
             if (!tabContainer) return;
 
             tabContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('.tab-btn');
                 if (!button) return;
 
-                tabContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
+                tabContainer.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn === button);
+                    btn.setAttribute('aria-pressed', String(btn === button));
+                });
 
                 clusterDetailsContainer.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
                 const tabId = button.dataset.tab;

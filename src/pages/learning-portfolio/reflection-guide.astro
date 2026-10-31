@@ -54,7 +54,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">工具一：情境式提問</h2>
                 <p class="text-gray-600 mb-6">選擇你參與的活動情境，這裡會隨機出一題反思問題。</p>
-                <div id="reflection-category-btns" class="flex flex-wrap gap-3 mb-6">
+                <div id="reflection-category-btns" role="group" aria-label="活動情境" class="flex flex-wrap gap-3 mb-6">
                     <!-- 情境按鈕由 renderCategoryButtons() 填入 -->
                 </div>
                 <div id="reflection-question-output" class="bg-gray-50 p-6 rounded-lg flex-grow flex items-center justify-center transition-all duration-300 min-h-[120px]">
@@ -124,6 +124,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const button = document.createElement('button');
                 button.className = 'category-btn px-4 py-2 font-semibold text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-300';
                 button.textContent = category;
+                button.setAttribute('aria-pressed', 'false');
                 button.onclick = () => generateQuestion(category);
                 categoryBtnsContainer.appendChild(button);
             });
@@ -141,10 +142,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             questionOutput.appendChild(p);
 
             categoryBtnsContainer.querySelectorAll('button').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent === category) {
-                    btn.classList.add('active');
-                }
+                const isActive = btn.textContent === category;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', String(isActive));
             });
         }
 
