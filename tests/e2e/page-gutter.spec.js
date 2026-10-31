@@ -181,3 +181,18 @@ test('768px：放得下的表格兩側沒有陰影', async ({ page }) => {
     expect(Math.abs(e.left - e.middle), '左緣和表格中間一樣亮').toBeLessThan(2);
     expect(Math.abs(e.right - e.middle), '右緣和表格中間一樣亮').toBeLessThan(2);
 });
+
+// 網站地圖的卡片高度跟著自己的內容，不被同一列較高的卡片撐高，留下空白。
+for (const width of [390, 768, 1280]) {
+    test(`${width}px：網站地圖的卡片底下沒有多出的空白`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`${BASE}/sch001-108platform/sitemap.html`);
+        const cards = await page.$$eval('main section', (els) => els.map((card) => {
+            const box = card.getBoundingClientRect();
+            const last = Math.max(...[...card.querySelectorAll('li')].map((li) => li.getBoundingClientRect().bottom));
+            return { title: card.querySelector('h2').textContent, extra: box.bottom - parseFloat(getComputedStyle(card).paddingBottom) - last };
+        }));
+        expect(cards.length).toBe(5);
+        for (const c of cards) expect(c.extra, c.title).toBeLessThanOrEqual(1);
+    });
+}
