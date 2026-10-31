@@ -24,11 +24,12 @@ export class UpstreamError extends Error {
      *                           retryAfter：上游 Retry-After 秒數；detail：遮罩過的上游原文；
      *                           upstreamId、upstreamType、upstreamCode、upstreamParam：上游的 request id
      *                           與錯誤的 type、code、param；mediaType、bodyLength、bodyStart：不是正常串流的
-     *                           回應的形狀。這些只收固定形狀的值，可以進 log
+     *                           回應的形狀。這些只收固定形狀的值，可以進 log。generated：上游沒有串流、
+     *                           直接回了寫完的回答（GPU 已經用了）
      */
     constructor(code, message, {
         status, retryable = false, retryAfter, detail, cause,
-        upstreamId, upstreamType, upstreamCode, upstreamParam, mediaType, bodyLength, bodyStart,
+        upstreamId, upstreamType, upstreamCode, upstreamParam, mediaType, bodyLength, bodyStart, generated = false,
     } = {}) {
         super(message, cause !== undefined ? { cause } : undefined);
         this.name = 'UpstreamError';
@@ -39,7 +40,7 @@ export class UpstreamError extends Error {
         this.upstreamId = upstreamId;
         this.upstreamType = upstreamType;
         this.upstreamCode = upstreamCode;
-        Object.assign(this, { upstreamParam, mediaType, bodyLength, bodyStart });
+        Object.assign(this, { upstreamParam, mediaType, bodyLength, bodyStart, generated });
         Object.defineProperty(this, 'detail', { value: detail, enumerable: false, writable: true, configurable: true });
     }
 }
@@ -439,6 +440,9 @@ function shapeFields(text) {
 }
 
 const MEDIA_TYPE = /^[a-z0-9.+-]{1,64}\/[a-z0-9.+-]{1,64}$/;
+// 不是串流的 200 回應裡，寫完的回答與 context 長度錯誤的樣子
+const COMPLETION_START = /"object"\s*:\s*"chat\.completion"|"choices"\s*:\s*\[/;
+const CONTEXT_ERROR = /context_length_exceeded|ContextWindowExceeded|maximum context length/i;
 
 // 回傳 { text, truncated }：truncated 表示後面還有沒讀的，交給 redact 丟掉尾端
 async function readLimited(res, limit) {
@@ -647,13 +651,40 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         const rawType = res.headers.get('content-type') || '';
         if (!rawType.toLowerCase().includes('text/event-stream') || !res.body) {
             armIdle(closingMs);
-            const { text } = await readLimited(res, MAX_ERROR_BODY_BYTES).catch(() => ({ text: '' }));
+            const { text, truncated } = await readLimited(res, MAX_ERROR_BODY_BYTES).catch(() => ({ text: '', truncated: false }));
             throwIfAborted();
             const mediaType = rawType.split(';')[0].trim().toLowerCase();
-            throw new UpstreamError('protocol', 'LLM 服務沒有回串流', {
-                detail: `content-type: ${redact(rawType, { secrets, limit: 100 }) || '（無）'}；${shapeOf(text)}`,
+            const shape = {
                 mediaType: MEDIA_TYPE.test(mediaType) && redact(mediaType, { secrets }) === mediaType ? mediaType : undefined,
                 ...shapeFields(text),
+            };
+            // 狀態碼 200、內容卻是錯誤：帶著 HTTP 狀態的（LiteLLM 的 {"error": {"code": "429"}}）照那個狀態分類；
+            // code 是文字、說的是 context 長度的，當成 400，generate 才認得出來
+            const parsed = parseJsonOrNull(text);
+            const error = parsed?.error && typeof parsed.error === 'object' ? parsed.error : parsed;
+            const isError = Boolean(error && typeof error === 'object' && (error !== parsed || parsed.object === 'error'));
+            const words = isError ? [error.type, error.code, error.message].filter((v) => typeof v === 'string').join(' ') : '';
+            let status = error && typeof error === 'object' ? Number(error.code) : Number.NaN;
+            if (!(status >= 400 && status <= 599) && CONTEXT_ERROR.test(words)) status = 400;
+            if (Number.isInteger(status) && status >= 400 && status <= 599) {
+                const { code, retryable } = classifyStatus(status);
+                throw new UpstreamError(code, `LLM 服務回應 HTTP 200，內容是 ${status} 的錯誤`, {
+                    status,
+                    retryable,
+                    retryAfter: parseRetryAfter(res.headers.get('retry-after')),
+                    detail: redact(text, { secrets, truncated }),
+                    ...errorFields(parsed, secrets),
+                    ...shape,
+                });
+            }
+            // 寫完的回答（chat.completion）：GPU 已經用了，再送一次多半也一樣，不重試。內容超過 8 KiB 時
+            // 只讀到開頭、解析不了，所以看開頭的文字。維護頁面、代理的錯誤頁當成暫時的，可以重試
+            const generated = COMPLETION_START.test(text);
+            throw new UpstreamError('protocol', 'LLM 服務沒有回串流', {
+                retryable: !generated,
+                generated,
+                detail: `content-type: ${redact(rawType, { secrets, limit: 100 }) || '（無）'}；${shapeOf(text)}`,
+                ...shape,
             });
         }
 

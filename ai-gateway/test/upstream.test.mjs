@@ -11,6 +11,7 @@ import { createServer as createHttpServer } from 'node:http';
 import { spawnSync } from 'node:child_process';
 
 import { streamChat, sseData, redact, parseRetryAfter, classifyStatus, UpstreamError } from '../src/upstream.mjs';
+import { parseContextOverflow } from '../src/generate.mjs';
 import { startFakeUpstream, testConfig } from './fake-upstream.mjs';
 
 const basicPayload = (extra = {}) => ({
@@ -269,6 +270,93 @@ test('200 但不是 SSE：protocol；content-type 是上游的文字，遮罩並
             return true;
         });
     });
+});
+
+// 不是串流的內容只讀前 8 KiB，寫完的長回答解析不了，要看開頭
+test('200 但不是 SSE、內容是超過 8 KiB 的寫完的回答：照樣認得出是 generated、不重試', async () => {
+    const body = JSON.stringify({ id: 'chatcmpl-x', object: 'chat.completion', choices: [{ index: 0, message: { role: 'assistant', content: '答'.repeat(5000) }, finish_reason: 'stop' }] });
+    assert.ok(Buffer.byteLength(body) > 15_000);
+    await withUpstream([{ rawChunks: [body], contentType: 'application/json' }], async (up) => {
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+            assert.equal(err.code, 'protocol');
+            assert.equal(err.retryable, false);
+            assert.equal(err.generated, true);
+            return true;
+        });
+    });
+});
+
+test('200 但內容是 code 為文字的錯誤：說的是 context 長度就當成 400（generate 認得出來），其他的照舊是可以重試的 protocol', async () => {
+    const overflow = { error: { code: 'context_length_exceeded', type: 'invalid_request_error', message: "This model's maximum context length is 65536 tokens. However, you requested 8 output tokens and your prompt contains at least 65529 input tokens" } };
+    await withUpstream([{ rawChunks: [JSON.stringify(overflow)], contentType: 'application/json' }], async (up) => {
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+            assert.equal(err.code, 'misconfigured');
+            assert.equal(err.status, 400);
+            assert.equal(err.retryable, false);
+            assert.deepEqual(parseContextOverflow(err), { limit: 65536, atLeast: 65529 });
+            return true;
+        });
+    });
+    await withUpstream([{ rawChunks: ['{"error":{"code":"server_overloaded","message":"retry later"}}'], contentType: 'application/json' }], async (up) => {
+        await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), { code: 'protocol', retryable: true });
+    });
+});
+
+test('200 但不是 SSE、內容是寫完的回答（有 choices 或 object 是 chat.completion）：protocol、不重試，標明 generated', async () => {
+    for (const body of ['{"choices":[{"message":{"content":"答"}}]}', '{"object":"chat.completion","id":"x"}']) {
+        await withUpstream([{ rawChunks: [body], contentType: 'application/json' }], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.equal(err.code, 'protocol', body);
+                assert.equal(err.retryable, false, body);
+                assert.equal(err.generated, true, body);
+                return true;
+            });
+        });
+    }
+});
+
+// 維護頁面、代理的錯誤頁多半是暫時的：接續輪會退避重試，HTTP 服務也不計次
+test('200 但不是 SSE、也不是帶著 HTTP 狀態的錯誤（HTML、沒有 code 的 JSON、code 不是 4xx／5xx、204）：protocol、可以重試', async () => {
+    const steps = [
+        { contentType: 'text/html', rawChunks: ['<html>維護中</html>'] },
+        { contentType: 'application/json', rawChunks: ['{"error":{"message":"oops"}}'] },
+        { contentType: 'application/json', rawChunks: ['{"error":{"message":"oops","code":"200"}}'] },
+        { contentType: 'application/json', rawChunks: ['{"error":"429"}'] },
+        { status: 204, headers: { 'content-type': 'application/json' } },
+    ];
+    for (const step of steps) {
+        await withUpstream([step], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.equal(err.code, 'protocol', JSON.stringify(step));
+                assert.equal(err.retryable, true, JSON.stringify(step));
+                assert.equal(err.status, undefined, JSON.stringify(step));
+                return true;
+            });
+        });
+    }
+});
+
+test('200 但內容是帶著 HTTP 狀態的錯誤（LiteLLM 包在 error 裡的字串、vLLM 放在最外層的數字）：照那個狀態分類，原文遮罩後放 detail', async () => {
+    const cases = [
+        [{ error: { message: 'Rate limit for sk-abcdef123456', type: 'rate_limit', code: '429' } }, { 'retry-after': '7' }, 'busy', true, 429, 7],
+        [{ object: 'error', message: 'timed out', type: 'Timeout', code: 504 }, {}, 'timeout', true, 504, undefined],
+        [{ error: { message: 'bad key', type: 'auth_error', code: 401 } }, {}, 'auth', false, 401, undefined],
+    ];
+    for (const [body, headers, code, retryable, status, retryAfter] of cases) {
+        await withUpstream([{ contentType: 'application/json', rawChunks: [JSON.stringify(body)], headers }], async (up) => {
+            await assert.rejects(streamChat(testConfig(up.origin), basicPayload()), (err) => {
+                assert.equal(err.code, code, String(status));
+                assert.equal(err.retryable, retryable, String(status));
+                assert.equal(err.status, status);
+                assert.equal(err.retryAfter, retryAfter);
+                assert.equal(err.upstreamType, body.error?.type ?? body.type);
+                assert.equal(err.mediaType, 'application/json');
+                assert.doesNotMatch(err.detail, /abcdef123456/);
+                assert.doesNotMatch(err.message, /Rate limit|timed out|bad key/);
+                return true;
+            });
+        });
+    }
 });
 
 test('content-type 裡的 key 用原文比對（先轉小寫的話，大小寫有別的 key 就遮不到）', async () => {
