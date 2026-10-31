@@ -313,6 +313,15 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // platform-ai.js 沒載入成功時用這句，與 describeError 對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
         let chatBusy = false;
+        // 與 platform-ai.js 的 COOLDOWN_CODES 相同：帶著 retryAfter 時，等完才能再送出
+        const WAIT_CODES = ['busy', 'rate_limited', 'too_many_inflight', 'not_ready'];
+
+        function enableChat(label) {
+            chatBusy = false;
+            chatSubmit.removeAttribute('aria-disabled');
+            chatSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+            chatSubmitLabel.textContent = label;
+        }
 
         // 一則訊息的外框、頭像與泡泡；內容由呼叫的人填進 text。
         function createMessage(sender) {
@@ -374,6 +383,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             let progress = null;
             let draft = null;
             let drawDraft = null;
+            let waitMs = 0;
             // 拿掉草稿，把完成的訊息加進紀錄，螢幕閱讀器唸一次。學生往上捲去看舊訊息時不拉回底部。
             const settle = (message) => {
                 const follow = isScrolledToBottom();
@@ -428,12 +438,21 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 notice.text.classList.add(error && error.name === 'AbortError' ? 'text-gray-600' : 'text-red-700');
                 notice.text.textContent = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);
                 settle(notice);
+                // 閘道說要等時把問題放回輸入框，已經顯示沒寫完的答案、或已經打了下一題就不放。
+                // 其他失敗不放回：按鈕馬上能按，連按 Enter 會一直重送
+                if (error && WAIT_CODES.includes(error.code) && error.retryAfter > 0) {
+                    // 快取裡的舊版 platform-ai.js 不設上限，這裡照新版的：busy 10 分鐘，其他一小時
+                    waitMs = Math.min(error.retryAfter, error.code === 'busy' ? 600 : 3600) * 1000;
+                    if (!error.partial && !chatInput.value.trim()) chatInput.value = question;
+                }
             } finally {
                 if (drawDraft) drawDraft.cancel();
-                chatBusy = false;
-                chatSubmit.removeAttribute('aria-disabled');
-                chatSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
-                chatSubmitLabel.textContent = originalLabel;
+                if (waitMs) {
+                    chatSubmitLabel.textContent = '請稍候';
+                    setTimeout(() => enableChat(originalLabel), waitMs);
+                } else {
+                    enableChat(originalLabel);
+                }
                 // Safari 點按鈕不給焦點，滑鼠按了取消時焦點不在進度區塊裡，finish() 不會把它交給輸入框。
                 if (controller.signal.aborted) chatInput.focus();
             }
