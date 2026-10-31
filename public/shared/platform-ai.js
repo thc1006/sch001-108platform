@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 14;
+    var VERSION = 15;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1144,6 +1144,37 @@
             .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
     }
 
+    // 沒寫完的回答停在行內記號的中間時（「**A2 系統思考」），畫面上會留著字面的 **。
+    // dropUnclosedMarkers 拿掉最後一行落單的 `、**、*。* 和 ** 後面接著空白、又不在行尾的不算記號
+    // （例如「3 * 4」），留著。行首的清單記號與井號不看。
+    function dropUnclosedMarkers(text) {
+        var start = text.lastIndexOf('\n') + 1;
+        var lead = text.slice(start).match(/^\s*(?:#{1,6}|[-*]|\d{1,9}[.)])\s+/);
+        var head = text.slice(0, start + (lead ? lead[0].length : 0));
+        var body = text.slice(head.length);
+        function opener(i, len) {
+            var next = body.charAt(i + len);
+            return next === '' || !/\s/.test(next);
+        }
+        if ((body.match(/`/g) || []).length % 2) {
+            var tick = body.lastIndexOf('`');
+            body = body.slice(0, tick) + body.slice(tick + 1);
+        }
+        if ((body.match(/\*\*/g) || []).length % 2) {
+            var bold = body.lastIndexOf('**');
+            if (opener(bold, 2)) body = body.slice(0, bold) + body.slice(bold + 2);
+        }
+        if ((body.replace(/\*\*/g, '').match(/\*/g) || []).length % 2) {
+            for (var i = body.length - 1; i >= 0; i--) {
+                if (body.charAt(i) === '*' && body.charAt(i - 1) !== '*' && body.charAt(i + 1) !== '*') {
+                    if (opener(i, 1)) body = body.slice(0, i) + body.slice(i + 1);
+                    break;
+                }
+            }
+        }
+        return head + body;
+    }
+
     var HEADING_LINE = /^\s*(#{1,6})\s+(.*)$/;
     var BULLET_LINE = /^\s*[-*]\s+(.*)$/;
     var NUMBERED_LINE = /^\s*(\d{1,9})[.)]\s+(.*)$/;
@@ -1165,8 +1196,10 @@
      * options.inline 為 true 時不產生任何區塊元素，給 <h4>、<span>、<b>，或本身就是清單
      * 項目的欄位用：`#` 開頭的行輸出 <strong>，`- `、`* ` 換成「• 」，數字開頭的行照原樣，
      * headingLevel 不看。陣列裡的一項以「1. 」開頭時，不會變成只有一項的 <ol>。
+     * options.partial 為 true 表示文字沒寫完（邊收邊顯示的草稿、錯誤帶著的 partial），
+     * 最後一行落單的 `、**、* 拿掉，見 dropUnclosedMarkers。
      * @param {string} text
-     * @param {{headingLevel?: number, inline?: boolean}} [options]
+     * @param {{headingLevel?: number, inline?: boolean, partial?: boolean}} [options]
      * @returns {string}
      */
     function renderMarkdown(text, options) {
@@ -1174,6 +1207,7 @@
         var top = options && options.headingLevel;
         if (inline || !(top >= 1 && top <= 6 && Math.floor(top) === top)) top = 0;
 
+        if (options && options.partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
         // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號
         var lines = escapeHtml(text).split('\n');
         var minHashes = 6;

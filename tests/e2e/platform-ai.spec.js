@@ -318,6 +318,15 @@ test.describe('PlatformAI 共用 module', () => {
             await expect(page.locator('#box [role="status"]')).toHaveText('仍在處理，已等 1 分鐘…');
         });
 
+        // 頁面上已經有 v14 時，版號沒升的話這一份會提早返回，斷掉的回答留著字面的 **。
+        test('v14 已經在頁面上時，這一份照樣載入，沒寫完的回答不留落單的 **', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 14 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => PlatformAI.renderMarkdown('**A2', { partial: true }))).toBe('A2');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1925,6 +1934,21 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await render('# 重點\n- 一\n* **二**\n2) 三', { inline: true, headingLevel: 3 }))
                 .toBe('<strong>重點</strong><br>• 一<br>• <strong>二</strong><br>2) 三');
             expect(await render('<b>x</b>', { inline: true })).toBe('&lt;b&gt;x&lt;/b&gt;');
+        });
+
+        // 斷線時回答停在「**A2 系統思考」，畫面上不該留著字面的 **
+        test('partial: true 拿掉最後一行落單的 `、**、*；前面幾行、成對的記號、後面接空白的 * 不動', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            const ul = '<ul style="margin:0;padding-left:1.5em;list-style:disc">';
+            expect(await render('* **A2 系統思考與解決問題', { partial: true })).toBe(ul + '<li>A2 系統思考與解決問題</li></ul>');
+            expect(await render('**A2**：寫出 *重', { partial: true })).toBe('<strong>A2</strong>：寫出 重');
+            expect(await render('執行 `print', { partial: true })).toBe('執行 print');
+            expect(await render('好的 **', { partial: true })).toBe('好的 ');
+            expect(await render('**未完\n3 * 4', { partial: true })).toBe('**未完<br>3 * 4');
+            expect(await render('x ** y', { partial: true })).toBe('x ** y');
+            expect(await render('**粗**與*斜*', { partial: true })).toBe('<strong>粗</strong>與<em>斜</em>');
+            // 沒給 partial 時照原樣
+            expect(await render('**A2 系統思考')).toBe('**A2 系統思考');
         });
 
         test('換行：文字行之間是 <br>；空一行的地方留一行空白；行內語法不跨行', async ({ page }) => {

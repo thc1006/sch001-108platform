@@ -315,6 +315,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         let chatBusy = false;
         // 回答裡的標題接在 h2「AI 學涯導師」底下。
         const ANSWER_MARKDOWN = { headingLevel: 3 };
+        // 沒寫完的文字（草稿、斷掉的回答）：最後一行落單的 ** 等記號拿掉
+        const PARTIAL_MARKDOWN = { headingLevel: 3, partial: true };
         // 與 platform-ai.js 的 COOLDOWN_CODES 相同：帶著 retryAfter 時，等完才能再送出
         const WAIT_CODES = ['busy', 'rate_limited', 'too_many_inflight', 'not_ready'];
 
@@ -411,7 +413,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         chatWindow.appendChild(draft.row);
                     }
                     // renderMarkdown 先 HTML escape 再套 markdown，AI 的輸出塞不進可執行的 HTML。
-                    draft.text.innerHTML = PlatformAI.renderMarkdown(text, ANSWER_MARKDOWN);
+                    draft.text.innerHTML = PlatformAI.renderMarkdown(text, PARTIAL_MARKDOWN);
                     if (follow) scrollToBottom();
                 };
                 // 部署後十分鐘內，瀏覽器快取裡的 platform-ai.js 可能還是沒有 perFrame 的舊版，那時每段都畫。
@@ -435,7 +437,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                     label.className = 'block text-xs font-semibold text-gray-600 mb-1';
                     label.textContent = 'AI 的回答（沒有寫完）';
                     partial.text.before(label);
-                    partial.text.innerHTML = PlatformAI.renderMarkdown(error.partial, ANSWER_MARKDOWN);
+                    partial.text.innerHTML = PlatformAI.renderMarkdown(error.partial, PARTIAL_MARKDOWN);
                     settle(partial);
                 }
                 const notice = createMessage('ai');

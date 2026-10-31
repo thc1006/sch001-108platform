@@ -33,6 +33,15 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await stubBuiltInGateway(page);
     });
 
+    test('回答停在「**Cofacts」就斷了 → 草稿與沒寫完的回答都不留字面的 **', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦 **Cofacts 真的假的')], hang: true });
+        await page.fill('#ai-interest-input', '假訊息');
+        await page.click('#ai-submit-btn');
+        await expect(page.locator('#ai-workspace .ai-result-text')).toHaveText('推薦 Cofacts 真的假的');
+        await push(page, sse('error', { code: 'incomplete', message: '沒寫完' }));
+        await expect(page.locator('#ai-results .ai-result-text')).toHaveText('推薦 Cofacts 真的假的');
+    });
+
     test('答案裡的 # 標題是框裡 h3「AI 推薦結果」底下的 h4，清單項目在 <ul> 裡，不多出空行', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done('## 推薦專案\n- Cofacts 真的假的\n- 零時政府\n\n## 下一步\n到專案的頁面看看。')] });
         await page.fill('#ai-interest-input', '假訊息');
@@ -266,7 +275,8 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
     // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
     const ENDS = [
         ['done', done('**最後的答案**'), ['AI 推薦結果', '最後的答案']],
-        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), ['AI 推薦結果（沒有寫完）', '**最後']],
+        // 沒寫完的答案停在 ** 的中間：落單的 ** 拿掉
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), ['AI 推薦結果（沒有寫完）', '最後']],
     ];
     for (const [code, end, [heading, expected]] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → 結果區是最後的答案，之後的畫面不再畫出草稿`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });

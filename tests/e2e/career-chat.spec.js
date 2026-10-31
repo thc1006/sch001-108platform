@@ -156,6 +156,14 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(1);
     });
 
+    test('回答停在「**資訊學群」就斷了 → 草稿與紀錄裡沒寫完的回答都不留字面的 **', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群')], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).locator('.chat-bubble-ai p')).toHaveText('推薦你 資訊學群');
+        await push(page, sse('error', { code: 'incomplete', message: '沒寫完' }));
+        await expect(aiText(page, 2)).toHaveText('推薦你 資訊學群');
+    });
+
     test('連續問兩題：各送一個請求，body 只有這一題；每一題的草稿都接在紀錄後面，收到 done 就移除', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你')], hang: true });
         for (const [i, question] of ['我喜歡畫畫', '那如果我也喜歡數學呢？'].entries()) {
@@ -454,7 +462,8 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
     // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
     const ENDS = [
         ['done', done('推薦你 **資訊學群**。'), '推薦你 資訊學群。'],
-        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), '推薦你 **資訊'],
+        // 沒寫完的回答停在 ** 的中間：落單的 ** 拿掉
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), '推薦你 資訊'],
     ];
     for (const [code, end, expected] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → 紀錄裡是最後的回答，之後的畫面不再畫出草稿`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
