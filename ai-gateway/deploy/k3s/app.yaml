@@ -111,7 +111,7 @@ spec:
             capabilities:
               drop: ["ALL"]
           # 節點記憶體吃緊時，用量超過 request 的 pod 先被驅逐，進行中的任務全部白做。
-          # request 取 server.mjs 在 MAX_BODY_READS 旁記的實測 RSS 高點 162 MiB，再留一點。
+          # request 取 server.mjs 在 MAX_BODY_READS、MAX_BODY_BYTES 旁記的實測 RSS 高點，再留一點。
           # 磁碟只用到 kubelet 輪替的 log：預設每個容器最多 5 個 10Mi 的檔。超過 limit 會立即驅逐，不走 920 秒的收尾
           resources:
             requests:
