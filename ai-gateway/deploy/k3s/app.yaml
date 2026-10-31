@@ -29,6 +29,8 @@ spec:
         app: ai-gateway
     spec:
       automountServiceAccountToken: false
+      # 閘道不讀命名空間裡各 Service 的環境變數（AI_GATEWAY_SERVICE_HOST 之類），不用注入
+      enableServiceLinks: false
       # preStop 5 秒 + 進行中的任務最多 900 秒（SHUTDOWN_GRACE_MS，不小於任務時限
       # LLM_TASK_TIMEOUT_MS）+ 餘裕
       terminationGracePeriodSeconds: 920
