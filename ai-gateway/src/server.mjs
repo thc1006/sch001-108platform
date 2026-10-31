@@ -197,6 +197,37 @@ function hasUnreadBody(req) {
     return req.headers['transfer-encoding'] !== undefined || (length !== undefined && length !== '0');
 }
 
+// 收 body 時一開始配置的大小（宣告的 Content-Length 比較小時用它）。學生的 body 多半只有幾 KB，
+// 停住的請求也只佔這麼多
+const BODY_BUFFER_START = 1024;
+
+/**
+ * createBodyBuffer 回傳收 body 用的緩衝：每一塊都複製進同一個 Buffer，不夠大時加倍，最多到 limit。
+ * 每一塊各自留著的話，chunked 編碼一次只送 1 byte 時，每 1 byte 都是一個物件，要佔幾百 bytes。
+ * 呼叫端要先確定加上這一塊不超過 limit。allocations 是配置過幾次（測試用）
+ * @param {number} limit @param {number} declared @returns {{append: (chunk: Buffer) => void, toString: () => string, allocations: number}}
+ */
+export function createBodyBuffer(limit, declared) {
+    const start = Math.min(BODY_BUFFER_START, limit, Number.isFinite(declared) ? declared : Infinity);
+    let buf = Buffer.allocUnsafe(Math.max(1, start));
+    let size = 0;
+    const body = {
+        allocations: 1,
+        append(chunk) {
+            if (size + chunk.length > buf.length) {
+                const next = Buffer.allocUnsafe(Math.min(limit, Math.max(size + chunk.length, buf.length * 2)));
+                buf.copy(next, 0, 0, size);
+                buf = next;
+                body.allocations++;
+            }
+            chunk.copy(buf, size);
+            size += chunk.length;
+        },
+        toString: () => buf.toString('utf8', 0, size),
+    };
+    return body;
+}
+
 // timeoutMs：收完 body 的期限，自己計時。Node 的 requestTimeout 在 server.close() 之後就不再
 // 檢查，而關機的寬限期（SHUTDOWN_GRACE_MS）預設長達 15 分鐘
 function readBody(req, limit, timeoutMs) {
@@ -207,14 +238,14 @@ function readBody(req, limit, timeoutMs) {
             return;
         }
         let size = 0;
-        const chunks = [];
+        let body = createBodyBuffer(limit, declared);
         let settled = false;
         let timer;
         const fail = (err) => {
             if (settled) return;
             settled = true;
             clearTimeout(timer);
-            chunks.length = 0;
+            body = null;
             reject(err);
         };
         timer = setTimeout(() => fail(new HttpError(408, 'request_timeout', MESSAGES.request_timeout)), timeoutMs);
@@ -225,13 +256,13 @@ function readBody(req, limit, timeoutMs) {
                 fail(new HttpError(413, 'payload_too_large', '請求內容太大'));
                 return;
             }
-            chunks.push(chunk);
+            body.append(chunk);
         });
         req.on('end', () => {
             if (settled) return;
             settled = true;
             clearTimeout(timer);
-            resolve(Buffer.concat(chunks).toString('utf8'));
+            resolve(body.toString());
         });
         req.on('error', () => fail(new ClientGone(req.socket?.errored?.code === 'ERR_HTTP_REQUEST_TIMEOUT')));
     });
