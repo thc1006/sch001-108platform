@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 12;
+    var VERSION = 13;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -840,7 +840,8 @@
     //   var ctrl = new AbortController();
     //   var progress = PlatformAI.mountProgress(progressEl, {
     //       onCancel: function () { ctrl.abort(); },
-    //       focusTarget: submitBtn
+    //       focusTarget: submitBtn,
+    //       escapeScope: featureSection
     //   });
     //   try {
     //       var r = await PlatformAI.runTask(id, input, { signal: ctrl.signal, onProgress: progress.update });
@@ -848,6 +849,8 @@
     //       progress.finish();
     //   }
     //
+    // 有 onCancel 才有取消按鈕。焦點在 escapeScope（功能的輸入框、按鈕與結果所在的區塊）或進度
+    // 區塊裡時，按 Esc 也會取消；沒給 escapeScope 時只看進度區塊。
     // 會先清空 container。container 和它的上層都不能是 live region，否則取消按鈕與每秒更新的
     // 秒數都可能被唸出來：Safari 用的 WebKit 會把計時器 aria-live="off" 裡的變化照樣算給外層
     // （見 WebKit 的 AXObjectCache::handleTextChanged）。結果另外放進 live region。
@@ -931,13 +934,16 @@
         root.appendChild(status);
         root.appendChild(elapsed);
 
+        var onKeydown = null;
         if (typeof options.onCancel === 'function') {
             var cancelBtn = document.createElement('button');
             cancelBtn.type = 'button';
             cancelBtn.textContent = '取消';
+            // 焦點在進度區塊或 escapeScope 裡時按 Esc 也會取消，見下方的 onKeydown
+            cancelBtn.setAttribute('aria-keyshortcuts', 'Escape');
             // 邊框要和白底有 3:1 的對比，才看得出這裡有個按鈕（WCAG 1.4.11）
             cancelBtn.style.cssText = 'padding:2px 12px;border:1px solid #6b7280;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:0.875em';
-            cancelBtn.addEventListener('click', function () {
+            var cancel = function () {
                 if (cancelBtn.getAttribute('aria-disabled') === 'true') return;
                 // 用 aria-disabled 而不是 disabled：disabled 的按鈕會失去焦點，鍵盤使用者的
                 // 焦點就掉回 <body>，得從頁首重新找起
@@ -945,8 +951,24 @@
                 cancelBtn.style.opacity = '0.6';
                 cancelBtn.style.cursor = 'default';
                 notify(options.onCancel);
-            });
+            };
+            cancelBtn.addEventListener('click', cancel);
             root.appendChild(cancelBtn);
+            // 焦點在 escapeScope 或進度區塊裡時按 Esc 等於按取消，焦點不動。輸入法選字時的 Esc 是
+            // 取消選字，不算。結束選字的那個 keydown 在 Safari 的 isComposing 是 false，所以照 MDN
+            // keydown 頁的寫法，keyCode 229 也一起擋。
+            onKeydown = function (e) {
+                if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
+                if (!root.isConnected) {
+                    document.removeEventListener('keydown', onKeydown);
+                    return;
+                }
+                var scope = options.escapeScope;
+                if (!root.contains(e.target) && !(scope && scope.contains(e.target))) return;
+                e.preventDefault();
+                cancel();
+            };
+            document.addEventListener('keydown', onKeydown);
         }
 
         container.textContent = '';
@@ -1020,6 +1042,7 @@
                 }
             },
             finish: function () {
+                if (onKeydown) document.removeEventListener('keydown', onKeydown);
                 clearTimeout(fillTimer);
                 clearTimeout(announceTimer);
                 clearTimeout(retryTimer);
