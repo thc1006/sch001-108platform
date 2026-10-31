@@ -31,7 +31,7 @@ import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { loadLlmConfig, loadServerConfig, configProblems } from './config.mjs';
+import { loadLlmConfig, loadServerConfig, configProblems, FRONTEND_TASK_TIMEOUT_MS } from './config.mjs';
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
 import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
@@ -1074,6 +1074,11 @@ async function main() {
     // 寬限期比任務時限短的話，換版時最長的那種任務會做到一半被中止（GPU 白做、學生要重來）
     if (serverConfig.shutdownGraceMs < llm.taskTimeoutMs) {
         log('warn', 'CONFIG', { problem: 'shutdown-grace-below-task-timeout', grace: serverConfig.shutdownGraceMs, taskTimeout: llm.taskTimeoutMs });
+    }
+    // 收 body、排隊與生成的時限加起來不比前端短的話，學生的畫面顯示逾時時，閘道可能還在做
+    const gatewayMs = serverConfig.bodyTimeoutMs + serverConfig.queueTimeoutMs + llm.taskTimeoutMs;
+    if (gatewayMs >= FRONTEND_TASK_TIMEOUT_MS) {
+        log('warn', 'CONFIG', { problem: 'gateway-timeout-not-below-frontend', gateway: gatewayMs, frontend: FRONTEND_TASK_TIMEOUT_MS });
     }
     const { TASK_DEFINITIONS } = await import('./task-catalog.mjs');
     const tasks = createCatalog(TASK_DEFINITIONS);

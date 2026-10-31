@@ -43,6 +43,10 @@ export const WINLAB_MAX_TOKENS = 8192;
 // （閘道沒有相依套件、不自建 Agent）。閒置逾時設得比它長也沒有意義，只會被它先截斷。
 export const MAX_IDLE_TIMEOUT_MS = 300_000;
 
+// 前端（public/shared/platform-ai.js 的 DEFAULT_TASK_TIMEOUT_MS）等一個任務最多這麼久。閘道的映像檔裡
+// 沒有那個檔案，這裡抄一份，兩邊是否相同由 test/source-hygiene.test.mjs 檢查
+export const FRONTEND_TASK_TIMEOUT_MS = 20 * 60 * 1000;
+
 // 貼上 key 時常夾帶的零寬字元（ZWSP、ZWNJ、ZWJ、WORD JOINER、BOM）：key 本身不會有這些字，
 // 在哪裡都清掉。一律寫成跳脫序列：直接寫字元本體的話畫面上看不見，被編輯器正規化掉也沒人發現
 const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
