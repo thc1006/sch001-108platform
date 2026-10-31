@@ -254,6 +254,25 @@ test.describe('PlatformAI 共用 module', () => {
             expect(calls).toBe(1);
         });
 
+        // 頁面上已經有 v10 時，版號沒升的話這一份會提早返回，排隊名次每變一次螢幕閱讀器就唸一次。
+        test('v10 已經在頁面上時，這一份照樣載入，排隊名次不會每變一次就寫進 status', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 10 };
+            });
+            await gotoFixture(page);
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                window.__progress = PlatformAI.mountProgress(box);
+                window.__progress.update({ phase: 'queued', position: 4 });
+            });
+            await page.clock.runFor(100);
+            await page.evaluate(() => window.__progress.update({ phase: 'queued', position: 3 }));
+            await expect(page.locator('#box [role="status"]')).toHaveText('排隊中，前面還有 3 位…');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1899,6 +1918,86 @@ test.describe('PlatformAI 共用 module', () => {
                 return { writes: records.length, text: status.textContent };
             });
             expect(r).toEqual({ writes: 1, text: 'AI 正在思考…' });
+        });
+
+        // 閘道每次有人離開佇列就送一次名次。每一次都寫進 status 的話，螢幕閱讀器幾秒內要唸好幾句
+        test('排隊名次在排隊階段裡變化時畫面照常更新，status 最多每 15 秒寫一次；輪到下一個或換階段就立刻寫', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                window.__progress = PlatformAI.mountProgress(box);
+                window.__writes = [];
+                const status = box.querySelector('[role="status"]');
+                new MutationObserver(() => window.__writes.push(status.textContent))
+                    .observe(status, { childList: true, characterData: true, subtree: true });
+            });
+            await page.clock.runFor(100);
+            const status = page.locator('#box [role="status"]');
+            const shown = page.locator('#box .platform-ai-progress > span[aria-hidden="true"]');
+            const update = (p) => page.evaluate((p) => window.__progress.update(p), p);
+
+            await update({ phase: 'accepted' });
+            await update({ phase: 'queued', position: 6 });
+            await expect(status).toHaveText('排隊中，前面還有 5 位…');
+            for (const position of [5, 4]) {
+                await page.clock.runFor(500);
+                await update({ phase: 'queued', position });
+                await expect(shown).toHaveText(`排隊中，前面還有 ${position - 1} 位…`);
+                await expect(status).toHaveText('排隊中，前面還有 5 位…');
+            }
+            // 距離上一次寫入滿 15 秒時，補寫期間最新的名次
+            await page.clock.runFor(13_999);
+            await expect(status).toHaveText('排隊中，前面還有 5 位…');
+            await page.clock.runFor(1);
+            await expect(status).toHaveText('排隊中，前面還有 3 位…');
+            await update({ phase: 'queued', position: 3 });
+            await expect(shown).toHaveText('排隊中，前面還有 2 位…');
+            await expect(status).toHaveText('排隊中，前面還有 3 位…');
+            await update({ phase: 'queued', position: 1 });
+            await expect(status).toHaveText('排隊中，下一個就輪到你…');
+            await update({ phase: 'started' });
+            await expect(status).toHaveText('輪到你了，等待 AI 開始回應…');
+            await expect(shown).toHaveText('輪到你了，等待 AI 開始回應…');
+            // 換了階段之後，排著的補寫不能再蓋掉新的一句
+            await page.clock.runFor(30_000);
+            expect(await page.evaluate(() => window.__writes)).toEqual([
+                '正在連線 AI 服務…',
+                '已送出，等待 AI 開始…',
+                '排隊中，前面還有 5 位…',
+                '排隊中，前面還有 3 位…',
+                '排隊中，下一個就輪到你…',
+                '輪到你了，等待 AI 開始回應…',
+            ]);
+        });
+
+        test('名次每半秒變一次、三秒內輪到：status 只寫兩次排隊名次，畫面每一次都更新', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                window.__progress = PlatformAI.mountProgress(box);
+                window.__progress.update({ phase: 'accepted' });
+            });
+            await page.clock.runFor(100);
+            await page.evaluate(() => {
+                const box = document.getElementById('box');
+                const status = box.querySelector('[role="status"]');
+                const shown = box.querySelector('.platform-ai-progress > span[aria-hidden="true"]');
+                const r = window.__r = { writes: [], seen: 0 };
+                new MutationObserver(() => r.writes.push(status.textContent))
+                    .observe(status, { childList: true, characterData: true, subtree: true });
+                new MutationObserver(() => { r.seen++; })
+                    .observe(shown, { childList: true, characterData: true, subtree: true });
+            });
+            for (const position of [6, 5, 4, 3, 2, 1]) {
+                await page.evaluate((position) => window.__progress.update({ phase: 'queued', position }), position);
+                await page.clock.runFor(500);
+            }
+            const r = await page.evaluate(() => window.__r);
+            expect(r).toEqual({ writes: ['排隊中，前面還有 5 位…', '排隊中，下一個就輪到你…'], seen: 6 });
         });
 
         // 排隊的名次一變，status 就重唸一次；提醒放在裡面的話每次都會跟著唸

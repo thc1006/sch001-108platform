@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 10;
+    var VERSION = 11;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -855,9 +855,12 @@
     // container。focusTarget 給發起任務的控制項。空的 container 通常高度是 0，看不到焦點框，WebKit
     // 也不把它放進無障礙樹（見 AccessibilityRenderObject::computeIsIgnored）。放結果的 live region
     // 也不適合，螢幕閱讀器會在焦點移入時唸一次內容，live region 又唸一次。
-    // 階段文字放在 role="status" 裡，螢幕閱讀器在階段改變時會唸出來。
-    // 這個 status 插入時是空的，約 100 毫秒後才填入第一句：多數螢幕閱讀器不唸插入當下就
-    // 已經在裡面的內容，只唸之後的變化。
+    // 階段文字畫面上顯示一份（aria-hidden），另外寫進視覺上隱藏的 role="status"，螢幕閱讀器在
+    // 階段改變時會唸出來。這個 status 插入時是空的，約 100 毫秒後才填入第一句：多數螢幕閱讀器
+    // 不唸插入當下就已經在裡面的內容，只唸之後的變化。
+    // 排隊名次在同一個排隊階段裡變化時，畫面照常更新，status 最多每 15 秒寫一次，期間只留最新
+    // 的名次；輪到下一個（position <= 1）或換了階段就立刻寫。閘道在名次每次變動時都送一次，
+    // status 每寫一次，螢幕閱讀器就唸一次。所以 status 裡的名次可能比畫面上的慢最多 15 秒，這是刻意的。
     // 每秒跳動的「已等待幾秒」用 role="timer" 加 aria-live="off"，看得到也讀得到，但不會每秒插話。
     // 第一次排隊時在 status 外加一行分批送出的提醒，名次變動時 status 重唸也不會唸到它。
     // 用到的樣式自己注入，不依賴頁面的 CSS（Tailwind 不會掃描 public/ 底下的 JS）。
@@ -866,6 +869,7 @@
     var RETRYING_NOW_TEXT = 'AI 服務有點忙，正在重新嘗試…';
     var QUEUED_HINT_TEXT = '同一個網路同時使用的人多時，請分批送出。';
     var STATUS_FILL_DELAY_MS = 100;
+    var QUEUE_ANNOUNCE_INTERVAL_MS = 15 * 1000;
 
     function retrySeconds(p) {
         return Math.max(1, Math.ceil((Number(p.delayMs) || 0) / 1000));
@@ -907,17 +911,23 @@
 
         var root = document.createElement('div');
         root.className = 'platform-ai-progress';
-        root.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;padding:16px 0;color:#374151';
+        root.style.cssText = 'position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;padding:16px 0;color:#374151';
         var spinner = document.createElement('div');
         spinner.className = 'platform-ai-spinner';
         spinner.setAttribute('aria-hidden', 'true');
+        var shown = document.createElement('span');
+        shown.setAttribute('aria-hidden', 'true');
         var status = document.createElement('span');
         status.setAttribute('role', 'status');
+        // 樣式寫在元素上，不放進注入的 <style>：同一頁先跑過舊版時，那份 <style> 已經在了，
+        // injectProgressStyle 不會再補新的規則
+        status.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
         var elapsed = document.createElement('span');
         elapsed.setAttribute('role', 'timer');
         elapsed.setAttribute('aria-live', 'off');
         elapsed.style.cssText = 'font-size:0.875em;color:#4b5563;font-variant-numeric:tabular-nums';
         root.appendChild(spinner);
+        root.appendChild(shown);
         root.appendChild(status);
         root.appendChild(elapsed);
 
@@ -942,23 +952,44 @@
         container.textContent = '';
         container.appendChild(root);
 
+        // queue 表示這一句是排隊名次（還沒輪到下一個），寫進 status 的間隔受 QUEUE_ANNOUNCE_INTERVAL_MS 限制
+        var announcedAt = 0;
+        var announcedQueue = false;
+        function announce(text, queue) {
+            status.textContent = text;
+            announcedAt = performance.now();
+            announcedQueue = queue;
+        }
+
         // 填入之前收到的進度只記下最新的一句，時間到再一次填進去
         var filled = false;
         var pendingText = INITIAL_PROGRESS_TEXT;
+        var pendingQueue = false;
         var fillTimer = setTimeout(function () {
             filled = true;
-            status.textContent = pendingText;
+            announce(pendingText, pendingQueue);
         }, STATUS_FILL_DELAY_MS);
+        var announceTimer = null;
         var retryTimer = null;
         var hint = null;
-        function show(text) {
+        function show(text, queue) {
+            if (shown.textContent !== text) shown.textContent = text;
+            clearTimeout(announceTimer);
             if (!filled) {
                 pendingText = text;
-            } else if (status.textContent !== text) {
-                // 文字沒變就不要重寫，否則螢幕閱讀器會把同一句再唸一次
-                status.textContent = text;
+                pendingQueue = queue;
+                return;
+            }
+            // 文字沒變就不要重寫，否則螢幕閱讀器會把同一句再唸一次
+            if (status.textContent === text) return;
+            var wait = queue && announcedQueue ? announcedAt + QUEUE_ANNOUNCE_INTERVAL_MS - performance.now() : 0;
+            if (wait > 0) {
+                announceTimer = setTimeout(function () { announce(text, queue); }, wait);
+            } else {
+                announce(text, queue);
             }
         }
+        shown.textContent = INITIAL_PROGRESS_TEXT;
 
         var startedAt = Date.now();
         var ticker = setInterval(function () {
@@ -976,7 +1007,7 @@
                 var text = phaseText(progress);
                 if (text === null) return;
                 clearTimeout(retryTimer);
-                show(text);
+                show(text, progress.phase === 'queued' && progress.position > 1);
                 if (progress.phase === 'queued' && !hint) {
                     hint = document.createElement('p');
                     hint.textContent = QUEUED_HINT_TEXT;
@@ -985,11 +1016,12 @@
                 }
                 // 倒數到了就改口：重試送出之後，要等上游的第一個 token 才有下一個進度
                 if (progress.phase === 'retrying') {
-                    retryTimer = setTimeout(function () { show(RETRYING_NOW_TEXT); }, retrySeconds(progress) * 1000);
+                    retryTimer = setTimeout(function () { show(RETRYING_NOW_TEXT, false); }, retrySeconds(progress) * 1000);
                 }
             },
             finish: function () {
                 clearTimeout(fillTimer);
+                clearTimeout(announceTimer);
                 clearTimeout(retryTimer);
                 clearInterval(ticker);
                 // 焦點在進度區塊裡就先移走：區塊一移除，焦點會掉回 <body>。目標取不到焦點才補上
