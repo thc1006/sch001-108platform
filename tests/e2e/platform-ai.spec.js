@@ -233,6 +233,27 @@ test.describe('PlatformAI 共用 module', () => {
             expect(r).toMatchObject({ code: 'disconnected', partial: '寫到一半' });
         });
 
+        // 頁面上已經有 v9 時，版號沒升的話這一份會提早返回，忙線之後每按一次都會送出。
+        test('v9 已經在頁面上時，這一份照樣載入，忙線之後的等待期間不送出', async ({ page }) => {
+            await page.addInitScript(fakeGatewayScript);
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 9 };
+            });
+            await gotoFixture(page);
+            const calls = await page.evaluate(async () => {
+                window.__setGatewayMeta('http://localhost:8787');
+                window.__installFakeGateway({
+                    status: 503,
+                    headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '30' },
+                    textBody: JSON.stringify({ error: { code: 'busy', message: '目前使用的人比較多，請稍後再試。' } }),
+                });
+                await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                return window.__gateway.calls.length;
+            });
+            expect(calls).toBe(1);
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -754,6 +775,8 @@ test.describe('PlatformAI 共用 module', () => {
 
         test('串流中的 error 事件 → AIError，保留代號、可否重試與建議等待時間', async ({ page }) => {
             const r = await page.evaluate(() => {
+                // 不多等隨機的秒數，等待時間就是閘道給的
+                Math.random = () => 0;
                 window.__installFakeGateway({
                     chunks: [
                         __sse('accepted', { requestId: 'req-4', task: 't' }),
@@ -819,6 +842,7 @@ test.describe('PlatformAI 共用 module', () => {
 
         test('開始串流之前就被拒絕（429）→ 採用閘道的訊息與 Retry-After', async ({ page }) => {
             const r = await page.evaluate(() => {
+                Math.random = () => 0;
                 // body 刻意不帶 retryAfter：要確定標頭真的有被讀
                 window.__installFakeGateway({
                     status: 429,
@@ -853,6 +877,143 @@ test.describe('PlatformAI 共用 module', () => {
                 describe: '你的請求有點頻繁，請稍後再試（大約 60 分鐘後可以再試）。',
             });
         });
+
+        test('閘道回 busy 與 retryAfter → 等待期間再呼叫任何任務都直接丟出 busy，不送出請求；時間到了才再送出', async ({ page }) => {
+            await pauseClock(page);
+            const first = await page.evaluate(() => {
+                // 隨機值固定為 0.9：等待時間是 30 + 30 × 0.3 × 0.9 = 38.1 秒
+                Math.random = () => 0.9;
+                window.__installFakeGateway({
+                    status: 503,
+                    headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '30' },
+                    textBody: JSON.stringify({ error: { code: 'busy', message: '目前使用的人比較多，請稍後再試。', retryable: true, retryAfter: 30 } }),
+                });
+                return __settle(PlatformAI.runTask('t', { a: 'b' }));
+            });
+            // 顯示的是實際要等的時間，不是閘道給的 30 秒
+            expect(first).toMatchObject({ code: 'busy', retryAfter: 39, describe: '目前使用的人比較多，請稍後再試（大約 39 秒後可以再試）。' });
+            const again = () => page.evaluate(async () => ({
+                settled: await __settle(PlatformAI.runTask('u', { a: 'b' })),
+                calls: window.__gateway.calls.length,
+            }));
+            expect(await again()).toMatchObject({
+                calls: 1,
+                settled: {
+                    ok: false,
+                    name: 'AIError',
+                    code: 'busy',
+                    retryable: true,
+                    retryAfter: 39,
+                    describe: '目前使用的人比較多，請稍後再試（大約 39 秒後可以再試）。',
+                },
+            });
+            await page.clock.fastForward(38_000);
+            expect(await again()).toMatchObject({ calls: 1, settled: { code: 'busy', retryAfter: 1 } });
+            await page.clock.fastForward(1_000);
+            expect((await again()).calls).toBe(2);
+        });
+
+        test('等待期間系統時間往後跳一小時 → 照樣擋著，不送出請求', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                Math.random = () => 0;
+                window.__installFakeGateway({
+                    status: 503,
+                    headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '30' },
+                    textBody: JSON.stringify({ error: { code: 'busy', message: '目前使用的人比較多，請稍後再試。' } }),
+                });
+                return __settle(PlatformAI.runTask('t', { a: 'b' }));
+            });
+            await page.clock.setSystemTime(10_000 + 3_600_000);
+            const r = await page.evaluate(async () => ({
+                settled: await __settle(PlatformAI.runTask('t', { a: 'b' })),
+                calls: window.__gateway.calls.length,
+            }));
+            expect(r).toMatchObject({ calls: 1, settled: { code: 'busy', retryAfter: 30 } });
+        });
+
+        test('rate_limited、too_many_inflight、not_ready 也要等；其他代號、或沒有 retryAfter 的不用等', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => { Math.random = () => 0.999; });
+            const r = {};
+            for (const code of ['rate_limited', 'too_many_inflight', 'not_ready', 'timeout', 'busy']) {
+                r[code] = await page.evaluate(async (code) => {
+                    // busy 這次沒有 retryAfter
+                    window.__installFakeGateway({
+                        status: code === 'timeout' ? 504 : 503,
+                        headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': code === 'busy' ? null : '5' },
+                        textBody: JSON.stringify({ error: { code, message: '請稍後再試。' } }),
+                    });
+                    await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                    const second = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                    return { calls: window.__gateway.calls.length, code: second.code };
+                }, code);
+                // 最長的等待是 5 + 5 × 0.3 × 0.999 秒，下一個代號之前先讓它過去
+                await page.clock.fastForward(7_000);
+            }
+            expect(r).toEqual({
+                rate_limited: { calls: 1, code: 'rate_limited' },
+                too_many_inflight: { calls: 1, code: 'too_many_inflight' },
+                not_ready: { calls: 1, code: 'not_ready' },
+                timeout: { calls: 2, code: 'timeout' },
+                busy: { calls: 2, code: 'busy' },
+            });
+        });
+
+        test('隨機多等的時間最多 30 秒；總共最多等一小時，busy 最多等 10 分鐘', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => { Math.random = () => 0.999; });
+            const wait = (code, retryAfter) => page.evaluate(async ([code, retryAfter]) => {
+                window.__installFakeGateway({
+                    status: 503,
+                    headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': String(retryAfter) },
+                    textBody: JSON.stringify({ error: { code, message: '請稍後再試。' } }),
+                });
+                const settled = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                return { code: settled.code, retryAfter: settled.retryAfter, sent: window.__gateway.calls.length };
+            }, [code, retryAfter]);
+            // 每段等待一過就要送得出去：上限沒有生效的話，下一次呼叫還在等待期間內
+            expect(await wait('busy', 3600)).toEqual({ code: 'busy', retryAfter: 600, sent: 1 });
+            await page.clock.fastForward(600_001);
+            expect(await wait('rate_limited', 300)).toEqual({ code: 'rate_limited', retryAfter: 330, sent: 1 });
+            await page.clock.fastForward(330_001);
+            expect(await wait('rate_limited', 3600)).toEqual({ code: 'rate_limited', retryAfter: 3600, sent: 1 });
+            await page.clock.fastForward(3_600_001);
+            expect(await wait('rate_limited', 5)).toEqual({ code: 'rate_limited', retryAfter: 7, sent: 1 });
+        });
+
+        // 兩個請求同時在進行，一個要等 120 秒、一個要等 10 秒，不論誰先被拒都以 120 秒為準
+        for (const [order, first, second] of [['長的先、短的後', 'long', 'short'], ['短的先、長的後', 'short', 'long']]) {
+            test(`同時進行的兩個任務先後被拒（${order}）：留下比較晚結束的等待時間，兩個錯誤都顯示它`, async ({ page }) => {
+                await pauseClock(page);
+                await page.evaluate(({ first, second }) => {
+                    Math.random = () => 0;
+                    const specs = { long: ['rate_limited', 120], short: ['busy', 10] };
+                    const reject = (name, headersDelayMs) => {
+                        const [code, retryAfter] = specs[name];
+                        window.__installFakeGateway({
+                            status: 429,
+                            headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': String(retryAfter) },
+                            textBody: JSON.stringify({ error: { code, message: '請稍後再試。' } }),
+                            headersDelayMs,
+                        });
+                        window['__' + name] = __settle(PlatformAI.runTask('t', { a: 'b' }));
+                    };
+                    reject(first, 500);
+                    reject(second, 1_000);
+                }, { first, second });
+                await page.clock.fastForward(1_000);
+                const r = await page.evaluate(async () => ({
+                    long: await window.__long,
+                    short: await window.__short,
+                    after: await __settle(PlatformAI.runTask('t', { a: 'b' })),
+                }));
+                expect(r.long).toMatchObject({ code: 'rate_limited', retryAfter: 120 });
+                // 短的先被拒時，當下要等的就是它自己的 10 秒
+                expect(r.short).toMatchObject({ code: 'busy', retryAfter: first === 'short' ? 10 : 120 });
+                expect(r.after).toMatchObject({ code: 'rate_limited', retryAfter: 120 });
+            });
+        }
 
         test('開始串流之前的錯誤：閘道明說的 retryable 優先，沒說才依狀態碼判斷（408、429、5xx 可以重試）', async ({ page }) => {
             const r = await page.evaluate(async () => {

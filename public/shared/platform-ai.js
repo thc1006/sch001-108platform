@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 9;
+    var VERSION = 10;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -377,6 +377,15 @@
     // 看得懂的事件。其他型別（包括沒有 event 欄位的 message）是閘道日後可能新增的，
     // 直接略過：不能因為舊的頁面看不懂新事件，就讓整個任務失敗
     var KNOWN_EVENTS = ['accepted', 'progress', 'delta', 'done', 'error'];
+    // 閘道回這些代號並給了 retryAfter 時，等待期間不送出。整間學校常共用一個對外 IP，多按的每一次
+    // 仍會送到閘道、計入這個 IP 每分鐘的請求數；等待時間多加隨機的幾秒，同時被拒的人才不會同時回來
+    var COOLDOWN_CODES = ['busy', 'rate_limited', 'too_many_inflight', 'not_ready'];
+    var COOLDOWN_JITTER_MAX_MS = 30 * 1000;
+    var COOLDOWN_MAX_MS = 3600 * 1000;
+    // busy 的 Retry-After 可能是上游給的，最長一天；閘道修好之後不該還擋著學生
+    var BUSY_COOLDOWN_MAX_MS = 600 * 1000;
+    // { until, code, message }，until 是 performance.now() 的時間：系統時間往回調不會拉長等待
+    var cooldown = null;
 
     // network 不能只怪學生的網路：跨網域時，閘道停擺（通道回 502）、網站不在允許名單、網址路徑
     // 錯了，瀏覽器給的都是同一個 TypeError，分不出來
@@ -603,6 +612,7 @@
      *   超過時限 → TimeoutError
      *   其餘一律是 AIError（見 makeAIError）
      * 除了使用者取消，出錯之前已經收到看得見的字時，錯誤帶著 partial。
+     * 閘道回 COOLDOWN_CODES 的錯誤並給了 retryAfter 時，等待期間再呼叫會直接丟出同一個代號的 AIError，不送出請求。
      * 要顯示的文字交給 describeError()。
      *
      * signal 不要拿來設時限，例如 signal: AbortSignal.timeout(30000)：閘道排隊和生成都可能
@@ -623,6 +633,11 @@
         if (!base) {
             log('error', 'AI 閘道網址沒有設定（<meta name="ai-gateway-url">）');
             throw makeAIError('not_configured', CLIENT_MESSAGES.not_configured);
+        }
+        var waitMs = cooldown ? cooldown.until - performance.now() : 0;
+        if (waitMs > 0) {
+            log('info', 'AI 任務沒有送出：還在閘道建議的等待時間內', { task: taskId, code: cooldown.code });
+            throw makeAIError(cooldown.code, cooldown.message, { retryable: true, retryAfter: toRetryAfter(waitMs / 1000) });
         }
 
         var controller = new AbortController();
@@ -766,6 +781,17 @@
             if (failure.name === 'AIError' && !failure.requestId) failure.requestId = requestId;
             // error 事件以外的失敗（斷線、逾時、回應格式錯誤）也帶著收到的字；使用者取消的不帶
             if (stopReason !== 'cancel' && failure.partial === undefined && VISIBLE_TEXT.test(text)) failure.partial = text;
+            if (failure.name === 'AIError' && failure.retryAfter && COOLDOWN_CODES.indexOf(failure.code) !== -1) {
+                var nowMs = performance.now();
+                var blockMs = failure.retryAfter * 1000;
+                blockMs += Math.min(blockMs * 0.3 * Math.random(), COOLDOWN_JITTER_MAX_MS);
+                blockMs = Math.min(blockMs, failure.code === 'busy' ? BUSY_COOLDOWN_MAX_MS : COOLDOWN_MAX_MS);
+                if (!cooldown || nowMs + blockMs > cooldown.until) {
+                    cooldown = { until: nowMs + blockMs, code: failure.code, message: failure.message };
+                }
+                // 顯示的秒數照實際要等的時間
+                failure.retryAfter = toRetryAfter((cooldown.until - nowMs) / 1000);
+            }
             log(failure.name === 'AbortError' ? 'info' : 'warn', 'AI 任務失敗', {
                 task: taskId,
                 requestId: requestId,
