@@ -136,6 +136,23 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
+    test('進行中焦點在輸入框上按 Esc → 和按「取消」一樣顯示「已取消。」，焦點留在輸入框；輸入法選字中的 Esc 不取消', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-input', '測試');
+        await page.click('#ai-generate-btn');
+        const progress = page.locator('#ai-work .platform-ai-progress');
+        await expect(progress).toHaveCount(1);
+        const target = page.locator('#ai-input');
+        await target.focus();
+        await target.dispatchEvent('keydown', { key: 'Escape', isComposing: true });
+        await expect(progress).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#ai-result')).toHaveText('已取消。');
+        await expect(progress).toHaveCount(0);
+        await expect(target).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點回到「開始分析」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**')], hang: true });
         await page.fill('#ai-input', '科展');

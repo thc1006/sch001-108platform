@@ -191,6 +191,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 progress = PlatformAI.mountProgress(aiWorkContainer, {
                     onCancel: () => controller.abort(),
                     focusTarget: aiGenerateBtn,
+                    // 焦點在這一區（輸入框、按鈕、結果）時按 Esc 等於按取消
+                    escapeScope: document.getElementById('ai-analyst'),
                 });
                 let draft = null;
                 const draw = (_, text) => {

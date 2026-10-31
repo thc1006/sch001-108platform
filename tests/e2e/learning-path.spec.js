@@ -142,6 +142,23 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
+    test('進行中焦點在按鈕上按 Esc → 和按「取消」一樣顯示「已取消。」，焦點留在按鈕；輸入法選字中的 Esc 不取消', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#pathInput', '測試');
+        await page.click('#generatePathBtn');
+        const progress = page.locator('#pathWork .platform-ai-progress');
+        await expect(progress).toHaveCount(1);
+        const target = page.locator('#generatePathBtn');
+        await target.focus();
+        await target.dispatchEvent('keydown', { key: 'Escape', isComposing: true });
+        await expect(progress).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#pathResult')).toHaveText('已取消。');
+        await expect(progress).toHaveCount(0);
+        await expect(target).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     test('進行中用鍵盤按「取消」→ 進度區塊移除，以一般的語氣顯示「已取消。」，焦點回到「規劃路徑」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#pathInput', 'Python');
