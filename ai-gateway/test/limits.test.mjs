@@ -474,6 +474,9 @@ test('clientKey：帶埠、方括號、zone id 的寫法先剝掉；不是 IP �
     assert.equal(clientKey('fe80::1%eth0'), 'fe80:0:0:0::/64');
     // zone id 不剝掉的話，結尾的 IPv4 認不出來，IPv4 對應位址就還原不了
     assert.equal(clientKey('::ffff:203.0.113.5%eth0'), '203.0.113.5');
+    // isIP 收含冒號的 zone id；沒剝掉的話 ::ffff 後面的 :cb00:7105 會被當成位址，變成 203.0.113.5
+    assert.equal(clientKey('::ffff%x:cb00:7105'), '0:0:0:0::/64');
+    assert.equal(createSourceMatcher(['203.0.113.0/24'])('::ffff%x:cb00:7105'), false);
     for (const junk of ['', undefined, 'unknown', 'not-an-ip', '1.2.3.256', 'x'.repeat(10_000), '203.0.113.5, 198.51.100.1']) {
         assert.equal(clientKey(junk), 'invalid', String(junk).slice(0, 30));
     }
