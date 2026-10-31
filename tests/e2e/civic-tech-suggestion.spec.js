@@ -167,6 +167,23 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
+    test('進行中焦點在按鈕上按 Esc → 和按「取消」一樣顯示「已取消。」，焦點留在按鈕；輸入法選字中的 Esc 不取消', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-interest-input', '測試');
+        await page.click('#ai-submit-btn');
+        const progress = page.locator('#ai-workspace .platform-ai-progress');
+        await expect(progress).toHaveCount(1);
+        const target = page.locator('#ai-submit-btn');
+        await target.focus();
+        await target.dispatchEvent('keydown', { key: 'Escape', isComposing: true });
+        await expect(progress).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#ai-results')).toHaveText('已取消。');
+        await expect(progress).toHaveCount(0);
+        await expect(target).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     test('草稿出現後用鍵盤按「取消」→ 草稿移除，結果區顯示「已取消。」（不是紅字），焦點回到「推薦專案」按鈕，按鈕恢復可按', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**')], hang: true });
         await page.fill('#ai-interest-input', '假訊息');

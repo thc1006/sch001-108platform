@@ -188,6 +188,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 progress = PlatformAI.mountProgress(analysisWork, {
                     onCancel: () => controller.abort(),
                     focusTarget: analyzeBtn,
+                    // 焦點在右欄（輸入框、按鈕、結果）時按 Esc 等於按取消；左欄的情境式提問不算
+                    escapeScope: analyzeBtn.parentElement,
                 });
                 const { result } = await PlatformAI.runTask('star-analysis', { reflection }, {
                     signal: controller.signal,

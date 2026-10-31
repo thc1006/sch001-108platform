@@ -215,7 +215,9 @@ const formatDate = (iso: string) => {
         try {
           progress = PlatformAI.mountProgress(workspace, {
             onCancel: function() { controller.abort(); },
-            focusTarget: submitBtn
+            focusTarget: submitBtn,
+            // 焦點在這一區（輸入框、按鈕、結果）時按 Esc 等於按取消
+            escapeScope: submitBtn.closest('section')
           });
           var draft = null;
           var draw = function(_, text) {

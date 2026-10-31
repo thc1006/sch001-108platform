@@ -225,6 +225,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 progress = PlatformAI.mountProgress(pathWork, {
                     onCancel: () => controller.abort(),
                     focusTarget: generatePathBtn,
+                    // 焦點在這一區（輸入框、按鈕、結果）時按 Esc 等於按取消
+                    escapeScope: generatePathBtn.closest('section'),
                 });
                 const { result } = await PlatformAI.runTask('learning-path', { topic }, {
                     signal: controller.signal,

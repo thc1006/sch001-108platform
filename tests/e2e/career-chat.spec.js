@@ -236,6 +236,21 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
+    test('進行中焦點在輸入框上按 Esc → 和按「取消」一樣，紀錄裡出現「已取消。」，焦點留在輸入框；輸入法選字中的 Esc 不取消', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await ask(page, '我喜歡畫畫');
+        await expect(progress(page)).toHaveCount(1);
+        const input = page.locator('#chat-input');
+        await input.focus();
+        await input.dispatchEvent('keydown', { key: 'Escape', isComposing: true });
+        await expect(progress(page)).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(aiText(page, 2)).toHaveText('已取消。');
+        await expect(progress(page)).toHaveCount(0);
+        await expect(input).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     test('串流在 done 之前就斷了 → 已收到的部分標明沒有寫完、進了紀錄，紀錄裡出現連線中斷的錯誤訊息；草稿移除，之後還能再問', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
         await ask(page, '我喜歡電腦');

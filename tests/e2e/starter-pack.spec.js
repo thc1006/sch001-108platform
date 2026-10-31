@@ -128,6 +128,23 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(page.locator('#coachResult')).not.toHaveAttribute('tabindex');
     });
 
+    test('進行中焦點在輸入框上按 Esc → 和按「取消」一樣顯示「已取消。」，焦點留在輸入框；輸入法選字中的 Esc 不取消', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' })], hang: true });
+        await page.fill('#coachInput', '測試');
+        await page.click('#generateCoachBtn');
+        const progress = page.locator('#coachProgress .platform-ai-progress');
+        await expect(progress).toHaveCount(1);
+        const target = page.locator('#coachInput');
+        await target.focus();
+        await target.dispatchEvent('keydown', { key: 'Escape', isComposing: true });
+        await expect(progress).toHaveCount(1);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#coachResult')).toHaveText('已取消。');
+        await expect(progress).toHaveCount(0);
+        await expect(target).toBeFocused();
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
     test('用鍵盤送出 → 進行中再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' })], hang: true });
