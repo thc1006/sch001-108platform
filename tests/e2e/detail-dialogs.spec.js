@@ -6,12 +6,13 @@ const { test, expect } = require('@playwright/test');
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const ROOT = `${BASE}/sch001-108platform`;
 
-// grid 是卡片的容器，button 是卡片上開啟對話框的按鈕。
+// grid 是卡片的容器，button 是卡片上開啟對話框的按鈕，tabs 表示對話框裡有分頁。
 const PAGES = [
     { name: '研究方法工具箱', path: '/autonomous-learning/methodology.html', grid: '#methodology-grid', button: 'h3 > button' },
+    { name: '計畫範本庫', path: '/autonomous-learning/plan-templates.html', grid: '#template-grid', button: 'h3 > button', tabs: true },
 ];
 
-for (const { name, path, grid, button } of PAGES) {
+for (const { name, path, grid, button, tabs } of PAGES) {
     test.describe(`${name}的卡片詳情`, () => {
         test.beforeEach(async ({ page }) => {
             await page.goto(ROOT + path);
@@ -117,6 +118,46 @@ for (const { name, path, grid, button } of PAGES) {
             expect(box.y).toBeGreaterThanOrEqual(0);
             expect(box.y + box.height).toBeLessThanOrEqual(256);
         });
+
+        if (tabs) {
+            test('對話框裡的分頁可以用方向鍵切換', async ({ page }) => {
+                await page.locator(`${grid} ${button}`).first().click();
+                const dialog = page.getByRole('dialog');
+                const tab = dialog.getByRole('tab');
+                await expect(tab).toHaveCount(2);
+                const [first, second] = [tab.nth(0), tab.nth(1)];
+                const panelOf = async (t) => dialog.getByRole('tabpanel', { name: await t.textContent(), exact: true });
+                await expect(first).toHaveAttribute('aria-selected', 'true');
+                await expect(await panelOf(first)).toBeVisible();
+                await expect(await panelOf(second)).toBeHidden();
+
+                // 只有選取的分頁在 Tab 順序裡，下一站是它的內容。
+                await first.focus();
+                await page.keyboard.press('Tab');
+                await expect(await panelOf(first)).toBeFocused();
+
+                await first.focus();
+                await page.keyboard.press('ArrowRight');
+                await expect(second).toBeFocused();
+                await expect(second).toHaveAttribute('aria-selected', 'true');
+                await expect(first).toHaveAttribute('aria-selected', 'false');
+                await expect(await panelOf(second)).toBeVisible();
+                await expect(await panelOf(first)).toBeHidden();
+                await page.keyboard.press('ArrowRight');
+                await expect(first).toBeFocused();
+                await page.keyboard.press('End');
+                await expect(second).toBeFocused();
+                await page.keyboard.press('Home');
+                await expect(first).toHaveAttribute('aria-selected', 'true');
+                // Alt+方向鍵是瀏覽器的上一頁、下一頁，不能拿來切分頁。
+                await page.keyboard.press('Alt+ArrowRight');
+                await expect(first).toHaveAttribute('aria-selected', 'true');
+
+                await second.click();
+                await expect(second).toHaveAttribute('aria-selected', 'true');
+                await expect(await panelOf(second)).toBeVisible();
+            });
+        }
     });
 }
 

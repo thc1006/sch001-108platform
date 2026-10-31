@@ -57,13 +57,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <!-- 範本詳情對話框 -->
-    <div id="templateModal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
-        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            <!-- 對話框內容由 showTemplateModal() 填入 -->
-        </div>
-    </div>
+    <dialog id="templateModal" aria-labelledby="modal-title" class="modal-content bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent open:flex flex-col">
+        <!-- 對話框內容由 showTemplateModal() 填入 -->
+    </dialog>
 
+    <script is:inline src="../shared/detail-dialog.js"></script>
     <script is:inline src="../shared/platform-ai.js"></script>
     <script is:inline>
         const staticTemplates = [
@@ -210,7 +208,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         const templateGrid = document.getElementById('template-grid');
         const modal = document.getElementById('templateModal');
-        const modalContent = document.getElementById('modal-content');
+        const detail = DetailDialog.setup(modal);
         const filters = document.querySelector('.flex.flex-wrap.justify-center');
 
         function renderTemplates(category = 'all') {
@@ -222,64 +220,68 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             filteredTemplates.forEach(template => {
                 const card = document.createElement('div');
                 card.className = 'bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col';
-                card.onclick = () => showTemplateModal(template.id);
-
                 card.innerHTML = `
                     <div class="flex-grow">
                         <div class="flex justify-between items-start">
                              <span class="text-sm font-bold text-teal-600">${escapeHtml(template.category)}</span>
                              <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHtml(template.type)}</span>
                         </div>
-                        <h3 class="text-xl font-bold mt-2 mb-3">${escapeHtml(template.title)}</h3>
+                        <h3 class="text-xl font-bold mt-2 mb-3"><button type="button" class="text-left cursor-pointer">${escapeHtml(template.title)}</button></h3>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <p class="text-sm text-gray-500">相關技能：${escapeHtml(template.tags.join('、'))}</p>
                     </div>
                 `;
+                // 整張卡片都可以點；鍵盤和螢幕閱讀器用標題的按鈕，按下時一樣冒泡到這裡。
+                const button = card.querySelector('h3 button');
+                card.onclick = () => showTemplateModal(template.id, button);
                 templateGrid.appendChild(card);
             });
         }
 
-        function showTemplateModal(id) {
+        function showTemplateModal(id, opener) {
             const template = staticTemplates.find(t => t.id === id);
             if (!template) return;
 
-            modalContent.innerHTML = `
+            modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
                         <p class="text-sm font-bold text-teal-600">${escapeHtml(template.category)} / ${escapeHtml(template.type)}</p>
-                        <h3 class="text-2xl font-bold">${escapeHtml(template.title)}</h3>
+                        <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(template.title)}</h3>
                     </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                    <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
                 <div class="border-b border-gray-200">
-                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
-                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTab(this, 'plan_html')">計畫內容</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTab(this, 'commentary_html')">專家點評</button>
+                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" role="tablist">
+                        <button type="button" role="tab" id="tab-plan_html" aria-controls="panel-plan_html" aria-selected="true" class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTab(this, 'plan_html')">計畫內容</button>
+                        <button type="button" role="tab" id="tab-commentary_html" aria-controls="panel-commentary_html" aria-selected="false" tabindex="-1" class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTab(this, 'commentary_html')">專家點評</button>
                     </nav>
                 </div>
                 <div class="p-6 overflow-y-auto flex-grow prose max-w-none">
-                    <div class="tab-content-plan_html">${template.plan_html}</div>
-                    <div class="tab-content-commentary_html hidden">${template.commentary_html}</div>
+                    <div id="panel-plan_html" role="tabpanel" aria-labelledby="tab-plan_html" tabindex="0" class="tab-content-plan_html">${template.plan_html}</div>
+                    <div id="panel-commentary_html" role="tabpanel" aria-labelledby="tab-commentary_html" tabindex="0" class="tab-content-commentary_html hidden">${template.commentary_html}</div>
                 </div>
             `;
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modalContent.scrollTop = 0;
+            detail.open(opener);
         }
 
         window.showTab = (btn, tabName) => {
-            modalContent.querySelectorAll('.modal-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            modal.querySelectorAll('.modal-tabs .tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+                b.tabIndex = -1;
+            });
             btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            btn.tabIndex = 0;
 
-            modalContent.querySelectorAll('.prose > div').forEach(div => div.classList.add('hidden'));
-            modalContent.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
+            modal.querySelectorAll('.prose > div').forEach(div => div.classList.add('hidden'));
+            modal.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
         }
 
         window.hideModal = () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            detail.close();
         }
 
         filters.addEventListener('click', (e) => {
@@ -385,7 +387,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .modal-backdrop {
+        .modal-content::backdrop {
             background-color: rgba(0, 0, 0, 0.6);
         }
         .modal-content {
