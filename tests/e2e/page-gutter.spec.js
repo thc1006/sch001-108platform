@@ -22,18 +22,18 @@ for (const width of [1024, 1280]) {
     });
 }
 
-// 學群主題頁的 Markdown 表格：比內文欄窄的置中，比內文欄寬的在表格內捲動。
+// 學群主題頁的 Markdown 表格：比內文欄窄的置中，比內文欄寬的在外框 .table-scroll 裡捲動。
 const tableLayout = (page, path) =>
     page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/${path}`).then(() =>
         page.evaluate(() => {
             const col = document.querySelector('.md-content').getBoundingClientRect();
-            return [...document.querySelectorAll('.md-content table')].map((table) => {
-                const rows = [...table.rows].map((row) => row.getBoundingClientRect());
+            return [...document.querySelectorAll('.md-content .table-scroll')].map((box) => {
+                const rows = [...box.querySelector('table').rows].map((row) => row.getBoundingClientRect());
                 return {
                     left: Math.min(...rows.map((r) => r.left)) - col.left,
                     right: col.right - Math.max(...rows.map((r) => r.right)),
-                    boxRight: table.getBoundingClientRect().right - col.right,
-                    scrolls: table.scrollWidth > table.clientWidth,
+                    boxRight: box.getBoundingClientRect().right - col.right,
+                    scrolls: box.scrollWidth > box.clientWidth,
                     pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
                 };
             });
@@ -135,7 +135,7 @@ const tableEdges = async (page, table) => {
 test('360px：可以橫滑的表格在還能捲的那一側有陰影', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
-    const table = page.locator('.md-content table').nth(1);
+    const table = page.locator('.md-content .table-scroll').nth(1);
     expect(await table.evaluate((t) => t.scrollWidth > t.clientWidth)).toBe(true);
     const start = await tableEdges(page, table);
     expect(start.left - start.right, '一開始右緣有陰影').toBeGreaterThan(3);
@@ -147,7 +147,7 @@ test('360px：可以橫滑的表格在還能捲的那一側有陰影', async ({ 
 test('768px：表格只超出 2px 也有陰影', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
-    const table = page.locator('.md-content table').first();
+    const table = page.locator('.md-content .table-scroll').first();
     expect(await table.evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
     expect(await table.evaluate((t) => t.hasAttribute('data-more-right'))).toBe(false);
     // 這張表在 768px 放得下。第一格放一段空白，先加寬到表格佔滿欄寬，再只讓內容超出 2px。
@@ -155,7 +155,7 @@ test('768px：表格只超出 2px 也有陰影', async ({ page }) => {
         const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         const pad = document.createElement('span');
         pad.style.display = 'inline-block';
-        t.rows[0].cells[0].append(pad);
+        t.querySelector('table').rows[0].cells[0].append(pad);
         let w = 0;
         const grow = (n) => { while (t.scrollWidth - t.clientWidth < n && w < 2000) pad.style.width = `${++w}px`; };
         grow(1);
@@ -167,7 +167,7 @@ test('768px：表格只超出 2px 也有陰影', async ({ page }) => {
         return { over: t.scrollWidth - t.clientWidth, full, width: t.getBoundingClientRect().width };
     });
     expect(over).toBe(2);
-    expect(width, '表格本身沒有變寬，只有內容變寬').toBe(full);
+    expect(width, '外框沒有變寬，只有表格變寬').toBe(full);
     const e = await tableEdges(page, table);
     expect(e.middle - e.right, `超出 ${over}px，右緣有陰影`).toBeGreaterThan(3);
 });
@@ -175,7 +175,7 @@ test('768px：表格只超出 2px 也有陰影', async ({ page }) => {
 test('768px：放得下的表格兩側沒有陰影', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto(`${BASE}/sch001-108platform/career-exploration/clusters/finance/traits.html`);
-    const table = page.locator('.md-content table').first();
+    const table = page.locator('.md-content .table-scroll').first();
     expect(await table.evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
     const e = await tableEdges(page, table);
     expect(Math.abs(e.left - e.middle), '左緣和表格中間一樣亮').toBeLessThan(2);

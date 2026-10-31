@@ -86,7 +86,7 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
               href={`${base}/career-exploration/clusters/${clusterSlug}/${prevTopic.slug}.html`}
               class="text-blue-600 font-semibold hover:underline"
             >
-              &larr; {prevTopic.name}
+              <span aria-hidden="true">&larr;</span> <span class="sr-only">上一篇：</span>{prevTopic.name}
             </a>
           ) : (
             <span />
@@ -98,7 +98,7 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
               href={`${base}/career-exploration/clusters/${clusterSlug}/${nextTopic.slug}.html`}
               class="text-blue-600 font-semibold hover:underline text-right"
             >
-              {nextTopic.name} &rarr;
+              <span class="sr-only">下一篇：</span>{nextTopic.name} <span aria-hidden="true">&rarr;</span>
             </a>
           ) : (
             <span />
@@ -116,25 +116,32 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
     /* Markdown 表格在窄視窗會把整頁撐寬（實測 360px 視窗下溢出 27px，手機上會
        左右晃）。內容來自 src/content/clusters 底下的 Markdown，作者無法逐一控制欄寬，
        所以在渲染層讓表格自己橫向捲動，而不是讓它撐破版面。
-       表格要設成 display: block 才有捲動軸，直接對 table 設 overflow 在多數瀏覽器無效。
-       寬度用 fit-content 加 margin auto，比內文欄窄的表格才會置中；寬的表格仍以 100% 為上限。 */
-    .md-content > table,
-    .md-content table {
-      display: block;
+       捲動的是 src/markdown/a11y-plugins.mjs 包在表格外面的 .table-scroll，表格維持 display: table。
+       寬度用 fit-content 加 margin auto，比內文欄窄的表格才會置中；寬的表格仍以 100% 為上限。
+       prose-lg 給表格的字級、行高和上下邊距搬到外框，表格內的字和間距才跟原本一樣。 */
+    .md-content .table-scroll {
       width: fit-content;
       max-width: 100%;
       margin-inline: auto;
+      margin-block: 2em;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      font-size: 0.8888889em;
+      line-height: 1.5;
+    }
+    .md-content .table-scroll > table {
+      margin-block: 0;
+      font-size: inherit;
+      line-height: inherit;
     }
     /* 還能捲的那一側顯示陰影，讀者才知道表格可以橫滑。data-more-left／right 由下方的 script 依捲動位置標上。 */
-    .md-content table[data-more-left] {
+    .md-content .table-scroll[data-more-left] {
       background: radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 0.75rem 100% no-repeat;
     }
-    .md-content table[data-more-right] {
+    .md-content .table-scroll[data-more-right] {
       background: radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 0.75rem 100% no-repeat;
     }
-    .md-content table[data-more-left][data-more-right] {
+    .md-content .table-scroll[data-more-left][data-more-right] {
       background:
         radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 0.75rem 100% no-repeat,
         radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 0.75rem 100% no-repeat;
@@ -150,19 +157,31 @@ const hubHref = `${base}/career-exploration/clusters/${clusterSlug}/index.html`;
     }
   </style>
   <script is:inline>
-    // 表格沒露出的那一側標上 data-more-left／right。載入、視窗改寬、字型變寬都由 ResizeObserver 觸發，
-    // 表格寬度被限制在 100% 時只有內容變寬，所以兩者都觀察。不支援的瀏覽器維持沒有陰影。
+    // 表格外框沒露出的那一側標上 data-more-left／right。載入、視窗改寬、字型變寬都由 ResizeObserver 觸發，
+    // 外框寬度被限制在 100% 時只有表格變寬，所以兩者都觀察。不支援的瀏覽器維持沒有陰影。
+    // 要捲的外框才是有名稱、可以用 Tab 移到的區塊，報讀器使用者靠它用方向鍵捲動。
     if (window.ResizeObserver) {
-      document.querySelectorAll('.md-content table').forEach(function (table) {
+      document.querySelectorAll('.md-content .table-scroll').forEach(function (box) {
         function update() {
-          var rest = table.scrollWidth - table.clientWidth - table.scrollLeft;
-          table.toggleAttribute('data-more-left', table.scrollLeft > 1);
-          table.toggleAttribute('data-more-right', rest > 1);
+          var rest = box.scrollWidth - box.clientWidth - box.scrollLeft;
+          box.toggleAttribute('data-more-left', box.scrollLeft > 1);
+          box.toggleAttribute('data-more-right', rest > 1);
+          var scrolls = box.scrollWidth - box.clientWidth > 1;
+          if (scrolls === box.hasAttribute('tabindex')) return;
+          if (scrolls) {
+            box.setAttribute('role', 'region');
+            box.setAttribute('aria-label', box.dataset.label);
+            box.tabIndex = 0;
+          } else {
+            box.removeAttribute('role');
+            box.removeAttribute('aria-label');
+            box.removeAttribute('tabindex');
+          }
         }
-        table.addEventListener('scroll', update, { passive: true });
+        box.addEventListener('scroll', update, { passive: true });
         var observer = new ResizeObserver(update);
-        observer.observe(table);
-        if (table.firstElementChild) observer.observe(table.firstElementChild);
+        observer.observe(box);
+        if (box.firstElementChild) observer.observe(box.firstElementChild);
       });
     }
   </script>
