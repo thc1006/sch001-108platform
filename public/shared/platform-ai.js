@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 11;
+    var VERSION = 12;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1079,7 +1079,8 @@
     //        此時任何 AI 想注入的 `<script>` 都已變成無害的字面文字
     //        `&lt;script&gt;`，瀏覽器不會把它當標籤執行。
     //     2. 之後才用「我們自己產生」的、白名單內的標籤
-    //        (<strong>/<em>/<code>/<br>/<li>...) 取代 markdown 標記。
+    //        (<strong>/<em>/<code>/<br>/<ul>/<ol>/<li>/<h1>～<h6>) 取代 markdown 標記。
+    //        屬性只有寫死的 style，和 <ol> 的 start；start 只取 1 到 9 位數字。
     //
     //   這個順序是關鍵：如果先渲染 markdown、後 escape，會把我們
     //   自己插入的 <strong> 也一起 escape 掉（功能壞掉）；如果只渲染
@@ -1100,57 +1101,115 @@
             .replace(/'/g, '&#39;');
     }
 
-    function renderMarkdown(text) {
-        // 步驟 1：在套用任何 markdown 之前先做 HTML escape。
-        // 經過這一步後，字串裡不可能再有可被瀏覽器解析的標籤 / 屬性。
-        var safe = escapeHtml(text);
+    // 行內語法：行內碼 `code`、粗體 **text**、斜體 *text*，都不跨行。
+    // 先處理 ** 再處理 *，否則 ** 會被 * 規則先吃掉。
+    function renderInline(line) {
+        return line
+            .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+            .replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+    }
 
-        // 步驟 2：在「已跳脫」的安全文字上套 markdown 子集。
-        // 以下所有 <...> 都是本函式自己寫死的白名單標籤，
-        // 內容部分早已 escape，故不會引入注入面。
+    var HEADING_LINE = /^\s*(#{1,6})\s+(.*)$/;
+    var BULLET_LINE = /^\s*[-*]\s+(.*)$/;
+    var NUMBERED_LINE = /^\s*(\d{1,9})[.)]\s+(.*)$/;
+    // Tailwind 的 preflight 把清單的項目符號、標題的字級與粗細都歸零了，頁面上的 CSS 不一定
+    // 補回來，所以寫在元素上。標題看起來和沒給 headingLevel 時的 <strong> 一樣，只是自成一行。
+    var LIST_STYLE = { ul: 'margin:0;padding-left:1.5em;list-style:disc', ol: 'margin:0;padding-left:1.5em;list-style:decimal' };
+    var HEADING_STYLE = 'margin:0;font-size:inherit;font-weight:700';
 
-        // 逐行處理：標題與清單是行層級語法
-        var lines = safe.split('\n');
-        var out = [];
+    /**
+     * renderMarkdown 把 AI 回應的 markdown 子集轉成 HTML，可以直接放進 innerHTML。
+     *
+     * 連續的 `- `、`* ` 行包進 <ul>，`1. `、`1) ` 行包進 <ol>，中間隔著空行的仍是同一個清單；
+     * 其他的換行轉成 <br>。輸出裡有區塊元素，要放進 <div>、<li> 這類放得下區塊的容器。
+     * options.headingLevel 決定標題的輸出：
+     *   給了 1 到 6 的整數：`#` 開頭的行輸出成真的標題。文字裡井號最少的標題用這一級，
+     *     每多一個井號往下一級，最多到 h6。螢幕閱讀器可以用標題跳著讀，層級要接在
+     *     頁面上一個標題底下，所以由呼叫的人決定。
+     *   沒給：`#` 開頭的行輸出 <strong>，清單照樣包進 <ul>、<ol>。
+     * options.inline 為 true 時不產生任何區塊元素，給 <h4>、<span>、<b>，或本身就是清單
+     * 項目的欄位用：`#` 開頭的行輸出 <strong>，`- `、`* ` 換成「• 」，數字開頭的行照原樣，
+     * headingLevel 不看。陣列裡的一項以「1. 」開頭時，不會變成只有一項的 <ol>。
+     * @param {string} text
+     * @param {{headingLevel?: number, inline?: boolean}} [options]
+     * @returns {string}
+     */
+    function renderMarkdown(text, options) {
+        var inline = Boolean(options && options.inline);
+        var top = options && options.headingLevel;
+        if (inline || !(top >= 1 && top <= 6 && Math.floor(top) === top)) top = 0;
+
+        // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號
+        var lines = escapeHtml(text).split('\n');
+        var minHashes = 6;
+        lines.forEach(function (line) {
+            var m = line.match(HEADING_LINE);
+            if (m && m[1].length < minHashes) minHashes = m[1].length;
+        });
+
+        var out = '';
+        var list = '';          // 目前開著的清單：'ul'、'ol' 或空字串
+        // 上一個輸出的是一行文字（空行也算）。下一行文字前要 <br>；接著是標題或清單時也補一個，
+        // 中間隔著空行的話，這兩個 <br> 留下一行空白，和文字之間空一行的效果一樣
+        var afterText = false;
+        function closeList() {
+            if (list) out += '</' + list + '>';
+            list = '';
+        }
+        function endText() {
+            if (afterText) out += '<br>';
+            afterText = false;
+        }
+        function listType(line) {
+            if (BULLET_LINE.test(line)) return 'ul';
+            if (NUMBERED_LINE.test(line)) return 'ol';
+            return '';
+        }
+
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
-
-            // 行首標題 `#`～`######`：去除井號，轉為 <strong>
-            // （escape 後 `#` 仍是 `#`，不受影響）
-            var heading = line.match(/^\s*(#{1,6})\s+(.*)$/);
-            if (heading) {
-                out.push('<strong>' + heading[2] + '</strong>');
+            var heading = line.match(HEADING_LINE);
+            if (heading && top) {
+                closeList();
+                endText();
+                var level = Math.min(6, top + heading[1].length - minHashes);
+                out += '<h' + level + ' style="' + HEADING_STYLE + '">' + renderInline(heading[2]) + '</h' + level + '>';
                 continue;
             }
 
-            // 行首清單 `- ` 或 `* `：轉為 • 項目
-            var listItem = line.match(/^\s*[-*]\s+(.*)$/);
-            if (listItem) {
-                out.push('<li style="list-style:none">• ' + listItem[1] + '</li>');
+            var type = listType(line);
+            if (type && !inline) {
+                var item = type === 'ul' ? line.match(BULLET_LINE)[1] : line.match(NUMBERED_LINE)[2];
+                if (list !== type) {
+                    closeList();
+                    endText();
+                    var start = type === 'ol' ? Number(line.match(NUMBERED_LINE)[1]) : 1;
+                    out += '<' + type + ' style="' + LIST_STYLE[type] + '"' + (start !== 1 ? ' start="' + start + '"' : '') + '>';
+                    list = type;
+                }
+                out += '<li>' + renderInline(item) + '</li>';
                 continue;
             }
 
-            out.push(line);
+            // 清單項目之間的空行不結束清單：下一個不是空行的行若是同一種清單，就跳過這些空行
+            if (list && !line.trim()) {
+                var next = i + 1;
+                while (next < lines.length && !lines[next].trim()) next++;
+                if (next < lines.length && listType(lines[next]) === list) {
+                    i = next - 1;
+                    continue;
+                }
+            }
+            closeList();
+            if (afterText) out += '<br>';
+            if (heading) out += '<strong>' + renderInline(heading[2]) + '</strong>';
+            else if (type === 'ul') out += '• ' + renderInline(line.match(BULLET_LINE)[1]);
+            else out += renderInline(line);
+            afterText = true;
         }
-        var result = out.join('\n');
-
-        // 行內語法（在整段文字上套用）：
-        // 粗體 **text** → <strong>，斜體 *text* → <em>，行內碼 `code` → <code>
-        // 先處理 ** 再處理 *，否則 ** 會被 * 規則先吃掉。
-
-        // 行內碼：`...`（escape 後反引號仍是反引號）
-        result = result.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
-        // 粗體：**...**（非貪婪，不跨行）
-        result = result.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-
-        // 斜體：*...*（非貪婪，不跨行；此時剩下的 * 都是單顆）
-        result = result.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-
-        // 換行：\n → <br>
-        result = result.replace(/\n/g, '<br>');
-
-        return result;
+        closeList();
+        return out;
     }
 
     global.PlatformAI = {
