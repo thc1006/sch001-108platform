@@ -105,7 +105,7 @@ function deferred() {
  * calls 記錄每次 generate 收到的設定、request 與 hooks。now 可以換成測試控制的時鐘。
  * random 預設固定回傳 0：忙線的等待秒數不加隨機時間，測試才寫得出確切的值
  */
-async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
+async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxBodyBytes, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
     const logs = [];
     const calls = [];
     const generateImpl = async (llmConfig, request, hooks) => {
@@ -122,6 +122,7 @@ async function startGateway({ server = {}, llm = {}, generate, now, random = () 
         random,
         ...(now ? { now } : {}),
         ...(maxBodyReads ? { maxBodyReads } : {}),
+        ...(maxBodyBytes ? { maxBodyBytes } : {}),
         ...(maxPendingBytes ? { maxPendingBytes } : {}),
         ...(stallTimeoutMs ? { stallTimeoutMs } : {}),
     });
@@ -2698,6 +2699,260 @@ test('body 用 chunked 編碼一次送 1 byte、中文字被切在兩塊之間�
         assert.match(socket.text, /^HTTP\/1\.1 200 /);
         assert.match(socket.text, /event: done/);
         assert.match(gw.calls[0].request.messages[1].content, /中文/);
+    } finally {
+        socket.destroy();
+        await gw.stop();
+    }
+});
+
+// demo-json 的 body 上限是 20 × 4 × 12 + 1024 = 1984 bytes。chunk() 是 chunked 編碼的一塊
+const chunk = (text) => `${Buffer.byteLength(text).toString(16)}\r\n${text}\r\n`;
+const chunkedHead = `POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n`;
+
+// 1899 bytes：開頭 19 bytes 加 1880 個空白
+const held = chunk(`{"input":{"topic":"${' '.repeat(1880)}`);
+
+test('同時在收的 body 以實際收到的位元組計上限：只連線不送資料的不佔；收到的超過就 503，宣告的 Content-Length 放不下也是', async () => {
+    // 時鐘不動：停住的請求都不滿 2 秒，不會被擋掉讓位
+    const gw = await startGateway({ maxBodyBytes: 2_000, now: () => 0, random: () => 0.999 });
+    const open = [];
+    const send = (port, ...pieces) => rawSocket(port).then((socket) => {
+        for (const piece of pieces) socket.write(piece);
+        open.push(socket);
+        return socket;
+    });
+    const small = () => rawRequest(gw.port, { headers: { ...jsonHeaders(), 'transfer-encoding': 'chunked' }, body: JSON.stringify({ input: { topic: 'x' } }) });
+    try {
+        // 只送標頭的連線不佔位元組
+        for (let i = 0; i < 3; i++) await send(gw.port, chunkedHead);
+        await sleep(50);
+        assert.equal((await small()).status, 200);
+        // 送了 1900 bytes 就停住：還放得下小的，宣告 200 bytes 的放不下
+        await send(gw.port, chunkedHead, held);
+        await sleep(50);
+        assert.equal((await small()).status, 200);
+        const declared = await rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x'.repeat(170) } }) });
+        assert.equal(declared.status, 503);
+        assert.equal(declared.headers['retry-after'], '7');
+        // 沒有宣告大小、送到一半超過預算：503
+        const midway = await rawRequest(gw.port, { headers: { ...jsonHeaders(), 'transfer-encoding': 'chunked' }, body: JSON.stringify({ input: { topic: ` ${' '.repeat(150)}x` } }) });
+        assert.equal(midway.status, 503);
+        assert.equal(JSON.parse(midway.body).error.code, 'busy');
+        assert.equal(midway.headers['retry-after'], '7');
+        assert.equal(JSON.parse(midway.body).error.retryAfter, 7);
+        assert.equal(midway.headers.connection, 'close');
+        // log 分得出是讀 body 之前就放不下，還是讀到一半才超過
+        const reasons = gw.logs.filter((l) => l.tag === 'REJECT' && l.fields.status === 503).map((l) => l.fields.reason);
+        assert.deepEqual(reasons, ['body_bytes', 'body_budget']);
+    } finally {
+        for (const socket of open) socket.destroy();
+        await gw.stop();
+    }
+});
+
+test('宣告的 Content-Length 在讀 body 之前檢查：放不下就 503、不回 100 Continue；剛好放得下的收；比任務上限大的是 413', async () => {
+    const gw = await startGateway({ maxBodyBytes: 2_000, now: () => 0 });
+    const holder = await rawSocket(gw.port);
+    const waiter = await rawSocket(gw.port);
+    try {
+        holder.write(chunkedHead + held);
+        await sleep(50);
+        // 1899 + 102 > 2000：只送標頭，回應在送 body 之前就到
+        waiter.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nContent-Length: 102\r\nExpect: 100-continue\r\n\r\n`);
+        await waiter.whenClosed;
+        assert.match(waiter.text, /^HTTP\/1\.1 503 /);
+        assert.doesNotMatch(waiter.text, /100 Continue/);
+        // 1899 + 101 = 2000：剛好放得下
+        const exact = JSON.stringify({ input: { topic: 'x' } }).padEnd(101, ' ');
+        assert.equal((await rawRequest(gw.port, { headers: jsonHeaders(), body: exact })).status, 200);
+        // 比任務的上限（1984）大：預算滿不滿都是 413
+        const tooLarge = await rawRequest(gw.port, { headers: jsonHeaders(), body: ' '.repeat(1985) });
+        assert.equal(tooLarge.status, 413);
+    } finally {
+        holder.destroy();
+        waiter.destroy();
+        await gw.stop();
+    }
+});
+
+test('放不下新請求時，收了 2 秒以上還沒收完的請求被擋掉讓位（503、關連線）；不滿 2 秒的不會', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({ maxBodyBytes: 2_000, now: () => clock.t, random: () => 0.999 });
+    const stalled = await rawSocket(gw.port);
+    const student = () => rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x'.repeat(10) } }).padEnd(200, ' ') });
+    try {
+        stalled.write(chunkedHead + held);
+        await sleep(50);
+        clock.t = 1_999;
+        assert.equal((await student()).status, 503);
+        assert.ok(!stalled.destroyed);
+        clock.t = 2_000;
+        assert.equal((await student()).status, 200);
+        await stalled.whenClosed;
+        assert.match(stalled.text, /^HTTP\/1\.1 503 /);
+        assert.match(stalled.text, /\r\nretry-after: 7\r\n/i);
+        assert.match(stalled.text, /\r\nconnection: close\r\n/i);
+    } finally {
+        stalled.destroy();
+        await gw.stop();
+    }
+});
+
+test('只有個數放不下時也擋掉收了 2 秒以上的請求；被擋的 REJECT 記 reason=evicted', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({ maxBodyReads: 1, now: () => clock.t });
+    const stalled = await rawSocket(gw.port);
+    try {
+        stalled.write(chunkedHead + chunk('{"input":'));
+        await sleep(50);
+        clock.t = 1_999;
+        assert.equal((await rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x' } }) })).status, 503);
+        assert.equal(gw.logs.find((l) => l.tag === 'REJECT').fields.reason, 'body_reads');
+        clock.t = 2_000;
+        assert.equal((await rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x' } }) })).status, 200);
+        await stalled.whenClosed;
+        assert.match(stalled.text, /^HTTP\/1\.1 503 /);
+        assert.ok(gw.logs.some((l) => l.tag === 'REJECT' && l.fields.status === 503 && l.fields.reason === 'evicted'));
+    } finally {
+        stalled.destroy();
+        await gw.stop();
+    }
+});
+
+test('宣告的 Content-Length 比任務上限大：直接 413，不擋掉別的請求', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({ maxBodyReads: 1, now: () => clock.t });
+    const stalled = await rawSocket(gw.port);
+    const big = await rawSocket(gw.port);
+    try {
+        stalled.write(chunkedHead + chunk('{"input":'));
+        await sleep(50);
+        clock.t = 5_000;
+        big.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nContent-Length: 99999\r\n\r\n`);
+        await big.whenClosed;
+        assert.match(big.text, /^HTTP\/1\.1 413 /);
+        await sleep(50);
+        assert.ok(!stalled.destroyed);
+        assert.equal(stalled.text, '');
+    } finally {
+        stalled.destroy();
+        big.destroy();
+        await gw.stop();
+    }
+});
+
+test('能擋的請求全部擋掉也放不下時，一個都不擋', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({ maxBodyBytes: 2_000, now: () => clock.t });
+    const old = await rawSocket(gw.port);
+    const fresh = await rawSocket(gw.port);
+    try {
+        // 收了 2 秒以上的只佔 100 bytes，不滿 2 秒的佔 1850 bytes；新請求宣告 200 bytes
+        old.write(chunkedHead + chunk(`{"input":{"topic":"${' '.repeat(81)}`));
+        await sleep(50);
+        clock.t = 3_000;
+        fresh.write(chunkedHead + chunk(`{"input":{"topic":"${' '.repeat(1831)}`));
+        await sleep(50);
+        const res = await rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x' } }).padEnd(200, ' ') });
+        assert.equal(res.status, 503);
+        await sleep(50);
+        assert.equal(old.text, '');
+        assert.ok(!old.destroyed);
+    } finally {
+        old.destroy();
+        fresh.destroy();
+        await gw.stop();
+    }
+});
+
+test('要擋的時候，同一個來源同時在收 5 個以上的先擋；沒有這種來源時先擋最早的，不看哪個來源比較多', async () => {
+    const clock = { t: 0 };
+    const start = (maxBodyReads) => startGateway({
+        maxBodyReads,
+        now: () => clock.t,
+        server: { clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'] },
+    });
+    const stall = async (gw, open, ip, at) => {
+        clock.t = at;
+        const socket = await rawSocket(gw.port);
+        socket.write(chunkedHead.replace('\r\n\r\n', `\r\nX-Forwarded-For: ${ip}\r\n\r\n`) + chunk('{"input":'));
+        open.push(socket);
+        await sleep(30);
+        return socket;
+    };
+    const newcomer = (gw) => rawRequest(gw.port, { headers: { ...jsonHeaders(), 'x-forwarded-for': '198.51.100.9' }, body: JSON.stringify({ input: { topic: 'x' } }) });
+    // 學生最早開始收（而且很慢），另一個來源同時有 5 個
+    let gw = await start(6);
+    let open = [];
+    try {
+        const student = await stall(gw, open, '198.51.100.1', 0);
+        const flood = [];
+        for (let i = 1; i <= 5; i++) flood.push(await stall(gw, open, '198.51.100.2', i * 100));
+        clock.t = 5_000;
+        assert.equal((await newcomer(gw)).status, 200);
+        await flood[0].whenClosed;
+        assert.match(flood[0].text, /^HTTP\/1\.1 503 /);
+        assert.equal(student.text, '');
+        assert.ok(!student.destroyed);
+    } finally {
+        for (const socket of open) socket.destroy();
+        await gw.stop();
+    }
+    // 攻擊者分散到多個來源、每個只停住一個；共用學校 IP 的兩個學生比較晚開始，不會因為同一個來源比較多就先被擋
+    clock.t = 0;
+    gw = await start(4);
+    open = [];
+    try {
+        const attackers = [await stall(gw, open, '198.51.100.3', 0), await stall(gw, open, '198.51.100.4', 50)];
+        const school = [await stall(gw, open, '198.51.100.5', 100), await stall(gw, open, '198.51.100.5', 200)];
+        clock.t = 5_000;
+        assert.equal((await newcomer(gw)).status, 200);
+        await attackers[0].whenClosed;
+        assert.match(attackers[0].text, /^HTTP\/1\.1 503 /);
+        assert.ok(school.every((socket) => socket.text === '' && !socket.destroyed));
+    } finally {
+        for (const socket of open) socket.destroy();
+        await gw.stop();
+    }
+});
+
+test('只差位元組時，沒收到東西的請求不擋', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({ maxBodyBytes: 2_000, now: () => clock.t });
+    const empty = await rawSocket(gw.port);
+    const full = await rawSocket(gw.port);
+    try {
+        // 一個只送了標頭（0 bytes），一個收了 1500 bytes；新請求宣告 600 bytes
+        empty.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nContent-Length: 100\r\n\r\n`);
+        await sleep(30);
+        clock.t = 100;
+        full.write(chunkedHead + chunk(`{"input":{"topic":"${' '.repeat(1481)}`));
+        await sleep(30);
+        clock.t = 5_000;
+        const res = await rawRequest(gw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x' } }).padEnd(600, ' ') });
+        assert.equal(res.status, 200);
+        await full.whenClosed;
+        assert.match(full.text, /^HTTP\/1\.1 503 /);
+        assert.equal(empty.text, '');
+        assert.ok(!empty.destroyed);
+    } finally {
+        empty.destroy();
+        full.destroy();
+        await gw.stop();
+    }
+});
+
+test('body 超過任務上限回 413 時，已經收到的位元組照樣還回去', async () => {
+    const gw = await startGateway({ maxBodyBytes: 2_000 });
+    const socket = await rawSocket(gw.port);
+    try {
+        socket.write(chunkedHead + held);
+        await sleep(50);
+        socket.write(chunk(' '.repeat(200)));
+        await socket.whenClosed;
+        assert.match(socket.text, /^HTTP\/1\.1 413 /);
+        const after = await rawRequest(gw.port, { headers: { ...jsonHeaders(), 'transfer-encoding': 'chunked' }, body: JSON.stringify({ input: { topic: ' '.repeat(150) + 'x' } }) });
+        assert.equal(after.status, 200);
     } finally {
         socket.destroy();
         await gw.stop();

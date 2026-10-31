@@ -285,7 +285,7 @@ function toCidrs(env, name, warn) {
  *                         之前就檢查：驗證失敗的請求不計入上面的次數，沒有這一道的話，連續送
  *                         超大的錯誤請求就能把 CPU 吃滿
  *   CLIENT_MAX_INFLIGHT   名額已滿時，每個來源最多佔用幾個（含排隊；預設 6）
- *   BODY_TIMEOUT_MS       收完請求 body 的期限（預設 10000）。body 最多十幾 KB，慢慢上傳的連線
+ *   BODY_TIMEOUT_MS       收完請求 body 的期限（預設 10000）。body 最多約 95 KiB（star-analysis），慢慢上傳的連線
  *                         佔著記憶體，不必等太久。Node 自己的 requestTimeout 在開始關機之後就
  *                         不再檢查，這個期限由閘道自己計時
  *   HEARTBEAT_MS          SSE 心跳間隔（預設 15000，上限 30000）。前端（public/shared/platform-ai.js
