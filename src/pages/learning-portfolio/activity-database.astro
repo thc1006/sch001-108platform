@@ -157,7 +157,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             featuredCard.innerHTML = `
                 <div class="p-8 md:w-full flex flex-col justify-center">
                     <div class="flex justify-between items-center mb-2">
-                        <p class="text-sm font-bold text-sky-600">${escapeHtml(featured.category)}</p>
+                        <p class="text-sm font-bold text-sky-700">${escapeHtml(featured.category)}</p>
                         <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
                     </div>
                     <h3 class="text-2xl font-bold mb-3">${escapeHtml(featured.title)}</h3>
@@ -168,7 +168,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.form)}</span>
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${escapeHtml(deadlineText(featured))}</span>
                     </div>
-                    <a href="${encodeURI(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 transition duration-300 self-start">
+                    <a href="${encodeURI(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-800 transition duration-300 self-start">
                         查看活動詳情<span class="sr-only">：${escapeHtml(featured.title)}（另開新分頁）</span> <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
@@ -203,7 +203,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     card.innerHTML = `
                         <div class="p-6 flex-grow">
                             <div class="flex justify-between items-start mb-2">
-                                <span class="text-sm font-bold text-sky-600">${escapeHtml(activity.category)}</span>
+                                <span class="text-sm font-bold text-sky-700">${escapeHtml(activity.category)}</span>
                                 <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
                             </div>
                             <h3 class="text-xl font-bold text-gray-900 mb-2">${escapeHtml(activity.title)}</h3>
@@ -215,7 +215,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                                 <p class="text-xs text-gray-500">報名截止</p>
                                 <p class="font-semibold text-gray-700">${escapeHtml(deadlineText(activity))}</p>
                             </div>
-                            <a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-700 transition duration-300">
+                            <a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-800 transition duration-300">
                                 查看詳情<span class="sr-only">：${escapeHtml(activity.title)}（另開新分頁）</span>
                             </a>
                         </div>
