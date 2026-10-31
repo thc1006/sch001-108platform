@@ -30,7 +30,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           </div>
           <div class="flex items-center justify-center p-4">
             <!-- 內嵌 SVG 插圖 -->
-            <svg viewBox="0 0 200 200" class="w-full max-w-xs md:max-w-64 lg:max-w-md">
+            <svg aria-hidden="true" viewBox="0 0 200 200" class="w-full max-w-xs md:max-w-64 lg:max-w-md">
               <defs>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="3.5" result="coloredBlur"></feGaussianBlur>
@@ -70,11 +70,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         <div class="max-w-3xl mx-auto">
           <div class="relative">
             <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </span>
             <input type="text" id="search-input" role="combobox" aria-autocomplete="list" aria-controls="search-results-container" aria-expanded="false" aria-label="全站搜尋輸入框" placeholder="正在載入搜尋引擎..." disabled class="w-full pl-14 pr-14 py-4 border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-shadow shadow-sm hover:shadow-md bg-gray-200" />
             <button id="search-clear-btn" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer hidden" aria-label="Clear search input">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
           </div>
           <!-- 搜尋結果將會動態插入此處 -->
@@ -93,21 +93,21 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <a href="autonomous-learning/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6 mx-auto">
-              <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
+              <svg aria-hidden="true" class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
             </div>
             <h3 class="text-2xl font-bold mb-3">1. 探索方向</h3>
             <p class="text-gray-600">感到迷惘，不知道自主學習要做什麼？從這裡開始，尋找你的主題與熱情所在。</p>
           </a>
           <a href="learning-portfolio/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-teal-100 mb-6 mx-auto">
-              <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+              <svg aria-hidden="true" class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
             </div>
             <h3 class="text-2xl font-bold mb-3">2. 打造歷程</h3>
             <p class="text-gray-600">將你的學習經驗與反思，淬鍊成一份能展現個人特質的精彩學習歷程檔案。</p>
           </a>
           <a href="advanced-resources/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6 mx-auto">
-              <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+              <svg aria-hidden="true" class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
             </div>
             <h3 class="text-2xl font-bold mb-3">3. 深化專業</h3>
             <p class="text-gray-600">已有明確目標？從這裡尋找頂尖的線上課程、競賽與書單，讓你的能力更上一層樓。</p>
