@@ -103,8 +103,9 @@ function deferred() {
 /**
  * 啟動一個閘道。generate 預設立刻回傳 {"answer":"好"}；可以傳入自訂的實作。
  * calls 記錄每次 generate 收到的設定、request 與 hooks。now 可以換成測試控制的時鐘。
+ * random 預設固定回傳 0：忙線的等待秒數不加隨機時間，測試才寫得出確切的值
  */
-async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
+async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
     const logs = [];
     const calls = [];
     const generateImpl = async (llmConfig, request, hooks) => {
@@ -118,6 +119,7 @@ async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads
         tasks: TASKS,
         generateImpl,
         log: (level, tag, fields) => logs.push({ level, tag, fields }),
+        random,
         ...(now ? { now } : {}),
         ...(maxBodyReads ? { maxBodyReads } : {}),
         ...(maxPendingBytes ? { maxPendingBytes } : {}),
@@ -149,6 +151,7 @@ async function startRealGateway(script, llm = {}, server = {}) {
         server: serverConfig(server),
         tasks: TASKS,
         log: createLogger('debug', (line) => lines.push(line)),
+        random: () => 0,
     });
     await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
     return {
@@ -944,6 +947,102 @@ test('各種錯誤對應到的代號、可否重試與建議等待時間', async
         } finally {
             await gw.stop();
         }
+    }
+});
+
+test('閘道自己決定的忙線秒數加上 0～30% 的隨機時間（無條件進位）；Retry-After 標頭與 JSON 的值相同，上游給的秒數照原樣', async () => {
+    const hang = hangingGenerate();
+    const errors = [hungError(), new UpstreamError('busy', '429', { status: 429, retryable: true }), new UpstreamError('busy', '429', { status: 429, retryable: true, retryAfter: 7 })];
+    for (const [random, expected] of [[0.999, 39], [0.5, 35], [0, 30]]) {
+        const gw = await startGateway({
+            random: () => random,
+            server: { concurrency: 1, maxQueue: 0 },
+            generate: async (request, hooks, n) => {
+                if (n === 1) return hang.generate(request, hooks);
+                throw errors[n - 2];
+            },
+        });
+        let holder;
+        try {
+            // 名額被佔住、不能排隊：第二個請求在開始串流之前就回 503
+            holder = post(gw.base, 'demo-json', { topic: 'x' });
+            await waitFor(() => gw.calls.length === 1);
+            const full = await post(gw.base, 'demo-json', { topic: 'x' });
+            assert.equal(full.status, 503);
+            assert.equal(full.headers.get('retry-after'), String(expected));
+            assert.equal((await full.json()).error.retryAfter, expected);
+        } finally {
+            await gw.stop();
+            await holder?.then((res) => res.text());
+        }
+        const gw2 = await startGateway({ random: () => random, generate: async (request, hooks, n) => { throw errors[n - 1]; } });
+        try {
+            const seen = [];
+            for (let i = 0; i < errors.length; i++) seen.push((await readEvents(await post(gw2.base, 'demo-json', { topic: 'x' }))).at(-1).data.retryAfter);
+            assert.deepEqual(seen, [expected, expected, 7], String(random));
+        } finally {
+            await gw2.stop();
+        }
+    }
+});
+
+test('隨機時間也加在斷路器的 503、body 收不下的 503 與排隊逾時（LimitError）的忙線上', async () => {
+    const random = () => 0.999;
+    // 斷路器：剩 30 秒 → 39
+    const clock = { t: 0 };
+    const breakerGw = await startGateway({ random, now: () => clock.t, generate: async () => { throw hungError(); } });
+    try {
+        for (let i = 0; i < 2; i++) await (await post(breakerGw.base, 'demo-json', { topic: 'x' })).text();
+        const res = await post(breakerGw.base, 'demo-json', { topic: 'x' });
+        assert.equal(res.status, 503);
+        assert.equal(res.headers.get('retry-after'), '39');
+        assert.equal((await res.json()).error.retryAfter, 39);
+    } finally {
+        await breakerGw.stop();
+    }
+    // 同時在收的 body 滿了：5 → 7
+    const bodyGw = await startGateway({ random, maxBodyReads: 1 });
+    const slow = await rawSocket(bodyGw.port);
+    try {
+        slow.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nContent-Length: 30\r\n\r\n{"input":`);
+        await sleep(50);
+        const full = await rawRequest(bodyGw.port, { headers: jsonHeaders(), body: JSON.stringify({ input: { topic: 'x' } }) });
+        assert.equal(full.status, 503);
+        assert.equal(full.headers['retry-after'], '7');
+        assert.equal(JSON.parse(full.body).error.retryAfter, 7);
+    } finally {
+        slow.destroy();
+        await bodyGw.stop();
+    }
+    // 排隊逾時：30 → 39
+    const hang = hangingGenerate();
+    const queueGw = await startGateway({ random, server: { concurrency: 1, queueTimeoutMs: 50 }, generate: hang.generate });
+    let holder;
+    try {
+        holder = post(queueGw.base, 'demo-json', { topic: 'x' });
+        await waitFor(() => queueGw.calls.length === 1);
+        const last = (await readEvents(await post(queueGw.base, 'demo-json', { topic: 'x' }))).at(-1);
+        assert.deepEqual(pick(last.data, ['code', 'retryAfter']), { code: 'busy', retryAfter: 39 });
+    } finally {
+        await queueGw.stop();
+        await holder?.then((res) => res.text());
+    }
+});
+
+test('沒有注入 random 時，同一批被拒絕的請求拿到 30～39 秒之間不全相同的數字', async () => {
+    const gw = await startGateway({ random: Math.random, generate: async () => { throw hungError(); } });
+    try {
+        const seen = new Set();
+        // 斷路器在第 2 個之後斷開，之後的請求在讀 body 之前就是 503
+        for (let i = 0; i < 20; i++) {
+            const res = await post(gw.base, 'demo-json', { topic: 'x' });
+            const retryAfter = res.status === 503 ? (await res.json()).error.retryAfter : (await readEvents(res)).at(-1).data.retryAfter;
+            assert.ok(retryAfter >= 30 && retryAfter <= 39, String(retryAfter));
+            seen.add(retryAfter);
+        }
+        assert.ok(seen.size > 1);
+    } finally {
+        await gw.stop();
     }
 });
 
@@ -2142,6 +2241,7 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
         tasks: TASKS,
         log: (level, tag, fields) => logs.push({ level, tag, fields }),
         now: () => clock.t,
+        random: () => 0,
     });
     await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${gateway.server.address().port}`;

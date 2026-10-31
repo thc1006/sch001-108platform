@@ -106,12 +106,13 @@ function scripted(rounds, { onEmit } = {}) {
     return { impl, calls };
 }
 
-async function run(rounds, { request = {}, cfg = {}, signal, onEmit } = {}) {
+async function run(rounds, { request = {}, cfg = {}, signal, onEmit, random } = {}) {
     const { impl, calls } = scripted(rounds, { onEmit });
     const streamed = [];
     const progress = [];
     const result = await generate(config(cfg), { messages: baseMessages, ...request }, {
         streamChatImpl: impl,
+        random,
         signal,
         onContent: (t) => streamed.push(t),
         onProgress: (p) => progress.push(p),
@@ -1187,21 +1188,31 @@ test('接續輪遇到 429：退避後重試成功，並發出 retrying 進度', 
     assert.equal(retrying.attempt, 1);
 });
 
-test('重試等多久：有 Retry-After 就照它（含 0 秒），沒有就指數退避（上限 retryMaxMs）', async () => {
-    const { progress } = await run([
+test('重試等多久：有 Retry-After 就照它（含 0 秒），沒有就指數退避（上限 retryMaxMs）再乘上 0.5～1 的隨機倍數', async () => {
+    const rounds = [
         { content: ['一'], finish: 'length' },
         { error: new UpstreamError('busy', '429', { retryable: true, retryAfter: 0 }) },
         { error: new UpstreamError('unavailable', '502', { retryable: true }) },
         { content: ['二'], finish: 'stop' },
-    ], { cfg: { retryBaseMs: 5, retryMaxMs: 40, continuationRetries: 3 } });
-    assert.deepEqual(progress.filter((p) => p.phase === 'retrying').map((p) => p.delayMs), [0, 10]);
-    const { progress: capped } = await run([
+    ];
+    const delays = async (random, cfg = { retryBaseMs: 5, retryMaxMs: 40, continuationRetries: 3 }, script = rounds) => {
+        const { progress } = await run(script, { cfg, random });
+        return progress.filter((p) => p.phase === 'retrying').map((p) => p.delayMs);
+    };
+    assert.deepEqual(await delays(() => 1), [0, 10]);
+    assert.deepEqual(await delays(() => 0), [0, 5]);
+    assert.deepEqual(await delays(() => 0.5), [0, 8]);
+    const flaky = [
         { content: ['一'], finish: 'length' },
         { error: new UpstreamError('unavailable', '502', { retryable: true }) },
         { error: new UpstreamError('unavailable', '502', { retryable: true }) },
         { content: ['二'], finish: 'stop' },
-    ], { cfg: { retryBaseMs: 30, retryMaxMs: 40 } });
-    assert.deepEqual(capped.filter((p) => p.phase === 'retrying').map((p) => p.delayMs), [30, 40]);
+    ];
+    assert.deepEqual(await delays(() => 1, { retryBaseMs: 30, retryMaxMs: 40 }, flaky), [30, 40]);
+    assert.deepEqual(await delays(() => 0, { retryBaseMs: 30, retryMaxMs: 40 }, flaky), [15, 20]);
+    // 沒有注入時用 Math.random：落在 0.5～1 倍之間
+    const [first] = await delays(undefined, { retryBaseMs: 1000, retryMaxMs: 1000 }, flaky.slice(0, 2).concat([{ content: ['二'], finish: 'stop' }]));
+    assert.ok(first >= 500 && first <= 1000, String(first));
 });
 
 test('第一輪的錯誤不重試（使用者重按就好）', async () => {
@@ -1310,13 +1321,14 @@ function productionRetryConfig(overrides = {}) {
     return cfg;
 }
 
-test('正式環境的重試預設：接續輪最多重試 2 次，2 秒起跳的指數退避', async (t) => {
+test('正式環境的重試預設：接續輪最多重試 2 次，2 秒起跳的指數退避（隨機倍數取 1）', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const flaky = () => new UpstreamError('unavailable', 'HTTP 502', { status: 502, retryable: true });
     const { impl, calls } = scripted([{ content: ['一'], finish: 'length' }, { error: flaky() }, { error: flaky() }, { error: flaky() }]);
     const delays = [];
     const settled = generate(productionRetryConfig(), { messages: baseMessages }, {
         streamChatImpl: impl,
+        random: () => 1,
         onProgress: (p) => { if (p.phase === 'retrying') delays.push(p.delayMs); },
     }).then(() => null, (err) => err);
     for (let i = 0; i < 2; i++) {
@@ -1329,13 +1341,14 @@ test('正式環境的重試預設：接續輪最多重試 2 次，2 秒起跳的
     assert.equal(calls.length, 4);
 });
 
-test('正式環境的退避上限是 30 秒', async (t) => {
+test('正式環境的退避上限是 30 秒（隨機倍數取 1）', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const flaky = () => new UpstreamError('unavailable', 'HTTP 502', { status: 502, retryable: true });
     const { impl } = scripted([{ content: ['一'], finish: 'length' }, ...Array.from({ length: 5 }, () => ({ error: flaky() })), { content: ['二'], finish: 'stop' }]);
     const delays = [];
     const done = generate(productionRetryConfig({ continuationRetries: 5 }), { messages: baseMessages }, {
         streamChatImpl: impl,
+        random: () => 1,
         onProgress: (p) => { if (p.phase === 'retrying') delays.push(p.delayMs); },
     });
     for (let i = 0; i < 5; i++) {
