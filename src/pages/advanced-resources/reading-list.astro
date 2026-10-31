@@ -149,7 +149,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                                 <img src="${coverSrc}" alt="" loading="lazy" class="h-56 w-auto object-contain rounded shadow-sm" onerror="this.onerror=null;this.src='${fallback}';">
                             </div>
                             <div class="p-4 flex-grow flex flex-col">
-                                <h4 class="font-bold text-lg text-gray-900 mb-1">${escapeHtml(book.title || '')}</h4>
+                                <h3 class="font-bold text-lg text-gray-900 mb-1">${escapeHtml(book.title || '')}</h3>
                                 ${originalTitleHtml}
                                 <p class="text-sm text-purple-600 font-semibold mb-2">${escapeHtml(book.author || '')}</p>
                                 <p class="text-sm text-gray-700 flex-grow">${escapeHtml(book.recommendation || '')}</p>
