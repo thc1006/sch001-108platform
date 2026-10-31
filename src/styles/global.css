@@ -44,9 +44,11 @@ body {
   font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
 
-/* 漸層標題字。gradient-text 用在首頁等頁面；gradient-text-warm 目前沒有頁面使用。 */
+/* 漸層標題字。gradient-text 用在首頁等頁面；gradient-text-warm 目前沒有頁面使用。
+   兩端的顏色在白底與 gray-100 底上都要有 4.5:1：#4f46e5 是 6.29 與 5.71，#0f766e 是 5.47 與 4.97。
+   只把 -webkit-text-fill-color 設成透明，不設 color: transparent，強制色彩模式下字才看得到。 */
 .gradient-text {
-  background: -webkit-linear-gradient(45deg, #4f46e5, #14b8a6);
+  background: -webkit-linear-gradient(45deg, #4f46e5, #0f766e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
