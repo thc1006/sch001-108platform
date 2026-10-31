@@ -1,6 +1,6 @@
 {
   "_readme": "線上課程資料來源檔。online-courses.html 會在載入時 fetch() 此檔並渲染。新增或修改課程請直接編輯下方 courses 陣列，不需要動 HTML。欄位：title / provider / platform / category / difficulty / language（中文 或 英文）/ certificate（true 或 false）/ tags（字串陣列）/ description / url / thumbnail_url。",
-  "lastUpdated": "2026-10-27",
+  "lastUpdated": "2026-11-01",
   "courses": [
     {
       "title": "李宏毅 — 生成式 AI 與機器學習",
@@ -53,7 +53,7 @@
         "GitHub",
         "公民科技"
       ],
-      "description": "零時小學校數位源力增能季的免費開放式課程，包括「我們與專案的距離」「g0v 帶你來提案」「協作不想吵架？快用版本控制系統！」等，適合想發起自主學習專案的同學。",
+      "description": "零時小學校數位源力增能季的免費開放式課程，包括「我們與專案的距離」「g0v 帶你來提案」「協作不想吵架？快用版本控制系統！」等。",
       "url": "https://g0v.hackmd.io/@jothon/Sch001courses",
       "thumbnail_url": "img/courses/g0v-sch001.jpg"
     },
