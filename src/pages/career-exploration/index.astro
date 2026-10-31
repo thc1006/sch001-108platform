@@ -463,11 +463,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
 
         chatSubmit.addEventListener('click', handleChatSubmit);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { // 按下 Enter 但非 Shift+Enter
-                e.preventDefault(); // 防止換行
-                handleChatSubmit();
-            }
+        // 用注音、倉頡選字時按 Enter 是確定選字，不能送出。結束選字的那個 keydown 在 Safari 的
+        // isComposing 是 false，照 MDN keydown 頁的寫法，keyCode 229 也一起擋。
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+            e.preventDefault();
+            handleChatSubmit();
         });
 
         initializeExplorer();
