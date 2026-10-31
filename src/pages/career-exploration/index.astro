@@ -49,7 +49,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
                 <div class="flex gap-2">
                     <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" aria-describedby="chat-input-hint" class="placeholder:text-gray-600 flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-hidden focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
-                    <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
+                    <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform motion-safe:hover:scale-105 flex items-center">
                         <span class="hidden sm:inline">發送</span>
                         {/* 窄螢幕上文字隱藏，按鈕的名稱只能來自圖示。 */}
                         <ion-icon name="send-outline" aria-label="發送" class="sm:hidden text-xl"></ion-icon>
@@ -93,13 +93,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 <p class="text-lg text-gray-600 mt-2">讓走過這條路的人，告訴你最真實的風景。</p>
             </div>
             <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform hover:-translate-y-1">
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform motion-safe:hover:-translate-y-1">
                     <img class="w-24 h-24 rounded-full mb-4 object-cover shadow-md ring-4 ring-white" src="https://api.dicebear.com/7.x/avataaars/svg?seed=wang&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear" alt="王同學頭像">
                     <h3 class="font-bold text-xl text-gray-900">王同學</h3>
                     <p class="text-indigo-600 font-semibold mb-4">陽明交通大學 生物科技學系</p>
                     <p class="text-gray-700 italic">「高中時的科展經驗，不只是為了得獎。從中學到的實驗設計和解決問題的能力，才是在大學真正派上用場的關鍵。」</p>
                 </div>
-                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform hover:-translate-y-1">
+                <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-center text-center transform motion-safe:hover:-translate-y-1">
                     <img class="w-24 h-24 rounded-full mb-4 object-cover shadow-md ring-4 ring-white" src="https://api.dicebear.com/7.x/avataaars/svg?seed=lin&hair=long&backgroundColor=c0aede,d1d4f9,ffdfbf,f0f0f0&backgroundType=gradientLinear" alt="林同學頭像">
                     <h3 class="font-bold text-xl text-gray-900">林同學</h3>
                     <p class="text-indigo-600 font-semibold mb-4">政治大學 傳播學院</p>
@@ -107,7 +107,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 </div>
             </div>
             <div class="text-center mt-12">
-                <a href="senior-interviews.html" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                <a href="senior-interviews.html" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform motion-safe:hover:scale-105 shadow-md hover:shadow-lg">
                     查看更多訪談
                 </a>
             </div>
@@ -527,6 +527,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #cluster-details.fade-in {
+                animation: none;
+            }
         }
 
         /* AI 聊天室樣式 */

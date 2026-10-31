@@ -378,5 +378,10 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @media (prefers-reduced-motion: reduce) {
+            .fade-in {
+                animation: none;
+            }
+        }
     </style>
 </BaseLayout>
