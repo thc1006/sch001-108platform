@@ -325,7 +325,7 @@ export class ClientLimiter {
      * 通過就回傳 { done, refund }（都可以重複呼叫）：
      *   done()    任務結束時呼叫，歸還佔用量
      *   refund()  這次請求最後沒用到 GPU（排隊已滿、排到逾時、排隊中離開或關機，或上游在第一個 token
-     *             之前就回忙線、連不上或逾時）時呼叫，把次數退回去
+     *             之前就回忙線、連不上、逾時，或回了錯誤頁、看不懂的串流）時呼叫，把次數退回去
      */
     admit(key, { wouldQueue = true } = {}) {
         const t = this.now();
