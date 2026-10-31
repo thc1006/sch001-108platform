@@ -301,6 +301,8 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg, pageAnchorIds) {
         // 內文：純文字欄位 + 去除標籤後的 HTML 欄位
         const textParts = ITEM_TEXT_FIELDS
             .map(f => item[f]).filter(v => typeof v === 'string' && v);
+        // 標題用 title 時，name 裡的英文名（Civil IoT、National Treasure）也要搜得到。放在最後，摘要才不會從它開始。
+        if (itemTitle !== item.name && typeof item.name === 'string' && item.name) textParts.push(item.name);
         const htmlParts = ITEM_HTML_FIELDS
             .map(f => item[f]).filter(v => typeof v === 'string' && v)
             .map(h => cheerio.load(h).text());
