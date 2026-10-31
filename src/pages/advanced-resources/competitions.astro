@@ -634,7 +634,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       background: #fff; font-size: 1rem; color: var(--ink); transition: border-color .2s, box-shadow .2s;
     }
     .comp-search input::placeholder { color: #64748b; }
-    .comp-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(190,18,60,.12); }
+    /* 外框用透明的而不是 none：強制色彩模式會拿掉 box-shadow，外框換成系統色，焦點才看得到。 */
+    .comp-search input:focus { outline: 2px solid transparent; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(190,18,60,.12); }
     .comp-search__clear {
       position: absolute; right: .7rem; top: 50%; transform: translateY(-50%);
       display: inline-flex; padding: .35rem; border: 0; background: #eef0f5; border-radius: 999px;
@@ -657,7 +658,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     select#sort-select { min-width: 13rem; }
     .comp-selects select:focus, select#sort-select:focus {
-      outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(190,18,60,.1);
+      outline: 2px solid transparent; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(190,18,60,.1);
     }
 
     .comp-chiprow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; }
