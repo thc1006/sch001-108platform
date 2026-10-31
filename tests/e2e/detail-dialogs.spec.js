@@ -10,6 +10,7 @@ const ROOT = `${BASE}/sch001-108platform`;
 const PAGES = [
     { name: '研究方法工具箱', path: '/autonomous-learning/methodology.html', grid: '#methodology-grid', button: 'h3 > button' },
     { name: '計畫範本庫', path: '/autonomous-learning/plan-templates.html', grid: '#template-grid', button: 'h3 > button', tabs: true },
+    { name: '優質範例藝廊', path: '/learning-portfolio/portfolio-gallery.html', grid: '#portfolio-grid', button: 'h3 > button' },
 ];
 
 for (const { name, path, grid, button, tabs } of PAGES) {
@@ -174,5 +175,35 @@ test.describe('研究方法工具箱的推薦', () => {
         await dialog.getByRole('button', { name: '關閉', exact: true }).click();
         await expect(dialog).toBeHidden();
         await expect(pick).toBeFocused();
+    });
+});
+
+test.describe('優質範例藝廊', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto(`${ROOT}/learning-portfolio/portfolio-gallery.html`);
+        await expect(page.locator('#portfolio-grid h3 > button').first()).toBeVisible();
+    });
+
+    test('三個篩選器有名稱，篩選照舊', async ({ page }) => {
+        for (const label of ['學科領域', '成果類型', '能力標籤']) {
+            await expect(page.getByRole('combobox', { name: label, exact: true })).toBeVisible();
+        }
+        const category = page.getByLabel('學科領域', { exact: true });
+        const value = await category.locator('option').nth(1).getAttribute('value');
+        await category.selectOption(value);
+        const shown = page.locator('#portfolio-grid > * .text-green-600');
+        await expect(shown.first()).toBeVisible();
+        for (const text of await shown.allTextContents()) expect(text).toBe(value);
+    });
+
+    test('焦點範例的按鈕開啟對話框，關閉後焦點回到它', async ({ page }) => {
+        const featured = page.getByRole('button', { name: '深度剖析此範例', exact: true });
+        await featured.focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(featured).toBeFocused();
     });
 });
