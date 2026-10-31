@@ -1,101 +1,177 @@
 {
-  "_readme": "公民科技專案地圖資料檔。彙整台灣公民科技專案與 108 課綱核心素養、SDGs 的對照。此檔同時是看門狗 check-civic-tech.mjs 的結構化資料來源、以及 build-search-index.js 的搜尋索引來源（見 scripts/data-pages.json），與 src/pages/civic-tech-map/index.astro 頁面內容對應，新增或修改專案時請同步更新兩處。欄位說明：id=與頁面 anchor 對應的識別碼（小寫英數與連字號，必須真的存在於建置後的頁面，否則搜尋結果會指向不存在的錨點，建置會直接失敗）；name=專案名稱；org=主辦／開發單位；url=專案官網（必須是合法 http(s) URL）；subjects=對應學科領域陣列；competencies=對應 108 課綱核心素養代碼陣列（如 A2、B1、C3，合法代碼見 scripts/taxonomy.json）；sdgs=對應 SDG 編號陣列（1-17 整數）；tags=議題關鍵字陣列（使用者會直接打進搜尋框的字，如「環保」「假訊息」；選填但填了就必須是非空字串陣列）；description=專案簡介；status 限「active」「maintenance」「dormant」三選一，maintenance 代表專案以維護方式運作（既有服務持續、但新進度放緩），dormant 代表近期幾無活動、需提醒讀者查證最新狀態。AI 閘道的 civic-tech-suggestion 任務指令另外抄了一份專案名稱與狀態（閘道的映像檔裡沒有這個檔案），由 ai-gateway/test/task-catalog.test.mjs 比對兩邊是否一致。",
-  "lastUpdated": "2026-10-29",
+  "_readme": "公民科技專案頁的資料。src/pages/civic-tech-map/index.astro 在建置時讀這個檔案產生頁面，build-search-index.js 用它建搜尋索引，scripts/check-civic-tech.mjs 檢查格式。欄位：id 是頁面上的錨點（小寫英數與連字號），其他頁面有連到 #thaubing、#national-treasure、#cofacts；name 是 AI 閘道 civic-tech-suggestion 任務指令裡的專案名稱，要和 ai-gateway/src/task-catalog.mjs 一字不差，ai-gateway/test/task-catalog.test.mjs 會比對；title 是頁面與搜尋結果顯示的名稱；theme 是專案列表裡的一兩個詞；description 寫專案是什麼；tools 是學生可以用的資料或工具，url 選填；topic 是題目例子；steps 是做法；sourceCheckedAt 是最後一次查證的日期；source 選填，資料不是取自官網時寫出處；recheckAfter 選填，過了這天 check-civic-tech 會提醒重查，理由寫在 recheckNote；subjects、competencies（108 課綱核心素養代碼，見 scripts/taxonomy.json）、sdgs、tags 只給搜尋用，頁面不顯示；status 限 active、maintenance、dormant，閘道指令會照它註明狀態。",
+  "lastUpdated": "2026-10-31",
   "projects": [
     {
       "id": "disfactory",
       "name": "Disfactory 農地違章工廠回報系統",
-      "org": "地球公民基金會 × g0v 社群",
+      "title": "Disfactory 農地違章工廠回報系統",
+      "theme": "農地上的工廠",
+      "org": "地球公民基金會、g0v 社群",
       "url": "https://disfactory.tw/",
+      "description": "民眾拍照回報 2016 年 5 月 20 日以後在農地上新增的工廠和中高污染工廠，地球公民基金會整理後向政府檢舉，並追蹤拆除進度。",
+      "tools": [
+        { "name": "回報地圖", "url": "https://disfactory.tw/", "note": "每間工廠標出未處理、處理中、已斷電、已拆除或無法處理" },
+        { "name": "大家來找廠", "url": "https://spot.disfactory.tw/", "note": "比對空拍影像，找出 2016 年以後新增的建物" }
+      ],
+      "topic": "你住的鄉鎮有幾間被回報的農地工廠？各停在哪個處理階段？",
+      "steps": "在回報地圖上點開你住的鄉鎮裡的工廠，記下處理狀態，算出已拆除和還沒處理的比例。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["地理（GIS）", "公民與社會"],
       "competencies": ["A2", "C1"],
       "sdgs": [11, 15],
       "tags": ["環保", "開放資料", "地理資訊", "國土規劃", "群眾外包"],
-      "description": "利用衛星圖資與群眾外包標記台灣農地上新增的違章工廠，協助政府執法並保護農地與糧食安全。已轉由地球公民基金會接手長期營運，並發展出衛星影像辨識遊戲與工廠登記、拆除狀態追蹤平台。",
       "status": "active"
     },
     {
       "id": "cofacts",
       "name": "Cofacts 真的假的",
-      "org": "g0v 社群協作專案",
+      "title": "Cofacts 真的假的",
+      "theme": "假訊息",
+      "org": "台灣實科協會（g0v 專案）",
       "url": "https://cofacts.tw/",
+      "description": "把可疑訊息轉傳給 LINE 機器人 @cofacts，資料庫裡有人查過的話，機器人會回覆查核內容。回應是其他使用者寫的，任何人都可以加入查證。",
+      "tools": [
+        { "name": "可疑訊息列表", "url": "https://cofacts.tw/articles", "note": "可以搜尋別人回報過的訊息和回應" },
+        { "name": "開放資料集", "url": "https://huggingface.co/datasets/Cofacts/line-msg-fact-check-tw", "note": "回報的訊息和查核回應，CC BY-SA 4.0，登入 Hugging Face 並同意條款後下載" }
+      ],
+      "topic": "家族 LINE 群組常收到的可疑訊息，主要是哪幾類？",
+      "steps": "收集 20 則訊息，到 Cofacts 查有沒有人回應過，依主題分類；沒人查過的，自己查證後寫一則回應。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["資訊科技", "公民與社會（媒體識讀）"],
       "competencies": ["B2", "A1"],
       "sdgs": [4, 16],
       "tags": ["假訊息", "媒體識讀", "事實查核", "開放資料"],
-      "description": "LINE 聊天機器人與協作查核資料庫，旨在減少假訊息傳播。累積 LINE 好友約 33 萬人、查核資料庫已有超過 4.5 萬筆查核回應，並固定每兩個月舉辦實體查核協作培訓。",
       "status": "active"
     },
     {
       "id": "amis-moedict",
       "name": "Amis MoeDict 阿美語萌典",
-      "org": "萌典延伸專案 × g0v 社群",
+      "title": "阿美語萌典",
+      "theme": "原住民族語",
+      "org": "唐鳳、小蟹、Lafin 與 g0v 社群",
       "url": "https://amis.moedict.tw/",
+      "description": "線上阿美語辭典。新版網站收了 6 部辭典和 5 份學習詞表，查一個詞會列出各部辭典的解釋和例句。",
+      "tools": [
+        { "name": "新版阿美語萌典", "url": "https://new-amis.moedict.tw/" },
+        { "name": "學習詞表", "note": "秀姑巒、恆春、海岸、南勢、馬蘭五種阿美語各一份" }
+      ],
+      "topic": "同一個阿美語詞，不同辭典的解釋差在哪裡？",
+      "steps": "挑 10 個日常生活的詞，比較各辭典的解釋和例句，整理出差異，再請教會說阿美語的人。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["國語文 / 原住民族語", "資訊科技"],
       "competencies": ["C3", "B1"],
       "sdgs": [4, 10],
       "tags": ["語言保存", "原住民族", "數位典藏", "文化平權"],
-      "description": "台灣第一部數位化原住民語線上辭典，致力於阿美語的數位化保存。除原網站外已推出新版站台 new-amis.moedict.tw，並支援離線使用與行動 App。",
       "status": "active"
     },
     {
       "id": "thaubing",
       "name": "透明足跡 / 掃了再買",
-      "org": "綠色公民行動聯盟 × g0v 社群",
+      "title": "透明足跡",
+      "theme": "企業污染",
+      "org": "綠色公民行動聯盟",
       "url": "https://thaubing.gcaa.org.tw/",
+      "description": "把環境部公開的工廠排放監測和環保裁罰紀錄整理成地圖與查詢頁。手機 App「掃了再買」掃商品條碼，就看得到製造商的違規紀錄。",
+      "tools": [
+        { "name": "依商品查詢", "url": "https://thaubing.gcaa.org.tw/merchandise/search", "note": "也可以依企業、依集團查" },
+        { "name": "環境部的裁處記錄資料集", "url": "https://data.moenv.gov.tw/dataset/detail/EMS_P_46", "note": "透明足跡的裁罰資料來自這裡，可以下載" }
+      ],
+      "topic": "福利社賣的零食和飲料，製造商有沒有環保違規紀錄？",
+      "steps": "用「掃了再買」或網站的依商品查詢查 15 項商品，整理違規的事由和次數。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["公民與社會（經濟）", "化學 / 環境科學"],
       "competencies": ["C1"],
       "sdgs": [12],
       "tags": ["環保", "污染監測", "責任消費", "開放資料", "企業社會責任"],
-      "description": "環境資訊公開平台，提供企業環境違規地圖與即時污染監測，配套 App 可掃描商品條碼查詢企業環境違規紀錄，並陸續擴充 ESG 檢測等功能模組。",
       "status": "active"
     },
     {
       "id": "national-treasure",
       "name": "國家寶藏 (National Treasure)",
-      "org": "g0v 社群專案（2016 年發起）",
+      "title": "國家寶藏",
+      "theme": "台灣史料",
+      "org": "Taiwan National Treasure Foundation",
       "url": "https://www.nationaltreasure.tw/",
+      "description": "志工到美國國家檔案館翻拍和台灣有關的檔案，年代從 1887 到 1977 年，放上網站讓大家閱讀、搜尋、校對。實地翻拍從 2020 年起暫停，已經上傳的檔案照常開放。",
+      "tools": [
+        { "name": "寶藏庫", "note": "從首頁進去，依美援、農復會、中美斷交等卷宗分類瀏覽，也可以全文搜尋" },
+        { "name": "校正模式", "note": "改正機器辨識和翻譯的錯字，不用註冊" }
+      ],
+      "topic": "美援時期的報告，怎麼描述當時台灣的某個產業？",
+      "steps": "在寶藏庫的美援分類挑一份報告，用校正模式改正辨識和翻譯，再對照課本或其他史料寫一篇短文。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["歷史", "英文"],
       "competencies": ["C3", "A3"],
       "sdgs": [],
       "tags": ["數位典藏", "歷史檔案", "群眾外包", "台灣史"],
-      "description": "從海外（主要為美國國家檔案局）挖掘與台灣有關的歷史檔案，志工翻拍檔案後建立資料庫。2026 年 10 月 29 日查，檔案資料庫可以瀏覽、搜尋，也可以直接校正辨識文字；官網寫明實地翻拍從 2020 年起暫停。",
       "status": "maintenance"
     },
     {
       "id": "lawtrace",
       "name": "LawTrace 立法足跡",
+      "title": "LawTrace 立法足跡",
+      "theme": "立法",
       "org": "歐噴有限公司（OpenFun）",
       "url": "https://lawtrace.tw/",
+      "description": "把立法院各網站的法案資料放在一起，看得到一部法律歷次修正的條文，以及一讀、二讀、三讀、審查會、公聽會的過程。資料每天從立法院的開放資料更新。",
+      "tools": [
+        { "name": "條文比較", "url": "https://lawtrace.tw/", "note": "把同一條的各版本草案並排" },
+        { "name": "立法院資料 API", "url": "https://v2.ly.govapi.tw/", "note": "會寫程式的話，可以直接抓歐噴整理過的立法院資料" }
+      ],
+      "topic": "《高級中等教育法》最近一次修法改了什麼？",
+      "steps": "在 LawTrace 搜尋這部法律，用條文比較看各版本草案和三讀條文的差別，整理出各方爭論的條文。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["公民與社會", "資訊科技（開放資料）"],
       "competencies": ["A2", "B1"],
       "sdgs": [16],
       "tags": ["開放資料", "國會監督", "法律", "資料視覺化"],
-      "description": "整合立法院各網站的法案資料，呈現一條法律從新增條文到歷次修正的完整立法歷程。網站每日以立法院原始開放資料更新，協助公民追蹤並監督國會立法動態。",
       "status": "active"
     },
     {
       "id": "vtaiwan",
       "name": "vTaiwan 數位民主審議平台",
-      "org": "g0v 社群數位民主專案",
+      "title": "vTaiwan",
+      "theme": "公共政策討論",
+      "org": "g0v 社群",
       "url": "https://vtaiwan.tw/",
+      "description": "公共政策的開放討論平台。議題依序經過意見徵集、研擬草案、送交院會，近年討論過 AI 規範和社群平台的言論審查。每週三晚上 7 點有線上會議。",
+      "tools": [
+        { "name": "議題列表", "url": "https://www.vtaiwan.tw/topics", "note": "議題頁連到當時的共筆、直播或討論，各議題不同" }
+      ],
+      "topic": "平衡車、電動滑板能不能上路，不同立場的人各在意什麼？",
+      "steps": "讀「平衡車、電動滑板，台灣上路可以嗎？」這個歷史案件公開的線上意見整理，把各方的立場和理由做成一張表。",
+      "sourceCheckedAt": "2026-10-31",
       "subjects": ["公民與社會", "資訊科技"],
       "competencies": ["A2", "C1", "C2"],
       "sdgs": [16, 9],
       "tags": ["數位民主", "公共參與", "政策審議", "AI 治理"],
-      "description": "太陽花運動後由 g0v 社群發起的數位民主實驗平台，結合線上意見分群與實體審議讓公民參與爭議性政策討論。2023 年以社群專案形式重啟，近年聚焦以公眾參與改善 AI 治理。",
       "status": "active"
     },
     {
       "id": "civil-iot",
       "name": "民生公共物聯網 Civil IoT Taiwan",
-      "org": "行政院跨部會開放資料專案",
-      "url": "https://scidm.nchc.org.tw/zh_TW/organization/civiliot",
+      "title": "民生公共物聯網",
+      "theme": "環境感測資料",
+      "org": "國家科學及技術委員會主辦的政府計畫",
+      "url": "https://history.colife.org.tw/",
+      "description": "整合空氣品質、水資源、地震、災防的感測資料，原平台已經連不上。它在 2026 年 1 月 1 日公告：計畫已在 2025 年 12 月 31 日結束，資料服務提供到 2026 年 12 月 1 日，之後規劃移到其他平台。要用的資料請在那之前下載。",
+      "tools": [
+        { "name": "歷史資料下載", "url": "https://history.colife.org.tw/", "note": "「空氣品質／環境部_國家空品測站」每個月一個壓縮檔，有測站名稱、經緯度和每小時的 PM2.5，最新一個整月的檔案是 2025 年 8 月" }
+      ],
+      "topic": "離學校最近的空品測站，PM2.5 上下學時段和半夜差多少？",
+      "steps": "在歷史資料下載的「空氣品質／環境部_國家空品測站」下載一個月的檔案，用 Google 試算表打開 CSV（Excel 要用 UTF-8 匯入，測站名稱才不會變亂碼），篩出離學校最近的測站，算出各時段的 PM2.5 平均，畫成折線圖。",
+      "source": {
+        "text": "原平台公告的 Internet Archive 存檔（2026 年 7 月 13 日）",
+        "url": "https://web.archive.org/web/20260713212740id_/https://ci.taiwan.gov.tw/dsp/"
+      },
+      "sourceCheckedAt": "2026-10-31",
+      "recheckAfter": "2026-12-01",
+      "recheckNote": "原平台公告資料服務提供到 2026-12-01，之後規劃移轉。過了這天要重查 history.colife.org.tw 還能不能下載、資料搬到哪裡。",
       "subjects": ["自然科學（地球科學）", "資訊科技"],
       "competencies": ["A2", "B2"],
       "sdgs": [11, 13],
       "tags": ["環保", "開放資料", "空氣品質", "防災", "物聯網", "資料科學"],
-      "description": "整合空氣品質、地震、防救災、水資源四大主題開放感測資料的政府計畫，已於 2025 年 12 月 31 日結束，原本的資料服務平台已經連不上。原平台 2026 年 1 月 1 日公告：資料服務提供到 2026 年 12 月 1 日，之後規劃移轉到其他平台。資料集現在列在國網中心資料集平台：空品微型感測器、氣象、水資源的即時資料改由 sta.colife.org.tw 的 SensorThings API 提供，水、空、地、災的歷史資料可以下載，少數連結仍指向舊站。雖由政府跨部會主導而非 g0v 社群專案，這些開放資料仍是高中生實作資料科學的理想素材。",
       "status": "maintenance"
     }
   ]

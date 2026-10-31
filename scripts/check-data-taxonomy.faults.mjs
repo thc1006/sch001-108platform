@@ -5,7 +5,7 @@
  * 但那道關卡在流程的最後，在它之前還有兩道，而那兩道在正常狀態下同樣看不出
  * 有沒有在把關：
  *
- *   1. scripts/check-civic-tech.mjs  來源 JSON 的 schema（代碼合法性、重複、型別）
+ *   1. scripts/check-civic-tech.mjs  來源 JSON 的 schema（代碼合法性、重複、型別），以及頁面顯示的欄位
  *   2. build-search-index.js         建置期的 fail closed：非法代碼、以及
  *                                    「逐項錨點不存在於頁面」時直接讓建置失敗
  *
@@ -110,6 +110,59 @@ const cases = [
         expect: /tags 必須是陣列/,
         mutate: (t) => t.replace('"tags": ["假訊息"', '"tags": "假訊息", "_x": ["假訊息"'),
     },
+    // 頁面顯示的欄位：空了的話卡片會少一段，建置不會失敗。
+    {
+        name: '來源資料的題目例子是空字串',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /欄位 topic 必須是非空字串/,
+        mutate: (t) => t.replace(/"topic": "你住的鄉鎮[^"]*"/, '"topic": ""'),
+    },
+    {
+        name: '來源資料的工具連結不是 http(s)',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /tools 第 2 項的 url「javascript:alert\(1\)」必須使用 http 或 https 通訊協定/,
+        mutate: (t) => t.replace('"url": "https://spot.disfactory.tw/"', '"url": "javascript:alert(1)"'),
+    },
+    {
+        name: '來源資料的查證日期不存在',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /sourceCheckedAt「2026-02-30」不是實際存在的/,
+        mutate: (t) => t.replace('"sourceCheckedAt": "2026-10-31"', '"sourceCheckedAt": "2026-02-30"'),
+    },
+    {
+        // 月份 13 這種，new Date(...).toISOString() 會丟 RangeError，看門狗連報告都寫不出來。
+        name: '來源資料的查證日期月份不存在',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /sourceCheckedAt「2026-01-32」不是實際存在的/,
+        mutate: (t) => t.replace('"sourceCheckedAt": "2026-10-31"', '"sourceCheckedAt": "2026-01-32"'),
+    },
+    {
+        name: '來源資料的重查日期月份不存在',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /recheckAfter「2026-13-01」不是實際存在的/,
+        mutate: (t) => t.replace(/"recheckAfter": "[^"]+"/, '"recheckAfter": "2026-13-01"'),
+    },
+    {
+        name: '來源資料有 recheckNote 卻沒有 recheckAfter',
+        target: WORK_JSON,
+        run: runWatchdog,
+        expect: /有 recheckNote 卻沒有 recheckAfter/,
+        mutate: (t) => t.replace(/\s*"recheckAfter": "[^"]+",/, ''),
+    },
+    {
+        // 過了 recheckAfter 只是提醒：結束碼是 0，報告要列出來。
+        name: '過了 recheckAfter 的專案列進報告',
+        target: WORK_JSON,
+        run: runWatchdog,
+        exitZero: true,
+        expect: /過了 recheckAfter 的專案[\s\S]*民生公共物聯網 Civil IoT Taiwan\*\*（recheckAfter 2026-01-01）/,
+        mutate: (t) => t.replace(/"recheckAfter": "[^"]+"/, '"recheckAfter": "2026-01-01"'),
+    },
     // 建置期的 fail closed（build-search-index.js）
     {
         // 錨點不存在卻照樣寫進索引的話，點了只會停在頁首，而且沒有任何訊號，
@@ -167,12 +220,13 @@ for (const c of cases) {
         if (mutated === original) throw new Error('注入未生效（mutate 沒有改到任何東西）');
         writeFileSync(c.target, mutated, 'utf8');
         const r = c.run();
-        if (r.code !== 0 && c.expect.test(r.out)) {
+        if ((c.exitZero ? r.code === 0 : r.code !== 0) && c.expect.test(r.out)) {
             pass++;
             console.log(`  ✅ ${c.name}`);
         } else {
             fail++;
-            console.log(`  ❌ ${c.name}  → exit=${r.code}${r.code === 0 ? '（沒擋下來！）' : '（擋了但訊息不符預期）'}`);
+            const why = c.exitZero ? (r.code === 0 ? '（訊息不符預期）' : '（預期結束碼 0）') : (r.code === 0 ? '（沒擋下來！）' : '（擋了但訊息不符預期）');
+            console.log(`  ❌ ${c.name}  → exit=${r.code}${why}`);
             if (r.out) console.log('       實際輸出片段：' + r.out.replace(/\s+/g, ' ').slice(0, 200));
         }
     } catch (e) {
