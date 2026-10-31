@@ -220,19 +220,18 @@ function hasUnreadBody(req) {
     return req.headers['transfer-encoding'] !== undefined || (length !== undefined && length !== '0');
 }
 
-// 收 body 時一開始配置的大小（宣告的 Content-Length 比較小時用它）。學生的 body 多半只有幾 KB，
-// 停住的請求也只佔這麼多
+// 收 body 時一開始配置的大小，不看宣告的 Content-Length（那是用戶端填的）。學生的 body 多半只有
+// 幾 KB，停住的請求也只佔這麼多
 const BODY_BUFFER_START = 1024;
 
 /**
  * createBodyBuffer 回傳收 body 用的緩衝：每一塊都複製進同一個 Buffer，不夠大時加倍，最多到 limit。
  * 每一塊各自留著的話，chunked 編碼一次只送 1 byte 時，每 1 byte 都是一個物件，要佔幾百 bytes。
  * 呼叫端要先確定加上這一塊不超過 limit。allocations 是配置過幾次（測試用）
- * @param {number} limit @param {number} declared @returns {{append: (chunk: Buffer) => void, toString: () => string, allocations: number}}
+ * @param {number} limit @returns {{append: (chunk: Buffer) => void, toString: () => string, allocations: number}}
  */
-export function createBodyBuffer(limit, declared) {
-    const start = Math.min(BODY_BUFFER_START, limit, Number.isFinite(declared) ? declared : Infinity);
-    let buf = Buffer.allocUnsafe(Math.max(1, start));
+export function createBodyBuffer(limit) {
+    let buf = Buffer.allocUnsafe(Math.max(1, Math.min(BODY_BUFFER_START, limit)));
     let size = 0;
     const body = {
         allocations: 1,
@@ -256,9 +255,8 @@ export function createBodyBuffer(limit, declared) {
 // 全站的預算（MAX_BODY_BYTES）放不下時回傳 false；read.evict() 讓位給新請求。兩者都以 503 結束
 function readBody(req, limit, timeoutMs, read) {
     return new Promise((resolve, reject) => {
-        const declared = Number(req.headers['content-length']);
         let size = 0;
-        let body = createBodyBuffer(limit, declared);
+        let body = createBodyBuffer(limit);
         let settled = false;
         let timer;
         const fail = (err) => {
