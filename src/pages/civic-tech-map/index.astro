@@ -160,14 +160,14 @@ const formatDate = (iso: string) => {
       });
 
       // 草稿與最後的結果用同一個框。renderMarkdown 先 escape 再套 markdown，可以放進 innerHTML。
-      // 回答裡的標題接在框裡的 h3「AI 推薦結果」底下。
-      function setResultText(box, markdown) {
-        box.querySelector('.ai-result-text').innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 4 });
+      // 回答裡的標題接在框裡的 h3「AI 推薦結果」底下。partial 表示文字沒寫完（草稿、斷掉的回答）。
+      function setResultText(box, markdown, partial) {
+        box.querySelector('.ai-result-text').innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 4, partial: partial });
       }
 
-      function createResultBox(markdown) {
+      function createResultBox(markdown, partial) {
         var box = resultTemplate.content.firstElementChild.cloneNode(true);
-        setResultText(box, markdown);
+        setResultText(box, markdown, partial);
         return box;
       }
 
@@ -222,9 +222,9 @@ const formatDate = (iso: string) => {
           var draft = null;
           var draw = function(_, text) {
             if (draft) {
-              setResultText(draft, text);
+              setResultText(draft, text, true);
             } else {
-              draft = createResultBox(text);
+              draft = createResultBox(text, true);
               workspace.appendChild(draft);
             }
           };
@@ -243,7 +243,7 @@ const formatDate = (iso: string) => {
           var text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(err);
           // 錯誤帶著已經收到的答案（沒寫完、斷線、逾時、接續輪忙線）：標明沒有寫完，放在訊息上面
           if (err && err.partial) {
-            var partialBox = createResultBox(err.partial);
+            var partialBox = createResultBox(err.partial, true);
             partialBox.querySelector('h3').textContent = 'AI 推薦結果（沒有寫完）';
             resultsArea.appendChild(partialBox);
           }

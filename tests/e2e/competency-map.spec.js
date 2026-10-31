@@ -387,6 +387,17 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(answer.getByRole('listitem')).toHaveText(['A2 系統思考與解決問題：寫出失敗的原因。', 'A3 規劃執行與創新應變：寫出怎麼調整。']);
     });
 
+    test('回答停在「**A2 系統思考」就斷了 → 草稿與沒寫完的回答都不留字面的 **', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題')], hang: true });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        await expect(page.locator('#ai-work .prose ul > li')).toHaveText(['A2 系統思考與解決問題']);
+        await push(page, sse('error', { code: 'incomplete', message: '沒寫完' }));
+        const answer = page.locator('#ai-result .prose');
+        await expect(answer.locator('ul > li')).toHaveText(['A2 系統思考與解決問題']);
+        await expect(answer).not.toContainText('*');
+    });
+
     test('閘道只回 done、沒有片段 → 直接顯示答案', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done('* **B1 符號運用與溝通表達**：上台報告的經驗很加分！')] });
         await page.fill('#ai-input', '科展');
