@@ -220,10 +220,10 @@
       "books": [
         {
           "title": "德國一流大學教你數學家的22個思考工具",
-          "original_title": "Mathematik - Das ist doch keine Kunst!",
+          "original_title": "Das kleine Einmaleins des klaren Denkens",
           "original_lang": "de",
-          "author": "克莉絲蒂安‧赫塞（Christian Hesse）",
-          "isbn": "9789862356395",
+          "author": "克里斯昂‧赫塞（Christian Hesse）",
+          "isbn": "9789865671907",
           "recommendation": "介紹鴿籠原理、排容原理等22個數學思考工具，並用生活例子說明，幫助高中生把數學思維用在課本之外。",
           "tags": [
             "數學",
@@ -292,7 +292,7 @@
           "original_title": "Basic Economics: A Common Sense Guide to the Economy",
           "original_lang": "en",
           "author": "湯瑪斯‧索維爾（Thomas Sowell）",
-          "isbn": "9789573288343",
+          "isbn": "9786267261743",
           "recommendation": "沒有圖表與公式，純粹用文字與生活案例講透經濟學核心觀念，是高中生自學經濟學最易讀的入門書。",
           "tags": [
             "經濟",
@@ -473,7 +473,7 @@
           "original_title": "君たちはどう生きるか",
           "original_lang": "ja",
           "author": "吉野源三郎",
-          "isbn": "9789861342184",
+          "isbn": "9789861343297",
           "recommendation": "以少年與舅舅的對話探討友情、貧富、勇氣與人之所以為人的價值，宮崎駿為它復出，是青少年自我探索的經典。",
           "tags": [
             "人生",
@@ -622,7 +622,7 @@
           "original_title": "君たちはどう生きるか",
           "original_lang": "ja",
           "author": "吉野源三郎",
-          "isbn": "9789861342184",
+          "isbn": "9789861343297",
           "recommendation": "以少年與舅舅的對話探討友情、貧富、勇氣與人之所以為人的價值，宮崎駿為它復出，是青少年自我探索的經典。",
           "tags": [
             "人生",
@@ -650,11 +650,11 @@
           ]
         },
         {
-          "title": "如何避免氣候災難：結合科技與商業的全面行動計畫",
+          "title": "如何避免氣候災難：結合科技與商業的奇蹟，全面啟動淨零碳新經濟",
           "original_title": "How to Avoid a Climate Disaster",
           "original_lang": "en",
           "author": "比爾‧蓋茲（Bill Gates）",
-          "isbn": "9789865258436",
+          "isbn": "9789863986515",
           "recommendation": "用清楚的數字拆解碳排放從何而來，並提出具體的減碳路徑，幫助高中生理性、全面地理解氣候議題。",
           "tags": [
             "氣候變遷",
@@ -733,11 +733,11 @@
           ]
         },
         {
-          "title": "法國高中生哲學讀本1：政府是人民的主人還是僕人？",
+          "title": "法國高中生哲學讀本1：政府是人民的主人還是僕人？探討政治的哲學之路",
           "original_title": "Passerelles: Philosophie Terminales L.ES.S",
           "original_lang": "fr",
           "author": "侯貝（Blanche Robert）等",
-          "isbn": "9789864890439",
+          "isbn": "9789869274173",
           "recommendation": "翻譯自法國高中哲學教材，以政治哲學為主題示範完整的思辨流程，讓台灣高中生體驗哲學作為公民教育的樣貌。",
           "tags": [
             "哲學",
