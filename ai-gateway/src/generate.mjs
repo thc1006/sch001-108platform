@@ -1,5 +1,5 @@
 /**
- * 自動續寫引擎：WinLab 單次輸出有長度上限（8192 tokens，含思考），xhigh 想得深的題目
+ * 自動續寫引擎：每一輪的輸出有長度上限（LLM_MAX_TOKENS，預設 8192 tokens，含思考），xhigh 想得深的題目
  * 一輪可能寫不完。這裡把「被截斷（finish_reason = length）」接成下一輪，直到答案寫完、
  * 或用完 LLM_MAX_ROUNDS。
  *

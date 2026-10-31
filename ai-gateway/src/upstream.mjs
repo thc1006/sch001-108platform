@@ -3,7 +3,7 @@
  * 收完回傳這一輪的思考、正文、結束原因與用量。
  *
  * 一律用串流（stream: true）：
- *   - xhigh 一輪最多 8192 tokens，以實測約 46 tokens/s 計要三分鐘；串流才能
+ *   - xhigh 一輪最多 LLM_MAX_TOKENS（預設 8192 tokens），以實測約 46 tokens/s 計要三分鐘；串流才能
  *     邊收邊回報進度，也才分得出「還在想」和「卡死了」（閒置逾時）。
  *   - 被截斷時要知道是斷在思考還是斷在正文（generate.mjs 的接續策略不同），
  *     而思考內容只出現在串流的 delta.reasoning_content。
