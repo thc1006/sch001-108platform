@@ -132,7 +132,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     });
 
                     card.innerHTML = `
-                        <img src="${encodeURI(course.thumbnail_url)}" alt="${escapeHtml(course.title)}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                        <img src="${encodeURI(course.thumbnail_url)}" alt="" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                         <div class="p-6 flex-grow flex flex-col">
                             <div class="flex-grow">
                                 <div class="flex justify-between items-center mb-2">
