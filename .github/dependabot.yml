@@ -56,3 +56,25 @@ updates:
         patterns:
           - 'astro'
           - '@astrojs/*'
+
+  # AI 閘道映像檔的基底（Containerfile 的 FROM），版本與 digest 一起升。
+  # Dependabot 認得 Containerfile 這個檔名（dependabot-core#11141）。
+  - package-ecosystem: 'docker'
+    directory: '/ai-gateway/deploy/k3s'
+    # 同目錄的 Kubernetes manifest 也會被當成映像檔來源；裡面的 image 是本機建的，Dependabot 查不到。
+    exclude-paths:
+      - '*.yaml'
+      - '*.yml'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(ai-gateway)'
+    # Docker 只支援 default-days。
+    cooldown:
+      default-days: 7
+    # Node 主版本要人工升（.node-version、Containerfile 的註解要一起改）。
+    ignore:
+      - dependency-name: 'library/node'
+        update-types: ['version-update:semver-major']
