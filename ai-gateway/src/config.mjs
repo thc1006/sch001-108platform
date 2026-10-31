@@ -18,7 +18,7 @@
  *   LLM_REASONING_EFFORT    思考強度，WinLab 只收 none／low／medium／xhigh（預設 xhigh；不分大小寫）
  *   LLM_CONTINUATION_EFFORT 接續輪的思考強度（預設 none，理由見 generate.mjs）
  *   LLM_MAX_TOKENS          每一輪的 max_tokens 上限，含思考（預設 8192 = WinLab 單次上限）
- *   LLM_CONTEXT_TOKENS      模型的 context 長度（預設 32768，2026-10-21 實測）
+ *   LLM_CONTEXT_TOKENS      模型的 context 長度（預設 65536，2026-10-31 實測）
  *   LLM_MAX_ROUNDS          被截斷時連同第一輪最多跑幾輪（預設 3）
  *   LLM_TASK_TIMEOUT_MS     一個任務所有輪合計的時限（預設 900000 = 15 分鐘）
  *   LLM_IDLE_TIMEOUT_MS     上游多久沒有進展就當成卡死（預設 180000，上限 300000）。收到標頭之前看有沒有
@@ -197,7 +197,8 @@ export function loadLlmConfig(env = process.env, { warn = (msg) => console.warn(
         // 一定要送 max_tokens：不送的話 WinLab 閘道預設只給 2048，思考完答案就被截斷
         // （ahp-match 實際踩過）
         maxTokens: toInt(env, 'LLM_MAX_TOKENS', WINLAB_MAX_TOKENS, 1, WINLAB_MAX_TOKENS, warn),
-        contextTokens: toInt(env, 'LLM_CONTEXT_TOKENS', 32_768, 4_096, 1_048_576, warn),
+        // 2026-10-31 實測：輸入 60016 tokens 收，65529 加上輸出 8 回 400；GET /v1/models 的 max_input_tokens 是 65536
+        contextTokens: toInt(env, 'LLM_CONTEXT_TOKENS', 65_536, 4_096, 1_048_576, warn),
         maxRounds: toInt(env, 'LLM_MAX_ROUNDS', 3, 1, 8, warn),
         // setTimeout 最多 2^31-1 毫秒，超過會變成馬上觸發
         taskTimeoutMs: toInt(env, 'LLM_TASK_TIMEOUT_MS', 900_000, 10_000, 2_147_483_647, warn),

@@ -35,6 +35,9 @@ function expectedMaxTokens(base, instruction, parts) {
     return Math.min(8192, BUDGET.ctx - fixed - carried - (BUDGET.safety + Math.ceil(carried * BUDGET.ratio)));
 }
 
+// 2026-10-31 直接呼叫 WinLab：輸入 65529 tokens、max_tokens 8 時 400 的訊息（開頭的一段）
+const WINLAB_OVERFLOW_2026_10_31 = "This model's maximum context length is 65536 tokens. However, you requested 8 output tokens and your prompt contains at least 65529 input tokens";
+
 // vLLM 以 context 長度拒絕時，經 LiteLLM 與 redact 之後的錯誤內容（2026-10-21 實測的格式）
 function overflowError(prompt, limit = 32768) {
     return new UpstreamError('misconfigured', 'LLM 服務回應 HTTP 400', {
@@ -151,6 +154,11 @@ test('parseContextOverflow：認得 vLLM 經 LiteLLM 的 context 長度錯誤；
     assert.equal(parseContextOverflow(new UpstreamError('misconfigured', 'x', { status: 400, detail: '單次輸出上限為 8192 tokens(含思考)' })), null);
     assert.equal(parseContextOverflow(new UpstreamError('unavailable', 'x', { status: 502, detail: overflowError(1).detail })), null);
     assert.equal(parseContextOverflow(new Error('x')), null);
+});
+
+test('parseContextOverflow：2026-10-31 WinLab 改成 65536 context 之後的訊息照樣認得', () => {
+    const err = new UpstreamError('misconfigured', 'LLM 服務回應 HTTP 400', { status: 400, detail: WINLAB_OVERFLOW_2026_10_31 });
+    assert.deepEqual(parseContextOverflow(err), { limit: 65536, atLeast: 65529 });
 });
 
 test('trimOverlap：中文斷在詞中間、下一輪從整個詞重寫', () => {
