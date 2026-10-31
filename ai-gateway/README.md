@@ -19,8 +19,7 @@
 設定全部來自環境變數，啟動時讀一次。清單與預設值寫在 `src/config.mjs` 的檔頭與
 `loadServerConfig` 上方，範圍見各個 `toInt` 的引數；k3s 上的值在 `deploy/k3s/app.yaml`。
 數值不合法時退回預設並警告；key 或 `LLM_UPSTREAM` 不合法時當成沒有設定，`/readyz` 回 503。
-`AI_BLOCK_SOURCES` 的位址不進 git，先跑 `ai-gateway/deploy/k3s/terminating-pods.sh` 再用 `kubectl set env`
-設定（值要寫完整清單，會整串覆蓋），`AI_BLOCK_SOURCES-` 拿掉；生效的筆數看 START 的 `blockSources`。
+`AI_BLOCK_SOURCES` 的位址不進 git，用 `kubectl set env` 設定（會整串覆蓋），`AI_BLOCK_SOURCES-` 拿掉；生效的筆數看 START 的 `blockSources`。
 
 下面幾組值要一起改：
 
@@ -74,9 +73,6 @@ restricted，網路預設全部拒絕，開了哪些連線見 `namespace.yaml` �
 5. 把對外網址填進 repository variable `AI_GATEWAY_URL`，到 Actions 對 CI 按 Run workflow 重新
    部署網站。網站的 origin 要列在 `ALLOWED_ORIGINS`，否則瀏覽器的預檢會被擋下。
 
-主機上的其他程序與 hostNetwork 的 pod 連進閘道時，來源位址和 Funnel 相同，它們送的
-`X-Forwarded-For` 一樣會被採信。這是已知的取捨，見 `app.yaml` 的 `ai-gateway-ingress`。
-
 ### 換版
 
 `ai-gateway/deploy/k3s/build-image.sh` 以目前的 commit 當 tag 建映像檔並換版。建置用到的檔案與
@@ -87,8 +83,8 @@ manifest 要先 commit。腳本不 commit，也不還原 `app.yaml`；結束後�
 
 舊 pod 收到刪除之後，會把進行中的任務做完才結束，最多 920 秒。這段期間再換版，舊 pod、目前的
 pod 和新 pod 合計最多 12 個並行，不算 ahp-match 就已經超過 key 的 8 個上限。所以腳本遇到還在
-收尾的 pod 會列出來並停下，等它們從 `get pods` 消失再執行。`rollout restart` 與 `rollout undo`
-不經過這個檢查，執行前先跑 `ai-gateway/deploy/k3s/terminating-pods.sh`。等不了的時候在兩支腳本
+收尾的 pod 會列出來並停下，等它們從 `get pods` 消失再執行。`rollout restart`、`rollout undo` 與
+`set env` 不經過這個檢查，執行前先跑 `ai-gateway/deploy/k3s/terminating-pods.sh`。等不了的時候在兩支腳本
 前面加 `ALLOW_ROLLOUT_OVERLAP=1`，照樣列出但不停下。代價是 WinLab 可能回 429：第一輪遇到的學生
 看到忙線，接續輪退避重試。
 
@@ -124,12 +120,11 @@ ai-gateway/deploy/k3s/terminating-pods.sh && sudo k3s kubectl -n sch001-ai rollo
 
 ```bash
 ai-gateway/deploy/k3s/terminating-pods.sh && sudo k3s kubectl -n sch001-ai rollout undo deployment/ai-gateway
-git checkout ai-gateway/deploy/k3s/app.yaml
 ```
 
 Deployment 只留一個舊的 ReplicaSet，`rollout undo` 只退得回它。`rollout restart` 與 `set env` 也會
-產生新的 ReplicaSet：restart 之後直接 undo 只會退回同一版，set env 之後 undo 會拿掉剛設的
-`AI_BLOCK_SOURCES`；換版逾時、沒有 undo 就再換版的話，undo 退回的是逾時的那一版。
+產生新的 ReplicaSet，之後的 undo 退回同一個映像檔，只拿掉剛設的值；逾時後沒有 undo 就再換版的話，
+undo 退回的是逾時的那一版。
 
 ### 檢查
 
