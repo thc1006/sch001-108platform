@@ -1850,18 +1850,20 @@ test('Expect: 100-continue：提早的檢查沒過就直接回最終結果，不
     }
 });
 
-test('Expect: 100-continue：檢查都過了才回 100 Continue，送完 body 照常串流', async () => {
+test('Expect: 100-continue：檢查都過了才回 100 Continue，送完 body 照常串流；大小寫、空白與夾在其他期望裡的寫法也一樣', async () => {
     const gw = await startGateway();
     try {
-        const socket = await rawSocket(gw.port);
-        const body = JSON.stringify({ input: { topic: 'x' } });
-        socket.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\n` +
-            `Content-Length: ${body.length}\r\nExpect: 100-continue\r\n\r\n`);
-        await waitFor(() => socket.text.includes('100 Continue'));
-        socket.write(body);
-        await waitFor(() => socket.text.includes('event: done'));
-        assert.match(socket.text, /^HTTP\/1\.1 100 Continue\r\n\r\nHTTP\/1\.1 200/);
-        socket.destroy();
+        for (const expect of ['100-continue', '100-Continue ', 'foo, 100-continue']) {
+            const socket = await rawSocket(gw.port);
+            const body = JSON.stringify({ input: { topic: 'x' } });
+            socket.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\n` +
+                `Content-Length: ${body.length}\r\nExpect: ${expect}\r\n\r\n`);
+            await waitFor(() => socket.text.includes('100 Continue'));
+            socket.write(body);
+            await waitFor(() => socket.text.includes('event: done'));
+            assert.match(socket.text, /^HTTP\/1\.1 100 Continue\r\n\r\nHTTP\/1\.1 200/, expect);
+            socket.destroy();
+        }
     } finally {
         await gw.stop();
     }
