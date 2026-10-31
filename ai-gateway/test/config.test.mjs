@@ -10,7 +10,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { loadLlmConfig, configProblems, EFFORTS, WINLAB_MAX_TOKENS, MAX_IDLE_TIMEOUT_MS } from '../src/config.mjs';
+import { loadLlmConfig, configProblems, EFFORTS, DEFAULT_MAX_TOKENS, MAX_TOKENS_LIMIT, MAX_IDLE_TIMEOUT_MS } from '../src/config.mjs';
 import { streamChat } from '../src/upstream.mjs';
 import { startFakeUpstream } from './fake-upstream.mjs';
 
@@ -46,7 +46,8 @@ test('預設值：xhigh、8192、65536 context、3 輪、15 分鐘', () => {
         taskTimeoutMs: 900_000,
         idleTimeoutMs: 180_000,
     });
-    assert.equal(WINLAB_MAX_TOKENS, 8192);
+    assert.equal(DEFAULT_MAX_TOKENS, 8192);
+    assert.equal(MAX_TOKENS_LIMIT, 16384);
     assert.equal(MAX_IDLE_TIMEOUT_MS, 300_000);
 });
 
@@ -99,7 +100,7 @@ test('WinLab 只收 none／low／medium／xhigh；不分大小寫；其他值退
 
 test('整數的上下界：剛好在界上接受，超出一格就退回預設', () => {
     const cases = [
-        ['LLM_MAX_TOKENS', 'maxTokens', 1, 8192, 8192],
+        ['LLM_MAX_TOKENS', 'maxTokens', 1, 16_384, 8192],
         ['LLM_MAX_ROUNDS', 'maxRounds', 1, 8, 3],
         ['LLM_CONTEXT_TOKENS', 'contextTokens', 4096, 1_048_576, 65536],
         ['LLM_TASK_TIMEOUT_MS', 'taskTimeoutMs', 10_000, 2_147_483_647, 900_000],

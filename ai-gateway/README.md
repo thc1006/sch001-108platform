@@ -22,10 +22,11 @@
 
 下面幾組值要一起改：
 
-- `LLM_MAX_ROUNDS`、`LLM_TASK_TIMEOUT_MS`、`SHUTDOWN_GRACE_MS`：任務的時限要容得下所有輪數；
-  換版時要等進行中的任務做完，所以 `SHUTDOWN_GRACE_MS` 不能比任務時限短（比較短時啟動會記
-  `CONFIG`）。`app.yaml` 的 `terminationGracePeriodSeconds` 要再多出 preStop 的 5 秒與收尾的
-  6 秒；前端 `public/shared/platform-ai.js` 的 `DEFAULT_TASK_TIMEOUT_MS` 要比 `BODY_TIMEOUT_MS`、
+- `LLM_MAX_ROUNDS`、`LLM_MAX_TOKENS`、`LLM_TASK_TIMEOUT_MS`、`SHUTDOWN_GRACE_MS`：任務的時限要
+  容得下所有輪數，每一輪最長是 `LLM_MAX_TOKENS`；換版時要等進行中的任務做完，所以
+  `SHUTDOWN_GRACE_MS` 不能比任務時限短（比較短時啟動會記 `CONFIG`）。`app.yaml` 的
+  `terminationGracePeriodSeconds` 要再多出 preStop 的 5 秒與收尾的 6 秒；前端
+  `public/shared/platform-ai.js` 的 `DEFAULT_TASK_TIMEOUT_MS` 要比 `BODY_TIMEOUT_MS`、
   `QUEUE_TIMEOUT_MS` 與任務時限加起來更長（不夠長時啟動會記 `CONFIG`）。
 - `HEARTBEAT_MS` 與 `platform-ai.js` 的 `IDLE_TIMEOUT_MS`：前端 60 秒沒收到任何位元組就當成斷線，
   所以心跳最慢 30 秒一次。
