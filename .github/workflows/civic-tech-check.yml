@@ -1,7 +1,7 @@
 name: Civic Tech Map Data Check
 
-# 公民科技專案地圖看門狗：每週檢查 civic-tech-map/projects.json，
-# 若有欄位錯誤、連結問題或需查證的休眠專案，自動開 / 更新一個 issue 提醒維護者。
+# 公民科技專案看門狗：每週檢查 civic-tech-map/projects.json，
+# 若有欄位錯誤、連結問題、需查證的休眠專案或過了 recheckAfter 的專案，自動開 / 更新一個 issue 提醒維護者。
 # 本 workflow 只讀取資料、不修改檔案，不會產生 commit 或 PR。
 
 on:
@@ -121,7 +121,7 @@ jobs:
               ;;
             create)
               url=$(gh issue create \
-                --title "公民科技專案地圖資料需要更新（自動偵測）" \
+                --title "公民科技專案資料需要更新（自動偵測）" \
                 --label civic-tech-watchdog \
                 --body-file issue-body.md)
               echo "沒有可接管的 issue，已新開：$url"

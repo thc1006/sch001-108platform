@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 公民科技專案地圖資料看門狗，檢查 public/civic-tech-map/projects.json：
+ * 公民科技專案資料看門狗，檢查 public/civic-tech-map/projects.json：
  *   1. JSON 格式與必填欄位是否正確
  *   2. id 格式（小寫英數與連字號）與唯一性
  *   3. status 欄位值是否在允許清單內
@@ -9,21 +9,23 @@
  *      - sdgs 須為 1-17 的整數
  *      - tags（議題關鍵字）選填，填了就必須是不重複的非空字串陣列
  *      - 合法代碼的唯一來源是 scripts/taxonomy.json，與搜尋索引共用同一份
- *   5. url 是否為合法的 http(s) 連結
- *   6. 哪些專案 status 為 dormant（近期活動較少，需提醒讀者查證最新狀態）
+ *   5. url、tools 與 source 裡的 url 是否為合法的 http(s) 連結
+ *   6. sourceCheckedAt、recheckAfter 是否為實際存在的日期
+ *   7. 哪些專案 status 為 dormant（近期活動較少，需提醒讀者查證最新狀態），
+ *      哪些專案已經過了 recheckAfter
  *
  * 由 .github/workflows/civic-tech-check.yml 每週執行；發現「欄位錯誤」或
- * 「有 dormant 專案」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
+ * 「有 dormant 專案」「過了 recheckAfter」時，workflow 會自動開 / 更新一個 issue 提醒維護者。
  *
  * 本機執行：  node scripts/check-civic-tech.mjs
  */
 
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 
+import { isRealDate } from './admission-cycle.lib.mjs';
 import { validateTaxonomyFields } from './taxonomy.lib.mjs';
 
-// 公民科技專案資料的單一家為 public/(會被 astro build 複製進 dist/);
-// 看門狗讀此處,並與 src/pages/civic-tech-map/index.astro 頁面內容對應。
+// 公民科技專案資料放在 public/（會被 astro build 複製進 dist/），頁面在建置時讀同一份。
 //
 // CIVIC_TECH_DATA / CIVIC_TECH_REPORT 可改指到別的檔案。故障注入需要一份可以
 // 隨意破壞的副本,絕不能動到版控裡的那一份(與 check-built-site.mjs 的 SITE_DIST
@@ -33,7 +35,7 @@ const DATA_PATH = process.env.CIVIC_TECH_DATA
 const REPORT_PATH = process.env.CIVIC_TECH_REPORT || 'civic-tech-report.md';
 
 // 必填文字欄位:必須存在且為非空字串
-const TEXT_FIELDS = ['id', 'name', 'org', 'url', 'description'];
+const TEXT_FIELDS = ['id', 'name', 'title', 'theme', 'org', 'url', 'description', 'topic', 'steps', 'sourceCheckedAt'];
 // 必填陣列欄位：必須存在且為陣列。competencies / sdgs / tags 三個分類欄位由
 // scripts/taxonomy.lib.mjs 的 validateTaxonomyFields 一手負責，避免同一個欄位
 // 有兩個檢查者卻各報一次錯。
@@ -47,7 +49,7 @@ const ID_RE = /^[a-z0-9-]+$/;
 async function fail(message) {
     console.error(`❌ ${message}`);
     const report = [
-        '## 公民科技專案地圖資料檢查報告',
+        '## 公民科技專案資料檢查報告',
         '',
         '### ❌ 致命錯誤：projects.json 無法檢查',
         '',
@@ -87,6 +89,25 @@ const taipeiToday = new Intl.DateTimeFormat('en-CA', {
 const schemaErrors = [];
 const linkWarnings = [];
 const dormant = [];
+const recheck = [];
+
+/** checkUrl 檢查 value 是 http(s) 網址，錯誤推進 schemaErrors，http 推進 linkWarnings。 */
+function checkUrl(value, where) {
+    let parsed = null;
+    try {
+        parsed = new URL(value);
+    } catch {
+        // 下面報錯
+    }
+    if (!parsed) {
+        schemaErrors.push(`${where}「${value}」不是合法的 URL`);
+    } else if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        schemaErrors.push(`${where}「${value}」必須使用 http 或 https 通訊協定`);
+    } else if (parsed.protocol === 'http:') {
+        // http 連結可運作但不安全，列入提醒供維護者升級為 https
+        linkWarnings.push(`${where}使用未加密的 http，建議改用 https：${value}`);
+    }
+}
 const seenIds = new Set();
 
 list.forEach((proj, index) => {
@@ -145,6 +166,53 @@ list.forEach((proj, index) => {
         requireSdgs: true,
     });
 
+    if (typeof proj.sourceCheckedAt === 'string' && proj.sourceCheckedAt.trim() && !isRealDate(proj.sourceCheckedAt)) {
+        schemaErrors.push(`「${label}」的 sourceCheckedAt「${proj.sourceCheckedAt}」不是實際存在的 YYYY-MM-DD 日期`);
+    }
+
+    // recheckAfter 選填：要配上 recheckNote 寫為什麼，過了這天列進報告提醒重查
+    if ('recheckAfter' in proj) {
+        if (!isRealDate(proj.recheckAfter)) {
+            schemaErrors.push(`「${label}」的 recheckAfter「${proj.recheckAfter}」不是實際存在的 YYYY-MM-DD 日期`);
+        } else if (taipeiToday > proj.recheckAfter) {
+            recheck.push({ label, after: proj.recheckAfter, note: proj.recheckNote });
+        }
+        if (typeof proj.recheckNote !== 'string' || !proj.recheckNote.trim()) {
+            schemaErrors.push(`「${label}」有 recheckAfter，recheckNote 必須是非空字串`);
+        }
+    } else if ('recheckNote' in proj) {
+        schemaErrors.push(`「${label}」有 recheckNote 卻沒有 recheckAfter，沒有日期就不會提醒`);
+    }
+
+    // source 選填：{ text, url }，資料不是取自官網時寫出處
+    if ('source' in proj) {
+        const src = proj.source;
+        if (src === null || typeof src !== 'object' || typeof src.text !== 'string' || !src.text.trim() || typeof src.url !== 'string' || !src.url.trim()) {
+            schemaErrors.push(`「${label}」的 source 必須有非空字串的 text 與 url`);
+        } else {
+            checkUrl(src.url, `「${label}」的 source.url`);
+        }
+    }
+
+    // tools：至少一項，每項要有 name；url、note 選填，填了就要是非空字串
+    if (!Array.isArray(proj.tools) || proj.tools.length === 0) {
+        schemaErrors.push(`「${label}」的 tools 必須是至少一項的陣列`);
+    } else {
+        proj.tools.forEach((tool, i) => {
+            const where = `「${label}」的 tools 第 ${i + 1} 項`;
+            if (tool === null || typeof tool !== 'object' || typeof tool.name !== 'string' || !tool.name.trim()) {
+                schemaErrors.push(`${where}要有非空字串的 name`);
+                return;
+            }
+            for (const key of ['url', 'note']) {
+                if (key in tool && (typeof tool[key] !== 'string' || !tool[key].trim())) {
+                    schemaErrors.push(`${where}的 ${key} 填了就必須是非空字串`);
+                }
+            }
+            if (typeof tool.url === 'string' && tool.url.trim()) checkUrl(tool.url, `${where}的 url`);
+        });
+    }
+
     // status:必填,且須在允許清單內
     if (!('status' in proj)) {
         schemaErrors.push(`「${label}」缺少欄位：status`);
@@ -154,35 +222,20 @@ list.forEach((proj, index) => {
         dormant.push({ label, url: typeof proj.url === 'string' ? proj.url : '' });
     }
 
-    // url:須為合法的 http(s) 連結
-    if (typeof proj.url === 'string' && proj.url.trim() !== '') {
-        let parsed;
-        try {
-            parsed = new URL(proj.url);
-        } catch {
-            parsed = null;
-        }
-        if (!parsed) {
-            schemaErrors.push(`「${label}」的 url「${proj.url}」不是合法的 URL`);
-        } else if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-            schemaErrors.push(`「${label}」的 url「${proj.url}」必須使用 http 或 https 通訊協定`);
-        } else if (parsed.protocol === 'http:') {
-            // http 連結可運作但不安全,列入提醒供維護者升級為 https
-            linkWarnings.push(`「${label}」的 url 使用未加密的 http,建議改用 https：${proj.url}`);
-        }
-    }
+    if (typeof proj.url === 'string' && proj.url.trim() !== '') checkUrl(proj.url, `「${label}」的 url`);
 });
 
-const needsAttention = schemaErrors.length > 0 || dormant.length > 0 || linkWarnings.length > 0;
+const needsAttention = schemaErrors.length > 0 || dormant.length > 0 || linkWarnings.length > 0 || recheck.length > 0;
 
 console.log(`公民科技專案資料檢查（資料版本 ${data.lastUpdated || '未標記'}）`);
 console.log(`  專案總數：${list.length}`);
 console.log(`  欄位錯誤：${schemaErrors.length}`);
 console.log(`  連結提醒：${linkWarnings.length}`);
 console.log(`  待查證　：${dormant.length}（status 為 dormant）`);
+console.log(`  該重查　：${recheck.length}（過了 recheckAfter）`);
 
 // Markdown 報告，workflow 用它開 issue 或在既有 issue 留言。
-const lines = ['## 公民科技專案地圖資料檢查報告', ''];
+const lines = ['## 公民科技專案資料檢查報告', ''];
 lines.push(`- 檢查日期：${taipeiToday}（台灣時間）`);
 lines.push(`- 資料最後更新：${data.lastUpdated || '未標記'}`);
 lines.push(`- 專案總數：${list.length}`);
@@ -203,6 +256,11 @@ if (dormant.length) {
     for (const d of dormant) lines.push(`- **${d.label}**${d.url ? `　${d.url}` : ''}`);
     lines.push('');
 }
+if (recheck.length) {
+    lines.push('### 🔁 過了 recheckAfter 的專案（請重新查證，更新資料與 recheckAfter）', '');
+    for (const x of recheck) lines.push(`- **${x.label}**（recheckAfter ${x.after}）：${x.note}`);
+    lines.push('');
+}
 if (!needsAttention) {
     lines.push('✅ 一切正常，沒有欄位錯誤、連結問題或待查證項目。', '');
 }
@@ -214,7 +272,7 @@ if (process.env.GITHUB_OUTPUT) {
 }
 
 // 欄位錯誤屬於資料結構問題,需以非零碼結束讓 CI 顯示紅燈;
-// dormant 與連結提醒只是維護提醒,不算建置失敗,以零碼結束。
+// dormant、該重查與連結提醒只是維護提醒，不算建置失敗，以零碼結束。
 if (schemaErrors.length) {
     console.error('→ 有欄位錯誤,請修正 projects.json。');
     process.exit(1);
