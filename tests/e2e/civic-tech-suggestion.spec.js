@@ -193,7 +193,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         });
     }
 
-    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、斷線、逾時、接續輪忙線），標明沒有寫完
     const PARTIAL_ERRORS = [
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
@@ -314,7 +314,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         await expect(button).toBeFocused();
     });
 
-    test('串流在 done 之前就斷了 → 草稿移除，結果區用紅字顯示連線中斷', async ({ page }) => {
+    test('串流在 done 之前就斷了 → 已收到的部分標明沒有寫完、留在結果區，連線中斷的紅字訊息接在下面；草稿移除', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**')], hang: true });
         await page.fill('#ai-interest-input', '假訊息');
         await page.click('#ai-submit-btn');
@@ -323,8 +323,12 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         // 等草稿出現才結束串流（等於閘道重啟、通道斷線），才驗得到草稿有被移除。
         await expect(workspace.locator('.ai-result-text strong')).toHaveText(['Cofacts 真的假的']);
         await page.evaluate(() => window.__stream.end());
-        await expect(results).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
-        await expect(results.locator('p')).toHaveClass(/text-red-700/);
+        const boxes = results.locator(':scope > div');
+        await expect(boxes).toHaveCount(2);
+        await expect(boxes.nth(0).locator('h3')).toHaveText('AI 推薦結果（沒有寫完）');
+        await expect(boxes.nth(0).locator('.ai-result-text strong')).toHaveText(['Cofacts 真的假的']);
+        await expect(boxes.nth(1)).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
+        await expect(boxes.nth(1).locator('p')).toHaveClass(/text-red-700/);
         await expect(workspace.locator('*')).toHaveCount(0);
         await expect(page.locator('#ai-submit-btn')).toBeEnabled();
     });

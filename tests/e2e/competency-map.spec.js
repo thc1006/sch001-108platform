@@ -175,7 +175,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         });
     }
 
-    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、斷線、逾時、接續輪忙線），標明沒有寫完
     const PARTIAL_ERRORS = [
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
@@ -295,7 +295,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(button).toBeFocused();
     });
 
-    test('草稿出現後串流沒等到 done 就結束 → 草稿移除，顯示連線中斷的錯誤訊息', async ({ page }) => {
+    test('草稿出現後串流沒等到 done 就結束 → 已收到的部分標明沒有寫完、留在 #ai-result，連線中斷的紅字訊息接在下面；草稿移除', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**')], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
@@ -305,8 +305,10 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
 
         // 閘道重啟、通道斷線時，串流就是這樣結束。
         await page.evaluate(() => window.__stream.end());
-        await expect(result).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
-        await expect(result.locator('p')).toHaveClass(/text-red-700/);
+        await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
+        await expect(result.locator('.prose strong')).toHaveText(['A2 系統思考與解決問題']);
+        await expect(result.locator(':scope > p')).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
+        await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
         await expect(work).toBeEmpty();
         await expect(page.locator('#ai-generate-btn')).toBeEnabled();
     });

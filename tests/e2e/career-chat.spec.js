@@ -221,23 +221,25 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
-    test('串流在 done 之前就斷了 → 草稿移除，紀錄裡出現連線中斷的錯誤訊息；之後還能再問', async ({ page }) => {
+    test('串流在 done 之前就斷了 → 已收到的部分標明沒有寫完、進了紀錄，紀錄裡出現連線中斷的錯誤訊息；草稿移除，之後還能再問', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
         await ask(page, '我喜歡電腦');
         await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
 
         // 草稿出現之後才結束串流，等於閘道重啟、通道斷線。
         await page.evaluate(() => window.__stream.end());
-        const notice = aiText(page, 2);
+        await expect(messages(page).nth(2).locator('.chat-bubble-ai span')).toHaveText('AI 的回答（沒有寫完）');
+        await expect(aiText(page, 2)).toHaveText('推薦你 資訊學群');
+        const notice = aiText(page, 3);
         await expect(notice).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
         await expect(notice).toHaveClass(/text-red-700/);
         await expect(draft(page)).toHaveCount(0);
         await expect(page.locator('#chat-submit')).toBeEnabled();
 
         await ask(page, '那數學呢？');
-        await expect(messages(page).nth(3)).toHaveText('那數學呢？');
+        await expect(messages(page).nth(4)).toHaveText('那數學呢？');
         await push(page, done('推薦你 **工程學群**。'));
-        await expect(aiText(page, 4).locator('strong')).toHaveText(['工程學群']);
+        await expect(aiText(page, 5).locator('strong')).toHaveText(['工程學群']);
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
@@ -255,7 +257,7 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         });
     }
 
-    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、逾時、接續輪忙線），標明沒有寫完
+    // 錯誤帶著已經收到、看得見的答案時都留下來（沒寫完、斷線、逾時、接續輪忙線），標明沒有寫完
     const PARTIAL_ERRORS = [
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
