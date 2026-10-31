@@ -72,6 +72,17 @@ test.describe('部署產物 smoke test', () => {
         await expect(feedback.getByRole('link', { name: 'hctsai@linux.com', exact: true })).toHaveAttribute('href', 'mailto:hctsai@linux.com');
     });
 
+    test('頁尾連到隱私權說明，說明頁的聯絡信箱和頁尾的一樣', async ({ page }) => {
+        const errors = watchForErrors(page);
+        await page.goto(P('/index.html'));
+        const mail = await page.locator('footer a[href^="mailto:"]').getAttribute('href');
+        await page.locator('footer').getByRole('link', { name: '隱私權說明', exact: true }).click();
+        await expect(page).toHaveURL(P('/privacy.html'));
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('隱私權說明');
+        await expect(page.locator(`main a[href="${mail}"]`)).toBeVisible();
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
+
     test('頁尾的問題回報連到關於我們的 #feedback，段落不在 header 底下', async ({ page }) => {
         for (const path of ['/index.html', '/career-exploration/clusters/law/index.html']) {
             await page.goto(P(path));
