@@ -282,6 +282,25 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => PlatformAI.renderMarkdown('- 一'))).toMatch(/^<ul [^>]*><li>一<\/li><\/ul>$/);
         });
 
+        // 頁面上已經有 v12 時，版號沒升的話這一份會提早返回，按 Esc 不會取消。
+        test('v12 已經在頁面上時，這一份照樣載入，焦點在功能區時按 Esc 會取消', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 12 };
+            });
+            await gotoFixture(page);
+            await page.evaluate(() => {
+                document.body.innerHTML = '<section id="scope"><input id="inside"><div id="box"></div></section>';
+                window.__cancelCount = 0;
+                PlatformAI.mountProgress(document.getElementById('box'), {
+                    onCancel: () => { window.__cancelCount++; },
+                    escapeScope: document.getElementById('scope'),
+                });
+            });
+            await page.locator('#inside').focus();
+            await page.keyboard.press('Escape');
+            expect(await page.evaluate(() => window.__cancelCount)).toBe(1);
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -2219,6 +2238,73 @@ test.describe('PlatformAI 共用 module', () => {
                 return { focused: document.activeElement === box, tabindex: box.getAttribute('tabindex') };
             });
             expect(after).toEqual({ focused: true, tabindex: '-1' });
+        });
+
+        test('焦點在 escapeScope 或進度區塊裡時按 Esc 等於按取消，只算一次，焦點不動；範圍外、輸入法選字中、已經被處理的 Esc 不算', async ({ page }) => {
+            await page.evaluate(() => {
+                document.body.innerHTML = '<input id="outside"><section id="scope"><input id="inside"><div id="box"></div></section>';
+                window.__cancelCount = 0;
+                window.__progress = PlatformAI.mountProgress(document.getElementById('box'), {
+                    onCancel: () => { window.__cancelCount++; },
+                    escapeScope: document.getElementById('scope'),
+                });
+            });
+            const count = () => page.evaluate(() => window.__cancelCount);
+            // 用 dispatchEvent 送出鍵盤真的按不出來的情況：選字中的 Esc、keyCode 229、別的 listener 已經處理過
+            const fakeEscape = (init, prevent) => page.evaluate(({ init, prevent }) => {
+                const input = document.getElementById('inside');
+                const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true, ...init });
+                if (init.keyCode) Object.defineProperty(e, 'keyCode', { get: () => init.keyCode });
+                const stop = (ev) => ev.preventDefault();
+                if (prevent) input.addEventListener('keydown', stop);
+                input.dispatchEvent(e);
+                input.removeEventListener('keydown', stop);
+            }, { init, prevent });
+
+            await page.locator('#outside').focus();
+            await page.keyboard.press('Escape');
+            expect(await count()).toBe(0);
+            await fakeEscape({ isComposing: true });
+            await fakeEscape({ keyCode: 229 });
+            await fakeEscape({}, true);
+            expect(await count()).toBe(0);
+
+            const inside = page.locator('#inside');
+            await inside.focus();
+            await page.keyboard.press('Escape');
+            await page.keyboard.press('Escape');
+            expect(await count()).toBe(1);
+            await expect(inside).toBeFocused();
+            const cancel = page.locator('#box').getByRole('button', { name: '取消' });
+            await expect(cancel).toHaveAttribute('aria-disabled', 'true');
+            await expect(cancel).toHaveAttribute('aria-keyshortcuts', 'Escape');
+        });
+
+        test('沒給 escapeScope 時只有焦點在進度區塊裡才算；finish() 之後按 Esc 不再呼叫 onCancel', async ({ page }) => {
+            await page.evaluate(() => {
+                document.body.innerHTML = '<input id="near"><div id="box"></div>';
+                window.__cancelCount = 0;
+                window.__progress = PlatformAI.mountProgress(document.getElementById('box'), { onCancel: () => { window.__cancelCount++; } });
+            });
+            const count = () => page.evaluate(() => window.__cancelCount);
+            await page.locator('#near').focus();
+            await page.keyboard.press('Escape');
+            expect(await count()).toBe(0);
+            await page.locator('#box').getByRole('button', { name: '取消' }).focus();
+            await page.keyboard.press('Escape');
+            expect(await count()).toBe(1);
+
+            await page.evaluate(() => {
+                window.__cancelCount = 0;
+                document.body.innerHTML = '<section id="scope"><input id="inside"><div id="box"></div></section>';
+                PlatformAI.mountProgress(document.getElementById('box'), {
+                    onCancel: () => { window.__cancelCount++; },
+                    escapeScope: document.getElementById('scope'),
+                }).finish();
+            });
+            await page.locator('#inside').focus();
+            await page.keyboard.press('Escape');
+            expect(await count()).toBe(0);
         });
 
         // 按鈕本來就能取得焦點，補上 tabindex="-1" 反而會被移出 Tab 的順序。
