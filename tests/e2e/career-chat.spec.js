@@ -136,6 +136,26 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         await expect(bubble.locator('li:not(ul > li, ol > li)')).toHaveCount(0);
     });
 
+    test('用輸入法選字時按 Enter 是確定選字，不送出；選完再按 Enter 才送出', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        const input = page.locator('#chat-input');
+        await input.fill('我喜歡畫畫');
+        // Chrome、Firefox 選字中的 keydown 帶 isComposing；Safari 結束選字的那個是 false，keyCode 是 229
+        await input.dispatchEvent('keydown', { key: 'Enter', isComposing: true });
+        await input.evaluate((el) => {
+            const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+            Object.defineProperty(e, 'keyCode', { get: () => 229 });
+            el.dispatchEvent(e);
+        });
+        await expect(messages(page)).toHaveCount(1);
+        await expect(input).toHaveValue('我喜歡畫畫');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+
+        await input.press('Enter');
+        await expect(messages(page).nth(1)).toHaveText('我喜歡畫畫');
+        expect(await page.evaluate(() => window.__calls.length)).toBe(1);
+    });
+
     test('連續問兩題：各送一個請求，body 只有這一題；每一題的草稿都接在紀錄後面，收到 done 就移除', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你')], hang: true });
         for (const [i, question] of ['我喜歡畫畫', '那如果我也喜歡數學呢？'].entries()) {
