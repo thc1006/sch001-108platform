@@ -1,0 +1,28 @@
+name: 連結失效
+description: 連結打不開，或連到不相關的網站。
+title: "[連結] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        這裡寫的內容和你的 GitHub 帳號名稱，任何人都看得到。請不要寫姓名、學校、班級、電話、電子郵件等個人資料，截圖也一樣。不想公開的話，可以寫信到 hctsai@linux.com。
+  - type: input
+    id: page
+    attributes:
+      label: 頁面網址
+      placeholder: https://thc1006.github.io/sch001-108platform/...
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: 哪一個連結
+      description: 連結上的文字或網址。
+    validations:
+      required: true
+  - type: input
+    id: result
+    attributes:
+      label: 點開後看到什麼
+      placeholder: 例如：404、網站打不開、轉到不相關的網站

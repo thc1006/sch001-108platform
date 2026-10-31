@@ -1,0 +1,50 @@
+name: AI 功能問題
+description: AI 功能出現錯誤訊息、沒有回應，或回答有問題。
+title: "[AI] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        這裡寫的內容和你的 GitHub 帳號名稱，任何人都看得到。請不要寫姓名、學校、班級、電話、電子郵件等個人資料，截圖也一樣。不想公開的話，可以寫信到 hctsai@linux.com。
+  - type: dropdown
+    id: feature
+    attributes:
+      label: 哪一個功能
+      options:
+        - AI 學涯導師（未來生涯GPS 2.0）
+        - AI 素養分析師（核心素養互動對照表）
+        - 找到你的公民科技切入點（公民科技專案地圖）
+        - AI 自主學習教練（自主學習啟航站）
+        - AI 個人化發想（主題靈感產生器）
+        - AI 計畫草擬工具（計畫範本庫）
+        - AI 學習路徑規劃師（學習資源地圖）
+        - AI 學習歷程健檢工具（學習歷程煉金室）
+        - AI 學習歷程健檢（反思引導提問集）
+    validations:
+      required: true
+  - type: input
+    id: time
+    attributes:
+      label: 發生時間
+      description: 日期和大概幾點。
+      placeholder: 例如：2026-10-31 21:30
+    validations:
+      required: true
+  - type: textarea
+    id: screen
+    attributes:
+      label: 畫面上看到什麼
+      description: 有錯誤訊息的話照抄，或附截圖。
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 瀏覽器和裝置
+      placeholder: 例如：iPhone Safari、Windows Chrome
+  - type: textarea
+    id: typed
+    attributes:
+      label: 你輸入的內容
+      description: 也會公開，有個人資料就不要貼。

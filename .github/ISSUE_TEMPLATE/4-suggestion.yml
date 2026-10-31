@@ -1,0 +1,19 @@
+name: 功能建議
+description: 想要新的功能，或希望現有的功能改變。
+title: "[建議] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        這裡寫的內容和你的 GitHub 帳號名稱，任何人都看得到。請不要寫姓名、學校、班級、電話、電子郵件等個人資料，截圖也一樣。不想公開的話，可以寫信到 hctsai@linux.com。
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: 建議
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: 相關頁面網址
