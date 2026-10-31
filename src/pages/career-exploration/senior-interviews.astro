@@ -39,18 +39,18 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                     </div>
                 </div>
                 <!-- 分類篩選 -->
-                <div id="category-filters" class="flex flex-wrap justify-center gap-2 md:gap-3">
-                    <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all">全部</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="工程學群">工程</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊學群">資訊</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="管理學群">管理</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="財經學群">財經</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="社會與心理學群">社會與心理</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群">傳播</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="設計學群">設計</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群">生命科學</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="醫藥衛生學群">醫藥衛生</button>
-                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群">法政</button>
+                <div id="category-filters" role="group" aria-label="依學群篩選" class="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <button class="filter-btn active px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="all" aria-pressed="true">全部</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="工程學群" aria-pressed="false">工程</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="資訊學群" aria-pressed="false">資訊</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="管理學群" aria-pressed="false">管理</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="財經學群" aria-pressed="false">財經</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="社會與心理學群" aria-pressed="false">社會與心理</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="大眾傳播學群" aria-pressed="false">傳播</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="設計學群" aria-pressed="false">設計</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="生命科學學群" aria-pressed="false">生命科學</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="醫藥衛生學群" aria-pressed="false">醫藥衛生</button>
+                    <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition-all duration-300" data-category="法政學群" aria-pressed="false">法政</button>
                 </div>
             </div>
         </section>
@@ -292,8 +292,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         filters.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
-                filters.querySelector('.active').classList.remove('active');
+                const current = filters.querySelector('.active');
+                current.classList.remove('active');
+                current.setAttribute('aria-pressed', 'false');
                 e.target.classList.add('active');
+                e.target.setAttribute('aria-pressed', 'true');
                 handleFilterAndSearch();
                 announceCount();
             }
