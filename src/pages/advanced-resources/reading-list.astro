@@ -50,7 +50,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
             </svg>
             <h3 class="mt-2 text-sm font-medium text-gray-900">找不到符合的書籍</h3>
-            <p class="mt-1 text-sm text-gray-500">試著調整關鍵字或主題篩選條件。</p>
+            <p class="mt-1 text-sm text-gray-600">試著調整關鍵字或主題篩選條件。</p>
         </div>
     </main>
 
@@ -141,7 +141,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                     const originalLang = book.original_lang ? ` lang="${escapeHtml(book.original_lang)}"` : '';
                     const originalTitleHtml = book.original_title
-                        ? `<p class="text-xs text-gray-400 italic mb-1"${originalLang}>${escapeHtml(book.original_title)}</p>`
+                        ? `<p class="text-xs text-gray-600 italic mb-1"${originalLang}>${escapeHtml(book.original_title)}</p>`
                         : '';
 
                     booksHtml += `
