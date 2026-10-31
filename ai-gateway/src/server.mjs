@@ -104,7 +104,7 @@ const MESSAGES = {
     // 同樣是 incomplete，原因是接續的幾輪都沒有進展（generate 的 stalled），不是回答太長
     stalled: 'AI 這次沒能把回答寫完，可以再試一次。',
     // 同樣是 incomplete，原因是回答超過任務的長度上限（tasks.mjs 的 maxOutputChars）
-    too_long: 'AI 的回答超過長度上限，沒有寫完。可以再試一次，或把問題縮小一點。',
+    too_long: 'AI 的回答太長，沒有寫完。請把範圍縮小一點再試。',
     format: 'AI 回覆的格式不正確，請再試一次。',
     empty: 'AI 沒有產生內容，請換個說法再試一次。',
     unavailable: 'AI 服務暫時無法使用，請稍後再試。',
@@ -361,7 +361,7 @@ function describeError(err, { tokensSeen = true, jitter }) {
     if (err instanceof GenerationError) {
         if (err.code === 'timeout') return { code: 'timeout', retryable: true };
         if (err.code === 'incomplete') {
-            if (err.tooLong) return { code: 'incomplete', message: MESSAGES.too_long, retryable: true, detail: err.message };
+            if (err.tooLong) return { code: 'incomplete', message: MESSAGES.too_long, retryable: false, detail: err.message };
             return err.stalled
                 ? { code: 'incomplete', message: MESSAGES.stalled, retryable: true, detail: err.message }
                 : { code: 'incomplete', retryable: false, detail: err.message };
@@ -371,7 +371,7 @@ function describeError(err, { tokensSeen = true, jitter }) {
         return { code: 'unavailable', retryable: true, detail: err.message };
     }
     if (err instanceof TaskError) {
-        if (err.code === 'too_long') return { code: 'incomplete', message: MESSAGES.too_long, retryable: true, detail: err.detail };
+        if (err.code === 'too_long') return { code: 'incomplete', message: MESSAGES.too_long, retryable: false, detail: err.detail };
         return { code: err.code === 'empty' ? 'empty' : 'format', retryable: true, detail: err.detail };
     }
     return { code: 'internal', retryable: true, detail: describeInternal(err) };
