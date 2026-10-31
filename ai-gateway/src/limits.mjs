@@ -248,13 +248,14 @@ function expandIPv6(address) {
     return [...headParts, ...zeros, ...tailParts].map((part) => parseInt(part, 16));
 }
 
-// 帶埠、方括號、zone id 的寫法先剝掉，剝完不是 IP 就回傳 null。只看前 100 個字元
+// 帶埠、方括號、zone id 的寫法先剝掉，剝完不是 IP 就回傳 null。只看前 100 個字元。isIP 收任何字元的
+// zone id，含冒號的會被 expandIPv6 當成位址的一組，所以 % 之後全部剝掉
 function parseAddress(address) {
     let raw = String(address || '').trim().slice(0, 100);
     const bracketed = /^\[([^\]]+)\](?::\d+)?$/.exec(raw);
     if (bracketed) raw = bracketed[1];
     else if (/^\d{1,3}(\.\d{1,3}){3}:\d+$/.test(raw)) raw = raw.slice(0, raw.lastIndexOf(':'));
-    raw = raw.replace(/%[\w.-]*$/, '');
+    raw = raw.replace(/%.*$/s, '');
     const version = isIP(raw);
     if (version === 4) return { v4: raw };
     return version === 6 ? { groups: expandIPv6(raw) } : null;
