@@ -160,7 +160,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                             </div>
                         </div>
                         <div class="p-4 bg-gray-50 flex justify-between items-center">
-                             <span class="text-xs font-semibold ${course.certificate ? 'text-green-600' : 'text-gray-500'}">${course.certificate ? '提供證書' : '無證書'}</span>
+                             <span class="text-xs font-semibold ${course.certificate ? 'text-green-700' : 'text-gray-500'}">${course.certificate ? '提供證書' : '無證書'}</span>
                             <a href="${encodeURI(course.url)}" target="_blank" rel="noopener noreferrer" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
                                 前往課程<span class="sr-only">：${escapeHtml(course.title)}（另開新分頁）</span>
                             </a>

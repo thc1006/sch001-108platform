@@ -28,21 +28,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <fieldset>
                     <legend class="font-semibold">1. 你的研究主要是想了解「人們的想法或經驗」嗎？</legend>
                     <div class="flex gap-4 mt-2">
-                        <button onclick="recommendMethod('qualitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('qualitative')" class="bg-orange-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-800 transition">是</button>
                         <button onclick="recommendMethod('other1')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
                     </div>
                 </fieldset>
                  <fieldset class="hidden" id="q2" tabindex="-1">
                     <legend class="font-semibold">2. 你的研究主要是想驗證「數字或數據」的關係嗎？</legend>
                     <div class="flex gap-4 mt-2">
-                        <button onclick="recommendMethod('quantitative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('quantitative')" class="bg-orange-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-800 transition">是</button>
                         <button onclick="recommendMethod('other2')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">否</button>
                     </div>
                 </fieldset>
                  <fieldset class="hidden" id="q3" tabindex="-1">
                     <legend class="font-semibold">3. 你的研究主要是想「創造出一個作品」嗎？</legend>
                     <div class="flex gap-4 mt-2">
-                        <button onclick="recommendMethod('creative')" class="bg-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-600 transition">是</button>
+                        <button onclick="recommendMethod('creative')" class="bg-orange-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-800 transition">是</button>
                         <button onclick="recommendMethod('other3')" class="bg-gray-200 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-300 transition">不完全是</button>
                     </div>
                 </fieldset>
@@ -135,7 +135,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.className = 'method-card bg-white p-6 rounded-xl shadow-lg cursor-pointer flex flex-col';
                 card.innerHTML = `
                     <div class="flex-grow">
-                        <span class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</span>
+                        <span class="text-sm font-bold text-orange-700">${escapeHtml(method.category)}</span>
                         <h3 class="text-2xl font-bold mt-2 mb-3"><button type="button" class="text-left cursor-pointer">${escapeHtml(method.title)}</button></h3>
                         <p class="text-gray-600">${escapeHtml(method.description)}</p>
                     </div>
@@ -157,7 +157,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</p>
+                        <p class="text-sm font-bold text-orange-700">${escapeHtml(method.category)}</p>
                         <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(method.title)}</h3>
                     </div>
                     <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>

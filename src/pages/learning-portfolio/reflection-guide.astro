@@ -36,7 +36,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-sm text-gray-700 mt-1">在那個情境下，你的任務或目標是什麼？</p>
                 </div>
                 <div class="bg-yellow-50 p-4 rounded-lg">
-                    <p class="font-bold text-2xl text-yellow-600" aria-hidden="true">A</p>
+                    <p class="font-bold text-2xl text-yellow-700" aria-hidden="true">A</p>
                     <h3 class="font-bold text-lg mt-1">行動（<span lang="en">Action</span>）</h3>
                     <p class="text-sm text-gray-700 mt-1">你採取了哪些具體行動來完成任務？</p>
                 </div>
@@ -68,7 +68,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <p class="text-gray-600 mb-6">將你寫好的心得反思文字貼入下方，AI 教練將根據 STAR 原則分析你的內容，並提供具體的修改建議！</p>
                 <textarea id="reflectionInput" maxlength="2000" aria-label="你的心得反思" aria-describedby="reflectionLimit" class="w-full h-32 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="在這裡貼上你的心得反思文字..."></textarea>
                 <p id="reflectionLimit" class="mt-1 text-sm text-gray-500">最多 2000 字，超過的部分貼不進來。</p>
-                <button id="analyzeBtn" class="mt-4 w-full bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2">
+                <button id="analyzeBtn" class="mt-4 w-full bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-800 transition duration-300 flex items-center justify-center space-x-2">
                     <span>開始健檢</span>
                 </button>
                 {/* 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構，所以結果區不是 live region。

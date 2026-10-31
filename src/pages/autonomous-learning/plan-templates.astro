@@ -26,7 +26,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <p class="text-gray-600 mb-6">輸入你的自主學習主題，AI 將為你草擬一份包含目標、方法、週次進度與產出規劃的完整計畫草案。</p>
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="planInput" maxlength="100" aria-label="你的自主學習主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="例如：分析手搖飲店的行銷策略">
-                <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-600 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
+                <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-800 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>產生計畫草案</span>
                 </button>
@@ -234,7 +234,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.innerHTML = `
                     <div class="flex-grow">
                         <div class="flex justify-between items-start">
-                             <span class="text-sm font-bold text-teal-600">${escapeHtml(template.category)}</span>
+                             <span class="text-sm font-bold text-teal-700">${escapeHtml(template.category)}</span>
                              <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHtml(template.type)}</span>
                         </div>
                         <h3 class="text-xl font-bold mt-2 mb-3"><button type="button" class="text-left cursor-pointer">${escapeHtml(template.title)}</button></h3>
@@ -258,7 +258,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-bold text-teal-600">${escapeHtml(template.category)} / ${escapeHtml(template.type)}</p>
+                        <p class="text-sm font-bold text-teal-700">${escapeHtml(template.category)} / ${escapeHtml(template.type)}</p>
                         <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(template.title)}</h3>
                     </div>
                     <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
@@ -425,12 +425,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             max-height: 90vh;
         }
         .tab-btn.active {
-            border-bottom-color: #10b981;
-            color: #10b981;
+            border-bottom-color: #047857;
+            color: #047857;
             font-weight: 600;
         }
         .filter-btn.active {
-            background-color: #059669;
+            background-color: #047857;
             color: white;
         }
   </style>

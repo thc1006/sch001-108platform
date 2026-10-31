@@ -192,7 +192,7 @@ test.describe('優質範例藝廊', () => {
         const category = page.getByLabel('學科領域', { exact: true });
         const value = await category.locator('option').nth(1).getAttribute('value');
         await category.selectOption(value);
-        const shown = page.locator('#portfolio-grid > * .text-green-600');
+        const shown = page.locator('#portfolio-grid > * .text-green-700');
         await expect(shown.first()).toBeVisible();
         for (const text of await shown.allTextContents()) expect(text).toBe(value);
     });
