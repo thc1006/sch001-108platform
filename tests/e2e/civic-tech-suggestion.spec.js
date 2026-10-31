@@ -1,4 +1,4 @@
-// 公民科技地圖的「AI 探索建議」（AI 閘道的 civic-tech-suggestion 任務）：用頁內的假閘道驗證頁面
+// 公民科技專案頁的「讓 AI 幫你挑」（AI 閘道的 civic-tech-suggestion 任務）：用頁內的假閘道驗證頁面
 // 怎麼送出、邊收邊顯示答案、處理錯誤與取消。假閘道見 fake-gateway.js。
 //
 // 進度區塊與草稿在工作區 #ai-workspace，最後的結果或訊息在結果區 #ai-results（live region）。
@@ -27,7 +27,7 @@ const SETTLE = [
         (page) => expect(page.locator('#ai-results > div').last()).toHaveText(FORMAT_ERROR)],
 ];
 
-test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任務）', () => {
+test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);
@@ -70,7 +70,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         await expect(answer).toHaveText('Cofacts 真的假的推薦原因：你關心假訊息。探索建議：當查核志工，整理查核技巧。');
         await expect(answer.locator('strong')).toHaveText(['Cofacts 真的假的']);
         await expect(results.getByRole('heading', { name: 'AI 推薦結果' })).toBeVisible();
-        await expect(results).toContainText('AI 建議僅供參考，實際專案內容請以各專案官網為準。');
+        await expect(results).toContainText('AI 的回答可能有錯，專案現況以各專案官網為準。');
         await expect(workspace.locator('*')).toHaveCount(0);
         expect(await hasBox(workspace)).toBe(false);
 
@@ -82,7 +82,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         // 按鈕恢復可按，文字與圖示都還在。
         await expect(button).toBeEnabled();
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
-        await expect(button).toHaveText('探索推薦');
+        await expect(button).toHaveText('推薦專案');
         await expect(button.locator('svg')).toHaveCount(1);
     });
 
@@ -155,7 +155,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('草稿出現後用鍵盤按「取消」→ 草稿移除，結果區顯示「已取消。」（不是紅字），焦點回到「探索推薦」按鈕，按鈕恢復可按', async ({ page }) => {
+    test('草稿出現後用鍵盤按「取消」→ 草稿移除，結果區顯示「已取消。」（不是紅字），焦點回到「推薦專案」按鈕，按鈕恢復可按', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**')], hang: true });
         await page.fill('#ai-interest-input', '假訊息');
         await page.click('#ai-submit-btn');
@@ -177,7 +177,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
     });
 
     for (const [when, chunk, expectSettled] of SETTLE) {
-        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「探索推薦」按鈕`, async ({ page }) => {
+        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「推薦專案」按鈕`, async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED, delta('**草稿**')], hang: true });
             await page.fill('#ai-interest-input', '假訊息');
             await page.click('#ai-submit-btn');
@@ -198,7 +198,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
     ];
-    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在結果區，紅字訊息接在下面；工作區清空，焦點回到「探索推薦」按鈕`, async ({ page }) => {
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在結果區，紅字訊息接在下面；工作區清空，焦點回到「推薦專案」按鈕`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**：'), delta('適合想')], hang: true });
         await page.fill('#ai-interest-input', '假訊息');
         await page.click('#ai-submit-btn');
@@ -284,7 +284,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         await expect(workspace.locator('*')).toHaveCount(0);
         const button = page.locator('#ai-submit-btn');
         await expect(button).not.toHaveAttribute('aria-disabled');
-        await expect(button).toHaveText('探索推薦');
+        await expect(button).toHaveText('推薦專案');
         await button.click();
         await expect(workspace.locator('.ai-result-text')).toHaveText('草稿');
         await push(page, done('**第二次的答案**'));
@@ -294,7 +294,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
     });
 
     // disabled 的按鈕會失去焦點，瀏覽器下一次更新畫面時就把焦點移到 <body>。
-    test('用鍵盤按「探索推薦」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
+    test('用鍵盤按「推薦專案」→ 進行中按鈕是 aria-disabled，再按不會重送；等待中與完成後，焦點都留在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#ai-interest-input', '假訊息');
         const button = page.locator('#ai-submit-btn');
@@ -346,14 +346,14 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
         await expect(results.locator('*')).toHaveCount(0);
     });
 
-    test('輸入框最多 300 字（與閘道的任務規格相同），看得到上限說明，有無障礙名稱；字數跟著更新', async ({ page }) => {
+    test('輸入框最多 300 字（與閘道的任務規格相同），有無障礙名稱；字數「n / 300」是輸入框的描述，跟著更新', async ({ page }) => {
         const input = page.locator('#ai-interest-input');
         await expect(input).toHaveAttribute('maxlength', '300');
         await expect(input).toHaveAccessibleName('你的興趣或關心的議題');
-        await expect(input).toHaveAccessibleDescription('最多 300 字。');
-        await expect(page.locator('#ai-interest-hint')).toBeVisible();
+        await expect(input).toHaveAccessibleDescription('0 / 300');
         await input.fill('環境保護');
         await expect(page.locator('#ai-char-count')).toHaveText('4 / 300');
+        await expect(input).toHaveAccessibleDescription('4 / 300');
     });
 
     // 進度區塊與草稿一直在變，放進 live region 就會一直被唸；WebKit 連計時器的 aria-live="off" 也不理會。
@@ -386,7 +386,7 @@ test.describe('公民科技地圖：AI 探索建議（civic-tech-suggestion 任�
 
 // 共用腳本 public/shared/platform-ai.js 沒載入成功時，PlatformAI 不存在。404（檔案沒部署好、路徑錯）
 // 與連線中斷（網路、被擋）頁面的處理應該相同：顯示錯誤訊息，按鈕不能卡在「分析中…」。
-test.describe('公民科技地圖：共用腳本 platform-ai.js 沒載入成功', () => {
+test.describe('公民科技專案頁：共用腳本 platform-ai.js 沒載入成功', () => {
     const FAILURES = [
         ['回 404', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })],
         ['連線中斷', (route) => route.abort()],
@@ -404,7 +404,7 @@ test.describe('公民科技地圖：共用腳本 platform-ai.js 沒載入成功'
             await expect(page.locator('#ai-results')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
             const button = page.locator('#ai-submit-btn');
             await expect(button).toBeEnabled();
-            await expect(button).toHaveText('探索推薦');
+            await expect(button).toHaveText('推薦專案');
             await expect(button.locator('svg')).toHaveCount(1);
         });
     }

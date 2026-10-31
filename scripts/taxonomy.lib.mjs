@@ -29,7 +29,7 @@ export const competencyLabel = (code) => {
     return entry ? `${code} ${entry.label}` : null;
 };
 export const competencyDomain = (code) => TAXONOMY.competencies[code]?.domain ?? null;
-/** 與 civic-tech-map 頁面上的標籤同字串（"SDG 11 永續城鄉"，SDG 與數字之間有空白）。 */
+/** 搜尋結果顯示的 SDG 標籤（"SDG 11 永續城鄉"，SDG 與數字之間有空白）。 */
 export const sdgLabel = (n) => (TAXONOMY.sdgs[String(n)] ? `SDG ${n} ${TAXONOMY.sdgs[String(n)]}` : null);
 
 /**

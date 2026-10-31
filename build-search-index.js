@@ -248,7 +248,7 @@ function taxonomyFor(item, label) {
                 throw new Error(`「${label}」的 sdgs「${n}」不是合法的 SDG 編號（須為 1-17 的整數）`);
             }
             tags.push(`SDG${n}`);
-            // 與 civic-tech-map 頁面上的標籤同字串（SDG 與數字之間有空白）
+            // 搜尋結果顯示的標籤，SDG 與數字之間有空白
             labels.push(`SDG ${n} ${name}`);
         }
         out.sdgs = tags;
@@ -326,8 +326,8 @@ function indexJsonDataPage(pageTitle, fileUrl, cfg, pageAnchorIds) {
  *
  *   cfg.anchor      整頁共用的容器錨點。資料是瀏覽器 fetch 後才 client-render 的
  *                   頁面（競賽、書單…）沒有逐項 id，只能指向容器。
- *   cfg.anchorField 用項目的哪一個欄位當錨點。頁面在 .astro 內靜態寫死、每筆都有
- *                   自己的 id 時使用（公民科技專案地圖）。
+ *   cfg.anchorField 用項目的哪一個欄位當錨點。頁面在建置時產生、每筆都有自己的 id
+ *                   時使用（公民科技專案）。
  *
  * 兩者都 fail closed：對不上就讓建置失敗。這裡刻意不沿用 buildItemUrl 的「錨點
  * 不存在就退回頁面路徑」。那條路適用於「本來就不保證有錨點」的內嵌資料；而這裡

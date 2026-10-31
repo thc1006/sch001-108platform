@@ -26,7 +26,7 @@ npm test
 
 競賽、線上課程、書單這類資料頁，內容從 `public/` 底下的 JSON 載入，改資料只要改 JSON。頁面和 JSON 的路徑相同，例如 `advanced-resources/competitions.html` 讀 `public/advanced-resources/competitions.json`，每一頁的對照在 `scripts/data-pages.json`。
 
-公民科技專案地圖是例外：頁面內容寫在 `src/pages/civic-tech-map/index.astro`，`public/civic-tech-map/projects.json` 是同一份資料的副本，給資料檢查和搜尋索引用。建置只確認每個專案的 id 在頁面上有錨點，名稱、說明和標籤沒有比對，改專案時要一起改。AI 閘道的 `civic-tech-suggestion` 任務也抄了專案名稱和狀態，這部分 `npm run test:ai-gateway` 會比對。
+公民科技專案頁在建置時讀 `public/civic-tech-map/projects.json` 產生，改專案只要改 JSON。AI 閘道的 `civic-tech-suggestion` 任務抄了專案名稱和狀態，`npm run test:ai-gateway` 會比對。
 
 其他頁面的內容直接寫在 `src/pages/` 的 `.astro`。
 

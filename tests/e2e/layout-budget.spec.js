@@ -83,8 +83,7 @@ async function measure(page) {
         // scroll-smooth，而那個兩參數形式等同 behavior:'auto'，會照 CSS 走平滑捲動
         // 動畫。實測（360x640、reduce 偏好）捲到 700：兩個 frame 後只到 2px，就算等滿
         // 320ms 也才 614px，固定的 sleep 會在動畫途中取樣。Chromium 不會因為
-        // reduce 偏好就關掉平滑捲動（全站只有 civic-tech-map 自己寫了
-        // scroll-behavior:auto，實測也只有它會落定）。真實使用者用手指或滾輪捲動本來
+        // reduce 偏好就關掉平滑捲動，全站也沒有頁面寫 scroll-behavior:auto。真實使用者用手指或滾輪捲動本來
         // 就不走這段動畫，所以 instant 反而更接近實際情形，取樣位置也變成確定值。
         const jumpTo = (y) => window.scrollTo({ top: y, behavior: 'instant' });
         // 三個 frame，不是兩個。實測（competitions.html、360x640、reduce）捲動之後，
@@ -324,12 +323,12 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
         ).toEqual([]);
 
         // 防空洞：這條測試靠正則辨認面板，正則跟不上寫法改變時它會安靜地零命中。
-        // 站上目前有 8 個無條件釘住的面板；低於這個數就是偵測壞了，不是面板變乾淨了。
+        // 站上目前有 7 個無條件釘住的面板；低於這個數就是偵測壞了，不是面板變乾淨了。
         expect(
             pinnedFound,
-            `只辨認出 ${pinnedFound} 個釘住的面板（預期至少 8）。多半是偵測正則跟不上新的 ` +
+            `只辨認出 ${pinnedFound} 個釘住的面板（預期至少 7）。多半是偵測正則跟不上新的 ` +
                 'class 寫法，而不是面板真的變少——零命中會讓這條測試變成擺設。',
-        ).toBeGreaterThanOrEqual(8);
+        ).toBeGreaterThanOrEqual(7);
     });
 });
 
@@ -386,7 +385,6 @@ test.describe('結構：sticky 面板必須與 header 底部齊平', () => {
         '/autonomous-learning/resource-map.html',
         '/career-exploration/competency-map.html',
         '/career-exploration/senior-interviews.html',
-        '/civic-tech-map/index.html',
         '/learning-portfolio/activity-database.html',
         '/learning-portfolio/portfolio-gallery.html',
     ];
@@ -530,7 +528,7 @@ test.describe('篩選面板的還原行為（360x640）', () => {
 });
 
 // 讓開的位移量是照面板釘在 header 下方的位置算的，面板還在文件流的原位時套上去，會往上
-// 蓋住前面的內容。公民科技地圖的導航在頁面很下方，手機上捲到標籤說明時就疊在它上面。
+// 蓋住前面的內容。學習資源地圖的面板在 AI 區塊下面，手機上捲到它上方的標題時就會疊在標題上。
 test.describe('篩選面板釘住之前不讓開', () => {
     const STEP = 120;
     const PIN_TOP = 64; // top-16，header 的高度
@@ -556,32 +554,33 @@ test.describe('篩選面板釘住之前不讓開', () => {
         }
     }
 
-    const CIVIC = `${BASE}/sch001-108platform/civic-tech-map/index.html`;
+    const RESOURCE_MAP = `${BASE}/sch001-108platform/autonomous-learning/resource-map.html`;
+    // 面板正上方的標題。
+    const heading = (page) => page.locator('[data-autohide-filters]').locator('xpath=preceding-sibling::h2[1]');
 
-    /** expectInPlace 檢查導航沒有位移，也沒有蓋到標籤說明。 */
+    /** expectInPlace 檢查面板沒有位移，也沒有蓋到上方的標題。 */
     async function expectInPlace(page, when) {
         const nav = await panel(page);
-        const l = await page.locator('section[aria-label="標籤說明"]').evaluate((el) => el.getBoundingClientRect().toJSON());
-        expect(nav.shift, `${when}：導航沒釘住就被往上移`).toBe(0);
-        expect(nav.top >= l.bottom || nav.bottom <= l.top, `${when}：導航蓋到標籤說明`).toBe(true);
+        const l = await heading(page).evaluate((el) => el.getBoundingClientRect().toJSON());
+        expect(nav.shift, `${when}：面板沒釘住就被往上移`).toBe(0);
+        expect(nav.top >= l.bottom || nav.bottom <= l.top, `${when}：面板蓋到標題`).toBe(true);
     }
 
     for (const viewport of [{ width: 360, height: 640 }, { width: 390, height: 844 }]) {
-        test(`civic-tech-map ${viewport.width}x${viewport.height}：導航釘住之前不蓋到標籤說明`, async ({ page }) => {
+        test(`resource-map ${viewport.width}x${viewport.height}：面板釘住之前不蓋到上方的標題`, async ({ page }) => {
             await page.setViewportSize(viewport);
-            await page.goto(CIVIC, { waitUntil: 'networkidle' });
-            const legend = page.locator('section[aria-label="標籤說明"]');
-            // 標籤說明捲到畫面上緣往下 80px 的位置，這時導航還沒釘住。
-            const nearLegend = await legend.evaluate((el) => el.getBoundingClientRect().top + window.scrollY - 80);
+            await page.goto(RESOURCE_MAP, { waitUntil: 'networkidle' });
+            // 標題捲到畫面上緣往下 80px 的位置，這時面板還沒釘住。
+            const nearHeading = await heading(page).evaluate((el) => el.getBoundingClientRect().top + window.scrollY - 80);
             const pinnedAt = (await panel(page)).top - PIN_TOP;
 
-            await stepDown(page, 0, nearLegend, (y) => expectInPlace(page, `捲到 ${y}`));
+            await stepDown(page, 0, nearHeading, (y) => expectInPlace(page, `捲到 ${y}`));
 
-            await stepDown(page, nearLegend, pinnedAt + 2 * STEP);
-            expect((await panel(page)).bottom, '導航釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
+            await stepDown(page, nearHeading, pinnedAt + 2 * STEP);
+            expect((await panel(page)).bottom, '面板釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
 
             await scrollTo(page, pinnedAt + STEP);
-            expect((await panel(page)).top, '往上捲時導航回到 header 下方').toBeCloseTo(PIN_TOP, 0);
+            expect((await panel(page)).top, '往上捲時面板回到 header 下方').toBeCloseTo(PIN_TOP, 0);
 
             // 讓開之後一次往上捲到沒釘住的位置，面板要還原；再往下捲到差 2px 才釘住，仍不能讓開。
             await scrollTo(page, pinnedAt + 2 * STEP);
@@ -594,9 +593,9 @@ test.describe('篩選面板釘住之前不讓開', () => {
     }
 
     // 往上捲開始還原、位移動畫還在跑時又往下捲。rect 含動畫中的位移，不扣掉的話沒釘住的面板會被當成釘住。
-    test('civic-tech-map 360x640：位移動畫進行中也照排版位置判斷', async ({ page }) => {
+    test('resource-map 360x640：位移動畫進行中也照排版位置判斷', async ({ page }) => {
         await page.setViewportSize({ width: 360, height: 640 });
-        await page.goto(CIVIC, { waitUntil: 'networkidle' });
+        await page.goto(RESOURCE_MAP, { waitUntil: 'networkidle' });
         const pinnedAt = (await panel(page)).top - PIN_TOP;
         await scrollTo(page, pinnedAt + 2 * STEP);
         expect((await panel(page)).bottom).toBeLessThanOrEqual(0);
@@ -623,22 +622,22 @@ test.describe('篩選面板釘住之前不讓開', () => {
     });
 
     // html 設了 CSS zoom 時，rect 會放大，computed top 不會。
-    test('civic-tech-map 360x640：html 設 zoom: 1.25 時，導航釘住後照樣讓開', async ({ page }) => {
+    test('resource-map 360x640：html 設 zoom: 1.25 時，面板釘住後照樣讓開', async ({ page }) => {
         await page.setViewportSize({ width: 360, height: 640 });
-        await page.goto(CIVIC, { waitUntil: 'networkidle' });
+        await page.goto(RESOURCE_MAP, { waitUntil: 'networkidle' });
         await page.evaluate(() => { document.documentElement.style.zoom = '1.25'; });
         const pinTop = PIN_TOP * 1.25;
         const pinnedAt = (await panel(page)).top - pinTop;
 
         await stepDown(page, 0, pinnedAt + 2 * STEP);
-        expect((await panel(page)).bottom, '導航釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
+        expect((await panel(page)).bottom, '面板釘住後再往下捲，要移出畫面').toBeLessThanOrEqual(0);
         await scrollTo(page, pinnedAt + STEP);
-        expect((await panel(page)).top, '往上捲時導航回到 header 下方').toBeCloseTo(pinTop, 0);
+        expect((await panel(page)).top, '往上捲時面板回到 header 下方').toBeCloseTo(pinTop, 0);
     });
 
     test('resource-map 360x640：面板釘住之前不位移', async ({ page }) => {
         await page.setViewportSize({ width: 360, height: 640 });
-        await page.goto(`${BASE}/sch001-108platform/autonomous-learning/resource-map.html`, { waitUntil: 'networkidle' });
+        await page.goto(RESOURCE_MAP, { waitUntil: 'networkidle' });
         const pinnedAt = (await panel(page)).top - PIN_TOP;
         // sticky-filters.js 捲過 160px 才開始讓開，面板要在那之後才釘住，這一頁才測得到。
         expect(pinnedAt).toBeGreaterThan(160 + STEP);
@@ -655,7 +654,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     const PIN_TOP = 64;
     const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
     const PAGES = {
-        'civic-tech-map': `${BASE}/sch001-108platform/civic-tech-map/index.html`,
+        'resource-map': `${BASE}/sch001-108platform/autonomous-learning/resource-map.html`,
         competitions: `${BASE}/sch001-108platform/advanced-resources/competitions.html`,
     };
 
@@ -1059,8 +1058,8 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     }
 
     // 按 Tab 時記下的捲動位置只給這次按鍵用，之後不是按 Tab 讓焦點進面板時不能捲回去。
-    test('civic-tech-map：在頁首按過 Tab，之後用 focus() 把焦點移進面板', async ({ page }) => {
-        await page.goto(PAGES['civic-tech-map'], { waitUntil: 'networkidle' });
+    test('resource-map：在頁首按過 Tab，之後用 focus() 把焦點移進面板', async ({ page }) => {
+        await page.goto(PAGES['resource-map'], { waitUntil: 'networkidle' });
         await page.keyboard.press('Tab');
         await concealLoaded(page);
         await page.evaluate(() => document.activeElement.blur());
@@ -1085,14 +1084,14 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     });
 
     // 面板還沒釘住、在畫面下方時，瀏覽器要把它捲進來，不能捲回去。
-    test('civic-tech-map：點標籤說明之後 Tab 進還在畫面下方的導航', async ({ page }) => {
-        await page.goto(PAGES['civic-tech-map'], { waitUntil: 'networkidle' });
-        // 導航在畫面下緣再往下 20px。
+    test('resource-map：點面板上方的標題之後 Tab 進還在畫面下方的面板', async ({ page }) => {
+        await page.goto(PAGES['resource-map'], { waitUntil: 'networkidle' });
+        // 面板在畫面下緣再往下 20px。
         await page.locator('[data-autohide-filters]').evaluate((el) => {
             window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - window.innerHeight - 20, behavior: 'instant' });
         });
         await settleFilters(page);
-        const box = await page.locator('section[aria-label="標籤說明"]').boundingBox();
+        const box = await page.locator('[data-autohide-filters]').locator('xpath=preceding-sibling::h2[1]').boundingBox();
         await page.mouse.click(box.x + 4, Math.min(box.y + box.height, page.viewportSize().height) - 30);
         expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
         await page.keyboard.press('Tab');
