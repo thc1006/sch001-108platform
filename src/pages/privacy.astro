@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-// AI 閘道的部分對照 ai-gateway/src/server.mjs 的 log 欄位與 ARRIVAL_WINDOW_MS，以及 config.mjs 的
-// RATE_LIMIT_WINDOW_MS，改了要跟著改。
+// AI 閘道的部分對照 ai-gateway/src/server.mjs 的 log 欄位、ARRIVAL_WINDOW_MS、USAGE_INTERVAL_MS，usage.mjs，
+// limits.mjs 的 sourcePrefix，以及 config.mjs 的 RATE_LIMIT_MAX、RATE_LIMIT_WINDOW_MS（700 次是 USAGE 的門檻），
+// 改了要跟著改。
 ---
 
 <BaseLayout
@@ -14,7 +15,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <header class="mb-8 border-b border-gray-200 pb-6">
         <h1 class="text-3xl md:text-4xl font-black text-gray-800">隱私權說明</h1>
         <p class="mt-3 text-gray-600">這一頁說明你使用台灣教育處方籤時，哪些資料會送到哪裡、保留多久。</p>
-        <p class="mt-2 text-sm text-gray-500">2026 年 10 月 31 日更新</p>
+        <p class="mt-2 text-sm text-gray-500">2026 年 11 月 1 日更新</p>
       </header>
 
       <div class="prose prose-lg max-w-none">
@@ -27,10 +28,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <li>連線先經過 Tailscale 的轉送伺服器，它看得到你的 IP，看不到內容。</li>
           <li>閘道用 IP 限制每個來源的使用次數。IP 只放在記憶體，最後一次使用約 10 分鐘後刪除。</li>
           <li>
-            閘道的記錄檔每次使用記一行：時間、功能、輸入與回答的長度、耗時，以及一組由 IP 換算出、推不回 IP 的代碼；閘道每次重新啟動，同一個 IP 換算出的代碼就不同。
+            閘道的記錄檔每次使用記一行：時間、功能、輸入與回答的長度、耗時，以及一組由 IP 換算出、推不回 IP 的代碼；閘道每次重新啟動，同一個 IP 換算出的代碼就不同。另外每小時記一行各功能的使用次數，以及一小時內合計用了超過 700 次的網段，最多 5 個（IPv4 只留前三段，IPv6 只留前三組）。
           </li>
           <li>
-            記錄檔不含你的 IP、輸入與 AI 的回答。只有 WinLab 出錯時，記錄檔會留下它回報的錯誤代號，偶爾夾帶輸入裡一小段英文或數字。
+            記錄檔不含你完整的 IP、輸入與 AI 的回答。只有 WinLab 出錯時，記錄檔會留下它回報的錯誤代號，偶爾夾帶輸入裡一小段英文或數字。
           </li>
           <li>記錄檔放在閘道的主機上，滿了就刪最舊的，平常最多約 50 MB。</li>
         </ul>
@@ -59,7 +60,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <a href="mailto:hctsai@linux.com">hctsai@linux.com</a> 即可。
         </p>
         <p>
-          閘道的記錄檔只有換算過的代碼，我們找不出哪幾行是你的，所以無法逐筆查詢或刪除。GitHub、Google、GoatCounter、Tailscale 自己保存的資料，請依它們的隱私權政策向它們要求。
+          閘道的記錄檔只有換算過的代碼與網段，除非你所在的網段一小時內合計用了超過 700 次，我們找不出哪幾行是你的，所以無法逐筆查詢或刪除。GitHub、Google、GoatCounter、Tailscale 自己保存的資料，請依它們的隱私權政策向它們要求。
         </p>
       </div>
     </article>

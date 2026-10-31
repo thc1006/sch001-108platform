@@ -355,6 +355,22 @@ export function blockRangeProblem(range) {
 }
 
 /**
+ * sourcePrefix 把用戶端位址縮短成 USAGE 記的網段：IPv4（含 clientKey 取出的內嵌 IPv4）取 /24，IPv6 取 /48，
+ * v6Prefix 比 48 短時照它。寫出來的網段要能貼進 AI_BLOCK_SOURCES：會涵蓋所有 IPv4 的（::1 這類位址的
+ * ::/48）每次加長 16 位元，到不涵蓋為止。不是 IP 的回傳 'invalid'
+ */
+export function sourcePrefix(address, v6Prefix = 64) {
+    const ip = parseAddress(address);
+    if (!ip) return 'invalid';
+    const v4 = ip.v4 ? ipv4ToInt(ip.v4) : embeddedIPv4(ip.groups);
+    if (v4 !== null) return `${intToIPv4(maskIPv4(v4, 24))}/24`;
+    const n = ipv6ToBigInt(ip.groups);
+    let bits = Math.min(48, v6Prefix);
+    while (coversAllIPv4({ v6: true, bits, base: maskIPv6(n, bits) })) bits += 16;
+    return ipv6Prefix(ip.groups, bits);
+}
+
+/**
  * createSourceMatcher 回傳「這個用戶端位址在不在 cidrs 裡」的判斷（AI_BLOCK_SOURCES）。位址照 clientKey
  * 剝掉埠與 zone id。IPv4 的範圍比對 IPv4 位址，以及 IPv6 位址裡 clientKey 也會取出的用戶端 IPv4（IPv4 對應
  * 位址、6to4、Teredo）；IPv6 的範圍比對原本的 IPv6 位址。寫錯或 blockRangeProblem 不收的項目丟例外

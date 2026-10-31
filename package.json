@@ -50,7 +50,7 @@
     "check:writing": "node scripts/check-writing.mjs",
     "test:writing": "node --test scripts/writing.test.mjs",
     "test:writing-faults": "node scripts/writing.faults.mjs",
-    "test:ai-gateway": "node --test --test-timeout=30000 ai-gateway/test/config.test.mjs ai-gateway/test/control-tokens.test.mjs ai-gateway/test/upstream.test.mjs ai-gateway/test/generate.test.mjs ai-gateway/test/s2t.test.mjs ai-gateway/test/schema.test.mjs ai-gateway/test/tasks.test.mjs ai-gateway/test/task-catalog.test.mjs ai-gateway/test/visible-text.test.mjs ai-gateway/test/limits.test.mjs ai-gateway/test/server-config.test.mjs ai-gateway/test/server.test.mjs ai-gateway/test/task-log.test.mjs ai-gateway/test/terminating-pods.test.mjs ai-gateway/test/build-image.test.mjs ai-gateway/test/source-hygiene.test.mjs"
+    "test:ai-gateway": "node --test --test-timeout=30000 ai-gateway/test/config.test.mjs ai-gateway/test/control-tokens.test.mjs ai-gateway/test/upstream.test.mjs ai-gateway/test/generate.test.mjs ai-gateway/test/s2t.test.mjs ai-gateway/test/schema.test.mjs ai-gateway/test/tasks.test.mjs ai-gateway/test/task-catalog.test.mjs ai-gateway/test/visible-text.test.mjs ai-gateway/test/limits.test.mjs ai-gateway/test/usage.test.mjs ai-gateway/test/server-config.test.mjs ai-gateway/test/server.test.mjs ai-gateway/test/task-log.test.mjs ai-gateway/test/terminating-pods.test.mjs ai-gateway/test/build-image.test.mjs ai-gateway/test/source-hygiene.test.mjs"
   },
   "keywords": [],
   "author": "",

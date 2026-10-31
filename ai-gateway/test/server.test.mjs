@@ -5,7 +5,7 @@
  *
  * 執行：npm run test:ai-gateway
  */
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import net from 'node:net';
@@ -111,7 +111,7 @@ function deferred() {
  * calls 記錄每次 generate 收到的設定、request 與 hooks。now 可以換成測試控制的時鐘。
  * random 預設固定回傳 0：忙線的等待秒數不加隨機時間，測試才寫得出確切的值
  */
-async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxBodyBytes, maxPendingBytes, stallTimeoutMs, host = '127.0.0.1' } = {}) {
+async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxBodyBytes, maxPendingBytes, stallTimeoutMs, usageIntervalMs, host = '127.0.0.1' } = {}) {
     const logs = [];
     const calls = [];
     const generateImpl = async (llmConfig, request, hooks) => {
@@ -131,6 +131,7 @@ async function startGateway({ server = {}, llm = {}, generate, now, random = () 
         ...(maxBodyBytes ? { maxBodyBytes } : {}),
         ...(maxPendingBytes ? { maxPendingBytes } : {}),
         ...(stallTimeoutMs ? { stallTimeoutMs } : {}),
+        ...(usageIntervalMs ? { usageIntervalMs } : {}),
     });
     await new Promise((resolve) => gateway.server.listen(0, host, resolve));
     const port = gateway.server.address().port;
@@ -1439,6 +1440,114 @@ test('AI_BLOCK_SOURCES：沒有代理時看連線的位址；body 再大也不�
         assert.equal(res.headers.connection, 'close');
     } finally {
         await gw.stop();
+    }
+});
+
+test('USAGE：關機時記一行到那一刻為止的用量；一個來源開得到的任務數不列網段；431 算進拒絕', async () => {
+    const xff = (value) => ({ headers: { 'x-forwarded-for': value } });
+    const gw = await startGateway({
+        server: { rateLimitMax: 1, clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'], blockSources: ['192.0.2.0/24'] },
+    });
+    const usageLines = () => gw.logs.filter((l) => l.tag === 'USAGE');
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }, xff('203.0.113.5')));
+        await readEvents(await post(gw.base, 'demo-md', { question: 'b' }, xff('2001:db8:1:2::1')));
+        await (await post(gw.base, 'demo-json', { topic: 'c' }, xff('203.0.113.5'))).text();
+        await (await post(gw.base, 'demo-json', { topic: 'd' }, xff('192.0.2.7'))).text();
+        await (await post(gw.base, 'no-such-task', { topic: 'e' }, xff('203.0.113.6'))).text();
+        await (await post(gw.base, 'demo-json', null, { body: '{', ...xff('203.0.113.6') })).text();
+        const big = await rawRequest(gw.port, { headers: jsonHeaders({ 'x-pad': 'a'.repeat(9_000) }), body: '{}' });
+        assert.equal(big.status, 431);
+        assert.equal(usageLines().length, 0);
+    } finally {
+        await gw.stop();
+    }
+    const [line, ...rest] = usageLines();
+    assert.equal(rest.length, 0, '收尾期間沒有新的請求，就不再記');
+    assert.equal(line.level, 'info');
+    const { from, top, ...counts } = line.fields;
+    assert.ok(Date.parse(from) <= Date.now());
+    assert.deepEqual(counts, {
+        requests: 6,
+        accepted: 2,
+        rejected: 'headers_too_large:1,invalid_json:1,rate_limited:1,source_blocked:1,unknown_task:1',
+        tasks: 'demo-json:4,demo-md:1,unknown:1',
+        sources: 4,
+    });
+    // RATE_LIMIT_MAX 1、窗口 1 分鐘：一個來源一小時最多開 61 個任務，這裡只開了 2 個
+    assert.equal(top, '');
+    const written = [];
+    createLogger('info', (text) => written.push(text))('info', 'USAGE', line.fields);
+    assert.doesNotMatch(written[0], /203\.0\.113\.[1-9]|192\.0\.2\.[1-9]|2001:db8:1:2/);
+    for (const { fields } of gw.logs.filter((l) => l.tag === 'TASK')) assert.ok(!written[0].includes(fields.client));
+    assert.doesNotMatch(written[0], /"/, '欄位不必加引號，整行好 grep');
+});
+
+test('USAGE：網段的任務數超過一個來源開得到的上限才列出；退回的次數不算', async () => {
+    const xff = (value) => ({ headers: { 'x-forwarded-for': value } });
+    // 窗口比一小時長：一個來源一小時最多開 1 個任務，門檻是 1
+    const gw = await startGateway({
+        server: { rateLimitMax: 1, rateLimitWindowMs: 2_147_483_647, concurrency: 1, maxQueue: 0, clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'] },
+    });
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }, xff('203.0.113.5')));
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'b' }, xff('198.51.100.5')));
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'c' }, xff('198.51.100.6')));
+    } finally {
+        await gw.stop();
+    }
+    assert.equal(gw.logs.find((l) => l.tag === 'USAGE').fields.top, '198.51.100.0/24:2');
+});
+
+test('USAGE：沒用到 GPU、退回次數的任務不算進網段', async () => {
+    const xff = (value) => ({ headers: { 'x-forwarded-for': value } });
+    const gw = await startGateway({
+        // 門檻是 1：三個來源各開 1 個的話會列出 198.51.100.0/24:3
+        server: { rateLimitMax: 1, rateLimitWindowMs: 2_147_483_647, clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'] },
+        generate: async () => { throw new UpstreamError('busy', 'WinLab 忙線', { status: 429 }); },
+    });
+    try {
+        for (const address of ['198.51.100.5', '198.51.100.6', '198.51.100.7']) {
+            assert.equal((await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }, xff(address)))).at(-1).event, 'error');
+        }
+    } finally {
+        await gw.stop();
+    }
+    assert.equal(gw.logs.find((l) => l.tag === 'USAGE').fields.top, '');
+});
+
+test('USAGE：每隔 usageIntervalMs 記一行並歸零，沒有請求的時段也記', async () => {
+    const gw = await startGateway({ usageIntervalMs: 40 });
+    try {
+        await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }));
+        const lines = () => gw.logs.filter((l) => l.tag === 'USAGE').map((l) => l.fields);
+        // 等到記過這個請求的那一行之後，又有一行
+        const done = () => lines().findIndex((f) => f.requests === 1) !== -1 && lines().at(-1).requests === 0;
+        const deadline = Date.now() + 2_000;
+        while (!done() && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 20));
+        assert.ok(done(), JSON.stringify(lines()));
+        assert.equal(lines().reduce((sum, f) => sum + f.requests, 0), 1);
+        assert.equal(lines().at(-1).top, '');
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 2026-11-01 安全審查的 probes/timer.mjs：計時器比整點早幾毫秒觸發時，原本會隔幾毫秒再記一行幾乎是空的
+test('USAGE：排程時離整點不到 1 秒，就排到下一個整點', () => {
+    mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.parse('2026-11-01T04:59:59.998Z') });
+    try {
+        const logs = [];
+        createGateway({
+            llm: testConfig('http://unused.invalid'), server: serverConfig(), tasks: TASKS,
+            log: (level, tag, fields) => logs.push({ tag, fields }),
+        });
+        mock.timers.tick(2);
+        assert.equal(logs.filter((l) => l.tag === 'USAGE').length, 0);
+        mock.timers.tick(3_600_000);
+        assert.deepEqual(logs.filter((l) => l.tag === 'USAGE').map((l) => l.fields.from), ['2026-11-01T04:59:59.998Z']);
+    } finally {
+        mock.timers.reset();
     }
 });
 

@@ -152,9 +152,9 @@ curl -sN -H 'Origin: https://thc1006.github.io' -H 'Content-Type: application/js
 30 秒新任務直接回忙線；`state=closed` 是又收到了回應。從主機直接送的請求沒有 `X-Forwarded-For`，
 log 會多一筆 `CLIENT-IP-MISSING`，不用理會。
 
-log 一行一筆。每個任務結束時記一行 `TASK`（結果、輪數、token 數與各階段的耗時），JSON 任務
-寫完卻不合格時記 `JSON-REJECT`。學生的輸入與模型的輸出不進 log；上游錯誤欄位裡符合代號形狀的
-短字串例外，見 `src/upstream.mjs` 的 `upstreamToken`。
+log 一行一筆。任務結束時記 `TASK`（結果、輪數、token 數與各階段的耗時），JSON 任務不合格時記
+`JSON-REJECT`，每小時記 `USAGE`（`src/usage.mjs`）。學生的輸入與模型的輸出不進 log；上游錯誤欄位裡
+符合代號形狀的短字串例外，見 `src/upstream.mjs` 的 `upstreamToken`。
 
 ### 下架
 
