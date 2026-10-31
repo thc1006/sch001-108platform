@@ -48,7 +48,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 </div>
 
                 <div class="flex gap-2">
-                    <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" aria-describedby="chat-input-hint" class="flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
+                    <input type="text" id="chat-input" maxlength="200" aria-label="你的問題" aria-describedby="chat-input-hint" class="placeholder:text-gray-600 flex-grow min-w-0 bg-gray-100 border-2 border-gray-200 rounded-full py-3 px-5 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="在這裡輸入你的問題...">
                     <button id="chat-submit" class="shrink-0 bg-indigo-600 text-white rounded-full px-5 py-3 font-semibold hover:bg-indigo-700 active:bg-indigo-800 transition-all duration-300 transform hover:scale-105 flex items-center">
                         <span class="hidden sm:inline">發送</span>
                         {/* 窄螢幕上文字隱藏，按鈕的名稱只能來自圖示。 */}
@@ -74,7 +74,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
                 <div class="md:w-1/3 lg:w-1/4 flex flex-col gap-4">
                     <div class="relative">
-                        <input type="text" id="search-bar" aria-label="搜尋學群" class="w-full bg-gray-100 border-2 border-transparent rounded-full py-3 pl-10 pr-4 focus:outline-none focus:border-indigo-300 transition-colors" placeholder="搜尋學群...">
+                        <input type="text" id="search-bar" aria-label="搜尋學群" class="placeholder:text-gray-600 w-full bg-gray-100 border-2 border-transparent rounded-full py-3 pl-10 pr-4 focus:outline-none focus:border-indigo-300 transition-colors" placeholder="搜尋學群...">
                         <ion-icon aria-hidden="true" name="search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
                     </div>
                     <p id="result-status" role="status" class="sr-only"></p>

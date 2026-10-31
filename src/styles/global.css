@@ -40,6 +40,14 @@ body > header *,
 
 /* 全站共用樣式。 */
 
+/* placeholder 的顏色。Tailwind 的預設是文字色的一半，白底只有 3.06:1；gray-500 在白底是 4.84:1。
+   灰底或藍底的輸入框另外加 placeholder:text-gray-600。 */
+@layer base {
+  ::placeholder {
+    color: var(--color-gray-500);
+  }
+}
+
 body {
   font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
