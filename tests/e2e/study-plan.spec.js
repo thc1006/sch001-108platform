@@ -83,6 +83,16 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         await expect(button.locator('svg')).toHaveCount(1);
     });
 
+    test('以「1. 」開頭的項目照原樣顯示，不變成只有一項的清單；- 換成「• 」', async ({ page }) => {
+        const plan = { ...RESULT, learning_objectives: ['1. 先選定主題', '- 再找資料'] };
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(plan)] });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        const items = page.locator('#planResult ul').first().locator(':scope > li');
+        await expect(items).toHaveText(['1. 先選定主題', '• 再找資料']);
+        await expect(page.locator('#planResult li :is(ul, ol)')).toHaveCount(0);
+    });
+
     test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done(XSS_RESULT)] });
         await page.fill('#planInput', '手搖飲');

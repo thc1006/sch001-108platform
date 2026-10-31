@@ -184,7 +184,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
             const topicTitle = document.createElement('h4');
             topicTitle.textContent = '建議主題方向';
-            const topicText = document.createElement('p');
+            // renderMarkdown 的輸出可能有清單與標題，用 <div>；下方的間距是 prose 給 <p> 的
+            const topicText = document.createElement('div');
+            topicText.className = 'mb-[1.25em]';
             topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic, { headingLevel: 5 });
 
             // 探索問題標題
@@ -197,7 +199,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 探索問題為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
             data.research_questions.forEach(q => {
                 const li = document.createElement('li');
-                li.innerHTML = PlatformAI.renderMarkdown(q);
+                li.innerHTML = PlatformAI.renderMarkdown(q, { inline: true });
                 questionsList.appendChild(li);
             });
 

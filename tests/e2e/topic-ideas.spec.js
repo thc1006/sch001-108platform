@@ -64,7 +64,7 @@ async function expectIdeas(page, ideas) {
     for (const [i, idea] of ideas.entries()) {
         const card = cards.nth(i);
         await expect(card.locator('h4')).toHaveText(idea.title);
-        await expect(card.locator('p')).toHaveText(idea.description);
+        await expect(card.locator(':scope > h4 + div')).toHaveText(idea.description);
         await expect(section(page, card, '建議研究方法：').locator('span')).toHaveText(idea.methods);
         await expect(section(page, card, '潛在挑戰：').locator('li')).toHaveText(idea.challenges);
         await expect(section(page, card, '相關關鍵字：').locator('span')).toHaveText(idea.keywords);

@@ -373,10 +373,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 以下欄位都是 AI 的回應，可能含 markdown，所以用 PlatformAI.renderMarkdown()。
             // 它內部先 HTML escape、再套 markdown，不可再另外呼叫 escapeHtml，
             // 否則會雙重跳脫（看到字面的 &amp; 等）。
-            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${PlatformAI.renderMarkdown(obj)}</li>`).join('');
-            const methodsHtml = (data.execution_methods || []).map(met => `<li>${PlatformAI.renderMarkdown(met)}</li>`).join('');
-            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${PlatformAI.renderMarkdown(week.week)}:</b> ${PlatformAI.renderMarkdown(week.tasks)}</li>`).join('');
-            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${PlatformAI.renderMarkdown(out)}</li>`).join('');
+            // 每一項本身就是清單項目，用 inline：以「1. 」開頭的項目不會變成只有一項的 <ol>。
+            const md = (text) => PlatformAI.renderMarkdown(text, { inline: true });
+            const objectivesHtml = (data.learning_objectives || []).map(obj => `<li>${md(obj)}</li>`).join('');
+            const methodsHtml = (data.execution_methods || []).map(met => `<li>${md(met)}</li>`).join('');
+            const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${md(week.week)}:</b> ${md(week.tasks)}</li>`).join('');
+            const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${md(out)}</li>`).join('');
 
             planResult.innerHTML = `
                 <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">
