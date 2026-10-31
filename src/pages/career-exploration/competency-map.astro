@@ -159,11 +159,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             aiResultContainer.appendChild(p);
         }
 
-        // renderMarkdown 先 escape 再轉換，輸出可以直接放進 innerHTML。
+        // renderMarkdown 先 escape 再轉換，輸出可以直接放進 innerHTML。回答裡的標題接在 h2「AI 素養分析師」底下。
         function createAnswerBox(markdown) {
             const box = document.createElement('div');
             box.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
-            box.innerHTML = PlatformAI.renderMarkdown(markdown);
+            box.innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 3 });
             return box;
         }
 

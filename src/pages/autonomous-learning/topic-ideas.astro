@@ -188,7 +188,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
                 const descEl = document.createElement('p');
                 descEl.className = 'text-gray-700 mt-1 mb-4';
-                descEl.innerHTML = PlatformAI.renderMarkdown(idea.description);
+                descEl.innerHTML = PlatformAI.renderMarkdown(idea.description, { headingLevel: 5 });
 
                 // 方法標籤容器
                 const methodsContainer = document.createElement('div');

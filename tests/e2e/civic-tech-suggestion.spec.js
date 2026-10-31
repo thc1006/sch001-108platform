@@ -33,6 +33,18 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await stubBuiltInGateway(page);
     });
 
+    test('答案裡的 # 標題是框裡 h3「AI 推薦結果」底下的 h4，清單項目在 <ul> 裡，不多出空行', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done('## 推薦專案\n- Cofacts 真的假的\n- 零時政府\n\n## 下一步\n到專案的頁面看看。')] });
+        await page.fill('#ai-interest-input', '假訊息');
+        await page.click('#ai-submit-btn');
+        const answer = page.locator('#ai-results .ai-result-text');
+        await expect(answer.getByRole('heading', { level: 4 })).toHaveText(['推薦專案', '下一步']);
+        await expect(answer.locator('ul > li')).toHaveText(['Cofacts 真的假的', '零時政府']);
+        await expect(answer.locator('li:not(ul > li)')).toHaveCount(0);
+        // 框有 whitespace-pre-line，輸出裡不能留下換行字元，否則每個標籤之間都多一行空白
+        expect(await answer.evaluate((el) => el.innerHTML.includes('\n'))).toBe(false);
+    });
+
     test('答案邊收邊顯示：草稿在工作區，收到 done 後結果區顯示 done 的答案；按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, {
             chunks: [

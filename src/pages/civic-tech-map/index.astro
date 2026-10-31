@@ -160,8 +160,9 @@ const formatDate = (iso: string) => {
       });
 
       // 草稿與最後的結果用同一個框。renderMarkdown 先 escape 再套 markdown，可以放進 innerHTML。
+      // 回答裡的標題接在框裡的 h3「AI 推薦結果」底下。
       function setResultText(box, markdown) {
-        box.querySelector('.ai-result-text').innerHTML = PlatformAI.renderMarkdown(markdown);
+        box.querySelector('.ai-result-text').innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 4 });
       }
 
       function createResultBox(markdown) {

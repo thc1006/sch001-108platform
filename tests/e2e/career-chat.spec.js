@@ -121,6 +121,21 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
+    test('回答裡的 # 標題是 h2「AI 學涯導師」底下的 h3，清單項目在 <ul> 裡；草稿也一樣', async ({ page }) => {
+        const answer = '# 資訊學群\n適合你的原因：\n- 喜歡電腦\n- 喜歡解題\n## 可以先做的事\n1. 學一種程式語言';
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta(answer)], hang: true });
+        await ask(page, '我喜歡電腦');
+        await expect(draft(page).getByRole('heading', { level: 3, name: '資訊學群' })).toBeVisible();
+        await push(page, done(answer));
+        const bubble = messages(page).nth(2);
+        await expect(bubble.getByRole('heading')).toHaveText(['資訊學群', '可以先做的事']);
+        await expect(bubble.getByRole('heading', { level: 3 })).toHaveText(['資訊學群']);
+        await expect(bubble.getByRole('heading', { level: 4 })).toHaveText(['可以先做的事']);
+        await expect(bubble.locator('ul > li')).toHaveText(['喜歡電腦', '喜歡解題']);
+        await expect(bubble.locator('ol > li')).toHaveText(['學一種程式語言']);
+        await expect(bubble.locator('li:not(ul > li, ol > li)')).toHaveCount(0);
+    });
+
     test('連續問兩題：各送一個請求，body 只有這一題；每一題的草稿都接在紀錄後面，收到 done 就移除', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你')], hang: true });
         for (const [i, question] of ['我喜歡畫畫', '那如果我也喜歡數學呢？'].entries()) {

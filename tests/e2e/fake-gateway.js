@@ -92,7 +92,7 @@ async function watchDraws(page) {
     await page.evaluate(() => {
         const stats = window.__draws = { renders: 0, frames: 0 };
         const render = PlatformAI.renderMarkdown;
-        PlatformAI.renderMarkdown = (text) => { stats.renders++; return render(text); };
+        PlatformAI.renderMarkdown = (...args) => { stats.renders++; return render(...args); };
         const tick = () => { stats.frames++; requestAnimationFrame(tick); };
         requestAnimationFrame(tick);
     });

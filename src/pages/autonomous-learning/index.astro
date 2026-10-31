@@ -168,7 +168,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const topicTitle = document.createElement('h4');
             topicTitle.textContent = '建議主題方向';
             const topicText = document.createElement('p');
-            topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic);
+            topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic, { headingLevel: 5 });
 
             // 探索問題標題
             const questionsTitle = document.createElement('h4');

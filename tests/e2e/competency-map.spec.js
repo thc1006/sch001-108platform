@@ -360,6 +360,16 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(work).toBeEmpty();
     });
 
+    test('答案裡的 # 標題是 h2「AI 素養分析師」底下的 h3，清單項目在 <ul> 裡', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done('# 對應的素養\n* **A2 系統思考與解決問題**：寫出失敗的原因。\n* **A3 規劃執行與創新應變**：寫出怎麼調整。')] });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        const answer = page.locator('#ai-result .prose');
+        await expect(answer.getByRole('heading', { level: 3 })).toHaveText(['對應的素養']);
+        await expect(answer.getByRole('list')).toHaveCount(1);
+        await expect(answer.getByRole('listitem')).toHaveText(['A2 系統思考與解決問題：寫出失敗的原因。', 'A3 規劃執行與創新應變：寫出怎麼調整。']);
+    });
+
     test('閘道只回 done、沒有片段 → 直接顯示答案', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done('* **B1 符號運用與溝通表達**：上台報告的經驗很加分！')] });
         await page.fill('#ai-input', '科展');
