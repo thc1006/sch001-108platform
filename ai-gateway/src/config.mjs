@@ -292,6 +292,8 @@ function toCidrs(env, name, warn) {
  *                         之前就檢查：驗證失敗的請求不計入上面的次數，沒有這一道的話，連續送
  *                         超大的錯誤請求就能把 CPU 吃滿
  *   CLIENT_MAX_INFLIGHT   名額已滿時，每個來源最多佔用幾個（含排隊；預設 6）
+ *   AI_V6_PREFIX          IPv6 用戶端取多長的前綴當成同一個來源（預設 64，範圍 32～128）。上面依來源的
+ *                         計數與佔用量都照它分；有人輪流換用同一段 /56、/48 裡的位址時才調小
  *   BODY_TIMEOUT_MS       收完請求 body 的期限（預設 10000）。body 最多約 95 KiB（star-analysis），慢慢上傳的連線
  *                         佔著記憶體，不必等太久。Node 自己的 requestTimeout 在開始關機之後就
  *                         不再檢查，這個期限由閘道自己計時
@@ -334,6 +336,7 @@ export function loadServerConfig(env = process.env, { warn = (msg) => console.wa
         rateLimitMax: toInt(env, 'RATE_LIMIT_MAX', 100, 1, 1_000, warn),
         requestLimitPerMinute: toInt(env, 'REQUEST_LIMIT_PER_MINUTE', 120, 10, 10_000, warn),
         clientMaxInflight: toInt(env, 'CLIENT_MAX_INFLIGHT', 6, 1, 64, warn),
+        v6Prefix: toInt(env, 'AI_V6_PREFIX', 64, 32, 128, warn),
         bodyTimeoutMs: toInt(env, 'BODY_TIMEOUT_MS', 10_000, 1_000, 120_000, warn),
         heartbeatMs: toInt(env, 'HEARTBEAT_MS', 15_000, 1_000, 30_000, warn),
         shutdownGraceMs: toInt(env, 'SHUTDOWN_GRACE_MS', 900_000, 0, 2_147_483_647, warn),

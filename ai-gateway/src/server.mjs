@@ -562,13 +562,13 @@ export function createGateway({
             const raw = req.headers[cfg.clientIpHeader];
             const value = Array.isArray(raw) ? raw.at(-1) : raw;
             const last = typeof value === 'string' ? value.slice(-MAX_IP_HEADER_CHARS).split(',').at(-1).trim() : '';
-            const key = clientKey(last);
+            const key = clientKey(last, cfg.v6Prefix);
             if (key !== 'invalid') return key;
             noteClientIpProblem('missing');
         } else if (cfg.clientIpHeader && req.headers[cfg.clientIpHeader] !== undefined) {
-            noteClientIpProblem('untrusted', internalAddress(peer) ? clientKey(peer) : `hash:${clientTag(clientKey(peer))}`);
+            noteClientIpProblem('untrusted', internalAddress(peer) ? clientKey(peer) : `hash:${clientTag(clientKey(peer, cfg.v6Prefix))}`);
         }
-        return clientKey(peer);
+        return clientKey(peer, cfg.v6Prefix);
     }
 
     // 兩種情況都只能退回連線的位址，等於所有經過代理的人共用一個桶（全站加起來每個窗口只剩
@@ -1139,6 +1139,7 @@ async function main() {
             clientIp: serverConfig.clientIpHeader
                 ? `${serverConfig.clientIpHeader} via ${serverConfig.trustedProxies.join(',') || '(no trusted proxy: header ignored)'}`
                 : 'socket',
+            v6Prefix: serverConfig.v6Prefix,
             key: llm.apiKey ? 'loaded' : 'MISSING',
             problems: configProblems(llm).join(',') || undefined,
         });

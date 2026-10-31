@@ -434,6 +434,20 @@ test('clientKey：IPv6 取 /64（同一段視為同一來源，大小寫與省�
 });
 
 // 2002:cb00:7105::/48 是 203.0.113.5 的 6to4 前綴（文件用的位址段）
+test('clientKey：IPv6 的前綴長度可以指定，不是 16 的倍數時那一組只留前面的位元；IPv4 與內嵌 IPv4 不受影響', () => {
+    assert.equal(clientKey('2001:db8:1:2:3:4:5:6', 48), '2001:db8:1::/48');
+    assert.equal(clientKey('2001:db8:1:2:3:4:5:6', 32), '2001:db8::/32');
+    assert.equal(clientKey('2001:db8:1:2ff:3:4:5:6', 56), '2001:db8:1:200::/56');
+    assert.equal(clientKey('2001:db8:1:2ff:3:4:5:6', 60), '2001:db8:1:2f0::/60');
+    assert.equal(clientKey('2001:DB8:1:2:3:4:5:6', 128), '2001:db8:1:2:3:4:5:6/128');
+    assert.equal(clientKey('2001:db8:1:2:3:4:5:6', 112), '2001:db8:1:2:3:4:5::/112');
+    assert.equal(clientKey('2001:db8:1:2:3:4:5:6', 64), clientKey('2001:db8:1:2:3:4:5:6'));
+    assert.equal(clientKey('2001:db8:1:2::1', 48), clientKey('2001:db8:1:ffff::1', 48));
+    for (const address of ['203.0.113.5', '::ffff:203.0.113.5', '2002:cb00:7105::1', '2001:0:c000:201:0:0:34ff:8efa']) {
+        assert.equal(clientKey(address, 32), '203.0.113.5', address);
+    }
+});
+
 test('clientKey：6to4（2002::/16）取內嵌的 IPv4，同一個 IPv4 的各個 /64 與 IPv4 本身都是同一個桶', () => {
     for (const address of ['2002:cb00:7105::1', '2002:cb00:7105:1::1', '2002:CB00:7105:ffff:1:2:3:4', '[2002:cb00:7105:2::9]:443']) {
         assert.equal(clientKey(address), '203.0.113.5', address);
