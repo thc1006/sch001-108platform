@@ -327,6 +327,20 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
         });
     }
 
+    // 公民科技專案的卡片標題沒有英文名與單位，這些只在 name、org 裡，搜尋要照樣找得到
+    for (const { query, id } of [
+        { query: 'Civil IoT', id: 'civil-iot' },
+        { query: 'National Treasure', id: 'national-treasure' },
+        { query: 'MoeDict', id: 'amis-moedict' },
+        { query: 'g0v', id: 'vtaiwan' },
+    ]) {
+        test(`搜尋「${query}」找得到 ${id}`, async ({ page }) => {
+            const results = await searchFor(page, query);
+            const hrefs = await results.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
+            expect(hrefs, `搜尋「${query}」的結果：${hrefs.join(', ')}`).toContain(`civic-tech-map/index.html#${id}`);
+        });
+    }
+
     test('素養代碼命中時會說明是「核心素養」命中的', async ({ page }) => {
         const results = await searchFor(page, 'A2');
         const summary = await results.first().locator('p').last().textContent();
