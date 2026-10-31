@@ -71,7 +71,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     </dialog>
 
     {/* 複製連結後的提示。透明時文字仍會被螢幕閱讀器讀到，所以加 aria-hidden；複製成功改由對話框裡的 #copy-status 通知。 */}
-    <div id="copy-notification" aria-hidden="true" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+    <div id="copy-notification" aria-hidden="true" class="pointer-events-none fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
         連結已複製！
     </div>
 
