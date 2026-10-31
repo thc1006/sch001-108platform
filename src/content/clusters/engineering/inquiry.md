@@ -37,7 +37,7 @@ ColleGo! 每個學類頁都有「學類體驗」，列出可以先做做看的�
 - [ColleGo!「土木工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=16)
 - [ColleGo!「材料工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=19)
 - [ColleGo!「生醫工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=20)
-- [On Indefinite Reflection of Light Beam Off of Convex Decreasing Curves，ISEF 2023 作品摘要，Society for Science](https://abstracts.societyforscience.org/Home/FullAbstract?ProjectId=23281)
+- [<span lang="en">On Indefinite Reflection of Light Beam Off of Convex Decreasing Curves</span>，ISEF 2023 作品摘要，Society for Science](https://abstracts.societyforscience.org/Home/FullAbstract?ProjectId=23281)
 - [〈學習歷程、備審資料與大學選才〉，教育部、大學招生委員會聯合會（2021 年 4 月，臺北市立陽明高中網站）](https://www.ymsh.tp.edu.tw/wp-content/uploads/doc/ym150/_self_store_17_self_attach_%E7%BF%92%E6%AD%B7%E7%A8%8B%E6%AA%94%E6%A1%88%E6%BA%96%E5%82%99%E5%BB%BA%E8%AD%B0-%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B%E8%88%87%E5%A4%A7%E5%AD%B8%E9%81%B8%E6%89%8D1100809.pdf)
 - [清大工學院學士班「115學年度清大工學院學士班大學申請入學審查資料準備指引」](https://ipe.site.nthu.edu.tw/p/406-1300-302214,r825.php?Lang=zh-tw)
 - [〈3D列印從無到有〉，112-2 南投縣高級中等學校適性學習社區自主學習聯合成果發表會（國立中興高中網站）](https://www.chsh.ntct.edu.tw/ischool/resources/WID_141_1_526656ef92aceeef5cfc799fdbf2c82263ae7ada/CLS_141_1_5f1642f11fcb4708da65b0f41d686848a733a7c9/8fea5daca17793225e54185b9a21bdd8.pdf)
