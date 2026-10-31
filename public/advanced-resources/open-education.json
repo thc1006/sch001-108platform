@@ -68,7 +68,7 @@
       "name": "Hugging Face 開源模型與資料集",
       "org": "Hugging Face",
       "url": "https://huggingface.co/models",
-      "description": "全球最大的開放 AI 平台，公開超過數百萬個開源模型與資料集，可在瀏覽器直接試用。高中生能免費取用真實 AI 模型做專題，認識業界實際使用的工具與資料。",
+      "description": "Hugging Face 上公開的模型超過 300 萬個、資料集超過 100 萬個，部分模型可以在瀏覽器試用。",
       "tags": [
         "開源模型",
         "資料集",
@@ -83,7 +83,7 @@
       "name": "Cohere Labs 開放科學計畫",
       "org": "Cohere Labs",
       "url": "https://cohere.com/research/open-science",
-      "description": "Cohere Labs 主導的全球開放科學社群，連結逾百國研究者共同推動多語言 AI 研究，公開所有研究成果。讓對 AI 研究有興趣的高中生一窺真實的開放科學如何協作運作。",
+      "description": "Cohere Labs 主持的開放科學社群，成員來自 100 多個國家，一起做機器學習研究。",
       "tags": [
         "開放科學",
         "AI 研究",
@@ -684,7 +684,7 @@
       "name": "台灣國際科學展覽會",
       "org": "國立臺灣科學教育館",
       "url": "https://twsf.ntsec.gov.tw/",
-      "description": "由臺灣科教館主辦的年度國際高中生科學競賽，匯聚 30 多國學生發表 STEM 研究專案。台灣高中生可透過校內初選與全國科展管道參與，官網亦公開歷屆得獎作品供觀摩學習。",
+      "description": "每年舉辦的國際科學展覽會，國內學生由就讀的學校送件報名。官網公開歷屆優勝作品。",
       "tags": [
         "國際科展",
         "科學競賽",
