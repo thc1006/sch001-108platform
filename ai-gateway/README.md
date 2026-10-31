@@ -78,17 +78,17 @@ restricted，網路預設全部拒絕，開了哪些連線見 `namespace.yaml` �
 ### 換版
 
 `ai-gateway/deploy/k3s/build-image.sh` 以目前的 commit 當 tag 建映像檔並換版。建置用到的檔案與
-manifest 要先 commit。腳本會改 `app.yaml` 的 image 但不會 commit：換版成功後把那一行 commit，
-否則下一次執行會停下。換版成功後，腳本只留這次的、各 ReplicaSet 用的和還有 pod 在用的映像檔；
-在換版前停下或清到一半失敗時，舊版可能以 `<none>` 留著，用 `sudo k3s crictl images` 與
-`buildah images` 找出來手動刪。
+manifest 要先 commit。腳本不 commit，也不還原 `app.yaml`；結束後不論成敗都用
+`git checkout ai-gateway/deploy/k3s/app.yaml` 還原，否則下一次會停下。換版成功後，腳本只留這次的、
+各 ReplicaSet 用的和還有 pod 在用的映像檔；在換版前停下或清到一半失敗時，舊版可能以 `<none>` 留著，
+用 `sudo k3s crictl images` 與 `buildah images` 找出來手動刪。
 
 舊 pod 收到刪除之後，會把進行中的任務做完才結束，最多 920 秒。這段期間再換版，舊 pod、目前的
 pod 和新 pod 合計最多 12 個並行，不算 ahp-match 就已經超過 key 的 8 個上限。所以腳本遇到還在
 收尾的 pod 會列出來並停下，等它們從 `get pods` 消失再執行。`rollout restart` 與 `rollout undo`
-不經過這個檢查，執行前先跑 `ai-gateway/deploy/k3s/terminating-pods.sh`。等不了的時候用
-`ALLOW_ROLLOUT_OVERLAP=1 ai-gateway/deploy/k3s/build-image.sh`，代價是 WinLab 可能回 429：
-第一輪遇到的學生看到忙線，接續輪退避重試。
+不經過這個檢查，執行前先跑 `ai-gateway/deploy/k3s/terminating-pods.sh`。等不了的時候在兩支腳本
+前面加 `ALLOW_ROLLOUT_OVERLAP=1`，照樣列出但不停下。代價是 WinLab 可能回 429：第一輪遇到的學生
+看到忙線，接續輪退避重試。
 
 要看換版造成的 429，在舊 pod 收尾時把它的 log 存下來，pod 刪除之後就讀不到了：
 

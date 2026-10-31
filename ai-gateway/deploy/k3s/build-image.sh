@@ -29,7 +29,7 @@ if [ -n "$ignored" ]; then
 fi
 # manifest 會整份套用，沒 commit 的設定會跟著上線
 if [ -n "$(git status --porcelain -- "$dir/namespace.yaml" "$dir/app.yaml")" ]; then
-  echo "$dir 的 manifest 有還沒 commit 的改動，先 commit（上次部署失敗的話用 git checkout 還原）" >&2
+  echo "$dir 的 manifest 有還沒 commit 的改動：上次換版改的 image 用 git checkout 還原，其他的先 commit" >&2
   exit 1
 fi
 
@@ -62,7 +62,7 @@ sudo k3s ctr images label "$tag" io.cri-containerd.pinned=pinned
 # 建置期間才開始收尾的也要擋。擋下時映像檔已匯入、釘選，app.yaml 與 Deployment 還沒動
 "$dir/terminating-pods.sh"
 
-# manifest 記下這次部署的版本（之後要 commit），再照 manifest 套用
+# 把 manifest 的 image 換成這次的 tag 再套用。不 commit，換版後用 git checkout 還原
 sed -i "s#image: localhost/sch001-ai-gateway:[0-9a-f]*\$#image: $tag#" "$dir/app.yaml"
 # 寫法不一樣（加引號、多空白）時 sed 什麼都沒換，套用後還會以為上了新版
 grep -qx " *image: $tag" "$dir/app.yaml" || { echo "app.yaml 的 image 沒換成 $tag，沒有套用" >&2; exit 1; }
