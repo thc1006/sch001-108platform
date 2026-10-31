@@ -11,6 +11,7 @@ const PAGES = [
     { name: '研究方法工具箱', path: '/autonomous-learning/methodology.html', grid: '#methodology-grid', button: 'h3 > button' },
     { name: '計畫範本庫', path: '/autonomous-learning/plan-templates.html', grid: '#template-grid', button: 'h3 > button', tabs: true },
     { name: '優質範例藝廊', path: '/learning-portfolio/portfolio-gallery.html', grid: '#portfolio-grid', button: 'h3 > button' },
+    { name: '學長姐真心話', path: '/career-exploration/senior-interviews.html', grid: '#interview-grid', button: 'h2 > button', tabs: true },
 ];
 
 for (const { name, path, grid, button, tabs } of PAGES) {
@@ -205,5 +206,57 @@ test.describe('優質範例藝廊', () => {
         await page.keyboard.press('Escape');
         await expect(dialog).toBeHidden();
         await expect(featured).toBeFocused();
+    });
+});
+
+test.describe('學長姐真心話', () => {
+    test('?view= 直接開啟那篇訪談，關閉後焦點回到那張卡片，網址拿掉 view', async ({ page }) => {
+        const res = await page.request.get(`${ROOT}/career-exploration/senior-interviews.json`);
+        const { interviews } = await res.json();
+        const { id, name } = interviews[3];
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html?view=${id}`);
+        const dialog = page.getByRole('dialog', { name, exact: true });
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(page.locator('#interview-grid h2 > button', { hasText: name })).toBeFocused();
+        expect(new URL(page.url()).searchParams.has('view')).toBe(false);
+        await page.reload();
+        await expect(page.locator('#interview-grid h2 > button').first()).toBeVisible();
+        await expect(page.getByRole('dialog')).toBeHidden();
+    });
+
+    // 第二次用 textarea 的備用作法：Clipboard API 不能用時（非 HTTPS），writeText 會丟錯。
+    for (const fallback of [false, true]) {
+        test(`複製連結會寫進剪貼簿並通知螢幕閱讀器，焦點留在按鈕上${fallback ? '（沒有 Clipboard API）' : ''}`, async ({ page, context }) => {
+            await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+            if (fallback) {
+                await page.addInitScript(() => {
+                    navigator.clipboard.writeText = () => Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+                });
+            }
+            await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+            await page.locator('#interview-grid h2 > button').first().click();
+            const dialog = page.getByRole('dialog');
+            const copy = dialog.getByRole('button', { name: '複製此訪談連結' });
+            await copy.focus();
+            await page.keyboard.press('Enter');
+            await expect(dialog.getByRole('status')).toHaveText('連結已複製！');
+            await expect(copy).toBeFocused();
+            const copied = await page.evaluate(() => navigator.clipboard.readText());
+            expect(new URL(copied).searchParams.get('view')).toBeTruthy();
+        });
+    }
+
+    test('搜尋之後的卡片一樣能用鍵盤開啟', async ({ page }) => {
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+        await page.getByPlaceholder('搜尋科系、學校或關鍵字...').fill('台大');
+        const buttons = page.locator('#interview-grid h2 > button');
+        await expect(buttons.first()).toBeVisible();
+        expect(await buttons.count()).toBeLessThan(await page.evaluate(() => interviewData.length));
+        await buttons.first().focus();
+        await page.keyboard.press('Enter');
+        await expect(page.getByRole('dialog', { name: await buttons.first().textContent(), exact: true })).toBeVisible();
     });
 });

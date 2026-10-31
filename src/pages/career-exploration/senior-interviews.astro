@@ -65,15 +65,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     </main>
 
     <!-- 訪談詳情對話框 -->
-    <div id="interviewModal" class="modal fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
-        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-2xl z-10 flex flex-col">
-            <!-- 對話框內容由 showModal() 填入 -->
-        </div>
-    </div>
+    <dialog id="interviewModal" aria-labelledby="modal-title" class="modal-content bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-2xl overflow-y-auto outline outline-transparent open:flex flex-col">
+        <!-- 對話框內容由 showModal() 填入 -->
+    </dialog>
 
-    <!-- 複製連結後的提示 -->
-    <div id="copy-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+    {/* 複製連結後的提示。透明時文字仍會被螢幕閱讀器讀到，所以加 aria-hidden；複製成功改由對話框裡的 #copy-status 通知。 */}
+    <div id="copy-notification" aria-hidden="true" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
         連結已複製！
     </div>
 
@@ -81,6 +78,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
          檢查會發現。版本由 package-lock.json 鎖定，檔案由 scripts/vendor-assets.mjs
          從 node_modules 複製；檔案缺少時 check:site 會在 CI 擋下。 -->
     <script is:inline src={`${vendorBase}/vendor/feather.min.js`}></script>
+    <script is:inline src="../shared/detail-dialog.js"></script>
 
     <script is:inline>
         // 資料從同目錄的 senior-interviews.json 載入（見下方 loadData）。
@@ -117,7 +115,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         const interviewGrid = document.getElementById('interview-grid');
         const modal = document.getElementById('interviewModal');
-        const modalContent = document.getElementById('modal-content');
+        const detail = DetailDialog.setup(modal);
         const filters = document.getElementById('category-filters');
         const searchBox = document.getElementById('search-box');
         const noResults = document.getElementById('no-results');
@@ -149,8 +147,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 const card = document.createElement('div');
                 card.className = 'interview-card bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer flex flex-col fade-in';
                 card.style.animationDelay = `${index * 50}ms`;
-                card.onclick = () => showModal(item.id);
-
+                card.dataset.id = item.id;
                 card.innerHTML = `
                     <div class="p-6 flex-grow flex flex-col">
                         <p class="text-sm font-bold text-purple-600 mb-2">${escapeHtml(item.category)}</p>
@@ -159,16 +156,19 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                     <div class="p-6 bg-gray-50 flex items-center border-t">
                         <img src="${encodeURI(item.photo_url)}" alt="${escapeHtml(item.name)}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
                         <div>
-                            <p class="font-bold text-gray-900">${escapeHtml(item.name)}</p>
+                            <h2 class="font-bold text-gray-900"><button type="button" class="text-left cursor-pointer">${escapeHtml(item.name)}</button></h2>
                             <p class="text-sm text-gray-600">${escapeHtml(item.university)} ${escapeHtml(item.major)}</p>
                         </div>
                     </div>
                 `;
+                // 整張卡片都可以點；鍵盤和螢幕閱讀器用化名的按鈕，按下時一樣冒泡到這裡。
+                const button = card.querySelector('h2 button');
+                card.onclick = () => showModal(item.id, button);
                 interviewGrid.appendChild(card);
             });
         }
 
-        function showModal(id) {
+        function showModal(id, opener) {
             const item = interviewData.find(p => p.id === id);
             if (!item) return;
 
@@ -176,79 +176,102 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
                     <i data-feather="check-circle" class="w-5 h-5 text-purple-600 mt-1 flex-shrink-0"></i>
                     <div>
-                        <h5 class="font-bold text-gray-800">${escapeHtml(tip.title)}</h5>
+                        <h4 class="font-bold text-gray-800">${escapeHtml(tip.title)}</h4>
                         <p class="text-sm text-gray-600">${escapeHtml(tip.desc)}</p>
                     </div>
                 </div>
             `).join('');
 
-            modalContent.innerHTML = `
+            modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div class="flex items-center gap-4">
                         <img src="${encodeURI(item.photo_url)}" alt="${escapeHtml(item.name)}" class="w-20 h-20 rounded-full object-cover shadow-md bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
                         <div>
-                            <h3 class="text-2xl font-bold">${escapeHtml(item.name)}</h3>
+                            <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(item.name)}</h3>
                             <p class="text-purple-600 font-semibold">${escapeHtml(item.university)} ${escapeHtml(item.major)}</p>
                         </div>
                     </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-7 h-7"></i></button>
+                    <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 p-1 rounded-full transition-colors"><i data-feather="x" class="w-7 h-7"></i></button>
                 </div>
                 <div class="border-b border-gray-200">
-                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" aria-label="Tabs">
-                        <button class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'interview')">訪談內容</button>
-                        <button class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'tips')">探索TIPS</button>
+                    <nav class="modal-tabs -mb-px flex space-x-6 px-6" role="tablist">
+                        <button type="button" role="tab" id="tab-interview" aria-controls="panel-interview" aria-selected="true" class="tab-btn active border-b-2 font-semibold py-4 px-1 text-sm" onclick="showTabContent(this, 'interview')">訪談內容</button>
+                        <button type="button" role="tab" id="tab-tips" aria-controls="panel-tips" aria-selected="false" tabindex="-1" class="tab-btn border-b-2 border-transparent font-semibold py-4 px-1 text-sm text-gray-500 hover:text-gray-700" onclick="showTabContent(this, 'tips')">探索TIPS</button>
                     </nav>
                 </div>
                 <div class="p-6 overflow-y-auto flex-grow">
-                    <div class="tab-content-interview">${item.content_html}</div>
-                    <div class="tab-content-tips hidden space-y-4">${tipsHtml}</div>
+                    <div id="panel-interview" role="tabpanel" aria-labelledby="tab-interview" tabindex="0" class="tab-content-interview">${item.content_html}</div>
+                    <div id="panel-tips" role="tabpanel" aria-labelledby="tab-tips" tabindex="0" class="tab-content-tips hidden space-y-4">${tipsHtml}</div>
                 </div>
                 <div class="p-4 bg-gray-50 border-t flex justify-end">
-                    <button onclick="copyLinkToClipboard('${id}')" class="flex items-center gap-2 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                    <p id="copy-status" role="status" class="sr-only"></p>
+                    <button type="button" onclick="copyLinkToClipboard('${id}')" class="flex items-center gap-2 bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
                         <i data-feather="copy" class="w-4 h-4"></i>
                         複製此訪談連結
                     </button>
                 </div>
             `;
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
+            detail.open(opener);
             feather.replace();
-            modalContent.scrollTop = 0;
-            showTabContent(modalContent.querySelector('.tab-btn.active'), 'interview');
+            showTabContent(modal.querySelector('.tab-btn.active'), 'interview');
         }
 
         function hideModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
+            detail.close();
         }
+
+        // 從 ?view= 開啟的訪談，關閉後把參數拿掉，重新整理才不會又打開。按 Esc 關閉時不會經過 hideModal。
+        modal.addEventListener('close', () => {
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has('view')) return;
+            url.searchParams.delete('view');
+            history.replaceState(history.state, '', url);
+        });
 
         function showTabContent(btn, tabName) {
             const modalTabs = btn.closest('.modal-tabs');
-            modalTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            modalTabs.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+                b.tabIndex = -1;
+            });
             btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            btn.tabIndex = 0;
 
-            const contentArea = modalContent.querySelector('.overflow-y-auto');
+            const contentArea = modal.querySelector('.overflow-y-auto');
             contentArea.querySelectorAll('[class^="tab-content-"]').forEach(c => c.classList.add('hidden'));
             contentArea.querySelector(`.tab-content-${tabName}`).classList.remove('hidden');
         }
 
-        function copyLinkToClipboard(id) {
+        async function copyLinkToClipboard(id) {
             const url = new URL(window.location.href);
             url.searchParams.set('view', id);
 
-            const textarea = document.createElement('textarea');
-            textarea.value = url.href;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+            try {
+                await navigator.clipboard.writeText(url.href);
+            } catch {
+                // 沒有 Clipboard API（例如非 HTTPS）時才用 textarea。對話框開著時，對話框外的元素都不能
+                // 操作，textarea 要放在對話框裡。選取會移走焦點，複製完要放回去。
+                const focused = document.activeElement;
+                const textarea = document.createElement('textarea');
+                textarea.value = url.href;
+                modal.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                modal.removeChild(textarea);
+                focused.focus();
+            }
 
             const notification = document.getElementById('copy-notification');
+            const status = document.getElementById('copy-status');
             notification.style.opacity = 1;
-            setTimeout(() => { notification.style.opacity = 0; }, 2000);
+            status.textContent = notification.textContent.trim();
+            setTimeout(() => {
+                notification.style.opacity = 0;
+                status.textContent = '';
+            }, 2000);
         }
 
         function handleFilterAndSearch() {
@@ -267,17 +290,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         searchBox.addEventListener('input', handleFilterAndSearch);
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                hideModal();
-            }
-        });
-
         function checkUrlForModal() {
             const urlParams = new URLSearchParams(window.location.search);
             const viewId = urlParams.get('view');
             if (viewId && interviewData.some(p => p.id === viewId)) {
-                showModal(viewId);
+                showModal(viewId, interviewGrid.querySelector(`[data-id="${CSS.escape(viewId)}"] h2 button`));
             }
         }
 
@@ -322,19 +339,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             color: white;
             box-shadow: 0 4px 14px 0 rgb(147 51 234 / 38%);
         }
-        .modal-backdrop {
+        .modal-content::backdrop {
             background-color: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
         }
         .modal-content {
             max-height: 90vh;
-            transition: all 0.3s ease-out;
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        .modal.flex .modal-content {
-            transform: translateY(0);
-            opacity: 1;
         }
         .interview-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
