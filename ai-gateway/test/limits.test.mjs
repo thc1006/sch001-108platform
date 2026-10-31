@@ -6,7 +6,7 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher, createSourceMatcher, parseCidr, formatCidr, coversAllIPv4, blockRangeProblem } from '../src/limits.mjs';
+import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher, createSourceMatcher, parseCidr, formatCidr, coversAllIPv4, blockRangeProblem, sourcePrefix } from '../src/limits.mjs';
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
@@ -561,6 +561,31 @@ test('createSourceMatcher：前綴長度的邊界（IPv4 /8、/31、/32，IPv6 /
         const blocked = createSourceMatcher([cidr]);
         assert.equal(blocked(inside), true, `${cidr} ${inside}`);
         assert.equal(blocked(outside), false, `${cidr} ${outside}`);
+    }
+});
+
+test('sourcePrefix：IPv4 與內嵌的 IPv4 取 /24，IPv6 取 /48（v6Prefix 較短時照它）；寫出的網段貼進封鎖清單都收', () => {
+    const cases = [
+        ['203.0.113.5', '203.0.113.0/24'],
+        ['::ffff:203.0.113.5', '203.0.113.0/24'],
+        ['2002:cb00:7105::1', '203.0.113.0/24'],
+        ['[2001:db8:1:2::1]:443', '2001:db8:1::/48'],
+        ['2001:DB8:1:2::1%eth0', '2001:db8:1::/48'],
+        // ::/48 涵蓋所有 IPv4，貼進封鎖清單不收：加長到不涵蓋為止
+        ['::1', '0:0:0:0:0:0::/96'],
+        ['::192.0.2.7', '0:0:0:0:0:0::/96'],
+        ['0:0:0:1::5', '0:0:0:1::/64'],
+        ['0:0:0:0:1::5', '0:0:0:0:1::/80'],
+    ];
+    for (const [address, prefix] of cases) {
+        assert.equal(sourcePrefix(address), prefix, address);
+        assert.equal(blockRangeProblem(parseCidr(prefix)), null, prefix);
+        assert.equal(createSourceMatcher([prefix])(address), true, address);
+    }
+    assert.equal(sourcePrefix('2001:db8:1:2::1', 32), '2001:db8::/32');
+    assert.equal(sourcePrefix('2001:db8:1:2::1', 128), '2001:db8:1::/48');
+    for (const value of ['invalid', '', undefined, 'x/64', '203.0.113.5/24']) {
+        assert.equal(sourcePrefix(value), 'invalid', String(value));
     }
 });
 

@@ -34,9 +34,10 @@ import { fileURLToPath } from 'node:url';
 import { loadLlmConfig, loadServerConfig, configProblems, FRONTEND_TASK_TIMEOUT_MS } from './config.mjs';
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
-import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher, createSourceMatcher } from './limits.mjs';
+import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher, createSourceMatcher, sourcePrefix } from './limits.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, tooLongMessage, TaskError } from './tasks.mjs';
 import { createTraditionalStream } from './s2t.mjs';
+import { Usage } from './usage.mjs';
 
 // 進度事件最多每 500ms 一次；階段改變時立刻送
 const PROGRESS_INTERVAL_MS = 500;
@@ -90,6 +91,8 @@ const MAX_HEADER_BYTES = 8 * 1024;
 // （2026-11-01 本機實測）。Firefox、Chromium 跨網域的 POST 是 14、15 個，Funnel 轉送時再加上
 // X-Forwarded-For 這類標頭
 const MAX_HEADERS_COUNT = 64;
+// USAGE log 的間隔，對齊整點
+const USAGE_INTERVAL_MS = 3_600_000;
 // 閘道自己給的忙線秒數多加 0～30% 的隨機時間，被同一批拒絕的學生才不會同時重送
 const BUSY_JITTER = 0.3;
 
@@ -425,10 +428,12 @@ function rejectLogFields(reason) {
  * @param {number} [options.maxBodyBytes]  同時在收的 body 合計的位元組上限；測試可以調小
  * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
  * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
+ * @param {number} [options.usageIntervalMs]  USAGE log 的間隔；測試可以調短
  */
 export function createGateway({
     llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(), random = Math.random,
     maxBodyReads = MAX_BODY_READS, maxBodyBytes = MAX_BODY_BYTES, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
+    usageIntervalMs = USAGE_INTERVAL_MS,
 }) {
     const gate = new SlotGate({
         concurrency: cfg.concurrency,
@@ -464,6 +469,25 @@ export function createGateway({
     // 用戶端在 log 裡只出現雜湊：同一個程序內可以關聯同一個來源，又反推不回 IP
     const salt = randomBytes(16);
     const clientTag = (key) => createHash('sha256').update(salt).update(key).digest('hex').slice(0, 10);
+    // USAGE 只列任務數超過門檻的網段。門檻是一個來源一段時間內最多能開始的任務數；一段最長約
+    // usageIntervalMs 加 1 秒，計時器晚觸發再留 1 分鐘
+    const usage = new Usage({ threshold: cfg.rateLimitMax * Math.ceil((usageIntervalMs + 60_000) / cfg.rateLimitWindowMs) });
+    const logUsage = () => {
+        for (const code of [...repeatedRejects.keys()]) flushRepeatedReject(code);
+        log('info', 'USAGE', usage.take());
+    };
+    let usageTimer;
+    const scheduleUsage = () => {
+        let delay = usageIntervalMs - (Date.now() % usageIntervalMs);
+        // 計時器可能比整點早幾毫秒觸發，這時下一個整點就在眼前：跳過它，不記一行幾乎是空的
+        if (delay < Math.min(1_000, usageIntervalMs / 10)) delay += usageIntervalMs;
+        usageTimer = setTimeout(() => {
+            logUsage();
+            scheduleUsage();
+        }, delay);
+        usageTimer.unref();
+    };
+    scheduleUsage();
     // 從拿到用戶端名額起、到回應的連線關閉為止的每個請求
     const active = new Set();
     // 每個已經收到、還沒回應完的請求（不只任務）：關機時限時等它們拿到回應，見 close()
@@ -501,6 +525,7 @@ export function createGateway({
     server.emit = function (event, ...args) {
         if (event === 'clientError' && args[0]?.code === 'HPE_HEADER_OVERFLOW') {
             logRepeatedReject({ status: 431, code: 'headers_too_large' });
+            usage.reject('headers_too_large');
         }
         return emit.apply(this, [event, ...args]);
     };
@@ -695,6 +720,7 @@ export function createGateway({
         // reason 只進 log：同一個代號有不同原因時分得出來
         const reject = (status, code, message, extra = {}, extraHeaders = {}, reason = undefined) => {
             log(status >= 500 ? 'warn' : 'info', 'REJECT', { id: requestId, task: taskId, status, code, reason });
+            usage.reject(code, reason);
             if (extra.retryAfter) extraHeaders = { ...extraHeaders, 'retry-after': String(extra.retryAfter) };
             sendJson(req, res, status, { error: { code, message, requestId, ...extra } }, { ...headers, ...extraHeaders });
         };
@@ -705,9 +731,11 @@ export function createGateway({
 
         const address = clientAddressOf(req);
         const key = clientKey(address, cfg.v6Prefix);
+        usage.request(tasks.has(taskId) ? taskId : 'unknown', clientTag(key));
         // 預檢不擋：預檢被拒時瀏覽器只說連不上，這裡的 403 帶 CORS 標頭，前端顯示得出訊息
         if (blockedSource(address)) {
             logRepeatedReject({ status: 403, code: 'source_blocked' });
+            usage.reject('source_blocked');
             sendJson(req, res, 403, { error: { code: 'source_blocked', message: MESSAGES.source_blocked, requestId } }, headers);
             return undefined;
         }
@@ -775,9 +803,9 @@ export function createGateway({
                 return reject(err.status, err.code, err.message, err.status === 503 ? { retryAfter: jitter(5) } : {}, {}, err.reason);
             }
             if (err instanceof ClientGone) {
-                log('info', 'REJECT', err.serverTimeout
-                    ? { id: requestId, task: taskId, status: 408, code: 'request_timeout' }
-                    : { id: requestId, task: taskId, status: 499, code: 'client_closed' });
+                const gone = err.serverTimeout ? { status: 408, code: 'request_timeout' } : { status: 499, code: 'client_closed' };
+                log('info', 'REJECT', { id: requestId, task: taskId, ...gone });
+                usage.reject(gone.code);
                 return undefined;
             }
             throw err;
@@ -812,6 +840,8 @@ export function createGateway({
             }
             throw err;
         }
+        const prefix = sourcePrefix(address, cfg.v6Prefix);
+        usage.start(prefix);
 
         // 從這裡開始握有用戶端名額，所有出口都要經過 finally 釋放；
         // 回應的連線關閉時才離開 active，關機流程才等得到最後一個事件真的送出去
@@ -869,6 +899,7 @@ export function createGateway({
                 'x-accel-buffering': 'no',
             });
             req.socket.setNoDelay(true);
+            usage.accept();
             send('accepted', { requestId, task: task.id });
             if (entry.queued) send('progress', { phase: 'queued', position: entry.position });
             heartbeat = setInterval(() => write(': ping\n\n'), cfg.heartbeatMs);
@@ -994,7 +1025,10 @@ export function createGateway({
             // protocol 錯誤（維護頁面、看不懂的串流），但不包括沒有串流、直接寫完的回答
             const upstreamRefused = failedWith instanceof UpstreamError && !failedWith.generated
                 && ['busy', 'unavailable', 'protocol'].includes(failedWith.code);
-            if (!generationStarted || (!tokensSeen && (upstreamRefused || isTimeout(failedWith)))) ticket.refund();
+            if (!generationStarted || (!tokensSeen && (upstreamRefused || isTimeout(failedWith)))) {
+                ticket.refund();
+                usage.unstart(prefix);
+            }
             // 連回應標頭都沒等到就逾時，算一次卡住。上游回了 408、504 的有標頭，不算
             breaker.finish(breakerTrial, isTimeout(failedWith) && firsts.byte === undefined);
             ticket.done();
@@ -1007,7 +1041,7 @@ export function createGateway({
             }
             // 排到逾時、排隊中離開或關機：記到這一刻為止排了多久
             if (handle.queued) queueMs = Date.now() - queuedAt;
-            const usage = result?.usage ?? failedWith?.usage;
+            const tokens = result?.usage ?? failedWith?.usage;
             const stats = result?.stats ?? failedWith?.stats;
             // queue 從送出 SSE 標頭算起。firstByte 含探測與錯誤的回應；WinLab 開始處理才送標頭，
             // 所以也含它的排隊
@@ -1019,9 +1053,9 @@ export function createGateway({
                 status: outcome === 'aborted' || outcome === 'client_stalled' ? 499 : res.statusCode,
                 rounds: result?.rounds ?? failedWith?.rounds,
                 cont: (result?.continuations ?? failedWith?.continuations)?.join(','),
-                reasoning: usage?.reasoningTokens,
-                completion: usage?.completionTokens,
-                prompt: usage?.promptTokens,
+                reasoning: tokens?.reasoningTokens,
+                completion: tokens?.completionTokens,
+                prompt: tokens?.promptTokens,
                 queue: `${queueMs}ms`,
                 total: `${Date.now() - started}ms`,
                 firstByte: since(firsts.byte),
@@ -1090,7 +1124,9 @@ export function createGateway({
         closing ??= (async () => {
             draining = true;
             clearInterval(sweepTimer);
-            for (const code of [...repeatedRejects.keys()]) flushRepeatedReject(code);
+            // 到這一刻為止的用量；之後還在收尾的請求，最後有的話再記一行
+            clearTimeout(usageTimer);
+            logUsage();
             for (const h of active) {
                 if (h.queued) h.abort.abort(SHUTDOWN);
                 // 這個回應一結束就關掉它的 keep-alive 連線。留著的話，代理的連線池會拿它送下一個
@@ -1111,6 +1147,7 @@ export function createGateway({
             if (unanswered.size) await settle([...unanswered], requestWaitMs);
             server.closeAllConnections();
             await closed;
+            if (usage.records) logUsage();
         })();
         return closing;
     }
