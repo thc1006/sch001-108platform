@@ -915,7 +915,7 @@ test('各種錯誤對應到的代號、可否重試與建議等待時間', async
         // 上游說 Retry-After: 0 也不能叫前端立刻重打
         ['demo-json', new UpstreamError('busy', '429', { status: 429, retryable: true, retryAfter: 0 }), 'busy', true, 1],
         ['demo-json', new GenerationError('incomplete', '用完輪數'), 'incomplete', false, undefined],
-        ['demo-json', Object.assign(new GenerationError('incomplete', '正文超過上限'), { tooLong: true }), 'incomplete', true, undefined],
+        ['demo-json', Object.assign(new GenerationError('incomplete', '正文超過上限'), { tooLong: true }), 'incomplete', false, undefined],
         ['demo-json', new GenerationError('timeout', '超時'), 'timeout', true, undefined, true],
         ['demo-json', new GenerationError('timeout', '超時'), 'busy', true, 30, false],
         // 上游要求等待的時間比剩下的時限長、沒有重試：不論收到過 token 沒有，都照忙線轉告上游要求的秒數
@@ -3155,8 +3155,8 @@ test('文字任務的回答超過 maxOutputChars：超過的那一段不送，�
         const last = events.at(-1);
         assert.equal(last.event, 'error');
         assert.equal(last.data.code, 'incomplete');
-        assert.equal(last.data.retryable, true);
-        assert.match(last.data.message, /超過長度上限/);
+        assert.equal(last.data.retryable, false);
+        assert.equal(last.data.message, 'AI 的回答太長，沒有寫完。請把範圍縮小一點再試。');
         assert.ok(!events.some((e) => e.event === 'done'));
         assert.equal(gw.upstream.requests.length, 1);
         assert.match(logFields(gw.lines.find((l) => / TASK-ERR /.test(l))).detail, /20 字/);
@@ -3178,7 +3178,8 @@ test('maxOutputChars 交給 generate（maxContentChars）；generate 沒擋下�
         assert.equal(gw.calls[0].request.maxContentChars, 20);
         assert.deepEqual(events.filter((e) => e.event === 'delta').map((e) => e.data.text), [long]);
         assert.equal(events.at(-1).data.code, 'incomplete');
-        assert.match(events.at(-1).data.message, /超過長度上限/);
+        assert.equal(events.at(-1).data.message, 'AI 的回答太長，沒有寫完。請把範圍縮小一點再試。');
+        assert.equal(events.at(-1).data.retryable, false);
         const other = await readEvents(await post(gw.base, 'demo-md', { question: 'q' }));
         assert.equal(gw.calls[1].request.maxContentChars, undefined);
         assert.equal(other.at(-1).event, 'done');
