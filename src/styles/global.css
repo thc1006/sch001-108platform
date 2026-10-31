@@ -10,6 +10,13 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
+/* <html> 的 scroll-pt-20 讓焦點停在 header 下方。header 是 sticky，一直在畫面上，裡面的元素用負的
+   scroll-margin 抵掉它。Chrome 把落在這段 padding 裡的元素當成看不到，sticky 元素也一樣，焦點一移進來
+   就把整頁往上捲。 */
+body > header * {
+  scroll-margin-top: -5rem;
+}
+
 /* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數：Tailwind 會把
    :root 自訂屬性剪掉，top 退回 auto、sticky 靜默失效。把關見 layout-budget.spec.js。 */
 

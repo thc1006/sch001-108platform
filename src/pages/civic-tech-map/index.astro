@@ -96,7 +96,7 @@ const formatDate = (iso: string) => {
         <h2 id="projects-heading" class="text-2xl font-bold text-gray-800 mb-6">專案介紹</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {projects.map((p) => (
-            <article id={p.id} class="bg-white p-5 md:p-6 rounded-xl shadow-md border border-gray-100 scroll-mt-20">
+            <article id={p.id} class="bg-white p-5 md:p-6 rounded-xl shadow-md border border-gray-100">
               <h3 class="text-xl font-bold"><a href={p.url} class="text-blue-700 hover:underline">{p.title}</a></h3>
               <p class="text-sm text-gray-500 mt-1">{p.org}</p>
               <p class="text-gray-700 leading-relaxed mt-3">{p.description}</p>
