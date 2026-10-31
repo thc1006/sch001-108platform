@@ -60,13 +60,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <!-- 研究方法詳情對話框 -->
-    <div id="methodModal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
-        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            <!-- 對話框內容由 showModal() 填入 -->
-        </div>
-    </div>
+    <dialog id="methodModal" aria-labelledby="modal-title" class="modal-content bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent open:flex flex-col">
+        <!-- 對話框內容由 showModal() 填入 -->
+    </dialog>
 
+    <script is:inline src="../shared/detail-dialog.js"></script>
     <script is:inline>
         // 資料從同目錄的 methodology.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 methodology.json，不需要動這支 HTML。
@@ -112,7 +110,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
 
             const recommendedMethods = methodsData.filter(m => m.type.some(t => recommendedTypes.includes(t)));
-            let methodsHtml = recommendedMethods.map(m => `<button onclick="showModal('${escapeHtml(m.id)}')" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${escapeHtml(m.title)}</button>`).join('');
+            let methodsHtml = recommendedMethods.map(m => `<button type="button" onclick="showModal('${escapeHtml(m.id)}', this)" class="bg-orange-100 text-orange-800 font-semibold py-2 px-4 rounded-lg hover:bg-orange-200 transition">${escapeHtml(m.title)}</button>`).join('');
 
             recommendationResult.innerHTML = `
                 <div class="bg-orange-50 p-4 rounded-lg">
@@ -124,52 +122,51 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         const grid = document.getElementById('methodology-grid');
         const modal = document.getElementById('methodModal');
-        const modalContent = document.getElementById('modal-content');
+        const detail = DetailDialog.setup(modal);
 
         function renderMethods() {
             grid.innerHTML = '';
             methodsData.forEach(method => {
                 const card = document.createElement('div');
                 card.className = 'method-card bg-white p-6 rounded-xl shadow-lg cursor-pointer flex flex-col';
-                card.onclick = () => showModal(method.id);
                 card.innerHTML = `
                     <div class="flex-grow">
                         <span class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</span>
-                        <h3 class="text-2xl font-bold mt-2 mb-3">${escapeHtml(method.title)}</h3>
+                        <h3 class="text-2xl font-bold mt-2 mb-3"><button type="button" class="text-left cursor-pointer">${escapeHtml(method.title)}</button></h3>
                         <p class="text-gray-600">${escapeHtml(method.description)}</p>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-right">
-                        <span class="text-blue-600 font-semibold">查看詳情 &rarr;</span>
+                        <span class="text-blue-600 font-semibold" aria-hidden="true">查看詳情 &rarr;</span>
                     </div>
                 `;
+                // 整張卡片都可以點；鍵盤和螢幕閱讀器用標題的按鈕，按下時一樣冒泡到這裡。
+                const button = card.querySelector('h3 button');
+                card.onclick = () => showModal(method.id, button);
                 grid.appendChild(card);
             });
         }
 
-        function showModal(id) {
+        function showModal(id, opener) {
             const method = methodsData.find(m => m.id === id);
             if (!method) return;
 
-            modalContent.innerHTML = `
+            modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
                         <p class="text-sm font-bold text-orange-600">${escapeHtml(method.category)}</p>
-                        <h3 class="text-2xl font-bold">${escapeHtml(method.title)}</h3>
+                        <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(method.title)}</h3>
                     </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                    <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
                 <div class="p-6 overflow-y-auto flex-grow">
                     ${method.content_html}
                 </div>
             `;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modalContent.scrollTop = 0;
+            detail.open(opener);
         }
 
         function hideModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            detail.close();
         }
 
         // 從 methodology.json 載入資料後再渲染
@@ -209,7 +206,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
-        .modal-backdrop {
+        .modal-content::backdrop {
             background-color: rgba(0, 0, 0, 0.6);
         }
         .modal-content {
