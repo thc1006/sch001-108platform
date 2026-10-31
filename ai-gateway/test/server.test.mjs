@@ -691,6 +691,46 @@ test('文字任務：簡體字在片段與結果裡都轉成台灣繁體；切�
     }
 });
 
+test('文字任務：看不見的字元在片段與結果裡都拿掉；切在兩段之間的 \\r\\n、Tags 區塊的字元、選擇符也一致', async () => {
+    const cp = (...points) => String.fromCodePoint(...points);
+    const tag = cp(0xE0041);
+    // Tags 區塊的字元切在兩個 UTF-16 單位中間；\r 與 \n、❤ 與它的選擇符各在兩段
+    const pieces = ['数据\r', `\n${cp(0x202E)}反${tag.slice(0, 1)}`, `${tag.slice(1)}❤`, cp(0xFE0F, 0xFE0F), `${cp(0x200B)}。`];
+    const raw = pieces.join('');
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            for (const piece of pieces) hooks.onContent(piece);
+            return { content: raw, rounds: 1, continuations: [], usage: { promptTokens: 1, completionTokens: 3, reasoningTokens: 0 } };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼開始？' }));
+        const text = events.filter((e) => e.event === 'delta').map((e) => e.data.text).join('');
+        const done = events.find((e) => e.event === 'done');
+        assert.equal(text, `數據\n反❤${cp(0xFE0F)}。`);
+        assert.equal(done.data.result, text);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('文字任務：最後一段以 \\r 結尾時，留著的 \\r 在結束時換成 \\n 送出', async () => {
+    const pieces = ['第一行\r', '\n第二行\r'];
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            for (const piece of pieces) hooks.onContent(piece);
+            return { content: pieces.join(''), rounds: 1, continuations: [], usage: { promptTokens: 1, completionTokens: 2, reasoningTokens: 0 } };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼開始？' }));
+        assert.equal(events.filter((e) => e.event === 'delta').map((e) => e.data.text).join(''), '第一行\n第二行\n');
+        assert.equal(events.find((e) => e.event === 'done').data.result, '第一行\n第二行');
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('進度事件會節流：同一階段的大量更新最多每 500ms 一次，但階段改變立刻送', async () => {
     const gw = await startGateway({
         generate: async (request, hooks) => {
@@ -916,8 +956,8 @@ test('文字任務的正文只有空白：error 事件 empty（不是 format）'
     }
 });
 
-// 串流的片段不檢查內容，照樣送出；交出前的檢查才判定沒有看得見的字。
-test('文字任務的正文只有看不見的字元：片段照樣送出，最後是 error 事件 empty', async () => {
+// 片段與結果用同一套規則清掉看不見的字元，清完是空的片段不送；交出前的檢查判定沒有看得見的字。
+test('文字任務的正文只有看不見的字元：片段裡也拿掉、不送空的片段，最後是 error 事件 empty', async () => {
     const gw = await startGateway({
         generate: async (request, hooks) => {
             hooks.onContent('\u200B');
@@ -926,7 +966,7 @@ test('文字任務的正文只有看不見的字元：片段照樣送出，最�
     });
     try {
         const events = await readEvents(await post(gw.base, 'demo-md', { question: 'q' }));
-        assert.deepEqual(events.filter((e) => e.event === 'delta').map((e) => e.data.text), ['\u200B']);
+        assert.deepEqual(events.filter((e) => e.event === 'delta').map((e) => e.data.text), []);
         assert.equal(events.at(-1).event, 'error');
         assert.equal(events.at(-1).data.code, 'empty');
     } finally {
@@ -2418,14 +2458,15 @@ const CUT_HEAD = '請先完成以下三項：\n1. 蒐集';
 const deltaText = (events) => events.filter((e) => e.event === 'delta').map((e) => e.data.text).join('');
 
 test('接續正文的一輪去重疊後沒有新增看得見的字就以 stop 結束：不送 done，第二次加提醒，連兩輪就以 incomplete 結束，已送出的部分不收回', async () => {
-    // 看不見的字元用 code point 產生：照樣送出，只是不算新增（原始碼裡不能有看不見的字元）
+    // 看不見的字元用 code point 產生（原始碼裡不能有看不見的字元）。韓文填充字是 Default_Ignorable，
+    // 片段裡就拿掉；點字空白不是，照樣送出，只是不算新增
     const [hangulFiller, brailleBlank] = [0x3164, 0x2800].map((cp) => String.fromCodePoint(cp));
     const cases = [
         // [說明, 第二、三輪的正文, 這兩輪送出去的字]
         ['只有空白', ['\n\n'], ''],
         ['空字串', [], ''],
         ['只重複結尾', ['蒐集'], ''],
-        ['只有韓文填充字', [hangulFiller], hangulFiller.repeat(2)],
+        ['只有韓文填充字', [hangulFiller], ''],
         ['只有點字空白', [brailleBlank], brailleBlank.repeat(2)],
     ];
     for (const [label, again, sent] of cases) {

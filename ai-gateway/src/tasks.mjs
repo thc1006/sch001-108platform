@@ -71,6 +71,7 @@ const INVISIBLE = /(?![\t\n\u200C-\u200F\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\p{Cc
 // 一個。連續好幾個沒有意義，卻能把任意位元組藏在一個字後面（emoji smuggling：每個位元組
 // 對到一個選擇符）。只留緊跟在一般字後面的第一個；接在開頭、空白或另一個選擇符後面的都刪掉
 const EXTRA_VARIATION_SELECTORS = /(^|[\s\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+/gu;
+const VARIATION_SELECTOR = /^[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u;
 // code point 的平均預算：整個欄位最多 maxLength × 4 個 code point（不是每個字各自的上限）。
 // 正常的字是 1 個，表情符號組合也很少超過 4 個；一個基底字後面疊上千個組合符號（Zalgo）
 // 仍算一個字，這一道擋的是那種輸入，它的 token 數遠多於字數。
@@ -105,6 +106,51 @@ function exceedsCodePoints(text, limit) {
         if (++count > limit) return true;
     }
     return false;
+}
+
+/**
+ * 學生的輸入與模型的輸出共用的字元清理：統一換行、刪掉看不見的字元、多餘的異體字選擇符。
+ * 模型的輸出也要清：學生可以要求模型照抄雙向覆寫或 Tags 區塊的字元，再顯示在頁面上。
+ */
+export function cleanText(text) {
+    return text
+        .replace(/\r\n?/g, '\n')
+        .replace(TO_NEWLINE, '\n')
+        .replace(INVISIBLE, '')
+        .replace(EXTRA_VARIATION_SELECTORS, '$1');
+}
+
+/**
+ * 串流用的 cleanText：所有片段（含 flush）接起來，等於整段 cleanText 的結果。結尾的 \r 與半個
+ * 代理對先留著，下一段再一起處理；異體字選擇符看前一個字（開頭、空白或選擇符之後的刪掉）。
+ */
+export function createCleanStream() {
+    let carry = '';
+    let afterBlank = true;
+    const clean = (input) => {
+        let out = '';
+        for (const ch of input.replace(/\r\n?/g, '\n').replace(TO_NEWLINE, '\n').replace(INVISIBLE, '')) {
+            const selector = VARIATION_SELECTOR.test(ch);
+            if (!(selector && afterBlank)) out += ch;
+            afterBlank = selector || /^\s$/u.test(ch);
+        }
+        return out;
+    };
+    const convert = (text) => {
+        let input = carry + String(text);
+        carry = '';
+        if (/[\r\uD800-\uDBFF]$/.test(input)) {
+            carry = input.slice(-1);
+            input = input.slice(0, -1);
+        }
+        return clean(input);
+    };
+    convert.flush = () => {
+        const rest = carry;
+        carry = '';
+        return clean(rest);
+    };
+    return convert;
 }
 
 /**
@@ -219,12 +265,7 @@ export function validateInput(task, raw) {
     for (const [name, spec] of Object.entries(task.input)) {
         const value = raw[name];
         if (typeof value !== 'string') throw new TaskError('invalid_input', `請填寫${spec.label}`, { field: name });
-        const cleaned = value
-            .replace(/\r\n?/g, '\n')
-            .replace(TO_NEWLINE, '\n')
-            .replace(INVISIBLE, '')
-            .replace(EXTRA_VARIATION_SELECTORS, '$1')
-            .trim();
+        const cleaned = cleanText(value).trim();
         if (!hasVisibleText(cleaned)) throw new TaskError('invalid_input', `請填寫${spec.label}`, { field: name });
         // 上限的兩倍以內照實寫出目前幾個字；再多就只說超過多少，不必為了訊息把整串數完
         const shownLimit = spec.maxLength * 2;
@@ -275,19 +316,20 @@ function describeParseFailure(err, content) {
     return `${err?.name || 'Error'}（正文 ${String(content).length} 字）`;
 }
 
-// JSON.parse 的 reviver：解碼後的字串值轉成台灣繁體。鍵不經過 reviver，它是規格裡的屬性名稱，照原樣比對
-const traditionalStrings = (key, value) => (typeof value === 'string' ? toTraditional(value) : value);
+// JSON.parse 的 reviver：解碼後的字串值清掉看不見的字元、轉成台灣繁體。鍵不經過 reviver，它是規格裡的
+// 屬性名稱，照原樣比對
+const traditionalStrings = (key, value) => (typeof value === 'string' ? toTraditional(cleanText(value)) : value);
 
 /**
  * 把模型的正文轉成前端拿到的結果：JSON 任務是驗證過的物件，文字任務是去掉前後空白的字串。
- * 零星冒出的簡體字轉成台灣繁體（s2t.mjs）。JSON 先解析、轉換解碼後的字串值，再驗證 schema
+ * 字元照輸入的規則清理（cleanText），零星冒出的簡體字轉成台灣繁體（s2t.mjs）。JSON 先解析、轉換解碼後的字串值，再驗證 schema
  * 與任務的 check：退化之後的輪次拿掉了 response_format，enum 的值可能寫成簡體字，轉過才比對
  * 得上。不轉換解析前的原文：寫成 \uXXXX 跳脫序列的字在原文裡看不到，而 toTraditional 會看前一個字，
  * 拮 寫成跳脫序列時 据 前面是 e，「拮据」會被轉成「拮據」。
  */
 export function finalizeOutput(task, content) {
     if (task.output.type === 'markdown') {
-        const text = toTraditional(content).trim();
+        const text = toTraditional(cleanText(content)).trim();
         if (!hasVisibleText(text)) throw new TaskError('empty', 'AI 沒有產生內容');
         // generate 拿到同一個上限、超過就中止，這裡只是保險
         if (task.maxOutputChars && createLengthGuard(task.maxOutputChars)(text)) {
