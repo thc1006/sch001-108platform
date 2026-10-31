@@ -97,7 +97,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 if(tool.pricing === '免費增值') pricingColor = 'bg-yellow-100 text-yellow-800';
 
                 card.innerHTML = `
-                    <img src="${encodeURI(tool.logo)}" alt="${escapeHtml(tool.name)}" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-6 rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
+                    <img src="${encodeURI(tool.logo)}" alt="" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-6 rounded-t-lg" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="flex justify-between items-start">
                             <h3 class="text-xl font-bold text-gray-900">${escapeHtml(tool.name)}</h3>
