@@ -60,6 +60,22 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(button.locator('svg')).toHaveCount(1);
     });
 
+    test('建議主題裡的清單在 <div> 裡；探索問題以「1. 」或「- 」開頭時照原樣顯示，不在清單項目裡再包一層清單', async ({ page }) => {
+        const pack = { ...RESULT, suggested_topic: '兩個方向：\n- 情緒表達\n- 人貓互動', research_questions: ['1. 貓怎麼表達情緒？', '- 依附關係怎麼形成？', '環境豐富化有什麼影響？'] };
+        await installFakeGateway(page, {
+            chunks: [
+                sse('accepted', { requestId: 'req-1', task: 'starter-pack' }),
+                sse('done', { result: pack, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 }),
+            ],
+        });
+        await page.fill('#coachInput', '貓咪');
+        await page.click('#generateCoachBtn');
+        const result = page.locator('#coachResult');
+        await expect(result.locator('.prose > div > ul > li')).toHaveText(['情緒表達', '人貓互動']);
+        await expect(result.locator('p :is(ul, ol), li :is(ul, ol)')).toHaveCount(0);
+        await expect(result.locator('ul.list-disc > li')).toHaveText(['1. 貓怎麼表達情緒？', '• 依附關係怎麼形成？', '環境豐富化有什麼影響？']);
+    });
+
     test('AI 回傳含 HTML 標籤的文字 → 當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
         await installFakeGateway(page, {
             chunks: [

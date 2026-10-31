@@ -103,6 +103,24 @@ for (const p of PAGES) {
             await expect(result.locator('span strong')).toHaveText(['背景']);
         });
 
+        // 清單與標題不能放進 <p>、<span>：瀏覽器照樣顯示，但不是合法的 HTML，輔助科技的處理也不一定
+        test('欄位裡有清單時，清單在 <div> 裡；評語與建議裡的 - 照原樣變成「• 」，不產生清單', async ({ page }) => {
+            const marked = {
+                ...RESULT,
+                overall_comment: '- 投入\n- 真誠',
+                analysis: { ...RESULT.analysis, T: { comment: '- 目標不明確', suggestion: '1. 寫出負責的工作' } },
+                revised_example: '- 第一段\n- 第二段',
+            };
+            await installFakeGateway(page, { chunks: [ACCEPTED, done(marked)] });
+            await page.fill('#reflectionInput', '心得');
+            await page.click('#analyzeBtn');
+            const result = page.locator('#analysisResult');
+            await expect(result.locator('div > ul > li')).toHaveText(['投入', '真誠', '第一段', '第二段']);
+            await expect(result.locator(':is(p, span, b, h1, h2, h3, h4, h5, h6) :is(ul, ol, h1, h2, h3, h4, h5, h6)')).toHaveCount(0);
+            await expect(result).toContainText('評語：• 目標不明確');
+            await expect(result).toContainText('建議：1. 寫出負責的工作');
+        });
+
         test('收到 progress 事件 → 工作區的進度文字跟著換，例如「AI 正在思考（第 2 輪）…」', async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');

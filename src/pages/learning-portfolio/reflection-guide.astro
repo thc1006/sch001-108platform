@@ -239,7 +239,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             // 總評內容（AI 純文字，可能含 markdown）
             // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
-            const overallComment = document.createElement('p');
+            // 總評與修改範例可能有清單與標題，用 <div>。prose 給 <p> 的間距與引用框裡 <p> 的引號另外補上
+            const overallComment = document.createElement('div');
+            overallComment.className = 'mb-[1.25em]';
             overallComment.innerHTML = PlatformAI.renderMarkdown(data.overall_comment, { headingLevel: 4 });
 
             // STAR 分析標題
@@ -278,7 +280,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const commentLabel = document.createElement('strong');
                 commentLabel.textContent = '評語：';
                 const commentSpan = document.createElement('span');
-                commentSpan.innerHTML = PlatformAI.renderMarkdown(item.comment);
+                commentSpan.innerHTML = PlatformAI.renderMarkdown(item.comment, { inline: true });
                 commentP.appendChild(commentLabel);
                 commentP.appendChild(commentSpan);
 
@@ -287,7 +289,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 const suggestionLabel = document.createElement('strong');
                 suggestionLabel.textContent = '建議：';
                 const suggestionSpan = document.createElement('span');
-                suggestionSpan.innerHTML = PlatformAI.renderMarkdown(item.suggestion);
+                suggestionSpan.innerHTML = PlatformAI.renderMarkdown(item.suggestion, { inline: true });
                 suggestionP.appendChild(suggestionLabel);
                 suggestionP.appendChild(suggestionSpan);
 
@@ -307,7 +309,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const exampleBox = document.createElement('blockquote');
             exampleBox.className = 'border-l-4 border-cyan-500 bg-cyan-50 p-3 text-sm';
             // 修改範例為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
-            const exampleText = document.createElement('p');
+            const exampleText = document.createElement('div');
+            exampleText.className = 'my-[1.25em] before:content-[open-quote] after:content-[close-quote]';
             exampleText.innerHTML = PlatformAI.renderMarkdown(data.revised_example, { headingLevel: 4 });
             exampleBox.appendChild(exampleText);
 
