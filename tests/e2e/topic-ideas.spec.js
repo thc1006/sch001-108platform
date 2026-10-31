@@ -3,7 +3,7 @@
 //
 // 要先建置：playwright.config.js 的 webServer 以 8001 埠提供 .link-root。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/topic-ideas.html`;
@@ -173,7 +173,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await expect(button).toHaveText('產生靈感');
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         // 取消鈕隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
-        // 訊息，live region 又唸一次。
+        // 訊息，#ideaStatus 又唸一次。
         await expect(button).toBeFocused();
         for (const el of [button, page.locator('#ideaWorkspace'), page.locator('#ideaResult')]) await expect(el).not.toHaveAttribute('tabindex');
     });
@@ -220,10 +220,10 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
     });
 
     // 進度區塊的計時器每秒更新，還有取消鈕。放在 live region 裡，Safari 搭配 VoiceOver 會反覆唸。
-    test('結果區 #ideaResult 是 aria-live="polite"，送出時先清空；進度區塊在不屬於任何 live region 的工作區，顯示閘道回報的進度', async ({ page }) => {
+    test('結果區不是 live region，送出時先清空；進度區塊在不屬於任何 live region 的工作區，顯示閘道回報的進度', async ({ page }) => {
         const result = page.locator('#ideaResult');
         const workspace = page.locator('#ideaWorkspace');
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(result)).toBe(true);
         await expect(workspace).not.toHaveAttribute('aria-live');
 
         await installFakeGateway(page, { chunks: [ACCEPTED, THINKING], hang: true });
@@ -243,7 +243,40 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
         await expectIdeas(page, RESULT.ideas);
         await expect(workspace.locator('*')).toHaveCount(0);
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(result)).toBe(true);
+    });
+
+    // 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構
+    test('結果區不在任何 live region 裡；#ideaStatus 是視覺上隱藏的 role="status"，提示、結果摘要與取消各唸一句，畫面照常顯示', async ({ page }) => {
+        const result = page.locator('#ideaResult');
+        const status = page.locator('#ideaStatus');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        expect(await outsideLiveRegions(result)).toBe(true);
+        await watchStatus(page, '#ideaStatus');
+
+        await page.click('#generateIdeaBtn');
+        await expect(result).toHaveText('請先輸入你的興趣關鍵字！');
+        await expect(status).toHaveText('請先輸入你的興趣關鍵字！');
+        // 同一句再出現一次，也要再唸一次
+        await page.click('#generateIdeaBtn');
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字！', '請先輸入你的興趣關鍵字！']);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+        await page.fill('#ideaInput', '旅行');
+        await page.click('#generateIdeaBtn');
+        await expect(result).toContainText(RESULT.ideas[2].title);
+        await expect(status).toHaveText('已產生 3 個主題靈感。');
+        expect(await outsideLiveRegions(result)).toBe(true);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.click('#generateIdeaBtn');
+        await expect(status).toBeEmpty();
+        await page.locator('#ideaWorkspace').getByRole('button', { name: '取消' }).click();
+        await expect(result).toHaveText('已取消。');
+        await expect(status).toHaveText('已取消。');
+        expect(await statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字！', '請先輸入你的興趣關鍵字！', '已產生 3 個主題靈感。', '已取消。']);
     });
 });
 

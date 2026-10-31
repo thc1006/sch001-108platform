@@ -71,11 +71,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <button id="analyzeBtn" class="mt-4 w-full bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-cyan-700 transition duration-300 flex items-center justify-center space-x-2">
                     <span>開始健檢</span>
                 </button>
-                {/* 進度區塊不放進結果區：WebKit 把 aria-live="off" 子樹的變化也算進外層的 live region，
-                    Safari + VoiceOver 會反覆唸出計時器與取消鈕。 */}
+                {/* 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構，所以結果區不是 live region。
+                    結果的摘要與各種訊息改由 #analysisStatus 唸，它載入時就在、一開始是空的，之後寫入的才會被唸出來。
+                    進度區塊有自己的 status，也不能放進 live region：WebKit 連 aria-live="off" 子樹的變化也會唸。 */}
                 <div class="mt-4">
                     <div id="analysisWork"></div>
-                    <div id="analysisResult" aria-live="polite"></div>
+                    <p id="analysisStatus" role="status" class="sr-only"></p>
+                    <div id="analysisResult"></div>
                 </div>
             </div>
         </div>
@@ -152,6 +154,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const reflectionInput = document.getElementById('reflectionInput');
         const analysisWork = document.getElementById('analysisWork');
         const analysisResult = document.getElementById('analysisResult');
+        // 結果區不是 live region，要唸的話用 announce 寫進這裡。
+        const analysisStatus = document.getElementById('analysisStatus');
+        let announceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次（例如連按兩次「請先輸入」）時，第二次
+        // 也會被唸出來。text 是空字串時只清空。
+        function announce(text) {
+            clearTimeout(announceTimer);
+            analysisStatus.textContent = '';
+            if (text) announceTimer = setTimeout(() => { analysisStatus.textContent = text; }, 100);
+        }
         const analyzeBtnLabel = analyzeBtn.querySelector('span');
         // platform-ai.js 沒載入時沒有 describeError 可用，改用這句；與它對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
@@ -163,6 +175,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
             p.textContent = text;
             analysisResult.appendChild(p);
+            announce(text);
         }
 
         analyzeBtn.addEventListener('click', async () => {
@@ -180,6 +193,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
             analyzeBtnLabel.textContent = '健檢中…';
             analysisResult.textContent = '';
+            announce('');
 
             const controller = new AbortController();
             // PlatformAI 不存在時 mountProgress 會丟 ReferenceError，要放在 try 裡，按鈕才會在 finally 恢復。
@@ -198,6 +212,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 progress.finish();
                 analysisWork.textContent = '';
                 displayAIAnalysis(result);
+                announce('已完成健檢，有總評、STAR 四項分析與修改範例。');
             } catch (error) {
                 if (progress) progress.finish();
                 analysisWork.textContent = '';

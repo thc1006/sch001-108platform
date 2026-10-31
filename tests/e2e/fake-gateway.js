@@ -120,4 +120,29 @@ async function reloadWithoutPerFrame(page) {
     await page.reload();
 }
 
-module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame };
+/** LIVE_REGION 選出 live region：aria-live 不是 off 的，和隱含 live region 的角色；<output> 的隱含角色是 status。 */
+const LIVE_REGION = '[aria-live]:not([aria-live="off"]), [role~="status"], [role~="log"], [role~="alert"], [role~="alertdialog"], output';
+
+/**
+ * outsideLiveRegions 回傳 locator 指的元素本身、祖先與子孫是不是都不是 live region。
+ * @param {import('@playwright/test').Locator} locator @returns {Promise<boolean>}
+ */
+const outsideLiveRegions = (locator) => locator.evaluate((el, selector) => !el.closest(selector) && !el.querySelector(selector), LIVE_REGION);
+
+/**
+ * watchStatus 從現在起記下 selector 指的 live region 每次被寫成的文字（清空不記），用 statusWrites 讀出。
+ * @param {import('@playwright/test').Page} page @param {string} selector
+ */
+async function watchStatus(page, selector) {
+    await page.evaluate((selector) => {
+        const status = document.querySelector(selector);
+        const writes = window.__statusWrites = [];
+        new MutationObserver(() => { if (status.textContent) writes.push(status.textContent); })
+            .observe(status, { childList: true, characterData: true, subtree: true });
+    }, selector);
+}
+
+/** statusWrites 讀出 watchStatus 記下的文字。 @param {import('@playwright/test').Page} page */
+const statusWrites = (page) => page.evaluate(() => window.__statusWrites);
+
+module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, LIVE_REGION, outsideLiveRegions, watchStatus, statusWrites };
