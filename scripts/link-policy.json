@@ -75,13 +75,16 @@
     },
     {
       "match": {
-        "host": "catalog.archives.gov"
+        "host": "data.moenv.gov.tw"
       },
-      "reason": "美國國家檔案局的線上目錄。任何路徑都回同一個前端殼和 HTTP 200。本站只連首頁，首頁不受影響，所以 urls 是空的。以後有人連到單筆紀錄頁（/id/…），check-link-policy 會要求在 urls 補上內容檢查。前端查單筆紀錄用的 /proxy/v3/records/search?naId_is=… 不需要 key，紀錄在不在看回應裡的 body.hits.total.value，expect 寫成 {\"/body/hits/total/value\": 1}。",
-      "evidence": "2026-10-27 查：/、/id/305263、/id/999999999999、/this/path/does/not/exist 都回 HTTP 200、同一份 5454 bytes 的殼（server: AmazonS3，經 CloudFront）。robots.txt 是 Disallow: /。打開 /id/305263，前端呼叫 https://catalog.archives.gov/proxy/v3/records/search?naId_is=305263&allowLegacyOrgNames=true&includeExtractedText=true&includeOtherExtractedText=true，不帶 key 回 HTTP 200，body.hits.total.value 是 1；naId_is=999999999999 時同樣回 HTTP 200，body.hits.total.value 是 0。",
+      "reason": "環境部環境資料開放平臺。/dataset/detail/ 底下不存在的資料集代號也回 HTTP 200，標題只剩「| 環境部環境資料開放平臺」，狀態碼看不出資料集還在不在。公民科技專案頁連到裁處記錄資料集 EMS_P_46。",
+      "evidence": "2026-10-31 在台灣用瀏覽器 UA 查：/dataset/detail/EMS_P_46 回 200、約 169 KB，<title>「列管事業污染源裁處資料 | 環境部環境資料開放平臺」；/dataset/detail/EMS_P_99999 回 200、約 102 KB，/dataset/detail/sch001-linkcheck-x 回 200，兩者的 <title> 都是「 | 環境部環境資料開放平臺」（開頭一個空白）。首頁 / 的標題是「首頁 | 環境部環境資料開放平臺」。",
       "owner": "thc1006",
       "expires": "2027-01-31",
-      "urls": []
+      "urls": [],
+      "missingTitles": [
+        "| 環境部環境資料開放平臺"
+      ]
     },
     {
       "match": {

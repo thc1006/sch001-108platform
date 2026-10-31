@@ -55,7 +55,7 @@
 
 ### [公民科技](https://thc1006.github.io/sch001-108platform/civic-tech-map/)
 
-台灣公民科技專案和 108 課綱核心素養、SDGs 的對照，專案多數來自 g0v 社群。頁面也整理了 g0v Summit、g0v 雙月大松、零時小學校和 SITCON 的參與方式。寫下你的興趣或關心的議題，AI 會推薦可以投入的專案。
+8 個台灣公民科技專案公開的資料與工具，每個附一個自主學習或探究與實作的題目例子和做法。寫下你的興趣或關心的議題，AI 會推薦適合的專案。
 
 [關於我們](https://thc1006.github.io/sch001-108platform/about.html)寫了專案的由來，[網站地圖](https://thc1006.github.io/sch001-108platform/sitemap.html)列出所有頁面。
 
