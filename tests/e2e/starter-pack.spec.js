@@ -6,7 +6,7 @@
  * 建置時有沒有設定 PUBLIC_AI_GATEWAY_URL（頁面有沒有帶 <meta name="ai-gateway-url">）都要全數通過。
  */
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites, headingJumps } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/index.html`;
@@ -76,6 +76,17 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(result.locator('ul.list-disc > li')).toHaveText(['1. 貓怎麼表達情緒？', '• 依附關係怎麼形成？', '環境豐富化有什麼影響？']);
     });
 
+    // 結果在功能的 h2 底下。標題跳級的話，用標題跳著讀的人會以為漏了一層
+    test('結果的標題從 h3 開始，接在功能的 h2 底下，不跳級', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' }), sse('done', { result: { ...RESULT, suggested_topic: '## 兩個方向\n- 情緒\n- 互動' }, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 })] });
+        await page.fill('#coachInput', '測試');
+        await page.click('#generateCoachBtn');
+        const result = page.locator('#coachResult');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText(['建議主題方向', '你可以從這幾個問題開始探索：', '建議尋找的資源類型：']);
+        await expect(result.getByRole('heading', { level: 4 })).toHaveText(['兩個方向']);
+        expect(await headingJumps(result)).toEqual([]);
+    });
+
     test('AI 回傳含 HTML 標籤的文字 → 當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
         await installFakeGateway(page, {
             chunks: [
@@ -122,7 +133,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await page.fill('#coachInput', '');
         await page.click('#generateCoachBtn');
         await expect(page.locator('#coachResult')).toHaveText('請先輸入你的初步想法！');
-        await expect(page.locator('#coachResult h4')).toHaveCount(0);
+        await expect(page.locator('#coachResult h3')).toHaveCount(0);
         expect(await page.evaluate(() => window.__calls.length)).toBe(1); // 只有第一次
     });
 

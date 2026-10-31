@@ -3,7 +3,7 @@
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites, headingJumps } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/plan-templates.html`;
@@ -50,11 +50,11 @@ const SETTLE = [
 
 async function expectPlan(page, plan) {
     const result = page.locator('#planResult');
-    await expect(result.locator('h4')).toHaveText(['學習目標', '執行方法', '週次進度', '預期產出']);
-    await expect(result.locator('h4:has-text("學習目標") + ul > li')).toHaveText(plan.learning_objectives);
-    await expect(result.locator('h4:has-text("執行方法") + ul > li')).toHaveText(plan.execution_methods);
-    await expect(result.locator('h4:has-text("週次進度") + ol > li')).toHaveText(plan.weekly_plan.map(({ week, tasks }) => `${week}: ${tasks}`));
-    await expect(result.locator('h4:has-text("預期產出") + ul > li')).toHaveText(plan.expected_outcome);
+    await expect(result.locator('h3')).toHaveText(['學習目標', '執行方法', '週次進度', '預期產出']);
+    await expect(result.locator('h3:has-text("學習目標") + ul > li')).toHaveText(plan.learning_objectives);
+    await expect(result.locator('h3:has-text("執行方法") + ul > li')).toHaveText(plan.execution_methods);
+    await expect(result.locator('h3:has-text("週次進度") + ol > li')).toHaveText(plan.weekly_plan.map(({ week, tasks }) => `${week}: ${tasks}`));
+    await expect(result.locator('h3:has-text("預期產出") + ul > li')).toHaveText(plan.expected_outcome);
 }
 
 test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', () => {
@@ -91,6 +91,16 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         const items = page.locator('#planResult ul').first().locator(':scope > li');
         await expect(items).toHaveText(['1. 先選定主題', '• 再找資料']);
         await expect(page.locator('#planResult li :is(ul, ol)')).toHaveCount(0);
+    });
+
+    // 結果在功能的 h2 底下。標題跳級的話，用標題跳著讀的人會以為漏了一層
+    test('結果的標題從 h3 開始，接在功能的 h2 底下，不跳級', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+        await page.fill('#planInput', '測試');
+        await page.click('#generatePlanBtn');
+        const result = page.locator('#planResult');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText(['學習目標', '執行方法', '週次進度', '預期產出']);
+        expect(await headingJumps(result)).toEqual([]);
     });
 
     test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {

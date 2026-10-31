@@ -145,4 +145,17 @@ async function watchStatus(page, selector) {
 /** statusWrites 讀出 watchStatus 記下的文字。 @param {import('@playwright/test').Page} page */
 const statusWrites = (page) => page.evaluate(() => window.__statusWrites);
 
-module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, LIVE_REGION, outsideLiveRegions, watchStatus, statusWrites };
+/**
+ * headingJumps 列出 locator 所在的 <section> 裡，比上一個標題多跳一級以上的標題，例如 h2 之後直接是 h4。
+ * 回傳 ['H2 → H4 某某'] 這樣的字串，沒有跳級就是空陣列。
+ * @param {import('@playwright/test').Locator} locator @returns {Promise<string[]>}
+ */
+const headingJumps = (locator) => locator.evaluate((el) => {
+    const headings = [...el.closest('section').querySelectorAll('h1, h2, h3, h4, h5, h6')];
+    return headings.slice(1).flatMap((h, i) => {
+        const prev = headings[i];
+        return Number(h.tagName[1]) > Number(prev.tagName[1]) + 1 ? [`${prev.tagName} → ${h.tagName} ${h.textContent.trim()}`] : [];
+    });
+});
+
+module.exports = { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, LIVE_REGION, outsideLiveRegions, watchStatus, statusWrites, headingJumps };

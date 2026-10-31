@@ -182,15 +182,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             // 建議主題方向（AI 純文字，可能含 markdown）
             // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
-            const topicTitle = document.createElement('h4');
+            // 結果在 h2「AI 自主學習教練」底下，小標題用 h3。prose 給 h3 的字比 h4 大、間距也不同，
+            // 這些 class 讓它看起來和 prose 的 h4 一樣；第一個標題的上方間距由 prose 歸零
+            const H3_AS_H4 = 'text-[1em] leading-[1.5] mb-[0.5em]';
+            const topicTitle = document.createElement('h3');
+            topicTitle.className = H3_AS_H4;
             topicTitle.textContent = '建議主題方向';
             // renderMarkdown 的輸出可能有清單與標題，用 <div>；下方的間距是 prose 給 <p> 的
             const topicText = document.createElement('div');
             topicText.className = 'mb-[1.25em]';
-            topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic, { headingLevel: 5 });
+            topicText.innerHTML = PlatformAI.renderMarkdown(data.suggested_topic, { headingLevel: 4 });
 
             // 探索問題標題
-            const questionsTitle = document.createElement('h4');
+            const questionsTitle = document.createElement('h3');
+            questionsTitle.className = H3_AS_H4 + ' mt-[1.5em]';
             questionsTitle.textContent = '你可以從這幾個問題開始探索：';
 
             // 問題列表
@@ -204,7 +209,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             // 資源類型標題
-            const resourcesTitle = document.createElement('h4');
+            const resourcesTitle = document.createElement('h3');
+            resourcesTitle.className = H3_AS_H4 + ' mt-[1.5em]';
             resourcesTitle.textContent = '建議尋找的資源類型：';
 
             // 資源標籤容器

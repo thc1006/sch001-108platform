@@ -277,7 +277,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 badge.textContent = index + 1;
                 // 標題與描述為 AI 回應內容，可能含 markdown（如 **粗體**）。
                 // PlatformAI.renderMarkdown() 先 HTML escape 再套 markdown，故 innerHTML 安全。
-                const title = document.createElement('h4');
+                // 結果在 h2「AI 學習路徑規劃師」底下，步驟的標題用 h3
+                const title = document.createElement('h3');
                 title.className = 'font-bold text-lg text-indigo-800';
                 title.innerHTML = PlatformAI.renderMarkdown(step.title, { inline: true });
                 stepNum.appendChild(badge);
@@ -286,7 +287,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // 描述（AI 純文字，可能含 markdown）
                 const desc = document.createElement('div');
                 desc.className = 'text-gray-700 mt-2 mb-3';
-                desc.innerHTML = PlatformAI.renderMarkdown(step.description, { headingLevel: 5 });
+                desc.innerHTML = PlatformAI.renderMarkdown(step.description, { headingLevel: 4 });
 
                 // 資源類型標籤
                 const resourceContainer = document.createElement('div');
@@ -309,7 +310,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // 行動建議為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 const actionText = document.createElement('div');
                 actionText.className = 'text-sm text-gray-800';
-                actionText.innerHTML = PlatformAI.renderMarkdown(step.actionable_suggestion, { headingLevel: 5 });
+                actionText.innerHTML = PlatformAI.renderMarkdown(step.actionable_suggestion, { headingLevel: 4 });
                 actionContainer.appendChild(actionLabel);
                 actionContainer.appendChild(actionText);
 
