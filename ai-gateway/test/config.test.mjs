@@ -31,7 +31,7 @@ function withKeyFile(contents, fn) {
     }
 }
 
-test('預設值：xhigh、8192、32768 context、3 輪、15 分鐘', () => {
+test('預設值：xhigh、8192、65536 context、3 輪、15 分鐘', () => {
     const { config, warnings } = load({});
     assert.deepEqual(warnings, []);
     assert.deepEqual(config, {
@@ -41,7 +41,7 @@ test('預設值：xhigh、8192、32768 context、3 輪、15 分鐘', () => {
         reasoningEffort: 'xhigh',
         continuationEffort: 'none',
         maxTokens: 8192,
-        contextTokens: 32768,
+        contextTokens: 65536,
         maxRounds: 3,
         taskTimeoutMs: 900_000,
         idleTimeoutMs: 180_000,
@@ -101,7 +101,7 @@ test('整數的上下界：剛好在界上接受，超出一格就退回預設',
     const cases = [
         ['LLM_MAX_TOKENS', 'maxTokens', 1, 8192, 8192],
         ['LLM_MAX_ROUNDS', 'maxRounds', 1, 8, 3],
-        ['LLM_CONTEXT_TOKENS', 'contextTokens', 4096, 1_048_576, 32768],
+        ['LLM_CONTEXT_TOKENS', 'contextTokens', 4096, 1_048_576, 65536],
         ['LLM_TASK_TIMEOUT_MS', 'taskTimeoutMs', 10_000, 2_147_483_647, 900_000],
         ['LLM_IDLE_TIMEOUT_MS', 'idleTimeoutMs', 1_000, 300_000, 180_000],
     ];
