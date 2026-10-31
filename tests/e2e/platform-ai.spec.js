@@ -301,6 +301,23 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => window.__cancelCount)).toBe(1);
         });
 
+        // 頁面上已經有 v13 時，版號沒升的話這一份會提早返回，等很久的時候 status 一直沒有聲音。
+        test('v13 已經在頁面上時，這一份照樣載入，等了一分鐘會唸「仍在處理」', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 13 };
+            });
+            await gotoFixture(page);
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                PlatformAI.mountProgress(box);
+            });
+            await page.clock.runFor(61_000);
+            await expect(page.locator('#box [role="status"]')).toHaveText('仍在處理，已等 1 分鐘…');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -2145,6 +2162,42 @@ test.describe('PlatformAI 共用 module', () => {
             }
             const r = await page.evaluate(() => window.__r);
             expect(r).toEqual({ writes: ['排隊中，前面還有 5 位…', '排隊中，下一個就輪到你…'], seen: 6 });
+        });
+
+        // 一個任務可能要好幾分鐘。一直沒有聲音的話，用螢幕閱讀器的人分不出是還在處理還是停住了
+        test('階段沒變、status 60 秒沒寫時唸「仍在處理，已等 N 分鐘…」，畫面文字不變；同一個階段再送來不重唸，換階段重新計時', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.id = 'box';
+                document.body.appendChild(box);
+                window.__progress = PlatformAI.mountProgress(box);
+                window.__writes = [];
+                const status = box.querySelector('[role="status"]');
+                new MutationObserver(() => window.__writes.push(status.textContent))
+                    .observe(status, { childList: true, characterData: true, subtree: true });
+            });
+            const shown = page.locator('#box .platform-ai-progress > span[aria-hidden="true"]');
+            const update = (p) => page.evaluate((p) => window.__progress.update(p), p);
+            const writes = () => page.evaluate(() => window.__writes);
+            await page.clock.runFor(100);
+            await update({ phase: 'thinking', round: 1 });
+            await page.clock.runFor(59_800);
+            expect(await writes()).toEqual(['正在連線 AI 服務…', 'AI 正在思考…']);
+            await page.clock.runFor(1_200);
+            await expect(page.locator('#box [role="status"]')).toHaveText('仍在處理，已等 1 分鐘…');
+            await expect(shown).toHaveText('AI 正在思考…');
+            await update({ phase: 'thinking', round: 1 });
+            await page.clock.runFor(60_000);
+            await update({ phase: 'writing', round: 1 });
+            await page.clock.runFor(59_000);
+            expect(await writes()).toEqual([
+                '正在連線 AI 服務…',
+                'AI 正在思考…',
+                '仍在處理，已等 1 分鐘…',
+                '仍在處理，已等 2 分鐘…',
+                'AI 正在撰寫回答…',
+            ]);
         });
 
         // 排隊的名次一變，status 就重唸一次；提醒放在裡面的話每次都會跟著唸
