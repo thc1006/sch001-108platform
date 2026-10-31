@@ -95,11 +95,12 @@ pod 和新 pod 合計最多 12 個並行，不算 ahp-match 就已經超過 key 
 sudo k3s kubectl -n sch001-ai logs -f <舊 pod 的名稱> > old-pod.log
 ```
 
-新 pod 就緒到舊 pod 最後一筆 `TASK` 之間，兩個 pod 都在呼叫 WinLab；舊 pod 收到 `SHUTDOWN`
-之前還有 5 秒的 preStop，所以起點約是 `SHUTDOWN` 往前 5 秒。這段時間兩個 pod 的 `UPSTREAM-ERR`
-裡 `status=429` 的，要和平時分開看。接續輪的 429 退避重試成功時不記 `UPSTREAM-ERR`，只算進
-`TASK` 的 `retries`。新 pod 的 log 用 `--since-time` 取，它只精確到秒，取出來再依每行開頭的
-UTC 時間篩一次。
+新 pod 就緒到舊 pod 最後一筆 `TASK` 之間，兩個 pod 都在呼叫 WinLab。起點是新 pod 的 `Ready`
+condition 的 `lastTransitionTime`（`get pod -o yaml` 的 `status.conditions`），至少比舊 pod 的
+`SHUTDOWN` 早 15 秒：新 pod 就緒滿 10 秒（`minReadySeconds`）舊 pod 才收到刪除，再過 5 秒的
+preStop 才記 `SHUTDOWN`。這段時間兩個 pod 的 `UPSTREAM-ERR` 裡 `status=429` 的，要和平時分開看。
+接續輪的 429 退避重試成功時不記 `UPSTREAM-ERR`，只算進 `TASK` 的 `retries`。新 pod 的 log 用
+`--since-time` 取，它只精確到秒，取出來再依每行開頭的 UTC 時間篩一次。
 
 ### 換 key
 

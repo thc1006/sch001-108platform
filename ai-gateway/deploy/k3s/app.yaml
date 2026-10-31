@@ -10,7 +10,9 @@ spec:
   replicas: 1
   # build-image.sh 只留各 ReplicaSet 用的映像檔，舊的只留一個，undo 也只退一版
   revisionHistoryLimit: 1
-  # 先起新的、新的 ready 才讓舊的收尾：換版期間不中斷。代價是重疊的那幾分鐘，兩版合計最多
+  # ready 後 10 秒內程序就結束的新 pod 不算可用，舊的不會進入最多 920 秒的收尾
+  minReadySeconds: 10
+  # 先起新的、新的可用才讓舊的收尾：換版期間不中斷。代價是重疊的那幾分鐘，兩版合計最多
   # 2×LLM_CONCURRENCY 個並行，再加上共用同一把 key 的 ahp-match，可能超過 key 的 8 個並行上限；
   # 撞到 429 時，接續輪由續寫引擎退避重試，第一輪由前端顯示「請稍後再試」
   strategy:
