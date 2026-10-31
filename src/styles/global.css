@@ -10,11 +10,16 @@
    等未生成、圖示色彩錯誤。 */
 @source inline("text-indigo-500 text-indigo-600 text-blue-500 text-blue-600 text-purple-500 text-purple-600");
 
-/* <html> 的 scroll-pt-20 讓焦點停在 header 下方。header 是 sticky，一直在畫面上，裡面的元素用負的
+/* <html> 的 scroll-pt-20 讓焦點停在 header 下方。header 和釘住的篩選面板一直在畫面上，裡面的元素用負的
    scroll-margin 抵掉它。Chrome 把落在這段 padding 裡的元素當成看不到，sticky 元素也一樣，焦點一移進來
-   就把整頁往上捲。 */
-body > header * {
+   就把整頁往上捲；面板裡的焦點由 public/shared/sticky-filters.js 處理。面板加上 header 超過視窗高度的 3/4 時，
+   sticky-filters.js 加上 data-unpinned，面板不釘住。 */
+body > header *,
+[data-autohide-filters]:not([data-unpinned]) * {
   scroll-margin-top: -5rem;
+}
+[data-autohide-filters][data-unpinned] {
+  position: static;
 }
 
 /* sticky 偏移一律用 top-16（header 高 64px），不可改用 CSS 變數：Tailwind 會把

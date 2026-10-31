@@ -926,7 +926,11 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     /** toBottom 載入頁面，html 設 CSS zoom，捲到頁底，面板要已經讓開。 */
     async function toBottom(page, url, zoom = 1) {
         await page.goto(url, { waitUntil: 'networkidle' });
-        await page.evaluate((zoom) => { document.documentElement.style.zoom = String(zoom); }, zoom);
+        // 瀏覽器縮放時會觸發 resize，sticky-filters.js 照縮放後的高度重新決定要不要釘住。
+        await page.evaluate((zoom) => {
+            document.documentElement.style.zoom = String(zoom);
+            window.dispatchEvent(new Event('resize'));
+        }, zoom);
         const pinnedAt = await page.locator('[data-autohide-filters]').evaluate((el, pinTop) => el.getBoundingClientRect().top + window.scrollY - pinTop, PIN_TOP * zoom);
         for (const top of [pinnedAt - 40, 1e7]) {
             await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), top);
@@ -960,10 +964,11 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         expect(f.hit, `${when}：焦點被別的元素蓋住`).toBe(true);
     }
 
-    // 視窗矮時，頁底的面板被容器往上推，放回去以後焦點可能在 header 底下。
+    // 視窗矮時，頁底的面板被容器往上推，放回去以後焦點可能在 header 底下。再矮的話，例如 740x360，面板加上
+    // header 超過視窗的 3/4，sticky-filters.js 不讓它釘住。
     for (const zoom of [1, 1.25]) {
-        test(`reading-list 740x360（zoom ${zoom}）：頁底點頁尾文字之後 Shift+Tab 回到面板`, async ({ page }) => {
-            await page.setViewportSize({ width: 740, height: 360 });
+        test(`reading-list 740x480（zoom ${zoom}）：頁底點頁尾文字之後 Shift+Tab 回到面板`, async ({ page }) => {
+            await page.setViewportSize({ width: 740, height: 480 });
             await toBottom(page, READING_LIST, zoom);
             await page.locator('footer p').first().click();
             await watchFocus(page);
@@ -987,8 +992,8 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     });
 
     // 往上捲一點，面板滑回來、沒有位移，但還被容器推在 header 底下。
-    test('reading-list 740x360：頁底往上捲一點之後，從頁尾 Shift+Tab 回到面板', async ({ page }) => {
-        await page.setViewportSize({ width: 740, height: 360 });
+    test('reading-list 740x480：頁底往上捲一點之後，從頁尾 Shift+Tab 回到面板', async ({ page }) => {
+        await page.setViewportSize({ width: 740, height: 480 });
         await toBottom(page, READING_LIST);
         await page.evaluate(() => window.scrollBy({ top: -20, behavior: 'instant' }));
         await settleFilters(page);
