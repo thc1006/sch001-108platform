@@ -19,6 +19,8 @@
 設定全部來自環境變數，啟動時讀一次。清單與預設值寫在 `src/config.mjs` 的檔頭與
 `loadServerConfig` 上方，範圍見各個 `toInt` 的引數；k3s 上的值在 `deploy/k3s/app.yaml`。
 數值不合法時退回預設並警告；key 或 `LLM_UPSTREAM` 不合法時當成沒有設定，`/readyz` 回 503。
+`AI_BLOCK_SOURCES` 的位址不進 git，先跑 `ai-gateway/deploy/k3s/terminating-pods.sh` 再用 `kubectl set env`
+設定（值要寫完整清單，會整串覆蓋），`AI_BLOCK_SOURCES-` 拿掉；生效的筆數看 START 的 `blockSources`。
 
 下面幾組值要一起改：
 
@@ -125,9 +127,9 @@ ai-gateway/deploy/k3s/terminating-pods.sh && sudo k3s kubectl -n sch001-ai rollo
 git checkout ai-gateway/deploy/k3s/app.yaml
 ```
 
-Deployment 只留一個舊的 ReplicaSet，`rollout undo` 只退得回它。`rollout restart` 也會產生新的
-ReplicaSet，restart 之後直接 undo 只會退回同一版；換版逾時、沒有 undo 就再換版的話，undo 退回的
-是逾時的那一版。
+Deployment 只留一個舊的 ReplicaSet，`rollout undo` 只退得回它。`rollout restart` 與 `set env` 也會
+產生新的 ReplicaSet：restart 之後直接 undo 只會退回同一版，set env 之後 undo 會拿掉剛設的
+`AI_BLOCK_SOURCES`；換版逾時、沒有 undo 就再換版的話，undo 退回的是逾時的那一版。
 
 ### 檢查
 

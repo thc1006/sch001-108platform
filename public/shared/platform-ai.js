@@ -561,10 +561,10 @@
     }
 
     // 開始串流之前的拒絕：閘道回 JSON {"error": {code, message, retryable?, retryAfter?, field?}}。
-    // 只有帶著閘道的 X-Request-Id 時才採信裡面的訊息。跨網域時，沒有 CORS 標頭的回應（閘道沒開時
-    // 通道回的 502、閘道自己的 403 與 404）瀏覽器根本不交給頁面，走的是 fetch 失敗的 network；
-    // 會走到這裡的，是補了 CORS 標頭的代理或同網域部署時的錯誤頁，內容可能是任何東西，一律
-    // 當作暫時無法使用，不把陌生的文字秀給學生。
+    // 只有帶著閘道的 X-Request-Id 時才採信裡面的訊息：閘道拒絕任務請求時帶 X-Request-Id，網站在允許名單內
+    // 就帶 CORS 標頭。跨網域時，沒有 CORS 標頭的回應（閘道沒開時通道回的 502、路徑不對的 404）瀏覽器不交給
+    // 頁面，走的是 fetch 失敗的 network。沒有 X-Request-Id 的，是補了 CORS 標頭的代理或同網域部署時的
+    // 錯誤頁，內容可能是任何東西，一律當作暫時無法使用，不把陌生的文字秀給學生。
     async function responseError(response, requestId) {
         var info = {};
         if (requestId) {

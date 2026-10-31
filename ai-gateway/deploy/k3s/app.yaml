@@ -82,6 +82,9 @@ spec:
             # IPv6 用戶端取多長的前綴當成同一個來源（預設 64，範圍 32～128）
             # - name: AI_V6_PREFIX
             #   value: "48"
+            # 封鎖的來源（IPv4、IPv6 位址或 CIDR），任務請求回 403。真的位址不寫進 git，見 README
+            # - name: AI_BLOCK_SOURCES
+            #   value: "192.0.2.0/24,2001:db8::/32"
           ports:
             - name: http
               containerPort: 8787
