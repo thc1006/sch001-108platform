@@ -1,0 +1,30 @@
+name: 內容錯誤或過時
+description: 頁面上的資訊有錯，或已經不是現在的情形。
+title: "[內容] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        這裡寫的內容和你的 GitHub 帳號名稱，任何人都看得到。請不要寫姓名、學校、班級、電話、電子郵件等個人資料，截圖也一樣。不想公開的話，可以寫信到 hctsai@linux.com。
+  - type: input
+    id: page
+    attributes:
+      label: 頁面網址
+      placeholder: https://thc1006.github.io/sch001-108platform/...
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 哪裡有錯
+      description: 貼上那段文字，說明哪裡不對。
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: 正確的資訊和出處
+      description: 有出處的話附上網址，例如官方公告或簡章。
+    validations:
+      required: false
