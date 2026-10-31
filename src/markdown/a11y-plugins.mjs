@@ -34,3 +34,33 @@ export function tableScroll() {
         },
     };
 }
+
+/**
+ * pdfLabel 在網址以 .pdf 結尾的連結文字後面加上「（PDF）」，點之前就知道會打開 PDF 檔。
+ * 標示和前面的一個英文字或一個字放進同一個不換行的 span，換行時不會只剩標示掉到下一行。
+ * @type {import('satteri').HastPluginDefinition}
+ */
+export const pdfLabel = {
+    name: 'pdf-label',
+    element: {
+        filter: ['a'],
+        visit(node, ctx) {
+            const href = node.properties?.href;
+            if (typeof href !== 'string' || !/\.pdf(?:[?#]|$)/i.test(href)) return;
+            const last = node.children?.at(-1);
+            const tail = last?.type === 'text' ? /(?:[\w.-]+|\S)$/u.exec(last.value) : null;
+            const label = (text) => ({
+                type: 'element',
+                tagName: 'span',
+                properties: { className: ['whitespace-nowrap'] },
+                children: [{ type: 'text', value: `${text}（PDF）` }],
+            });
+            if (!tail) {
+                ctx.appendChild(node, label(''));
+                return;
+            }
+            const head = last.value.slice(0, tail.index);
+            ctx.replaceNode(last, head ? [{ type: 'text', value: head }, label(tail[0])] : [label(tail[0])]);
+        },
+    },
+};
