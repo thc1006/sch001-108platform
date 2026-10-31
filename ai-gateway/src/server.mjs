@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { loadLlmConfig, loadServerConfig, configProblems } from './config.mjs';
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
-import { SlotGate, ClientLimiter, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
+import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, TaskError } from './tasks.mjs';
 import { createTraditionalStream } from './s2t.mjs';
 
@@ -390,7 +390,7 @@ function rejectLogFields(reason) {
  * @param {Map}    options.tasks      createCatalog() 的結果
  * @param {Function} [options.generateImpl]
  * @param {Function} [options.log]    createLogger() 的結果
- * @param {Function} [options.now]    單調時鐘（毫秒），限流與警告的頻率用；測試可以注入
+ * @param {Function} [options.now]    單調時鐘（毫秒），限流、斷路器與警告的頻率用；測試可以注入
  * @param {number} [options.maxBodyReads]  同時在收 body 的請求上限；測試可以調小
  * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
  * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
@@ -418,6 +418,8 @@ export function createGateway({
         maxInflight: Infinity,
         now,
     });
+    // 上游卡住時暫停送出新任務（見 limits.mjs 的 Breaker）。log 只有狀態與次數
+    const breaker = new Breaker({ now, onChange: (fields) => log(fields.state === 'open' ? 'warn' : 'info', 'BREAKER', fields) });
     const trustedProxy = createProxyMatcher(cfg.trustedProxies || []);
     // 內部位址（代理、節點）可以原樣進 log；其他位址可能是用戶端，只記雜湊
     const internalAddress = createProxyMatcher(['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8']);
@@ -595,8 +597,9 @@ export function createGateway({
         const started = Date.now();
         const origin = allowedOrigin(req);
         const headers = { 'x-request-id': requestId, ...corsHeaders(req) };
-        const reject = (status, code, message, extra = {}, extraHeaders = {}) => {
-            log(status >= 500 ? 'warn' : 'info', 'REJECT', { id: requestId, task: taskId, status, code });
+        // reason 只進 log：同一個代號有不同原因時分得出來
+        const reject = (status, code, message, extra = {}, extraHeaders = {}, reason = undefined) => {
+            log(status >= 500 ? 'warn' : 'info', 'REJECT', { id: requestId, task: taskId, status, code, reason });
             if (extra.retryAfter) extraHeaders = { ...extraHeaders, 'retry-after': String(extra.retryAfter) };
             sendJson(req, res, status, { error: { code, message, requestId, ...extra } }, { ...headers, ...extraHeaders });
         };
@@ -630,6 +633,9 @@ export function createGateway({
             throw err;
         }
 
+        // 上游卡住：不收 body、不佔名額也不計次
+        const breakerWait = breaker.wait();
+        if (breakerWait) return reject(503, 'busy', MESSAGES.busy, { retryAfter: breakerWait }, {}, 'breaker');
         if (bodyReads >= maxBodyReads) return reject(503, 'busy', MESSAGES.busy, { retryAfter: 5 });
         // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body
         if (expectsContinue.has(req)) res.writeContinue();
@@ -707,6 +713,8 @@ export function createGateway({
         let generationStarted = false;
         // 上游送來過思考或正文沒有：第一個 token 之前就忙線、連不上或逾時的，也要退回次數
         let tokensSeen = false;
+        // 斷路器斷開之後去試的任務才有（breaker.enter() 的回傳值）
+        let breakerTrial = null;
         // 回應結束前連線就斷了：使用者關分頁或按停止。立刻中止上游，不讓 GPU 白做工
         res.on('close', () => {
             if (!res.writableFinished) abort.abort();
@@ -743,6 +751,8 @@ export function createGateway({
             queueMs = Date.now() - queuedAt;
             // 輪到的那一刻剛好開始關機（或用戶端剛好離開）：不必開始了
             abort.signal.throwIfAborted();
+            // 排隊期間斷路器斷開了：不呼叫上游，跟新任務一樣回忙線
+            breakerTrial = breaker.enter();
             if (entry.queued) send('progress', { phase: 'started' });
 
             let lastPhase = null;
@@ -790,7 +800,10 @@ export function createGateway({
                 signal: abort.signal,
                 onProgress,
                 onContent: task.output.type === 'markdown' ? (text) => sendDelta(traditional(clean(text))) : undefined,
-                onResponse: () => { firsts.byte ??= Date.now(); },
+                onResponse: () => {
+                    firsts.byte ??= Date.now();
+                    breaker.success();
+                },
                 onReject: ({ round, reason }) => log('info', 'JSON-REJECT', { id: requestId, task: task.id, round, ...rejectLogFields(reason) }),
             });
             clearTimeout(progressTimer);
@@ -851,6 +864,8 @@ export function createGateway({
             // 反而被自己的重試鎖住。包括上游在第一個 token 之前就回忙線（429）、連不上或逾時的
             const upstreamRefused = failedWith instanceof UpstreamError && (failedWith.code === 'busy' || failedWith.code === 'unavailable');
             if (!generationStarted || (!tokensSeen && (upstreamRefused || isTimeout(failedWith)))) ticket.refund();
+            // 連回應標頭都沒等到就逾時，算一次卡住。上游回了 408、504 的有標頭，不算
+            breaker.finish(breakerTrial, isTimeout(failedWith) && firsts.byte === undefined);
             ticket.done();
             if (res.headersSent && !res.writableEnded) res.end();
             // 用戶端不把資料收走（零視窗）時，名額已經歸還，連線與緩衝也不能無限期佔著
@@ -968,8 +983,8 @@ export function createGateway({
         return closing;
     }
 
-    // gate、limiter 一併交出去：給測試注入故障，也方便除錯時查看
-    return { server, close, gate, limiter, stats: () => ({ ...gate.stats, active: active.size, draining }) };
+    // gate、limiter、breaker 一併交出去：給測試注入故障，也方便除錯時查看
+    return { server, close, gate, limiter, breaker, stats: () => ({ ...gate.stats, active: active.size, draining }) };
 }
 
 async function main() {

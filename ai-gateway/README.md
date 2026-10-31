@@ -150,8 +150,9 @@ curl -sN -H 'Origin: https://thc1006.github.io' -H 'Content-Type: application/js
 
 最後是 `error` 的話，看 log 的 `UPSTREAM-ERR`。`status=401` 是 key 不對；408、504 是 WinLab 或
 它前面的代理逾時；沒有 `status`、`reason` 寫著「還沒收到任何 token」的，是 WinLab 忙到閘道的
-時限到了都還沒開始回應。從主機直接送的請求沒有 `X-Forwarded-For`，log 會多一筆
-`CLIENT-IP-MISSING`，不用理會。
+時限到了都還沒開始回應。`BREAKER state=open` 是連續兩個任務連回應標頭都沒等到就逾時，之後
+30 秒新任務直接回忙線；`state=closed` 是又收到了回應。從主機直接送的請求沒有 `X-Forwarded-For`，
+log 會多一筆 `CLIENT-IP-MISSING`，不用理會。
 
 log 一行一筆。每個任務結束時記一行 `TASK`（結果、輪數、token 數與各階段的耗時），JSON 任務
 寫完卻不合格時記 `JSON-REJECT`。學生的輸入與模型的輸出不進 log；上游錯誤欄位裡符合代號形狀的

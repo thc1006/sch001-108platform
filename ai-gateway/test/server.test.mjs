@@ -141,12 +141,12 @@ async function startGateway({ server = {}, llm = {}, generate, now, maxBodyReads
  * 用真的 generate、streamChat 與假 WinLab 啟動閘道：請求走過 HTTP 入口、生成引擎、上游串流解析
  * 與 SSE 回應。lines 收下 createLogger 寫出的每一行 log。
  */
-async function startRealGateway(script, llm = {}) {
+async function startRealGateway(script, llm = {}, server = {}) {
     const upstream = await startFakeUpstream(script);
     const lines = [];
     const gateway = createGateway({
         llm: testConfig(upstream.origin, { taskTimeoutMs: 4_000, ...llm }),
-        server: serverConfig(),
+        server: serverConfig(server),
         tasks: TASKS,
         log: createLogger('debug', (line) => lines.push(line)),
     });
@@ -347,6 +347,7 @@ async function waitFor(fn, timeoutMs = 2000) {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const pick = (obj, keys) => Object.fromEntries(keys.map((key) => [key, obj[key]]));
 
 test('healthz／readyz：有 key 才 ready；公開的 readyz 只說狀態；HEAD 也可以', async () => {
     const gw = await startGateway();
@@ -2133,11 +2134,14 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
         ? { thinking: ['想'], hangAfterChunks: 2 }
         : { hangBeforeHeaders: true }));
     const logs = [];
+    // 連續卡住的任務會讓斷路器斷開（另有測試）：每個請求之前把時鐘撥快 30 秒，讓它放行
+    const clock = { t: 0 };
     const gateway = createGateway({
         llm: testConfig(upstream.origin, { taskTimeoutMs: 10_000, idleTimeoutMs: 600 }),
         server: serverConfig({ rateLimitMax: 1 }),
         tasks: TASKS,
         log: (level, tag, fields) => logs.push({ level, tag, fields }),
+        now: () => clock.t,
     });
     await new Promise((resolve) => gateway.server.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${gateway.server.address().port}`;
@@ -2145,8 +2149,10 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
     try {
         // demo-quick 的時限 300ms 比閒置逾時短，先到的是任務的時限；demo-md 沒有自己的時限，先到的是閒置逾時
         for (const [task, input] of [['demo-quick', { topic: '等' }], ['demo-md', { question: '等' }], ['demo-quick', { topic: '等' }]]) {
+            clock.t += 30_000;
             assert.deepEqual((await readEvents(await post(base, task, input))).at(-1).data, busy, task);
         }
+        clock.t += 30_000;
         const waited = logs.filter((l) => l.tag === 'UPSTREAM-ERR').map((l) => [l.fields.code, l.fields.reason]);
         assert.deepEqual(waited, [
             ['timeout', '超過總時限 300ms，還沒收到任何 token'],
@@ -2163,6 +2169,177 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
     } finally {
         await gateway.close({ graceMs: 0, requestWaitMs: 0 });
         await upstream.close();
+    }
+});
+
+// 閘道自己的時限到了、上游連回應標頭都沒送：WinLab 收了連線卻卡住
+const hungError = () => new UpstreamError('timeout', '上游超過 2000ms 沒有回應任何資料', { retryable: true });
+
+test('斷路器：連續 2 個任務卡住就斷開，新任務在讀 body 之前回 503 忙線（Retry-After 是剩下的秒數），不呼叫模型、不計次；30 秒後放一個去試，收到回應就恢復', async () => {
+    const clock = { t: 0 };
+    const gw = await startGateway({
+        now: () => clock.t,
+        server: { rateLimitMax: 2 },
+        generate: async (request, hooks, n) => {
+            if (n <= 2) throw hungError();
+            hooks.onResponse();
+            return OK_RESULT;
+        },
+    });
+    try {
+        for (let i = 0; i < 2; i++) assert.equal((await readEvents(await post(gw.base, 'demo-json', { topic: 'x' }))).at(-1).data.code, 'busy');
+        const breakerLogs = () => gw.logs.filter((l) => l.tag === 'BREAKER').map((l) => [l.level, l.fields]);
+        assert.deepEqual(breakerLogs(), [['warn', { state: 'open', failures: 2 }]]);
+        clock.t = 12_500;
+        for (let i = 0; i < 3; i++) {
+            const res = await post(gw.base, 'demo-json', { topic: 'x' });
+            assert.equal(res.status, 503);
+            assert.equal(res.headers.get('retry-after'), '18');
+            assert.equal(res.headers.get('connection'), 'close');
+            assert.deepEqual(pick((await res.json()).error, ['code', 'retryAfter']), { code: 'busy', retryAfter: 18 });
+        }
+        assert.equal(gw.calls.length, 2);
+        assert.ok(gw.logs.some((l) => l.tag === 'REJECT' && l.fields.status === 503 && l.fields.reason === 'breaker'));
+        // rateLimitMax 是 2：上面 5 次都沒計次，去試的那次與下一次都照常
+        clock.t = 30_000;
+        for (let i = 0; i < 2; i++) assert.equal((await readEvents(await post(gw.base, 'demo-json', { topic: 'x' }))).at(-1).event, 'done');
+        assert.equal(gw.calls.length, 4);
+        assert.deepEqual(breakerLogs(), [['warn', { state: 'open', failures: 2 }], ['info', { state: 'closed' }]]);
+        // log 只有狀態與次數
+        assert.ok(gw.logs.filter((l) => l.tag === 'BREAKER').every((l) => Object.keys(l.fields).every((k) => k === 'state' || k === 'failures')));
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('斷路器：排隊中的任務輪到時已經斷開，不呼叫模型，送出忙線的 error 事件，不計次', async () => {
+    const clock = { t: 0 };
+    const fail = deferred();
+    const gw = await startGateway({
+        now: () => clock.t,
+        server: { concurrency: 2 },
+        generate: async () => {
+            await fail.promise;
+            throw hungError();
+        },
+    });
+    try {
+        const first = [post(gw.base, 'demo-json', { topic: 'a' }), post(gw.base, 'demo-json', { topic: 'b' })];
+        await waitFor(() => gw.calls.length === 2);
+        const queuedRes = await post(gw.base, 'demo-json', { topic: 'c' });
+        const reader = sseReader(queuedRes);
+        await reader.until(queued);
+        clock.t = 1_000;
+        fail.resolve();
+        await Promise.all((await Promise.all(first)).map((res) => res.text()));
+        const events = await reader.rest();
+        assert.deepEqual(pick(events.at(-1).data, ['code', 'retryable', 'retryAfter']), { code: 'busy', retryable: true, retryAfter: 30 });
+        assert.ok(!events.some((e) => e.data.phase === 'started'));
+        assert.equal(gw.calls.length, 2);
+        assert.equal(gw.gateway.limiter.clients.get('127.0.0.1').hits.length, 0);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('斷路器：上游回了狀態碼（408、429、401）、連不上、收到標頭之後才逾時、用戶端離開，各連續兩次也不算卡住', async () => {
+    const withStatus = (err) => (request, hooks) => {
+        hooks.onResponse();
+        throw err;
+    };
+    const kinds = [
+        withStatus(new UpstreamError('timeout', 'HTTP 408', { status: 408, retryable: true })),
+        withStatus(new UpstreamError('busy', 'HTTP 429', { status: 429, retryable: true })),
+        withStatus(new UpstreamError('auth', 'HTTP 401', { status: 401 })),
+        () => { throw new UpstreamError('unavailable', '連不上 LLM 服務（ECONNREFUSED）', { retryable: true }); },
+        withStatus(hungError()),
+        (request, hooks) => {
+            hooks.onResponse();
+            hooks.onProgress({ phase: 'thinking', round: 1, thinkingTokens: 1, writingTokens: 0 });
+            throw hungError();
+        },
+    ];
+    for (const [i, kind] of kinds.entries()) {
+        const gw = await startGateway({ generate: async (request, hooks) => kind(request, hooks) });
+        try {
+            for (let n = 0; n < 2; n++) await (await post(gw.base, 'demo-json', { topic: 'x' })).text();
+            assert.equal(gw.calls.length, 2, String(i));
+            assert.equal(gw.gateway.breaker.wait(), 0, String(i));
+            assert.ok(!gw.logs.some((l) => l.tag === 'BREAKER'), String(i));
+        } finally {
+            await gw.stop();
+        }
+    }
+    // 用戶端離開：不算
+    const hang = hangingGenerate();
+    const left = await startGateway({ generate: hang.generate });
+    try {
+        for (let i = 0; i < 2; i++) {
+            const ctl = new AbortController();
+            const res = post(left.base, 'demo-json', { topic: 'x' }, { signal: ctl.signal }).catch(() => {});
+            await waitFor(() => left.calls.length === i + 1);
+            ctl.abort();
+            await res;
+        }
+        await waitFor(() => left.logs.filter((l) => l.tag === 'TASK').length === 2);
+        assert.equal(left.gateway.breaker.wait(), 0);
+    } finally {
+        await left.stop();
+    }
+});
+
+// 一個接一個跑的話，後一個收到標頭時會把計數歸零；兩個同時跑，都先收到標頭、之後才逾時
+test('斷路器：兩個同時進行的任務都收到標頭之後才逾時，不算卡住', async () => {
+    const fail = deferred();
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            hooks.onResponse();
+            await fail.promise;
+            throw hungError();
+        },
+    });
+    try {
+        const both = [post(gw.base, 'demo-json', { topic: 'a' }), post(gw.base, 'demo-json', { topic: 'b' })];
+        await waitFor(() => gw.calls.length === 2);
+        fail.resolve();
+        await Promise.all((await Promise.all(both)).map((res) => res.text()));
+        assert.equal(gw.gateway.breaker.wait(), 0);
+        assert.ok(!gw.logs.some((l) => l.tag === 'BREAKER'));
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 經過真的 streamChat：408 與「送了標頭之後就沒聲音」都收到過回應標頭
+test('斷路器：上游連續兩次回 408、或連續兩次送了標頭之後閒置逾時，都不斷開', async () => {
+    for (const step of [{ status: 408, body: { error: { message: 'timeout' } } }, { hangAfterChunks: 1 }]) {
+        const gw = await startRealGateway([step, step, { content: ['好'] }], { idleTimeoutMs: 300 });
+        try {
+            for (let n = 0; n < 2; n++) assert.equal((await readEvents(await post(gw.base, 'demo-md', { question: 'q' }))).at(-1).event, 'error');
+            assert.equal((await readEvents(await post(gw.base, 'demo-md', { question: 'q' }))).at(-1).event, 'done', JSON.stringify(step));
+            assert.equal(gw.upstream.requests.length, 3);
+            assert.ok(!gw.lines.some((l) => / BREAKER /.test(l)));
+        } finally {
+            await gw.stop();
+        }
+    }
+});
+
+test('斷路器：WinLab 收了連線卻不回標頭時，前兩個任務等滿閒置逾時，之後的不再一批一批地等', async () => {
+    const gw = await startRealGateway(() => ({ hangBeforeHeaders: true }), { idleTimeoutMs: 400 }, { concurrency: 2 });
+    try {
+        const started = Date.now();
+        const results = await Promise.all(Array.from({ length: 6 }, () => post(gw.base, 'demo-md', { question: '等' }).then(async (res) => {
+            const text = await res.text();
+            return res.status === 200 ? parseSse(text).events.at(-1).data.code : JSON.parse(text).error.code;
+        })));
+        // 沒有斷路器時是三批，要 1200ms 以上
+        assert.ok(Date.now() - started < 1_100, `${Date.now() - started}ms`);
+        assert.deepEqual(results, Array(6).fill('busy'));
+        assert.ok(gw.upstream.requests.length <= 3, String(gw.upstream.requests.length));
+        assert.ok(gw.lines.some((l) => / warn BREAKER state=open failures=2$/.test(l)));
+    } finally {
+        await gw.stop();
     }
 });
 

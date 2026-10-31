@@ -1,5 +1,5 @@
 /**
- * 閘道的兩道限制。
+ * 閘道的兩道限制，以及上游卡住時的斷路器（Breaker）。
  *
  * SlotGate 管全站同時進行的任務數與排隊上限。WinLab 的 key 同時只收 8 個請求，
  * 超過回 429；預設只放 4 個（LLM_CONCURRENCY），另一半留給同一把 key 的其他服務
@@ -160,6 +160,68 @@ export class SlotGate {
 function handled(promise) {
     promise.catch(() => {});
     return promise;
+}
+
+/**
+ * Breaker 是上游卡住時的斷路器。WinLab 收了連線卻一直不回標頭時，每個任務都要等滿閒置逾時
+ * （LLM_IDLE_TIMEOUT_MS）才失敗，排隊的人一批接一批跟著等。連續 failures 個任務連上游的回應標頭
+ * 都沒等到就逾時（卡住），就斷開 openMs：這段期間新任務直接回忙線，不佔名額。時間到了只放一個
+ * 任務去試，收到回應標頭就恢復，又卡住就再斷開。429、401、連不上本來就馬上失敗，不算；收到標頭
+ * 之後才停住的（例如代理只送 SSE 註解）也不算，交給閒置逾時。onChange({ state, failures? }) 在
+ * 斷開與恢復時各呼叫一次。
+ */
+export class Breaker {
+    constructor({ failures = 2, openMs = 30_000, now = () => performance.now(), onChange = () => {} } = {}) {
+        this.failures = failures;
+        this.openMs = openMs;
+        this.now = now;
+        this.onChange = onChange;
+        this.count = 0;           // 連續幾個任務卡住
+        this.openUntil = null;    // 斷開到什麼時候；null 是正常
+        this.trial = null;        // 斷開的時間過了、去試的那個任務（enter() 回傳的物件），還沒結束
+    }
+
+    /** 現在要擋下新任務嗎：要的話回傳建議等待的秒數，否則 0 */
+    wait() {
+        if (this.openUntil === null) return 0;
+        const left = this.openUntil - this.now();
+        if (left > 0) return Math.ceil(left / 1000);
+        return this.trial ? Math.ceil(this.openMs / 1000) : 0;
+    }
+
+    /**
+     * 任務要開始呼叫上游時呼叫。要擋就丟 LimitError。斷開的時間過了的第一個任務去試，回傳代表它的
+     * 物件，其他回傳 null；結束時交給 finish()
+     */
+    enter() {
+        const wait = this.wait();
+        if (wait) throw new LimitError('busy', '上游沒有回應，暫停送出新任務', wait);
+        if (this.openUntil === null) return null;
+        this.trial = {};
+        return this.trial;
+    }
+
+    /** 收到上游的回應標頭 */
+    success() {
+        this.count = 0;
+        if (this.openUntil === null) return;
+        this.openUntil = null;
+        this.trial = null;
+        this.onChange({ state: 'closed' });
+    }
+
+    /**
+     * 任務結束。trial 是 enter() 的回傳值：恢復之後又斷開時，去試的已經換成別的任務，舊的結束不影響它。
+     * hung：連回應標頭都沒等到就逾時
+     */
+    finish(trial, hung) {
+        if (trial && trial === this.trial) this.trial = null;
+        if (!hung) return;
+        this.count++;
+        if (this.count < this.failures || (this.openUntil !== null && this.openUntil > this.now())) return;
+        this.openUntil = this.now() + this.openMs;
+        this.onChange({ state: 'open', failures: this.count });
+    }
 }
 
 // 'a.b.c.d' → 32 位元無號整數；不是 IPv4 就回傳 null
