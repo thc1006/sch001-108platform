@@ -153,6 +153,24 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         expect(await page.evaluate(() => window.__calls.length)).toBe(1);
     });
 
+    // 頁首的 Esc 處理只管焦點在頁首裡的情況，不能先把這一下用掉。
+    test('手機選單開著、焦點在輸入框時按 Esc → 第一下就取消，選單照樣開著', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.fill('#ai-input', '測試');
+        await page.click('#ai-generate-btn');
+        const progress = page.locator('#ai-work .platform-ai-progress');
+        await expect(progress).toHaveCount(1);
+        await page.locator('#nav-toggle').click();
+        await expect(page.locator('#mobile-menu')).toBeVisible();
+        // 像點了頁面上的文字：焦點離開漢堡鈕，但沒有移到別的元素上，選單不會收合。
+        await page.evaluate(() => document.activeElement.blur());
+        await page.locator('#ai-input').focus();
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#ai-result')).toHaveText('已取消。');
+        await expect(page.locator('#mobile-menu')).toBeVisible();
+    });
+
     test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點回到「開始分析」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**')], hang: true });
         await page.fill('#ai-input', '科展');
