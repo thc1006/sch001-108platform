@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createGateway, createLogger } from '../src/server.mjs';
+import { createGateway, createLogger, createBodyBuffer } from '../src/server.mjs';
 import { createCatalog } from '../src/tasks.mjs';
 import { TASK_DEFINITIONS } from '../src/task-catalog.mjs';
 import { UpstreamError } from '../src/upstream.mjs';
@@ -2297,6 +2297,43 @@ test('同時在收 body 的請求有上限：滿了就立刻 503 並關掉連線
         assert.equal(fourth.status, 200);
     } finally {
         for (const socket of slow) socket.destroy();
+        await gw.stop();
+    }
+});
+
+// chunked 編碼一次送 1 byte 時，每一塊各自留著的話每 1 byte 都是一個物件
+test('createBodyBuffer：一塊一塊複製進同一個 Buffer，不夠時加倍、最多到上限；1 byte 一塊也只配置幾次', () => {
+    const limit = 97_024;
+    const body = createBodyBuffer(limit, Number.NaN);
+    const one = Buffer.from('x');
+    for (let i = 0; i < limit; i++) body.append(one);
+    assert.equal(body.toString(), 'x'.repeat(limit));
+    // 1 KiB → 2 → 4 → 8 → 16 → 32 → 64 KiB → 97024
+    assert.equal(body.allocations, 8);
+    // 宣告的大小比 1 KiB 小：一開始就配置剛好的大小，不再長大
+    const pieces = ['{"input":', '{"topic":"', '中"}}'];
+    const small = createBodyBuffer(limit, Buffer.byteLength(pieces.join('')));
+    for (const piece of pieces) small.append(Buffer.from(piece));
+    assert.equal(small.toString(), '{"input":{"topic":"中"}}');
+    assert.equal(small.allocations, 1);
+    // 宣告 0 也能收（最少配置 1 byte）
+    assert.equal(createBodyBuffer(limit, 0).toString(), '');
+});
+
+test('body 用 chunked 編碼一次送 1 byte、中文字被切在兩塊之間，也照常解析', async () => {
+    const gw = await startGateway();
+    const socket = await rawSocket(gw.port);
+    try {
+        const body = Buffer.from(JSON.stringify({ input: { topic: '中文' } }));
+        socket.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n`);
+        for (const byte of body) socket.write(Buffer.concat([Buffer.from('1\r\n'), Buffer.from([byte]), Buffer.from('\r\n')]));
+        socket.write('0\r\n\r\n');
+        await socket.whenClosed;
+        assert.match(socket.text, /^HTTP\/1\.1 200 /);
+        assert.match(socket.text, /event: done/);
+        assert.match(gw.calls[0].request.messages[1].content, /中文/);
+    } finally {
+        socket.destroy();
         await gw.stop();
     }
 });
