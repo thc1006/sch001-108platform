@@ -2156,7 +2156,7 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
         const waited = logs.filter((l) => l.tag === 'UPSTREAM-ERR').map((l) => [l.fields.code, l.fields.reason]);
         assert.deepEqual(waited, [
             ['timeout', '超過總時限 300ms，還沒收到任何 token'],
-            ['timeout', '上游超過 600ms 沒有回應任何資料，還沒收到任何 token'],
+            ['timeout', '上游超過 600ms 沒有任何進展，還沒收到任何 token'],
             ['timeout', '超過總時限 300ms，還沒收到任何 token'],
         ]);
         // rateLimitMax 是 1：上面三次都沒計次，開始思考之後才逾時的這次才算
@@ -2173,7 +2173,7 @@ test('第一個 token 之前就逾時（任務的時限、上游的閒置逾時�
 });
 
 // 閘道自己的時限到了、上游連回應標頭都沒送：WinLab 收了連線卻卡住
-const hungError = () => new UpstreamError('timeout', '上游超過 2000ms 沒有回應任何資料', { retryable: true });
+const hungError = () => new UpstreamError('timeout', '上游超過 2000ms 沒有任何進展', { retryable: true });
 
 test('斷路器：連續 2 個任務卡住就斷開，新任務在讀 body 之前回 503 忙線（Retry-After 是剩下的秒數），不呼叫模型、不計次；30 秒後放一個去試，收到回應就恢復', async () => {
     const clock = { t: 0 };

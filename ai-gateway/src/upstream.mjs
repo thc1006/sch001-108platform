@@ -356,7 +356,7 @@ const RESPONSE_SLACK_CHARS = 4096;
  * 每塊只掃描新進來的部分，殘行以陣列累積，長行切成很多小塊送來時不會一再重掃。
  * 用 TextDecoder 的 stream 模式，中文字的 UTF-8 位元組被切在兩塊之間也不會變亂碼。
  */
-export async function* sseData(body, onBytes) {
+export async function* sseData(body) {
     const decoder = new TextDecoder();
     const terminator = /\r\n|\r|\n/g;
     let partial = [];       // 還沒遇到行尾的片段
@@ -411,7 +411,6 @@ export async function* sseData(body, onBytes) {
     }
 
     for await (const chunk of body) {
-        if (onBytes) onBytes();
         yield* feed(decoder.decode(chunk, { stream: true }));
     }
     yield* feed(decoder.decode());
@@ -519,8 +518,10 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
     // 在送出前序列化：本地的錯誤（例如循環參照）不能被當成可重試的網路錯誤
     const requestBody = JSON.stringify(body);
 
-    // 閒置逾時：上游多久沒送任何位元組就當成卡死。每收到一塊就重新計時，所以 xhigh 想很久
-    // 但一直在吐 token 的請求不會被誤殺。答案收完之後改成固定的收尾期限（見 enterClosing）
+    // 閒置逾時：上游多久沒有進展就當成卡死。收到標頭之前從送出算起；之後每收到思考、正文或 usage
+    // 就重新計時，所以 xhigh 想很久但一直在吐 token 的請求不會被誤殺。SSE 註解、空的 delta 這類
+    // 沒有內容的位元組不算：卡住的代理一直送這些的話，名額會被佔到任務的總時限。收到結束原因或
+    // [DONE] 之後改成固定的收尾期限，不再重新計時（見 enterClosing）
     const idle = new AbortController();
     let idleTimer;
     let closing = false;
@@ -534,6 +535,9 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         if (closing) return;
         closing = true;
         armIdle(closingMs);
+    };
+    const progressed = () => {
+        if (!closing) armIdle();
     };
     // 一個回應最多收的思考加正文（字元）
     const maxChars = (Number(payload.maxTokens) || 0) * MAX_CHARS_PER_TOKEN + RESPONSE_SLACK_CHARS;
@@ -566,7 +570,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
     const translate = (err) => {
         if (err instanceof UpstreamError) return err;
         if (idle.signal.aborted) {
-            return new UpstreamError('timeout', `上游超過 ${config.idleTimeoutMs}ms 沒有回應任何資料`, { retryable: true });
+            return new UpstreamError('timeout', `上游超過 ${config.idleTimeoutMs}ms 沒有任何進展`, { retryable: true });
         }
         if (signal?.aborted) {
             return new UpstreamError('aborted', '請求被取消', { cause: signal.reason });
@@ -676,7 +680,7 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
         };
 
         try {
-            for await (const data of sseData(res.body, () => { if (!closing) armIdle(); })) {
+            for await (const data of sseData(res.body)) {
                 // [DONE] 之後還是把串流讀到結束（chunked 的結尾），連線才能放回連線池重用；
                 // 之後的事件一律不理
                 if (sawDone) continue;
@@ -712,7 +716,10 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                         ...errorFields(chunk, secrets),
                     });
                 }
-                if (chunk.usage) usage = chunk.usage;
+                if (chunk.usage) {
+                    usage = chunk.usage;
+                    progressed();
+                }
                 const choice = chunk.choices?.[0];
                 if (!choice) continue;
                 // 最後一塊（只帶 usage）的 finish_reason 是 null，不能蓋掉前一塊的 stop／length
@@ -731,12 +738,14 @@ export async function streamChat(config, payload, { signal, onReasoning, onConte
                     ensureRoom(thought);
                     reasoning += thought;
                     reasoningChunks++;
+                    progressed();
                     call(onReasoning, thought);
                 }
                 if (delta.content) {
                     ensureRoom(delta.content);
                     content += delta.content;
                     contentChunks++;
+                    progressed();
                     call(onContent, delta.content);
                 }
             }

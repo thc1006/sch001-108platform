@@ -551,6 +551,77 @@ test('一直有東西進來就不算閒置：總時間超過閒置門檻也不�
     });
 });
 
+// 2026-10-31 的探測：卡住的代理一直送 SSE 註解或空的 delta，名額被佔到任務的總時限
+test('收到標頭之後只有 SSE 註解、空的 delta、空字串的正文：不算進展，照樣閒置逾時', async () => {
+    const fillers = [
+        ': keepalive\n\n',
+        'data: {"choices":[{"index":0,"delta":{}}]}\n\n',
+        'data: {"choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}\n\n',
+        'data: {"choices":[]}\n\n',
+    ];
+    for (const filler of fillers) {
+        await withServer(async (req, res) => {
+            for await (const _ of req);
+            res.writeHead(200, { 'content-type': 'text/event-stream' });
+            const timer = setInterval(() => { if (!res.destroyed) res.write(filler); }, 50);
+            res.on('close', () => clearInterval(timer));
+        }, async (origin) => {
+            const started = Date.now();
+            await assert.rejects(streamChat(testConfig(origin, { idleTimeoutMs: 300 }), basicPayload()), { code: 'timeout', retryable: true }, filler);
+            assert.ok(Date.now() - started < 2_000, `${filler}：等了 ${Date.now() - started}ms`);
+        });
+    }
+});
+
+test('只有正文、或只有 usage 的串流也算進展：每 100ms 一段、閒置逾時 300ms，一共 1 秒多也照常完成', async () => {
+    const streams = {
+        content: Array.from({ length: 10 }, (_, i) => ({ choices: [{ index: 0, delta: { content: String(i) } }] })),
+        usage: Array.from({ length: 10 }, (_, i) => ({ choices: [], usage: { prompt_tokens: i + 1 } })),
+    };
+    for (const [label, events] of Object.entries(streams)) {
+        await withServer(async (req, res) => {
+            for await (const _ of req);
+            res.writeHead(200, { 'content-type': 'text/event-stream' });
+            for (const event of [...events, { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] }]) {
+                await sleepMs(100);
+                if (res.destroyed) return;
+                res.write(`data: ${JSON.stringify(event)}\n\n`);
+            }
+            res.end('data: [DONE]\n\n');
+        }, async (origin) => {
+            const started = Date.now();
+            const r = await streamChat(testConfig(origin, { idleTimeoutMs: 300 }), basicPayload());
+            assert.equal(r.finishReason, 'stop', label);
+            assert.ok(Date.now() - started > 900, label);
+        });
+    }
+});
+
+test('思考、正文、只帶 usage 的事件都算進展：每一段的間隔（150ms）都短於閒置逾時（500ms），總時間比它長也照常完成', async () => {
+    const events = [
+        { choices: [{ index: 0, delta: { reasoning_content: '想' } }] },
+        { choices: [{ index: 0, delta: { reasoning: '再想' } }] },
+        { choices: [], usage: { prompt_tokens: 1 } },
+        { choices: [{ index: 0, delta: { content: '答' } }] },
+        { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] },
+    ];
+    await withServer(async (req, res) => {
+        for await (const _ of req);
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        for (const event of events) {
+            await sleepMs(150);
+            // 每段之間夾著註解：不影響計時
+            res.write(`: ping\n\ndata: ${JSON.stringify(event)}\n\n`);
+        }
+        res.end('data: [DONE]\n\n');
+    }, async (origin) => {
+        const r = await streamChat(testConfig(origin, { idleTimeoutMs: 500 }), basicPayload());
+        assert.equal(r.reasoning, '想再想');
+        assert.equal(r.content, '答');
+        assert.equal(r.finishReason, 'stop');
+    });
+});
+
 test('undici 自己的 headers／body 逾時歸類為 timeout（不是 unavailable）', async () => {
     for (const code of ['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']) {
         const fetchImpl = async () => {
