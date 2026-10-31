@@ -54,6 +54,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Activity Grid -->
         <section>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Activity cards will be injected here -->
             </div>
@@ -79,6 +80,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const formFilter = document.getElementById('form-filter');
         const featuredSection = document.getElementById('featured-section');
         const featuredCard = document.getElementById('featured-card');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         // 純文字資料欄位注入 innerHTML 前一律轉義，content_html 類原始 HTML 才維持原樣。
         function escapeHtml(value) {
@@ -181,6 +190,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             activityGrid.innerHTML = '';
+            shownCount = filteredActivities.length;
 
             if (filteredActivities.length > 0) {
                 noResultsDiv.classList.add('hidden');
@@ -217,9 +227,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         }
 
-        searchInput.addEventListener('input', renderActivities);
-        categoryFilter.addEventListener('change', renderActivities);
-        formFilter.addEventListener('change', renderActivities);
+        searchInput.addEventListener('input', () => { renderActivities(); announceCount(400); });
+        categoryFilter.addEventListener('change', () => { renderActivities(); announceCount(); });
+        formFilter.addEventListener('change', () => { renderActivities(); announceCount(); });
 
         // 從 activity-database.json 載入資料後再渲染
         async function loadData() {

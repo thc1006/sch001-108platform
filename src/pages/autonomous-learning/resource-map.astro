@@ -80,6 +80,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
 
             <!-- 資源卡片網格 -->
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 資源卡片由 renderResources() 填入 -->
             </div>
@@ -115,6 +116,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const searchInput = document.getElementById('search-input');
         const typeFilter = document.getElementById('type-filter');
         const categoryFilter = document.getElementById('category-filter');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderResources() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -130,6 +139,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             resourceGrid.textContent = '';
+            shownCount = filteredResources.length;
 
             if (filteredResources.length > 0) {
                 noResultsDiv.classList.add('hidden');
@@ -182,9 +192,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         }
 
-        searchInput.addEventListener('input', renderResources);
-        typeFilter.addEventListener('change', renderResources);
-        categoryFilter.addEventListener('change', renderResources);
+        searchInput.addEventListener('input', () => { renderResources(); announceCount(400); });
+        typeFilter.addEventListener('change', () => { renderResources(); announceCount(); });
+        categoryFilter.addEventListener('change', () => { renderResources(); announceCount(); });
 
         // 路徑由 AI 閘道的 learning-path 任務產生（ai-gateway/src/task-catalog.mjs），閘道驗證過格式才交給這裡。
         const generatePathBtn = document.getElementById('generatePathBtn');
