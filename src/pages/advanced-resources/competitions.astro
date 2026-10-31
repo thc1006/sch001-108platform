@@ -762,7 +762,9 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-cta svg { width: .95rem; height: .95rem; transition: transform .2s; }
     .comp-cta:hover { background: var(--primary); }
     .comp-cta:hover svg { transform: translateX(2px); }
-    .comp-card.is-closed { opacity: .68; }
+    /* 已截止的卡片用灰色的強調色與底色表示，不用 opacity：整張變淡會讓次要文字掉到 3:1 左右。
+       --accent 是卡片的行內樣式，要 !important 才蓋得過。 */
+    .comp-card.is-closed { --accent: #64748b !important; background: #f8fafc; }
     .comp-card:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 
     .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
