@@ -713,9 +713,11 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     .comp-card__bar { height: 5px; width: 100%; background: var(--accent); background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, #fff)); }
     .comp-card__body { padding: 1.35rem 1.4rem 1rem; flex: 1; }
-    .comp-card__head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .7rem; }
+    /* 狀態說明可能很長（「報名開放日未公布 · 線上 7/30、紙本 6/25 截止」），放不下時換到下一行再折行，
+       不要超出卡片被裁掉。 */
+    .comp-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .7rem; }
     .comp-cat {
-      position: relative; padding-left: .9rem; font-size: .74rem; font-weight: 800;
+      position: relative; padding-left: .9rem; font-size: .875rem; font-weight: 800;
       letter-spacing: .03em; color: color-mix(in srgb, var(--accent) 72%, #1e293b); white-space: nowrap;
     }
     .comp-cat::before {
@@ -723,8 +725,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       width: .45rem; height: .45rem; border-radius: 999px; background: var(--accent);
     }
     .comp-status {
-      flex-shrink: 0; font-size: .72rem; font-weight: 700; padding: .22rem .6rem; border-radius: 999px;
-      background: #f1f5f9; color: #475569; white-space: nowrap;
+      font-size: .875rem; font-weight: 700; padding: .22rem .6rem; border-radius: .75rem;
+      background: #f1f5f9; color: #475569;
     }
     .is-open .comp-status { background: #dcfce7; color: #15803d; }
     .is-soon .comp-status { background: #fef3c7; color: #b45309; }
@@ -737,17 +739,17 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-card__org { font-size: .82rem; color: var(--muted); margin: 0 0 .8rem; }
     .comp-meta { display: flex; flex-wrap: wrap; gap: .35rem; list-style: none; padding: 0; margin: 0 0 .55rem; }
     .comp-tag {
-      font-size: .72rem; font-weight: 600; color: #475569; background: #f1f5f9;
+      font-size: .875rem; font-weight: 600; color: #475569; background: #f1f5f9;
       padding: .18rem .5rem; border-radius: .4rem;
     }
-    .comp-elig { font-size: .74rem; color: var(--muted); margin: 0 0 .7rem; font-weight: 600; }
+    .comp-elig { font-size: .875rem; color: var(--muted); margin: 0 0 .7rem; font-weight: 600; }
     .comp-card__desc { font-size: .875rem; line-height: 1.65; color: #475569; margin: 0; }
     .comp-card__foot {
       display: flex; align-items: center; justify-content: space-between; gap: .8rem;
       padding: .9rem 1.4rem; border-top: 1px solid var(--line); background: #fafbfc;
     }
     .comp-deadline { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
-    .comp-deadline__label { font-size: .68rem; color: var(--muted); font-weight: 600; }
+    .comp-deadline__label { font-size: .875rem; color: var(--muted); font-weight: 600; }
     .comp-deadline__value {
       font-family: 'Space Mono', ui-monospace, monospace; font-size: .92rem; font-weight: 700; color: var(--ink);
       font-variant-numeric: tabular-nums;
