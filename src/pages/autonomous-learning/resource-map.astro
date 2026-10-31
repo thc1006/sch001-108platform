@@ -269,7 +269,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // 描述（AI 純文字，可能含 markdown）
                 const desc = document.createElement('p');
                 desc.className = 'text-gray-700 mt-2 mb-3';
-                desc.innerHTML = PlatformAI.renderMarkdown(step.description);
+                desc.innerHTML = PlatformAI.renderMarkdown(step.description, { headingLevel: 5 });
 
                 // 資源類型標籤
                 const resourceContainer = document.createElement('div');
@@ -292,7 +292,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 // 行動建議為 AI 純文字，可能含 markdown；renderMarkdown 先 escape 後渲染。
                 const actionText = document.createElement('p');
                 actionText.className = 'text-sm text-gray-800';
-                actionText.innerHTML = PlatformAI.renderMarkdown(step.actionable_suggestion);
+                actionText.innerHTML = PlatformAI.renderMarkdown(step.actionable_suggestion, { headingLevel: 5 });
                 actionContainer.appendChild(actionLabel);
                 actionContainer.appendChild(actionText);
 

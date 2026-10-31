@@ -86,6 +86,23 @@ for (const p of PAGES) {
             await expect(button.locator('svg')).toHaveCount(p.icon ? 1 : 0);
         });
 
+        test('總評與修改範例裡的 # 標題是 h3 底下的 h4，清單項目在 <ul> 裡；評語與建議裡的 # 照舊是粗體', async ({ page }) => {
+            const marked = {
+                ...RESULT,
+                overall_comment: '## 優點\n- 投入\n- 真誠',
+                analysis: { ...RESULT.analysis, S: { comment: '# 背景', suggestion: '補上時間。' } },
+                revised_example: '## 改寫\n高二上學期……',
+            };
+            await installFakeGateway(page, { chunks: [ACCEPTED, done(marked)] });
+            await page.fill('#reflectionInput', '心得');
+            await page.click('#analyzeBtn');
+            const result = page.locator('#analysisResult');
+            await expect(result.getByRole('heading', { level: 3 })).toHaveText(['健檢總評', 'STAR 分析與建議', '修改範例']);
+            await expect(result.getByRole('heading', { level: 4 })).toHaveText(['優點', 'S (情境)', 'T (任務)', 'A (行動)', `R (${p.rName})`, '改寫']);
+            await expect(result.locator('ul > li')).toHaveText(['投入', '真誠']);
+            await expect(result.locator('span strong')).toHaveText(['背景']);
+        });
+
         test('收到 progress 事件 → 工作區的進度文字跟著換，例如「AI 正在思考（第 2 輪）…」', async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');
