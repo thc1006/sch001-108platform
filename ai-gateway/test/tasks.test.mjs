@@ -145,7 +145,8 @@ test('validateInput：多餘欄位（包括原型鏈上的名稱）、非物件�
 
 test('validateInput：長度以「字」計（國旗、家庭表情都算一個字），訊息寫出上限與目前字數', () => {
     assert.equal(countChars('🇹🇼👨\u200D👩\u200D👧中a'), 4);
-    assert.deepEqual(validateInput(jsonTask, { topic: '🇹🇼'.repeat(10) }), { topic: '🇹🇼'.repeat(10) });
+    // 國旗一個 8 bytes，10 個會超過 UTF-8 的上限（另有測試），一半換成中文
+    assert.deepEqual(validateInput(jsonTask, { topic: `${'🇹🇼'.repeat(5)}中文字測試` }), { topic: `${'🇹🇼'.repeat(5)}中文字測試` });
     assert.throws(() => validateInput(jsonTask, { topic: '一二三四五六七八九十一' }), (err) => {
         assert.equal(err.field, 'topic');
         assert.match(err.message, /主題最多 10 字（目前 11 字）/);
@@ -153,14 +154,15 @@ test('validateInput：長度以「字」計（國旗、家庭表情都算一個�
     });
 });
 
-test('validateInput：一個字疊上大量組合符號（Zalgo）另外擋下', () => {
-    // 1 個字、41 個 code point；上限 10 字 × 4
+test('validateInput：一個字疊上大量組合符號（Zalgo）由 UTF-8 的上限擋下', () => {
+    // 1 個字；組合符號一個 2 bytes，上限 10 字 × 6 = 60 bytes
     assert.throws(() => validateInput(jsonTask, { topic: `a${'\u0301'.repeat(40)}` }), (err) => {
         assert.equal(err.field, 'topic');
-        assert.match(err.message, /含有太多特殊符號/);
+        assert.match(err.message, /含有太多罕用字或特殊符號/);
         return true;
     });
-    assert.doesNotThrow(() => validateInput(jsonTask, { topic: `a${'\u0301'.repeat(39)}` }));
+    assert.throws(() => validateInput(jsonTask, { topic: `a${'\u0301'.repeat(30)}` }), /含有太多罕用字或特殊符號/);
+    assert.doesNotThrow(() => validateInput(jsonTask, { topic: `a${'\u0301'.repeat(29)}` }));
 });
 
 // hidden 放了 U+206A–206F、U+FFF9–FFFB、U+1D173–1D17A 各段的頭尾兩個字元，逐一列舉時容易漏掉這幾段。
@@ -247,15 +249,38 @@ test('finalizeOutput：文字任務的回答超過 maxOutputChars 是 too_long�
     });
 });
 
-test('validateInput：code point 上限（整欄 maxLength × 4）一眼可知與需要逐一數的情況都對', () => {
+// 2026-10-31 的探測：擴展 B 區的字各疊三個星號平面的組合符號，字數與 code point 都在上限內
+test('validateInput：UTF-8 超過整欄 maxLength × 6 bytes 就擋；一般中文寫滿、表情符號照常', () => {
+    const heavy = cp(0x20021, 0x1D167, 0x1D168, 0x1D169);
+    assert.equal(Buffer.byteLength(heavy), 16);
+    // 上限 10 字 → 60 bytes
+    assert.doesNotThrow(() => validateInput(jsonTask, { topic: heavy.repeat(3) }));
+    assert.throws(() => validateInput(jsonTask, { topic: heavy.repeat(4) }), (err) => {
+        assert.ok(err instanceof TaskError);
+        assert.equal(err.code, 'invalid_input');
+        assert.equal(err.field, 'topic');
+        assert.match(err.message, /主題含有太多罕用字或特殊符號/);
+        return true;
+    });
+    assert.doesNotThrow(() => validateInput(jsonTask, { topic: '中'.repeat(10) }));
+    // 剛好 60 bytes 的收：國旗 8 bytes × 7、中 3 bytes、a 1 byte
+    assert.equal(Buffer.byteLength(`${'🇹🇼'.repeat(7)}中a`), 60);
+    assert.doesNotThrow(() => validateInput(jsonTask, { topic: `${'🇹🇼'.repeat(7)}中a` }));
+    assert.throws(() => validateInput(jsonTask, { topic: '🇹🇼'.repeat(8) }), /罕用字或特殊符號/);
+});
+
+// 輸入不另外數 code point 的依據（見 tasks.mjs 的 MAX_UTF8_BYTES_PER_CHAR）
+test('validateInput：字數沒超過、code point 超過 maxLength × 4 的欄位，一定被 UTF-8 的上限擋下', () => {
     const acute = cp(0x0301);
-    // 上限 10 字 → 40 個 code point。UTF-16 長度不超過 40：一定沒超過
-    assert.doesNotThrow(() => validateInput(jsonTask, { topic: `a${acute.repeat(39)}` }));
-    // 長度落在 41～80 之間要逐一數：星號平面的基底字佔 2 個 UTF-16 單位
-    assert.doesNotThrow(() => validateInput(jsonTask, { topic: `😀${acute.repeat(39)}` }));
-    assert.throws(() => validateInput(jsonTask, { topic: `😀${acute.repeat(40)}` }), /含有太多特殊符號/);
-    // 長度超過 80：一定超過
-    assert.throws(() => validateInput(jsonTask, { topic: `a${acute.repeat(100)}` }), /含有太多特殊符號/);
+    // 10 字、41 個 code point，bytes 最少的組合：10 個 ASCII 字母各是一個字，31 個組合符號（各 2 bytes）
+    // 接在最後一個後面，10 + 31 × 2 = 72 bytes
+    const cheapest = `${'a'.repeat(10)}${acute.repeat(31)}`;
+    assert.equal(countChars(cheapest), 10);
+    assert.equal([...cheapest].length, 41);
+    assert.throws(() => validateInput(jsonTask, { topic: cheapest }), /含有太多罕用字或特殊符號/);
+    for (const topic of [`😀${acute.repeat(40)}`, `a${acute.repeat(100)}`]) {
+        assert.throws(() => validateInput(jsonTask, { topic }), /含有太多罕用字或特殊符號/);
+    }
 });
 
 test('neutralizeDataMarkers：我們自己的資料標記（開頭與結尾）換成全形；其他的 < > 不動', () => {
