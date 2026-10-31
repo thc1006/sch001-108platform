@@ -785,16 +785,27 @@ test('每條路徑都不殘留計時器：子程序跑完各種收尾路徑後�
     assert.ok(Date.now() - started < 15_000, `子程序 ${Date.now() - started}ms 才退出：有計時器沒清掉`);
 });
 
-test('[DONE] 之後把串流讀到結束：連線放回連線池，之後的輪次不必重新連線', async () => {
-    // 回應在 [DONE] 之後 50ms 才結束。收到 [DONE] 就中斷的話，每一輪都要重新連線（與 TLS 握手）。
-    // 第一條連線不被重用是 undici 本身的行為（純 fetch 打最簡單的 Node 伺服器也一樣），
-    // 所以斷言的是「之後不再增加」。收尾期限放寬：CPU 被搶時，200ms 的期限可能比那 50ms 先到，
-    // 連線被中止，每一輪都得重新連線（2026-10-22 在負載高時重複跑整套測試，24 次裡遇過 1 次）
-    const step = { content: ['ok'], endDelayMs: 50 };
-    await withUpstream([step, step, step, step, step], async (up) => {
-        const cfg = testConfig(up.origin, { idleTimeoutMs: 10_000, afterFinishIdleMs: 5_000 });
-        for (let i = 0; i < 5; i++) await streamChat(cfg, basicPayload());
-        assert.ok(up.connections <= 2, `5 輪用了 ${up.connections} 條連線`);
+// 收到 [DONE] 就中斷的話，這條連線不能放回連線池，下一輪要重新連線（與 TLS 握手）。這裡檢查的是
+// 伺服器端每個回應都送完、沒有被用戶端中途關掉；不數連線數：undici 偶爾照樣另開一條（2026-10-31
+// 整套測試跑 72 次遇過 1 次 5 輪用了 5 條）
+test('[DONE] 之後把串流讀到結束：回應在 [DONE] 之後 50ms 才結束，5 輪的回應都送完，沒有被中途關掉', async () => {
+    const event = (obj) => `data: ${JSON.stringify(obj)}\n\n`;
+    let finished = 0;
+    let cut = 0;
+    await withServer(async (req, res) => {
+        for await (const _ of req);
+        res.on('finish', () => { finished++; });
+        res.on('close', () => { if (!res.writableFinished) cut++; });
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        res.write(`${event({ choices: [{ index: 0, delta: { content: 'ok' }, finish_reason: 'stop' }] })}data: [DONE]\n\n`);
+        await sleepMs(50);
+        res.end();
+    }, async (origin) => {
+        const cfg = testConfig(origin, { idleTimeoutMs: 10_000, afterFinishIdleMs: 5_000 });
+        for (let i = 0; i < 5; i++) assert.equal((await streamChat(cfg, basicPayload())).content, 'ok');
+        for (let i = 0; i < 50 && finished < 5; i++) await sleepMs(10);
+        assert.equal(finished, 5);
+        assert.equal(cut, 0);
     });
 });
 
