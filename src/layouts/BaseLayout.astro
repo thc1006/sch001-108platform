@@ -37,10 +37,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
 // 網址不寫進 repo。沒設定時不輸出，AI 功能（PlatformAI.runTask）會回報「尚未設定」。
 // 網址合不合格、是否與建置時的設定一致由 check:site 把關。
 const aiGatewayUrl = (import.meta.env.PUBLIC_AI_GATEWAY_URL ?? '').trim();
+
+// <html> 的 scroll-pt-20：header 高 64px，焦點移動與錨點捲動時元素停在它下方 16px，不被它蓋住。
 ---
 
 <!doctype html>
-<html lang="zh-Hant" class="scroll-smooth">
+<html lang="zh-Hant" class="scroll-smooth scroll-pt-20">
   <head>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WZGCGHZ5FK"></script>

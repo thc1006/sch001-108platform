@@ -29,7 +29,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <div class="container mx-auto px-6 py-12 space-y-20">
       <!-- 四大資源專頁 -->
-      <section id="resource-pages" class="resource-section">
+      <section id="resource-pages">
         <h2 class="text-3xl font-bold mb-2">四大資源專頁</h2>
         <p class="text-gray-600 mb-8">每個專頁都收錄了大量經整理的資源，並可依領域、平台、語言等條件即時篩選與搜尋。</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -57,7 +57,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </section>
 
       <!-- 程式練功平台 -->
-      <section id="coding-practice" class="resource-section">
+      <section id="coding-practice">
         <h2 class="text-3xl font-bold mb-2">程式練功平台</h2>
         <p class="text-gray-600 mb-8">想動手寫程式、累積實戰手感？這些平台用真實專案與解題挑戰帶你前進。</p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -80,7 +80,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </section>
 
       <!-- 推薦科普頻道 -->
-      <section id="science-channels" class="resource-section">
+      <section id="science-channels">
         <h2 class="text-3xl font-bold mb-2">推薦科普頻道</h2>
         <p class="text-gray-600 mb-8">用零碎時間，讓世界一流的科普內容拓寬你對科學的想像。</p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -112,9 +112,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       background: -webkit-linear-gradient(45deg, #8b5cf6, #ec4899);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-    }
-    .resource-section {
-      scroll-margin-top: 80px;
     }
     .resource-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
