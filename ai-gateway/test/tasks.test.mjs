@@ -149,7 +149,7 @@ test('validateInput：長度以「字」計（國旗、家庭表情都算一個�
     assert.deepEqual(validateInput(jsonTask, { topic: `${'🇹🇼'.repeat(5)}中文字測試` }), { topic: `${'🇹🇼'.repeat(5)}中文字測試` });
     assert.throws(() => validateInput(jsonTask, { topic: '一二三四五六七八九十一' }), (err) => {
         assert.equal(err.field, 'topic');
-        assert.match(err.message, /主題最多 10 字（目前 11 字）/);
+        assert.equal(err.message, '主題最多 10 字（目前 11 字），請縮短後再試。');
         return true;
     });
 });

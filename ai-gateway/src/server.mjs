@@ -35,7 +35,7 @@ import { loadLlmConfig, loadServerConfig, configProblems, FRONTEND_TASK_TIMEOUT_
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
 import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
-import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, TaskError } from './tasks.mjs';
+import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, tooLongMessage, TaskError } from './tasks.mjs';
 import { createTraditionalStream } from './s2t.mjs';
 
 // 進度事件最多每 500ms 一次；階段改變時立刻送
@@ -272,7 +272,7 @@ function readBody(req, limit, timeoutMs, read) {
             if (settled) return;
             size += chunk.length;
             if (size > limit) {
-                fail(new HttpError(413, 'payload_too_large', '請求內容太大'));
+                fail(new HttpError(413, 'payload_too_large'));
                 return;
             }
             if (!read.take(chunk.length)) {
@@ -309,6 +309,14 @@ function exceedsDepth(text, limit) {
         }
     }
     return false;
+}
+
+// 413 時還沒解析 body：只有一個欄位的任務才說得出是哪一欄（目前的任務都只有一欄）
+function tooLarge(task) {
+    const fields = Object.entries(task.input);
+    if (fields.length !== 1) return { message: '輸入的內容太長，請縮短後再試。' };
+    const [[field, spec]] = fields;
+    return { message: tooLongMessage(spec), field };
 }
 
 // body 只能是 {"input": …}：多出來的頂層鍵（前端寫錯也好、塞垃圾也好）一律拒絕
@@ -693,8 +701,12 @@ export function createGateway({
         // 宣告的 Content-Length 比任務的上限大就直接 413，不必讓位。宣告了的要放得下宣告的大小，沒宣告的
         // 至少要有 1 byte 的空間
         const byteLimit = inputByteLimit(task);
+        const rejectTooLarge = () => {
+            const { message, field } = tooLarge(task);
+            return reject(413, 'payload_too_large', message, field ? { field } : {});
+        };
         const declared = Number(req.headers['content-length']);
-        if (Number.isFinite(declared) && declared > byteLimit) return reject(413, 'payload_too_large', '請求內容太大');
+        if (Number.isFinite(declared) && declared > byteLimit) return rejectTooLarge();
         if (!makeRoom(1, Number.isFinite(declared) ? declared : 1)) {
             const reason = bodyReads.size + 1 > maxBodyReads ? 'body_reads' : 'body_bytes';
             return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) }, {}, reason);
@@ -719,6 +731,7 @@ export function createGateway({
             raw = await readBody(req, byteLimit, cfg.bodyTimeoutMs, read);
         } catch (err) {
             if (err instanceof HttpError) {
+                if (err.status === 413) return rejectTooLarge();
                 return reject(err.status, err.code, err.message, err.status === 503 ? { retryAfter: jitter(5) } : {}, {}, err.reason);
             }
             if (err instanceof ClientGone) {
