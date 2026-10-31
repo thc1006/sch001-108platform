@@ -30,6 +30,8 @@ Fellow 由各專案的技術嚮導（Track Lead）依實際貢獻提名，學生
 
 Fellow 從通過審核的次月起每月領 20,000 元，按季發放；當月完成功能優化、API 擴充，或挑戰 Hard Bug 這類貢獻並通過審查，有機會再加 10,000 元（卓越貢獻獎勵）。每月要做約 10 分鐘的技術分享；每三個月為一期，期滿前由技術嚮導評估是否續任，同一個專案最多兩年。
 
+Kubernetes、Ray 等專案的 Fellowship 提名紀錄，公開在開源社群「源來適你」的 GitHub 上，每次提名都列出被提名者做了哪些貢獻。
+
 ## 學生計算機年會
 
 學生計算機年會（SITCON）由學生自發舉辦，不向與會者收費，官網寫已辦過 13 屆年會。SITCON 2027 在 2027 年 3 月 13 日於中央研究院人文社會科學館舉行，開放一般議程、開放式議程和 Demo 展（現場展示作品）投稿，早鳥投稿到 2026 年 11 月 29 日截止。
@@ -44,4 +46,5 @@ Fellow 從通過審核的次月起每月領 20,000 元，按季發放；當月�
 - [AI 開源新勢力行動方案開源專案（11 個 Track），財團法人開源基金會](https://taione.org/fellowship/tracks)
 - [TAIONE Fellowship Program 常見問題，財團法人開源基金會](https://taione.org/fellowship/faq)
 - [TAIONE Fellowship Program 報名簡章，財團法人開源基金會](https://drive.google.com/file/d/1JYP9tU7mFIYhoExSJpWOYGdQpdoR7GXk/view)
+- [Fellowship 提名紀錄，源來適你](https://github.com/opensource4you/readme/tree/main/fellowship)
 - [SITCON 2027 徵稿頁](https://sitcon.org/2027/cfp/)、[關於 SITCON](https://sitcon.org/2027/cfp/about/)
