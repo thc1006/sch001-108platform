@@ -59,8 +59,8 @@ const current = (item: (typeof navItems)[number]) =>
     </button>
   </nav>
 
-  <!-- 手機選單(預設收合) -->
-  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white">
+  <!-- 手機選單(預設收合)。header 是 sticky，視窗矮的時候選單要能在自己裡面捲動，不然後面的選項到不了。 -->
+  <div id="mobile-menu" tabindex="-1" class="hidden md:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto scroll-pt-20 border-t border-gray-100 bg-white">
     {navItems.map((item) => (
       <a
         href={item.href}
@@ -80,16 +80,37 @@ const current = (item: (typeof navItems)[number]) =>
   // 手機選單開合
   const toggle = document.getElementById('nav-toggle');
   const menu = document.getElementById('mobile-menu');
+  const close = () => {
+    menu?.classList.add('hidden');
+    toggle?.setAttribute('aria-expanded', 'false');
+  };
   toggle?.addEventListener('click', () => {
     const isHidden = menu?.classList.toggle('hidden');
     toggle.setAttribute('aria-expanded', String(isHidden === false));
   });
+  const header = toggle?.closest('header');
+  // 焦點在頁首裡時，Esc 收合選單；焦點在選單裡的話移回漢堡鈕，不然焦點會留在隱藏的連結上。
+  // 焦點在別處時不處理，那裡的 Esc 可能是取消 AI 任務或清除搜尋。輸入法選字中的 Esc 也不處理。
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing || e.keyCode === 229) return;
+    if (!menu || menu.classList.contains('hidden') || !header?.contains(document.activeElement)) return;
+    // 開著的對話框蓋在選單上面，這一下是要關對話框。
+    if (document.querySelector('dialog[open]')) return;
+    // 這次按鍵用掉了，其他看 defaultPrevented 的 Esc 處理就跳過。在捕獲階段處理，比掛在 document 或
+    // window 冒泡階段的處理先跑。
+    e.preventDefault();
+    const inMenu = menu.contains(document.activeElement);
+    close();
+    if (inMenu) toggle?.focus();
+  }, true);
+  // 焦點移到選單和漢堡鈕以外的地方時收合，展開的選單不會蓋住焦點所在的內容。
+  header?.addEventListener('focusout', (e) => {
+    const next = e.relatedTarget;
+    if (next instanceof Node && !header.contains(next)) close();
+  });
   // 視窗放大跨過 md 斷點時收合選單並重置狀態,避免桌機版殘留展開狀態、
   // 以及 aria-expanded 與實際可見性脫節。
   window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
-    if (e.matches) {
-      menu?.classList.add('hidden');
-      toggle?.setAttribute('aria-expanded', 'false');
-    }
+    if (e.matches) close();
   });
 </script>
