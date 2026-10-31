@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { CLUSTERS } from './src/data/clusters.ts';
-import { tableScroll } from './src/markdown/a11y-plugins.mjs';
+import { pdfLabel, tableScroll } from './src/markdown/a11y-plugins.mjs';
 
 // 台灣教育處方籤部署在 GitHub Pages 的專案頁，網址帶 /sch001-108platform 前綴。
 //
@@ -38,7 +38,7 @@ export default defineConfig({
       name: 'markdown-a11y',
       hooks: {
         'astro:config:setup'({ config }) {
-          config.markdown.processor.options.hastPlugins.push(tableScroll);
+          config.markdown.processor.options.hastPlugins.push(tableScroll, pdfLabel);
         },
       },
     },
