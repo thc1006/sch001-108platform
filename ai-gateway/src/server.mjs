@@ -76,6 +76,8 @@ const MAX_HEADER_BYTES = 8 * 1024;
 // （2026-11-01 本機實測）。Firefox、Chromium 跨網域的 POST 是 14、15 個，Funnel 轉送時再加上
 // X-Forwarded-For 這類標頭
 const MAX_HEADERS_COUNT = 64;
+// 閘道自己給的忙線秒數多加 0～30% 的隨機時間，被同一批拒絕的學生才不會同時重送
+const BUSY_JITTER = 0.3;
 
 // 給學生看的錯誤訊息。code 是穩定的代號，前端可以依代號另外處理；
 // 建議等待的秒數由前端依 retryAfter 自己補上，這裡不寫死時間
@@ -316,11 +318,11 @@ function isTimeout(err) {
  * auth、misconfigured 這類是我們這邊的設定問題：對學生一律說「暫時無法使用」，
  * 狀態碼與上游的錯誤代號只進 log（見 upstreamLogFields）。
  * 取消（用戶端離開、關機）不經過這裡：呼叫端先看自己的 signal 判斷。
- * tokensSeen 表示上游已經送來過思考或正文。
+ * tokensSeen 表示上游已經送來過思考或正文；jitter(seconds) 替閘道自己決定的忙線秒數加上隨機時間。
  */
-function describeError(err, { tokensSeen = true } = {}) {
+function describeError(err, { tokensSeen = true, jitter }) {
     if (err instanceof LimitError) {
-        return { code: 'busy', retryable: true, retryAfter: err.retryAfter };
+        return { code: 'busy', retryable: true, retryAfter: jitter(err.retryAfter) };
     }
     // 上游要求等待的時間太長（超過在請求裡等的上限或任務剩下的時限），generate 沒有重試：照忙線回報，
     // 轉告上游要求的秒數
@@ -332,11 +334,13 @@ function describeError(err, { tokensSeen = true } = {}) {
     // 上游自己回了 408、504 的，log 照樣記狀態碼與上游的錯誤代號；其他是閘道的時限先到，註明一個 token 都沒收到。
     if (!tokensSeen && isTimeout(err)) {
         const upstream = err.status ? err : { code: 'timeout', message: `${err.message}，還沒收到任何 token` };
-        return { code: 'busy', retryable: true, retryAfter: 30, upstream };
+        return { code: 'busy', retryable: true, retryAfter: jitter(30), upstream };
     }
     if (err instanceof UpstreamError) {
         // Retry-After: 0 原樣傳下去的話，前端會立刻重打
-        if (err.code === 'busy') return { code: 'busy', retryable: true, retryAfter: Math.max(1, err.retryAfter ?? 30), upstream: err };
+        if (err.code === 'busy') {
+            return { code: 'busy', retryable: true, retryAfter: err.retryAfter === undefined ? jitter(30) : Math.max(1, err.retryAfter), upstream: err };
+        }
         if (err.code === 'timeout') return { code: 'timeout', retryable: true, upstream: err };
         return { code: 'unavailable', retryable: err.retryable, upstream: err };
     }
@@ -391,12 +395,13 @@ function rejectLogFields(reason) {
  * @param {Function} [options.generateImpl]
  * @param {Function} [options.log]    createLogger() 的結果
  * @param {Function} [options.now]    單調時鐘（毫秒），限流、斷路器與警告的頻率用；測試可以注入
+ * @param {Function} [options.random] 忙線等待秒數的隨機時間用（見 BUSY_JITTER）；測試可以注入
  * @param {number} [options.maxBodyReads]  同時在收 body 的請求上限；測試可以調小
  * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
  * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
  */
 export function createGateway({
-    llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(),
+    llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(), random = Math.random,
     maxBodyReads = MAX_BODY_READS, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
 }) {
     const gate = new SlotGate({
@@ -418,6 +423,7 @@ export function createGateway({
         maxInflight: Infinity,
         now,
     });
+    const jitter = (seconds) => Math.ceil(seconds * (1 + random() * BUSY_JITTER));
     // 上游卡住時暫停送出新任務（見 limits.mjs 的 Breaker）。log 只有狀態與次數
     const breaker = new Breaker({ now, onChange: (fields) => log(fields.state === 'open' ? 'warn' : 'info', 'BREAKER', fields) });
     const trustedProxy = createProxyMatcher(cfg.trustedProxies || []);
@@ -635,8 +641,8 @@ export function createGateway({
 
         // 上游卡住：不收 body、不佔名額也不計次
         const breakerWait = breaker.wait();
-        if (breakerWait) return reject(503, 'busy', MESSAGES.busy, { retryAfter: breakerWait }, {}, 'breaker');
-        if (bodyReads >= maxBodyReads) return reject(503, 'busy', MESSAGES.busy, { retryAfter: 5 });
+        if (breakerWait) return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(breakerWait) }, {}, 'breaker');
+        if (bodyReads >= maxBodyReads) return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) });
         // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body
         if (expectsContinue.has(req)) res.writeContinue();
         let raw;
@@ -728,7 +734,7 @@ export function createGateway({
             });
             if (!entry) {
                 outcome = 'busy';
-                return reject(503, 'busy', MESSAGES.busy, { retryAfter: 30 });
+                return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(30) });
             }
 
             res.writeHead(200, {
@@ -830,7 +836,7 @@ export function createGateway({
                 failure = { code: 'aborted' };
                 outcome = 'aborted';
             } else {
-                failure = describeError(err, { tokensSeen });
+                failure = describeError(err, { tokensSeen, jitter });
                 outcome = failure.code;
             }
             if (failure.upstream) {

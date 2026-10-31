@@ -74,8 +74,9 @@
  * 照抄成半形，第二輪就繞過了輸入端的中和。送給呼叫端的串流與最後的結果不動。
  *
  * 接續輪遇到可重試的上游錯誤（429 忙線、連線中斷、閒置逾時，探測時遇到的也一樣），在總時限內
- * 退避重試；有 Retry-After 就照它等，等不完總時限就提早放棄。第一輪失敗讓使用者自己重按就好，
- * 但接續輪失敗會把前面幾分鐘的成果全部丟掉。
+ * 退避重試；有 Retry-After 就照它等，沒有就指數退避再乘上 0.5～1 的隨機倍數（同時失敗的任務才不會
+ * 同時重送），等不完總時限就提早放棄。第一輪失敗讓使用者自己重按就好，但接續輪失敗會把前面幾分鐘
+ * 的成果全部丟掉。
  *
  * 文字任務串流給呼叫端的文字（onContent）與最後回傳的 content 保證逐字相同：每一輪開頭與
  * 正文中間的空白先暫存，確定不是退化才送；接續輪的開頭再緩衝到確定不會形成更長的重疊，
@@ -638,7 +639,7 @@ function segmentRatio(tokens, text) {
  *                            acceptJson 的回傳值
  *                          這幾個 hook 可以是 async；丟出例外或 reject 都會中止任務並原樣丟回。
  *                            回傳結果前會等所有 async hook 完成（受總時限與取消約束）
- *                          streamChatImpl：測試用
+ *                          streamChatImpl、random（退避的隨機倍數用，預設 Math.random）：測試用
  * @returns {Promise<{content: string, rounds: number, usage: object, continuations: string[], stats: object}>}
  *          continuations 依序記錄每次接續的原因：thinking | writing | rewrite | degenerate
  *          stats：{ retries（接續輪退避後重送）, probes（max_tokens=1 的探測）, rewrites（送出過的 JSON 重寫輪）}
@@ -646,7 +647,7 @@ function segmentRatio(tokens, text) {
  */
 export async function generate(config, request, hooks = {}) {
     const { messages, temperature, responseFormat, acceptJson, maxContentChars } = request;
-    const { signal, streamChatImpl = streamChat } = hooks;
+    const { signal, streamChatImpl = streamChat, random = Math.random } = hooks;
     const jsonMode = isJsonFormat(responseFormat);
     const judge = (text) => Boolean(text.trim()) && (acceptJson
         ? acceptJson(text)
@@ -1233,7 +1234,7 @@ export async function generate(config, request, hooks = {}) {
                     }
                     const delayMs = err.retryAfter !== undefined
                         ? err.retryAfter * 1000
-                        : Math.min(config.retryMaxMs ?? RETRY_MAX_MS, (config.retryBaseMs ?? RETRY_BASE_MS) * 2 ** attempt);
+                        : Math.round(Math.min(config.retryMaxMs ?? RETRY_MAX_MS, (config.retryBaseMs ?? RETRY_BASE_MS) * 2 ** attempt) * (0.5 + random() / 2));
                     // 等的是上游指定的時間（Retry-After）時，錯誤帶著它，閘道照忙線回報、轉告要等多久
                     if (err.retryAfter > MAX_RETRY_WAIT_SECONDS) {
                         throw fail('busy', `上游要求等 ${err.retryAfter} 秒，超過在請求裡等的上限 ${MAX_RETRY_WAIT_SECONDS} 秒`, {
