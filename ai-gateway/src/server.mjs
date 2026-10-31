@@ -54,6 +54,8 @@ const STALL_TIMEOUT_MS = 30_000;
 const MAX_IP_HEADER_CHARS = 256;
 // 信任的代理沒送用戶端 IP 時的警告，最多每分鐘一次
 const CLIENT_IP_WARN_INTERVAL_MS = 60_000;
+// 不經過任務流程就能一再觸發的拒絕（標頭太大的 431），同一個代號最多每分鐘記一行
+const REPEATED_REJECT_INTERVAL_MS = 60_000;
 // 不論成敗、所有到達的任務請求的計數窗口（上限是 cfg.requestLimitPerMinute）
 const ARRIVAL_WINDOW_MS = 60_000;
 // 合法的 body 是 {"input": {"欄位": "字串"}}，只有兩層。JSON.parse 處理深層巢狀很貴
@@ -491,6 +493,35 @@ export function createGateway({
     const server = createServer({ connectionsCheckingInterval: CONNECTIONS_CHECK_MS, maxHeaderSize: MAX_HEADER_BYTES }, onRequest);
     server.maxConnections = MAX_CONNECTIONS;
     server.maxHeadersCount = MAX_HEADERS_COUNT;
+    // 標頭太大或太多時 Node 自己回 431，不經過 onRequest。掛 clientError 的 listener 會把 Node 預設的
+    // 回應也換掉，所以包住 emit：記下來再照常交給 Node。錯誤的 rawPacket 是收到的標頭，不記
+    const emit = server.emit;
+    server.emit = function (event, ...args) {
+        if (event === 'clientError' && args[0]?.code === 'HPE_HEADER_OVERFLOW') {
+            logRepeatedReject({ status: 431, code: 'headers_too_large' });
+        }
+        return emit.apply(this, [event, ...args]);
+    };
+    // Node 回 431 之後會關掉連線，但對方可以一直開新連線再送，每次一行的話 log 會被灌滿。每個代號以一分鐘
+    // 為一段：段裡的第一次立刻記，其餘的次數等這一段過了、下一次發生或關機時再記一行，from 是那一段開始
+    // 的時間。代號只有固定幾個
+    const repeatedRejects = new Map();
+    function logRepeatedReject(fields) {
+        const t = now();
+        const entry = repeatedRejects.get(fields.code);
+        if (entry && t - entry.since < REPEATED_REJECT_INTERVAL_MS) {
+            entry.rest++;
+            return;
+        }
+        if (entry) flushRepeatedReject(fields.code);
+        repeatedRejects.set(fields.code, { fields, since: t, from: new Date().toISOString(), rest: 0 });
+        log('info', 'REJECT', { ...fields, count: 1 });
+    }
+    function flushRepeatedReject(code) {
+        const { fields, from, rest } = repeatedRejects.get(code);
+        repeatedRejects.delete(code);
+        if (rest) log('info', 'REJECT', { ...fields, count: rest, from });
+    }
     // Expect: 100-continue：不讓 Node 自動回 100 Continue（那等於請對方先把整個 body 送過來），
     // 等提早的檢查（origin、任務、格式、限流）都過了、真的要讀 body 時才回。Node 認得的寫法（例如
     // 「foo, 100-continue」）都經過這裡，記下來，回不回 100 照這個判斷
@@ -1050,6 +1081,7 @@ export function createGateway({
         closing ??= (async () => {
             draining = true;
             clearInterval(sweepTimer);
+            for (const code of [...repeatedRejects.keys()]) flushRepeatedReject(code);
             for (const h of active) {
                 if (h.queued) h.abort.abort(SHUTDOWN);
                 // 這個回應一結束就關掉它的 keep-alive 連線。留著的話，代理的連線池會拿它送下一個

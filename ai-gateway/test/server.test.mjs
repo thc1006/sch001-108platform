@@ -3008,8 +3008,9 @@ test('標頭最多 8 KiB（超過回 431）；連線數上限是 2048', async ()
 });
 
 // 只限位元組的話，8 KiB 塞得下約 940 個很短的標頭，每一個都是一個字串
-test('標頭最多 64 個：30 個、64 個照常，66 個回 431', async () => {
-    const gw = await startGateway();
+test('標頭最多 64 個：30 個、64 個照常，66 個回 431；431 的 REJECT 每分鐘一段，第一次立刻記，其餘的記在同一段名下', async () => {
+    let clock = 0;
+    const gw = await startGateway({ now: () => clock });
     const withHeaders = (count) => {
         // jsonHeaders 3 個，rawRequest 再加 Host、Content-Length 與 Connection
         const extra = Object.fromEntries(Array.from({ length: count - 6 }, (_, i) => [`x-h${i}`, 'v']));
@@ -3020,9 +3021,43 @@ test('標頭最多 64 個：30 個、64 個照常，66 個回 431', async () => 
         assert.equal((await withHeaders(64)).status, 200);
         assert.equal((await withHeaders(66)).status, 431);
         assert.equal(gw.calls.length, 2);
+        const big = () => rawRequest(gw.port, { headers: jsonHeaders({ 'x-pad': 'secret'.repeat(1_500) }), body: '{}' });
+        assert.equal((await big()).status, 431);
+        assert.equal((await big()).status, 431);
+        clock += 59_999;
+        assert.equal((await big()).status, 431);
+        clock += 1;
+        assert.equal((await big()).status, 431);
+        clock += 3_600_000;
+        assert.equal((await big()).status, 431);
+        // 第一段：66 個那次立刻記，同一段的三次 big 到下一段開始時一起記，from 是第一段的開始。第二段只有
+        // 一次，一小時後的那次是第三段。不含標頭的內容
+        const rejects = gw.logs.filter((l) => l.tag === 'REJECT');
+        const from = rejects[1].fields.from;
+        assert.match(from, /^\d{4}-\d\d-\d\dT/);
+        assert.deepEqual(rejects.map((l) => l.fields), [
+            { status: 431, code: 'headers_too_large', count: 1 },
+            { status: 431, code: 'headers_too_large', count: 3, from },
+            { status: 431, code: 'headers_too_large', count: 1 },
+            { status: 431, code: 'headers_too_large', count: 1 },
+        ]);
+        assert.ok(rejects.every((l) => l.level === 'info'));
     } finally {
         await gw.stop();
     }
+});
+
+test('431 的 REJECT：關機時把這一段還沒記的次數記掉', async () => {
+    const gw = await startGateway({ now: () => 0 });
+    const big = () => rawRequest(gw.port, { headers: jsonHeaders({ 'x-pad': 'a'.repeat(9_000) }), body: '{}' });
+    try {
+        await big();
+        await big();
+        await big();
+    } finally {
+        await gw.stop();
+    }
+    assert.deepEqual(gw.logs.filter((l) => l.tag === 'REJECT').map((l) => l.fields.count), [1, 2]);
 });
 
 test('帶著 CLIENT_IP_HEADER、連線卻不是來自信任的代理：退回連線的位址，並記一筆有頻率限制的警告（附次數與位址）', async () => {
