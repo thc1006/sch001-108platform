@@ -306,7 +306,7 @@ const SHUTDOWN = new Error('閘道正在關機');
 // 用戶端不把資料收走時中止任務用的 reason（見 MAX_PENDING_BYTES）
 const CLIENT_STALLED = new Error('用戶端不收資料');
 
-// 任務的總時限到了（GenerationError），或上游逾時（UpstreamError：太久沒送任何資料，或回了 408、504）。
+// 任務的總時限到了（GenerationError），或上游逾時（UpstreamError：太久沒有進展，或回了 408、504）。
 function isTimeout(err) {
     return (err instanceof GenerationError || err instanceof UpstreamError) && err.code === 'timeout';
 }
