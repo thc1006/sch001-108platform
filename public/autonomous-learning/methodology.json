@@ -1,6 +1,6 @@
 {
   "_readme": "研究方法論資料來源檔。methodology.html 會在載入時 fetch() 此檔並渲染。新增或修改方法請直接編輯下方 methods 陣列，不需要動 HTML。",
-  "lastUpdated": "2026-05-19",
+  "lastUpdated": "2026-11-01",
   "methods": [
     {
       "id": "literature-review",
@@ -23,7 +23,7 @@
         "quantitative"
       ],
       "description": "設計標準化問題，向特定群體進行調查，以蒐集大量的量化數據來進行統計分析。",
-      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>想了解某個群體（如：全校學生）對特定議題的普遍看法、或想驗證某個假設時。</p>\n                        <h4>如何進行（SOP）</h4>\n                        <ol>\n                            <li><strong>定義研究目標：</strong> 清楚知道你想透過問卷了解什麼。</li>\n                            <li><strong>設計問卷題目：</strong> 題目要清晰、無引導性。多使用選擇題以利統計，也可搭配少量開放題。</li>\n                            <li><strong>前測與修改：</strong> 先找少量的人試填，確保題目沒有問題，再進行修改。</li>\n                            <li><strong>發放與回收：</strong> 決定發放管道（線上/紙本）與對象，並努力提高回收率。</li>\n                            <li><strong>數據分析：</strong> 使用統計軟體或試算表分析數據，並製作圖表。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>樣本數不足或取樣不具代表性，會讓你的研究結論缺乏說服力。例如，只問了10個好朋友，不能代表全校學生的想法。</p>\n                        <h4>推薦工具</h4>\n                        <p>可使用<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>中的 Google Forms 或 SurveyCake 製作問卷，並用 Google Sheets 進行數據分析。</p>\n                    </div>"
+      "content_html": "\n                    <div class=\"prose max-w-none\">\n                        <h4>適用情境</h4>\n                        <p>想了解某個群體（如：全校學生）對特定議題的普遍看法、或想驗證某個假設時。</p>\n                        <h4>如何進行（SOP）</h4>\n                        <ol>\n                            <li><strong>定義研究目標：</strong> 清楚知道你想透過問卷了解什麼。</li>\n                            <li><strong>設計問卷題目：</strong> 題目要清晰、無引導性。多使用選擇題以利統計，也可搭配少量開放題。</li>\n                            <li><strong>前測與修改：</strong> 先找少量的人試填，確保題目沒有問題，再進行修改。</li>\n                            <li><strong>發放與回收：</strong> 決定發放管道（線上/紙本）與對象，並努力提高回收率。</li>\n                            <li><strong>數據分析：</strong> 使用統計軟體或試算表分析數據，並製作圖表。</li>\n                        </ol>\n                        <h4>常見陷阱</h4>\n                        <p>樣本數不足或取樣不具代表性，會讓你的研究結論缺乏說服力。例如，只問了10個好朋友，不能代表全校學生的想法。</p>\n                        <h4>推薦工具</h4>\n                        <p>可以用 Google Forms 或 SurveyCake 做問卷，再用<a href=\"../learning-portfolio/tools.html\" class=\"text-blue-600 hover:underline font-semibold\">「線上製作工具箱」</a>裡的 Google Sheets 分析。</p>\n                    </div>"
     },
     {
       "id": "interview-method",
