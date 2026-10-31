@@ -31,8 +31,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-sm font-bold text-green-600 mb-1">社會科學</p>
                     <h3 class="text-2xl font-bold mb-3">社會實踐報告：<br>「剩食」議題的社區田野調查</h3>
                     <p class="text-gray-600 mb-4">這份報告不僅止於資料蒐集，作者實際走訪社區店家與里長，透過訪談與觀察，提出了具體的剩食解決方案，展現了強大的行動力與社會關懷。</p>
-                    <button onclick="showModal('social-02')" class="mt-4 inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 self-start">
-                        深度剖析此範例 &rarr;
+                    <button type="button" onclick="showModal('social-02', this)" class="mt-4 inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 self-start">
+                        深度剖析此範例 <span aria-hidden="true">&rarr;</span>
                     </button>
                 </div>
             </div>
@@ -43,19 +43,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div class="bg-white p-4 rounded-xl shadow-md">
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="font-bold text-gray-700 text-sm">學科領域</label>
+                        <label for="category-filter" class="font-bold text-gray-700 text-sm">學科領域</label>
                         <select id="category-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">全部領域</option>
                         </select>
                     </div>
                     <div>
-                        <label class="font-bold text-gray-700 text-sm">成果類型</label>
+                        <label for="type-filter" class="font-bold text-gray-700 text-sm">成果類型</label>
                         <select id="type-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">所有類型</option>
                         </select>
                     </div>
                     <div>
-                        <label class="font-bold text-gray-700 text-sm">能力標籤</label>
+                        <label for="tag-filter" class="font-bold text-gray-700 text-sm">能力標籤</label>
                          <select id="tag-filter" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                             <option value="all">所有能力</option>
                         </select>
@@ -80,13 +80,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </main>
 
     <!-- 作品詳情對話框 -->
-    <div id="portfolioModal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="hideModal()"></div>
-        <div id="modal-content" class="modal-content bg-white w-11/12 md:max-w-4xl mx-auto rounded-lg shadow-lg z-10 flex flex-col">
-            <!-- 對話框內容由 showModal() 填入 -->
-        </div>
-    </div>
+    <dialog id="portfolioModal" aria-labelledby="modal-title" class="modal-content bg-white text-inherit w-11/12 max-w-none md:max-w-4xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent open:flex flex-col">
+        <!-- 對話框內容由 showModal() 填入 -->
+    </dialog>
 
+    <script is:inline src="../shared/detail-dialog.js"></script>
     <script is:inline>
         // 資料從同目錄的 portfolio-gallery.json 載入（見下方 loadData）。
         // 要新增或修改資料，請編輯 portfolio-gallery.json，不需要動這支 HTML。
@@ -102,7 +100,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const portfolioGrid = document.getElementById('portfolio-grid');
         const noResultsDiv = document.getElementById('no-results');
         const modal = document.getElementById('portfolioModal');
-        const modalContent = document.getElementById('modal-content');
+        const detail = DetailDialog.setup(modal);
         const categoryFilter = document.getElementById('category-filter');
         const typeFilter = document.getElementById('type-filter');
         const tagFilter = document.getElementById('tag-filter');
@@ -130,8 +128,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             filteredData.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'portfolio-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer flex flex-col';
-                card.onclick = () => showModal(item.id);
-
                 card.innerHTML = `
                     <img src="${encodeURI(item.thumbnail_url)}" alt="${escapeHtml(item.title)}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
                     <div class="p-6 flex-grow">
@@ -139,27 +135,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                             <p class="text-sm font-bold text-green-600">${escapeHtml(item.category)}</p>
                             <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-700">${escapeHtml(item.type)}</span>
                         </div>
-                        <h3 class="text-lg font-bold mt-2 h-14">${escapeHtml(item.title)}</h3>
+                        <h3 class="text-lg font-bold mt-2 h-14"><button type="button" class="text-left cursor-pointer">${escapeHtml(item.title)}</button></h3>
                     </div>
                     <div class="px-6 pb-6 border-t border-gray-100 mt-auto pt-4">
                         <p class="text-xs text-gray-500 font-semibold">相關能力：${item.tags.map(escapeHtml).join(', ')}</p>
                     </div>
                 `;
+                // 整張卡片都可以點；鍵盤和螢幕閱讀器用標題的按鈕，按下時一樣冒泡到這裡。
+                const button = card.querySelector('h3 button');
+                card.onclick = () => showModal(item.id, button);
                 portfolioGrid.appendChild(card);
             });
         }
 
-        function showModal(id) {
+        function showModal(id, opener) {
             const item = portfolioData.find(p => p.id === id);
             if (!item) return;
 
-            modalContent.innerHTML = `
+            modal.innerHTML = `
                 <div class="p-6 border-b flex justify-between items-start">
                     <div>
                         <p class="text-sm font-bold text-green-600">${escapeHtml(item.category)} / ${escapeHtml(item.type)}</p>
-                        <h3 class="text-2xl font-bold">${escapeHtml(item.title)}</h3>
+                        <h3 id="modal-title" class="text-2xl font-bold">${escapeHtml(item.title)}</h3>
                     </div>
-                    <button onclick="hideModal()" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                    <button type="button" onclick="hideModal()" aria-label="關閉" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
                 <div class="p-6 overflow-y-auto flex-grow">
                     <div class="prose max-w-none">
@@ -168,14 +167,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             `;
 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modalContent.scrollTop = 0;
+            detail.open(opener);
         }
 
         function hideModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            detail.close();
         }
 
         // 依資料中實際出現的值動態填入篩選器選項
@@ -233,7 +229,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .modal-backdrop {
+        .modal-content::backdrop {
             background-color: rgba(0, 0, 0, 0.6);
         }
         .modal-content {
