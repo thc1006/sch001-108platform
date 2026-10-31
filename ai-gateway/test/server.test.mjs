@@ -61,6 +61,12 @@ const TASKS = createCatalog([
         maxOutputChars: 20,
     },
     {
+        id: 'demo-pair',
+        input: { first: { label: '第一題', maxLength: 20 }, second: { label: '第二題', maxLength: 20 } },
+        output: { type: 'markdown' },
+        instructions: '回答兩題。',
+    },
+    {
         id: 'demo-quick',
         input: { topic: { label: '主題', maxLength: 20 } },
         output: { type: 'markdown' },
@@ -505,6 +511,33 @@ test('body 上限依任務的字數上限計算：6000 字的欄位填 5500 個�
         // 而 20 字上限的任務，同樣的 body 就太大了
         const small = await post(gw.base, 'demo-json', null, { body: JSON.stringify({ input: { topic: '學'.repeat(5500) } }) });
         assert.equal(small.status, 413);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('413 的訊息說出是哪一欄、上限幾字並帶 field；有兩欄的任務分不出是哪一欄，只說輸入太長', async () => {
+    const gw = await startGateway();
+    try {
+        const big = JSON.stringify({ input: { topic: 'x'.repeat(20_000) } });
+        const declared = await post(gw.base, 'demo-json', null, { body: big });
+        const chunked = await fetch(`${gw.base}/v1/tasks/demo-json`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', origin: ORIGIN },
+            body: new Blob([big]).stream(),
+            duplex: 'half',
+        });
+        for (const res of [declared, chunked]) {
+            assert.equal(res.status, 413);
+            assert.deepEqual((await res.json()).error, {
+                code: 'payload_too_large', message: '主題最多 20 字，請縮短後再試。', requestId: res.headers.get('x-request-id'), field: 'topic',
+            });
+        }
+        const pair = await post(gw.base, 'demo-pair', null, { body: JSON.stringify({ input: { first: 'x'.repeat(20_000), second: 'y' } }) });
+        assert.equal(pair.status, 413);
+        const { error } = await pair.json();
+        assert.equal(error.message, '輸入的內容太長，請縮短後再試。');
+        assert.equal(error.field, undefined);
     } finally {
         await gw.stop();
     }

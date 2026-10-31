@@ -244,6 +244,14 @@ export function inputByteLimit(task) {
 }
 
 /**
+ * 欄位超過字數上限時的訊息。current 是目前的字數（「21 字」「超過 40 字」）；body 太大、還沒解析時
+ * 不知道，省略。400 與 413 用同一句，學生看到的說法一樣
+ */
+export function tooLongMessage(spec, current) {
+    return `${spec.label}最多 ${spec.maxLength} 字${current ? `（目前${current}）` : ''}，請縮短後再試。`;
+}
+
+/**
  * 驗證並正規化輸入：必須是物件、只能有宣告過的欄位、每個欄位都是有內容的字串且不超過上限。
  */
 export function validateInput(task, raw) {
@@ -263,10 +271,8 @@ export function validateInput(task, raw) {
         const shownLimit = spec.maxLength * 2;
         const length = countChars(cleaned, shownLimit);
         if (length > spec.maxLength) {
-            const message = length > shownLimit
-                ? `${spec.label}最多 ${spec.maxLength} 字（目前超過 ${shownLimit} 字）`
-                : `${spec.label}最多 ${spec.maxLength} 字（目前 ${length} 字）`;
-            throw new TaskError('invalid_input', message, { field: name });
+            const current = length > shownLimit ? `超過 ${shownLimit} 字` : ` ${length} 字`;
+            throw new TaskError('invalid_input', tooLongMessage(spec, current), { field: name });
         }
         if (Buffer.byteLength(cleaned, 'utf8') > spec.maxLength * MAX_UTF8_BYTES_PER_CHAR) {
             throw new TaskError('invalid_input', `${spec.label}含有太多罕用字或特殊符號，請改用一般文字`, { field: name });
