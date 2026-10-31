@@ -24,7 +24,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             <p class="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 mb-8">
               我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感，陪你走好高中這段探索之旅。
             </p>
-            <a href="#paths" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform hover:-translate-y-1 transition duration-300 ease-in-out inline-block">
+            <a href="#paths" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform motion-safe:hover:-translate-y-1 transition duration-300 ease-in-out inline-block">
               開始你的探索之旅 &rarr;
             </a>
           </div>
@@ -380,7 +380,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           if (idx === selectedIndex) {
             el.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
             el.setAttribute('aria-selected', 'true');
-            el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            el.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
           } else {
             el.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
             el.setAttribute('aria-selected', 'false');

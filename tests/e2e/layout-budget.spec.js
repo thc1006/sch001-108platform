@@ -80,10 +80,10 @@ async function measure(page) {
         // frame 約 220ms。
         //
         // 為什麼不能用 scrollTo(0, y)：BaseLayout 在 <html> 上掛了 Tailwind 的
-        // scroll-smooth，而那個兩參數形式等同 behavior:'auto'，會照 CSS 走平滑捲動
-        // 動畫。實測（360x640、reduce 偏好）捲到 700：兩個 frame 後只到 2px，就算等滿
-        // 320ms 也才 614px，固定的 sleep 會在動畫途中取樣。Chromium 不會因為
-        // reduce 偏好就關掉平滑捲動，全站也沒有頁面寫 scroll-behavior:auto。真實使用者用手指或滾輪捲動本來
+        // motion-safe:scroll-smooth，而那個兩參數形式等同 behavior:'auto'，沒有減少動態偏好時會照 CSS
+        // 走平滑捲動動畫。實測（360x640）捲到 700：兩個 frame 後只到 2px，就算等滿
+        // 320ms 也才 614px，固定的 sleep 會在動畫途中取樣。這一組跑在 reduce 偏好下，現在不會平滑捲動，
+        // 但取樣不該靠這件事。真實使用者用手指或滾輪捲動本來
         // 就不走這段動畫，所以 instant 反而更接近實際情形，取樣位置也變成確定值。
         const jumpTo = (y) => window.scrollTo({ top: y, behavior: 'instant' });
         // 三個 frame，不是兩個。實測（competitions.html、360x640、reduce）捲動之後，
@@ -471,7 +471,7 @@ test.describe('篩選面板的還原行為（360x640）', () => {
             return r.bottom > 8 && r.top < window.innerHeight;
         });
 
-    // 和 measure() 一樣用 instant：<html> 掛了 scroll-smooth，兩個參數的 scrollBy 會走平滑捲動。
+    // 和 measure() 一樣用 instant：<html> 掛了 motion-safe:scroll-smooth，兩個參數的 scrollBy 會走平滑捲動。
     async function scrollBy(page, dy) {
         await page.evaluate((d) => window.scrollBy({ top: d, behavior: 'instant' }), dy);
         await settleFilters(page);
