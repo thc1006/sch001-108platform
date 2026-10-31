@@ -3,9 +3,10 @@
 # 基底映像檔以 multi-arch index 的 digest 釘死：tag 之後改指別的映像檔，建出來的仍是這一份。
 # 目錄結構與 repo 一致（/app/ai-gateway/src），程式裡的相對路徑在兩邊都成立。
 
-FROM docker.io/library/node:24.22.1-alpine3.24@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
+# tag 不寫 Alpine 的版本：寫了的話 Dependabot 只找同一版 Alpine 的 tag，不會換到新的 Alpine
+FROM docker.io/library/node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
 # 執行時只用 node，基底附的 npm、npx、corepack 與 yarn 刪掉。yarn 的路徑見 nodejs/docker-node 的
-# 24/alpine3.24/Dockerfile，其餘是 Node tarball 解到 /usr/local 的位置。檔案還在基底的層裡，映像檔不會變小。
+# 24/alpine3.*/Dockerfile，其餘是 Node tarball 解到 /usr/local 的位置。檔案還在基底的層裡，映像檔不會變小。
 RUN rm -rf /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/lib/node_modules \
       /usr/local/bin/yarn /usr/local/bin/yarnpkg "/opt/yarn-v$YARN_VERSION"
 WORKDIR /app
