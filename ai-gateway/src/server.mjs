@@ -711,7 +711,7 @@ export function createGateway({
         let failedWith;
         // 有沒有真的開始生成：沒開始的（排隊已滿、排到逾時、排隊中離開或關機）最後要退回次數
         let generationStarted = false;
-        // 上游送來過思考或正文沒有：第一個 token 之前就忙線、連不上或逾時的，也要退回次數
+        // 上游送來過思考或正文沒有：第一個 token 之前就失敗的（見 finally 的 upstreamRefused），也要退回次數
         let tokensSeen = false;
         // 斷路器斷開之後去試的任務才有（breaker.enter() 的回傳值）
         let breakerTrial = null;
@@ -861,8 +861,10 @@ export function createGateway({
             if (abort.signal.reason === CLIENT_STALLED) outcome = 'client_stalled';
             release();
             // 沒用到 GPU 的請求不算次數：尖峰時依 Retry-After 重試的整班學生，不該在負載退了之後
-            // 反而被自己的重試鎖住。包括上游在第一個 token 之前就回忙線（429）、連不上或逾時的
-            const upstreamRefused = failedWith instanceof UpstreamError && (failedWith.code === 'busy' || failedWith.code === 'unavailable');
+            // 反而被自己的重試鎖住。包括上游在第一個 token 之前就回忙線（429）、連不上、逾時，或任何
+            // protocol 錯誤（維護頁面、看不懂的串流），但不包括沒有串流、直接寫完的回答
+            const upstreamRefused = failedWith instanceof UpstreamError && !failedWith.generated
+                && ['busy', 'unavailable', 'protocol'].includes(failedWith.code);
             if (!generationStarted || (!tokensSeen && (upstreamRefused || isTimeout(failedWith)))) ticket.refund();
             // 連回應標頭都沒等到就逾時，算一次卡住。上游回了 408、504 的有標頭，不算
             breaker.finish(breakerTrial, isTimeout(failedWith) && firsts.byte === undefined);

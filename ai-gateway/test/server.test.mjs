@@ -2343,6 +2343,45 @@ test('斷路器：WinLab 收了連線卻不回標頭時，前兩個任務等滿�
     }
 });
 
+test('上游回 200 卻不是串流（維護頁面、帶著 429 的錯誤 JSON）：可以重試、不計次', async () => {
+    const steps = [
+        { contentType: 'text/html', rawChunks: ['<html>維護中</html>'] },
+        { contentType: 'application/json', rawChunks: [JSON.stringify({ error: { message: 'Rate limit', type: 'rate_limit', code: '429' } })] },
+        { contentType: 'text/html', rawChunks: ['<html>維護中</html>'] },
+    ];
+    const gw = await startRealGateway(steps, {}, { rateLimitMax: 1 });
+    try {
+        const results = [];
+        for (let i = 0; i < steps.length; i++) {
+            const res = await post(gw.base, 'demo-md', { question: '怎麼做專題？' });
+            assert.equal(res.status, 200, String(i));
+            results.push(pick((await readEvents(res)).at(-1).data, ['code', 'retryable', 'retryAfter']));
+        }
+        assert.deepEqual(results, [
+            { code: 'unavailable', retryable: true, retryAfter: undefined },
+            { code: 'busy', retryable: true, retryAfter: 30 },
+            { code: 'unavailable', retryable: true, retryAfter: undefined },
+        ]);
+        const fields = logFields(gw.lines.filter((l) => / UPSTREAM-ERR /.test(l))[1]);
+        assert.equal(fields.status, '429');
+        assert.equal(fields.upstreamType, 'rate_limit');
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('上游回 200、沒有串流、直接回了寫完的回答：GPU 已經用了，不能重試、要計次', async () => {
+    const completion = { contentType: 'application/json', rawChunks: [JSON.stringify({ object: 'chat.completion', choices: [{ message: { content: '答' } }] })] };
+    const gw = await startRealGateway([completion, completion], {}, { rateLimitMax: 1 });
+    try {
+        const last = (await readEvents(await post(gw.base, 'demo-md', { question: 'q' }))).at(-1);
+        assert.deepEqual(pick(last.data, ['code', 'retryable']), { code: 'unavailable', retryable: false });
+        assert.equal((await post(gw.base, 'demo-md', { question: 'q' })).status, 429);
+    } finally {
+        await gw.stop();
+    }
+});
+
 // 408、504 是 WinLab（LiteLLM 或它前面的代理）自己回的逾時，維運要看得到它附的訊息。
 test('第一個 token 之前上游回 408、504（HTTP 狀態或串流中的 error）：回忙線、不計次，UPSTREAM-ERR 記著狀態碼與上游錯誤的 code，不記錯誤的原文', async () => {
     const litellm = { message: 'litellm.Timeout: upstream vllm timed out after 600s', code: '504' };
