@@ -119,10 +119,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const resultStatus = document.getElementById('result-status');
         // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
         let shownCount = 0;
-        let announceTimer;
+        let countTimer;
         function announceCount(delay = 0) {
-            clearTimeout(announceTimer);
-            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+            clearTimeout(countTimer);
+            countTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
         }
 
         function renderResources() {
