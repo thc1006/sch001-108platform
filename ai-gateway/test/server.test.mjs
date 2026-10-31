@@ -1646,7 +1646,7 @@ test('直接執行：透過 symlink 也會啟動；SIGTERM 時記 SHUTDOWN 並�
     const child = spawn(process.execPath, [link], {
         env: {
             PATH: process.env.PATH, PORT: '0', HOST: '127.0.0.1', LLM_API_KEY: 'sk-test-only', LLM_UPSTREAM: 'http://127.0.0.1:9',
-            LOG_LEVEL: 'info', SHUTDOWN_GRACE_MS: '1000',
+            LOG_LEVEL: 'info', SHUTDOWN_GRACE_MS: '1000', QUEUE_TIMEOUT_MS: '290000',
         },
         stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -1659,6 +1659,8 @@ test('直接執行：透過 symlink 也會啟動；SIGTERM 時記 SHUTDOWN 並�
         assert.match(out, /key=loaded/);
         assert.doesNotMatch(out, /problems=/, '上游設定合法');
         assert.match(out, / warn CONFIG problem=shutdown-grace-below-task-timeout grace=1000 taskTimeout=\d+/, '寬限期比任務時限短要警告');
+        // 10000 + 290000 + 900000 = 1200000，等於前端的時限也要警告
+        assert.match(out, / warn CONFIG problem=gateway-timeout-not-below-frontend gateway=1200000 frontend=1200000/, '閘道的時限不比前端短要警告');
         const port = Number(/ port=(\d+)/.exec(out)?.[1]);
         assert.ok(port > 0, 'START log 印出系統挑的埠');
         assert.equal((await fetch(`http://127.0.0.1:${port}/healthz`)).status, 200);

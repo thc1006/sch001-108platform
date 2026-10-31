@@ -3,6 +3,7 @@
  *   1. 不能有看不見的字元（零寬字元、雙向控制字元、各種特殊空白、C0／C1 控制字元等）
  *   2. package.json 的 test:ai-gateway 明列的測試檔要剛好等於 ai-gateway/test/ 底下的測試檔
  *   3. test:ai-gateway 不能加 --test-force-exit
+ *   4. config.mjs 抄的前端時限與 public/shared/platform-ai.js 相同
  *
  * 為什麼要專門測第 1 點：這類字元寫在正規表示式或字串裡時畫面上完全看不出來，被編輯器
  * 或工具正規化掉也不會有人發現。這個 repo 吃過一次虧（audit-quote-freshness 的 norm()
@@ -21,6 +22,8 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { FRONTEND_TASK_TIMEOUT_MS, loadLlmConfig, loadServerConfig } from '../src/config.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const REPO = path.resolve(ROOT, '..');
@@ -102,6 +105,18 @@ test('test:ai-gateway 明列的測試檔，剛好等於 ai-gateway/test 底下�
 test('test:ai-gateway 不加 --test-force-exit，少回報的測試不會變成綠燈', () => {
     const script = JSON.parse(readFileSync(path.join(REPO, 'package.json'), 'utf8')).scripts['test:ai-gateway'];
     assert.doesNotMatch(script, /--test-force-exit\b/);
+});
+
+// 閘道的映像檔裡沒有前端的檔案，啟動時的 CONFIG 警告用的是 config.mjs 抄的一份
+test('FRONTEND_TASK_TIMEOUT_MS 與 platform-ai.js 的 DEFAULT_TASK_TIMEOUT_MS 相同；預設設定的閘道時限比它短', () => {
+    const source = readFileSync(path.join(REPO, 'public/shared/platform-ai.js'), 'utf8');
+    const expr = /\bvar DEFAULT_TASK_TIMEOUT_MS = ([\d_ *]+);/.exec(source)?.[1];
+    assert.ok(expr, '找不到 DEFAULT_TASK_TIMEOUT_MS');
+    const frontend = expr.split('*').reduce((product, n) => product * Number(n.trim().replaceAll('_', '')), 1);
+    assert.equal(FRONTEND_TASK_TIMEOUT_MS, frontend);
+    const llm = loadLlmConfig({}, { warn: () => {} });
+    const server = loadServerConfig({}, { warn: () => {} });
+    assert.ok(server.bodyTimeoutMs + server.queueTimeoutMs + llm.taskTimeoutMs < frontend);
 });
 
 test('守衛本身有效：放在子目錄、副檔名 .test.js 或 .ts／.mts、命名 .spec.mjs 的檔案都算進應該執行的測試', () => {
