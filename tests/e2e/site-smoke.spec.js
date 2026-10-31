@@ -65,7 +65,7 @@ test.describe('部署產物 smoke test', () => {
     test('關於我們的 #feedback 有 GitHub 表單選單和聯絡信箱的連結', async ({ page }) => {
         await page.goto(P('/about.html'));
         const feedback = page.locator('main #feedback');
-        const github = feedback.getByRole('link', { name: '回報', exact: true });
+        const github = feedback.getByRole('link', { name: /^回報\s?（另開新分頁）$/ });
         await expect(github).toBeVisible();
         await expect(github).toHaveAttribute('href', 'https://github.com/thc1006/sch001-108platform/issues/new/choose');
         await expect(github).toHaveAttribute('target', '_blank');

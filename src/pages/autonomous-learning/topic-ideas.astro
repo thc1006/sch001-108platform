@@ -264,7 +264,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 googleLink.target = '_blank';
                 googleLink.rel = 'noopener noreferrer';
                 googleLink.className = 'inline-block mt-2 bg-white text-blue-600 font-semibold py-2 px-4 border border-blue-200 rounded-lg hover:bg-blue-100 transition duration-300';
-                googleLink.textContent = '用 Google 深入研究 →';
+                // 每個靈感都有一個這樣的連結，報讀器的連結清單要靠隱藏的題目分辨。
+                const googleLinkNote = document.createElement('span');
+                googleLinkNote.className = 'sr-only';
+                googleLinkNote.textContent = `：${titleEl.textContent}（另開新分頁）`;
+                const googleLinkArrow = document.createElement('span');
+                googleLinkArrow.setAttribute('aria-hidden', 'true');
+                googleLinkArrow.textContent = '→';
+                googleLink.append('用 Google 深入研究', googleLinkNote, ' ', googleLinkArrow);
 
                 // 組裝所有元素
                 ideaElement.appendChild(titleEl);
@@ -380,8 +387,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 titleSpan.className = 'font-semibold mt-1';
                 titleSpan.textContent = sdg.title;
 
+                const newTab = document.createElement('span');
+                newTab.className = 'sr-only';
+                newTab.textContent = '（另開新分頁）';
+
                 card.appendChild(idSpan);
                 card.appendChild(titleSpan);
+                card.appendChild(newTab);
                 sdgGrid.appendChild(card);
             });
         }
