@@ -30,6 +30,7 @@ test('loadServerConfig：預設值', () => {
         requestLimitPerMinute: 120,
         clientMaxInflight: 6,
         v6Prefix: 64,
+        blockSources: [],
         bodyTimeoutMs: 10_000,
         heartbeatMs: 15_000,
         shutdownGraceMs: 900_000,
@@ -166,4 +167,24 @@ test('AI_V6_PREFIX：32～128 的整數；超出範圍或不是整數就用 64 �
         assert.equal(warnings.length, 1, raw);
         assert.match(warnings[0], /AI_V6_PREFIX/, raw);
     }
+});
+
+test('AI_BLOCK_SOURCES：IPv4、IPv6 的位址或 CIDR，逗號、分號、空白與換行都可以分隔；寫錯的項目略過，警告只說第幾項', () => {
+    const { config, warnings } = load({
+        AI_BLOCK_SOURCES: ' 192.0.2.0/24, 2001:DB8::/32 ;198.51.100.7\n,,::ffff:203.0.113.0/120  192.0.2.0/33, fe80::1%eth0, [2001:db8::1], 2001:db8::/129, 300.1.1.1, abc',
+    });
+    assert.deepEqual(config.blockSources, ['192.0.2.0/24', '2001:db8::/32', '198.51.100.7/32', '203.0.113.0/24']);
+    assert.deepEqual(warnings, [5, 6, 7, 8, 9, 10].map((n) => `設定 AI_BLOCK_SOURCES 的第 ${n} 項不是 IPv4、IPv6 位址或 CIDR，已略過`));
+});
+
+test('AI_BLOCK_SOURCES：涵蓋所有 IPv4、比 IPv4 /8 或 IPv6 /16 大、前綴之後還有 1 的項目都略過並警告', () => {
+    const items = ['0.0.0.0/0', '::/0', '::/80', '::ffff:192.0.2.0/24', '203.0.113.0/2', '2001::/15', '198.51.100.7/24', '2001:db8::1/32', '::ffff:192.0.2.4/97', '10.0.0.0/8', '2001::/16'];
+    const { config, warnings } = load({ AI_BLOCK_SOURCES: items.join(',') });
+    assert.deepEqual(config.blockSources, ['10.0.0.0/8', '2001::/16']);
+    assert.equal(warnings.length, 9);
+    for (const [i, reason] of [[0, /涵蓋所有的 IPv4/], [3, /涵蓋所有的 IPv4/], [4, /範圍太大/], [5, /範圍太大/], [6, /在前綴之後還有 1/], [7, /在前綴之後還有 1/], [8, /範圍太大/]]) {
+        assert.match(warnings[i], new RegExp(`第 ${i + 1} 項${reason.source}`), items[i]);
+    }
+    // 位址不進 log
+    assert.ok(warnings.every((w) => items.every((item) => !w.includes(item.split('/')[0]))), warnings.join('\n'));
 });

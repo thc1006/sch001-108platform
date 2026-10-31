@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { loadLlmConfig, loadServerConfig, configProblems, FRONTEND_TASK_TIMEOUT_MS } from './config.mjs';
 import { generate, GenerationError, parseContextOverflow } from './generate.mjs';
 import { UpstreamError } from './upstream.mjs';
-import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher } from './limits.mjs';
+import { SlotGate, ClientLimiter, Breaker, LimitError, clientKey, createProxyMatcher, createSourceMatcher } from './limits.mjs';
 import { createCatalog, validateInput, buildMessages, finalizeOutput, inputByteLimit, createCleanStream, tooLongMessage, TaskError } from './tasks.mjs';
 import { createTraditionalStream } from './s2t.mjs';
 
@@ -54,7 +54,7 @@ const STALL_TIMEOUT_MS = 30_000;
 const MAX_IP_HEADER_CHARS = 256;
 // 信任的代理沒送用戶端 IP 時的警告，最多每分鐘一次
 const CLIENT_IP_WARN_INTERVAL_MS = 60_000;
-// 不經過任務流程就能一再觸發的拒絕（標頭太大的 431），同一個代號最多每分鐘記一行
+// 不收 body 就能一再觸發的拒絕（標頭太大的 431、封鎖的來源），同一個代號最多每分鐘記一行
 const REPEATED_REJECT_INTERVAL_MS = 60_000;
 // 不論成敗、所有到達的任務請求的計數窗口（上限是 cfg.requestLimitPerMinute）
 const ARRIVAL_WINDOW_MS = 60_000;
@@ -100,6 +100,7 @@ const MESSAGES = {
     // 次數是依對外 IP 計的，整間學校常共用一個：只按了一次的學生也可能看到這個訊息
     rate_limited: '同一個網路（例如學校）的使用次數已達上限，請稍後再試。',
     too_many_inflight: '同一個網路（例如學校）進行中和排隊中的任務已達上限。同時使用的人多時，請分批送出。',
+    source_blocked: '這個網路目前不能使用 AI 服務。',
     request_timeout: '傳送內容花了太久，請檢查網路後再試一次。',
     timeout: 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。',
     incomplete: 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。',
@@ -452,6 +453,7 @@ export function createGateway({
     // 上游卡住時暫停送出新任務（見 limits.mjs 的 Breaker）。log 只有狀態與次數
     const breaker = new Breaker({ now, onChange: (fields) => log(fields.state === 'open' ? 'warn' : 'info', 'BREAKER', fields) });
     const trustedProxy = createProxyMatcher(cfg.trustedProxies || []);
+    const blockedSource = cfg.blockSources?.length ? createSourceMatcher(cfg.blockSources) : () => false;
     // 內部位址（代理、節點）可以原樣進 log；其他位址可能是用戶端，只記雜湊
     const internalAddress = createProxyMatcher(['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8']);
     const sweepTimer = setInterval(() => {
@@ -549,26 +551,26 @@ export function createGateway({
     }
 
     /**
-     * 用戶端的限流鍵（見 limits.mjs 的 clientKey）。只有連線來自信任的代理（TRUSTED_PROXIES，
+     * 用戶端的位址，限流鍵（limits.mjs 的 clientKey）與封鎖都看它。只有連線來自信任的代理（TRUSTED_PROXIES，
      * 例如把 Funnel 流量轉進來的那一跳）時才看 CLIENT_IP_HEADER，而且只取最右邊、必須是合法
      * 的位址（ip:port、[v6]:port 的寫法也收）：那是代理自己看到的來源，左邊的都可能是用戶端
      * 自己填的。直接連進來的人填這個標頭沒有用，否則每次換一個值就能繞過限流，或塞超長的值
      * 把限流表撐爆。要注意 TRUSTED_PROXIES 涵蓋的是一個位址，不是一支程式：k3s 上主機本身與
      * hostNetwork 的 pod 連進來時，來源也是那個位址（見 deploy/k3s/app.yaml）
      */
-    function clientKeyOf(req) {
+    function clientAddressOf(req) {
         const peer = req.socket.remoteAddress || '';
         if (cfg.clientIpHeader && trustedProxy(peer)) {
             const raw = req.headers[cfg.clientIpHeader];
             const value = Array.isArray(raw) ? raw.at(-1) : raw;
             const last = typeof value === 'string' ? value.slice(-MAX_IP_HEADER_CHARS).split(',').at(-1).trim() : '';
-            const key = clientKey(last, cfg.v6Prefix);
-            if (key !== 'invalid') return key;
+            if (clientKey(last) !== 'invalid') return last;
+            // 解析不了就退回代理的位址，AI_BLOCK_SOURCES 也比對不到用戶端。Funnel 自己寫這個標頭，不會這樣
             noteClientIpProblem('missing');
         } else if (cfg.clientIpHeader && req.headers[cfg.clientIpHeader] !== undefined) {
             noteClientIpProblem('untrusted', internalAddress(peer) ? clientKey(peer) : `hash:${clientTag(clientKey(peer, cfg.v6Prefix))}`);
         }
-        return clientKey(peer, cfg.v6Prefix);
+        return peer;
     }
 
     // 兩種情況都只能退回連線的位址，等於所有經過代理的人共用一個桶（全站加起來每個窗口只剩
@@ -701,6 +703,14 @@ export function createGateway({
         // 代理下一次開新連線，就會落到已經就緒的新 pod
         const rejectDraining = () => reject(503, 'not_ready', MESSAGES.restarting, { retryAfter: 5 });
 
+        const address = clientAddressOf(req);
+        const key = clientKey(address, cfg.v6Prefix);
+        // 預檢不擋：預檢被拒時瀏覽器只說連不上，這裡的 403 帶 CORS 標頭，前端顯示得出訊息
+        if (blockedSource(address)) {
+            logRepeatedReject({ status: 403, code: 'source_blocked' });
+            sendJson(req, res, 403, { error: { code: 'source_blocked', message: MESSAGES.source_blocked, requestId } }, headers);
+            return undefined;
+        }
         // 瀏覽器跨網域的 POST 一定帶 Origin；沒有或不在名單內就拒絕（curl 可以偽造，
         // 這不是身分驗證，只是讓別的網站無法借用；真正的防線是下面的限流與排隊）
         if (!origin) return reject(403, 'origin_not_allowed', '這個網站不能使用 AI 服務');
@@ -715,7 +725,6 @@ export function createGateway({
         // 收 body、解析、驗證都要花主執行緒的時間，而驗證失敗的請求不計入次數上限：讀 body 之前
         // 先擋掉超量的來源（2026-10-22 實測：單一來源每秒送 33 個 28 萬字元的錯誤請求，一次都
         // 沒被計次，/healthz 從 2ms 變成 266ms～2s）
-        const key = clientKeyOf(req);
         try {
             arrivals.admit(key, { wouldQueue: false }).done();
             limiter.check(key);
@@ -1140,6 +1149,8 @@ async function main() {
                 ? `${serverConfig.clientIpHeader} via ${serverConfig.trustedProxies.join(',') || '(no trusted proxy: header ignored)'}`
                 : 'socket',
             v6Prefix: serverConfig.v6Prefix,
+            // 只記筆數，位址不進 log
+            blockSources: serverConfig.blockSources.length,
             key: llm.apiKey ? 'loaded' : 'MISSING',
             problems: configProblems(llm).join(',') || undefined,
         });

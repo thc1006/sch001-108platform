@@ -1367,6 +1367,81 @@ test('AI_V6_PREFIX：IPv6 用戶端照設定的前綴併成同一個來源，限
     }
 });
 
+test('AI_BLOCK_SOURCES：封鎖的來源拿到帶 CORS 標頭的 403 source_blocked，不讀 body、不計次；預檢照常；REJECT 每分鐘一段', async () => {
+    const xff = (value) => ({ headers: { 'x-forwarded-for': value } });
+    let clock = 0;
+    const gw = await startGateway({
+        server: { clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'], blockSources: ['192.0.2.0/24', '2001:db8:1::/48'] },
+        now: () => clock,
+    });
+    try {
+        // 原本的位址、IPv4 對應位址、6to4 與 Teredo 裡的 192.0.2.7、同一段 /48 的 IPv6
+        for (const address of ['192.0.2.7', '::ffff:192.0.2.7', '2002:c000:207::1', '2001:0:c000:201:8000:63bf:3fff:fdf8', '2001:DB8:1:2::1']) {
+            const res = await post(gw.base, 'demo-json', { topic: 'x' }, xff(address));
+            assert.equal(res.status, 403, address);
+            assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN, address);
+            assert.ok(res.headers.get('x-request-id'), address);
+            assert.deepEqual(await res.json(), {
+                error: { code: 'source_blocked', message: '這個網路目前不能使用 AI 服務。', requestId: res.headers.get('x-request-id') },
+            });
+        }
+        // 沒有 Origin、任務不存在也是 source_blocked：封鎖先於其他檢查
+        assert.equal((await (await post(gw.base, 'no-such-task', { topic: 'x' }, { origin: null, ...xff('192.0.2.7') })).json()).error.code, 'source_blocked');
+        const preflight = await fetch(`${gw.base}/v1/tasks/demo-json`, {
+            method: 'OPTIONS',
+            headers: { origin: ORIGIN, 'access-control-request-method': 'POST', ...xff('192.0.2.7').headers },
+        });
+        assert.equal(preflight.status, 204);
+        const open = await post(gw.base, 'demo-json', { topic: 'x' }, xff('203.0.113.9'));
+        assert.equal(open.status, 200);
+        await open.text();
+        assert.equal(gw.calls.length, 1);
+        assert.deepEqual([...gw.gateway.limiter.clients.keys()], ['203.0.113.9']);
+        clock += 60_000;
+        assert.equal((await post(gw.base, 'demo-json', { topic: 'x' }, xff('192.0.2.8'))).status, 403);
+        // 第一分鐘被擋 6 次：第一次立刻記，其餘 5 次在下一分鐘那一次時記在第一分鐘名下。不記位址
+        const rejects = gw.logs.filter((l) => l.tag === 'REJECT');
+        const { from } = rejects[1].fields;
+        assert.deepEqual(rejects.map((l) => [l.level, l.fields]), [
+            ['info', { status: 403, code: 'source_blocked', count: 1 }],
+            ['info', { status: 403, code: 'source_blocked', count: 5, from }],
+            ['info', { status: 403, code: 'source_blocked', count: 1 }],
+        ]);
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 已知的限制：信任的代理送來解析不了的值時，退回代理自己的位址，封鎖比對不到用戶端。Funnel 自己寫這個標頭
+test('AI_BLOCK_SOURCES：信任的代理送來的用戶端 IP 解析不了時，比對的是代理的位址，記 CLIENT-IP-MISSING', async () => {
+    const gw = await startGateway({
+        server: { clientIpHeader: 'x-forwarded-for', trustedProxies: ['127.0.0.1/32'], blockSources: ['192.0.2.0/24'] },
+    });
+    try {
+        const res = await post(gw.base, 'demo-json', { topic: 'x' }, { headers: { 'x-forwarded-for': '192.0.2.7, not-an-ip' } });
+        assert.equal(res.status, 200);
+        await res.text();
+        assert.deepEqual([...gw.gateway.limiter.clients.keys()], ['127.0.0.1']);
+        assert.ok(gw.logs.some((l) => l.tag === 'CLIENT-IP-MISSING'));
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('AI_BLOCK_SOURCES：沒有代理時看連線的位址；body 再大也不讀', async () => {
+    const gw = await startGateway({ server: { blockSources: ['127.0.0.0/8'] } });
+    try {
+        const res = await rawRequest(gw.port, {
+            headers: { origin: ORIGIN, 'content-type': 'application/json', 'content-length': '10000000' },
+        });
+        assert.equal(res.status, 403);
+        assert.equal(JSON.parse(res.body).error.code, 'source_blocked');
+        assert.equal(res.headers.connection, 'close');
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('CLIENT_IP_HEADER：連線不是來自信任的代理時，自己填的標頭沒有用', async () => {
     const gw = await startGateway({ server: { rateLimitMax: 1, clientIpHeader: 'x-forwarded-for', trustedProxies: ['10.42.0.1/32'] } });
     try {

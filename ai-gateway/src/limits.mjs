@@ -301,6 +301,84 @@ export function clientKey(address, v6Prefix = 64) {
     return v4 === null ? ipv6Prefix(ip.groups, v6Prefix) : intToIPv4(v4);
 }
 
+const ipv6ToBigInt = (groups) => groups.reduce((n, g) => (n << 16n) | BigInt(g), 0n);
+const maskIPv4 = (n, bits) => (bits === 0 ? 0 : (n & (0xffffffff << (32 - bits))) >>> 0);
+const maskIPv6 = (n, bits) => n & (((1n << BigInt(bits)) - 1n) << BigInt(128 - bits));
+
+const MAPPED = 0xffffn << 32n;
+const MAX_IPV6 = (1n << 128n) - 1n;
+
+/**
+ * parseCidr 把「位址」或「位址/前綴長度」解析成 { v6, bits, base, hostBits }，寫錯回傳 null。base 是前綴
+ * 以外清成 0 的位址：IPv4 是 32 位元整數，IPv6 是 BigInt；hostBits 表示寫的位址在前綴之後還有 1。
+ * ::ffff:a.b.c.d/(96+n) 換成 IPv4 的 a.b.c.d/n，跟 clientKey 一樣把它當成 IPv4。不收 zone id、方括號與埠
+ */
+export function parseCidr(text) {
+    const m = /^([0-9A-Fa-f.:]+)(?:\/(\d{1,3}))?$/.exec(String(text).trim());
+    const version = m ? isIP(m[1]) : 0;
+    if (!version) return null;
+    let v6 = version === 6;
+    let bits = m[2] === undefined ? (v6 ? 128 : 32) : Number(m[2]);
+    if (bits > (v6 ? 128 : 32)) return null;
+    let n = v6 ? ipv6ToBigInt(expandIPv6(m[1])) : ipv4ToInt(m[1]);
+    if (v6 && bits >= 96 && n >> 32n === 0xffffn) {
+        [v6, bits, n] = [false, bits - 96, Number(n & 0xffffffffn)];
+    }
+    const base = v6 ? maskIPv6(n, bits) : maskIPv4(n, bits);
+    return { v6, bits, base, hostBits: base !== n };
+}
+
+/** formatCidr 把 parseCidr 的結果寫回「位址/前綴長度」 */
+export function formatCidr({ v6, bits, base }) {
+    if (!v6) return `${intToIPv4(base)}/${bits}`;
+    const groups = Array.from({ length: 8 }, (_, i) => Number((base >> BigInt(112 - i * 16)) & 0xffffn));
+    return ipv6Prefix(groups, bits);
+}
+
+/**
+ * coversAllIPv4 判斷範圍是否涵蓋所有的 IPv4：IPv4 的 /0，或包含 ::ffff:0:0/96 的 IPv6 範圍（::/0、::/80 這類）。
+ * 封鎖清單不收這種範圍，寫錯一個字就會擋掉所有的 IPv4 來源
+ */
+export function coversAllIPv4(range) {
+    if (!range.v6) return range.bits === 0;
+    return range.bits <= 96 && maskIPv6(MAPPED, range.bits) === range.base;
+}
+
+/**
+ * blockRangeProblem 回傳封鎖清單不收這個範圍的原因，收的話回傳 null：all-ipv4（coversAllIPv4）、
+ * too-broad（比 IPv4 /8、IPv6 /16 大）、host-bits（前綴之後還有 1，多半是前綴長度寫錯）
+ */
+export function blockRangeProblem(range) {
+    if (coversAllIPv4(range)) return 'all-ipv4';
+    if (range.bits < (range.v6 ? 16 : 8)) return 'too-broad';
+    return range.hostBits ? 'host-bits' : null;
+}
+
+/**
+ * createSourceMatcher 回傳「這個用戶端位址在不在 cidrs 裡」的判斷（AI_BLOCK_SOURCES）。位址照 clientKey
+ * 剝掉埠與 zone id。IPv4 的範圍比對 IPv4 位址，以及 IPv6 位址裡 clientKey 也會取出的用戶端 IPv4（IPv4 對應
+ * 位址、6to4、Teredo）；IPv6 的範圍比對原本的 IPv6 位址。寫錯或 blockRangeProblem 不收的項目丟例外
+ */
+export function createSourceMatcher(cidrs) {
+    // 遮罩先算好，每個請求不必再建 BigInt
+    const ranges = cidrs.map((cidr) => {
+        const range = parseCidr(cidr);
+        if (!range || blockRangeProblem(range)) throw new Error(`不合法的 CIDR：${cidr}`);
+        return { ...range, mask: range.v6 ? maskIPv6(MAX_IPV6, range.bits) : maskIPv4(0xffffffff, range.bits) };
+    });
+    const v4 = ranges.filter((r) => !r.v6);
+    const v6 = ranges.filter((r) => r.v6);
+    return (address) => {
+        const ip = parseAddress(address);
+        if (!ip) return false;
+        const four = ip.v4 ? ipv4ToInt(ip.v4) : embeddedIPv4(ip.groups);
+        if (four !== null && v4.some((r) => ((four & r.mask) >>> 0) === r.base)) return true;
+        if (ip.v4) return false;
+        const six = ipv6ToBigInt(ip.groups);
+        return v6.some((r) => (six & r.mask) === r.base);
+    };
+}
+
 /**
  * 「這個連線來源是不是我們信任的代理」的判斷，例如 createProxyMatcher(['10.42.0.1/32'])。
  * 只支援 IPv4（k3s 的 pod 網段與本機都是），IPv4 對應的 IPv6 位址（::ffff:a.b.c.d）先還原。

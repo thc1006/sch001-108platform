@@ -31,6 +31,8 @@
  */
 import { readFileSync } from 'node:fs';
 
+import { parseCidr, formatCidr, blockRangeProblem } from './limits.mjs';
+
 // WinLab 只收這四種思考強度。high、max 會被 400 拒絕（2026-10-21 實測），
 // 所以不能照 OpenAI 的文件猜。由弱到強排列。
 export const EFFORTS = ['none', 'low', 'medium', 'xhigh'];
@@ -267,6 +269,25 @@ function toCidrs(env, name, warn) {
     return cidrs;
 }
 
+const BLOCK_PROBLEMS = {
+    'all-ipv4': '涵蓋所有的 IPv4 來源',
+    'too-broad': '範圍太大（IPv4 要 /8 以上、IPv6 要 /16 以上）',
+    'host-bits': '在前綴之後還有 1，可能是前綴長度寫錯',
+};
+
+// 封鎖的來源：IPv4、IPv6 位址或 CIDR，以逗號、分號或空白分隔。不收的項目略過並警告；警告只說第幾項與
+// 原因，位址不進 log。回傳 formatCidr 寫回的樣子
+function toBlockSources(env, name, warn) {
+    const cidrs = [];
+    String(env[name] || '').split(/[\s,;]+/).filter(Boolean).forEach((item, i) => {
+        const range = parseCidr(item);
+        const problem = range ? BLOCK_PROBLEMS[blockRangeProblem(range)] : '不是 IPv4、IPv6 位址或 CIDR';
+        if (problem) warn(`設定 ${name} 的第 ${i + 1} 項${problem}，已略過`);
+        else cidrs.push(formatCidr(range));
+    });
+    return cidrs;
+}
+
 /**
  * HTTP 服務的設定（server.mjs 用）：
  *
@@ -294,6 +315,8 @@ function toCidrs(env, name, warn) {
  *   CLIENT_MAX_INFLIGHT   名額已滿時，每個來源最多佔用幾個（含排隊；預設 6）
  *   AI_V6_PREFIX          IPv6 用戶端取多長的前綴當成同一個來源（預設 64，範圍 32～128）。上面依來源的
  *                         計數與佔用量都照它分；有人輪流換用同一段 /56、/48 裡的位址時才調小
+ *   AI_BLOCK_SOURCES      封鎖的來源，以逗號分隔的 IPv4、IPv6 位址或 CIDR（預設沒有）。任務請求回 403
+ *                         source_blocked；比對的位址與內嵌 IPv4 的規則見 limits.mjs 的 createSourceMatcher
  *   BODY_TIMEOUT_MS       收完請求 body 的期限（預設 10000）。body 最多約 95 KiB（star-analysis），慢慢上傳的連線
  *                         佔著記憶體，不必等太久。Node 自己的 requestTimeout 在開始關機之後就
  *                         不再檢查，這個期限由閘道自己計時
@@ -337,6 +360,7 @@ export function loadServerConfig(env = process.env, { warn = (msg) => console.wa
         requestLimitPerMinute: toInt(env, 'REQUEST_LIMIT_PER_MINUTE', 120, 10, 10_000, warn),
         clientMaxInflight: toInt(env, 'CLIENT_MAX_INFLIGHT', 6, 1, 64, warn),
         v6Prefix: toInt(env, 'AI_V6_PREFIX', 64, 32, 128, warn),
+        blockSources: toBlockSources(env, 'AI_BLOCK_SOURCES', warn),
         bodyTimeoutMs: toInt(env, 'BODY_TIMEOUT_MS', 10_000, 1_000, 120_000, warn),
         heartbeatMs: toInt(env, 'HEARTBEAT_MS', 15_000, 1_000, 30_000, warn),
         shutdownGraceMs: toInt(env, 'SHUTDOWN_GRACE_MS', 900_000, 0, 2_147_483_647, warn),
