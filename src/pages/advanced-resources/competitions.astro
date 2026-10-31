@@ -175,6 +175,14 @@ import data from '../../../public/advanced-resources/competitions.json';
         ));
       }
 
+      // markEnglishQuotes 把說明裡照抄官網的英文引文標上 lang="en"，報讀器才會換英文語音念。
+      // 只看「」裡沒有中日文字的段落，全形空白不算；輸入是 escapeHtml 處理過的字串。
+      function markEnglishQuotes(html) {
+        return html.replace(/「([^「」]*[A-Za-z][^「」]*)」/g, (m, inner) => (
+          /[\u3001-\u9fff\uff00-\uffef]/.test(inner) ? m : '「<span lang="en">' + inner + '</span>」'
+        ));
+      }
+
       // 僅允許 http(s) 連結，擋掉 javascript: 等協定（縱深防禦；資料源本已受看門狗把關）。
       function safeUrl(u) {
         return /^https?:\/\//i.test(String(u)) ? encodeURI(u) : '#';
@@ -409,7 +417,7 @@ import data from '../../../public/advanced-resources/competitions.json';
               '<p class="comp-card__org">' + escapeHtml(c.organizer) + '</p>' +
               '<ul class="comp-meta">' + meta + '</ul>' +
               '<p class="comp-elig">' + escapeHtml(c.eligibility) + ' · ' + escapeHtml(c.mode) + '</p>' +
-              '<p class="comp-card__desc">' + escapeHtml(c.description) + '</p>' +
+              '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '</div>' +
             '<div class="comp-card__foot">' +
               '<div class="comp-deadline">' +

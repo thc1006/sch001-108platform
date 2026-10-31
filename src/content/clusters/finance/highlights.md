@@ -47,7 +47,7 @@ ColleGo! 財務金融學類的體驗活動建議增強英文聽、說、讀、�
 - [Yory 優歷〈適當呈現學習歷程，每一個人的學習與成長都是閃閃發亮！｜臺大財金系 陳彥行教授〉（2022-02-16）](https://www.yory.school/contents/620c56ee54391b00116fd9f9)
 - [ColleGo!〈【112申請入學】財經學群小福袋〉](https://collego.edu.tw/Media/Article/349)
 - [台灣經濟學奧林匹亞（TEO）官網](https://www.ecolympiad.tw/)
-- [Wharton Global Youth Program「Investment Competition」（內容依 2026-10-14 的頁面存檔）](https://globalyouth.wharton.upenn.edu/competitions/investment-competition/)
+- [<span lang="en">Wharton Global Youth Program</span>「<span lang="en">Investment Competition</span>」（內容依 2026-10-14 的頁面存檔）](https://globalyouth.wharton.upenn.edu/competitions/investment-competition/)
 - [世新大學財務金融學系「未來股神：2026世新盃AI投資爭霸戰」](https://fin.wp.shu.edu.tw/?page_id=3680)
 - [2026 德明 X 富達投資擂台全國高中職組模擬投資競賽簡章與辦法（2026/08/23 版，新竹市成德高中網站轉載）](https://www.cdjh.hc.edu.tw/uploads/1787730580739KP7nxpZO.pdf)
 - [國立臺中科技大學「商學院暨全國高中職專題競賽」](https://business.nutc.edu.tw/p/412-1046-12423.php)

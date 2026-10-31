@@ -139,8 +139,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     const coverSrc = encodeURI(`img/books/${isbn}.jpg`);
                     const fallback = placeholderCover(book.title || '書籍');
 
+                    const originalLang = book.original_lang ? ` lang="${escapeHtml(book.original_lang)}"` : '';
                     const originalTitleHtml = book.original_title
-                        ? `<p class="text-xs text-gray-400 italic mb-1">${escapeHtml(book.original_title)}</p>`
+                        ? `<p class="text-xs text-gray-400 italic mb-1"${originalLang}>${escapeHtml(book.original_title)}</p>`
                         : '';
 
                     booksHtml += `

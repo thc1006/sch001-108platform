@@ -1,5 +1,5 @@
 {
-  "_readme": "台灣高中生主題書單資料檔。欄位說明：theme=主題名稱；description=主題一句話簡介；books[]=該主題書目。每本書欄位：title=繁體中文書名；original_title=原文書名（非翻譯書為空字串）；author=作者（翻譯書保留原文姓名或譯名）；isbn=ISBN-13（優先採用台灣繁體中文版，多為博客來/誠品在售版本）；recommendation=針對高中生（15-18歲）的推薦理由；tags=主題標籤陣列。同一本書可能因適合多個學群而跨多個主題出現，此時各筆的 title/original_title/author/recommendation/tags 皆為同一份內容（僅所屬 theme 不同）。封面圖建議以 https://covers.openlibrary.org/b/isbn/<isbn>-L.jpg?default=false 取用，若回傳 404 表示 Open Library 無此封面，前端應提供替代版面。註：Open Library 封面資料庫對台灣繁中版 ISBN 收錄率極低，本清單多數書籍於 Open Library 查無封面（詳見驗證輸出），建議前端改用書店 API 或預設版型呈現。",
+  "_readme": "台灣高中生主題書單資料檔。欄位說明：theme=主題名稱；description=主題一句話簡介；books[]=該主題書目。每本書欄位：title=繁體中文書名；original_title=原文書名（非翻譯書為空字串）；original_lang=原文書名的語言代碼（BCP 47，如 en、ja），沒有原文書名的書不寫；author=作者（翻譯書保留原文姓名或譯名）；isbn=ISBN-13（優先採用台灣繁體中文版，多為博客來/誠品在售版本）；recommendation=針對高中生（15-18歲）的推薦理由；tags=主題標籤陣列。同一本書可能因適合多個學群而跨多個主題出現，此時各筆的 title/original_title/author/recommendation/tags 皆為同一份內容（僅所屬 theme 不同）。封面圖建議以 https://covers.openlibrary.org/b/isbn/<isbn>-L.jpg?default=false 取用，若回傳 404 表示 Open Library 無此封面，前端應提供替代版面。註：Open Library 封面資料庫對台灣繁中版 ISBN 收錄率極低，本清單多數書籍於 Open Library 查無封面（詳見驗證輸出），建議前端改用書店 API 或預設版型呈現。",
   "lastUpdated": "2026-05-19",
   "themes": [
     {
@@ -9,6 +9,7 @@
         {
           "title": "人類大歷史：從野獸到扮演上帝（增訂版）",
           "original_title": "Sapiens: A Brief History of Humankind",
+          "original_lang": "en",
           "author": "哈拉瑞（Yuval Noah Harari）",
           "isbn": "9789865258900",
           "recommendation": "從認知革命到科學革命，用一本書俯瞰人類七萬年發展，幫助高中生建立歷史感與跨學群的整體視野。",
@@ -21,6 +22,7 @@
         {
           "title": "槍炮、病菌與鋼鐵：人類社會的命運（25週年暢銷紀念版）",
           "original_title": "Guns, Germs, and Steel: The Fates of Human Societies",
+          "original_lang": "en",
           "author": "賈德‧戴蒙（Jared Diamond）",
           "isbn": "9789571378527",
           "recommendation": "解答「為何不同大陸文明發展如此懸殊」，示範如何用地理、生態的證據思考大哉問，是探索地理與歷史學群的入門經典。",
@@ -33,6 +35,7 @@
         {
           "title": "正義：一場思辨之旅（10週年全新譯本）",
           "original_title": "Justice: What's the Right Thing to Do?",
+          "original_lang": "en",
           "author": "邁可‧桑德爾（Michael J. Sandel）",
           "isbn": "9789861343280",
           "recommendation": "哈佛最受歡迎的公開課，用一連串道德兩難帶你練習論證，是法政、社會學群學生培養思辨力的最佳起點。",
@@ -45,6 +48,7 @@
         {
           "title": "真確：扭轉十大直覺偏誤，發現事情比你想的美好",
           "original_title": "Factfulness: Ten Reasons We're Wrong About the World",
+          "original_lang": "en",
           "author": "漢斯‧羅斯林（Hans Rosling）等",
           "isbn": "9789861343242",
           "recommendation": "教你用數據而非直覺認識世界，破解對全球貧窮、人口、環境的常見誤解，是培養資料素養與公民判斷力的好書。",
@@ -57,6 +61,7 @@
         {
           "title": "窮人的經濟學：如何終結貧窮？",
           "original_title": "Poor Economics: A Radical Rethinking of the Way to Fight Global Poverty",
+          "original_lang": "en",
           "author": "阿比吉特‧班納吉、艾絲特‧杜芙若",
           "isbn": "9789869280303",
           "recommendation": "諾貝爾經濟學獎得主以嚴謹的田野實驗探討貧窮，示範社會科學如何用實證回答真實問題，適合對社會議題有熱情的學生。",
@@ -75,6 +80,7 @@
         {
           "title": "觀念物理1：牛頓運動定律‧動量",
           "original_title": "Conceptual Physics: The High School Physics Program",
+          "original_lang": "en",
           "author": "休伊特（Paul G. Hewitt）",
           "isbn": "9789864795062",
           "recommendation": "全球高中生愛用的物理觀念書，幾乎不靠公式就把力學講清楚，能補足課本理解、重新愛上物理。",
@@ -87,6 +93,7 @@
         {
           "title": "自私的基因（新版）",
           "original_title": "The Selfish Gene",
+          "original_lang": "en",
           "author": "理查‧道金斯（Richard Dawkins）",
           "isbn": "9789864799190",
           "recommendation": "演化生物學的里程碑著作，以「基因視角」重新詮釋生命與利他行為，適合對生物、生命科學有興趣的學生延伸閱讀。",
@@ -99,6 +106,7 @@
         {
           "title": "基因：人類最親密的歷史",
           "original_title": "The Gene: An Intimate History",
+          "original_lang": "en",
           "author": "辛達塔‧穆克吉（Siddhartha Mukherjee）",
           "isbn": "9789571374765",
           "recommendation": "普立茲獎作家把遺傳學的科學史與倫理爭議寫成動人故事，幫助高中生理解基因編輯時代的科學與責任。",
@@ -111,6 +119,7 @@
         {
           "title": "起源的故事：從宇宙誕生到人類文明的大歷史",
           "original_title": "Origin Story: A Big History of Everything",
+          "original_lang": "en",
           "author": "大衛‧克里斯欽（David Christian）",
           "isbn": "9789864794058",
           "recommendation": "「大歷史」學派代表作，把宇宙、地球、生命與人類串成一條連貫的故事線，是跨學科思考的絕佳範例。",
@@ -123,6 +132,7 @@
         {
           "title": "寂靜的春天：瑞秋‧卡森逝世60周年紀念版",
           "original_title": "Silent Spring",
+          "original_lang": "en",
           "author": "瑞秋‧卡森（Rachel Carson）",
           "isbn": "9786267279915",
           "recommendation": "啟動全球環境運動的科普經典，示範科學家如何以嚴謹證據改變世界，兼具自然科學與環境關懷的雙重視角。",
@@ -141,6 +151,7 @@
         {
           "title": "AI 2041：預見10個未來新世界",
           "original_title": "AI 2041: Ten Visions for Our Future",
+          "original_lang": "en",
           "author": "李開復、陳楸帆",
           "isbn": "9789865251918",
           "recommendation": "用十篇科幻短篇加上技術解說，具體描繪二十年後的 AI 世界，兼顧想像力與知識性，是認識 AI 趨勢的友善入門。",
@@ -165,6 +176,7 @@
         {
           "title": "演算法圖鑑（全新增訂版）：33種演算法 + 7種資料結構",
           "original_title": "アルゴリズム図鑑",
+          "original_lang": "ja",
           "author": "石田保輝、宮崎修一",
           "isbn": "9786263153349",
           "recommendation": "全圖解呈現排序、搜尋、加密等核心演算法，多所高中資訊社團推薦，是理解電腦科學運作邏輯的視覺化好書。",
@@ -177,6 +189,7 @@
         {
           "title": "快思慢想（新版）",
           "original_title": "Thinking, Fast and Slow",
+          "original_lang": "en",
           "author": "丹尼爾‧康納曼（Daniel Kahneman）",
           "isbn": "9789863200611",
           "recommendation": "諾貝爾獎得主康納曼說明大腦的兩套思考系統，以及人在判斷時常見的非理性與認知偏誤。",
@@ -189,6 +202,7 @@
         {
           "title": "思考的藝術：52 個非受迫性思考錯誤",
           "original_title": "Die Kunst des klaren Denkens",
+          "original_lang": "de",
           "author": "魯爾夫‧杜伯里（Rolf Dobelli）",
           "isbn": "9786263903265",
           "recommendation": "以52個簡短篇章拆解日常常見的思考陷阱，每篇只需幾分鐘，幫助高中生在資訊爆炸時代保持清醒判斷。",
@@ -207,6 +221,7 @@
         {
           "title": "德國一流大學教你數學家的22個思考工具",
           "original_title": "Mathematik - Das ist doch keine Kunst!",
+          "original_lang": "de",
           "author": "克莉絲蒂安‧赫塞（Christian Hesse）",
           "isbn": "9789862356395",
           "recommendation": "介紹鴿籠原理、排容原理等22個數學思考工具，並用生活例子說明，幫助高中生把數學思維用在課本之外。",
@@ -219,6 +234,7 @@
         {
           "title": "這才是數學：從不知道到想知道的探索之旅",
           "original_title": "Mathematical Mindsets",
+          "original_lang": "en",
           "author": "裘‧波勒（Jo Boaler）",
           "isbn": "9789863207979",
           "recommendation": "史丹佛數學教育學者告訴你，數學不是天賦而是可以練習的能力，特別適合對數學感到挫折卻不想放棄的學生。",
@@ -243,6 +259,7 @@
         {
           "title": "蘇菲的世界（上／下冊）",
           "original_title": "Sofies verden",
+          "original_lang": "no",
           "author": "喬斯坦‧賈德（Jostein Gaarder）",
           "isbn": "9789863594802",
           "recommendation": "用懸疑小說的形式串起整部西方哲學史，示範如何把抽象思辨變成引人入勝的故事，是邏輯與思辨的最佳啟蒙書。",
@@ -273,6 +290,7 @@
         {
           "title": "經濟學的思考方式：經濟學大師寫給大眾的入門書（二版）",
           "original_title": "Basic Economics: A Common Sense Guide to the Economy",
+          "original_lang": "en",
           "author": "湯瑪斯‧索維爾（Thomas Sowell）",
           "isbn": "9789573288343",
           "recommendation": "沒有圖表與公式，純粹用文字與生活案例講透經濟學核心觀念，是高中生自學經濟學最易讀的入門書。",
@@ -285,6 +303,7 @@
         {
           "title": "從0到1：打開世界運作的未知祕密",
           "original_title": "Zero to One: Notes on Startups, or How to Build the Future",
+          "original_lang": "en",
           "author": "彼得‧提爾（Peter Thiel）、布雷克‧馬斯特",
           "isbn": "9789862419533",
           "recommendation": "矽谷創投教父談「真正的創新」是創造前所未有的事物，啟發學生思考獨特價值，是商管與創業學群的必讀書。",
@@ -297,6 +316,7 @@
         {
           "title": "窮查理的普通常識（紀念典藏版）：巴菲特50年智慧合夥人查理‧蒙格的人生哲學",
           "original_title": "Poor Charlie's Almanack",
+          "original_lang": "en",
           "author": "查理‧蒙格（Charles T. Munger）",
           "isbn": "9786267366882",
           "recommendation": "投資大師蒙格主張用「多元思維模型」跨領域思考，這套方法不只適用於投資，也是經營人生與學習的智慧。",
@@ -309,6 +329,7 @@
         {
           "title": "漫步華爾街的10條投資金律",
           "original_title": "The Elements of Investing",
+          "original_lang": "en",
           "author": "墨基爾（Burton G. Malkiel）、艾利斯（Charles D. Ellis）",
           "isbn": "9789863984832",
           "recommendation": "用十條簡明原則講清楚個人理財與長期投資的基本功，篇幅輕薄好讀，是高中生建立正確金錢觀的起點。",
@@ -321,6 +342,7 @@
         {
           "title": "原則：生活和工作",
           "original_title": "Principles: Life and Work",
+          "original_lang": "en",
           "author": "瑞‧達利歐（Ray Dalio）",
           "isbn": "9789864791668",
           "recommendation": "全球最大避險基金創辦人分享他系統化的決策原則，教你如何把人生與工作變成一套可改進的方法，啟發自我管理。",
@@ -339,6 +361,7 @@
         {
           "title": "被討厭的勇氣：自我啟發之父「阿德勒」的教導",
           "original_title": "嫌われる勇気",
+          "original_lang": "ja",
           "author": "岸見一郎、古賀史健",
           "isbn": "9789861371955",
           "recommendation": "以哲學家與青年對話的形式介紹阿德勒心理學，談人際關係與課題分離，幫助高中生卸下他人眼光的壓力。",
@@ -351,6 +374,7 @@
         {
           "title": "蛤蟆先生去看心理師",
           "original_title": "Counselling for Toads: A Psychological Adventure",
+          "original_lang": "en",
           "author": "羅伯‧狄保德（Robert de Board）",
           "isbn": "9789576587399",
           "recommendation": "用童話角色演繹一段完整的心理諮商歷程，溫柔說明情緒從何而來，是認識心理諮商與情緒覺察的入門好書。",
@@ -363,6 +387,7 @@
         {
           "title": "心流：高手都在研究的最優體驗心理學（三版）",
           "original_title": "Flow: The Psychology of Optimal Experience",
+          "original_lang": "en",
           "author": "米哈里‧契克森米哈伊（Mihaly Csikszentmihalyi）",
           "isbn": "9786267771648",
           "recommendation": "解析人完全投入某件事、忘記時間流逝的「心流」體驗，幫助學生找到真正能讓自己專注與快樂的領域。",
@@ -375,6 +400,7 @@
         {
           "title": "心態致勝：全新成功心理學",
           "original_title": "Mindset: The New Psychology of Success",
+          "original_lang": "en",
           "author": "卡蘿‧杜維克（Carol S. Dweck）",
           "isbn": "9789864791897",
           "recommendation": "區分「定型心態」與「成長心態」，說明相信能力可以成長的人如何走得更遠，是面對升學壓力的重要心理裝備。",
@@ -387,6 +413,7 @@
         {
           "title": "原子習慣：細微改變帶來巨大成就的實證法則",
           "original_title": "Atomic Habits",
+          "original_lang": "en",
           "author": "詹姆斯‧克利爾（James Clear）",
           "isbn": "9789861755267",
           "recommendation": "用具體可操作的方法建立微小好習慣，讓複利效應改變人生，特別適合想改善讀書與生活節奏的高中生。",
@@ -405,6 +432,7 @@
         {
           "title": "如何閱讀一本書（臺灣商務70週年典藏紀念版）",
           "original_title": "How to Read a Book",
+          "original_lang": "en",
           "author": "莫提默‧艾德勒、查理‧范多倫",
           "isbn": "9789570530629",
           "recommendation": "閱讀方法的經典指南，教你從基礎閱讀進階到分析閱讀與主題閱讀，是做專題研究與自主學習的必備技能書。",
@@ -417,6 +445,7 @@
         {
           "title": "刻意練習：原創者全面解析，比天賦更關鍵的學習法",
           "original_title": "Peak: Secrets from the New Science of Expertise",
+          "original_lang": "en",
           "author": "安德斯‧艾瑞克森、羅伯特‧普爾",
           "isbn": "9789861754604",
           "recommendation": "揭開頂尖表現的秘密：關鍵不是天賦，而是有目標、有回饋的刻意練習，幫助學生用對方法精進任何技能。",
@@ -429,6 +458,7 @@
         {
           "title": "大腦解鎖：史丹佛頂尖學者裘‧波勒以最新腦科學推動學習革命",
           "original_title": "Limitless Mind: Learn, Lead, and Live Without Barriers",
+          "original_lang": "en",
           "author": "裘‧波勒（Jo Boaler）",
           "isbn": "9789865250317",
           "recommendation": "用最新腦科學說明「犯錯」與「掙扎」正是大腦成長的時刻，提供六把金鑰扭轉對學習與能力的迷思。",
@@ -441,6 +471,7 @@
         {
           "title": "你想活出怎樣的人生？",
           "original_title": "君たちはどう生きるか",
+          "original_lang": "ja",
           "author": "吉野源三郎",
           "isbn": "9789861342184",
           "recommendation": "以少年與舅舅的對話探討友情、貧富、勇氣與人之所以為人的價值，宮崎駿為它復出，是青少年自我探索的經典。",
@@ -495,6 +526,7 @@
         {
           "title": "解憂雜貨店【暖心紀念版】",
           "original_title": "ナミヤ雑貨店の奇蹟",
+          "original_lang": "ja",
           "author": "東野圭吾",
           "isbn": "9789573330127",
           "recommendation": "跨越三十年時空的溫暖故事，巧妙的結構與動人的情節，讓高中生在閱讀樂趣中體會敘事技巧與人生抉擇。",
@@ -507,6 +539,7 @@
         {
           "title": "麥田捕手",
           "original_title": "The Catcher in the Rye",
+          "original_lang": "en",
           "author": "沙林傑（J. D. Salinger）",
           "isbn": "9789570836042",
           "recommendation": "二十世紀最具代表性的青少年成長小說，叛逆而真誠的主角聲音，貼近高中生的迷惘，是世界文學的必讀經典。",
@@ -561,6 +594,7 @@
         {
           "title": "人類大命運：從智人到神人",
           "original_title": "Homo Deus: A Brief History of Tomorrow",
+          "original_lang": "en",
           "author": "哈拉瑞（Yuval Noah Harari）",
           "isbn": "9789863204503",
           "recommendation": "《人類大歷史》續作，從歷史走向未來，探討科技將如何改寫人類處境，是連結歷史與未來思辨的橋樑書。",
@@ -573,6 +607,7 @@
         {
           "title": "槍炮、病菌與鋼鐵：人類社會的命運（25週年暢銷紀念版）",
           "original_title": "Guns, Germs, and Steel: The Fates of Human Societies",
+          "original_lang": "en",
           "author": "賈德‧戴蒙（Jared Diamond）",
           "isbn": "9789571378527",
           "recommendation": "解答「為何不同大陸文明發展如此懸殊」，示範如何用地理、生態的證據思考大哉問，是探索地理與歷史學群的入門經典。",
@@ -585,6 +620,7 @@
         {
           "title": "你想活出怎樣的人生？",
           "original_title": "君たちはどう生きるか",
+          "original_lang": "ja",
           "author": "吉野源三郎",
           "isbn": "9789861342184",
           "recommendation": "以少年與舅舅的對話探討友情、貧富、勇氣與人之所以為人的價值，宮崎駿為它復出，是青少年自我探索的經典。",
@@ -603,6 +639,7 @@
         {
           "title": "寂靜的春天：瑞秋‧卡森逝世60周年紀念版",
           "original_title": "Silent Spring",
+          "original_lang": "en",
           "author": "瑞秋‧卡森（Rachel Carson）",
           "isbn": "9786267279915",
           "recommendation": "啟動全球環境運動的科普經典，示範科學家如何以嚴謹證據改變世界，兼具自然科學與環境關懷的雙重視角。",
@@ -615,6 +652,7 @@
         {
           "title": "如何避免氣候災難：結合科技與商業的全面行動計畫",
           "original_title": "How to Avoid a Climate Disaster",
+          "original_lang": "en",
           "author": "比爾‧蓋茲（Bill Gates）",
           "isbn": "9789865258436",
           "recommendation": "用清楚的數字拆解碳排放從何而來，並提出具體的減碳路徑，幫助高中生理性、全面地理解氣候議題。",
@@ -627,6 +665,7 @@
         {
           "title": "崩潰：人類社會的明天？",
           "original_title": "Collapse: How Societies Choose to Fail or Succeed",
+          "original_lang": "en",
           "author": "賈德‧戴蒙（Jared Diamond）",
           "isbn": "9789571379074",
           "recommendation": "比較歷史上文明因環境失衡而崩潰的案例，提醒永續不只是口號，是結合歷史、地理與環境的深度思考。",
@@ -639,6 +678,7 @@
         {
           "title": "真確：扭轉十大直覺偏誤，發現事情比你想的美好",
           "original_title": "Factfulness: Ten Reasons We're Wrong About the World",
+          "original_lang": "en",
           "author": "漢斯‧羅斯林（Hans Rosling）等",
           "isbn": "9789861343242",
           "recommendation": "教你用數據而非直覺認識世界，破解對全球貧窮、人口、環境的常見誤解，是培養資料素養與公民判斷力的好書。",
@@ -669,6 +709,7 @@
         {
           "title": "蘇菲的世界（上／下冊）",
           "original_title": "Sofies verden",
+          "original_lang": "no",
           "author": "喬斯坦‧賈德（Jostein Gaarder）",
           "isbn": "9789863594802",
           "recommendation": "用懸疑小說的形式串起整部西方哲學史，示範如何把抽象思辨變成引人入勝的故事，是邏輯與思辨的最佳啟蒙書。",
@@ -681,6 +722,7 @@
         {
           "title": "正義：一場思辨之旅（10週年全新譯本）",
           "original_title": "Justice: What's the Right Thing to Do?",
+          "original_lang": "en",
           "author": "邁可‧桑德爾（Michael J. Sandel）",
           "isbn": "9789861343280",
           "recommendation": "哈佛最受歡迎的公開課，用一連串道德兩難帶你練習論證，是法政、社會學群學生培養思辨力的最佳起點。",
@@ -693,6 +735,7 @@
         {
           "title": "法國高中生哲學讀本1：政府是人民的主人還是僕人？",
           "original_title": "Passerelles: Philosophie Terminales L.ES.S",
+          "original_lang": "fr",
           "author": "侯貝（Blanche Robert）等",
           "isbn": "9789864890439",
           "recommendation": "翻譯自法國高中哲學教材，以政治哲學為主題示範完整的思辨流程，讓台灣高中生體驗哲學作為公民教育的樣貌。",
@@ -717,6 +760,7 @@
         {
           "title": "思考的藝術：52 個非受迫性思考錯誤",
           "original_title": "Die Kunst des klaren Denkens",
+          "original_lang": "de",
           "author": "魯爾夫‧杜伯里（Rolf Dobelli）",
           "isbn": "9786263903265",
           "recommendation": "以52個簡短篇章拆解日常常見的思考陷阱，每篇只需幾分鐘，幫助高中生在資訊爆炸時代保持清醒判斷。",
@@ -735,6 +779,7 @@
         {
           "title": "Python 程式設計的樂趣：範例實作與專題研究的20堂程式設計課（第三版）",
           "original_title": "Python Crash Course",
+          "original_lang": "en",
           "author": "Eric Matthes",
           "isbn": "9786263245044",
           "recommendation": "全球最暢銷的 Python 入門書，從基礎語法到三個完整專題（遊戲、資料視覺化、網站），最適合零基礎自學的高中生。",
@@ -747,6 +792,7 @@
         {
           "title": "邊玩邊學程式設計：30堂Python創意程式課，培養運算思維！",
           "original_title": "Creative Coding in Python",
+          "original_lang": "en",
           "author": "雪拉‧阿芙特（Sheena Vaidyanathan）",
           "isbn": "9789578799806",
           "recommendation": "美國亞馬遜青少年電腦科學類暢銷書，用彩色插圖與流程圖帶你做出有趣的小程式，扣合108課綱運算思維。",
@@ -759,6 +805,7 @@
         {
           "title": "演算法圖鑑（全新增訂版）：33種演算法 + 7種資料結構",
           "original_title": "アルゴリズム図鑑",
+          "original_lang": "ja",
           "author": "石田保輝、宮崎修一",
           "isbn": "9786263153349",
           "recommendation": "全圖解呈現排序、搜尋、加密等核心演算法，多所高中資訊社團推薦，是理解電腦科學運作邏輯的視覺化好書。",

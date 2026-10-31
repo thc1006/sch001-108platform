@@ -80,5 +80,5 @@ ColleGo! 寫，系上以跨媒體整合為核心，兼顧影視製作、新聞�
 - [ColleGo!「中正大學傳播學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=041014)
 - [陳曦，關鍵評論網轉載《卓越新聞電子報》「2026新聞業展望：人工智慧消滅人類記者？AI在媒體機構的階級鴻溝與應用創新」（2026-01-05）](https://www.thenewslens.com/article/263147)
 - [李淑蓮，《北美智權報》「AI 規模化元年：2026 全球科技、媒體與電信產業深度洞察」，聯合新聞網（2026-01-04）](https://udn.com/news/story/6871/9240833)
-- [Deloitte Insights〈Tiny episodes, massive appeal: Short-form serials are gaining viewers and empowering independent studios〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/short-form-video-series.html)
-- [Deloitte Insights〈Video podcasts dominate: Opportunity for brands, competition for traditional video〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/video-podcasts-reach.html)
+- [Deloitte Insights〈<span lang="en">Tiny episodes, massive appeal: Short-form serials are gaining viewers and empowering independent studios</span>〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/short-form-video-series.html)
+- [Deloitte Insights〈<span lang="en">Video podcasts dominate: Opportunity for brands, competition for traditional video</span>〉（TMT Predictions 2026）](https://www.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions/2026/video-podcasts-reach.html)
