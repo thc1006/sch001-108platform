@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// AI 閘道的部分對照 ai-gateway/src/server.mjs 的 log 欄位與 ARRIVAL_WINDOW_MS，以及 config.mjs 的
+// RATE_LIMIT_WINDOW_MS，改了要跟著改。
+---
+
+<BaseLayout
+  title="隱私權說明 - 台灣教育處方籤"
+  description="使用本站時，哪些資料會送到哪裡、保留多久，以及你可以怎麼查詢或要求刪除。"
+>
+  <main id="main-content" class="container mx-auto px-6 py-12">
+    <article class="max-w-3xl mx-auto">
+      <header class="mb-8 border-b border-gray-200 pb-6">
+        <h1 class="text-3xl md:text-4xl font-black text-gray-800">隱私權說明</h1>
+        <p class="mt-3 text-gray-600">這一頁說明你使用台灣教育處方籤時，哪些資料會送到哪裡、保留多久。</p>
+        <p class="mt-2 text-sm text-gray-500">2026 年 10 月 31 日更新</p>
+      </header>
+
+      <div class="prose prose-lg max-w-none">
+        <h2>使用 AI 功能時</h2>
+        <p>
+          AI 功能會把你輸入的文字送到我們的 AI 閘道，閘道再轉給 WinLab 的語言模型產生回答。閘道與 WinLab 都在台灣，WinLab 不記錄送過去的內容。
+        </p>
+        <p>請不要在 AI 的輸入框寫姓名、學校、電話、身分證字號這類認得出你的資料。</p>
+        <ul>
+          <li>連線先經過 Tailscale 的轉送伺服器，它看得到你的 IP，看不到內容。</li>
+          <li>閘道用 IP 限制每個來源的使用次數。IP 只放在記憶體，最後一次使用約 10 分鐘後刪除。</li>
+          <li>
+            閘道的記錄檔每次使用記一行：時間、功能、輸入與回答的長度、耗時，以及一組由 IP 換算出、推不回 IP 的代碼；閘道每次重新啟動，同一個 IP 換算出的代碼就不同。
+          </li>
+          <li>
+            記錄檔不含你的 IP、輸入與 AI 的回答。只有 WinLab 出錯時，記錄檔會留下它回報的錯誤代號，偶爾夾帶輸入裡一小段英文或數字。
+          </li>
+          <li>記錄檔放在閘道的主機上，滿了就刪最舊的，平常最多約 50 MB。</li>
+        </ul>
+        <p>不用 AI 功能，閘道就收不到你的任何資料，其他頁面照常可用。</p>
+
+        <h2>瀏覽網站時</h2>
+        <ul>
+          <li>
+            網站放在 GitHub Pages。GitHub 會
+            <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">記錄訪客的 IP</a>，用於安全目的。
+          </li>
+          <li>每一頁都會連到 Google 的服務（例如載入字型）。</li>
+          <li>
+            每一頁也送一筆瀏覽紀錄給
+            <a href="https://www.goatcounter.com/help/privacy">GoatCounter</a>，用來統計瀏覽次數：頁面網址、從哪個網頁連過來、瀏覽器與作業系統、語言、螢幕寬度，以及由 IP 推得的國家。GoatCounter 不儲存 IP，資料放在芬蘭與德國。
+          </li>
+          <li>
+            有些頁面直接顯示其他網站的影片或圖片：YouTube 影片、DiceBear 頭像、Pexels 照片、GitHub 頭像等。載入時，你的瀏覽器會把 IP 送給這些網站。
+          </li>
+        </ul>
+        <p>以上服務依各自的隱私權政策處理資料，可能在台灣以外。</p>
+
+        <h2>你的權利</h2>
+        <p>
+          依<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=I0050021">個人資料保護法</a>第 3 條，你可以查詢或閱覽你的個人資料、要求複製本、補充或更正、要求停止蒐集處理利用，或要求刪除，寫信到
+          <a href="mailto:hctsai@linux.com">hctsai@linux.com</a> 即可。
+        </p>
+        <p>
+          閘道的記錄檔只有換算過的代碼，我們找不出哪幾行是你的，所以無法逐筆查詢或刪除。GitHub、Google、GoatCounter、Tailscale 自己保存的資料，請依它們的隱私權政策向它們要求。
+        </p>
+      </div>
+    </article>
+  </main>
+</BaseLayout>
