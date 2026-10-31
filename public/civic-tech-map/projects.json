@@ -1,5 +1,5 @@
 {
-  "_readme": "公民科技專案頁的資料。src/pages/civic-tech-map/index.astro 在建置時讀這個檔案產生頁面，build-search-index.js 用它建搜尋索引，scripts/check-civic-tech.mjs 檢查格式。欄位：id 是頁面上的錨點（小寫英數與連字號），其他頁面有連到 #thaubing、#national-treasure、#cofacts；name 是 AI 閘道 civic-tech-suggestion 任務指令裡的專案名稱，要和 ai-gateway/src/task-catalog.mjs 一字不差，ai-gateway/test/task-catalog.test.mjs 會比對；title 是頁面與搜尋結果顯示的名稱；theme 是專案列表裡的一兩個詞；description 寫專案是什麼；tools 是學生可以用的資料或工具，url 選填；topic 是題目例子；steps 是做法；sourceCheckedAt 是最後一次查證的日期；source 選填，資料不是取自官網時寫出處；recheckAfter 選填，過了這天 check-civic-tech 會提醒重查，理由寫在 recheckNote；subjects、competencies（108 課綱核心素養代碼，見 scripts/taxonomy.json）、sdgs、tags 只給搜尋用，頁面不顯示；status 限 active、maintenance、dormant，閘道指令會照它註明狀態。",
+  "_readme": "公民科技專案頁的資料。src/pages/civic-tech-map/index.astro 在建置時讀這個檔案產生頁面，build-search-index.js 用它建搜尋索引，scripts/check-civic-tech.mjs 檢查格式。欄位：id 是頁面上的錨點（小寫英數與連字號），其他頁面有連到 #thaubing、#national-treasure、#cofacts；name 和 title 不同時，搜尋索引把它當別名；title 是頁面、搜尋結果與 AI 閘道 civic-tech-suggestion 任務指令裡的專案名稱，要和 ai-gateway/src/task-catalog.mjs 一字不差，ai-gateway/test/task-catalog.test.mjs 會比對；theme 是專案列表裡的一兩個詞；description 寫專案是什麼；tools 是學生可以用的資料或工具，url 選填；topic 是題目例子；steps 是做法；sourceCheckedAt 是最後一次查證的日期；source 選填，資料不是取自官網時寫出處；recheckAfter 選填，過了這天 check-civic-tech 會提醒重查，理由寫在 recheckNote；subjects、competencies（108 課綱核心素養代碼，見 scripts/taxonomy.json）、sdgs、tags 只給搜尋用，頁面不顯示；status 限 active、maintenance、dormant，閘道指令會照它註明狀態。",
   "lastUpdated": "2026-10-31",
   "projects": [
     {
@@ -135,7 +135,7 @@
       "theme": "公共政策討論",
       "org": "g0v 社群",
       "url": "https://vtaiwan.tw/",
-      "description": "公共政策的開放討論平台。議題依序經過意見徵集、研擬草案、送交院會，近年討論過 AI 規範和社群平台的言論審查。每週三晚上 7 點有線上會議。",
+      "description": "公共政策的開放討論平台。議題列表依進度標示意見徵集、研擬草案或送交院會，近年討論過 AI 的風險評估和社群平台的言論審查。每週三晚上 7 點有線上會議。",
       "tools": [
         { "name": "議題列表", "url": "https://www.vtaiwan.tw/topics", "note": "議題頁連到當時的共筆、直播或討論，各議題不同" }
       ],

@@ -6,6 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
@@ -279,7 +280,7 @@ test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的
 });
 
 // 文字任務沒有 schema 的 maxLength，長度靠指令；maxOutputChars 只擋遠超過指令的回答。
-test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句、建議 1～2 句、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦', () => {
+test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句、建議 1～2 句、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦，不指定語氣', () => {
     const { instructions } = catalog.get('civic-tech-suggestion');
     assert.match(instructions, /推薦 1 至 3 個/);
     assert.match(instructions, /推薦原因（2～3 句）/);
@@ -288,22 +289,45 @@ test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句�
     assert.match(instructions, /推薦 3 個專案時，每個推薦都要寫得更精簡/);
     assert.match(instructions, /不太相關，也請誠實說明/);
     assert.match(instructions, /寧可少推薦幾個/);
+    assert.doesNotMatch(instructions, /語氣|鼓勵/);
 });
 
-// 專案名稱與狀態以 public/civic-tech-map/projects.json 為準（地圖上的專案卡片標題也與它相同）。
+// 專案名稱與狀態以 public/civic-tech-map/projects.json 為準，名稱用地圖上專案卡片的 title。
 // 閘道的映像檔裡沒有那個檔案，指令只能自己抄一份，靠這個測試防止兩邊漂移。
-test('civic-tech-suggestion：指令列出的專案與 projects.json 一一對應，不是 active 的專案註明了狀態', () => {
+test('civic-tech-suggestion：指令列出的專案與 projects.json 的 title 一一對應，不是 active 的專案註明了狀態', () => {
     const { instructions } = catalog.get('civic-tech-suggestion');
     const { projects } = JSON.parse(readFileSync(new URL('../../public/civic-tech-map/projects.json', import.meta.url), 'utf8'));
     // 每個專案一行：「編號. 名稱：簡介……」。
     const lines = new Map(instructions.split('\n').filter((line) => /^\d+\. /.test(line))
         .map((line) => [line.replace(/^\d+\. /, '').split('：')[0], line]));
-    assert.deepEqual([...lines.keys()].sort(), projects.map(({ name }) => name).sort());
+    assert.deepEqual([...lines.keys()].sort(), projects.map(({ title }) => title).sort());
     const STATUS_NOTES = { maintenance: '維護中', dormant: '近期幾無活動' };
-    for (const { name, status } of projects) {
+    for (const { title, status } of projects) {
         for (const [key, note] of Object.entries(STATUS_NOTES)) {
-            assert.equal(lines.get(name).includes(note), status === key, `${name} 是 ${status}，指令${status === key ? '要' : '不要'}寫「${note}」`);
+            assert.equal(lines.get(title).includes(note), status === key, `${title} 是 ${status}，指令${status === key ? '要' : '不要'}寫「${note}」`);
         }
+    }
+});
+
+// 指令裡的簡介照 projects.json 的 description 與 status 寫。這兩欄改了（例如過了 recheckAfter 重查之後），
+// 這裡的雜湊就對不上：照新的內容改 task-catalog.mjs 的那一行，再把雜湊換成失敗訊息裡的新值
+const REVIEWED_PROJECTS = {
+    'disfactory': '3b6e67cdb09a',
+    'cofacts': '3845286e9e7d',
+    'amis-moedict': '3132eb3b1d27',
+    'thaubing': '69cd2318d3aa',
+    'national-treasure': '84de664b8b13',
+    'lawtrace': '541a118afbb6',
+    'vtaiwan': '61bcf0d56826',
+    'civil-iot': 'e309baf94cce',
+};
+
+test('civic-tech-suggestion：projects.json 的 description 或 status 改了，指令那一行要跟著重看', () => {
+    const { projects } = JSON.parse(readFileSync(new URL('../../public/civic-tech-map/projects.json', import.meta.url), 'utf8'));
+    assert.deepEqual(Object.keys(REVIEWED_PROJECTS).sort(), projects.map(({ id }) => id).sort());
+    for (const { id, status, description } of projects) {
+        const hash = createHash('sha256').update(`${status}\n${description}`).digest('hex').slice(0, 12);
+        assert.equal(hash, REVIEWED_PROJECTS[id], `${id} 的 description 或 status 改了：照著改 task-catalog.mjs 的指令，再把這裡的值換成 ${hash}`);
     }
 });
 
