@@ -456,8 +456,13 @@ export function createGateway({
     server.maxConnections = MAX_CONNECTIONS;
     server.maxHeadersCount = MAX_HEADERS_COUNT;
     // Expect: 100-continue：不讓 Node 自動回 100 Continue（那等於請對方先把整個 body 送過來），
-    // 等提早的檢查（origin、任務、格式、限流）都過了、真的要讀 body 時才回
-    server.on('checkContinue', onRequest);
+    // 等提早的檢查（origin、任務、格式、限流）都過了、真的要讀 body 時才回。Node 認得的寫法（例如
+    // 「foo, 100-continue」）都經過這裡，記下來，回不回 100 照這個判斷
+    const expectsContinue = new WeakSet();
+    server.on('checkContinue', (req, res) => {
+        expectsContinue.add(req);
+        onRequest(req, res);
+    });
     // body 只有幾 KB：慢慢上傳的連線不必等到預設的 5 分鐘。回應（SSE）不受這兩個限制。
     // 任務請求的 body 另有閘道自己計時的期限（cfg.bodyTimeoutMs，回 JSON 的 408 並帶 CORS），
     // requestTimeout 只是其他路徑的最後防線：設得比「標頭期限 + body 期限」長，正常輪不到它
@@ -623,7 +628,7 @@ export function createGateway({
 
         if (bodyReads >= maxBodyReads) return reject(503, 'busy', MESSAGES.busy, { retryAfter: 5 });
         // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body
-        if (/^100-continue$/i.test(req.headers.expect || '')) res.writeContinue();
+        if (expectsContinue.has(req)) res.writeContinue();
         let raw;
         bodyReads++;
         try {
