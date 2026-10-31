@@ -38,7 +38,7 @@ const current = (item: (typeof navItems)[number]) =>
             'transition duration-300',
             item.key === currentSection
               ? 'text-blue-600 font-bold'
-              : 'text-gray-600 hover:text-blue-500',
+              : 'text-gray-600 hover:text-blue-700',
           ]}
         >{item.label}</a>
       ))}
@@ -48,7 +48,7 @@ const current = (item: (typeof navItems)[number]) =>
     <button
       id="nav-toggle"
       type="button"
-      class="md:hidden text-gray-600 hover:text-blue-500"
+      class="md:hidden text-gray-600 hover:text-blue-700"
       aria-label="開啟導覽選單"
       aria-expanded="false"
       aria-controls="mobile-menu"
@@ -69,7 +69,7 @@ const current = (item: (typeof navItems)[number]) =>
           'block px-6 py-3 font-semibold border-b border-gray-50',
           item.key === currentSection
             ? 'text-blue-600 bg-blue-50'
-            : 'text-gray-600 hover:text-blue-500 hover:bg-gray-50',
+            : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50',
         ]}
       >{item.label}</a>
     ))}
