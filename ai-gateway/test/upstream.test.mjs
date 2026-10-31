@@ -1008,7 +1008,8 @@ test('SSE：接近上限的長行切成很多小塊送來也很快（殘行不�
     const events = await collect(chunks());
     assert.equal(events.length, 1);
     assert.equal(events[0].length, 900 * 1024);
-    assert.ok(Date.now() - started < 1_500, `花了 ${Date.now() - started}ms`);
+    // 平常約 0.1 秒；每來一塊就從頭重掃的寫法本機要 7 秒以上（2026-11-01）。門檻放寬到 5 秒，CPU 被搶時才不會誤判
+    assert.ok(Date.now() - started < 5_000, `花了 ${Date.now() - started}ms`);
 });
 
 test('redact：含數字與大寫的雜湊、小寫 bearer、黏在底線後的雜湊都要遮掉', () => {

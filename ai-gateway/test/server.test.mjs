@@ -3122,7 +3122,8 @@ test('接續輪遇到 429、Retry-After 比剩下的總時限長（3600 秒、�
 });
 
 test('上游沒照 max_tokens 停、一直送正文：超過一個回應的上限就中止，瀏覽器收到 unavailable，UPSTREAM-ERR 記 protocol', async () => {
-    const gw = await startRealGateway([{ content: Array.from({ length: 270 }, () => 'x'.repeat(4096)), finish: 'stop' }]);
+    // 送 1 MiB 多要一點時間，CPU 被搶時 4 秒的任務時限可能先到：放寬到 30 秒
+    const gw = await startRealGateway([{ content: Array.from({ length: 270 }, () => 'x'.repeat(4096)), finish: 'stop' }], { taskTimeoutMs: 30_000 });
     try {
         const events = await readEvents(await post(gw.base, 'demo-md', { question: '怎麼做專題？' }));
         const last = events.at(-1);
@@ -3221,7 +3222,8 @@ function floodingGenerate(limit, { waitAfter = false } = {}) {
  * 會先讀到排著的資料再正常結束）
  */
 async function expectStalled(gw, flood, socket, stall) {
-    await waitFor(() => gw.logs.some((l) => l.tag === 'TASK'), 5_000);
+    // CPU 被搶時，灌滿緩衝與判定不收資料都會慢：等到 15 秒
+    await waitFor(() => gw.logs.some((l) => l.tag === 'TASK'), 15_000);
     const task = gw.logs.find((l) => l.tag === 'TASK').fields;
     assert.deepEqual([task.outcome, task.status, task.stall], ['client_stalled', 499, stall]);
     assert.ok(task.pending > 0);
