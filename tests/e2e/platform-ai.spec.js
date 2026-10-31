@@ -273,6 +273,15 @@ test.describe('PlatformAI 共用 module', () => {
             await expect(page.locator('#box [role="status"]')).toHaveText('排隊中，前面還有 3 位…');
         });
 
+        // 頁面上已經有 v11 時，版號沒升的話這一份會提早返回，AI 回答裡的清單項目不在清單裡。
+        test('v11 已經在頁面上時，這一份照樣載入，清單項目包在 <ul> 裡', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 11 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => PlatformAI.renderMarkdown('- 一'))).toMatch(/^<ul [^>]*><li>一<\/li><\/ul>$/);
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1775,6 +1784,125 @@ test.describe('PlatformAI 共用 module', () => {
             });
             expect(r.calls).toEqual(['壞掉', '之後']);
             expect(r.warnings).toEqual(['AI 任務的回呼函式出錯：Error: 畫不出來']);
+        });
+    });
+
+    test.describe('renderMarkdown', () => {
+        test.beforeEach(async ({ page }) => { await gotoFixture(page); });
+
+        // 把輸出放進 DOM，回傳每個元素的標籤與屬性，看它產生了什麼結構
+        const structure = (page, text, options) => page.evaluate(({ text, options }) => {
+            const box = document.createElement('div');
+            box.innerHTML = PlatformAI.renderMarkdown(text, options);
+            document.body.appendChild(box);
+            const walk = (el) => Array.from(el.children).map((c) => {
+                const attrs = Array.from(c.attributes).map((a) => a.name).filter((n) => n !== 'style');
+                const node = { tag: c.tagName.toLowerCase() };
+                if (attrs.length) node.attrs = Object.fromEntries(attrs.map((n) => [n, c.getAttribute(n)]));
+                if (c.children.length) node.children = walk(c);
+                else node.text = c.textContent;
+                return node;
+            });
+            return walk(box);
+        }, { text, options });
+
+        test('先 escape 再轉換：模型給的 HTML 一律是文字，產生的標籤只有白名單裡的，屬性只有 style 與 <ol> 的 start', async ({ page }) => {
+            const r = await page.evaluate(() => {
+                const text = [
+                    '# <img src=x onerror="window.__xss=1">',
+                    '- <script>window.__xss=2<\/script>',
+                    '1. <a href="javascript:alert(1)">x</a>',
+                    '**<b onclick=alert(1)>粗</b>** `<i>` *<svg onload=alert(1)>*',
+                    '<h3 style="color:red">假的標題</h3>',
+                ].join('\n');
+                const box = document.createElement('div');
+                box.innerHTML = PlatformAI.renderMarkdown(text, { headingLevel: 3 });
+                document.body.appendChild(box);
+                const tags = new Set();
+                const attrs = new Set();
+                box.querySelectorAll('*').forEach((el) => {
+                    tags.add(el.tagName.toLowerCase());
+                    for (const a of el.attributes) attrs.add(el.tagName.toLowerCase() + '[' + a.name + ']');
+                });
+                return { tags: [...tags].sort(), attrs: [...attrs].sort(), text: box.textContent, xss: window.__xss };
+            });
+            expect(r.xss).toBeUndefined();
+            for (const tag of r.tags) expect(['br', 'code', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'ol', 'strong', 'ul']).toContain(tag);
+            for (const attr of r.attrs) expect(attr).toMatch(/\[style\]$|^ol\[start\]$/);
+            expect(r.text).toContain('<img src=x onerror="window.__xss=1">');
+            expect(r.text).toContain('<h3 style="color:red">假的標題</h3>');
+        });
+
+        test('連續的 - 、* 行包進 <ul>，數字行包進 <ol>，start 照第一項；空行隔開的仍是同一個清單；沒有落單的 <li>', async ({ page }) => {
+            expect(await structure(page, '說明\n- 一\n* 二\n\n- 三\n結尾')).toEqual([
+                { tag: 'br', text: '' },
+                { tag: 'ul', children: [{ tag: 'li', text: '一' }, { tag: 'li', text: '二' }, { tag: 'li', text: '三' }] },
+            ]);
+            expect(await structure(page, '3. 甲\n4) 乙\n\n5. 丙')).toEqual([
+                { tag: 'ol', attrs: { start: '3' }, children: [{ tag: 'li', text: '甲' }, { tag: 'li', text: '乙' }, { tag: 'li', text: '丙' }] },
+            ]);
+            expect(await structure(page, '1. 甲\n- 乙')).toEqual([
+                { tag: 'ol', children: [{ tag: 'li', text: '甲' }] },
+                { tag: 'ul', children: [{ tag: 'li', text: '乙' }] },
+            ]);
+            // 項目符號與編號由清單的 list-style 畫出，文字裡沒有符號
+            const marker = await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.innerHTML = PlatformAI.renderMarkdown('- 一\n1. 二');
+                document.body.appendChild(box);
+                return [...box.querySelectorAll('ul, ol')].map((el) => getComputedStyle(el).listStyleType).concat(box.textContent);
+            });
+            expect(marker).toEqual(['disc', 'decimal', '一二']);
+        });
+
+        test('給了 headingLevel：# 開頭的行輸出成標題，井號最少的用這一級，往下遞增，最多 h6', async ({ page }) => {
+            expect(await structure(page, '## 大\n文字\n### 小\n#### 更小', { headingLevel: 4 })).toEqual([
+                { tag: 'h4', text: '大' },
+                { tag: 'br', text: '' },
+                { tag: 'h5', text: '小' },
+                { tag: 'h6', text: '更小' },
+            ]);
+            expect(await structure(page, '# 一\n###### 六', { headingLevel: 5 })).toEqual([
+                { tag: 'h5', text: '一' },
+                { tag: 'h6', text: '六' },
+            ]);
+            const look = await page.evaluate(() => {
+                const box = document.createElement('div');
+                box.innerHTML = PlatformAI.renderMarkdown('# 標題', { headingLevel: 3 });
+                document.body.appendChild(box);
+                const s = getComputedStyle(box.querySelector('h3'));
+                return { weight: s.fontWeight, size: s.fontSize === getComputedStyle(box).fontSize };
+            });
+            expect(look).toEqual({ weight: '700', size: true });
+        });
+
+        test('沒給 headingLevel、或給的不是 1 到 6 的整數：# 開頭的行照舊輸出 <strong>，不產生標題', async ({ page }) => {
+            for (const options of [undefined, {}, { headingLevel: 0 }, { headingLevel: 7 }, { headingLevel: 2.5 }, { headingLevel: '3' }]) {
+                expect(await page.evaluate((options) => PlatformAI.renderMarkdown('# 重點\n內容', options), options))
+                    .toBe('<strong>重點</strong><br>內容');
+            }
+        });
+
+        test('inline: true 不產生區塊元素：標題是 <strong>，- 換成「• 」，數字開頭的行照原樣，不看 headingLevel', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            expect(await render('1. 先選定主題', { inline: true })).toBe('1. 先選定主題');
+            expect(await render('# 重點\n- 一\n* **二**\n2) 三', { inline: true, headingLevel: 3 }))
+                .toBe('<strong>重點</strong><br>• 一<br>• <strong>二</strong><br>2) 三');
+            expect(await render('<b>x</b>', { inline: true })).toBe('&lt;b&gt;x&lt;/b&gt;');
+        });
+
+        test('換行：文字行之間是 <br>；空一行的地方留一行空白；行內語法不跨行', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            expect(await render('甲\n乙\n\n丙')).toBe('甲<br>乙<br><br>丙');
+            expect(await render('**粗** *斜* `碼`\n**不\n跨行**')).toBe('<strong>粗</strong> <em>斜</em> <code>碼</code><br>**不<br>跨行**');
+            const ul = '<ul style="margin:0;padding-left:1.5em;list-style:disc">';
+            const h4 = '<h4 style="margin:0;font-size:inherit;font-weight:700">';
+            expect(await render('甲\n- 一\n乙')).toBe('甲<br>' + ul + '<li>一</li></ul>乙');
+            expect(await render('甲\n\n- 一\n\n乙')).toBe('甲<br><br>' + ul + '<li>一</li></ul><br>乙');
+            expect(await render('## 標\n甲\n\n## 標二\n\n乙', { headingLevel: 4 }))
+                .toBe(h4 + '標</h4>甲<br><br>' + h4 + '標二</h4><br>乙');
+            expect(await render('')).toBe('');
+            expect(await render(null)).toBe('');
         });
     });
 

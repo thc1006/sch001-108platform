@@ -15,7 +15,7 @@ const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) =
 // 草稿標明沒有寫完、留在結果區，訊息接在最後。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
 const SETTLE = [
-    ['收到 done', done('* 最後的答案'), (page) => expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案')],
+    ['收到 done', done('* 最後的答案'), (page) => expect(page.locator('#ai-result .prose')).toHaveText('最後的答案')],
     ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
         (page) => expect(page.locator('#ai-result > p')).toHaveText(FORMAT_ERROR)],
 ];
@@ -59,7 +59,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         const button = page.locator('#ai-generate-btn');
 
         await expect(draft.locator('strong')).toHaveText(['A2 系統思考與解決問題']);
-        await expect(draft.locator('li')).toHaveText(['• A2 系統思考與解決問題：寫出你怎麼從失敗的實驗找出原因。']);
+        await expect(draft.locator('ul > li')).toHaveText(['A2 系統思考與解決問題：寫出你怎麼從失敗的實驗找出原因。']);
         await expect(work.getByRole('status')).toHaveText('AI 正在撰寫回答…');
         await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
         await expect(result).toBeEmpty();
@@ -68,7 +68,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(button).toHaveText('分析中…');
 
         await push(page, delta('* **A3 規劃執行與創新應變**：描述你如何調整實驗設計'));
-        await expect(draft.locator('li')).toHaveCount(2);
+        await expect(draft.locator('ul > li')).toHaveCount(2);
 
         // done 的 result 句尾多了「。」，畫面要以它為準。
         await push(page, done([
@@ -76,9 +76,9 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
             '* **A3 規劃執行與創新應變**：描述你如何調整實驗設計。',
         ].join('\n')));
 
-        await expect(result.locator('.prose li')).toHaveText([
-            '• A2 系統思考與解決問題：寫出你怎麼從失敗的實驗找出原因。',
-            '• A3 規劃執行與創新應變：描述你如何調整實驗設計。',
+        await expect(result.locator('.prose ul > li')).toHaveText([
+            'A2 系統思考與解決問題：寫出你怎麼從失敗的實驗找出原因。',
+            'A3 規劃執行與創新應變：描述你如何調整實驗設計。',
         ]);
         await expect(work).toBeEmpty();
         await expect(page.locator('#ai-analyst .prose')).toHaveCount(1);
@@ -165,7 +165,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
             await page.fill('#ai-input', '科展');
             await page.click('#ai-generate-btn');
             const work = page.locator('#ai-work');
-            await expect(work.locator('.prose')).toHaveText('• 草稿');
+            await expect(work.locator('.prose')).toHaveText('草稿');
 
             await work.getByRole('button', { name: '取消' }).focus();
             await push(page, chunk);
@@ -187,11 +187,11 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         const work = page.locator('#ai-work');
         const result = page.locator('#ai-result');
         const button = page.locator('#ai-generate-btn');
-        await expect(work.locator('.prose li')).toHaveText(['• A2 系統思考與解決問題：寫出你怎麼']);
+        await expect(work.locator('.prose ul > li')).toHaveText(['A2 系統思考與解決問題：寫出你怎麼']);
 
         await work.getByRole('button', { name: '取消' }).focus();
         await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
-        await expect(result.locator('.prose li')).toHaveText(['• A2 系統思考與解決問題：寫出你怎麼']);
+        await expect(result.locator('.prose ul > li')).toHaveText(['A2 系統思考與解決問題：寫出你怎麼']);
         await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
         await expect(result.locator(':scope > p')).toHaveText(message);
         await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
@@ -218,8 +218,8 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
 
     // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
     const ENDS = [
-        ['done', done('* 最後的答案'), '• 最後的答案'],
-        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), 'AI 的回答（沒有寫完）• 最後'],
+        ['done', done('* 最後的答案'), '最後的答案'],
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), 'AI 的回答（沒有寫完）最後'],
     ];
     for (const [code, end, expected] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → #ai-result 是最後的答案，之後的畫面不再畫出草稿`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
@@ -259,17 +259,17 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
         const work = page.locator('#ai-work');
-        await expect(work.locator('.prose')).toHaveText('• 草稿');
+        await expect(work.locator('.prose')).toHaveText('草稿');
         await push(page, done('* 最後的答案'));
-        await expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案');
+        await expect(page.locator('#ai-result .prose')).toHaveText('最後的答案');
         await expect(work).toBeEmpty();
         const button = page.locator('#ai-generate-btn');
         await expect(button).not.toHaveAttribute('aria-disabled');
         await expect(button).toHaveText('開始分析');
         await button.click();
-        await expect(work.locator('.prose')).toHaveText('• 草稿');
+        await expect(work.locator('.prose')).toHaveText('草稿');
         await push(page, done('* 第二次的答案'));
-        await expect(page.locator('#ai-result .prose')).toHaveText('• 第二次的答案');
+        await expect(page.locator('#ai-result .prose')).toHaveText('第二次的答案');
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
         expect(errors).toEqual([]);
     });
@@ -280,7 +280,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         const button = page.locator('#ai-generate-btn');
         await button.focus();
         await page.keyboard.press('Enter');
-        await expect(page.locator('#ai-work .prose')).toHaveText('• 草稿');
+        await expect(page.locator('#ai-work .prose')).toHaveText('草稿');
         // 按鈕若變得不能聚焦，瀏覽器到更新畫面時才移走焦點（HTML 標準的 focus fixup），所以先等兩個畫格。
         await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await expect(button).toBeFocused();
@@ -289,7 +289,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
 
         await page.keyboard.press('Enter');
         await push(page, done('* 最後的答案'));
-        await expect(page.locator('#ai-result .prose')).toHaveText('• 最後的答案');
+        await expect(page.locator('#ai-result .prose')).toHaveText('最後的答案');
         expect(await page.evaluate(() => window.__calls.length)).toBe(1);
         await expect(button).toBeEnabled();
         await expect(button).toBeFocused();
@@ -318,12 +318,12 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
         const result = page.locator('#ai-result');
-        await expect(result.locator('.prose')).toHaveText('• 第一次的答案');
+        await expect(result.locator('.prose')).toHaveText('第一次的答案');
         await expect(page.locator('#ai-generate-btn')).toBeEnabled();
 
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 第二次的草稿')], hang: true });
         await page.click('#ai-generate-btn');
-        await expect(page.locator('#ai-work .prose')).toHaveText('• 第二次的草稿');
+        await expect(page.locator('#ai-work .prose')).toHaveText('第二次的草稿');
         await expect(result).toBeEmpty();
     });
 
@@ -348,14 +348,14 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
-        await expect(work.locator('.prose')).toHaveText('• 草稿');
+        await expect(work.locator('.prose')).toHaveText('草稿');
         await expect(work.locator('.platform-ai-progress')).toHaveCount(1);
         await expect(result.locator('.platform-ai-progress, .prose')).toHaveCount(0);
         expect(await work.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual([]);
         expect(await work.locator('.platform-ai-progress').evaluate(liveSettingsUpFrom)).toEqual([]);
 
         await push(page, done('* 最後的答案'));
-        await expect(result.locator('.prose')).toHaveText('• 最後的答案');
+        await expect(result.locator('.prose')).toHaveText('最後的答案');
         expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual(['ai-result:polite']);
         await expect(work).toBeEmpty();
     });
@@ -365,7 +365,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
         const answer = page.locator('#ai-result .prose');
-        await expect(answer.locator('li')).toHaveText(['• B1 符號運用與溝通表達：上台報告的經驗很加分！']);
+        await expect(answer.locator('ul > li')).toHaveText(['B1 符號運用與溝通表達：上台報告的經驗很加分！']);
         await expect(answer.locator('strong')).toHaveText(['B1 符號運用與溝通表達']);
     });
 });
