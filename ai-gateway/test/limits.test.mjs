@@ -433,6 +433,26 @@ test('clientKey：IPv6 取 /64（同一段視為同一來源，大小寫與省�
     assert.notEqual(clientKey('::1'), clientKey('203.0.113.5'), 'IPv4 不能全部擠進同一個 IPv6 桶');
 });
 
+// 2002:cb00:7105::/48 是 203.0.113.5 的 6to4 前綴（文件用的位址段）
+test('clientKey：6to4（2002::/16）取內嵌的 IPv4，同一個 IPv4 的各個 /64 與 IPv4 本身都是同一個桶', () => {
+    for (const address of ['2002:cb00:7105::1', '2002:cb00:7105:1::1', '2002:CB00:7105:ffff:1:2:3:4', '[2002:cb00:7105:2::9]:443']) {
+        assert.equal(clientKey(address), '203.0.113.5', address);
+    }
+    assert.equal(clientKey('2002:cb00:7106:1::1'), '203.0.113.6');
+    // 2002 開頭的才是 6to4
+    assert.equal(clientKey('2001:db8:7105:1::1'), '2001:db8:7105:1::/64');
+});
+
+// Teredo：2001:0:<伺服器的 IPv4>:<旗標>:<反相的埠>:<反相的用戶端 IPv4>。伺服器用 192.0.2.1、192.0.2.2，
+// 用戶端 203.0.113.5 反相是 34ff:8efa（都是文件用的位址段）
+test('clientKey：Teredo（2001:0::/32）取反相後的用戶端 IPv4，伺服器、旗標與埠換了也是同一個桶', () => {
+    for (const address of ['2001:0:c000:201:0:0:34ff:8efa', '2001:0:c000:202:8000:1234:34ff:8efa', '2001::c000:201:0:ffff:34ff:8efa']) {
+        assert.equal(clientKey(address), '203.0.113.5', address);
+    }
+    assert.equal(clientKey('2001:0:c000:201:0:0:34ff:8ef9'), '203.0.113.6');
+    assert.equal(clientKey('2001:db8:c000:201::1'), '2001:db8:c000:201::/64');
+});
+
 test('clientKey：帶埠、方括號、zone id 的寫法先剝掉；不是 IP 的一律 invalid（鍵長有上限）', () => {
     assert.equal(clientKey('203.0.113.5:51234'), '203.0.113.5');
     assert.equal(clientKey('[2001:db8::1]:443'), '2001:db8:0:0::/64');
