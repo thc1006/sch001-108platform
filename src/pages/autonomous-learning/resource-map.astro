@@ -31,11 +31,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <span>規劃路徑</span>
                 </button>
             </div>
-            {/* 進度區塊放在 #pathWork，live region #pathResult 只放最後的結果或訊息：WebKit 連
-                aria-live="off" 的子樹也算進外層的 live region，計時器放進去，VoiceOver 會反覆朗讀。 */}
+            {/* 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構，所以結果區不是 live region。
+                結果的摘要與各種訊息改由 #pathStatus 唸，它載入時就在、一開始是空的，之後寫入的才會被唸出來。
+                進度區塊有自己的 status，也不能放進 live region：WebKit 連 aria-live="off" 子樹的變化也會唸。 */}
             <div class="mt-6">
                 <div id="pathWork"></div>
-                <div id="pathResult" aria-live="polite"></div>
+                <p id="pathStatus" role="status" class="sr-only"></p>
+                <div id="pathResult"></div>
             </div>
         </section>
 
@@ -189,6 +191,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const pathInput = document.getElementById('pathInput');
         const pathWork = document.getElementById('pathWork');
         const pathResult = document.getElementById('pathResult');
+        // 結果區不是 live region，要唸的話用 announce 寫進這裡。
+        const pathStatus = document.getElementById('pathStatus');
+        let announceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次（例如連按兩次「請先輸入」）時，第二次
+        // 也會被唸出來。text 是空字串時只清空。
+        function announce(text) {
+            clearTimeout(announceTimer);
+            pathStatus.textContent = '';
+            if (text) announceTimer = setTimeout(() => { pathStatus.textContent = text; }, 100);
+        }
         const pathBtnLabel = generatePathBtn.querySelector('span');
         // platform-ai.js 沒載入成功時沒有 describeError 可用。字句與它對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
@@ -200,6 +212,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
             p.textContent = text;
             pathResult.appendChild(p);
+            announce(text);
         }
 
         generatePathBtn.addEventListener('click', async () => {
@@ -217,6 +230,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             generatePathBtn.classList.add('opacity-50', 'cursor-not-allowed');
             pathBtnLabel.textContent = '規劃中…';
             pathResult.textContent = '';
+            announce('');
 
             const controller = new AbortController();
             // mountProgress 也放在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
@@ -235,6 +249,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 progress.finish();
                 pathWork.textContent = '';
                 displayAIPath(result.learning_path);
+                announce(`已規劃學習路徑，共 ${result.learning_path.length} 個步驟。`);
             } catch (error) {
                 if (progress) progress.finish();
                 pathWork.textContent = '';

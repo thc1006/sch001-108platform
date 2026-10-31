@@ -4,7 +4,7 @@
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/resource-map.html`;
@@ -179,7 +179,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         await expect(page.locator('#pathWork > *')).toHaveCount(0);
         await expectButtonRestored(button);
         // 取消鈕會隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
-        // 訊息，live region 又唸一次。
+        // 訊息，#pathStatus 又唸一次。
         await expect(button).toBeFocused();
         for (const el of [button, page.locator('#pathWork'), page.locator('#pathResult')]) await expect(el).not.toHaveAttribute('tabindex');
     });
@@ -248,12 +248,45 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         await expect(input).toHaveAccessibleName('你想學習的主題');
     });
 
+    // 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構
+    test('結果區不在任何 live region 裡；#pathStatus 是視覺上隱藏的 role="status"，提示、結果摘要與取消各唸一句，畫面照常顯示', async ({ page }) => {
+        const result = page.locator('#pathResult');
+        const status = page.locator('#pathStatus');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        expect(await outsideLiveRegions(result)).toBe(true);
+        await watchStatus(page, '#pathStatus');
+
+        await page.click('#generatePathBtn');
+        await expect(result).toHaveText('請先輸入你想學習的主題！');
+        await expect(status).toHaveText('請先輸入你想學習的主題！');
+        // 同一句再出現一次，也要再唸一次
+        await page.click('#generatePathBtn');
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你想學習的主題！', '請先輸入你想學習的主題！']);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+        await page.fill('#pathInput', 'Python');
+        await page.click('#generatePathBtn');
+        await expect(result).toContainText(RESULT.learning_path[3].title);
+        await expect(status).toHaveText('已規劃學習路徑，共 4 個步驟。');
+        expect(await outsideLiveRegions(result)).toBe(true);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.click('#generatePathBtn');
+        await expect(status).toBeEmpty();
+        await page.locator('#pathWork').getByRole('button', { name: '取消' }).click();
+        await expect(result).toHaveText('已取消。');
+        await expect(status).toHaveText('已取消。');
+        expect(await statusWrites(page)).toEqual(['請先輸入你想學習的主題！', '請先輸入你想學習的主題！', '已規劃學習路徑，共 4 個步驟。', '已取消。']);
+    });
+
     // WebKit 連 aria-live="off" 的子樹也算進外層的 live region，進度區塊的計時器放在 live region 裡，
     // VoiceOver 會反覆朗讀。所以進度在工作區，結果區只放最後的結果或訊息。
-    test('結果區 #pathResult 是 aria-live="polite"；進度區塊在不屬於任何 live region 的 #pathWork', async ({ page }) => {
+    test('結果區 #pathResult 不是 live region；進度區塊在不屬於任何 live region 的 #pathWork', async ({ page }) => {
         const work = page.locator('#pathWork');
         const result = page.locator('#pathResult');
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(result)).toBe(true);
 
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#pathInput', 'Python');
@@ -270,7 +303,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         await push(page, done(RESULT));
         await expect(result.locator(':scope > div')).toHaveCount(4);
         await expect(work.locator(':scope > *')).toHaveCount(0);
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(result)).toBe(true);
     });
 });
 

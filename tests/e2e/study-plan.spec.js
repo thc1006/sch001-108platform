@@ -3,7 +3,7 @@
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/plan-templates.html`;
@@ -155,7 +155,7 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         await expect(button).toHaveText('產生計畫草案');
         // 取消鈕跟著進度區塊移除了，焦點不能停在清空的工作區，也不能移進結果區：螢幕閱讀器會唸一次
-        // 訊息，live region 又唸一次。
+        // 訊息，#planStatus 又唸一次。
         await expect(button).toBeFocused();
         for (const el of [button, page.locator('#planWorkspace'), page.locator('#planResult')]) await expect(el).not.toHaveAttribute('tabindex');
     });
@@ -222,11 +222,44 @@ test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', 
         await expect(input).toHaveAccessibleName('你的自主學習主題');
     });
 
+    // 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構
+    test('結果區不在任何 live region 裡；#planStatus 是視覺上隱藏的 role="status"，提示、結果摘要與取消各唸一句，畫面照常顯示', async ({ page }) => {
+        const result = page.locator('#planResult');
+        const status = page.locator('#planStatus');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        expect(await outsideLiveRegions(result)).toBe(true);
+        await watchStatus(page, '#planStatus');
+
+        await page.click('#generatePlanBtn');
+        await expect(result).toHaveText('請先輸入你的自主學習主題！');
+        await expect(status).toHaveText('請先輸入你的自主學習主題！');
+        // 同一句再出現一次，也要再唸一次
+        await page.click('#generatePlanBtn');
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的自主學習主題！', '請先輸入你的自主學習主題！']);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+        await page.fill('#planInput', '手搖飲');
+        await page.click('#generatePlanBtn');
+        await expect(result).toContainText(RESULT.expected_outcome[1]);
+        await expect(status).toHaveText('已產生計畫草案，共 4 項週次進度。');
+        expect(await outsideLiveRegions(result)).toBe(true);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.click('#generatePlanBtn');
+        await expect(status).toBeEmpty();
+        await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).click();
+        await expect(result).toHaveText('已取消。');
+        await expect(status).toHaveText('已取消。');
+        expect(await statusWrites(page)).toEqual(['請先輸入你的自主學習主題！', '請先輸入你的自主學習主題！', '已產生計畫草案，共 4 項週次進度。', '已取消。']);
+    });
+
     // 進度區塊放在 live region 裡的話，WebKit 會連計時器每秒的變化都通報（見頁面的註解）。
-    test('結果區是 aria-live="polite"，工作區不在任何 live region 裡；再送一次時舊結果先清掉，進度只出現在工作區', async ({ page }) => {
+    test('結果區與工作區都不在任何 live region 裡；再送一次時舊結果先清掉，進度只出現在工作區', async ({ page }) => {
         const result = page.locator('#planResult');
         const workspace = page.locator('#planWorkspace');
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(result)).toBe(true);
         expect(await workspace.evaluate((el, selector) => el.closest(selector) === null, LIVE_REGION)).toBe(true);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });

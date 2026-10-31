@@ -7,7 +7,7 @@
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 
@@ -182,7 +182,7 @@ for (const p of PAGES) {
             await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
             await expect(button).toBeEnabled();
             // 取消鈕隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
-            // 訊息，live region 又唸一次。
+            // 訊息，#analysisStatus 又唸一次。
             await expect(button).toBeFocused();
             for (const el of [button, page.locator('#analysisWork'), result]) await expect(el).not.toHaveAttribute('tabindex');
         });
@@ -236,13 +236,46 @@ for (const p of PAGES) {
             await expect(hint).toHaveText(LIMIT_TEXT);
         });
 
+        // 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構
+        test('結果區不在任何 live region 裡；#analysisStatus 是視覺上隱藏的 role="status"，提示、結果摘要與取消各唸一句，畫面照常顯示', async ({ page }) => {
+            const result = page.locator('#analysisResult');
+            const status = page.locator('#analysisStatus');
+            await expect(status).toHaveAttribute('role', 'status');
+            await expect(status).toHaveClass(/\bsr-only\b/);
+            await expect(status).toBeEmpty();
+            expect(await outsideLiveRegions(result)).toBe(true);
+            await watchStatus(page, '#analysisStatus');
+
+            await page.click('#analyzeBtn');
+            await expect(result).toHaveText('請先貼上你的心得反思文字！');
+            await expect(status).toHaveText('請先貼上你的心得反思文字！');
+            // 同一句再出現一次，也要再唸一次
+            await page.click('#analyzeBtn');
+            await expect.poll(() => statusWrites(page)).toEqual(['請先貼上你的心得反思文字！', '請先貼上你的心得反思文字！']);
+
+            await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+            await page.fill('#reflectionInput', '心得');
+            await page.click('#analyzeBtn');
+            await expect(result).toContainText(RESULT.revised_example);
+            await expect(status).toHaveText('已完成健檢，有總評、STAR 四項分析與修改範例。');
+            expect(await outsideLiveRegions(result)).toBe(true);
+
+            await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+            await page.click('#analyzeBtn');
+            await expect(status).toBeEmpty();
+            await page.locator('#analysisWork').getByRole('button', { name: '取消' }).click();
+            await expect(result).toHaveText('已取消。');
+            await expect(status).toHaveText('已取消。');
+            expect(await statusWrites(page)).toEqual(['請先貼上你的心得反思文字！', '請先貼上你的心得反思文字！', '已完成健檢，有總評、STAR 四項分析與修改範例。', '已取消。']);
+        });
+
         // 進度區塊不能在 live region 裡：WebKit 把 aria-live="off" 子樹的變化也算進外層的 live region，
         // Safari + VoiceOver 會反覆唸出計時器與取消鈕。
-        test('進度區塊在沒有 aria-live 的工作區；結果區是 aria-live="polite"，只放最後的結果', async ({ page }) => {
+        test('進度區塊在沒有 aria-live 的工作區；結果區不是 live region，只放最後的結果', async ({ page }) => {
             const work = page.locator('#analysisWork');
             const result = page.locator('#analysisResult');
             await expect(work).not.toHaveAttribute('aria-live');
-            await expect(result).toHaveAttribute('aria-live', 'polite');
+            expect(await outsideLiveRegions(result)).toBe(true);
 
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');

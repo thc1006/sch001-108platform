@@ -28,11 +28,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <span>請求指導</span>
                 </button>
             </div>
-            {/* 進度不放進 #coachResult 這個 live region，否則取消按鈕與每秒更新的秒數都可能被唸出來。
-                Safari 用的 WebKit 會把計時器 aria-live="off" 裡的變化照樣算給外層。 */}
+            {/* 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構，所以結果區不是 live region。
+                結果的摘要與各種訊息改由 #coachStatus 唸，它載入時就在、一開始是空的，之後寫入的才會被唸出來。
+                進度區塊有自己的 status，也不能放進 live region：WebKit 連 aria-live="off" 子樹的變化也會唸。 */}
             <div class="mt-6">
                 <div id="coachProgress"></div>
-                <div id="coachResult" aria-live="polite"></div>
+                <p id="coachStatus" role="status" class="sr-only"></p>
+                <div id="coachResult"></div>
             </div>
         </section>
 
@@ -99,6 +101,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const coachInput = document.getElementById('coachInput');
         const coachProgress = document.getElementById('coachProgress');
         const coachResult = document.getElementById('coachResult');
+        // 結果區不是 live region，要唸的話用 announce 寫進這裡。
+        const coachStatus = document.getElementById('coachStatus');
+        let announceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次（例如連按兩次「請先輸入」）時，第二次
+        // 也會被唸出來。text 是空字串時只清空。
+        function announce(text) {
+            clearTimeout(announceTimer);
+            coachStatus.textContent = '';
+            if (text) announceTimer = setTimeout(() => { coachStatus.textContent = text; }, 100);
+        }
         const coachBtnLabel = generateCoachBtn.querySelector('span');
         // platform-ai.js 沒載入成功（404、被擋）時，PlatformAI 不存在，連 describeError 都沒有，
         // 就退回這一句；字句與 describeError 對未知錯誤的說法相同
@@ -111,6 +123,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
             p.textContent = text;
             coachResult.appendChild(p);
+            announce(text);
         }
 
         generateCoachBtn.addEventListener('click', async () => {
@@ -129,6 +142,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             generateCoachBtn.classList.add('opacity-50', 'cursor-not-allowed');
             coachBtnLabel.textContent = '產生中…';
             coachResult.textContent = '';
+            announce('');
 
             const controller = new AbortController();
             // mountProgress 也要在 try 裡面：PlatformAI 不存在時它會丟 ReferenceError，放在 try 外面
@@ -147,6 +161,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 });
                 progress.finish();
                 displayAIStarterPack(result);
+                announce(`已產生學習啟動包，共 ${result.research_questions.length} 個探索問題。`);
             } catch (error) {
                 if (progress) progress.finish();
                 const text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(error);

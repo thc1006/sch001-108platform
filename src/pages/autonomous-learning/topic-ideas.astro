@@ -74,11 +74,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <span>產生靈感</span>
                 </button>
             </div>
-            {/* 計時器與取消鈕所在的進度區塊放在工作區，結果區只放最後的結果或訊息。
-                Safari 搭配 VoiceOver 時，live region 裡 aria-live="off" 的子樹有變化也會唸出來。 */}
+            {/* 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構，所以結果區不是 live region。
+                結果的摘要與各種訊息改由 #ideaStatus 唸，它載入時就在、一開始是空的，之後寫入的才會被唸出來。
+                進度區塊有自己的 status，也不能放進 live region：WebKit 連 aria-live="off" 子樹的變化也會唸。 */}
             <div class="mt-6">
                 <div id="ideaWorkspace"></div>
-                <div id="ideaResult" class="space-y-4" aria-live="polite"></div>
+                <p id="ideaStatus" role="status" class="sr-only"></p>
+                <div id="ideaResult" class="space-y-4"></div>
             </div>
         </section>
 
@@ -118,6 +120,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const ideaInput = document.getElementById('ideaInput');
         const ideaWorkspace = document.getElementById('ideaWorkspace');
         const ideaResult = document.getElementById('ideaResult');
+        // 結果區不是 live region，要唸的話用 announce 寫進這裡。
+        const ideaStatus = document.getElementById('ideaStatus');
+        let announceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次（例如連按兩次「請先輸入」）時，第二次
+        // 也會被唸出來。text 是空字串時只清空。
+        function announce(text) {
+            clearTimeout(announceTimer);
+            ideaStatus.textContent = '';
+            if (text) announceTimer = setTimeout(() => { ideaStatus.textContent = text; }, 100);
+        }
         const ideaBtnLabel = generateIdeaBtn.querySelector('span');
         // platform-ai.js 沒載入時沒有 describeError 可用。字句與它對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
@@ -129,6 +141,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center';
             p.textContent = text;
             ideaResult.appendChild(p);
+            announce(text);
         }
 
         generateIdeaBtn.addEventListener('click', async () => {
@@ -147,6 +160,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             ideaBtnLabel.textContent = '產生中…';
 
             ideaResult.textContent = '';
+            announce('');
             const controller = new AbortController();
             let progress = null;
             try {
@@ -164,6 +178,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 progress.finish();
                 ideaWorkspace.textContent = '';
                 displayAIdeas(result.ideas);
+                announce(`已產生 ${result.ideas.length} 個主題靈感。`);
             } catch (error) {
                 if (progress) progress.finish();
                 ideaWorkspace.textContent = '';

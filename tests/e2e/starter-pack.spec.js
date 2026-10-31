@@ -6,7 +6,7 @@
  * 建置時有沒有設定 PUBLIC_AI_GATEWAY_URL（頁面有沒有帶 <meta name="ai-gateway-url">）都要全數通過。
  */
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/index.html`;
@@ -122,7 +122,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(page.locator('#generateCoachBtn')).toBeEnabled();
         // 空的 #coachProgress 看不到焦點框。焦點移進 #coachResult 的話，螢幕閱讀器會唸一次訊息，
-        // live region 又唸一次。
+        // #coachStatus 又唸一次。
         await expect(page.locator('#generateCoachBtn')).toBeFocused();
         await expect(page.locator('#generateCoachBtn')).not.toHaveAttribute('tabindex');
         await expect(page.locator('#coachResult')).not.toHaveAttribute('tabindex');
@@ -191,22 +191,37 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await expect(page.locator('#coachInput')).toHaveAttribute('maxlength', '200');
     });
 
-    // 進度區塊自己的 role="status" 會在 finish() 時跟著區塊一起移除，之後才出現的結果與錯誤訊息
-    // 就沒有 live region 可以唸；所以不會被換掉的容器 #coachResult 本身要是 live region
-    test('結果區 #coachResult 是 aria-live="polite" 的 live region → 結果與錯誤訊息才會被螢幕閱讀器唸出', async ({ page }) => {
+    // 結果有標題與清單，整段放進 live region 會被唸成一長串、聽不出結構
+    test('結果區不在任何 live region 裡；#coachStatus 是視覺上隱藏的 role="status"，提示、結果摘要與取消各唸一句，畫面照常顯示', async ({ page }) => {
         const result = page.locator('#coachResult');
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        const status = page.locator('#coachStatus');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        expect(await outsideLiveRegions(result)).toBe(true);
+        await watchStatus(page, '#coachStatus');
 
-        await installFakeGateway(page, {
-            chunks: [
-                sse('accepted', { requestId: 'req-1', task: 'starter-pack' }),
-                sse('done', { result: RESULT, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 }),
-            ],
-        });
+        await page.click('#generateCoachBtn');
+        await expect(result).toHaveText('請先輸入你的初步想法！');
+        await expect(status).toHaveText('請先輸入你的初步想法！');
+        // 同一句再出現一次，也要再唸一次
+        await page.click('#generateCoachBtn');
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的初步想法！', '請先輸入你的初步想法！']);
+
+        await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' }), sse('done', { result: RESULT, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 })] });
         await page.fill('#coachInput', '貓咪');
         await page.click('#generateCoachBtn');
         await expect(result).toContainText(RESULT.suggested_topic);
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        await expect(status).toHaveText('已產生學習啟動包，共 3 個探索問題。');
+        expect(await outsideLiveRegions(result)).toBe(true);
+
+        await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' })], hang: true });
+        await page.click('#generateCoachBtn');
+        await expect(status).toBeEmpty();
+        await page.locator('#coachProgress').getByRole('button', { name: '取消' }).click();
+        await expect(result).toHaveText('已取消。');
+        await expect(status).toHaveText('已取消。');
+        expect(await statusWrites(page)).toEqual(['請先輸入你的初步想法！', '請先輸入你的初步想法！', '已產生學習啟動包，共 3 個探索問題。', '已取消。']);
     });
 
     // 進度區塊在 live region 裡的話，取消按鈕與每秒更新的秒數都可能被唸出來。
