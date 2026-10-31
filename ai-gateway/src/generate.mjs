@@ -88,6 +88,7 @@
 import { neutralizeControlTokens } from './control-tokens.mjs';
 import { streamChat, UpstreamError, MAX_CHARS_PER_TOKEN } from './upstream.mjs';
 import { hasVisibleText } from './visible-text.mjs';
+import { createLengthGuard } from './tasks.mjs';
 
 export class GenerationError extends Error {
     /**
@@ -96,6 +97,7 @@ export class GenerationError extends Error {
      *                       timeout（超過總時限）| stopped（非 stop／length 的結束原因）|
      *                       busy（上游要求等的時間超過在請求裡等的上限）
      * retryAfter 與 cause：上游要求等得太久、沒有重試時（busy 或 timeout），帶著它與上游的錯誤
+     * 正文超過 maxContentChars 的 incomplete 另外帶著 tooLong: true；沒有進展的帶著 stalled: true
      */
     constructor(code, message, { partial, rounds, finishReason, continuations, usage, stats, retryAfter, cause } = {}) {
         super(message, cause !== undefined ? { cause } : undefined);
@@ -619,8 +621,10 @@ function segmentRatio(tokens, text) {
  * 產生一個完整回答（必要時跨多輪）。
  *
  * @param {object} config   loadLlmConfig() 的結果（用到 contextTokens、maxTokens、maxRounds 等）
- * @param {object} request  { messages, temperature?, responseFormat?, acceptJson? }
+ * @param {object} request  { messages, temperature?, responseFormat?, acceptJson?, maxContentChars? }
  *                          responseFormat 是 json_object／json_schema 時視為 JSON 輸出。
+ *                          maxContentChars：文字任務的正文上限（見 tasks.mjs 的 maxOutputChars），送出的正文
+ *                          累計超過就中止上游，以 incomplete（tooLong）結束，不再開下一輪
  *                          acceptJson(content)：JSON 任務的正文可以交出時回傳 true（其他值都是不收），呼叫端
  *                          交出前用同一套驗證才不會收下不合格的、或重寫其實合格的。沒給就只看是不是完整的
  *                          JSON（可包在 ``` 圍欄裡）而且頂層必填欄位都在
@@ -641,7 +645,7 @@ function segmentRatio(tokens, text) {
  *          失敗時丟出的錯誤帶著 partial（已寫好的部分）、rounds、continuations、usage、stats
  */
 export async function generate(config, request, hooks = {}) {
-    const { messages, temperature, responseFormat, acceptJson } = request;
+    const { messages, temperature, responseFormat, acceptJson, maxContentChars } = request;
     const { signal, streamChatImpl = streamChat } = hooks;
     const jsonMode = isJsonFormat(responseFormat);
     const judge = (text) => Boolean(text.trim()) && (acceptJson
@@ -789,6 +793,9 @@ export async function generate(config, request, hooks = {}) {
             throw new UpstreamError('protocol', `上游送來的思考與正文累計超過 ${maxTaskChars} 字元`);
         }
     };
+
+    // 只有文字任務的 forward 會用到
+    const overLength = maxContentChars ? createLengthGuard(maxContentChars) : null;
 
     const minOutput = Math.min(MIN_ROUND_TOKENS, config.maxTokens);
     const estimateMessages = (msgs) => estimateTokens(msgs.map((m) => m.content).join('')) + PER_MESSAGE_TOKENS * msgs.length;
@@ -1073,8 +1080,13 @@ export async function generate(config, request, hooks = {}) {
                 // 接續正文時，開頭先緩衝到確定重疊不會再變長才送出
                 let headResolved = jsonMode || plan.mode !== 'writing';
                 let head = '';
+                // 超過正文上限的那一段不收也不送，丟出的錯誤由 streamChat 中止串流後原樣丟回。只有空白的
+                // 一段不算超過：結尾的空白在交出前會去掉，後面再有字時才算
                 const forward = (text) => {
                     if (!text) return;
+                    if (overLength?.(text) && /\S/.test(text)) {
+                        throw Object.assign(fail('incomplete', `正文超過 ${maxContentChars} 字的上限`, { rounds: round }), { tooLong: true });
+                    }
                     content += text;
                     onContent?.(text);
                 };

@@ -37,6 +37,8 @@ const WEEKS = ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'];
  * 位元組的 2 分鐘。xhigh 的思考長度變化很大，2026-10-23 經正式閘道實測，同一題 career-chat 是 40.1 秒和
  * 145.8 秒；思考寫滿一輪、接到第二輪的 civic-tech-suggestion 是 218.9 秒。145.8 秒與 218.9 秒加上 2 分鐘
  * 都超過 QUEUE_TIMEOUT_MS，不超過它的時限會切掉正常的請求。
+ * 文字任務的 maxOutputChars 是指令寫的字數上限的 4 倍。competency-analysis 的指令沒寫字數，2026-10-23 經
+ * 正式閘道的 8 次回答是 188～232 字，最長 232 字的 4 倍約 930，取 1000。
  */
 export const TASK_DEFINITIONS = [
     {
@@ -96,6 +98,8 @@ export const TASK_DEFINITIONS = [
             'C1 道德實踐與公民意識、C2 人際關係與團隊合作、C3 多元文化與國際理解。',
         ].join('\n'),
         output: { type: 'markdown' },
+        // 指令沒寫字數，依據見 TASK_DEFINITIONS 的說明
+        maxOutputChars: 1000,
     },
     {
         // 職涯探索首頁的「AI 學涯導師」（src/pages/career-exploration/index.astro）。畫面像聊天，
@@ -126,6 +130,7 @@ export const TASK_DEFINITIONS = [
             '下一步建議要是學生自己就能完成的事，不要用「下次」「再跟我說」這類需要接續對話的說法。',
         ].join('\n'),
         output: { type: 'markdown' },
+        maxOutputChars: 800,
     },
     {
         // 學習歷程首頁（src/pages/learning-portfolio/index.astro）與反思引導提問集
@@ -254,6 +259,7 @@ export const TASK_DEFINITIONS = [
             '回答請簡潔有力，不要超過 400 字；推薦 3 個專案時，每個推薦都要寫得更精簡。',
         ].join('\n'),
         output: { type: 'markdown' },
+        maxOutputChars: 1600,
     },
     {
         // 自主學習 › 學習資源地圖的「AI 學習路徑規劃師」（src/pages/autonomous-learning/resource-map.astro）。

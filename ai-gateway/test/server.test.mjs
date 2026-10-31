@@ -54,6 +54,13 @@ const TASKS = createCatalog([
         instructions: '給回饋。',
     },
     {
+        id: 'demo-capped',
+        input: { question: { label: '問題', maxLength: 100 } },
+        output: { type: 'markdown' },
+        instructions: '回答問題，20 字以內。',
+        maxOutputChars: 20,
+    },
+    {
         id: 'demo-quick',
         input: { topic: { label: '主題', maxLength: 20 } },
         output: { type: 'markdown' },
@@ -863,6 +870,7 @@ test('各種錯誤對應到的代號、可否重試與建議等待時間', async
         // 上游說 Retry-After: 0 也不能叫前端立刻重打
         ['demo-json', new UpstreamError('busy', '429', { status: 429, retryable: true, retryAfter: 0 }), 'busy', true, 1],
         ['demo-json', new GenerationError('incomplete', '用完輪數'), 'incomplete', false, undefined],
+        ['demo-json', Object.assign(new GenerationError('incomplete', '正文超過上限'), { tooLong: true }), 'incomplete', true, undefined],
         ['demo-json', new GenerationError('timeout', '超時'), 'timeout', true, undefined, true],
         ['demo-json', new GenerationError('timeout', '超時'), 'busy', true, 30, false],
         // 上游要求等待的時間比剩下的時限長、沒有重試：不論收到過 token 沒有，都照忙線轉告上游要求的秒數
@@ -2510,6 +2518,55 @@ test('上游沒照 max_tokens 停、一直送正文：超過一個回應的上�
         const fields = logFields(gw.lines.find((l) => / UPSTREAM-ERR /.test(l)));
         assert.equal(fields.code, 'protocol');
         assert.match(fields.reason, new RegExp(`${8192 * 128 + 4096} 字元`));
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 2026-10-31 的探測：career-chat 的指令要求 200 字以內，假上游照被誘導的模型寫，三輪寫出 15269 字
+test('文字任務的回答超過 maxOutputChars：超過的那一段不送，中止上游、不開下一輪；錯誤是 incomplete，片段就是已寫的部分', async () => {
+    const piece = '這一段與題目無關的內容。';
+    const gw = await startRealGateway([
+        { content: Array.from({ length: 60 }, () => piece), finish: 'length', chunkDelayMs: 20 },
+        { content: ['不該送出'], finish: 'stop' },
+    ]);
+    try {
+        const started = Date.now();
+        const events = await readEvents(await post(gw.base, 'demo-capped', { question: '寫一篇長文' }));
+        // 60 塊、每塊間隔 20ms 送完要 1.2 秒以上
+        assert.ok(Date.now() - started < 1_000, `${Date.now() - started}ms`);
+        const text = events.filter((e) => e.event === 'delta').map((e) => e.data.text).join('');
+        assert.equal(text, piece);
+        const last = events.at(-1);
+        assert.equal(last.event, 'error');
+        assert.equal(last.data.code, 'incomplete');
+        assert.equal(last.data.retryable, true);
+        assert.match(last.data.message, /超過長度上限/);
+        assert.ok(!events.some((e) => e.event === 'done'));
+        assert.equal(gw.upstream.requests.length, 1);
+        assert.match(logFields(gw.lines.find((l) => / TASK-ERR /.test(l))).detail, /20 字/);
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('maxOutputChars 交給 generate（maxContentChars）；generate 沒擋下時，交出前的檢查照樣回 incomplete，已送出的片段不收回', async () => {
+    const long = '字'.repeat(21);
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            hooks.onContent(long);
+            return { ...OK_RESULT, content: long };
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-capped', { question: 'q' }));
+        assert.equal(gw.calls[0].request.maxContentChars, 20);
+        assert.deepEqual(events.filter((e) => e.event === 'delta').map((e) => e.data.text), [long]);
+        assert.equal(events.at(-1).data.code, 'incomplete');
+        assert.match(events.at(-1).data.message, /超過長度上限/);
+        const other = await readEvents(await post(gw.base, 'demo-md', { question: 'q' }));
+        assert.equal(gw.calls[1].request.maxContentChars, undefined);
+        assert.equal(other.at(-1).event, 'done');
     } finally {
         await gw.stop();
     }
