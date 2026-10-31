@@ -71,6 +71,11 @@ const MAX_BODY_READS = 1000;
 const MAX_CONNECTIONS = 2048;
 // 標頭上限。任務請求的標頭只有幾個欄位，Node 預設的 16 KiB 只會讓每條慢連線多佔記憶體
 const MAX_HEADER_BYTES = 8 * 1024;
+// 標頭的個數上限（Node 的 maxHeadersCount，超過回 431）。上面只限位元組：8 KiB 塞約 940 個很短的
+// 標頭，1000 個這種停住的請求 RSS 279～280 MiB；限 64 個之後同樣的送法都回 431，84～85 MiB
+// （2026-11-01 本機實測）。Firefox、Chromium 跨網域的 POST 是 14、15 個，Funnel 轉送時再加上
+// X-Forwarded-For 這類標頭
+const MAX_HEADERS_COUNT = 64;
 
 // 給學生看的錯誤訊息。code 是穩定的代號，前端可以依代號另外處理；
 // 建議等待的秒數由前端依 retryAfter 自己補上，這裡不寫死時間
@@ -449,6 +454,7 @@ export function createGateway({
     }
     const server = createServer({ connectionsCheckingInterval: CONNECTIONS_CHECK_MS, maxHeaderSize: MAX_HEADER_BYTES }, onRequest);
     server.maxConnections = MAX_CONNECTIONS;
+    server.maxHeadersCount = MAX_HEADERS_COUNT;
     // Expect: 100-continue：不讓 Node 自動回 100 Continue（那等於請對方先把整個 body 送過來），
     // 等提早的檢查（origin、任務、格式、限流）都過了、真的要讀 body 時才回
     server.on('checkContinue', onRequest);

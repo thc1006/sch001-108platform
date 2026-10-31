@@ -2351,6 +2351,24 @@ test('標頭最多 8 KiB（超過回 431）；連線數上限是 2048', async ()
     }
 });
 
+// 只限位元組的話，8 KiB 塞得下約 940 個很短的標頭，每一個都是一個字串
+test('標頭最多 64 個：30 個、64 個照常，66 個回 431', async () => {
+    const gw = await startGateway();
+    const withHeaders = (count) => {
+        // jsonHeaders 3 個，rawRequest 再加 Host、Content-Length 與 Connection
+        const extra = Object.fromEntries(Array.from({ length: count - 6 }, (_, i) => [`x-h${i}`, 'v']));
+        return rawRequest(gw.port, { headers: jsonHeaders(extra), body: JSON.stringify({ input: { topic: 'x' } }) });
+    };
+    try {
+        assert.equal((await withHeaders(30)).status, 200);
+        assert.equal((await withHeaders(64)).status, 200);
+        assert.equal((await withHeaders(66)).status, 431);
+        assert.equal(gw.calls.length, 2);
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('帶著 CLIENT_IP_HEADER、連線卻不是來自信任的代理：退回連線的位址，並記一筆有頻率限制的警告（附次數與位址）', async () => {
     let clock = 0;
     const gw = await startGateway({ server: { clientIpHeader: 'x-forwarded-for', trustedProxies: ['10.42.0.1/32'] }, now: () => clock });
