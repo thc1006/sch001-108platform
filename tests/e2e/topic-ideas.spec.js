@@ -3,7 +3,7 @@
 //
 // 要先建置：playwright.config.js 的 webServer 以 8001 埠提供 .link-root。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites, headingJumps } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/topic-ideas.html`;
@@ -56,15 +56,15 @@ const SETTLE = [
 ];
 
 /** section 回傳主題卡片裡小標題是 heading 的那一區，例如「建議研究方法：」。 */
-const section = (page, card, heading) => card.locator(':scope > div').filter({ has: page.locator('h5', { hasText: heading }) });
+const section = (page, card, heading) => card.locator(':scope > div').filter({ has: page.locator('h4', { hasText: heading }) });
 
 async function expectIdeas(page, ideas) {
     const cards = page.locator('#ideaResult > div');
     await expect(cards).toHaveCount(ideas.length);
     for (const [i, idea] of ideas.entries()) {
         const card = cards.nth(i);
-        await expect(card.locator('h4')).toHaveText(idea.title);
-        await expect(card.locator(':scope > h4 + div')).toHaveText(idea.description);
+        await expect(card.locator('h3')).toHaveText(idea.title);
+        await expect(card.locator(':scope > h3 + div')).toHaveText(idea.description);
         await expect(section(page, card, '建議研究方法：').locator('span')).toHaveText(idea.methods);
         await expect(section(page, card, '潛在挑戰：').locator('li')).toHaveText(idea.challenges);
         await expect(section(page, card, '相關關鍵字：').locator('span')).toHaveText(idea.keywords);
@@ -100,6 +100,17 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await expect(button).toHaveText('產生靈感');
         await expect(button.locator('svg')).toHaveCount(1);
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+    });
+
+    // 結果在功能的 h2 底下。標題跳級的話，用標題跳著讀的人會以為漏了一層
+    test('結果的標題從 h3 開始，接在功能的 h2 底下，不跳級', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done({ ideas: RESULT.ideas.map((idea) => ({ ...idea, description: '## 背景\n' + idea.description })) })] });
+        await page.fill('#ideaInput', '測試');
+        await page.click('#generateIdeaBtn');
+        const result = page.locator('#ideaResult');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText(RESULT.ideas.map((idea) => idea.title));
+        await expect(result.locator(':scope > div').first().getByRole('heading', { level: 4 })).toHaveText(['背景', '建議研究方法：', '潛在挑戰：', '相關關鍵字：']);
+        expect(await headingJumps(result)).toEqual([]);
     });
 
     test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {

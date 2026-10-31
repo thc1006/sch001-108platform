@@ -4,7 +4,7 @@
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, outsideLiveRegions, watchStatus, statusWrites, headingJumps } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/autonomous-learning/resource-map.html`;
@@ -86,7 +86,7 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         for (const [i, step] of RESULT.learning_path.entries()) {
             const item = steps.nth(i);
             await expect(item.locator('span').first()).toHaveText(String(i + 1));
-            await expect(item.locator('h4')).toHaveText(step.title);
+            await expect(item.locator('h3')).toHaveText(step.title);
             await expect(item).toContainText(step.description);
             await expect(item).toContainText(`建議資源：${step.resource_type}`);
             await expect(item).toContainText(`下一步行動：${step.actionable_suggestion}`);
@@ -101,13 +101,24 @@ test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 
         await expectButtonRestored(page.locator('#generatePathBtn'));
     });
 
+    // 結果在功能的 h2 底下。標題跳級的話，用標題跳著讀的人會以為漏了一層
+    test('結果的標題從 h3 開始，接在功能的 h2 底下，不跳級', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done({ learning_path: RESULT.learning_path.map((step) => ({ ...step, description: '## 重點\n' + step.description })) })] });
+        await page.fill('#pathInput', '測試');
+        await page.click('#generatePathBtn');
+        const result = page.locator('#pathResult');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText(RESULT.learning_path.map((step) => step.title));
+        await expect(result.getByRole('heading', { level: 4 })).toHaveText(RESULT.learning_path.map(() => '重點'));
+        expect(await headingJumps(result)).toEqual([]);
+    });
+
     test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done(XSS_RESULT)] });
         await page.fill('#pathInput', 'Python');
         await page.click('#generatePathBtn');
 
         const result = page.locator('#pathResult');
-        await expect(result.locator('h4')).toHaveText(XSS_RESULT.learning_path.map((step) => step.title));
+        await expect(result.locator('h3')).toHaveText(XSS_RESULT.learning_path.map((step) => step.title));
         for (const step of XSS_RESULT.learning_path) {
             await expect(result).toContainText(step.description);
             await expect(result).toContainText(step.resource_type);

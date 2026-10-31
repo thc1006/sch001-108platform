@@ -380,15 +380,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${md(week.week)}:</b> ${md(week.tasks)}</li>`).join('');
             const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${md(out)}</li>`).join('');
 
+            // 結果在 h2「AI 計畫草擬工具」底下，小標題用 h3。prose 給 h3 的字比 h4 大、間距也不同，
+            // 這些 class 讓它看起來和 prose 的 h4 一樣；第一個標題的上方間距由 prose 歸零
+            const h3 = 'text-teal-800 font-bold text-[1em] leading-[1.5] mb-[0.5em]';
             planResult.innerHTML = `
                 <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg prose max-w-none">
-                    <h4 class="text-teal-800 font-bold">學習目標</h4>
+                    <h3 class="${h3}">學習目標</h3>
                     <ul class="list-disc">${objectivesHtml}</ul>
-                    <h4 class="text-teal-800 font-bold">執行方法</h4>
+                    <h3 class="${h3} mt-[1.5em]">執行方法</h3>
                     <ul class="list-disc">${methodsHtml}</ul>
-                    <h4 class="text-teal-800 font-bold">週次進度</h4>
+                    <h3 class="${h3} mt-[1.5em]">週次進度</h3>
                     <ol class="list-decimal">${weeklyPlanHtml}</ol>
-                    <h4 class="text-teal-800 font-bold">預期產出</h4>
+                    <h3 class="${h3} mt-[1.5em]">預期產出</h3>
                     <ul class="list-disc">${outcomeHtml}</ul>
                 </div>
             `;
