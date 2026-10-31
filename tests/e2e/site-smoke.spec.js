@@ -72,6 +72,32 @@ test.describe('部署產物 smoke test', () => {
         await expect(feedback.getByRole('link', { name: 'hctsai@linux.com', exact: true })).toHaveAttribute('href', 'mailto:hctsai@linux.com');
     });
 
+    test('頁尾的問題回報連到關於我們的 #feedback，段落不在 header 底下', async ({ page }) => {
+        for (const path of ['/index.html', '/career-exploration/clusters/law/index.html']) {
+            await page.goto(P(path));
+            await expect(page.locator('footer').getByRole('link', { name: '問題回報', exact: true }), path)
+                .toHaveAttribute('href', '/sch001-108platform/about.html#feedback');
+        }
+        // 視窗要矮，#feedback 離頁底才夠遠，捲動不會先停在頁底，量得出 scroll-mt。
+        for (const size of [{ width: 320, height: 568 }, { width: 667, height: 375 }]) {
+            const at = `${size.width}x${size.height}`;
+            await page.setViewportSize(size);
+            await page.goto(P('/index.html'));
+            await page.locator('footer').getByRole('link', { name: '問題回報', exact: true }).click();
+            await expect(page).toHaveURL(/\/about\.html#feedback$/);
+            const feedback = page.locator('#feedback');
+            await expect(feedback, at).toBeInViewport();
+            // html 有 scroll-smooth，等捲動停下來再量。
+            await expect.poll(async () => {
+                const y = await page.evaluate(() => scrollY);
+                await page.waitForTimeout(100);
+                return y === await page.evaluate(() => scrollY);
+            }).toBe(true);
+            const headerBottom = await page.locator('body > header').evaluate((el) => el.getBoundingClientRect().bottom);
+            await expect.poll(() => feedback.evaluate((el) => el.getBoundingClientRect().top), at).toBeGreaterThanOrEqual(headerBottom);
+        }
+    });
+
     test('首頁載入且無錯誤', async ({ page }) => {
         const errors = watchForErrors(page);
         await page.goto(P('/'), { waitUntil: 'networkidle' });
