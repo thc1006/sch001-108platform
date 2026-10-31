@@ -1,5 +1,63 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const sections = [
+  {
+    title: '自主學習',
+    href: 'autonomous-learning/index.html',
+    links: [
+      ['autonomous-learning/topic-ideas.html', '主題靈感產生器', '請 AI 依興趣想題目，或從社會議題例子、學科和方法的組合、SDGs 找方向。'],
+      ['autonomous-learning/plan-templates.html', '計畫範本庫', '列出學習目標和週次進度的計畫範本，也可以請 AI 依主題草擬計畫。'],
+      ['autonomous-learning/resource-map.html', '學習資源地圖', '線上課程、影片、Podcast、數位典藏等學習網站，也可以請 AI 排學習步驟。'],
+      ['autonomous-learning/methodology.html', '研究方法工具箱', '6 種研究方法的適用情境、步驟和常見陷阱，回答幾個問題可以篩出適合的方法。'],
+      ['civic-tech-map/index.html', '公民科技專案', '8 個專案公開的資料與工具，各附題目例子和做法，也可以請 AI 幫你挑。'],
+    ],
+  },
+  {
+    title: '學習歷程',
+    href: 'learning-portfolio/index.html',
+    links: [
+      ['learning-portfolio/portfolio-gallery.html', '優質範例藝廊', '4 份學習歷程檔案範例，每份附寫法分析。'],
+      ['learning-portfolio/reflection-guide.html', '反思引導提問集', 'STAR 敘事法、依活動情境抽的反思問題，也可以請 AI 替心得提修改建議。'],
+      ['learning-portfolio/activity-database.html', '多元表現資料庫', '課堂外可以參加的活動與報名狀態。'],
+      ['learning-portfolio/tools.html', '線上製作工具箱', '簡報、心智圖、筆記、剪輯等工具，標出免費或免費增值，以及適合做什麼。'],
+    ],
+  },
+  {
+    title: '生涯探索',
+    href: 'career-exploration/index.html',
+    links: [
+      ['career-exploration/clusters/index.html', '十大學群升學指南', '每個學群分 6 篇，從科系介紹、適合的特質，到備審與面試。'],
+      ['career-exploration/senior-interviews.html', '學長姐真心話', '10 個學群的升學經驗，綜合升學制度、公開數據和經驗分享寫成，人名是化名。'],
+      ['career-exploration/competency-map.html', '核心素養對照表', '三面九項核心素養的說明、展現方式和相關學群，也可以請 AI 看你的活動經驗對應哪幾項。'],
+    ],
+  },
+  {
+    title: '進階資源',
+    href: 'advanced-resources/index.html',
+    links: [
+      ['advanced-resources/online-courses.html', '線上課程精選', 'Coursera、edX、Khan Academy 等平台的課程，標出語言、程度和有沒有證書。'],
+      ['advanced-resources/competitions.html', '國內外競賽資訊', '報名狀態和截止日，可以依領域、地區和級別篩選。'],
+      ['advanced-resources/reading-list.html', '主題書單推薦', '12 個主題的書單，每本附作者和推薦理由。'],
+      ['advanced-resources/open-education.html', '開放教育資源', 'AI 實驗室、開放科學、開放課程和國際科學社群公開的學習資源。'],
+    ],
+  },
+  {
+    title: '關於本站',
+    links: [
+      ['about.html', '關於我們', '本站的緣起、團隊，以及回報問題的方式。'],
+      ['privacy.html', '隱私權說明', '本站蒐集哪些資料、送到哪裡、保留多久。'],
+    ],
+  },
+];
+
+// 依連結數決定欄數，讓每一列的數量接近：5 個排成 3＋2，不排成 4＋1。
+const columns: Record<number, string> = {
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-2 lg:grid-cols-3',
+  4: 'md:grid-cols-2 lg:grid-cols-4',
+  5: 'md:grid-cols-2 lg:grid-cols-3',
+};
 ---
 
 <BaseLayout
@@ -7,91 +65,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="台灣教育處方籤各區的頁面：自主學習、學習歷程、生涯探索、進階資源，以及關於本站與隱私權說明。"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
-    <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
-        <section class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">
-                網站<span class="gradient-text">地圖</span>
-            </h1>
+  <main id="main-content" class="container mx-auto px-6 py-12">
+    <h1 class="text-4xl md:text-5xl font-bold text-gray-800 text-center mb-10">
+      網站<span class="gradient-text">地圖</span>
+    </h1>
+
+    <div class="space-y-6">
+      {sections.map((s) => (
+        <section class="bg-white px-6 pt-6 pb-3 rounded-lg shadow-md">
+          <h2 class="text-xl font-bold mb-3">
+            {s.href ? <a href={s.href} class="text-blue-600 hover:underline">{s.title}</a> : s.title}
+          </h2>
+          {/* -mx-4 抵掉連結的 px-4，連結的字和分區名稱對齊。 */}
+          <ul class:list={['-mx-4 grid grid-cols-1 gap-2', columns[s.links.length] ?? 'md:grid-cols-2 lg:grid-cols-3']}>
+            {s.links.map(([href, name, desc]) => (
+              <li>
+                <a href={href} class="block h-full rounded-lg px-4 py-3 transition-colors hover:bg-gray-100 focus-visible:bg-gray-100">
+                  <span class="font-semibold">{name}</span>
+                  <p class="mt-1 text-sm text-gray-600">{desc}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
         </section>
-
-        <!-- Sitemap Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-            <!-- Column 1: 自主學習 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-xl font-bold text-blue-600 mb-4"><a href="autonomous-learning/index.html" class="hover:underline">自主學習</a></h3>
-                <ul class="space-y-2">
-                    <li><a href="autonomous-learning/topic-ideas.html" class="sitemap-link"><span class="font-semibold">主題靈感產生器</span><p class="text-sm text-gray-500">請 AI 依興趣想題目，或從社會議題例子、學科和方法的組合、SDGs 找方向。</p></a></li>
-                    <li><a href="autonomous-learning/plan-templates.html" class="sitemap-link"><span class="font-semibold">計畫範本庫</span><p class="text-sm text-gray-500">列出學習目標和週次進度的計畫範本，也可以請 AI 依主題草擬計畫。</p></a></li>
-                    <li><a href="autonomous-learning/resource-map.html" class="sitemap-link"><span class="font-semibold">學習資源地圖</span><p class="text-sm text-gray-500">線上課程、影片、Podcast、數位典藏等學習網站，也可以請 AI 排學習步驟。</p></a></li>
-                    <li><a href="autonomous-learning/methodology.html" class="sitemap-link"><span class="font-semibold">研究方法工具箱</span><p class="text-sm text-gray-500">6 種研究方法的適用情境、步驟和常見陷阱，回答幾個問題可以篩出適合的方法。</p></a></li>
-                    <li><a href="civic-tech-map/index.html" class="sitemap-link"><span class="font-semibold">公民科技專案</span><p class="text-sm text-gray-500">8 個專案公開的資料與工具，各附題目例子和做法，也可以請 AI 幫你挑。</p></a></li>
-                </ul>
-            </div>
-
-            <!-- Column 2: 學習歷程 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-xl font-bold text-green-600 mb-4"><a href="learning-portfolio/index.html" class="hover:underline">學習歷程</a></h3>
-                <ul class="space-y-2">
-                    <li><a href="learning-portfolio/portfolio-gallery.html" class="sitemap-link"><span class="font-semibold">優質範例藝廊</span><p class="text-sm text-gray-500">4 份學習歷程檔案範例，每份附寫法分析。</p></a></li>
-                    <li><a href="learning-portfolio/reflection-guide.html" class="sitemap-link"><span class="font-semibold">反思引導提問集</span><p class="text-sm text-gray-500">STAR 敘事法、依活動情境抽的反思問題，也可以請 AI 替心得提修改建議。</p></a></li>
-                    <li><a href="learning-portfolio/activity-database.html" class="sitemap-link"><span class="font-semibold">多元表現資料庫</span><p class="text-sm text-gray-500">課堂外可以參加的活動與報名狀態。</p></a></li>
-                    <li><a href="learning-portfolio/tools.html" class="sitemap-link"><span class="font-semibold">線上製作工具箱</span><p class="text-sm text-gray-500">簡報、心智圖、筆記、剪輯等工具，標出免費或免費增值，以及適合做什麼。</p></a></li>
-                </ul>
-            </div>
-
-            <!-- Column 3: 生涯探索 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h3 class="text-xl font-bold text-purple-600 mb-4"><a href="career-exploration/index.html" class="hover:underline">生涯探索</a></h3>
-                <ul class="space-y-2">
-                    <li><a href="career-exploration/clusters/index.html" class="sitemap-link"><span class="font-semibold">十大學群升學指南</span><p class="text-sm text-gray-500">每個學群分 6 篇，從科系介紹、適合的特質，到備審與面試。</p></a></li>
-                    <li><a href="career-exploration/senior-interviews.html" class="sitemap-link"><span class="font-semibold">學長姐真心話</span><p class="text-sm text-gray-500">10 個學群的升學經驗，綜合升學制度、公開數據和經驗分享寫成，人名是化名。</p></a></li>
-                    <li><a href="career-exploration/competency-map.html" class="sitemap-link"><span class="font-semibold">核心素養對照表</span><p class="text-sm text-gray-500">三面九項核心素養的說明、展現方式和相關學群，也可以請 AI 看你的活動經驗對應哪幾項。</p></a></li>
-                </ul>
-            </div>
-
-            <!-- Column 4: 進階資源 & 其他 -->
-            <div class="space-y-8">
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h3 class="text-xl font-bold text-pink-600 mb-4"><a href="advanced-resources/index.html" class="hover:underline">進階資源</a></h3>
-                    <ul class="space-y-2">
-                        <li><a href="advanced-resources/online-courses.html" class="sitemap-link"><span class="font-semibold">線上課程精選</span><p class="text-sm text-gray-500">Coursera、edX、Khan Academy 等平台的課程，標出語言、程度和有沒有證書。</p></a></li>
-                        <li><a href="advanced-resources/competitions.html" class="sitemap-link"><span class="font-semibold">國內外競賽資訊</span><p class="text-sm text-gray-500">報名狀態和截止日，可以依領域、地區和級別篩選。</p></a></li>
-                        <li><a href="advanced-resources/reading-list.html" class="sitemap-link"><span class="font-semibold">主題書單推薦</span><p class="text-sm text-gray-500">12 個主題的書單，每本附作者和推薦理由。</p></a></li>
-                        <li><a href="advanced-resources/open-education.html" class="sitemap-link"><span class="font-semibold">開放教育資源</span><p class="text-sm text-gray-500">AI 實驗室、開放科學、開放課程和國際科學社群公開的學習資源。</p></a></li>
-                    </ul>
-                </div>
-                 <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h3 class="text-xl font-bold text-gray-700 mb-4">關於本站</h3>
-                    <ul class="space-y-2">
-                        <li><a href="about.html" class="sitemap-link"><span class="font-semibold">關於我們</span><p class="text-sm text-gray-500">本站的緣起、團隊，以及回報問題的方式。</p></a></li>
-                        <li><a href="privacy.html" class="sitemap-link"><span class="font-semibold">隱私權說明</span><p class="text-sm text-gray-500">本站蒐集哪些資料、送到哪裡、保留多久。</p></a></li>
-                    </ul>
-                </div>
-            </div>
-
-        </section>
-    </main>
-
-  <style is:global>
-        body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-        }
-        .gradient-text {
-            background: -webkit-linear-gradient(45deg, #6b7280, #111827);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .sitemap-link {
-            display: block;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .sitemap-link:hover {
-            background-color: #f3f4f6;
-        }
-  </style>
+      ))}
+    </div>
+  </main>
 </BaseLayout>
