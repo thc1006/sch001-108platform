@@ -2673,20 +2673,20 @@ test('同時在收 body 的請求有上限：滿了就立刻 503 並關掉連線
 // chunked 編碼一次送 1 byte 時，每一塊各自留著的話每 1 byte 都是一個物件
 test('createBodyBuffer：一塊一塊複製進同一個 Buffer，不夠時加倍、最多到上限；1 byte 一塊也只配置幾次', () => {
     const limit = 97_024;
-    const body = createBodyBuffer(limit, Number.NaN);
+    const body = createBodyBuffer(limit);
     const one = Buffer.from('x');
     for (let i = 0; i < limit; i++) body.append(one);
     assert.equal(body.toString(), 'x'.repeat(limit));
     // 1 KiB → 2 → 4 → 8 → 16 → 32 → 64 KiB → 97024
     assert.equal(body.allocations, 8);
-    // 宣告的大小比 1 KiB 小：一開始就配置剛好的大小，不再長大
+    // 1 KiB 以內的 body 不再長大
     const pieces = ['{"input":', '{"topic":"', '中"}}'];
-    const small = createBodyBuffer(limit, Buffer.byteLength(pieces.join('')));
+    const small = createBodyBuffer(limit);
     for (const piece of pieces) small.append(Buffer.from(piece));
     assert.equal(small.toString(), '{"input":{"topic":"中"}}');
     assert.equal(small.allocations, 1);
-    // 宣告 0 也能收（最少配置 1 byte）
-    assert.equal(createBodyBuffer(limit, 0).toString(), '');
+    // 上限比 1 KiB 小時照上限配置；沒有 body 也能收
+    assert.equal(createBodyBuffer(10).toString(), '');
 });
 
 test('body 用 chunked 編碼一次送 1 byte、中文字被切在兩塊之間，也照常解析', async () => {
