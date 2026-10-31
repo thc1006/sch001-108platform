@@ -63,9 +63,21 @@ const MAX_BODY_DEPTH = 3;
 // 30 秒才生效（2026-10-22 實測：20 秒的標頭期限 30 秒才切、30 秒的 body 期限 60 秒才切）
 const CONNECTIONS_CHECK_MS = 5_000;
 // 同時在收 body 的任務請求上限，超過就 503 並關連線。Funnel 邊收邊轉送 body，慢速上傳每條約 50 KiB；
-// 2026-10-22 在 256 MiB 的 cgroup 實測 RSS 最高 162 MiB（上限 2000 時 204 MiB）。代價：照預設的每分鐘
-// 請求上限與 BODY_TIMEOUT_MS，每個 IPv4 來源平均佔 20 個，約 50 個來源就能佔滿，期間新任務都拿到 503
+// 2026-10-22 在 256 MiB 的 cgroup 實測 RSS 最高 162 MiB（上限 2000 時 204 MiB）
 const MAX_BODY_READS = 1000;
+// 同時在收的 body 已經收到的位元組合計上限。只限個數時，1000 個送了約 95 KiB 就停住的 star-analysis
+// 請求佔到 RSS 185～189 MiB（2026-10-31），加上這一道最高 147 MiB。收 body 的 Buffer 加倍成長，配置的
+// 可能比收到的多將近一倍：每個送 64 KiB 多 1 byte 時最高 143 MiB（2026-11-01 本機實測，閒置時 66～70 MiB）
+const MAX_BODY_BYTES = 24 * 1024 * 1024;
+// 上面兩道放不下新請求時，擋掉收了這麼久還沒收完的請求，先擋最早的。學生的 body 只有幾 KB，行動網路
+// 上傳也只要幾十到幾百毫秒。照預設的每分鐘請求上限，每個 IPv4 來源平均每 2 秒開始 4 個請求：要一直
+// 佔滿個數得有 250 個來源，一直佔滿位元組得有約 65 個來源、每秒共上傳約 12 MiB。一分鐘的額度一次
+// 用完的話，約 9 個來源就能佔滿個數 2 秒
+const BODY_EVICT_AFTER_MS = 2_000;
+// 同一個來源同時在收的請求超過這麼多個時，先擋它的，再照先後。只看先後的話，一個來源停住一大批，
+// 別人慢慢上傳的那一個可能最早被擋；門檻設低的話，攻擊者把請求分散到多個來源、每個只停住一個時，
+// 共用學校 IP、同時有兩三個在上傳的學生反而先被擋
+const BODY_EVICT_SOURCE_MIN = 5;
 // 連線數的最後防線（net.Server 的 maxConnections：到了上限，新連線直接關掉）。比 MAX_BODY_READS
 // 大，留給進行中的 SSE、閒置的 keep-alive 與還在送標頭的連線
 const MAX_CONNECTIONS = 2048;
@@ -181,11 +193,13 @@ function upstreamLogFields(err) {
     };
 }
 
+// reason 只進 log（REJECT 的 reason 欄位）
 class HttpError extends Error {
-    constructor(status, code, message) {
+    constructor(status, code, message, reason) {
         super(message);
         this.status = status;
         this.code = code;
+        this.reason = reason;
     }
 }
 
@@ -238,14 +252,11 @@ export function createBodyBuffer(limit, declared) {
 }
 
 // timeoutMs：收完 body 的期限，自己計時。Node 的 requestTimeout 在 server.close() 之後就不再
-// 檢查，而關機的寬限期（SHUTDOWN_GRACE_MS）預設長達 15 分鐘
-function readBody(req, limit, timeoutMs) {
+// 檢查，而關機的寬限期（SHUTDOWN_GRACE_MS）預設長達 15 分鐘。read.take(n) 記下收到的位元組，
+// 全站的預算（MAX_BODY_BYTES）放不下時回傳 false；read.evict() 讓位給新請求。兩者都以 503 結束
+function readBody(req, limit, timeoutMs, read) {
     return new Promise((resolve, reject) => {
         const declared = Number(req.headers['content-length']);
-        if (Number.isFinite(declared) && declared > limit) {
-            reject(new HttpError(413, 'payload_too_large', '請求內容太大'));
-            return;
-        }
         let size = 0;
         let body = createBodyBuffer(limit, declared);
         let settled = false;
@@ -258,11 +269,16 @@ function readBody(req, limit, timeoutMs) {
             reject(err);
         };
         timer = setTimeout(() => fail(new HttpError(408, 'request_timeout', MESSAGES.request_timeout)), timeoutMs);
+        read.evict = () => fail(new HttpError(503, 'busy', MESSAGES.busy, 'evicted'));
         req.on('data', (chunk) => {
             if (settled) return;
             size += chunk.length;
             if (size > limit) {
                 fail(new HttpError(413, 'payload_too_large', '請求內容太大'));
+                return;
+            }
+            if (!read.take(chunk.length)) {
+                fail(new HttpError(503, 'busy', MESSAGES.busy, 'body_budget'));
                 return;
             }
             body.append(chunk);
@@ -397,12 +413,13 @@ function rejectLogFields(reason) {
  * @param {Function} [options.now]    單調時鐘（毫秒），限流、斷路器與警告的頻率用；測試可以注入
  * @param {Function} [options.random] 忙線等待秒數的隨機時間用（見 BUSY_JITTER）；測試可以注入
  * @param {number} [options.maxBodyReads]  同時在收 body 的請求上限；測試可以調小
+ * @param {number} [options.maxBodyBytes]  同時在收的 body 合計的位元組上限；測試可以調小
  * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
  * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
  */
 export function createGateway({
     llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(), random = Math.random,
-    maxBodyReads = MAX_BODY_READS, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
+    maxBodyReads = MAX_BODY_READS, maxBodyBytes = MAX_BODY_BYTES, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
 }) {
     const gate = new SlotGate({
         concurrency: cfg.concurrency,
@@ -448,8 +465,9 @@ export function createGateway({
         missing: { tag: 'CLIENT-IP-MISSING', count: 0, warnedAt: -Infinity },
         untrusted: { tag: 'CLIENT-IP-UNTRUSTED', count: 0, warnedAt: -Infinity },
     };
-    // 正在收 body 的任務請求數（見 MAX_BODY_READS）
-    let bodyReads = 0;
+    // 正在收 body 的任務請求（依開始的順序）與已經收到的位元組（見 MAX_BODY_READS、MAX_BODY_BYTES）
+    const bodyReads = new Set();
+    let bodyBytes = 0;
 
     function onRequest(req, res) {
         const answered = new Promise((resolve) => res.once('close', resolve));
@@ -528,6 +546,38 @@ export function createGateway({
         log('warn', warning.tag, { header: cfg.clientIpHeader, count: warning.count, ...(peer ? { peer } : {}) });
         warning.count = 0;
         warning.warnedAt = t;
+    }
+
+    /**
+     * 收 body 的兩道上限能不能再放 count 個新請求、多 bytes 位元組。放不下時照 BODY_EVICT_AFTER_MS 的
+     * 規則擋掉別的請求；擋掉所有能擋的也放不下的話，一個都不擋，回傳 false。self 是正在收的請求自己
+     */
+    function makeRoom(count, bytes, self) {
+        let reads = bodyReads.size + count - maxBodyReads;
+        let excess = bodyBytes + bytes - maxBodyBytes;
+        if (reads <= 0 && excess <= 0) return true;
+        const t = now();
+        const perKey = new Map();
+        for (const read of bodyReads) perKey.set(read.key, (perKey.get(read.key) ?? 0) + 1);
+        const crowd = (read) => (perKey.get(read.key) >= BODY_EVICT_SOURCE_MIN ? perKey.get(read.key) : 0);
+        const candidates = [...bodyReads]
+            .filter((read) => read !== self && t - read.since >= BODY_EVICT_AFTER_MS)
+            .sort((a, b) => crowd(b) - crowd(a) || a.since - b.since);
+        const victims = [];
+        for (const read of candidates) {
+            if (reads <= 0 && excess <= 0) break;
+            // 個數已經夠了，只差位元組：沒收到東西的擋了也沒用
+            if (reads <= 0 && read.received === 0) continue;
+            victims.push(read);
+            reads--;
+            excess -= read.received;
+        }
+        if (reads > 0 || excess > 0) return false;
+        for (const read of victims) {
+            read.evict();
+            read.release();
+        }
+        return true;
     }
 
     // 還沒讀完的 body 不必替它讀完：直接關掉連線，免得對方一路灌到 requestTimeout。
@@ -642,15 +692,37 @@ export function createGateway({
         // 上游卡住：不收 body、不佔名額也不計次
         const breakerWait = breaker.wait();
         if (breakerWait) return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(breakerWait) }, {}, 'breaker');
-        if (bodyReads >= maxBodyReads) return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) });
+        // 宣告的 Content-Length 比任務的上限大就直接 413，不必讓位。宣告了的要放得下宣告的大小，沒宣告的
+        // 至少要有 1 byte 的空間
+        const byteLimit = inputByteLimit(task);
+        const declared = Number(req.headers['content-length']);
+        if (Number.isFinite(declared) && declared > byteLimit) return reject(413, 'payload_too_large', '請求內容太大');
+        if (!makeRoom(1, Number.isFinite(declared) ? declared : 1)) {
+            const reason = bodyReads.size + 1 > maxBodyReads ? 'body_reads' : 'body_bytes';
+            return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) }, {}, reason);
+        }
         // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body
         if (expectsContinue.has(req)) res.writeContinue();
         let raw;
-        bodyReads++;
+        const read = { key, since: now(), received: 0, evict: () => {}, released: false };
+        read.release = () => {
+            if (read.released) return;
+            read.released = true;
+            bodyReads.delete(read);
+            bodyBytes -= read.received;
+        };
+        read.take = (n) => {
+            read.received += n;
+            bodyBytes += n;
+            return bodyBytes <= maxBodyBytes || makeRoom(0, 0, read);
+        };
+        bodyReads.add(read);
         try {
-            raw = await readBody(req, inputByteLimit(task), cfg.bodyTimeoutMs);
+            raw = await readBody(req, byteLimit, cfg.bodyTimeoutMs, read);
         } catch (err) {
-            if (err instanceof HttpError) return reject(err.status, err.code, err.message);
+            if (err instanceof HttpError) {
+                return reject(err.status, err.code, err.message, err.status === 503 ? { retryAfter: jitter(5) } : {}, {}, err.reason);
+            }
             if (err instanceof ClientGone) {
                 log('info', 'REJECT', err.serverTimeout
                     ? { id: requestId, task: taskId, status: 408, code: 'request_timeout' }
@@ -659,7 +731,7 @@ export function createGateway({
             }
             throw err;
         } finally {
-            bodyReads--;
+            read.release();
         }
         // 合法的 body 只有兩層；深層巢狀先擋下來，不交給 JSON.parse
         if (exceedsDepth(raw, MAX_BODY_DEPTH)) return reject(400, 'invalid_input', '請求格式不正確');
