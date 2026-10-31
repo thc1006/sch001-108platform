@@ -218,6 +218,21 @@ test.describe('PlatformAI 共用 module', () => {
             expect(text).toContain('請分批送出');
         });
 
+        // 頁面上已經有 v8 時，版號沒升的話這一份會提早返回，斷線時已經收到的答案不會放在 partial。
+        test('v8 已經在頁面上時，這一份照樣載入，斷線時帶著 partial', async ({ page }) => {
+            await page.addInitScript(fakeGatewayScript);
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 8 };
+            });
+            await gotoFixture(page);
+            const r = await page.evaluate(() => {
+                window.__setGatewayMeta('http://localhost:8787');
+                window.__installFakeGateway({ chunks: [__sse('delta', { text: '寫到一半' })] });
+                return __settle(PlatformAI.runTask('t', { a: 'b' }));
+            });
+            expect(r).toMatchObject({ code: 'disconnected', partial: '寫到一半' });
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1010,6 +1025,53 @@ test.describe('PlatformAI 共用 module', () => {
                 return __settle(PlatformAI.runTask('t', { a: 'b' }));
             });
             expect(r).toMatchObject({ ok: false, name: 'AIError', code: 'disconnected', retryable: true, requestId: 'req-5' });
+        });
+
+        // 頁面靠 partial 把已經顯示的答案留在畫面上，斷線時也一樣
+        test('已經收到片段之後串流沒有 done 就結束、或連線斷掉 → disconnected 帶著 partial', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                const chunks = [__sse('accepted', { requestId: 'req-eof', task: 't' }), __sse('delta', { text: '第一段' }), __sse('delta', { text: '寫到一半' })];
+                window.__installFakeGateway({ chunks });
+                const ended = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                window.__installFakeGateway({ chunks, failAfterChunks: true });
+                const dropped = await __settle(PlatformAI.runTask('t', { a: 'b' }));
+                return { ended, dropped };
+            });
+            for (const res of [r.ended, r.dropped]) {
+                expect(res).toMatchObject({ ok: false, name: 'AIError', code: 'disconnected', partial: '第一段寫到一半', describe: '和 AI 服務的連線中斷了，請再試一次。' });
+            }
+        });
+
+        test('已經收到片段之後一分鐘沒有任何位元組 → disconnected 帶著 partial', async ({ page }) => {
+            await pauseClock(page);
+            await page.evaluate(() => {
+                window.__installFakeGateway({ chunks: [__sse('accepted', { requestId: 'req-idle-partial', task: 't' }), __sse('delta', { text: '寫到一半' })], hangAfterChunks: true });
+                window.__outcome = __settle(PlatformAI.runTask('t', { a: 'b' }));
+            });
+            await page.clock.fastForward(61_000);
+            const r = await page.evaluate(() => window.__outcome);
+            expect(r).toMatchObject({ ok: false, name: 'AIError', code: 'disconnected', partial: '寫到一半' });
+        });
+
+        test('已經收到片段之後超過 timeoutMs → TimeoutError 帶著 partial', async ({ page }) => {
+            const r = await page.evaluate(() => {
+                window.__installFakeGateway({ chunks: [__sse('accepted', { requestId: 'r', task: 't' }), __sse('delta', { text: '寫到一半' })], hangAfterChunks: true });
+                return __settle(PlatformAI.runTask('t', { a: 'b' }, { timeoutMs: 50 }));
+            });
+            expect(r).toMatchObject({ ok: false, name: 'TimeoutError', partial: '寫到一半' });
+        });
+
+        test('已經收到片段之後使用者取消 → AbortError 不帶 partial', async ({ page }) => {
+            const r = await page.evaluate(async () => {
+                window.__installFakeGateway({ chunks: [__sse('accepted', { requestId: 'r', task: 't' }), __sse('delta', { text: '寫到一半' })], hangAfterChunks: true });
+                const ctrl = new AbortController();
+                return __settle(PlatformAI.runTask('t', { a: 'b' }, {
+                    signal: ctrl.signal,
+                    onDelta: () => setTimeout(() => ctrl.abort(), 0),
+                }));
+            });
+            expect(r).toMatchObject({ ok: false, name: 'AbortError' });
+            expect(r.partial).toBeUndefined();
         });
 
         test('回應不是 SSE、data 不是 JSON、done 沒有 result → bad_response', async ({ page }) => {

@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 8;
+    var VERSION = 9;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -428,7 +428,7 @@
         err.requestId = extra.requestId;     // 回報問題時用來對照閘道的 log
         err.status = extra.status;
         err.field = extra.field;             // invalid_input：哪個欄位有問題
-        err.partial = extra.partial;         // error 事件之前收到的片段接起來的全文，有看得見的字才有
+        err.partial = extra.partial;         // 出錯之前收到的片段接起來的全文，有看得見的字才有
         return err;
     }
 
@@ -602,6 +602,7 @@
      *   使用者取消 → signal 的 reason（通常是 AbortError）
      *   超過時限 → TimeoutError
      *   其餘一律是 AIError（見 makeAIError）
+     * 除了使用者取消，出錯之前已經收到看得見的字時，錯誤帶著 partial。
      * 要顯示的文字交給 describeError()。
      *
      * signal 不要拿來設時限，例如 signal: AbortSignal.timeout(30000)：閘道排隊和生成都可能
@@ -643,6 +644,7 @@
         var requestId;
         var responded = false;   // 收到回應標頭了沒：閒置逾時發生在這之前是連不上，之後是斷線
         var streaming = false;
+        var text = '';           // 收到的片段接起來的全文
         var startedAt = Date.now();
         log('info', 'AI 任務開始', { task: taskId });
         try {
@@ -668,7 +670,6 @@
             }
 
             streaming = true;
-            var text = '';
             var outcome = null;
             var parse = createSseParser(function (event) {
                 // 已經有結果，或使用者剛在回呼裡同步取消了：後面的一律不看
@@ -763,6 +764,8 @@
             // 有些錯誤建立時還不知道 requestId（例如解析器發現事件過大）；補上目前已知的，
             // 回報問題時才對得上閘道的 log
             if (failure.name === 'AIError' && !failure.requestId) failure.requestId = requestId;
+            // error 事件以外的失敗（斷線、逾時、回應格式錯誤）也帶著收到的字；使用者取消的不帶
+            if (stopReason !== 'cancel' && failure.partial === undefined && VISIBLE_TEXT.test(text)) failure.partial = text;
             log(failure.name === 'AbortError' ? 'info' : 'warn', 'AI 任務失敗', {
                 task: taskId,
                 requestId: requestId,
