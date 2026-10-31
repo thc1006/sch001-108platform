@@ -72,10 +72,14 @@ const INVISIBLE = /(?![\t\n\u200C-\u200F\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\p{Cc
 // 對到一個選擇符）。只留緊跟在一般字後面的第一個；接在開頭、空白或另一個選擇符後面的都刪掉
 const EXTRA_VARIATION_SELECTORS = /(^|[\s\uFE00-\uFE0F\u{E0100}-\u{E01EF}])[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+/gu;
 const VARIATION_SELECTOR = /^[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u;
-// code point 的平均預算：整個欄位最多 maxLength × 4 個 code point（不是每個字各自的上限）。
-// 正常的字是 1 個，表情符號組合也很少超過 4 個；一個基底字後面疊上千個組合符號（Zalgo）
-// 仍算一個字，這一道擋的是那種輸入，它的 token 數遠多於字數。
+// code point 的平均預算：maxLength × 4 個。正常的字是 1 個，表情符號組合也很少超過 4 個；一個基底字
+// 後面疊上千個組合符號（Zalgo）仍算一個字。用在 body 的上限與輸出的長度檢查（createLengthGuard）
 const MAX_CODE_POINTS_PER_CHAR = 4;
+// UTF-8 的平均預算：整個欄位最多 maxLength × 6 bytes，常用的中文字是 3 bytes。擴展 B 區的字（4 bytes）
+// 各疊三個星號平面的組合符號，字數與 code point 都在上限內，2000 個這種字 estimateTokens 估 32000，
+// 是一般中文的 13 倍。字數沒超過、code point 超過 maxLength × 4 的欄位，UTF-8 一定超過 maxLength × 7
+// bytes（每個 ASCII 字元都是一個字，其他的 code point 至少 2 bytes），所以輸入不另外數 code point
+const MAX_UTF8_BYTES_PER_CHAR = 6;
 
 const segmenter = new Intl.Segmenter('zh-TW', { granularity: 'grapheme' });
 
@@ -94,18 +98,6 @@ export function countChars(text, stopAfter = Infinity) {
         if (++count > stopAfter) break;
     }
     return count;
-}
-
-// code point 數是否超過 limit。UTF-16 長度是 code point 數的 1～2 倍，多半一眼就能判斷，
-// 只有落在中間時才逐一數，數到超過就停
-function exceedsCodePoints(text, limit) {
-    if (text.length <= limit) return false;
-    if (text.length > limit * 2) return true;
-    let count = 0;
-    for (const _ of text) {
-        if (++count > limit) return true;
-    }
-    return false;
 }
 
 /**
@@ -242,7 +234,7 @@ export function createCatalog(defs) {
 }
 
 /**
- * 這個任務的請求 body 上限（bytes）。整欄最多 maxLength × 4 個 code point，每個在 JSON 裡
+ * 這個任務的請求 body 上限（bytes）。通過驗證的欄位不超過 maxLength × 4 個 code point，每個在 JSON 裡
  * 最多佔 12 bytes（星號平面的字寫成 \uXXXX\uXXXX），再加上欄位名稱與括號的餘裕。用全站寫死
  * 的上限的話，maxLength 大的任務會在檢查字數之前就被 413 擋掉，錯誤也指不出是哪個欄位。
  */
@@ -276,8 +268,8 @@ export function validateInput(task, raw) {
                 : `${spec.label}最多 ${spec.maxLength} 字（目前 ${length} 字）`;
             throw new TaskError('invalid_input', message, { field: name });
         }
-        if (exceedsCodePoints(cleaned, spec.maxLength * MAX_CODE_POINTS_PER_CHAR)) {
-            throw new TaskError('invalid_input', `${spec.label}含有太多特殊符號，請改用一般文字`, { field: name });
+        if (Buffer.byteLength(cleaned, 'utf8') > spec.maxLength * MAX_UTF8_BYTES_PER_CHAR) {
+            throw new TaskError('invalid_input', `${spec.label}含有太多罕用字或特殊符號，請改用一般文字`, { field: name });
         }
         input[name] = neutralizeDataMarkers(neutralizeControlTokens(cleaned));
     }
