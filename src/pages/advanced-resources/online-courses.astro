@@ -66,6 +66,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Course Grid -->
         <section>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Course cards will be injected here -->
             </div>
@@ -102,6 +103,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const categoryFilter = document.getElementById('category-filter');
         const platformFilter = document.getElementById('platform-filter');
         const languageFilter = document.getElementById('language-filter');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderCourses() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -119,6 +128,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             courseGrid.innerHTML = '';
+            shownCount = filteredCourses.length;
 
             if (filteredCourses.length > 0) {
                 noResultsDiv.classList.add('hidden');
@@ -163,10 +173,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         }
 
-        searchInput.addEventListener('input', renderCourses);
-        categoryFilter.addEventListener('change', renderCourses);
-        platformFilter.addEventListener('change', renderCourses);
-        languageFilter.addEventListener('change', renderCourses);
+        searchInput.addEventListener('input', () => { renderCourses(); announceCount(400); });
+        categoryFilter.addEventListener('change', () => { renderCourses(); announceCount(); });
+        platformFilter.addEventListener('change', () => { renderCourses(); announceCount(); });
+        languageFilter.addEventListener('change', () => { renderCourses(); announceCount(); });
 
         // 從 online-courses.json 載入課程資料後再渲染
         async function loadCourses() {

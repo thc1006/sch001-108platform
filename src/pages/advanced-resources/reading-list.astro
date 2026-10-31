@@ -39,6 +39,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
 
         <!-- Reading Lists Section -->
+        <p id="result-status" role="status" class="sr-only"></p>
         <section id="reading-lists-container" class="space-y-16">
             <!-- Reading lists will be injected here -->
         </section>
@@ -92,6 +93,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const noResultsDiv = document.getElementById('no-results');
         const searchInput = document.getElementById('search-input');
         const themeFilter = document.getElementById('theme-filter');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderBooks() {
             const searchTerm = searchInput.value.trim().toLowerCase();
@@ -164,6 +173,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 container.appendChild(section);
             });
 
+            shownCount = totalShown;
             if (totalShown === 0) {
                 noResultsDiv.classList.remove('hidden');
             } else {
@@ -171,8 +181,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             }
         }
 
-        searchInput.addEventListener('input', renderBooks);
-        themeFilter.addEventListener('change', renderBooks);
+        searchInput.addEventListener('input', () => { renderBooks(); announceCount(400); });
+        themeFilter.addEventListener('change', () => { renderBooks(); announceCount(); });
 
         // 以資料驅動方式產生主題篩選器選項。
         function populateThemeFilter() {

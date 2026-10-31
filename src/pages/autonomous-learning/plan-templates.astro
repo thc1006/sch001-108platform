@@ -52,6 +52,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="藝術設計">藝術設計</button>
                 <button class="filter-btn px-4 py-2 font-semibold text-sm rounded-full transition" data-filter="自然科學">自然科學</button>
             </div>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 範本卡片由 renderTemplates() 填入 -->
             </div>
@@ -212,6 +213,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const modal = document.getElementById('templateModal');
         const detail = DetailDialog.setup(modal);
         const filters = document.querySelector('.flex.flex-wrap.justify-center');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderTemplates(category = 'all') {
             templateGrid.innerHTML = '';
@@ -239,6 +248,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 card.onclick = () => showTemplateModal(template.id, button);
                 templateGrid.appendChild(card);
             });
+            shownCount = filteredTemplates.length;
         }
 
         function showTemplateModal(id, opener) {
@@ -292,6 +302,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 e.target.classList.add('active');
                 const category = e.target.dataset.filter;
                 renderTemplates(category);
+                announceCount();
             }
         });
 

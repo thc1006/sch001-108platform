@@ -57,6 +57,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         <!-- 訪談卡片網格 -->
         <section>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="interview-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 訪談卡片由 renderInterviews() 填入 -->
             </div>
@@ -119,6 +120,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         const filters = document.getElementById('category-filters');
         const searchBox = document.getElementById('search-box');
         const noResults = document.getElementById('no-results');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderInterviews(category = 'all', searchTerm = '') {
             interviewGrid.innerHTML = '';
@@ -137,6 +146,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 return inCategory && inSearch;
             });
 
+            shownCount = filteredData.length;
             if (filteredData.length === 0) {
                 noResults.classList.remove('hidden');
             } else {
@@ -285,10 +295,11 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 filters.querySelector('.active').classList.remove('active');
                 e.target.classList.add('active');
                 handleFilterAndSearch();
+                announceCount();
             }
         });
 
-        searchBox.addEventListener('input', handleFilterAndSearch);
+        searchBox.addEventListener('input', () => { handleFilterAndSearch(); announceCount(400); });
 
         function checkUrlForModal() {
             const urlParams = new URLSearchParams(window.location.search);

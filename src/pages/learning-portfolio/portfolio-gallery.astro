@@ -66,6 +66,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- 作品卡片網格 -->
         <section>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 作品卡片由 renderPortfolioGrid() 填入 -->
             </div>
@@ -104,6 +105,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const categoryFilter = document.getElementById('category-filter');
         const typeFilter = document.getElementById('type-filter');
         const tagFilter = document.getElementById('tag-filter');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function renderPortfolioGrid() {
             const selectedCategory = categoryFilter.value;
@@ -118,6 +127,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
 
             portfolioGrid.innerHTML = '';
+            shownCount = filteredData.length;
 
             if (filteredData.length === 0) {
                 noResultsDiv.classList.remove('hidden');
@@ -194,9 +204,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             appendOptions(tagFilter, tags);
         }
 
-        categoryFilter.addEventListener('change', renderPortfolioGrid);
-        typeFilter.addEventListener('change', renderPortfolioGrid);
-        tagFilter.addEventListener('change', renderPortfolioGrid);
+        categoryFilter.addEventListener('change', () => { renderPortfolioGrid(); announceCount(); });
+        typeFilter.addEventListener('change', () => { renderPortfolioGrid(); announceCount(); });
+        tagFilter.addEventListener('change', () => { renderPortfolioGrid(); announceCount(); });
 
         // 從 portfolio-gallery.json 載入資料後再渲染
         async function loadData() {

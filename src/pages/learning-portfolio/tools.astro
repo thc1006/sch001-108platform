@@ -60,6 +60,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- Tool Grid -->
         <section>
+            <p id="result-status" role="status" class="sr-only"></p>
             <div id="tool-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Tool cards will be injected here -->
             </div>
@@ -73,6 +74,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         const toolGrid = document.getElementById('tool-grid');
         const filters = document.getElementById('category-filters');
+        const resultStatus = document.getElementById('result-status');
+        // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+        let shownCount = 0;
+        let announceTimer;
+        function announceCount(delay = 0) {
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+        }
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, (c) => (
@@ -113,6 +122,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 `;
                 toolGrid.appendChild(card);
             });
+            shownCount = filteredTools.length;
         }
 
         filters.addEventListener('click', (e) => {
@@ -121,6 +131,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 e.target.classList.add('active');
                 const category = e.target.dataset.category;
                 renderTools(category);
+                announceCount();
             }
         });
 

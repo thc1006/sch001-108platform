@@ -46,6 +46,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <!-- 資源卡片網格 -->
     <section>
+      <p id="result-status" role="status" class="sr-only"></p>
       <p id="result-count" class="text-sm text-gray-500 mb-4 text-center"></p>
       <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       <div id="no-results" class="hidden text-center py-16">
@@ -80,6 +81,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const grid = document.getElementById('resource-grid');
     const noResults = document.getElementById('no-results');
     const resultCount = document.getElementById('result-count');
+    const resultStatus = document.getElementById('result-status');
+    // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
+    let shownCount = 0;
+    let announceTimer;
+    function announceCount(delay = 0) {
+      clearTimeout(announceTimer);
+      announceTimer = setTimeout(() => { resultStatus.textContent = `顯示 ${shownCount} 筆`; }, delay);
+    }
     const searchInput = document.getElementById('search-input');
     const categoryFilters = document.getElementById('category-filters');
     let activeCategory = 'all';
@@ -100,6 +109,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       grid.innerHTML = '';
       resultCount.textContent = `共 ${filtered.length} 筆資源`;
+      shownCount = filtered.length;
 
       if (filtered.length === 0) {
         noResults.classList.remove('hidden');
@@ -135,7 +145,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
     }
 
-    searchInput.addEventListener('input', render);
+    searchInput.addEventListener('input', () => { render(); announceCount(400); });
     categoryFilters.addEventListener('click', (e) => {
       const btn = e.target.closest('.filter-btn');
       if (!btn) return;
@@ -148,6 +158,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       btn.setAttribute('aria-pressed', 'true');
       activeCategory = btn.dataset.category;
       render();
+      announceCount();
     });
 
     async function loadResources() {
