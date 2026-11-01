@@ -23,57 +23,60 @@ const current = (item: (typeof navItems)[number]) =>
 ---
 
 <header class="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-  <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-    <div class="text-2xl font-bold text-blue-600">
-      <a href={`${base}/index.html`}>台灣教育處方籤</a>
+  {/* 手機選單也放在這個 nav 裡：桌機與手機的選項都在同一個導覽地標，螢幕上同時只有一組看得到。 */}
+  <nav aria-label="主選單">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="text-2xl font-bold text-blue-600">
+        <a href={`${base}/index.html`}>台灣教育處方籤</a>
+      </div>
+
+      {/* 桌機選單。768～1023px 的版心只有 720px，選項間距 32px 時站名和選單只隔 8px，所以 lg 以下用 24px。 */}
+      <div class="hidden md:flex space-x-6 lg:space-x-8 items-center font-semibold">
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            aria-current={current(item)}
+            class:list={[
+              'transition duration-300',
+              item.key === currentSection
+                ? 'text-blue-600 font-bold'
+                : 'text-gray-600 hover:text-blue-700',
+            ]}
+          >{item.label}</a>
+        ))}
+      </div>
+
+      <!-- 手機漢堡鈕 -->
+      <button
+        id="nav-toggle"
+        type="button"
+        class="md:hidden text-gray-600 hover:text-blue-700"
+        aria-label="開啟導覽選單"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </div>
 
-    {/* 桌機選單。768～1023px 的版心只有 720px，選項間距 32px 時站名和選單只隔 8px，所以 lg 以下用 24px。 */}
-    <div class="hidden md:flex space-x-6 lg:space-x-8 items-center font-semibold">
+    <!-- 手機選單(預設收合)。header 是 sticky，視窗矮的時候選單要能在自己裡面捲動，不然後面的選項到不了。 -->
+    <div id="mobile-menu" tabindex="-1" class="hidden md:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto scroll-pt-20 border-t border-gray-100 bg-white">
       {navItems.map((item) => (
         <a
           href={item.href}
           aria-current={current(item)}
           class:list={[
-            'transition duration-300',
+            'block px-6 py-3 font-semibold border-b border-gray-50',
             item.key === currentSection
-              ? 'text-blue-600 font-bold'
-              : 'text-gray-600 hover:text-blue-700',
+              ? 'text-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50',
           ]}
         >{item.label}</a>
       ))}
     </div>
-
-    <!-- 手機漢堡鈕 -->
-    <button
-      id="nav-toggle"
-      type="button"
-      class="md:hidden text-gray-600 hover:text-blue-700"
-      aria-label="開啟導覽選單"
-      aria-expanded="false"
-      aria-controls="mobile-menu"
-    >
-      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
   </nav>
-
-  <!-- 手機選單(預設收合)。header 是 sticky，視窗矮的時候選單要能在自己裡面捲動，不然後面的選項到不了。 -->
-  <div id="mobile-menu" tabindex="-1" class="hidden md:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto scroll-pt-20 border-t border-gray-100 bg-white">
-    {navItems.map((item) => (
-      <a
-        href={item.href}
-        aria-current={current(item)}
-        class:list={[
-          'block px-6 py-3 font-semibold border-b border-gray-50',
-          item.key === currentSection
-            ? 'text-blue-600 bg-blue-50'
-            : 'text-gray-600 hover:text-blue-700 hover:bg-gray-50',
-        ]}
-      >{item.label}</a>
-    ))}
-  </div>
 </header>
 
 <script>

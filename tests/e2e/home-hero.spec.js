@@ -164,7 +164,7 @@ for (const [width, expected] of CONTAINER_WIDTHS) {
         const m = await page.evaluate(() => {
             const left = (selector) => document.querySelector(selector).getBoundingClientRect().left;
             return {
-                nav: document.querySelector('header nav').getBoundingClientRect().width,
+                nav: document.querySelector('header nav > .container').getBoundingClientRect().width,
                 hero: document.querySelector('main section .container').getBoundingClientRect().width,
                 brandLeft: left('header nav a'),
                 headlineLeft: left('main h1'),
