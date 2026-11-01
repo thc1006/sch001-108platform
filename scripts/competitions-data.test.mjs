@@ -751,10 +751,11 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.equal(purple.eventStartsAt, '2027-04-06');
     assert.equal(purple.eventEndsAt, '2027-04-15');
 
-    // SEAMO 官網的 Exam Period Starts／Registration Start Date／Registration Deadline／Region 全部是 N/A
+    // SEAMO 官網首頁 2026-11-01 列出 SEAMO X 2027：「Registration Deadline 15 Nov 2026, 23:55 PM」，沒有標時區，
+    // 只收各地前 40%，不填 deadline。
     const seamo = find('東南亞數學奧林匹亞');
     assert.equal(seamo.deadline, '');
-    assert.ok(seamo.registrationNote?.includes('N/A'));
+    assert.equal(seamo.registrationNote, 'SEAMO X 限各地前 40% · 11/15 截止');
 
     // Embracing Our Differences 的官方投稿平台逐字顯示「There are presently no open calls for submissions.」
     for (const needle of ['Embracing Our Differences', 'John Locke']) {
