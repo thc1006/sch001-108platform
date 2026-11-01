@@ -309,7 +309,7 @@ test.describe('核心素養對照表', () => {
     });
 });
 
-// [頁面, 輸入框, 送出按鈕, 提示]。沒有輸入就送出時，焦點回到輸入框，螢幕閱讀器要唸出它有錯、錯在哪裡。
+// [頁面, 輸入框, 送出按鈕, 提示]。沒有輸入就送出時，焦點不動，提示由 status 唸；之後移到輸入框時，螢幕閱讀器要唸出它有錯、錯在哪裡。
 const AI_INPUTS = [
     ['autonomous-learning/index.html', '#coachInput', '#generateCoachBtn', '請先輸入你的初步想法。'],
     ['autonomous-learning/plan-templates.html', '#planInput', '#generatePlanBtn', '請先輸入你的自主學習主題。'],
