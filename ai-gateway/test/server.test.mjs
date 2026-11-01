@@ -2144,11 +2144,11 @@ test('CLIENT_IP_HEADER：ip:port、[v6]:port、IPv6（取 /64）、多行標頭�
     }
 });
 
-test('逾時設定：標頭 20 秒、Node 每 5 秒檢查一次；requestTimeout 長於「標頭 + body」期限，只是最後防線', async () => {
+test('逾時設定：標頭 10 秒、Node 每 5 秒檢查一次；requestTimeout 長於「標頭 + body」期限，只是最後防線', async () => {
     const gw = await startGateway({ server: { bodyTimeoutMs: 30_000 } });
     try {
         const { server } = gw.gateway;
-        assert.equal(server.headersTimeout, 20_000);
+        assert.equal(server.headersTimeout, 10_000);
         assert.equal(server.connectionsCheckingInterval, 5_000);
         assert.ok(server.requestTimeout > server.headersTimeout + 30_000, `requestTimeout=${server.requestTimeout}`);
     } finally {
