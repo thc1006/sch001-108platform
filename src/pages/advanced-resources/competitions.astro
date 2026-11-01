@@ -701,8 +701,9 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
+    /* overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。 */
     .comp-card {
-      position: relative; display: flex; flex-direction: column; overflow: hidden;
+      position: relative; display: flex; flex-direction: column; overflow: hidden; overflow-wrap: anywhere;
       background: #fff; border: 1px solid var(--line); border-radius: 1.15rem;
       box-shadow: 0 1px 2px rgba(15,23,42,.04);
       transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s, border-color .28s;
