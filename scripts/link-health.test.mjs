@@ -308,6 +308,46 @@ test('三態：DNS 卡住時照 signal 的時間回傳 ABORT_ERR，歸入 unveri
     assert.deepEqual(results.map((x) => [x.code, classifyLink(x)]), [['ABORT_ERR', 'unverified'], ['ABORT_ERR', 'unverified']]);
 });
 
+test('DNS：同時進行的查詢最多 3 個，不再等的也算，查詢真的結束才空出位子', { timeout: 10_000 }, async (t) => {
+    const { lookup, state, releaseOne, releaseAll, close } = hangingDns(t);
+    const tick = () => new Promise((r) => setImmediate(r));
+    const rs = await Promise.all(Array.from({ length: 5 }, (_, i) => probe(`https://h${i}.dns-hang.example/`, AbortSignal.timeout(300))));
+    assert.deepEqual(rs.map((r) => [r.code, classifyLink(r)]), Array(5).fill(['ABORT_ERR', 'unverified']));
+    assert.equal(lookup.mock.callCount(), 3, '排隊的兩個不送出查詢');
+    assert.equal((await probe('https://full.dns-hang.example/', AbortSignal.abort())).code, 'ABORT_ERR', '位子滿時，已經中止的不等位子');
+    releaseAll();
+    await tick();
+    assert.equal((await probe('https://free.dns-hang.example/', AbortSignal.abort())).code, 'ABORT_ERR');
+    assert.equal(lookup.mock.callCount(), 3, '已經中止的不送出查詢');
+    const later = Array.from({ length: 6 }, (_, i) => probe(`https://l${i}.dns-hang.example/`, AbortSignal.timeout(5000)));
+    await tick();
+    assert.equal(lookup.mock.callCount(), 6);
+    releaseOne();
+    await tick();
+    assert.equal(lookup.mock.callCount(), 7, '空出一個位子，排隊的三個只有一個送出查詢');
+    close();
+    assert.deepEqual((await Promise.all(later)).map((r) => r.code), Array(6).fill('EAI_AGAIN'));
+    assert.equal(state.peak, 3, '同時在跑的查詢不超過 3 個');
+});
+
+test('DNS：排在前面的探測中止了，空出的位子照樣給後面的', { timeout: 10_000 }, async (t) => {
+    const { lookup, releaseOne, close } = hangingDns(t);
+    const tick = () => new Promise((r) => setImmediate(r));
+    const holders = Array.from({ length: 3 }, (_, i) => probe(`https://h${i}.dns-queue.example/`, AbortSignal.timeout(5000)));
+    const first = new AbortController();
+    const w1 = probe('https://w1.dns-queue.example/', first.signal);
+    const w2 = probe('https://w2.dns-queue.example/', AbortSignal.timeout(5000));
+    await tick();
+    assert.equal(lookup.mock.callCount(), 3);
+    first.abort();
+    assert.equal((await w1).code, 'ABORT_ERR');
+    releaseOne();
+    await tick();
+    assert.equal(lookup.mock.callCount(), 4, '第二個排隊的送出查詢');
+    close();
+    assert.deepEqual((await Promise.all([...holders, w2])).map((r) => r.code), Array(4).fill('EAI_AGAIN'));
+});
+
 test('三態：逾時 → unverified', async () => {
     const slow = await probe(`${base}/slow`, AbortSignal.timeout(300), LOOPBACK_OK);
     assert.equal(slow.status, 0);

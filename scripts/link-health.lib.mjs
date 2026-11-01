@@ -314,7 +314,7 @@ export function staticUrlPolicy(raw, opts = {}) {
 export async function resolveAndVerify(host, opts = {}, signal) {
     let addresses;
     try {
-        addresses = await untilAborted(dns.promises.lookup(host, { all: true, verbatim: true }), signal);
+        addresses = await lookupAll(host, signal);
     } catch (err) {
         if (signal?.aborted) return { ok: false, code: 'ABORT_ERR', reason: `等 ${host} 的 DNS 回應時逾時` };
         // Windows 的 getaddrinfo 對「查無此名」有時回 ENOENT 而非 ENOTFOUND（已實測：
@@ -345,6 +345,24 @@ function untilAborted(promise, signal) {
         else signal.addEventListener('abort', onAbort, { once: true });
     });
     return Promise.race([promise, aborted]).finally(() => signal.removeEventListener('abort', onAbort));
+}
+
+// LOOKUP_SLOTS 是同時進行的 dns.lookup 上限，不再等的也算，查詢真的結束才空出來。執行緒池預設 4 條，
+// check-external-links 併發 6；卡住的查詢佔滿執行緒池時，寫報告的檔案讀寫也要排在後面。
+const LOOKUP_SLOTS = 3;
+let lookupsRunning = 0;
+const slotFreed = [];
+
+/** lookupAll 等到有空位才查，等位子和等查詢結果都可以被 signal 中止，已經中止的不送出查詢。 */
+async function lookupAll(host, signal) {
+    while (lookupsRunning >= LOOKUP_SLOTS) await untilAborted(new Promise((wake) => slotFreed.push(wake)), signal);
+    signal?.throwIfAborted();
+    lookupsRunning++;
+    const done = () => {
+        lookupsRunning--;
+        for (const wake of slotFreed.splice(0)) wake();
+    };
+    return untilAborted((async () => dns.promises.lookup(host, { all: true, verbatim: true }))().finally(done), signal);
 }
 
 /** probe 回傳被封鎖時的形狀，讓呼叫端不必比對字串。 */
