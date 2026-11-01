@@ -1,7 +1,7 @@
 // 核心素養對照表頁「AI 對照核心素養」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
 // 8001 埠服務的是 .link-root，要先建置。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/career-exploration/competency-map.html`;
@@ -189,7 +189,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(button).toBeEnabled();
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
         // 取消鈕跟著進度區塊移除了。空的 #ai-work 看不到焦點框；焦點移進 #ai-result 的話，螢幕閱讀器
-        // 會唸一次訊息，live region 又唸一次。
+        // 會唸一次訊息，#ai-status 又唸一次。
         await expect(button).toBeFocused();
         for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
     });
@@ -230,9 +230,10 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
         await expect(result.locator(':scope > p')).toHaveText(message);
         await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
-        // 先放答案再放訊息，live region 唸的順序跟畫面一樣
+        // 先放答案再放訊息
         expect(await result.evaluate((el) => [...el.children].map((c) => c.tagName))).toEqual(['DIV', 'P']);
-        expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual(['ai-result:polite']);
+        expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual([]);
+        await expect(page.locator('#ai-status')).toHaveText(message + '沒寫完的回答留在按鈕後面。');
         await expect(work).toBeEmpty();
         await expect(button).toBeFocused();
         for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
@@ -372,13 +373,12 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(hint).toHaveText('最多 1000 字');
     });
 
-    // 進度區塊的 role="status" 會跟著 finish() 移除，答案與訊息要靠一直都在的 #ai-result 唸出來。
     // WebKit 會把 live region 裡任何子孫的變化送給 VoiceOver，子孫的 aria-live="off" 擋不住，
-    // 所以進度區塊與草稿往上都不能有 live region。
-    test('#ai-result 是 polite 的 live region，只放最後的答案；進度區塊與草稿在 #ai-work，往上沒有 live region', async ({ page }) => {
+    // 所以進度區塊與草稿往上都不能有 live region。答案有標題與清單，整段唸出來聽不出結構，也不放進去。
+    test('#ai-result 只放最後的答案；答案、進度區塊與草稿往上都沒有 live region', async ({ page }) => {
         const work = page.locator('#ai-work');
         const result = page.locator('#ai-result');
-        await expect(result).toHaveAttribute('aria-live', 'polite');
+        expect(await result.evaluate(liveSettingsUpFrom)).toEqual([]);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
         await page.fill('#ai-input', '科展');
@@ -391,8 +391,35 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
 
         await push(page, done('* 最後的答案'));
         await expect(result.locator('.prose')).toHaveText('最後的答案');
-        expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual(['ai-result:polite']);
+        expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual([]);
         await expect(work).toBeEmpty();
+    });
+
+    // 進度區塊的 role="status" 會跟著 finish() 移除，答案的摘要與訊息由一直都在的 #ai-status 唸。
+    test('#ai-status 是載入時就在、視覺上隱藏的 role="status"；提示、完成、取消各唸一句，同一句再出現也再唸', async ({ page }) => {
+        const status = page.locator('#ai-status');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        await watchStatus(page, '#ai-status');
+
+        await page.click('#ai-generate-btn');
+        await expect(status).toHaveText('請先輸入你的活動經驗描述！');
+        await page.click('#ai-generate-btn');
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述！']);
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('# 對應的素養'), done('# 對應的素養\n* A2')] });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        await expect(page.locator('#ai-result .prose li')).toHaveText(['A2']);
+        await expect(status).toHaveText('已產生 AI 的回答，接在按鈕後面。');
+
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.click('#ai-generate-btn');
+        await expect(status).toBeEmpty();
+        await page.locator('#ai-work').getByRole('button', { name: '取消' }).click();
+        await expect(status).toHaveText('已取消。');
+        expect(await statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述！', '已產生 AI 的回答，接在按鈕後面。', '已取消。']);
     });
 
     test('答案裡的 # 標題是 h2「AI 對照核心素養」底下的 h3，清單項目在 <ul> 裡', async ({ page }) => {

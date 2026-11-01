@@ -50,11 +50,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                      <i data-feather="zap"></i>
                      <span>開始對照</span>
                  </button>
-                 {/* 進度與草稿放在沒有 aria-live 的 #ai-work，#ai-result 只放最後的答案或訊息：WebKit 會把
-                     live region 裡任何子孫的變化送給 VoiceOver，子孫自己設 aria-live="off" 也擋不住。 */}
+                 {/* 進度與草稿放在 #ai-work，不放進 live region：WebKit 會把 live region 裡任何子孫的變化送給
+                     VoiceOver，子孫自己設 aria-live="off" 也擋不住。答案有標題與清單，整段唸出來聽不出結構，
+                     所以 #ai-result 也不是 live region；摘要與訊息由載入時就在、一開始是空的 #ai-status 唸。 */}
                  <div class="mt-6">
                      <div id="ai-work"></div>
-                     <div id="ai-result" aria-live="polite"></div>
+                     <p id="ai-status" role="status" class="sr-only"></p>
+                     <div id="ai-result"></div>
                  </div>
             </div>
         </section>
@@ -146,6 +148,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         const aiWorkContainer = document.getElementById('ai-work');
         const aiResultContainer = document.getElementById('ai-result');
         const aiBtnLabel = aiGenerateBtn.querySelector('span');
+        const aiStatus = document.getElementById('ai-status');
+        let announceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次時，第二次也會被唸出來。text 是空字串時只清空。
+        function announce(text) {
+            clearTimeout(announceTimer);
+            aiStatus.textContent = '';
+            if (text) announceTimer = setTimeout(() => { aiStatus.textContent = text; }, 100);
+        }
         // platform-ai.js 沒載入時沒有 describeError 可用，改顯示這句，與它對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
@@ -165,6 +175,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center font-semibold';
             p.textContent = text;
             aiResultContainer.appendChild(p);
+            announce(partial ? text + '沒寫完的回答留在按鈕後面。' : text);
         }
 
         // renderMarkdown 先 escape 再轉換，輸出可以直接放進 innerHTML。回答裡的標題接在這一區的 h2 底下。
@@ -191,6 +202,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             aiGenerateBtn.classList.add('opacity-50', 'cursor-not-allowed');
             aiBtnLabel.textContent = '分析中…';
             aiResultContainer.textContent = '';
+            announce('');
 
             const controller = new AbortController();
             // mountProgress 放在 try 裡：PlatformAI 沒載入時它會丟 ReferenceError，按鈕仍要靠 finally 恢復。
@@ -222,6 +234,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 aiWorkContainer.textContent = '';
                 // 以 done 的 result 為準，片段接起來的只是草稿。
                 aiResultContainer.appendChild(createAnswerBox(result));
+                announce('已產生 AI 的回答，接在按鈕後面。');
             } catch (error) {
                 if (progress) progress.finish();
                 aiWorkContainer.textContent = '';
