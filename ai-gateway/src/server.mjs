@@ -55,7 +55,7 @@ const STALL_TIMEOUT_MS = 30_000;
 const MAX_IP_HEADER_CHARS = 256;
 // 信任的代理沒送用戶端 IP 時的警告，最多每分鐘一次
 const CLIENT_IP_WARN_INTERVAL_MS = 60_000;
-// 不收 body 就能一再觸發的拒絕（標頭太大的 431、封鎖的來源、連線太多），同一個代號最多每分鐘記一行
+// 不收 body 就能一再觸發的拒絕（標頭太大的 431、連線太多、讀 body 之前的拒絕），同一個代號最多每分鐘記一行
 const REPEATED_REJECT_INTERVAL_MS = 60_000;
 // 不論成敗、所有到達的任務請求的計數窗口（上限是 cfg.requestLimitPerMinute）
 const ARRIVAL_WINDOW_MS = 60_000;
@@ -479,7 +479,7 @@ export function createGateway({
     // usageIntervalMs 加 1 秒，計時器晚觸發再留 1 分鐘
     const usage = new Usage({ threshold: cfg.rateLimitMax * Math.ceil((usageIntervalMs + 60_000) / cfg.rateLimitWindowMs) });
     const logUsage = () => {
-        for (const code of [...repeatedRejects.keys()]) flushRepeatedReject(code);
+        for (const key of [...repeatedRejects.keys()]) flushRepeatedReject(key);
         log('info', 'USAGE', usage.take());
     };
     let usageTimer;
@@ -555,25 +555,26 @@ export function createGateway({
         }
         return emit.apply(this, [event, ...args]);
     };
-    // Node 回 431 之後會關掉連線，但對方可以一直開新連線再送，每次一行的話 log 會被灌滿。每個代號以一分鐘
-    // 為一段：段裡的第一次立刻記，其餘的次數等這一段過了、下一次發生或關機時再記一行，from 是那一段開始
-    // 的時間。代號只有固定幾個
+    // Node 回 431 之後會關掉連線，但對方可以一直開新連線再送，每次一行的話 log 會被灌滿。每個代號（有原因的
+    // 再分原因）以一分鐘為一段：段裡的第一次立刻記，其餘的次數等這一段過了、下一次發生或關機時再記一行，
+    // from 是那一段開始的時間。代號與原因只有固定幾種
     const repeatedRejects = new Map();
     function logRepeatedReject(fields) {
         const t = now();
-        const entry = repeatedRejects.get(fields.code);
+        const key = fields.reason ? `${fields.code}/${fields.reason}` : fields.code;
+        const entry = repeatedRejects.get(key);
         if (entry && t - entry.since < REPEATED_REJECT_INTERVAL_MS) {
             entry.rest++;
             return;
         }
-        if (entry) flushRepeatedReject(fields.code);
-        repeatedRejects.set(fields.code, { fields, since: t, from: new Date().toISOString(), rest: 0 });
-        log('info', 'REJECT', { ...fields, count: 1 });
+        if (entry) flushRepeatedReject(key);
+        repeatedRejects.set(key, { fields, since: t, from: new Date().toISOString(), rest: 0 });
+        log(fields.status >= 500 ? 'warn' : 'info', 'REJECT', { ...fields, count: 1 });
     }
-    function flushRepeatedReject(code) {
-        const { fields, from, rest } = repeatedRejects.get(code);
-        repeatedRejects.delete(code);
-        if (rest) log('info', 'REJECT', { ...fields, count: rest, from });
+    function flushRepeatedReject(key) {
+        const { fields, from, rest } = repeatedRejects.get(key);
+        repeatedRejects.delete(key);
+        if (rest) log(fields.status >= 500 ? 'warn' : 'info', 'REJECT', { ...fields, count: rest, from });
     }
     // Expect: 100-continue：不讓 Node 自動回 100 Continue（那等於請對方先把整個 body 送過來），
     // 等提早的檢查（origin、任務、格式、限流）都過了、真的要讀 body 時才回。Node 認得的寫法（例如
@@ -745,37 +746,41 @@ export function createGateway({
         const origin = allowedOrigin(req);
         const headers = { 'x-request-id': requestId, ...corsHeaders(req) };
         // reason 只進 log：同一個代號有不同原因時分得出來
+        const respond = (status, code, message, extra = {}, extraHeaders = {}) => {
+            if (extra.retryAfter) extraHeaders = { ...extraHeaders, 'retry-after': String(extra.retryAfter) };
+            sendJson(req, res, status, { error: { code, message, requestId, ...extra } }, { ...headers, ...extraHeaders });
+        };
         const reject = (status, code, message, extra = {}, extraHeaders = {}, reason = undefined) => {
             log(status >= 500 ? 'warn' : 'info', 'REJECT', { id: requestId, task: taskId, status, code, reason });
             usage.reject(code, reason);
-            if (extra.retryAfter) extraHeaders = { ...extraHeaders, 'retry-after': String(extra.retryAfter) };
-            sendJson(req, res, status, { error: { code, message, requestId, ...extra } }, { ...headers, ...extraHeaders });
+            respond(status, code, message, extra, extraHeaders);
+        };
+        // 讀 body 之前的拒絕不必送 body 就能一再觸發：同一個代號每分鐘記一行（見 logRepeatedReject）
+        const rejectEarly = (status, code, message, extra = {}, extraHeaders = {}, reason = undefined) => {
+            logRepeatedReject(reason ? { status, code, reason } : { status, code });
+            usage.reject(code, reason);
+            respond(status, code, message, extra, extraHeaders);
         };
         // 關機中還收得到請求，只可能是沿用舊的 keep-alive 連線（新連線已經不收了），或是開始
         // 關機時還在上傳 body 的請求。回應帶 connection: close（見 connectionHeader）：
         // 代理下一次開新連線，就會落到已經就緒的新 pod
-        const rejectDraining = () => reject(503, 'not_ready', MESSAGES.restarting, { retryAfter: 5 });
+        const rejectDraining = (rejectWith = reject) => rejectWith(503, 'not_ready', MESSAGES.restarting, { retryAfter: 5 }, {}, 'shutdown');
 
         const address = clientAddressOf(req);
         const key = clientKey(address, cfg.v6Prefix);
         usage.request(tasks.has(taskId) ? taskId : 'unknown', clientTag(key));
         // 預檢不擋：預檢被拒時瀏覽器只說連不上，這裡的 403 帶 CORS 標頭，前端顯示得出訊息
-        if (blockedSource(address)) {
-            logRepeatedReject({ status: 403, code: 'source_blocked' });
-            usage.reject('source_blocked');
-            sendJson(req, res, 403, { error: { code: 'source_blocked', message: MESSAGES.source_blocked, requestId } }, headers);
-            return undefined;
-        }
+        if (blockedSource(address)) return rejectEarly(403, 'source_blocked', MESSAGES.source_blocked);
         // 瀏覽器跨網域的 POST 一定帶 Origin；沒有或不在名單內就拒絕（curl 可以偽造，
         // 這不是身分驗證，只是讓別的網站無法借用；真正的防線是下面的限流與排隊）
-        if (!origin) return reject(403, 'origin_not_allowed', '這個網站不能使用 AI 服務');
+        if (!origin) return rejectEarly(403, 'origin_not_allowed', '這個網站不能使用 AI 服務');
         const task = tasks.get(taskId);
-        if (!task) return reject(404, 'unknown_task', '沒有這個 AI 功能');
+        if (!task) return rejectEarly(404, 'unknown_task', '沒有這個 AI 功能');
         if (!isJsonContentType(req.headers['content-type'])) {
-            return reject(415, 'unsupported_media_type', '請求格式必須是 JSON');
+            return rejectEarly(415, 'unsupported_media_type', '請求格式必須是 JSON');
         }
-        if (draining) return rejectDraining();
-        if (configProblems(llm).length) return reject(503, 'not_ready', MESSAGES.not_ready, { retryAfter: 30 });
+        if (draining) return rejectDraining(rejectEarly);
+        if (configProblems(llm).length) return rejectEarly(503, 'not_ready', MESSAGES.not_ready, { retryAfter: 30 }, {}, 'config');
 
         // 收 body、解析、驗證都要花主執行緒的時間，而驗證失敗的請求不計入次數上限：讀 body 之前
         // 先擋掉超量的來源（2026-10-22 實測：單一來源每秒送 33 個 28 萬字元的錯誤請求，一次都
@@ -785,7 +790,7 @@ export function createGateway({
             limiter.check(key);
         } catch (err) {
             if (err instanceof LimitError) {
-                return reject(429, err.code, MESSAGES[err.code] || MESSAGES.rate_limited, { retryAfter: err.retryAfter });
+                return rejectEarly(429, err.code, MESSAGES[err.code] || MESSAGES.rate_limited, { retryAfter: err.retryAfter });
             }
             throw err;
         }
