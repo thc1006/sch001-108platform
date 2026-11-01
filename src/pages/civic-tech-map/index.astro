@@ -207,6 +207,8 @@ const formatDate = (iso: string) => {
         if (submitBtn.getAttribute('aria-disabled') === 'true') return;
         var interest = input.value.trim();
         if (!interest) {
+          resultsArea.textContent = '';
+          showMessage('請先輸入你的興趣或關心的議題。');
           input.focus();
           return;
         }
