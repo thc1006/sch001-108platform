@@ -327,6 +327,15 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => PlatformAI.renderMarkdown('**A2', { partial: true }))).toBe('A2');
         });
 
+        // 頁面上已經有 v15 時，版號沒升的話這一份會提早返回，頁面拿不到 markInvalid。
+        test('v15 已經在頁面上時，這一份照樣載入，markInvalid 可用', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 15 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => typeof window.PlatformAI.markInvalid)).toBe('function');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1763,6 +1772,48 @@ test.describe('PlatformAI 共用 module', () => {
             // 程式錯誤的細節（英文、變數名）不給學生看
             expect(r.other).toBe('抱歉，AI 服務發生錯誤，請稍後再試。');
             expect(r.nothing).toBe('發生未知的錯誤，請稍後再試。');
+        });
+    });
+
+    test.describe('markInvalid', () => {
+        test.beforeEach(async ({ page }) => {
+            await gotoFixture(page);
+            await page.evaluate(() => {
+                document.body.innerHTML = '<input id="topic" aria-describedby="limit"><p id="limit">最多 100 字</p><div id="result"></div>';
+            });
+        });
+
+        const showHint = (page) => page.evaluate(() => {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>請先輸入主題。</p>';
+            PlatformAI.markInvalid(document.getElementById('topic'), result.firstElementChild);
+        });
+
+        test('輸入框標 aria-invalid，描述保留原本的、加上提示；連按兩次不重複加', async ({ page }) => {
+            await showHint(page);
+            await showHint(page);
+            const input = page.locator('#topic');
+            await expect(input).toHaveAttribute('aria-invalid', 'true');
+            await expect(input).toHaveAttribute('aria-describedby', 'limit topic-error');
+            await expect(input).toHaveAccessibleDescription('最多 100 字 請先輸入主題。');
+        });
+
+        test('開始輸入就拿掉標記，描述回到原本的，提示藏起來；之後再輸入不出錯', async ({ page }) => {
+            await showHint(page);
+            const input = page.locator('#topic');
+            await input.pressSequentially('科展');
+            await expect(input).not.toHaveAttribute('aria-invalid');
+            await expect(input).toHaveAttribute('aria-describedby', 'limit');
+            await expect(page.locator('#topic-error')).toBeHidden();
+        });
+
+        test('輸入框原本沒有描述時，拿掉標記後也不留空的 aria-describedby', async ({ page }) => {
+            await page.evaluate(() => document.getElementById('topic').removeAttribute('aria-describedby'));
+            await showHint(page);
+            const input = page.locator('#topic');
+            await expect(input).toHaveAttribute('aria-describedby', 'topic-error');
+            await input.fill('科展');
+            await expect(input).not.toHaveAttribute('aria-describedby');
         });
     });
 

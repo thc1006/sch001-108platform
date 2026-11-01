@@ -3,7 +3,7 @@
  *
  * 暴露為 window.PlatformAI = {
  *   runTask, describeError, mountProgress, getGatewayUrl,
- *   formatError, renderMarkdown, perFrame,
+ *   formatError, renderMarkdown, perFrame, markInvalid,
  *   log, getLogs, clearLogs, mountDebugPanel
  * }
  *
@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 15;
+    var VERSION = 16;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1074,6 +1074,39 @@
         };
     }
 
+    // markInvalid 標過的輸入框 → 拿掉標記的監聽。同一個輸入框再標一次時，先把前一個拿掉。
+    var invalidClearers = new WeakMap();
+
+    function describedBy(input) {
+        return (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    }
+
+    /**
+     * markInvalid 在沒有輸入就送出時，把輸入框標成 aria-invalid，aria-describedby 加上畫面上那行提示，
+     * 焦點在輸入框上時螢幕閱讀器會唸出來。開始輸入就拿掉標記，提示也藏起來。
+     * @param {HTMLInputElement|HTMLTextAreaElement} input
+     * @param {HTMLElement} message 畫面上的提示，沒有 id 的話設成 input.id + '-error'
+     */
+    function markInvalid(input, message) {
+        if (!message.id) message.id = input.id + '-error';
+        var ids = describedBy(input).filter(function (id) { return id !== message.id; });
+        input.setAttribute('aria-describedby', ids.concat(message.id).join(' '));
+        input.setAttribute('aria-invalid', 'true');
+        var previous = invalidClearers.get(input);
+        if (previous) input.removeEventListener('input', previous);
+        function clear() {
+            input.removeEventListener('input', clear);
+            invalidClearers.delete(input);
+            input.removeAttribute('aria-invalid');
+            var rest = describedBy(input).filter(function (id) { return id !== message.id; });
+            if (rest.length) input.setAttribute('aria-describedby', rest.join(' '));
+            else input.removeAttribute('aria-describedby');
+            message.hidden = true;
+        }
+        invalidClearers.set(input, clear);
+        input.addEventListener('input', clear);
+    }
+
     /**
      * perFrame 包住 fn：回傳的函式呼叫幾次都可以，fn 每個畫面最多執行一次，拿到最後一次的參數。
      * 邊收邊顯示的草稿每次都重畫全文，片段一次到好幾段或頁面忙的時候，多畫的那些看不到。
@@ -1290,6 +1323,7 @@
         mountProgress: mountProgress,
         renderMarkdown: renderMarkdown,
         perFrame: perFrame,
+        markInvalid: markInvalid,
         log: log,
         getLogs: getLogs,
         clearLogs: clearLogs,

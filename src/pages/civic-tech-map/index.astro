@@ -210,6 +210,8 @@ const formatDate = (iso: string) => {
         if (!interest) {
           resultsArea.textContent = '';
           showMessage('請先輸入你的興趣或關心的議題。');
+          // 快取裡的舊版 platform-ai.js 沒有 markInvalid。
+          if (typeof PlatformAI !== 'undefined' && PlatformAI.markInvalid) PlatformAI.markInvalid(input, resultsArea.lastElementChild);
           input.focus();
           return;
         }

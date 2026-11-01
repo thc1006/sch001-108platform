@@ -308,3 +308,32 @@ test.describe('核心素養對照表', () => {
         await expect(content).toHaveCSS('visibility', 'hidden');
     });
 });
+
+// [頁面, 輸入框, 送出按鈕, 提示]。沒有輸入就送出時，焦點回到輸入框，螢幕閱讀器要唸出它有錯、錯在哪裡。
+const AI_INPUTS = [
+    ['autonomous-learning/index.html', '#coachInput', '#generateCoachBtn', '請先輸入你的初步想法。'],
+    ['autonomous-learning/plan-templates.html', '#planInput', '#generatePlanBtn', '請先輸入你的自主學習主題。'],
+    ['autonomous-learning/resource-map.html', '#pathInput', '#generatePathBtn', '請先輸入你想學習的主題。'],
+    ['autonomous-learning/topic-ideas.html', '#ideaInput', '#generateIdeaBtn', '請先輸入你的興趣關鍵字。'],
+    ['career-exploration/competency-map.html', '#ai-input', '#ai-generate-btn', '請先輸入你的活動經驗描述。'],
+    ['career-exploration/index.html', '#chat-input', '#chat-submit', '請先輸入你的問題。'],
+    ['civic-tech-map/index.html', '#ai-interest-input', '#ai-submit-btn', '請先輸入你的興趣或關心的議題。'],
+    ['learning-portfolio/index.html', '#reflectionInput', '#analyzeBtn', '請先貼上你的心得反思文字。'],
+    ['learning-portfolio/reflection-guide.html', '#reflectionInput', '#analyzeBtn', '請先貼上你的心得反思文字。'],
+];
+test.describe('AI 功能沒有輸入就送出', () => {
+    for (const [p, input, button, hint] of AI_INPUTS) {
+        test(`${p}：輸入框標 aria-invalid，描述包含「${hint}」；開始輸入就拿掉`, async ({ page }) => {
+            await page.goto(P(p));
+            const field = page.locator(input);
+            const before = await field.getAttribute('aria-describedby');
+            await page.click(button);
+            await expect(field).toHaveAttribute('aria-invalid', 'true');
+            await expect(field).toHaveAccessibleDescription(new RegExp(hint.replace('。', '\\。')));
+            await field.pressSequentially('科');
+            await expect(field).not.toHaveAttribute('aria-invalid');
+            expect(await field.getAttribute('aria-describedby')).toBe(before);
+            await expect(page.getByText(hint)).toBeHidden();
+        });
+    }
+});

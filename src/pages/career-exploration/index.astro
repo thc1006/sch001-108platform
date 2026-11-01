@@ -407,6 +407,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 chatInputError.textContent = '請先輸入你的問題。';
                 chatInputError.hidden = false;
                 announceChat(chatInputError.textContent);
+                // 快取裡的舊版 platform-ai.js 沒有 markInvalid。
+                if (typeof PlatformAI !== 'undefined' && PlatformAI.markInvalid) PlatformAI.markInvalid(chatInput, chatInputError);
                 return;
             }
             chatInputError.hidden = true;

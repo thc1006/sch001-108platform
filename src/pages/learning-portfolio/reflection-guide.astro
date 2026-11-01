@@ -182,6 +182,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const reflection = reflectionInput.value.trim();
             if (!reflection) {
                 showMessage('請先貼上你的心得反思文字。');
+                // 快取裡的舊版 platform-ai.js 沒有 markInvalid。
+                if (typeof PlatformAI !== 'undefined' && PlatformAI.markInvalid) PlatformAI.markInvalid(reflectionInput, analysisResult.lastElementChild);
                 return;
             }
 
