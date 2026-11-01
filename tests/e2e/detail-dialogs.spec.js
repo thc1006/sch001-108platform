@@ -103,7 +103,19 @@ for (const { name, path, grid, button, tabs } of PAGES) {
             await page.keyboard.press('Escape');
             await expect(dialog).toBeHidden();
             await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
-            expect(await page.evaluate(() => window.scrollY)).toBe(y);
+            // 關閉後若有平滑捲動，要等它停下才量：連續 10 個畫面 scrollY 都沒變才算停下。
+            const settled = await page.evaluate(() => new Promise((resolve) => {
+                let last = scrollY;
+                let same = 0;
+                const tick = () => {
+                    same = scrollY === last ? same + 1 : 0;
+                    last = scrollY;
+                    if (same >= 10) resolve(last);
+                    else requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            }));
+            expect(settled).toBe(y);
         });
 
         test('320x256 也捲得到對話框最底下的按鈕，一般尺寸不會多出捲軸', async ({ page }) => {
