@@ -55,7 +55,7 @@ const STALL_TIMEOUT_MS = 30_000;
 const MAX_IP_HEADER_CHARS = 256;
 // 信任的代理沒送用戶端 IP 時的警告，最多每分鐘一次
 const CLIENT_IP_WARN_INTERVAL_MS = 60_000;
-// 不收 body 就能一再觸發的拒絕（標頭太大的 431、封鎖的來源），同一個代號最多每分鐘記一行
+// 不收 body 就能一再觸發的拒絕（標頭太大的 431、封鎖的來源、連線太多），同一個代號最多每分鐘記一行
 const REPEATED_REJECT_INTERVAL_MS = 60_000;
 // 不論成敗、所有到達的任務請求的計數窗口（上限是 cfg.requestLimitPerMinute）
 const ARRIVAL_WINDOW_MS = 60_000;
@@ -84,6 +84,11 @@ const BODY_EVICT_SOURCE_MIN = 5;
 // 連線數的最後防線（net.Server 的 maxConnections：到了上限，新連線直接關掉）。比 MAX_BODY_READS
 // 大，留給進行中的 SSE、閒置的 keep-alive 與還在送標頭的連線
 const MAX_CONNECTIONS = 2048;
+// 直接連進來的連線，同一個來源同時開著的上限，超過的新連線直接關掉。少了這一道，一個來源開 2048 條連線、
+// 每 2 秒送一行標頭，就能佔滿上面的上限，連 /healthz 都連不進來（2026-11-01 本機實測）。信任的代理不算：
+// 正式環境經過 Funnel 的學生、kubelet 的健康檢查都是那個位址（見 deploy/k3s/app.yaml 的 TRUSTED_PROXIES），
+// 這一道管不到；那裡慢慢送的標頭由 tailscaled 收完才轉送，到不了閘道
+const MAX_SOCKETS_PER_SOURCE = 64;
 // 標頭上限。任務請求的標頭只有幾個欄位，Node 預設的 16 KiB 只會讓每條慢連線多佔記憶體
 const MAX_HEADER_BYTES = 8 * 1024;
 // 標頭的個數上限（Node 的 maxHeadersCount，超過回 431）。上面只限位元組：8 KiB 塞約 940 個很短的
@@ -429,11 +434,12 @@ function rejectLogFields(reason) {
  * @param {number} [options.maxPendingBytes]  生成期間待送資料的上限；測試可以調小
  * @param {number} [options.stallTimeoutMs]   write() 回 false 之後等 drain 的時限；測試可以調短
  * @param {number} [options.usageIntervalMs]  USAGE log 的間隔；測試可以調短
+ * @param {number} [options.maxConnections]   連線數上限；測試可以調小
  */
 export function createGateway({
     llm, server: cfg, tasks, generateImpl = generate, log = createLogger(cfg.logLevel), now = () => performance.now(), random = Math.random,
     maxBodyReads = MAX_BODY_READS, maxBodyBytes = MAX_BODY_BYTES, maxPendingBytes = MAX_PENDING_BYTES, stallTimeoutMs = STALL_TIMEOUT_MS,
-    usageIntervalMs = USAGE_INTERVAL_MS,
+    usageIntervalMs = USAGE_INTERVAL_MS, maxConnections = MAX_CONNECTIONS,
 }) {
     const gate = new SlotGate({
         concurrency: cfg.concurrency,
@@ -517,8 +523,28 @@ export function createGateway({
         });
     }
     const server = createServer({ connectionsCheckingInterval: CONNECTIONS_CHECK_MS, maxHeaderSize: MAX_HEADER_BYTES }, onRequest);
-    server.maxConnections = MAX_CONNECTIONS;
+    server.maxConnections = maxConnections;
     server.maxHeadersCount = MAX_HEADERS_COUNT;
+    // 各來源開著的連線數（見 MAX_SOCKETS_PER_SOURCE），來源照 clientKey 算，IPv6 同一段算一個
+    const socketsPerSource = new Map();
+    server.on('connection', (socket) => {
+        const peer = socket.remoteAddress || '';
+        if (trustedProxy(peer)) return;
+        const key = clientKey(peer, cfg.v6Prefix);
+        const count = (socketsPerSource.get(key) ?? 0) + 1;
+        if (count > MAX_SOCKETS_PER_SOURCE) {
+            socket.destroy();
+            logRepeatedReject({ code: 'too_many_connections' });
+            usage.reject('too_many_connections');
+            return;
+        }
+        socketsPerSource.set(key, count);
+        socket.once('close', () => {
+            const left = socketsPerSource.get(key) - 1;
+            if (left) socketsPerSource.set(key, left);
+            else socketsPerSource.delete(key);
+        });
+    });
     // 標頭太大或太多時 Node 自己回 431，不經過 onRequest。掛 clientError 的 listener 會把 Node 預設的
     // 回應也換掉，所以包住 emit：記下來再照常交給 Node。錯誤的 rawPacket 是收到的標頭，不記
     const emit = server.emit;
