@@ -1,5 +1,5 @@
 {
-  "_readme": "台灣高中生主題書單資料檔。欄位說明：theme=主題名稱；description=主題一句話簡介；books[]=該主題書目。每本書欄位：title=繁體中文書名；original_title=原文書名（非翻譯書為空字串）；original_lang=原文書名的語言代碼（BCP 47，如 en、ja），沒有原文書名的書不寫；author=作者（翻譯書保留原文姓名或譯名）；isbn=ISBN-13（優先採用台灣繁體中文版，多為博客來/誠品在售版本）；recommendation=針對高中生（15-18歲）的推薦理由；tags=主題標籤陣列。同一本書可能因適合多個學群而跨多個主題出現，此時各筆的 title/original_title/author/recommendation/tags 皆為同一份內容（僅所屬 theme 不同）。封面圖建議以 https://covers.openlibrary.org/b/isbn/<isbn>-L.jpg?default=false 取用，若回傳 404 表示 Open Library 無此封面，前端應提供替代版面。註：Open Library 封面資料庫對台灣繁中版 ISBN 收錄率極低，本清單多數書籍於 Open Library 查無封面（詳見驗證輸出），建議前端改用書店 API 或預設版型呈現。",
+  "_readme": "台灣高中生主題書單資料檔。欄位說明：theme=主題名稱；description=主題一句話簡介；books[]=該主題書目。每本書欄位：title=繁體中文書名；original_title=原文書名（非翻譯書為空字串）；original_lang=原文書名的語言代碼（BCP 47，如 en、ja），沒有原文書名的書不寫；author=作者（翻譯書保留原文姓名或譯名）；isbn=ISBN-13，用台灣繁體中文版，和書名、書封是同一個版本（不必換成書店現在在賣的版本）；recommendation=書的內容簡介，一兩句；tags=主題標籤陣列。同一本書可能因適合多個學群而跨多個主題出現，此時各筆的 title/original_title/author/recommendation/tags 皆為同一份內容（僅所屬 theme 不同）。封面圖放在 img/books/<isbn>.jpg，和 isbn 同一版，長邊不超過 400 像素；沒有封面檔時頁面用書名產生佔位圖。",
   "lastUpdated": "2026-11-01",
   "themes": [
     {
