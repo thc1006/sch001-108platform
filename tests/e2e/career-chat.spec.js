@@ -3,7 +3,7 @@
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/career-exploration/index.html`;
@@ -229,16 +229,24 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(page.locator('#chat-submit')).toBeEnabled();
     });
 
-    test('沒有輸入（或只有空白）就送出 → 什麼都不做：不送請求，紀錄不變', async ({ page }) => {
-        await installFakeGateway(page);
+    test('沒有輸入（或只有空白）就送出 → 顯示並唸出「請先輸入你的問題。」，不送請求，紀錄不變；送出問題後提示收起來', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done('推薦你資訊學群。')] });
+        await watchStatus(page, '#chat-status');
+        const hint = page.locator('#chat-input-error');
         for (const value of ['', '   ']) {
             await page.fill('#chat-input', value);
             await page.click('#chat-submit');
+            await expect(hint).toHaveText('請先輸入你的問題。');
+            await expect(hint).toBeVisible();
             await page.locator('#chat-input').press('Enter');
         }
+        await expect.poll(() => statusWrites(page)).toContain('請先輸入你的問題。');
         await expect(messages(page)).toHaveCount(1);
         await expect(progress(page)).toHaveCount(0);
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
+
+        await ask(page, '我喜歡電腦');
+        await expect(hint).toBeHidden();
     });
 
     test('草稿出現後按「取消」→ 草稿移除，紀錄裡出現「已取消。」（不是錯誤的紅字），焦點回到輸入框；之後還能再問', async ({ page }) => {

@@ -56,6 +56,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         <ion-icon name="send-outline" aria-label="發送" class="sm:hidden text-xl"></ion-icon>
                     </button>
                 </div>
+                {/* 沒有輸入就送出時的提示。看得到的那行不是 live region，由 #chat-status 唸。 */}
+                <p id="chat-input-error" class="mt-2 text-sm font-semibold text-red-700" hidden></p>
+                <p id="chat-status" role="status" class="sr-only"></p>
                 {/* career-chat 每次只送這一題，不帶先前的對話（ai-gateway/src/task-catalog.mjs）。 */}
                 <p id="chat-input-hint" class="mt-2 text-sm text-gray-500">每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 200 字。</p>
                 <div id="chat-progress"></div>
@@ -339,6 +342,15 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // platform-ai.js 沒載入成功時用這句，與 describeError 對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
         let chatBusy = false;
+        const chatInputError = document.getElementById('chat-input-error');
+        const chatStatus = document.getElementById('chat-status');
+        let chatAnnounceTimer = 0;
+        // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次時，第二次也會被唸出來。
+        function announceChat(text) {
+            clearTimeout(chatAnnounceTimer);
+            chatStatus.textContent = '';
+            if (text) chatAnnounceTimer = setTimeout(() => { chatStatus.textContent = text; }, 100);
+        }
         // 回答裡的標題接在這一區的 h2 底下。
         const ANSWER_MARKDOWN = { headingLevel: 3 };
         // 沒寫完的文字（草稿、斷掉的回答）：最後一行落單的 ** 等記號拿掉
@@ -390,7 +402,14 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         async function handleChatSubmit() {
             const question = chatInput.value.trim();
-            if (chatBusy || !question) return;
+            if (chatBusy) return;
+            if (!question) {
+                chatInputError.textContent = '請先輸入你的問題。';
+                chatInputError.hidden = false;
+                announceChat(chatInputError.textContent);
+                return;
+            }
+            chatInputError.hidden = true;
 
             const asked = createMessage('user');
             asked.text.textContent = question;
