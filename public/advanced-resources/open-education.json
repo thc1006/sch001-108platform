@@ -624,14 +624,13 @@
       "name": "Perimeter Institute GoPhysics! 學生線上工作坊",
       "org": "加拿大 Perimeter 理論物理研究所",
       "url": "https://perimeterinstitute.ca/outreach/students/gophysics-online-workshops",
-      "description": "Perimeter 理論物理研究所為高中生開設免費的線上物理工作坊，以小組討論的方式談黑洞、重力、量子等主題，另有免費教學資源與科普影片。要在官網報名梯次。",
+      "description": "Perimeter 理論物理研究所給高中生的 GoPhysics! 線上工作坊，用高中物理談重力、黑洞、系外行星等現代物理主題。2026 年的線上梯次已截止，可以在官網登記，下次開放時收到通知。",
       "tags": [
         "理論物理",
-        "線上工作坊",
-        "免費參與"
+        "線上工作坊"
       ],
       "lang": "英文",
-      "level": "進階"
+      "level": "入門"
     },
     {
       "id": "ipho-problems-syllabus",
@@ -654,7 +653,7 @@
       "name": "歐洲研究人員之夜",
       "org": "歐盟 Marie Skłodowska-Curie Actions",
       "url": "https://marie-sklodowska-curie-actions.ec.europa.eu/actions/msca-and-citizens/join-a-celebration-of-science",
-      "description": "每年九月在 40 多國舉辦的科學推廣活動，有科學秀、實驗、討論與數位活動，全部免費並開放大眾參加。",
+      "description": "每年九月在 40 國舉辦的科學推廣活動，有科學秀、實驗、討論與數位活動，全部免費並開放大眾參加。",
       "tags": [
         "科學節",
         "免費活動",
