@@ -932,8 +932,8 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(find('歐洲女子數學奧林匹亞').description, /Taiwan/);
     assert.match(find('歐洲女子資訊奧林匹亞').description, /Taiwan|台灣/);
 
-    // 官網 How to participate 的參加國名單中沒有台灣，要據實寫出，不得暗示台灣有選拔管道。
-    assert.match(find('國際哲學奧林匹亞').description, /未見台灣|查無台灣/);
+    // 官網的參加國名單沒有台灣，要據實寫出，不得暗示台灣有選拔管道。
+    assert.match(find('國際哲學奧林匹亞').description, /台灣目前沒有代表團/);
 
     // 年齡門檻警語：留在清單裡但必須標明，否則就是下一個 iF Design
     assert.match(find('DrivenData').description, /18/);
@@ -986,7 +986,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     const ieso = find('國際地球科學奧林匹亞');
     assert.equal(ieso.eventStartsAt, '2027-08-22');
     assert.equal(ieso.eventEndsAt, '2027-08-28');
-    assert.match(ieso.description, /博弈|Pokies/, '必須留下「原網域已成博弈站」的警告，否則下次又會被改回去');
+    assert.match(ieso.sourceNote, /博弈|Pokies/, '必須留下「原網域已成博弈站」的警告，否則下次又會被改回去');
 });
 
 // #70 在 2026-10-25 更正的描述。每一句的官網原文寫在更正它的 commit 訊息裡。

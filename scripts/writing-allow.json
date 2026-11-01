@@ -58,14 +58,6 @@
       "reason": "引號裡照抄臺灣大學大氣科學系 115 學年度申請入學校系分則的審查資料說明，原文就是半形括號。"
     },
     {
-      "file": "public/advanced-resources/competitions.json",
-      "text": "把參加「Asia-Pacific Informatics Olympiad(亞太資奧，佔10%)」計入",
-      "rule": "P05-halfwidth-paren",
-      "kind": "quote",
-      "source": "https://tpmso.k12ea.gov.tw/toi/wp-content/uploads/2025/10/%E5%9C%8B%E9%9A%9B%E8%B3%87%E8%A8%8A%E5%A5%A7%E6%9E%97%E5%8C%B9%E4%BA%9E%E7%AB%B6%E8%B3%BD%E5%9C%8B%E5%AE%B6%E4%BB%A3%E8%A1%A8%E9%9A%8A%E9%81%B4%E9%81%B8%E4%BD%9C%E6%A5%AD%E8%A6%81%E9%BB%9E_20250402%E4%BF%AE%E6%AD%A3%E9%80%9A%E9%81%8E.pdf",
-      "reason": "引號裡引國際資訊奧林匹亞競賽國家代表隊遴選作業要點第八點，括號照原文用半形。"
-    },
-    {
       "file": "src/pages/career-exploration/index.astro",
       "text": "處理組織系統內外人事物的各種問題",
       "rule": "W02-vague-quantity",
