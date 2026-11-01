@@ -227,6 +227,11 @@ test('alt 屬性照查，資料 JSON 的 url 欄位不看', () => {
     assert.deepEqual(jsonBlocks({ url: '網址欄位很多', desc: '描述' }, 'public/x.json', cheerio.load).map((b) => b.text), ['描述']);
 });
 
+test('資料 JSON 不顯示的 recheckNote、sourceNote 不看', () => {
+    const data = { items: [{ description: '描述', recheckNote: '重查依據很多', sourceNote: '查證紀錄——很多' }] };
+    assert.deepEqual(jsonBlocks(data, 'public/x.json', cheerio.load).map((b) => b.text), ['描述']);
+});
+
 test('allowCovers：片段旁邊新加的命中不放行', () => {
     const b = block('很多只有一句「我學到很多」很多');
     assert.equal(allowCovers(okEntry, b, 0, 2), false);

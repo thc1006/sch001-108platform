@@ -13,7 +13,7 @@ const BLOCK = new Set(['p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'td', 'th'
 const DROP = new Set(['script', 'style', 'code', 'pre', 'noscript', 'svg', 'template', 'kbd', 'samp']);
 /** NAME_FIELDS 是資料 JSON 裡的專有名稱欄位：競賽名、書名、機構名照官方寫法，不檢查。tips 底下的 title 是站方寫的，照查。 */
 const NAME_FIELDS = new Set(['title', 'name', 'org', 'organizer', 'author', 'original_title', 'provider', 'platform', 'university', 'major', 'category', 'tags', 'subjects', 'level', 'form', 'region', 'mode', 'lang', 'language', 'difficulty', 'pricing', 'type', 'theme']);
-const SKIP_KEYS = new Set(['id', 'url', 'link', 'photo_url', 'image', 'lastUpdated', 'date', 'deadline', 'slug', 'icon', 'thumbnail_url', 'logo', 'thumbnail', 'recheckNote']);
+const SKIP_KEYS = new Set(['id', 'url', 'link', 'photo_url', 'image', 'lastUpdated', 'date', 'deadline', 'slug', 'icon', 'thumbnail_url', 'logo', 'thumbnail', 'recheckNote', 'sourceNote']);
 // 只有明說照抄的「逐字」「原文」後面的「」算引文。冒號、說、寫後面多半是站方自己寫的示範句，照查。
 const ATTRIB = /(逐字|原文)\s*[：:]?\s*$/u;
 const DISPLAY_ATTRS = ['alt', 'title', 'aria-label', 'placeholder'];
