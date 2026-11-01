@@ -261,8 +261,9 @@
       "eventEndsAt": "2027-07-25",
       "registrationNote": "由生奧選訓選拔 · 無個人報名",
       "sourceCheckedAt": "2026-10-23",
+      "sourceNote": "官網 Future IBOs 頁已不列 2026 年第 37 屆。",
       "url": "https://www.ibo-info.org/",
-      "description": "中學生生物競賽，官網自述為「the premier high school biology student competition worldwide」，逾 70 個國家與地區的國家生物奧林匹亞優勝者參加。官網 Future IBOs 頁公布：第 38 屆 2027 年 7 月 18 至 25 日於波蘭華沙、第 39 屆 2028 年 7 月 16 至 24 日於荷蘭、第 40 屆 2029 年於捷克布爾諾、第 41 屆 2030 年於巴西聖保羅（暫定）；2026 年第 37 屆已結束，不再列於該頁。台灣採國手選拔制，須經就讀學校報名：2027 年初賽報名已於 2026-09-22 截止，初賽 2026-11-07、複賽 2027-01-31、選訓決賽 04-16 至 04-21、國手決選 04-22 至 04-24。"
+      "description": "中學生生物競賽，官網自述為「the premier high school biology student competition worldwide」，逾 70 個國家與地區的國家生物奧林匹亞優勝者參加。官網 Future IBOs 頁公布：第 38 屆 2027 年 7 月 18 至 25 日於波蘭華沙、第 39 屆 2028 年 7 月 16 至 24 日於荷蘭、第 40 屆 2029 年於捷克布爾諾、第 41 屆 2030 年於巴西聖保羅（暫定）；2026 年第 37 屆已結束。台灣採國手選拔制，須經就讀學校報名：2027 年初賽報名已於 2026-09-22 截止，初賽 2026-11-07、複賽 2027-01-31、選訓決賽 04-16 至 04-21、國手決選 04-22 至 04-24。"
     },
     {
       "title": "國際地球科學奧林匹亞 (IESO)",
@@ -299,7 +300,7 @@
       "recheckOn": "2026-12-10",
       "recheckNote": "TOL 預計 12 月初公布初賽報名資訊，屆時補上 opensAt 與 deadline",
       "url": "https://ioling.org/",
-      "description": "以邏輯推理破解陌生語言的中學生競賽，官網章程規定參賽者須「less than 20 years old on the first day of the competition」且為大學前學生，各國一隊至多 4 人。第 23 屆 2026 年 7 月 26 日至 8 月 2 日於羅馬尼亞布加勒斯特舉行，已結束；第 24 屆 2027 年 7 月 21 至 28 日於泰國曼谷舉行，報名時程官網標示 TBA。台灣國手由國立臺灣大學語言學研究所主辦的臺灣語言學奧林匹亞（TOL）選拔。TOL 官網 2026-08-12 預告的 2027 年時程：高中生推薦管道 2026-10-01 至 12-15 開放，受推薦的高中生直接參加複賽；初賽 1/30 上午，國高中生都能報名，1/8 報名截止；複賽 2/20 下午，參加者是初賽前 25%、2026 語言學科展前 8 名與受推薦的高中生；複賽前 25%（取前 25 至 50 名）上一階國手培訓（3/13–14，暫定），再參加 3 至 4 月的決賽，決賽前 8 名成為正式國手。初賽報名資訊預計 12 月初公布。"
+      "description": "以邏輯推理破解陌生語言的中學生競賽，官網章程規定參賽者須「less than 20 years old on the first day of the competition」且為大學前學生，各國一隊至多 4 人。第 23 屆 2026 年 7 月 26 日至 8 月 2 日於羅馬尼亞布加勒斯特舉行，已結束；第 24 屆 2027 年 7 月 21 至 28 日於泰國曼谷舉行，報名時程官網標示 TBA。台灣國手由國立臺灣大學語言學研究所主辦的臺灣語言學奧林匹亞（TOL）選拔。TOL 官網 2026-08-12 預告的 2027 年時程：高中生推薦管道 2026-10-01 至 12-15 開放，受推薦的高中生直接參加複賽；初賽 1/30 上午，國高中生都能報名，1/8 報名截止；複賽 2/20 下午，參加者是初賽前 25%、2026 語言學科展前 8 名與受推薦的高中生；複賽前 25%（取前 25 至 50 名）進入第一階段國手培訓（3/13–14，暫定），再參加 3 至 4 月的決賽，決賽前 8 名成為正式國手。初賽報名資訊預計 12 月初公布。"
     },
     {
       "title": "國際哲學奧林匹亞 (IPO)",
@@ -1288,7 +1289,7 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。",
       "url": "https://www.seamo-official.org/",
-      "description": "商業營運的中小學數學競賽。官網只標示新加坡總部，費用不公開、由各國代理開發票。首頁的報名開始日、截止日欄位都顯示 N/A，查不到日期。官網的地區選單沒有台灣，台灣代理是 JoyEdu Academy（taiwan@seamo-official.org），要報名須自行去信。"
+      "description": "商業營運的中小學數學競賽。官網只標示新加坡總部，費用不公開、由各國代理開發票。官網還沒有公布報名日期。官網的地區選單沒有台灣，台灣代理是 JoyEdu Academy（taiwan@seamo-official.org），要報名須自行去信。"
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
@@ -1480,8 +1481,9 @@
         "closes": "11"
       },
       "sourceCheckedAt": "2026-10-25",
+      "sourceNote": "台灣的區域負責人查自 firstinspires.org/find-local-support 這一頁呼叫的 first-search API，region「Chinese Taipei」下 FRC 的 Regional Director 與 FTC 的 Partner 都是 Rene Cheng。",
       "url": "https://www.firstinspires.org/programs/frc/",
-      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網寫對象是「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，2024-2025 賽季參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00（美東時間）開放，官方寫「The season registration due date is November 17, 2026」，官網行事曆寫賽事報名 11/17 12:00 PM（美東時間，台灣時間 11/18 01:00）截止、初始賽事費同日 5:00 PM 前付清，每隊賽季報名費 US$6,500；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。台灣的聯絡窗口：firstinspires.org/find-local-support 這一頁查詢的 first-search API，在 region「Chinese Taipei」下列出 FRC 的 Regional Director 為 Rene Cheng（rcheng@firstpartners.org），FTC 的 Partner 也是同一人。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
+      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網寫對象是「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，2024-2025 賽季參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00（美東時間）開放，官方寫「The season registration due date is November 17, 2026」，官網行事曆寫賽事報名 11/17 12:00 PM（美東時間，台灣時間 11/18 01:00）截止、初始賽事費同日 5:00 PM 前付清，每隊賽季報名費 US$6,500；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。FIRST 官網列的台灣（Chinese Taipei）FRC 區域負責人（Regional Director）是 Rene Cheng（rcheng@firstpartners.org），FTC 的 Partner 也是他。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
     },
     {
       "title": "VEX 機器人世界錦標賽",
@@ -1823,8 +1825,9 @@
       "deadline": "",
       "registrationNote": "經校內初賽選拔 · 由學校選薦",
       "sourceCheckedAt": "2026-10-23",
+      "sourceNote": "國教署業務頁只有制度說明、沒有年度日程。",
       "url": "https://www.k12ea.gov.tw/Tw/Station/AffairDetail?filter=63F293A9-0155-41A3-97B7-46E43E4685FE&id=f8bd9371-62d7-4626-9f6c-ee105a6a3692",
-      "description": "正式名稱為「普通型高級中等學校數理及資訊學科能力競賽」（俗稱全國高中學科能力競賽）。複賽由國教署與臺北市、新北市、臺中市、高雄市政府教育局主辦並委託學校承辦，決賽由國教署主辦並委由各學科承辦校（115 學年度數學、物理、化學、生物在臺師大，資訊在政治大學資訊學院，地球科學在中央大學太空科學與工程學系）辦理。資格：「全國高級中等學校各年級在學之普通科及綜合高中學程一年級與二、三年級學術學程學生」，明文不含外國僑民學校學生。經主管機關許可參與非學校型態實驗教育、未取得學籍的「無學籍自學生」，依戶籍所在地歸屬的複賽區別，自己向該區複賽承辦學校報名、參加該校的校內初賽（報名方式依各校計畫）。成績達標的自學生由該校以外加名額薦送複賽，其他學生由就讀學校逐級選薦。115 學年度計畫（2026-04-01 頒布）僅訂期限不訂賽日：校內初賽 2026-10-15 前辦畢、複賽 2026-11-13 前辦畢、決賽報名 2026-11-20 前、決賽 2026-12-31 前辦畢，各科確切日期地點由承辦學校另行通知。此國教署業務頁只有制度說明、沒有年度日程，日期以國教署行文各校的計畫為準。"
+      "description": "正式名稱為「普通型高級中等學校數理及資訊學科能力競賽」（俗稱全國高中學科能力競賽）。複賽由國教署與臺北市、新北市、臺中市、高雄市政府教育局主辦並委託學校承辦，決賽由國教署主辦並委由各學科承辦校（115 學年度數學、物理、化學、生物在臺師大，資訊在政治大學資訊學院，地球科學在中央大學太空科學與工程學系）辦理。資格：「全國高級中等學校各年級在學之普通科及綜合高中學程一年級與二、三年級學術學程學生」，明文不含外國僑民學校學生。經主管機關許可參與非學校型態實驗教育、未取得學籍的「無學籍自學生」，依戶籍所在地歸屬的複賽區別，自己向該區複賽承辦學校報名、參加該校的校內初賽（報名方式依各校計畫）。成績達標的自學生由該校以外加名額薦送複賽，其他學生由就讀學校逐級選薦。115 學年度計畫（2026-04-01 頒布）僅訂期限不訂賽日：校內初賽 2026-10-15 前辦畢、複賽 2026-11-13 前辦畢、決賽報名 2026-11-20 前、決賽 2026-12-31 前辦畢，各科確切日期地點由承辦學校另行通知。"
     },
     {
       "title": "The Concord Review 中學歷史論文期刊",
