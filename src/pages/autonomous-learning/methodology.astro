@@ -214,5 +214,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         .prose ul > li::before {
             background-color: #f97316;
         }
+        /* 訪談法的提示詞範例放在 blockquote。typography 預設把引用排成斜體、字重 500，前後再加上引號，
+           中文沒有斜體字形，瀏覽器會硬斜；加上去的引號看起來也像提示詞的一部分。 */
+        .prose blockquote {
+            font-style: normal;
+            font-weight: 400;
+        }
+        .prose blockquote p::before,
+        .prose blockquote p::after {
+            content: none;
+        }
   </style>
 </BaseLayout>
