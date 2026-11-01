@@ -212,7 +212,7 @@ test.describe('優質範例藝廊', () => {
     });
 
     test('焦點範例的按鈕開啟對話框，關閉後焦點回到它', async ({ page }) => {
-        const featured = page.getByRole('button', { name: '深度剖析此範例', exact: true });
+        const featured = page.getByRole('button', { name: '看這份範例的分析', exact: true });
         await featured.focus();
         await page.keyboard.press('Enter');
         const dialog = page.getByRole('dialog');
