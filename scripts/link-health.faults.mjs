@@ -482,7 +482,35 @@ const guardMutations = [
     },
     {
         name: 'DNS 查詢不看 signal（getaddrinfo 卡住時整批跟著卡住）',
-        apply: (s) => s.replace('await untilAborted(dns.promises.lookup(host, { all: true, verbatim: true }), signal);', 'await dns.promises.lookup(host, { all: true, verbatim: true });'),
+        apply: (s) => s.replace('return untilAborted((async () => dns.promises.lookup(host, { all: true, verbatim: true }))().finally(done), signal);', 'return (async () => dns.promises.lookup(host, { all: true, verbatim: true }))().finally(done);'),
+    },
+    {
+        name: '同時進行的 DNS 查詢沒有上限',
+        apply: (s) => s.replace('while (lookupsRunning >= LOOKUP_SLOTS)', 'while (false)'),
+    },
+    {
+        name: '不再等的 DNS 查詢不佔位子（中止就空出來，卡住的 getaddrinfo 照樣佔滿執行緒池）',
+        apply: (s) => s.replace('.finally(done), signal);', ', signal).finally(done);'),
+    },
+    {
+        name: '等 DNS 查詢的位子只檢查一次（叫醒全部時會超過上限）',
+        apply: (s) => s.replace('while (lookupsRunning >= LOOKUP_SLOTS) await', 'if (lookupsRunning >= LOOKUP_SLOTS) await'),
+    },
+    {
+        name: '已經中止的探測也送出 DNS 查詢',
+        apply: (s) => s.replace('    signal?.throwIfAborted();\n    lookupsRunning++;', '    lookupsRunning++;'),
+    },
+    {
+        name: 'DNS 查詢結束時只叫醒排第一個的（叫到已經中止的，後面的就卡住）',
+        apply: (s) => s.replace('for (const wake of slotFreed.splice(0)) wake();', 'slotFreed.shift()?.();'),
+    },
+    {
+        name: 'DNS 查詢結束時沒叫醒排隊的',
+        apply: (s) => s.replace('        for (const wake of slotFreed.splice(0)) wake();\n', ''),
+    },
+    {
+        name: '等 DNS 查詢的位子時不看 signal',
+        apply: (s) => s.replace('await untilAborted(new Promise((wake) => slotFreed.push(wake)), signal);', 'await new Promise((wake) => slotFreed.push(wake));'),
     },
     {
         name: 'probe 沒把 signal 交給 DNS 查詢',
