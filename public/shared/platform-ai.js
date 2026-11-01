@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 16;
+    var VERSION = 17;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1082,15 +1082,15 @@
     }
 
     /**
-     * markInvalid 在沒有輸入就送出時，把輸入框標成 aria-invalid，aria-describedby 加上畫面上那行提示，
-     * 焦點在輸入框上時螢幕閱讀器會唸出來。開始輸入就拿掉標記，提示也藏起來。
+     * markInvalid 在沒有輸入就送出時，把輸入框標成 aria-invalid，畫面上那行提示放在 aria-describedby 最前面，
+     * 焦點在輸入框上時螢幕閱讀器先唸提示、再唸原本的說明。開始輸入就拿掉標記，提示也藏起來。
      * @param {HTMLInputElement|HTMLTextAreaElement} input
      * @param {HTMLElement} message 畫面上的提示，沒有 id 的話設成 input.id + '-error'
      */
     function markInvalid(input, message) {
         if (!message.id) message.id = input.id + '-error';
         var ids = describedBy(input).filter(function (id) { return id !== message.id; });
-        input.setAttribute('aria-describedby', ids.concat(message.id).join(' '));
+        input.setAttribute('aria-describedby', [message.id].concat(ids).join(' '));
         input.setAttribute('aria-invalid', 'true');
         var previous = invalidClearers.get(input);
         if (previous) input.removeEventListener('input', previous);

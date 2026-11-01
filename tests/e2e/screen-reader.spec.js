@@ -323,13 +323,14 @@ const AI_INPUTS = [
 ];
 test.describe('AI 功能沒有輸入就送出', () => {
     for (const [p, input, button, hint] of AI_INPUTS) {
-        test(`${p}：輸入框標 aria-invalid，描述包含「${hint}」；開始輸入就拿掉`, async ({ page }) => {
+        test(`${p}：輸入框標 aria-invalid，描述以「${hint}」開頭；開始輸入就拿掉`, async ({ page }) => {
             await page.goto(P(p));
             const field = page.locator(input);
             const before = await field.getAttribute('aria-describedby');
             await page.click(button);
             await expect(field).toHaveAttribute('aria-invalid', 'true');
-            await expect(field).toHaveAccessibleDescription(new RegExp(hint.replace('。', '\\。')));
+            // 提示先唸，原本的說明接在後面。
+            await expect(field).toHaveAccessibleDescription(new RegExp(`^${hint.replace('。', '\\。')}`));
             // 描述多出來的那個 id 是畫面上的提示。提示約 100 毫秒後也會寫進 role="status"，等它寫完再往下，
             // 畫面上同一句有兩處，所以下面只看提示本身。
             const added = (await field.getAttribute('aria-describedby')).split(' ').filter((id) => !(before ?? '').split(' ').includes(id));
