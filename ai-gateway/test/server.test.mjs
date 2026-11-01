@@ -111,7 +111,7 @@ function deferred() {
  * calls 記錄每次 generate 收到的設定、request 與 hooks。now 可以換成測試控制的時鐘。
  * random 預設固定回傳 0：忙線的等待秒數不加隨機時間，測試才寫得出確切的值
  */
-async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxBodyBytes, maxPendingBytes, stallTimeoutMs, usageIntervalMs, host = '127.0.0.1' } = {}) {
+async function startGateway({ server = {}, llm = {}, generate, now, random = () => 0, maxBodyReads, maxBodyBytes, maxPendingBytes, stallTimeoutMs, usageIntervalMs, maxConnections, host = '127.0.0.1' } = {}) {
     const logs = [];
     const calls = [];
     const generateImpl = async (llmConfig, request, hooks) => {
@@ -132,6 +132,7 @@ async function startGateway({ server = {}, llm = {}, generate, now, random = () 
         ...(maxPendingBytes ? { maxPendingBytes } : {}),
         ...(stallTimeoutMs ? { stallTimeoutMs } : {}),
         ...(usageIntervalMs ? { usageIntervalMs } : {}),
+        ...(maxConnections ? { maxConnections } : {}),
     });
     await new Promise((resolve) => gateway.server.listen(0, host, resolve));
     const port = gateway.server.address().port;
@@ -3203,6 +3204,85 @@ test('標頭最多 8 KiB（超過回 431）；連線數上限是 2048', async ()
         assert.equal(big.status, 431);
         assert.equal(gw.gateway.server.maxConnections, 2048);
     } finally {
+        await gw.stop();
+    }
+});
+
+/**
+ * 從 from 開 count 條連線，每條送出請求行之後每 200ms 送一行標頭，永遠不送完；被關掉就重開。
+ * accepted() 是閘道收下、沒有關掉的條數，stop() 全部關掉
+ */
+function slowHeaders(gw, from, count) {
+    const { port, gateway: { server } } = gw;
+    // 閘道自己的 connection listener 先跑：它關掉的連線，這裡看到的已經是 destroyed
+    const accepted = new Set();
+    const track = (socket) => {
+        if (socket.destroyed || socket.remoteAddress !== from) return;
+        accepted.add(socket);
+        socket.once('close', () => accepted.delete(socket));
+    };
+    server.on('connection', track);
+    const sockets = new Set();
+    let stopped = false;
+    const connect = () => {
+        if (stopped) return;
+        const socket = net.connect({ host: '127.0.0.1', port, localAddress: from });
+        socket.on('error', () => {});
+        socket.once('connect', () => {
+            sockets.add(socket);
+            socket.write('POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\n');
+        });
+        socket.once('close', () => {
+            sockets.delete(socket);
+            setTimeout(connect, 20);
+        });
+    };
+    for (let i = 0; i < count; i++) connect();
+    const pump = setInterval(() => {
+        for (const socket of sockets) socket.write(`X-Slow-${Date.now()}: 1\r\n`);
+    }, 200);
+    return {
+        accepted: () => accepted.size,
+        stop() {
+            stopped = true;
+            clearInterval(pump);
+            server.off('connection', track);
+            for (const socket of sockets) socket.destroy();
+        },
+    };
+}
+
+// 2026-11-01 本機實測：2048 條連線、每 2 秒送一行標頭，閘道約 25 秒連 /healthz 都不回。這裡把連線數上限
+// 調成 80，攻擊的一方從 127.0.0.2 開 80 條
+test('慢慢送標頭：一個來源最多開 64 條連線，其餘的立刻關掉；連線數上限沒被佔滿，/healthz 照常回應', async () => {
+    const gw = await startGateway({ maxConnections: 80 });
+    const attack = slowHeaders(gw, '127.0.0.2', 80);
+    try {
+        await waitFor(() => gw.logs.some((l) => l.tag === 'REJECT'), 10_000);
+        await sleep(500);
+        assert.equal(attack.accepted(), 64);
+        for (let i = 0; i < 3; i++) {
+            const res = await within(fetch(`${gw.base}/healthz`).then((r) => assert.equal(r.status, 200)), 5_000);
+            assert.equal(res, true, `第 ${i + 1} 次 /healthz 沒有回應`);
+            await sleep(200);
+        }
+        assert.deepEqual(gw.logs.find((l) => l.tag === 'REJECT').fields, { code: 'too_many_connections', count: 1 });
+    } finally {
+        attack.stop();
+        await gw.stop();
+    }
+});
+
+test('信任的代理不受每個來源的連線上限：經過 Funnel 的學生與 kubelet 都是那個位址', async () => {
+    const gw = await startGateway({ server: { trustedProxies: ['127.0.0.2/32'] } });
+    const proxy = slowHeaders(gw, '127.0.0.2', 70);
+    try {
+        await waitFor(() => proxy.accepted() === 70, 10_000);
+        await sleep(300);
+        assert.equal(proxy.accepted(), 70);
+        assert.ok(!gw.logs.some((l) => l.tag === 'REJECT'));
+    } finally {
+        proxy.stop();
         await gw.stop();
     }
 });
