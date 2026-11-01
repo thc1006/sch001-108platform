@@ -1,7 +1,7 @@
 // 正式上線的任務清單，格式見 tasks.mjs 的 defineTask。
 
 /**
- * CAREER_CLUSTERS 是 career-chat 的參考資料：職涯探索首頁 majorData 裡的五個欄位，抄自頁面
+ * CAREER_CLUSTERS 是 career-chat 的參考資料：生涯探索首頁 majorData 裡的五個欄位，抄自頁面
  * （閘道的映像檔裡沒有那個檔案），頁面又照 ColleGo! 的學群頁。兩邊是否一致由
  * test/task-catalog.test.mjs 檢查。
  */
@@ -42,7 +42,7 @@ const WEEKS = ['Week 1-2', 'Week 3-4', 'Week 5-6', 'Week 7-8'];
  */
 export const TASK_DEFINITIONS = [
     {
-        // 自主學習 › AI 自主學習教練（src/pages/autonomous-learning/index.astro）的「學習啟動包」。
+        // 自主學習首頁的「AI 學習啟動包」（src/pages/autonomous-learning/index.astro）。
         // 指令寫明長度（探索問題一句話、資源類型只寫簡短名稱）：schema 的 maxLength 是硬截斷，
         // 沒說長度時模型把資源類型寫成長篇說明，被切在 50 字（WinLab 實測），學生看到半句話；
         // maxLength 只當保險。
@@ -81,7 +81,7 @@ export const TASK_DEFINITIONS = [
         },
     },
     {
-        // 職涯探索 › 素養地圖的「AI 素養分析師」（src/pages/career-exploration/competency-map.astro）。
+        // 生涯探索 › 素養地圖的「AI 對照核心素養」（src/pages/career-exploration/competency-map.astro）。
         // 指令列出九項素養的代號與名稱：只給代號的話，名稱得靠模型自己記，記錯就誤導學生。
         // 名稱抄自 scripts/taxonomy.json，因為閘道的映像檔裡沒有那個檔案；test/task-catalog.test.mjs 比對兩邊。
         id: 'competency-analysis',
@@ -102,7 +102,7 @@ export const TASK_DEFINITIONS = [
         maxOutputChars: 1000,
     },
     {
-        // 職涯探索首頁的「AI 學涯導師」（src/pages/career-exploration/index.astro）。畫面像聊天，
+        // 生涯探索首頁的「AI 推薦學群」（src/pages/career-exploration/index.astro）。畫面像聊天，
         // 但每次只送這一題，不帶先前的對話。
         id: 'career-chat',
         input: {
@@ -262,7 +262,7 @@ export const TASK_DEFINITIONS = [
         maxOutputChars: 1600,
     },
     {
-        // 自主學習 › 學習資源地圖的「AI 學習路徑規劃師」（src/pages/autonomous-learning/resource-map.astro）。
+        // 自主學習 › 學習資源地圖的「AI 規劃學習路徑」（src/pages/autonomous-learning/resource-map.astro）。
         // 步驟編號由頁面依陣列順序給，不讓模型寫：schema 管不住編號是否連續。
         id: 'learning-path',
         input: {

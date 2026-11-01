@@ -56,7 +56,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         // 按鈕恢復可按，文字與圖示都還在（頁面只換按鈕裡 span 的文字，不能把整個按鈕換成純文字）。
         const button = page.locator('#generateCoachBtn');
         await expect(button).toBeEnabled();
-        await expect(button).toHaveText('請求指導');
+        await expect(button).toHaveText('產生啟動包');
         await expect(button.locator('svg')).toHaveCount(1);
     });
 
@@ -137,7 +137,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         expect(await page.evaluate(() => window.__calls.length)).toBe(1); // 只有第一次
     });
 
-    test('進行中用鍵盤按「取消」→ 進度收掉，用提示的灰字顯示「已取消。」，焦點回到「請求指導」按鈕，按鈕恢復可按', async ({ page }) => {
+    test('進行中用鍵盤按「取消」→ 進度收掉，用提示的灰字顯示「已取消。」，焦點回到「產生啟動包」按鈕，按鈕恢復可按', async ({ page }) => {
         await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' })], hang: true });
         await page.fill('#coachInput', '貓咪');
         await page.click('#generateCoachBtn');
@@ -296,7 +296,7 @@ test.describe('自主學習頁：共用腳本 platform-ai.js 沒載入成功', (
             await expect(page.locator('#coachResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
             const button = page.locator('#generateCoachBtn');
             await expect(button).toBeEnabled();
-            await expect(button).toHaveText('請求指導');
+            await expect(button).toHaveText('產生啟動包');
             await expect(button.locator('svg')).toHaveCount(1);
         });
     }

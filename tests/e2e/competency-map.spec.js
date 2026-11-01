@@ -1,4 +1,4 @@
-// 素養地圖頁「AI 素養分析師」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
+// 素養地圖頁「AI 對照核心素養」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
 // 8001 埠服務的是 .link-root，要先建置。
 const { test, expect } = require('@playwright/test');
 const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
@@ -34,7 +34,7 @@ function liveSettingsUpFrom(el) {
     return found;
 }
 
-test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務）', () => {
+test.describe('素養地圖頁：AI 對照核心素養（competency-analysis 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);
@@ -90,7 +90,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
 
         await expect(button).toBeEnabled();
         await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
-        await expect(button).toHaveText('開始分析');
+        await expect(button).toHaveText('開始對照');
         await expect(button.locator('svg')).toHaveCount(1);
     });
 
@@ -171,7 +171,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(page.locator('#mobile-menu')).toBeVisible();
     });
 
-    test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點回到「開始分析」按鈕，按鈕恢復原狀', async ({ page }) => {
+    test('草稿出現後用鍵盤按「取消」→ 草稿移除，以 info 語氣顯示「已取消。」，焦點回到「開始對照」按鈕，按鈕恢復原狀', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**')], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
@@ -195,7 +195,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
     });
 
     for (const [when, chunk, expectSettled] of SETTLE) {
-        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「開始分析」按鈕`, async ({ page }) => {
+        test(`焦點在「取消」上時${when} → 草稿移除，焦點回到「開始對照」按鈕`, async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
             await page.fill('#ai-input', '科展');
             await page.click('#ai-generate-btn');
@@ -215,7 +215,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
     ];
-    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在 #ai-result，紅字訊息接在下面；#ai-work 清空，焦點回到「開始分析」按鈕`, async ({ page }) => {
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到答案之後收到 ${code} → 已收到的部分標明沒有寫完、留在 #ai-result，紅字訊息接在下面；#ai-work 清空，焦點回到「開始對照」按鈕`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* **A2 系統思考與解決問題**：'), delta('寫出你怎麼')], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
@@ -300,7 +300,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(work).toBeEmpty();
         const button = page.locator('#ai-generate-btn');
         await expect(button).not.toHaveAttribute('aria-disabled');
-        await expect(button).toHaveText('開始分析');
+        await expect(button).toHaveText('開始對照');
         await button.click();
         await expect(work.locator('.prose')).toHaveText('草稿');
         await push(page, done('* 第二次的答案'));
@@ -309,7 +309,7 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         expect(errors).toEqual([]);
     });
 
-    test('用鍵盤按「開始分析」→ 進行中焦點留在按鈕上，再按 Enter 不會再送一次；完成後焦點仍在按鈕上', async ({ page }) => {
+    test('用鍵盤按「開始對照」→ 進行中焦點留在按鈕上，再按 Enter 不會再送一次；完成後焦點仍在按鈕上', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('* 草稿')], hang: true });
         await page.fill('#ai-input', '科展');
         const button = page.locator('#ai-generate-btn');
@@ -395,12 +395,13 @@ test.describe('素養地圖頁：AI 素養分析師（competency-analysis 任務
         await expect(work).toBeEmpty();
     });
 
-    test('答案裡的 # 標題是 h2「AI 素養分析師」底下的 h3，清單項目在 <ul> 裡', async ({ page }) => {
+    test('答案裡的 # 標題是 h2「AI 對照核心素養」底下的 h3，清單項目在 <ul> 裡', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, done('# 對應的素養\n* **A2 系統思考與解決問題**：寫出失敗的原因。\n* **A3 規劃執行與創新應變**：寫出怎麼調整。')] });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
         const answer = page.locator('#ai-result .prose');
         await expect(answer.getByRole('heading', { level: 3 })).toHaveText(['對應的素養']);
+        await expect(page.locator('#ai-analyst h2')).toHaveText('AI 對照核心素養');
         await expect(answer.getByRole('list')).toHaveCount(1);
         await expect(answer.getByRole('listitem')).toHaveText(['A2 系統思考與解決問題：寫出失敗的原因。', 'A3 規劃執行與創新應變：寫出怎麼調整。']);
     });
@@ -445,7 +446,7 @@ test.describe('素養地圖頁：共用腳本 platform-ai.js 沒載入成功', (
             const button = page.locator('#ai-generate-btn');
             await expect(button).toBeEnabled();
             await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
-            await expect(button).toHaveText('開始分析');
+            await expect(button).toHaveText('開始對照');
             await expect(button.locator('svg')).toHaveCount(1);
         });
     }

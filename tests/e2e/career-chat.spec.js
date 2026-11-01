@@ -1,4 +1,4 @@
-// 職涯探索首頁的「AI 學涯導師」（AI 閘道的 career-chat 任務）：用頁內的假閘道驗證頁面怎麼送出、
+// 生涯探索首頁的「AI 推薦學群」（AI 閘道的 career-chat 任務）：用頁內的假閘道驗證頁面怎麼送出、
 // 邊收邊顯示回答、處理錯誤與取消，以及焦點與對話紀錄的 live region 結構。假閘道見 fake-gateway.js。
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
@@ -36,7 +36,7 @@ async function ask(page, question) {
     await page.click('#chat-submit');
 }
 
-test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', () => {
+test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);
@@ -121,7 +121,7 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         expect(await page.evaluate(() => window.__calls.length)).toBe(2);
     });
 
-    test('回答裡的 # 標題是 h2「AI 學涯導師」底下的 h3，清單項目在 <ul> 裡；草稿也一樣', async ({ page }) => {
+    test('回答裡的 # 標題是 h2「AI 推薦學群」底下的 h3，清單項目在 <ul> 裡；草稿也一樣', async ({ page }) => {
         const answer = '# 資訊學群\n適合你的原因：\n- 喜歡電腦\n- 喜歡解題\n## 可以先做的事\n1. 學一種程式語言';
         await installFakeGateway(page, { chunks: [ACCEPTED, delta(answer)], hang: true });
         await ask(page, '我喜歡電腦');
@@ -130,6 +130,7 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
         const bubble = messages(page).nth(2);
         await expect(bubble.getByRole('heading')).toHaveText(['資訊學群', '可以先做的事']);
         await expect(bubble.getByRole('heading', { level: 3 })).toHaveText(['資訊學群']);
+        await expect(page.locator('#ai-advisor h2')).toHaveText('AI 推薦學群');
         await expect(bubble.getByRole('heading', { level: 4 })).toHaveText(['可以先做的事']);
         await expect(bubble.locator('ul > li')).toHaveText(['喜歡電腦', '喜歡解題']);
         await expect(bubble.locator('ol > li')).toHaveText(['學一種程式語言']);
@@ -651,7 +652,7 @@ test.describe('職涯探索首頁：AI 學涯導師（career-chat 任務）', ()
 
 // 共用腳本 public/shared/platform-ai.js 沒載入成功時，PlatformAI 不存在。404（檔案沒部署好、路徑錯）
 // 與連線中斷（網路、被擋）頁面的處理應該相同：顯示錯誤訊息，按鈕不能卡在「思考中...」。
-test.describe('職涯探索首頁：共用腳本 platform-ai.js 沒載入成功', () => {
+test.describe('生涯探索首頁：共用腳本 platform-ai.js 沒載入成功', () => {
     const FAILURES = [
         ['回 404', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })],
         ['連線中斷', (route) => route.abort()],

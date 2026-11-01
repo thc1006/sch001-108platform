@@ -1,4 +1,4 @@
-// 學習資源地圖頁的「AI 學習路徑規劃師」（AI 閘道的 learning-path 任務）：用假閘道驗證頁面怎麼送出、
+// 學習資源地圖頁的「AI 規劃學習路徑」（AI 閘道的 learning-path 任務）：用假閘道驗證頁面怎麼送出、
 // 顯示進度與結果、處理錯誤與取消。假閘道見 fake-gateway.js。
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
@@ -68,7 +68,7 @@ async function expectButtonRestored(button) {
     await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
 }
 
-test.describe('學習資源地圖頁：AI 學習路徑規劃師（learning-path 任務）', () => {
+test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);
