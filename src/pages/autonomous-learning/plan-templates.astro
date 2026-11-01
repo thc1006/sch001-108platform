@@ -25,7 +25,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <h2 class="text-2xl font-bold mb-2">AI 草擬學習計畫</h2>
             <p class="text-gray-600 mb-6">輸入自主學習主題，AI 會草擬一份 8 週的計畫，列出學習目標、執行方法、每兩週的進度和預期產出。</p>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="planInput" maxlength="100" aria-label="你的自主學習主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-teal-700" placeholder="例如：分析手搖飲店的行銷策略">
+                <input type="text" id="planInput" maxlength="100" aria-label="你的自主學習主題" class="w-full px-4 py-3 border border-gray-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-teal-700" placeholder="例如：分析手搖飲店的行銷策略">
                 <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-800 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>產生計畫草案</span>

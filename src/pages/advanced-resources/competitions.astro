@@ -562,6 +562,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       --muted: #5a697e;
       --faint: #94a3b8;
       --line: #e6e8ee;
+      /* 搜尋框與下拉選單的外框，白底與面板底色上都要有 3:1（WCAG 1.4.11）。 */
+      --field-line: #64748b;
       --bg: #f6f7fb;
       --primary: #be123c;
       color: var(--ink);
@@ -632,7 +634,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       width: 1.15rem; height: 1.15rem; color: var(--faint); pointer-events: none;
     }
     .comp-search input {
-      width: 100%; padding: .8rem 2.6rem; border: 1.5px solid var(--line); border-radius: 999px;
+      width: 100%; padding: .8rem 2.6rem; border: 1.5px solid var(--field-line); border-radius: 999px;
       background: #fff; font-size: 1rem; color: var(--ink); transition: border-color .2s, box-shadow .2s;
     }
     .comp-search input::placeholder { color: #64748b; }
@@ -652,7 +654,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-selects { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
     select#sort-select, .comp-selects select {
       appearance: none; -webkit-appearance: none;
-      padding: .6rem 2.2rem .6rem .85rem; border: 1.5px solid var(--line); border-radius: .7rem;
+      padding: .6rem 2.2rem .6rem .85rem; border: 1.5px solid var(--field-line); border-radius: .7rem;
       background-color: #fff; color: var(--ink); font-size: .92rem; font-weight: 500; cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right .7rem center;
