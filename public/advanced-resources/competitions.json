@@ -846,7 +846,7 @@
       "level": "國際",
       "form": "團體",
       "region": "全球線上",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "線上",
       "deadline": "2026-11-04",
       "deadlineAt": "2026-11-04T14:00:00-05:00",
@@ -993,7 +993,7 @@
       "level": "國際",
       "form": "團體",
       "region": "美國",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "混合",
       "deadline": "2026-09-11",
       "deadlineAt": "2026-09-11T17:00:00-04:00",
@@ -1005,7 +1005,7 @@
       },
       "sourceCheckedAt": "2026-10-25",
       "url": "https://globalyouth.wharton.upenn.edu/competitions/investment-competition/",
-      "description": "由賓州大學華頓商學院 Wharton Global Youth Program 主辦的免費線上投資競賽，官網寫「High school students (see Rules) around the world who are interested in business and finance」皆可參加：4 至 6 人同校組隊、須有同校教師 advisor，隊長須於競賽首日滿 16 歲，官網寫「the competition is free for all participants. There is no registration fee」。2026-27 屆由指導老師於 2026-08-10 至 09-11 17:00 ET 完成報名並建立學生帳號，報名已截止；9/15 釋出競賽細節、9/28 開始模擬交易、11/6 繳交投資政策書（IPS）、12/4 繳交期末報告，2027 年 4 月 29 至 30 日於費城舉行全球決賽，進入決賽的隊伍可選擇視訊參加，親自出席須自付旅費。（原名 KWHS Investment Competition，官方已更名。）"
+      "description": "由賓州大學華頓商學院 Wharton Global Youth Program 主辦的免費線上投資競賽，官網寫「High school students (see Rules) around the world who are interested in business and finance」皆可參加：4 至 6 人同校組隊、須有同校教師 advisor，隊長須於競賽首日滿 16 歲，官網寫「the competition is free for all participants. There is no registration fee」。全由自學生組成的隊伍要先經主辦單位核准，由家長擔任 advisor。規則頁寫「Students may not register themselves or their teams」，2026-27 屆由指導老師於 2026-08-10 至 09-11 17:00 ET 完成報名並建立學生帳號，報名已截止；9/15 釋出競賽細節、9/28 開始模擬交易、11/6 繳交投資政策書（IPS）、12/4 繳交期末報告，2027 年 4 月 29 至 30 日於費城舉行全球決賽，進入決賽的隊伍可選擇視訊參加，親自出席須自付旅費。（原名 KWHS Investment Competition，官方已更名。）"
     },
     {
       "title": "John Locke 論文競賽",
@@ -1346,7 +1346,7 @@
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "實體",
       "deadline": "",
       "eventStartsAt": "2026-12-12",
@@ -1354,7 +1354,7 @@
       "registrationNote": "經直轄市、縣（市）初賽複賽晉級決賽",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://language115.eduweb.tw/",
-      "description": "教育部主辦、文化部與原住民族委員會、客家委員會協辦，115 年由基隆市政府承辦。高中學生組資格：「就讀公私立高級中等學校日、夜間部與進修學校且未滿二十歲、五專前三年學生」。學生報名就讀學校所在地的直轄市、縣（市）初賽，逐級經複賽晉級決賽；複賽「以直轄市、縣（市）為競賽單位」，決賽報名方式：「各競賽單位應於115年9月23日至10月20日前完成網路報名並電話確認」。115 年決賽：個人賽 2026-12-12 至 12-13，國語、臺灣台語、臺灣客語項目在基隆市立明德國中，臺灣原住民族語言項目在基隆市仁愛國小；團體賽（讀者劇場）2026-12-20 在明德國中。依《全國語文競賽舉辦原則》規定「於比賽半年前公告競賽實施要點，並架設專屬網站」，官網每年隨承辦縣市更換（116 年網址尚未建立）；language.moe.gov.tw 是教育部語文成果入口網，收錄舉辦原則與歷年成績，不是競賽官網。"
+      "description": "教育部主辦、文化部與原住民族委員會、客家委員會協辦，115 年由基隆市政府承辦。高中學生組資格：「就讀公私立高級中等學校日、夜間部與進修學校且未滿二十歲、五專前三年學生」。學生由就讀學校報名學校所在地的直轄市、縣（市）初賽，逐級經複賽晉級決賽；初賽辦法由各縣市自訂，例如桃園市 115 年實施計畫寫初賽「由各校秉持公平公正公開的原則下自行擇期辦理，選拔校內優秀選手，代表學校參加複賽」；複賽「以直轄市、縣（市）為競賽單位」，決賽報名方式：「各競賽單位應於115年9月23日至10月20日前完成網路報名並電話確認」。115 年決賽：個人賽 2026-12-12 至 12-13，國語、臺灣台語、臺灣客語項目在基隆市立明德國中，臺灣原住民族語言項目在基隆市仁愛國小；團體賽（讀者劇場）2026-12-20 在明德國中。依《全國語文競賽舉辦原則》規定「於比賽半年前公告競賽實施要點，並架設專屬網站」，官網每年隨承辦縣市更換（116 年網址尚未建立）；language.moe.gov.tw 是教育部語文成果入口網，收錄舉辦原則與歷年成績，不是競賽官網。"
     },
     {
       "title": "全國高級中等學校小論文寫作比賽",
@@ -1363,7 +1363,7 @@
       "level": "全國",
       "form": "個人/團體",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "線上",
       "deadline": "2027-03-15",
       "deadlineAt": "2027-03-15T12:00:00+08:00",
@@ -1380,14 +1380,14 @@
       "level": "全國",
       "form": "個人",
       "region": "台灣",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "線上",
       "deadline": "2027-03-10",
       "deadlineAt": "2027-03-10T12:00:00+08:00",
       "opensAt": "2027-02-01T00:00:00+08:00",
       "sourceCheckedAt": "2026-10-24",
       "url": "https://www.shs.edu.tw/Customer/Information/OverIndex",
-      "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立嘉義高級工業職業學校承辦（與小論文比賽的承辦學校不同）。對象為全國高級中等學校在學學生。實施計畫規定「每位在學學生每學期僅能投稿一篇作品，每篇作品須為單一作者，不接受聯名投稿」，並明文「不得使用任何 AI 工具輔助參賽」。115 學年度兩梯次：第一學期 2026-09-01 至 10-08 12:00、第二學期 2027-02-01 至 03-10 12:00，成績分別於 2026-11-14 前與 2027-04-16 前公告。兩學期的截止日都比小論文比賽早（小論文是 10/15 與 3/15）。"
+      "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立嘉義高級工業職業學校承辦（與小論文比賽的承辦學校不同）。對象為全國高級中等學校在學學生，學生用學校給的驗證碼註冊投稿，參賽學校在截稿後篩選作品，每校可投的篇數是班級數的兩倍。實施計畫規定「每位在學學生每學期僅能投稿一篇作品，每篇作品須為單一作者，不接受聯名投稿」，並明文「不得使用任何 AI 工具輔助參賽」。115 學年度兩梯次：第一學期 2026-09-01 至 10-08 12:00、第二學期 2027-02-01 至 03-10 12:00，成績分別於 2026-11-14 前與 2027-04-16 前公告。兩學期的截止日都比小論文比賽早（小論文是 10/15 與 3/15）。"
     },
     {
       "title": "全國中小學科學探究競賽—這樣教我就懂",
@@ -1573,7 +1573,7 @@
       "level": "國際",
       "form": "團體",
       "region": "歐洲",
-      "eligibility": "公開報名",
+      "eligibility": "經學校報名",
       "mode": "混合",
       "deadline": "",
       "eventStartsAt": "2026-11-13",
@@ -1582,7 +1582,7 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "正確網域是單數的 competition.igem.org。",
       "url": "https://competition.igem.org/",
-      "description": "由 iGEM Foundation, Inc. 主辦的合成生物學競賽。官網寫「iGEM organizes two competition types」，其中高中組：「For teams made up of high school-level students enrolled at high schools or other secondary education institutions」。參賽者以當年 3 月 31 日計須年滿 13 歲，未滿 18 歲的同意書由家長或監護人簽；競賽條款沒有國籍條件，但第 3.6 節依美國等地的貿易制裁與出口管制寫明「may be unable to accept registrations, process payments, or provide services to individuals or entities in certain countries or regions」。須由校方 PI（校長、教師或學術教練）發起註冊，官網寫「Students are not allowed to do the application on behalf of the PI」。2026 屆報名 Stage I 早鳥 2/12（€4,950）、一般 4/2（€5,450）、最終 6/4（€5,950），Stage II 7/30 截止，皆已結束；Grand Jamboree 2026-11-13 至 11-16 於法國巴黎。2027 屆時程尚未公布。"
+      "description": "由 iGEM Foundation, Inc. 主辦的合成生物學競賽。官網寫「iGEM organizes two competition types」，其中高中組：「For teams made up of high school-level students enrolled at high schools or other secondary education institutions」。參賽者以當年 3 月 31 日計須年滿 13 歲，未滿 18 歲的同意書由家長或監護人簽；競賽條款沒有國籍條件，但第 3.6 節依美國等地的貿易制裁與出口管制寫明「may be unable to accept registrations, process payments, or provide services to individuals or entities in certain countries or regions」。須由 Primary PI 發起註冊，官網寫「Students are not allowed to do the application on behalf of the PI」；學校隊的 PI 是學生就讀學校的校長、教師或學術教練，另有社區實驗室隊（PI 是實驗室主任）與公司辦的隊伍。2026 屆報名 Stage I 早鳥 2/12（€4,950）、一般 4/2（€5,450）、最終 6/4（€5,950），Stage II 7/30 截止，皆已結束；Grand Jamboree 2026-11-13 至 11-16 於法國巴黎。2027 屆時程尚未公布。"
     },
     {
       "title": "Earth Science Week 國際攝影與影片競賽",
