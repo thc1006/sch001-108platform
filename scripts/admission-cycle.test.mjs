@@ -33,6 +33,10 @@ const urlKeep = (url, fields = {}) => ({ url, cycle: 115, reason: '測試用的�
 const years = (src) => findYears(src).map((t) => `${t.kind}:${t.from === undefined ? '' : `${t.from}-`}${t.year}`);
 const errorsOf = (files, config) => checkContent(files, config).errors;
 
+test('findYears：--!> 結尾的註解之後是內文', () => {
+    assert.equal(findYears('<!-- a --!>115 學年度<!-- b -->').length, 1);
+});
+
 test('findYears：內文的學年度，區間算一個，列舉每個都算', () => {
     const cases = [
         ['115 學年度起，臺大醫學系改採社會科', ['text:115']],
@@ -351,6 +355,8 @@ test('findFraming、findYears：定義要在區塊開頭，插在段落或清單
     assert.deepEqual(framing('標題', '===', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['5:2026 升學']);
     assert.deepEqual(framing('<!-- 註解 -->', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['4:2026 升學']);
     assert.deepEqual(framing('<!--', '註解', '-->', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['6:2026 升學']);
+    // 瀏覽器把 --!> 也當成註解結尾：之後的定義在區塊外，[2026 升學趨勢][a] 是連結。
+    assert.deepEqual(framing('<!--', '註解', '--!>', '', '[a]: https://x/', '', '[2026 升學趨勢][a]'), []);
 });
 
 test('findFraming：不合規則的定義、HTML 區塊和程式碼裡的定義不算，\\[x] 和程式碼裡的 [x] 不是連結', () => {

@@ -73,7 +73,7 @@ function maskForText(src) {
     return src
         .replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0))
         .replace(/\]\([^)\n]*\)/g, (m) => `](${' '.repeat(m.length - 3)})`)
-        .replace(/<!--[^]*?-->/g, blank)
+        .replace(/<!--[^]*?--!?>/g, blank)
         .replace(/<\/?[A-Za-z][^<>\n]*>/g, blank)
         .replace(/^ {0,3}\[[^\]\n]+\]:.*/gm, blank)
         .replace(/https?:\/\/[^\s<>()[\]"'`\u0080-\uffff]*/g, blank)
