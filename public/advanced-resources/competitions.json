@@ -366,10 +366,11 @@
       "deadline": "",
       "eventStartsAt": "2027-08-02",
       "eventEndsAt": "2027-08-09",
-      "registrationNote": "由國家代表隊參賽 · 無個人報名",
+      "registrationNote": "經高中地理奧林匹亞選拔 · 由學校報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.geoolympiad.org/",
-      "description": "由 International Geographical Union (IGU) Olympiad Commission 主辦的中學生地理競賽，含寫作測驗、多媒體測驗與野外實察，官網寫「an annual competition for the best 16 to 19-year-old geography students」，各國一隊至多 4 名學生加 2 名領隊。2026 年於土耳其伊斯坦堡舉行（8/11–17）已結束；官網 Future iGeos 列出 2027 年 8 月 2 至 9 日於拉脫維亞 Jelgava、2028 年 7 月 3 至 10 日於澳洲墨爾本舉行。台灣採選拔制。"
+      "description": "由 International Geographical Union (IGU) Olympiad Commission 主辦的中學生地理競賽，含寫作測驗、多媒體測驗與野外實察，官網寫「an annual competition for the best 16 to 19-year-old geography students」，各國一隊至多 4 名學生加 2 名領隊。2026 年於土耳其伊斯坦堡舉行（8/11–17）已結束；官網 Future iGeos 列出 2027 年 8 月 2 至 9 日於拉脫維亞 Jelgava、2028 年 7 月 3 至 10 日於澳洲墨爾本舉行。台灣國手從中華民國地理學會主辦的高中地理奧林匹亞個人組選出，由就讀學校團體報名。個人組同時選拔次年 iGeo 代表隊儲備選手，原則上第 1 至 4 名為正取、第 5 至 8 名為備取；儲備選手要完成所有培訓課程，「並能積極投入且表現優異，才可成為正式代表隊員」；賽前培訓由臺師大地理學系負責。2026 年第 25 屆報名 6/1 至 6/22、個人組決賽 9/19，得獎名單已於 9/21 公告。",
+      "sourceNote": "台灣選拔的出處：高中地理奧林匹亞官網 Q&A（https://geoolympiad.tw/info/）與 115 年第 25 屆競賽辦法（官網連到 Google Drive）。「賽前培訓由臺師大地理學系負責」出自臺師大 2026-08-19 發的新聞稿（中央社訊息平台 https://www.cna.com.tw/postwrite/chi/441963 ）：「賽前培訓則由臺灣師大地理學系負責」。"
     },
     {
       "title": "國際國中科學奧林匹亞 (IJSO)",
