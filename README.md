@@ -49,7 +49,7 @@
 
 ### [進階資源](https://thc1006.github.io/sch001-108platform/advanced-resources/)
 
-* [線上課程精選](https://thc1006.github.io/sch001-108platform/advanced-resources/online-courses.html)：Coursera、edX、Khan Academy、freeCodeCamp 等平台上適合高中生的課程。
+* [線上課程](https://thc1006.github.io/sch001-108platform/advanced-resources/online-courses.html)：Coursera、edX、Khan Academy、freeCodeCamp 等平台上適合高中生的課程。
 * [開放教育資源](https://thc1006.github.io/sch001-108platform/advanced-resources/open-education.html)：AI 實驗室、開放科學、開放課程和國際科學社群的免費資源。
 * [國內外競賽資訊](https://thc1006.github.io/sch001-108platform/advanced-resources/competitions.html)：高中生可以參加的競賽，標出開放報名和即將截止的項目，可以依領域、地區、級別、形式篩選。
 * [主題書單推薦](https://thc1006.github.io/sch001-108platform/advanced-resources/reading-list.html)：十二個主題的書單，附推薦理由。
