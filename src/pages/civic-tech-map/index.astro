@@ -209,10 +209,10 @@ const formatDate = (iso: string) => {
         var interest = input.value.trim();
         if (!interest) {
           resultsArea.textContent = '';
+          // 和其他 AI 頁一樣焦點留在按鈕上，提示由 status 唸一次。移焦點的話，輸入框的描述裡也有提示，會唸兩次。
           showMessage('請先輸入你的興趣或關心的議題。');
           // 快取裡的舊版 platform-ai.js 沒有 markInvalid。
           if (typeof PlatformAI !== 'undefined' && PlatformAI.markInvalid) PlatformAI.markInvalid(input, resultsArea.lastElementChild);
-          input.focus();
           return;
         }
 
