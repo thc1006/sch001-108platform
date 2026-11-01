@@ -626,13 +626,13 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(log.locator('ion-icon:not([aria-hidden="true"])')).toHaveCount(0);
     });
 
-    test('對話視窗用 Shift+Tab 從輸入框移得到，有名稱，焦點看得到，可以用鍵盤捲動', async ({ page }) => {
+    test('對話視窗用 Shift+Tab 從輸入框移得到，名稱是這一區的標題，焦點看得到，可以用鍵盤捲動', async ({ page }) => {
         const lines = Array.from({ length: 20 }, (_, i) => `第 ${i + 1} 行`).join('\n');
         await installFakeGateway(page, { chunks: [ACCEPTED, done(lines)] });
         await ask(page, '我喜歡電腦');
         await expect(messages(page)).toHaveCount(3);
 
-        const chatWindow = page.getByRole('region', { name: '對話', exact: true });
+        const chatWindow = page.getByRole('region', { name: 'AI 推薦學群', exact: true });
         await expect(page.locator('#chat-input')).toBeFocused();
         await page.keyboard.press('Shift+Tab');
         await expect(chatWindow).toBeFocused();
