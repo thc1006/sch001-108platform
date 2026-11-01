@@ -664,12 +664,15 @@ test('data：賽事日期不得被寫成報名截止（第二輪）', () => {
     assert.equal(ccc.deadline, '2027-02-11');
     assert.equal(ccc.eventStartsAt, '2027-02-18', '2/18 是比賽日，不是報名截止日');
 
-    // MAA amcreg：「Regular Registration Deadline: October 15, 2026」是報名截止；
-    // 「AMC 10/12 A Competition Date: November 5, 2026」「B: November 13, 2026」是考試日。
+    // 台灣承辦單位九九文教基金會（https://www.99cef.org.tw/15729/）：「報名日期 2026 年 9 月 18 日(星期五)
+    // 〜 9 月 30 日(星期三)」是報名期間；「AMC10A / 12A 2026 年 11 月 6 日(星期五)晚上」
+    // 「AMC10B / 12B 2026 年 11 月 14 日(星期六)上午」是考試日。MAA amcreg 的 10/15、11/5、11/13 是給美國
+    // competition manager 的時程，不是台灣考生的。
     const amc = find('美國數學競賽 (AMC 10/12)');
-    assert.equal(amc.deadline, '2026-10-15');
-    assert.equal(amc.eventStartsAt, '2026-11-05');
-    assert.equal(amc.eventEndsAt, '2026-11-13');
+    assert.equal(amc.deadline, '2026-09-30');
+    assert.equal(amc.opensAt, '2026-09-18T00:00:00+08:00');
+    assert.equal(amc.eventStartsAt, '2026-11-06');
+    assert.equal(amc.eventEndsAt, '2026-11-14');
 
     // APCS：2027-01-10 檢測場的報名期是「2026年11月23日-12月11日」，「每日9:00至18:00開放報名」。
     const apcs = find('APCS');
@@ -873,11 +876,11 @@ test('data：#138 補上的週期與新截止日', () => {
     assert.equal(tisf.opensAt, '2026-10-12T00:00:00+08:00');
 
     // 往年截止日：Wharton 2024-09-13、2025-09-12、2026-09-11；
-    // AMC 10/12 一般報名 2024-10-22、2025-10-15、2026-10-15；ACSL 2023-24 起四季都是 December 31；
+    // AMC 10/12 台灣報名 2025-09-17 至 09-29、2026-09-18 至 09-30（九九文教基金會簡章）；ACSL 2023-24 起四季都是 December 31；
     // FRC 官網「The season team registration fee due date is in mid-November」；
     // Earth Science Week 2023-10-13、2024-10-18、2025-10-17、2026-10-16
     assert.equal(find('華頓全球高中投資競賽').cycle.closes, '09');
-    assert.equal(find('美國數學競賽 (AMC 10/12)').cycle.closes, '10', '2024 年是 10/22，只能寫月份');
+    assert.equal(find('美國數學競賽 (AMC 10/12)').cycle.closes, '09', '2025 年是 9/29，只能寫月份');
     assert.equal(find('ACSL').cycle.closes, '12-31');
     assert.equal(find('FIRST 機器人競賽').cycle.closes, '11');
     assert.equal(find('Earth Science Week').cycle.closes, '10');
@@ -1200,5 +1203,5 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
 
     // 尚未開放報名的不得顯示「報名中」
     assert.equal(card('GENIUS Olympiad').status, '尚未開放 · 預計 2026-12-15 開放');
-    assert.equal(card('美國數學競賽 (AMC 10/12)').status, '尚未開放 · 預計 2026-09-02 開放');
+    assert.equal(card('美國數學競賽 (AMC 10/12)').status, '尚未開放 · 預計 2026-09-18 開放');
 });
