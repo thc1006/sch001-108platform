@@ -10,7 +10,7 @@ import { probe as guardedProbe } from './link-health.lib.mjs';
 export const ALLOWED_CATEGORIES = ['科學', '數理', '資訊', '語文人文', '商業管理', '藝術設計', '社會永續', '跨領域'];
 export const ALLOWED_LEVELS = ['校際/地區', '全國', '國際'];
 export const ALLOWED_REGIONS = ['台灣', '美國', '英國', '歐洲', '東亞', '全球線上', '其他'];
-export const ALLOWED_ELIGIBILITY = ['公開報名', '國家隊選拔', '邀請制'];
+export const ALLOWED_ELIGIBILITY = ['公開報名', '經學校報名', '國家隊選拔', '邀請制'];
 export const ALLOWED_MODES = ['線上', '實體', '混合'];
 export const ALLOWED_FORMS = ['個人', '團體', '個人/團體'];
 

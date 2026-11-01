@@ -13,7 +13,7 @@ import { createServer } from 'node:http';
 import dns from 'node:dns';
 import { readFile } from 'node:fs/promises';
 
-import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_FORMS, ALLOWED_REGIONS } from './check-competitions.lib.mjs';
+import { probe, isDeadResult, classifyLink, validateUrl, validateCycle, nextOccurrenceUTC, ALLOWED_ELIGIBILITY, ALLOWED_FORMS, ALLOWED_REGIONS } from './check-competitions.lib.mjs';
 import { ALLOWED_COMPETITION_FIELDS, TEXT_FIELDS, validateInstant, validateDateOnly, validateSchedule } from './check-competitions.lib.mjs';
 import { selectNeedsRecheck, sourceCheckedProblem } from './check-competitions.lib.mjs';
 import { selectCanonicalIssue, WATCHDOG_MARKER, ACTIONS_APP_LOGIN } from './watchdog-issue.lib.mjs';
@@ -158,6 +158,10 @@ test('合法 https url 不應產生錯誤', () => {
 test('form 只接受三種值', () => {
     assert.deepEqual(ALLOWED_FORMS, ['個人', '團體', '個人/團體']);
     assert.ok(!ALLOWED_FORMS.includes('個人與團隊'));
+});
+
+test('eligibility 只接受四種值', () => {
+    assert.deepEqual(ALLOWED_ELIGIBILITY, ['公開報名', '經學校報名', '國家隊選拔', '邀請制']);
 });
 
 test('region 只接受七種值，歐洲不寫成歐盟', () => {
