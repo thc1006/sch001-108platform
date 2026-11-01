@@ -162,28 +162,27 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // partial：沒寫完的答案已經收到的部分，標明沒有寫完，放在訊息上面
         function showMessage(text, tone = 'error', partial = '') {
             aiResultContainer.textContent = '';
-            if (partial) {
-                const box = createAnswerBox(partial, true);
-                const label = document.createElement('p');
-                label.className = 'not-prose text-sm font-semibold text-gray-600';
-                label.textContent = 'AI 的回答（沒有寫完）';
-                box.prepend(label);
-                aiResultContainer.appendChild(box);
-            }
+            if (partial) aiResultContainer.appendChild(createAnswerBox(partial, true, 'AI 的回答（沒有寫完）'));
             const p = document.createElement('p');
             // red-500 對白底只有 3.8:1，不到 WCAG 對一般文字要求的 4.5:1
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center font-semibold';
             p.textContent = text;
             aiResultContainer.appendChild(p);
-            announce(partial ? text + '沒寫完的回答留在按鈕後面。' : text);
+            announce(partial ? text + '已收到的部分在「AI 的回答（沒有寫完）」標題下。' : text);
         }
 
-        // renderMarkdown 先 escape 再轉換，輸出可以直接放進 innerHTML。回答裡的標題接在這一區的 h2 底下。
-        // partial 表示文字沒寫完（草稿、斷掉的回答）。
-        function createAnswerBox(markdown, partial = false) {
+        // 回答框的 h3 讓按 H 跳標題的人找得到回答，回答裡的標題從 h4 開始。renderMarkdown 先 escape 再
+        // 轉換，輸出可以直接放進 innerHTML。partial 表示文字沒寫完（草稿、斷掉的回答）。
+        function createAnswerBox(markdown, partial = false, title = 'AI 的回答') {
             const box = document.createElement('div');
-            box.className = 'prose max-w-none p-4 bg-indigo-50 rounded-lg';
-            box.innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 3, partial });
+            box.className = 'p-4 bg-indigo-50 rounded-lg';
+            const heading = document.createElement('h3');
+            heading.className = 'font-bold text-indigo-800 mb-2';
+            heading.textContent = title;
+            const body = document.createElement('div');
+            body.className = 'prose max-w-none';
+            body.innerHTML = PlatformAI.renderMarkdown(markdown, { headingLevel: 4, partial });
+            box.append(heading, body);
             return box;
         }
 
@@ -234,7 +233,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 aiWorkContainer.textContent = '';
                 // 以 done 的 result 為準，片段接起來的只是草稿。
                 aiResultContainer.appendChild(createAnswerBox(result));
-                announce('已產生 AI 的回答，接在按鈕後面。');
+                announce('已產生 AI 的回答，在「AI 的回答」標題下。');
             } catch (error) {
                 if (progress) progress.finish();
                 aiWorkContainer.textContent = '';

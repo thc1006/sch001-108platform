@@ -14,6 +14,12 @@ const push = (page, ...chunks) => page.evaluate((chunks) => chunks.forEach((c) =
 // 答案與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。錯誤之前已經收到草稿，
 // 草稿標明沒有寫完、留在結果區，訊息接在最後。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
+// 2026-10-23 正式閘道的回答都是這樣三行的星號清單，沒有 # 標題。
+const REAL_ANSWER = [
+    '* **A3 規劃執行與創新應變**：建議你把「場地不夠→重畫配置圖→雨天改動線」的解決過程寫清楚，讓大學看到你能冷靜規劃、即時應變！',
+    '* **C2 人際關係與團隊合作**：建議你點出如何與幹部分工、和總務處協調空間，展現你溝通協調、凝聚團隊的實力。',
+    '* **C1 道德實踐與公民意識**：建議你補充捐款育幼院的動機與意義，把活動成果連結到回饋社區的公民行動，會讓亮點更有溫度！',
+].join('\n');
 const SETTLE = [
     ['收到 done', done('* 最後的答案'), (page) => expect(page.locator('#ai-result .prose')).toHaveText('最後的答案')],
     ['閘道回報錯誤', sse('error', { code: 'format', message: FORMAT_ERROR, retryable: true }),
@@ -227,13 +233,13 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await work.getByRole('button', { name: '取消' }).focus();
         await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
         await expect(result.locator('.prose ul > li')).toHaveText(['A2 系統思考與解決問題：寫出你怎麼']);
-        await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText('AI 的回答（沒有寫完）');
         await expect(result.locator(':scope > p')).toHaveText(message);
         await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
         // 先放答案再放訊息
         expect(await result.evaluate((el) => [...el.children].map((c) => c.tagName))).toEqual(['DIV', 'P']);
         expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual([]);
-        await expect(page.locator('#ai-status')).toHaveText(message + '沒寫完的回答留在按鈕後面。');
+        await expect(page.locator('#ai-status')).toHaveText(message + '已收到的部分在「AI 的回答（沒有寫完）」標題下。');
         await expect(work).toBeEmpty();
         await expect(button).toBeFocused();
         for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
@@ -254,16 +260,17 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
 
     // 草稿等下一個畫面才畫；結束事件在那之前就到了，之後的畫面不能把草稿畫回來。
     const ENDS = [
-        ['done', done('* 最後的答案'), '最後的答案'],
-        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), 'AI 的回答（沒有寫完）最後'],
+        ['done', done('* 最後的答案'), ['AI 的回答', '最後的答案']],
+        ['incomplete', sse('error', { code: 'incomplete', message: '沒寫完' }), ['AI 的回答（沒有寫完）', '最後']],
     ];
-    for (const [code, end, expected] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → #ai-result 是最後的答案，之後的畫面不再畫出草稿`, async ({ page }) => {
+    for (const [code, end, [heading, expected]] of ENDS) test(`片段與 ${code} 在同一個畫面之前送達 → #ai-result 是最後的答案，之後的畫面不再畫出草稿`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
         const work = page.locator('#ai-work');
         await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
         await push(page, delta('* 最'), delta('後'), end);
+        await expect(page.locator('#ai-result h3')).toHaveText(heading);
         await expect(page.locator('#ai-result .prose')).toHaveText(expected);
         await afterFrames(page);
         await expect(work).toBeEmpty();
@@ -341,7 +348,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
 
         // 閘道重啟、通道斷線時，串流就是這樣結束。
         await page.evaluate(() => window.__stream.end());
-        await expect(result.locator('.prose > p').first()).toHaveText('AI 的回答（沒有寫完）');
+        await expect(result.getByRole('heading', { level: 3 })).toHaveText('AI 的回答（沒有寫完）');
         await expect(result.locator('.prose strong')).toHaveText(['A2 系統思考與解決問題']);
         await expect(result.locator(':scope > p')).toHaveText('和 AI 服務的連線中斷了，請再試一次。');
         await expect(result.locator(':scope > p')).toHaveClass(/text-red-700/);
@@ -406,31 +413,42 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await page.click('#ai-generate-btn');
         await expect(status).toHaveText('請先輸入你的活動經驗描述！');
         await page.click('#ai-generate-btn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述！']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述。']);
 
-        await installFakeGateway(page, { chunks: [ACCEPTED, delta('# 對應的素養'), done('# 對應的素養\n* A2')] });
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta(REAL_ANSWER.slice(0, 40)), done(REAL_ANSWER)] });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
-        await expect(page.locator('#ai-result .prose li')).toHaveText(['A2']);
-        await expect(status).toHaveText('已產生 AI 的回答，接在按鈕後面。');
+        await expect(page.locator('#ai-result .prose li')).toHaveCount(3);
+        await expect(status).toHaveText('已產生 AI 的回答，在「AI 的回答」標題下。');
 
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         await page.click('#ai-generate-btn');
         await expect(status).toBeEmpty();
         await page.locator('#ai-work').getByRole('button', { name: '取消' }).click();
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述！', '已產生 AI 的回答，接在按鈕後面。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述。', '已產生 AI 的回答，在「AI 的回答」標題下。', '已取消。']);
     });
 
-    test('答案裡的 # 標題是 h2「AI 對照核心素養」底下的 h3，清單項目在 <ul> 裡', async ({ page }) => {
-        await installFakeGateway(page, { chunks: [ACCEPTED, done('# 對應的素養\n* **A2 系統思考與解決問題**：寫出失敗的原因。\n* **A3 規劃執行與創新應變**：寫出怎麼調整。')] });
+    // 真實的回答沒有標題，按 H 跳標題的人要靠回答框的 h3 找到它。
+    test('沒有標題的星號清單回答 → h2「AI 對照核心素養」之後是 h3「AI 的回答」，三項在同一個 <ul> 裡', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(REAL_ANSWER)] });
         await page.fill('#ai-input', '科展');
         await page.click('#ai-generate-btn');
-        const answer = page.locator('#ai-result .prose');
-        await expect(answer.getByRole('heading', { level: 3 })).toHaveText(['對應的素養']);
-        await expect(page.locator('#ai-analyst h2')).toHaveText('AI 對照核心素養');
+        const section = page.locator('#ai-analyst');
+        await expect(section.locator('#ai-result .prose li')).toHaveCount(3);
+        await expect(section.getByRole('heading')).toHaveText(['AI 對照核心素養', 'AI 的回答']);
+        expect(await section.getByRole('heading').evaluateAll((hs) => hs.map((h) => h.tagName))).toEqual(['H2', 'H3']);
+        const answer = section.locator('#ai-result .prose');
         await expect(answer.getByRole('list')).toHaveCount(1);
-        await expect(answer.getByRole('listitem')).toHaveText(['A2 系統思考與解決問題：寫出失敗的原因。', 'A3 規劃執行與創新應變：寫出怎麼調整。']);
+        await expect(answer.getByRole('listitem').first()).toHaveText(/^A3 規劃執行與創新應變：建議你把/);
+    });
+
+    test('回答裡有 # 標題時是 h3「AI 的回答」底下的 h4', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, done('# 對應的素養\n* **A2 系統思考與解決問題**：寫出失敗的原因。')] });
+        await page.fill('#ai-input', '科展');
+        await page.click('#ai-generate-btn');
+        await expect(page.locator('#ai-result').getByRole('heading', { level: 4 })).toHaveText(['對應的素養']);
+        await expect(page.locator('#ai-result').getByRole('heading', { level: 3 })).toHaveText(['AI 的回答']);
     });
 
     test('回答停在「**A2 系統思考」就斷了 → 草稿與沒寫完的回答都不留字面的 **', async ({ page }) => {
