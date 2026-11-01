@@ -25,9 +25,9 @@ const loose = (name) => new RegExp(`^${[...name].map((c) => c.replace(/[.*+?^${}
 
 // 和 axe 的 heading-order 一樣：報讀器看得到的標題，下一個最多只比上一個深一層。
 for (const p of PAGES) {
-    test(`${p}：標題不跳級，開新分頁的連結都說會開新分頁`, async ({ page }) => {
+    test(`${p}：標題不跳級，開新分頁的連結都說會開新分頁，aria-label 包含看得到的字`, async ({ page }) => {
         await page.goto(P(p), { waitUntil: 'networkidle' });
-        const { skips, silent } = await page.evaluate(() => {
+        const { skips, silent, mismatched } = await page.evaluate(() => {
             const shown = (el) => el.checkVisibility({ visibilityProperty: true }) && !el.closest('[aria-hidden="true"]');
             const levels = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
                 .filter(shown)
@@ -36,10 +36,16 @@ for (const p of PAGES) {
             const silent = [...document.querySelectorAll('a[target="_blank"]')]
                 .map((a) => a.getAttribute('aria-label') ?? a.textContent)
                 .filter((name) => !name.includes('（另開新分頁）'));
-            return { skips: levels.filter(([level], i) => i > 0 && level > levels[i - 1][0] + 1), silent };
+            // 說「點前往官網」的語音指令要找得到：名稱來自 aria-label 時，要包含畫面上的字（WCAG 2.5.3）。比對時不看空白與標點。
+            const norm = (s) => s.replace(/[\s\p{P}]/gu, '');
+            const mismatched = [...document.querySelectorAll('a[aria-label], button[aria-label]')]
+                .filter((el) => el.checkVisibility() && norm(el.innerText) && !norm(el.getAttribute('aria-label')).includes(norm(el.innerText)))
+                .map((el) => `${el.innerText.trim()} → ${el.getAttribute('aria-label')}`);
+            return { skips: levels.filter(([level], i) => i > 0 && level > levels[i - 1][0] + 1), silent, mismatched };
         });
         expect(skips).toEqual([]);
         expect(silent).toEqual([]);
+        expect(mismatched).toEqual([]);
     });
 }
 
@@ -188,6 +194,9 @@ test.describe('連結名稱', () => {
         await page.goto(P('advanced-resources/open-education.html'), { waitUntil: 'networkidle' });
         const card = page.locator('.resource-card').first();
         await expect(card.getByRole('link')).toHaveAccessibleName(loose(`前往資源：${await card.locator('h2').textContent()}（另開新分頁）`));
+        await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
+        const comp = page.locator('.comp-card').first();
+        await expect(comp.getByRole('link')).toHaveAccessibleName(loose(`前往官網：${await comp.locator('h2').textContent()}（另開新分頁）`));
     });
 
     test('連到 PDF 的連結後面標「（PDF）」', async ({ page }) => {
