@@ -214,6 +214,11 @@ test('star-analysis：指令寫明總評、各項評論與建議、修改範例�
     assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
 });
 
+test('star-analysis：修改範例不自己編心得裡沒有的細節，用「（填入…）」標出要補的地方', () => {
+    const { instructions } = catalog.get('star-analysis');
+    assert.match(instructions, /revised_example：[^\n]*心得裡沒有的人數、時間、名次與成果不要自己編，用「（填入[^」]+）」/);
+});
+
 test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
     const task = catalog.get('study-plan');
     assert.equal(validateInput(task, { topic: '飲'.repeat(100) }).topic.length, 100);
