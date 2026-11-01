@@ -73,6 +73,10 @@ const mutations = [
     ['略過的範圍照算', 'if (f.len > 0 && r.skip &&', 'if (false &&'],
     ['談詞語的引號照算', 'if (f.len > 0 && isMention(b.text, f.index, f.len))', 'if (false)'],
     ['回推時短片段也找', 'if (snip.length < 4) continue;', 'if (snip.length < 2) continue;'],
+    ['參考式連結留著方括號', '(refs?.has(refLabel(id || text)) ? text : m)', 'm'],
+    ['沒有定義的方括號也去掉', 'refs?.has(refLabel(id || text)) ? text', 'true ? text'],
+    ['.md 以外的檔案也認定義', 'const refs = md ? refLabels(content) : null;', 'const refs = refLabels(content);'],
+    ['\\[x] 也當參考式連結', '.replace(/(?<!\\\\)\\[([^\\]]*)\\]', '.replace(/\\[([^\\]]*)\\]'],
     ['屬性只比對去掉標籤的文字', "const kinds = block.tag.startsWith('attr') || block.tag === 'script' ? ['raw', 'text'] : ['text', 'raw'];", "const kinds = ['text'];"],
     ['行號一律回第 1 行', 'return { file, line: lineAt(starts, pos), dup };', 'return { file, line: 1, dup };'],
     ['超過基準一筆不報', 'if (n > (baseline[key] ?? 0)) over.push', 'if (n > (baseline[key] ?? 0) + 1) over.push'],
@@ -266,7 +270,12 @@ cases.forEach(([name], k) => (a[k] ? bad(name, a[k]) : ok(name)));
 
 console.log('\nB. 改壞判斷（writing.test.mjs 必須失敗）：');
 const testsPass = (dir) => new Promise((resolve) => execFile(process.execPath, ['--test', path.join(dir, 'writing.test.mjs')], { cwd: ROOT }, (err) => resolve(!err)));
-const libDir = (k) => { const d = path.join(WORK, `m${k}`); mkdirSync(d, { recursive: true }); cpSync(path.join(ROOT, 'scripts/writing.test.mjs'), path.join(d, 'writing.test.mjs')); return d; };
+const libDir = (k) => {
+    const d = path.join(WORK, `m${k}`);
+    mkdirSync(d, { recursive: true });
+    for (const f of ['writing.test.mjs', 'markdown-refs.lib.mjs']) cpSync(path.join(ROOT, 'scripts', f), path.join(d, f));
+    return d;
+};
 const clean = libDir('clean');
 writeFileSync(path.join(clean, 'writing.lib.mjs'), original);
 if (!(await testsPass(clean))) bad('沒有改動', 'writing.test.mjs 已經失敗，突變結果沒有意義');

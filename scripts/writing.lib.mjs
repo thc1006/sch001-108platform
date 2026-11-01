@@ -5,6 +5,8 @@
 // 區塊是一段讀者看得到的文字：{ page, kind, tag, text, skip, bold, pointer? }。skip 和 text 等長，每個字元
 // 一個代號：' ' 一般文字，'a' 站外連結文字，'q' 引用的原文與書名，'f' 外文引文，'u' 網址。
 
+import { refLabel, refLabels } from './markdown-refs.lib.mjs';
+
 /** PH 是模板字串 ${…} 的佔位符。執行時那裡多半是中文：P10 把它當成中文，英文 em dash 的判斷不把它當英文，回推原始檔時從這裡切開。 */
 export const PH = '\uE000';
 
@@ -402,18 +404,21 @@ const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" 
 const decode = (s) => s.replace(/&(nbsp|amp|lt|gt|quot|#39);/g, (_, e) => ENTITIES[e]);
 const stripTags = (s) => { let prev; do { prev = s; s = s.replace(/<[^>]*>/g, ''); } while (s !== prev); return s; };
 const normText = (s) => s.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, '');
-const normLine = (s, md) => normText(decode(stripTags(s.replace(/\\"/g, '"').replace(/\\n/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')).replace(/\*\*|__|`/g, '').replace(md ? /^\s*(#+|[-*+]|\d+\.|>)\s+/ : /^\s*(#+|[-*+]|>)\s+/, '')));
+const normLine = (s, md, refs) => normText(decode(stripTags(s.replace(/\\"/g, '"').replace(/\\n/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/(?<!\\)\[([^\]]*)\](?:\[([^\]]*)\])?/g, (m, text, id) => (refs?.has(refLabel(id || text)) ? text : m))).replace(/\*\*|__|`/g, '').replace(md ? /^\s*(#+|[-*+]|\d+\.|>)\s+/ : /^\s*(#+|[-*+]|>)\s+/, '')));
 
 /**
- * sourceIndex 為每個原始檔建兩份正規化文字：text 去掉標籤（比對內文），raw 保留屬性值（比對屬性與腳本字串）。
- * 各行接成一串，記下每行的起點，跨行的字也找得到。
+ * sourceIndex 為每個原始檔建兩份正規化文字：text 去掉標籤，Markdown 的行內連結與有定義的參考式連結只留連結文字
+ * （比對內文）；raw 保留屬性值（比對屬性與腳本字串）。各行接成一串，記下每行的起點，跨行的字也找得到。
  * @param {Array<{path: string, content: string}>} files
  */
 export function sourceIndex(files) {
     const build = (lines) => { const starts = []; let joined = ''; for (const l of lines) { starts.push(joined.length); joined += l; } return { joined, starts }; };
     return new Map(files.map(({ path, content }) => {
         const lines = content.split('\n');
-        return [path, { text: build(lines.map((l) => normLine(l, path.endsWith('.md')))), raw: build(lines.map((l) => normText(decode(l.replace(/\\"/g, '"'))))) }];
+        const md = path.endsWith('.md');
+        const refs = md ? refLabels(content) : null;
+        return [path, { text: build(lines.map((l) => normLine(l, md, refs))), raw: build(lines.map((l) => normText(decode(l.replace(/\\"/g, '"'))))) }];
     }));
 }
 

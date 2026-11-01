@@ -162,6 +162,45 @@ test('locate：屬性比對保留屬性值的原文，片段不到 4 字不找',
     assert.equal(locate(index, block('很多'), 0, 2), null);
 });
 
+test('locate：Markdown 參考式連結和行內連結一樣只比對連結文字，沒有定義的方括號照原文', () => {
+    const index = sourceIndex([{
+        path: 'src/content/c.md',
+        content: [
+            '---',
+            '[寅]: 寫在 frontmatter',
+            '---',
+            '甲[乙][a]丙很多',
+            '丁[Ex][]戊很多',
+            '己[庚]辛很多',
+            '**[沒定義]**的很多',
+            '壬[ 癸  子 ][]丑很多',
+            '卯[寅]**辰**很多',
+            '午[巳]**未**很多',
+            '酉[申]**戌**很多',
+            '亥\\[a]**子**很多',
+            '',
+            '[a]: <https://example.org/a> "定義的標題很多"',
+            "[ex]: https://example.org/b '單引號標題'",
+            '   [庚]: https://example.org/c (括號標題)',
+            '[癸 子]: https://example.org/d',
+            '```',
+            '[巳]: https://example.org/e',
+            '```',
+            '<!--',
+            '[申]: https://example.org/f',
+            '-->',
+        ].join('\n'),
+    }, {
+        path: 'src/pages/d.astro',
+        content: '<p>亥[乙]<b>甲</b>很多</p>\n\n[乙]: https://example.org/g',
+    }]);
+    const at = (text, tag = 'p') => locate(index, block(text, { tag }), text.indexOf('很多'), 2);
+    const lines = ['甲乙丙很多', '丁Ex戊很多', '己庚辛很多', '[沒定義]的很多', '壬 癸 子 丑很多', '卯[寅]辰很多', '午[巳]未很多', '酉[申]戌很多', '亥[a]子很多'].map((t) => at(t)?.line);
+    assert.deepEqual(lines, [4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    assert.equal(at('定義的標題很多', 'attr:title')?.line, 14);
+    assert.deepEqual(at('亥[乙]甲很多'), { file: 'src/pages/d.astro', line: 1, dup: 1 });
+});
+
 const ids = new Set(RULES.map((r) => r.id));
 const okEntry = { file: 'src/a.md', text: '只有一句「我學到很多」', rule: 'W01-hen-duo', kind: 'counterexample', reason: '引號裡是要學生避開的空話原句。' };
 const errorsOf = (entries) => allowProblems(entries, ids, '2026-10-27').map((p) => p.errors.join('；'));
