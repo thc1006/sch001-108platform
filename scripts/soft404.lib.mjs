@@ -130,7 +130,7 @@ function comparable(random) {
 
 /**
  * judgeSoft404 用網址的探測結果 r 和同目錄隨機路徑的結果 random 套規則，回傳 { dead, hints }，兩者都是 { rule, reason } 的陣列。
- * dead 的四條：1 轉址落在錯誤頁路徑、2 標題或 h1 寫著找不到或 canonical 指向錯誤頁、3 canonical 指向上層目錄或根目錄、
+ * dead 的四條：1 轉址落在錯誤頁路徑、2 標題或 h1 寫著找不到或 canonical 指向錯誤頁、3 canonical 指向根目錄、
  * 4 轉址的落點和隨機路徑相同。hints 只列進報告：5 只轉到上層目錄、6 可見文字很少，隨機路徑也直接回 200。
  * r 不是 2xx、網址是首頁時不套規則。random 是 null 時只看前三條。
  * @param {string} url @param {object} r @param {object|null} random @param {string} token
@@ -154,8 +154,10 @@ export function judgeSoft404(url, r, random, token) {
     } else if (f?.canonical && ERROR_PATH.test(decode(new URL(f.canonical).pathname)) && dirPath(new URL(f.canonical).pathname) !== dirPath(su.pathname)) {
         dead.push({ rule: 2, reason: `canonical 指向錯誤頁 ${f.canonical}` });
     }
-    if (f?.canonical && ancestorOf(url, f.canonical) && dirPath(fu.pathname) !== dirPath(new URL(f.canonical).pathname)) {
-        dead.push({ rule: 3, reason: `canonical 指向上層目錄或根目錄 ${f.canonical}` });
+    // 第 3 條只認根目錄。分頁、摘要頁的 canonical 指向上層的完整閱讀版，頁面還在；世新財金系刪掉的文章指向根目錄。
+    const canon = f?.canonical ? new URL(f.canonical) : null;
+    if (canon && dirPath(canon.pathname) === '/' && ancestorOf(url, f.canonical) && dirPath(fu.pathname) !== dirPath(canon.pathname)) {
+        dead.push({ rule: 3, reason: `canonical 指向根目錄 ${f.canonical}` });
     }
     if (redirected(r) && comparable(random) && landing(final) === landing(random.finalUrl, token)) {
         dead.push({ rule: 4, reason: `落點和同目錄的隨機路徑相同：${final}` });

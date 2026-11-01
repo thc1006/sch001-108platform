@@ -1441,8 +1441,12 @@ const soft404Mutations = [
         apply: (s) => s.replace('    const markup = pageMarkup(html);\n', '    const markup = html;\n'),
     },
     {
+        name: '第 3 條也算 canonical 指向上層目錄（分頁、摘要頁指回完整閱讀版會判失效）',
+        apply: (s) => s.replace("if (canon && dirPath(canon.pathname) === '/' && ancestorOf(", 'if (canon && ancestorOf('),
+    },
+    {
         name: '第 3 條不排除落點就是 canonical',
-        apply: (s) => s.replace(' && dirPath(fu.pathname) !== dirPath(new URL(f.canonical).pathname)) {', ') {'),
+        apply: (s) => s.replace(' && dirPath(fu.pathname) !== dirPath(canon.pathname)) {', ') {'),
     },
     {
         name: '可見文字的下限從 200 改成 20',
