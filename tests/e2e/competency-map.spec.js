@@ -137,7 +137,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         for (const value of ['', ' \n\t ']) {
             await page.fill('#ai-input', value);
             await page.click('#ai-generate-btn');
-            await expect(page.locator('#ai-result')).toHaveText('請先輸入你的活動經驗描述！');
+            await expect(page.locator('#ai-result')).toHaveText('請先輸入你的活動經驗描述。');
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
@@ -411,9 +411,9 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await watchStatus(page, '#ai-status');
 
         await page.click('#ai-generate-btn');
-        await expect(status).toHaveText('請先輸入你的活動經驗描述！');
+        await expect(status).toHaveText('請先輸入你的活動經驗描述。');
         await page.click('#ai-generate-btn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述。']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的活動經驗描述。', '請先輸入你的活動經驗描述。']);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, delta(REAL_ANSWER.slice(0, 40)), done(REAL_ANSWER)] });
         await page.fill('#ai-input', '科展');
@@ -426,7 +426,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(status).toBeEmpty();
         await page.locator('#ai-work').getByRole('button', { name: '取消' }).click();
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你的活動經驗描述！', '請先輸入你的活動經驗描述。', '已產生 AI 的回答，在「AI 的回答」標題下。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你的活動經驗描述。', '請先輸入你的活動經驗描述。', '已產生 AI 的回答，在「AI 的回答」標題下。', '已取消。']);
     });
 
     // 真實的回答沒有標題，按 H 跳標題的人要靠回答框的 h3 找到它。
