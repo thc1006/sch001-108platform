@@ -239,7 +239,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         // 先放答案再放訊息
         expect(await result.evaluate((el) => [...el.children].map((c) => c.tagName))).toEqual(['DIV', 'P']);
         expect(await result.locator('.prose').evaluate(liveSettingsUpFrom)).toEqual([]);
-        await expect(page.locator('#ai-status')).toHaveText(message + '已收到的部分在「AI 的回答（沒有寫完）」標題下。');
+        await expect(page.locator('#ai-status')).toHaveText(message + '已收到的部分在「AI 的回答」標題下。');
         await expect(work).toBeEmpty();
         await expect(button).toBeFocused();
         for (const el of [button, work, result]) await expect(el).not.toHaveAttribute('tabindex');
