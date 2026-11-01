@@ -3,6 +3,8 @@
 // 網址 applyNNN／starNNN 的年度只能是 cycle 或 next，「113 至 115 學年度」這種區間要包含其中一個，
 // 其他的要列在 keep 才放行。next 也放行，換屆時才能一頁一個 PR 改成下一屆，最後再改 cycle。
 
+import { refLabel, refLabels } from './markdown-refs.lib.mjs';
+
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MIN_REASON_CHARS = 10;
 const TOP_KEYS = new Set(['_readme', 'cycle', 'next', 'remindAfter', 'remindReason', 'keep']);
@@ -131,11 +133,30 @@ export function findYears(src) {
 const FRAMING_GAP = '(?:[^\\S\\n]*[^\\s\\d\\p{P}\\p{S}]){0,6}?[^\\S\\n]*';
 const FRAMING_WORD = '(?:升學|申請|考生|招生|備審|審查|選才|甄選|入學|學測|繁星|風向)';
 const FRAMING = new RegExp(`(?<!\\d)20\\d{2}(?!\\d)${FRAMING_GAP}${FRAMING_WORD}`, 'gu');
-const LINK_TEXT = /\[([^\]\n]*)\](?=\()/g;
+// Markdown 連結的文字：行內連結 [文字](網址)，以及有定義的參考式連結 [文字][id]、[文字][]、[文字]。
+// [X][Y](網址) 的連結文字是 Y，[X] 照內文。
+const LINK_TEXT = /\[([^\]\n]*)\](?:(?=\()|\[([^\]\n]*)\](?!\())?/dg;
 // 時程日期只看申請入學那幾個月：學測在 1 月，分發入學 8 月放榜。同一年 9 月以後的日期是下一屆的事，
 // 例如「2026 年 10 月 27 日公告的 116 學年度一覽表」。
 const SCHEDULE_LAST_MONTH = 8;
 const SCHEDULE_WORD = /放榜|篩選|甄試|上傳|錄取|公告|簡章|報名|學測|申請/;
+
+/** linkTexts 回傳 masked（maskForText(src)）裡 Markdown 連結文字的比對結果。 */
+function linkTexts(masked, src) {
+    const refs = refLabels(src);
+    // `…` 程式碼：前後的反引號一樣長，可以跨行但不跨空行。
+    const code = [...masked.matchAll(/(?<!`)(`+)(?!`)[^]*?(?<!`)\1(?!`)/g)].filter((c) => !/\n[ \t]*\n/.test(c[0])).map((c) => [c.index, c.index + c[0].length]);
+    return [...masked.matchAll(LINK_TEXT)].filter((m) => {
+        if (masked[m.index + m[0].length] === '(') return true;
+        // \[x]、碰到 `…` 程式碼的 [x]、文字裡還有 [ 的不是參考式連結。圍起來的程式碼裡的照算。
+        if (masked[m.index - 1] === '\\' || m[1].includes('[') || code.some(([a, b]) => m.index < b && m.index + m[0].length > a)) return false;
+        // 標籤從原文取，masked 換掉了粗體記號和全形數字。
+        const [a, b] = m[2] ? m.indices[2] : m.indices[1];
+        return refs.has(refLabel(src.slice(a, b)));
+    });
+}
+
+const blankLinks = (masked, src) => linkTexts(masked, src).reduce((t, m) => t.slice(0, m.index) + m[0].replace(/[^\n]/g, ' ') + t.slice(m.index + m[0].length), masked);
 
 /**
  * findFraming 找出 src 裡用西元年當申請年度的寫法。別人文章的標題不能改，Markdown 連結的文字和
@@ -144,7 +165,7 @@ const SCHEDULE_WORD = /放榜|篩選|甄試|上傳|錄取|公告|簡章|報名|�
  */
 export function findFraming(src) {
     const blank = (m) => m.replace(/[^\n]/g, ' ');
-    const text = maskForText(src).replace(LINK_TEXT, blank).replace(/[《〈][^》〉\n]*[》〉]/g, blank);
+    const text = blankLinks(maskForText(src), src).replace(/[《〈][^》〉\n]*[》〉]/g, blank);
     return [...text.matchAll(FRAMING)].map((m) => ({
         start: m.index,
         end: m.index + m[0].length,
@@ -164,7 +185,7 @@ export function cycleHints(src, cycle) {
     const masked = maskForText(src);
     const lineOf = (pos) => src.slice(0, pos).split('\n').length;
     const out = [];
-    const body = masked.replace(LINK_TEXT, (m) => m.replace(/[^\n]/g, ' '));
+    const body = blankLinks(masked, src);
     const lines = body.split('\n');
     const date = new RegExp(`(?<!\\d)(?:${cycle}|${cycle + 1911})${SP}年${SP}(\\d{1,2})${SP}月`, 'g');
     for (const m of body.matchAll(date)) {
@@ -174,7 +195,7 @@ export function cycleHints(src, cycle) {
     // 「113-115 年」「115 至 119 學年度」和「115 學年度」不算，後兩種學年度檢查已經看得到。
     const roc = new RegExp(`(?<![\\d\\-–~～])${cycle}(?!\\d)(?!${SP}(?:年|學年度|[至到~～\\-–、／/]))`);
     const western = new RegExp(`(?<!\\d)${cycle + 1911}(?!\\d)[^｜|\\n]{0,8}?(?:升學|申請|考生|招生|備審|學測|放榜)`);
-    for (const m of masked.matchAll(LINK_TEXT)) {
+    for (const m of linkTexts(masked, src)) {
         if (roc.test(m[1]) || western.test(m[1])) out.push({ kind: 'title', line: lineOf(m.index), phrase: m[1].trim() });
     }
     return out.sort((a, b) => a.line - b.line);
