@@ -17,7 +17,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 未來生涯<span class="gradient-text">GPS</span> 2.0
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                將你的高中學習，精準定位到未來方向。結合 AI 學涯導師，探索大學學群，聆聽學長姐的真實建議。
+                依興趣找適合的學群、查各學群的科系，再看學長姐的升學經驗。
             </p>
         </section>
 
@@ -28,8 +28,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         <ion-icon aria-hidden="true" name="sparkles-outline" class="text-3xl text-indigo-600"></ion-icon>
                     </div>
                     <div>
-                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">AI 學涯導師</h2>
-                        <p class="text-gray-600">對未來感到迷惘嗎？試著問我問題吧！</p>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">AI 推薦學群</h2>
+                        <p class="text-gray-600">回答參考大學科系羅盤裡 9 個學群的 ColleGo! 資料。</p>
                     </div>
                 </div>
 
@@ -41,7 +41,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                                 <ion-icon name="sparkles" aria-hidden="true" class="text-indigo-600"></ion-icon>
                             </div>
                             <div class="chat-bubble-ai p-3 max-w-lg">
-                                <p class="text-sm sm:text-base">你好！我是 AI 學涯導師。你可以告訴我你喜歡的科目、興趣，或任何對未來科系的疑問，我會試著給你一些建議。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
+                                <p class="text-sm sm:text-base">寫下你喜歡的科目、興趣，或對科系的疑問，AI 會推薦 1 到 2 個學群並說明原因，再給一件下一步可以做的事。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
                             </div>
                         </div>
                     </div>
@@ -324,7 +324,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             });
         }
 
-        // AI 學涯導師：prompt 與學群資料都在閘道的 career-chat 任務（ai-gateway/src/task-catalog.mjs），
+        // prompt 與學群資料都在閘道的 career-chat 任務（ai-gateway/src/task-catalog.mjs），
         // 頁面一次只送這一題，不帶先前的對話。
         const chatLog = document.getElementById('chat-log');
         const chatProgress = document.getElementById('chat-progress');
@@ -332,7 +332,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // platform-ai.js 沒載入成功時用這句，與 describeError 對未知錯誤的說法相同。
         const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
         let chatBusy = false;
-        // 回答裡的標題接在 h2「AI 學涯導師」底下。
+        // 回答裡的標題接在這一區的 h2 底下。
         const ANSWER_MARKDOWN = { headingLevel: 3 };
         // 沒寫完的文字（草稿、斷掉的回答）：最後一行落單的 ** 等記號拿掉
         const PARTIAL_MARKDOWN = { headingLevel: 3, partial: true };
@@ -420,7 +420,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 progress = PlatformAI.mountProgress(chatProgress, {
                     onCancel: () => controller.abort(),
                     focusTarget: chatInput,
-                    // 焦點在 AI 學涯導師這一區（輸入框、按鈕、對話紀錄）時按 Esc 等於按取消
+                    // 焦點在這一區（輸入框、按鈕、對話紀錄）時按 Esc 等於按取消
                     escapeScope: document.getElementById('ai-advisor'),
                 });
                 // 草稿接在紀錄後面，不在 live region 裡，否則每收到一段就重唸一次。Safari 連
