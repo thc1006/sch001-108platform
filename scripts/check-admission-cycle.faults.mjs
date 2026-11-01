@@ -288,7 +288,8 @@ const libMutations = [
     ['列舉少了和、與、或', "const LIST = '[、／/及和與或]';", "const LIST = '[、／/及]';"],
     ['區間只認至和 en dash', "const RANGE = '[至到~～〜\\\\-–—－]';", "const RANGE = '[至–]';"],
     ['分隔符號後面不能換行', 'const BREAK = `${SP}(?:\\\\r?\\\\n${SP})?`;', 'const BREAK = SP;'],
-    ['HTML 註解當成內文', '.replace(/<!--[^]*?-->/g, blank)', ''],
+    ['HTML 註解當成內文', '.replace(/<!--[^]*?--!?>/g, blank)', ''],
+    ['遮蔽的註解不認 --!> 結尾', '.replace(/<!--[^]*?--!?>/g, blank)', '.replace(/<!--[^]*?-->/g, blank)'],
     ['HTML 標籤擋住年度', '.replace(/<\\/?[A-Za-z][^<>\\n]*>/g, blank)', ''],
     ['參考式連結的定義當成內文', '.replace(/^ {0,3}\\[[^\\]\\n]+\\]:.*/gm, blank)', ''],
     ['裸網址當成內文', '.replace(/https?:\\/\\/[^\\s<>()[\\]"\'`\\u0080-\\uffff]*/g, blank)', ''],
@@ -367,7 +368,8 @@ const refsMutations = [
     ['pre、script 這類區塊到空行為止', '[/^ {0,3}<(?:pre|script|style|textarea)(?:[\\s>]|$)/i, /<\\/(?:pre|script|style|textarea)>/i],', '[/^ {0,3}<(?:pre|script|style|textarea)(?:[\\s>]|$)/i, null],'],
     ['<? 區塊不認', '[/^ {0,3}<\\?/, /\\?>/],', ''],
     ['CDATA 區塊不認', '[/^ {0,3}<!\\[CDATA\\[/, /\\]\\]>/],', ''],
-    ['HTML 註解只到空行', '[/^ {0,3}<!--/, /-->/],', '[/^ {0,3}<!--/, null],'],
+    ['HTML 註解只到空行', '[/^ {0,3}<!--/, /--!?>/],', '[/^ {0,3}<!--/, null],'],
+    ['HTML 註解區塊不認 --!> 結尾', '[/^ {0,3}<!--/, /--!?>/],', '[/^ {0,3}<!--/, /-->/],'],
     ['HTML 區塊裡的也算定義', '            html = m[1] && m[1].test(line.replace(m[0], \'\')) ? null : m[1] ?? \'blank\';', '            html = null;'],
 ];
 // 每一條都是曾經讓單元測試照樣通過的改法。
