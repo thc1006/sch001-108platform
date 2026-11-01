@@ -11,7 +11,7 @@
 專案的起點是 g0v 零時小學校 2021 年專案孵化競賽的獲選提案。
 
 * 網站：<https://thc1006.github.io/sch001-108platform/>
-* g0v 提案頁：[零時小學校 2021 年度獲獎團隊（Internet Archive 2026-03-28 存檔）](https://web.archive.org/web/20260328115517/https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
+* g0v 提案頁：[零時小學校 2021 年獲選提案（Internet Archive 2026-03-28 存檔）](https://web.archive.org/web/20260328115517/https://sch001.g0v.tw/dash/prj/3Cyfkt0EDc05-70AJd02ny2Yt)
 * 介紹影片：[YouTube](https://www.youtube.com/watch?v=BxKFVSTmiYI)
 
 標有 AI 的功能會把你輸入的文字送到另外部署的 [AI 閘道](ai-gateway/README.md)，由自架的語言模型回答。
