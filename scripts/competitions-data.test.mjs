@@ -1185,7 +1185,7 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
         label: '2027 賽事 5/16–5/24',
     });
     assert.equal(card('臺灣數學奧林匹亞競賽').status, '須由學校或主管機關報名 · 不接受個人報名');
-    assert.equal(card('普通型高級中等學校數理及資訊').status, '經校內初賽選拔 · 無個人報名');
+    assert.equal(card('普通型高級中等學校數理及資訊').status, '經校內初賽選拔 · 由學校選薦');
 
     // 官網未公布下屆時程的，不得出現任何具體日期
     for (const needle of ['Ayn Rand', '東南亞數學奧林匹亞']) {
