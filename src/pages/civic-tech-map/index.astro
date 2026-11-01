@@ -79,8 +79,10 @@ const formatDate = (iso: string) => {
         </div>
         {/* 進度區塊與草稿一直在變，不放進 live region；WebKit 不理會裡層的 aria-live="off"，用它包起來也沒用。 */}
         <div id="ai-workspace" class="mt-6 empty:hidden"></div>
-        {/* 結果區一開始就不能是 display: none：不在無障礙樹裡的 live region，內容出現時不會被唸出來。 */}
-        <div id="ai-results" aria-live="polite"></div>
+        {/* 結果有標題、清單與提醒，整段放進 live region 會被唸成一長串，所以結果區不是 live region。
+            摘要與訊息由 #ai-status 唸，它載入時就在、一開始是空的，之後寫入的才會被唸出來。 */}
+        <p id="ai-status" role="status" class="sr-only"></p>
+        <div id="ai-results"></div>
         <template id="ai-result-template">
           <div class="mt-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-5">
@@ -152,6 +154,14 @@ const formatDate = (iso: string) => {
       var workspace = document.getElementById('ai-workspace');
       var resultsArea = document.getElementById('ai-results');
       var resultTemplate = document.getElementById('ai-result-template');
+      var statusEl = document.getElementById('ai-status');
+      var announceTimer = 0;
+      // 先清空，約 100 毫秒後才寫入：同一句連著出現兩次時，第二次也會被唸出來。text 是空字串時只清空。
+      function announce(text) {
+        clearTimeout(announceTimer);
+        statusEl.textContent = '';
+        if (text) announceTimer = setTimeout(function() { statusEl.textContent = text; }, 100);
+      }
       // PlatformAI 沒載入成功時連 describeError 都沒有，改用這句，與它對未知錯誤的說法相同。
       var FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
 
@@ -184,6 +194,7 @@ const formatDate = (iso: string) => {
         p.textContent = text;
         box.appendChild(p);
         resultsArea.appendChild(box);
+        announce(text);
       }
 
       // 先 finish() 再清空：焦點在取消鈕上時，finish() 會把它交給按鈕，直接清空會掉回 <body>。
@@ -207,6 +218,7 @@ const formatDate = (iso: string) => {
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
         submitLabel.textContent = '分析中…';
         resultsArea.textContent = '';
+        announce('');
 
         var controller = new AbortController();
         // mountProgress 也在 try 裡：PlatformAI 不存在時它會丟錯，放在外面就走不到 finally。
@@ -238,6 +250,7 @@ const formatDate = (iso: string) => {
           clearWorkspace(progress);
           // 以 done 的結果為準，片段接起來的只是草稿。
           resultsArea.appendChild(createResultBox(outcome.result));
+          announce('已產生推薦結果，在「AI 推薦結果」標題下。');
         } catch (err) {
           clearWorkspace(progress);
           var text = typeof PlatformAI === 'undefined' ? FALLBACK_ERROR_TEXT : PlatformAI.describeError(err);
@@ -248,6 +261,7 @@ const formatDate = (iso: string) => {
             resultsArea.appendChild(partialBox);
           }
           showMessage(text, err && err.name === 'AbortError' ? 'info' : 'error');
+          if (err && err.partial) announce(text + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。');
         } finally {
           if (drawDraft) drawDraft.cancel();
           submitBtn.removeAttribute('aria-disabled');

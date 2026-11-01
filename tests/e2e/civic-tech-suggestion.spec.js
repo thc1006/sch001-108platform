@@ -1,11 +1,12 @@
 // 公民科技專案頁的「讓 AI 幫你挑」（AI 閘道的 civic-tech-suggestion 任務）：用頁內的假閘道驗證頁面
 // 怎麼送出、邊收邊顯示答案、處理錯誤與取消。假閘道見 fake-gateway.js。
 //
-// 進度區塊與草稿在工作區 #ai-workspace，最後的結果或訊息在結果區 #ai-results（live region）。
+// 進度區塊與草稿在工作區 #ai-workspace，最後的結果或訊息在結果區 #ai-results。兩者都不是 live region，
+// 要唸的摘要與訊息寫進 #ai-status（role="status"）。
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
 const { test, expect } = require('@playwright/test');
-const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
+const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame, outsideLiveRegions, watchStatus, statusWrites } = require('./fake-gateway');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/civic-tech-map/index.html`;
@@ -209,7 +210,7 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await expect(workspace.locator('*')).toHaveCount(0);
         await expect(button).toBeEnabled();
         // 取消鈕跟著進度區塊移除，清空的工作區也藏起來了；焦點移進結果區的話，螢幕閱讀器會唸一次
-        // 訊息，live region 又唸一次。
+        // 訊息，#ai-status 又唸一次。
         await expect(button).toBeFocused();
         for (const el of [button, workspace, results]) await expect(el).not.toHaveAttribute('tabindex');
     });
@@ -247,7 +248,7 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
 
         await workspace.getByRole('button', { name: '取消' }).focus();
         await push(page, sse('error', { code, message, retryable: code !== 'incomplete' }));
-        // 先放答案再放訊息，live region 唸的順序跟畫面一樣
+        // 先放答案再放訊息
         const boxes = results.locator(':scope > div');
         await expect(boxes).toHaveCount(2);
         await expect(boxes.nth(0).locator('h3')).toHaveText('AI 推薦結果（沒有寫完）');
@@ -396,13 +397,11 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
     });
 
     // 進度區塊與草稿一直在變，放進 live region 就會一直被唸；WebKit 連計時器的 aria-live="off" 也不理會。
-    // 所以它們在工作區，結果區只放最後的結果或訊息。
-    test('結果區是 aria-live="polite"、一開始就沒有被隱藏；工作區不在任何 live region 裡、空的時候不佔版面，進度區塊與草稿只在工作區', async ({ page }) => {
+    // 結果有標題、清單與提醒，整段放進 live region 會被唸成一長串。所以兩區都不是 live region。
+    test('工作區與結果區都不在任何 live region 裡；工作區空的時候不佔版面，進度區塊與草稿只在工作區', async ({ page }) => {
         const workspace = page.locator('#ai-workspace');
         const results = page.locator('#ai-results');
-        await expect(results).toHaveAttribute('aria-live', 'polite');
-        // display: none 的 live region 不在無障礙樹裡，第一則訊息出現時才一起冒出來，不會被唸。
-        expect(await hasBox(results)).toBe(true);
+        expect(await outsideLiveRegions(results)).toBe(true);
         // 工作區有 mt-6，空的時候沒藏起來，AI 區塊底下就會多出這段外距。
         expect(await hasBox(workspace)).toBe(false);
 
@@ -419,7 +418,42 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await push(page, done('**最後的答案**'));
         await expect(results.locator('.ai-result-text')).toHaveText('最後的答案');
         await expect(workspace.locator('*')).toHaveCount(0);
-        await expect(results).toHaveAttribute('aria-live', 'polite');
+        expect(await outsideLiveRegions(results)).toBe(true);
+    });
+
+    test('#ai-status 是載入時就在、視覺上隱藏的 role="status"；完成時只唸一句摘要，錯誤與取消照原文唸，沒寫完的答案說出在哪個標題下', async ({ page }) => {
+        const status = page.locator('#ai-status');
+        const results = page.locator('#ai-results');
+        await expect(status).toHaveAttribute('role', 'status');
+        await expect(status).toHaveClass(/\bsr-only\b/);
+        await expect(status).toBeEmpty();
+        await watchStatus(page, '#ai-status');
+
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('## 推薦'), done('## 推薦\n- Cofacts 真的假的\n- vTaiwan')] });
+        await page.fill('#ai-interest-input', '假訊息');
+        await page.click('#ai-submit-btn');
+        await expect(results.locator('li')).toHaveText(['Cofacts 真的假的', 'vTaiwan']);
+        await expect(status).toHaveText('已產生推薦結果，在「AI 推薦結果」標題下。');
+
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        await page.click('#ai-submit-btn');
+        await expect(status).toBeEmpty();
+        await page.locator('#ai-workspace').getByRole('button', { name: '取消' }).click();
+        await expect(status).toHaveText('已取消。');
+
+        const message = 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。';
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('**Cofacts 真的假的**')], hang: true });
+        await page.click('#ai-submit-btn');
+        await expect(page.locator('#ai-workspace .ai-result-text')).toHaveText('Cofacts 真的假的');
+        await push(page, sse('error', { code: 'incomplete', message }));
+        await expect(results.locator('h3')).toHaveText('AI 推薦結果（沒有寫完）');
+        await expect(status).toHaveText(message + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。');
+        // 草稿、進度與結果都不會寫進 status，每次只唸一句
+        expect(await statusWrites(page)).toEqual([
+            '已產生推薦結果，在「AI 推薦結果」標題下。',
+            '已取消。',
+            message + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。',
+        ]);
     });
 });
 
