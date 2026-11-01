@@ -135,6 +135,24 @@ for (const { name, path, grid, button, tabs } of PAGES) {
             expect(box.y + box.height).toBeLessThanOrEqual(256);
         });
 
+        test('320x256 能讀的區域至少有視窗高度的六成，捲到底看得到內文最後一段', async ({ page }) => {
+            await page.setViewportSize({ width: 320, height: 256 });
+            await page.locator(`${grid} ${button}`).first().click();
+            const dialog = page.getByRole('dialog');
+            await expect(dialog).toBeVisible();
+            const m = await dialog.evaluate((d) => {
+                // 從內文區往上找真的在捲的那一層，量它的高度；捲到底之後內文最後一個元素要在它裡面。
+                const body = d.querySelector(':scope > .overflow-y-auto');
+                let box = body;
+                while (box !== d && !(/auto|scroll/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight + 1)) box = box.parentElement;
+                box.scrollTop = box.scrollHeight;
+                const last = [...body.querySelectorAll('*')].filter((el) => el.checkVisibility()).pop();
+                return { area: box.clientHeight, lastBottom: last.getBoundingClientRect().bottom, boxBottom: box.getBoundingClientRect().bottom };
+            });
+            expect(m.area).toBeGreaterThanOrEqual(256 * 0.6);
+            expect(m.lastBottom).toBeLessThanOrEqual(m.boxBottom + 1);
+        });
+
         if (tabs) {
             test('對話框裡的分頁可以用方向鍵切換', async ({ page }) => {
                 await page.locator(`${grid} ${button}`).first().click();

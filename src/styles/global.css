@@ -74,6 +74,17 @@ body {
   }
 }
 
+/* 卡片詳情對話框（public/shared/detail-dialog.js）平常只捲內文，標題列和分頁固定在上面。視窗矮的時候
+   固定的部分佔掉大半，320x256 的內文區只剩 48px，所以改成整個對話框一起捲。 */
+@media (max-height: 30rem) {
+  dialog.modal-content[open] {
+    display: block;
+  }
+  dialog.modal-content > .overflow-y-auto {
+    overflow-y: visible;
+  }
+}
+
 /* 卡片 hover 上浮效果 */
 .feature-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
