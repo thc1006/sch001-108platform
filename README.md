@@ -18,7 +18,7 @@
 
 ## 網站內容
 
-[網站首頁](https://thc1006.github.io/sch001-108platform/)有全站搜尋，查得到各頁的內容和資料頁裡的每一筆項目。
+[網站首頁](https://thc1006.github.io/sch001-108platform/)有全站搜尋，查得到各頁的標題、說明和資料頁裡的每一筆項目。
 
 ### [自主學習](https://thc1006.github.io/sch001-108platform/autonomous-learning/)
 
