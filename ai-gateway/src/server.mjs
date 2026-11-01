@@ -585,8 +585,9 @@ export function createGateway({
     });
     // body 只有幾 KB：慢慢上傳的連線不必等到預設的 5 分鐘。回應（SSE）不受這兩個限制。
     // 任務請求的 body 另有閘道自己計時的期限（cfg.bodyTimeoutMs，回 JSON 的 408 並帶 CORS），
-    // requestTimeout 只是其他路徑的最後防線：設得比「標頭期限 + body 期限」長，正常輪不到它
-    server.headersTimeout = 20_000;
+    // requestTimeout 只是其他路徑的最後防線：設得比「標頭期限 + body 期限」長，正常輪不到它。
+    // 標頭期限跟 body 的預設期限一樣 10 秒：瀏覽器、Funnel 與 kubelet 都一次送完標頭
+    server.headersTimeout = 10_000;
     server.requestTimeout = server.headersTimeout + cfg.bodyTimeoutMs + 10_000;
 
     function allowedOrigin(req) {
