@@ -38,7 +38,7 @@
         "host": "arcade.now"
       },
       "kind": "terminus",
-      "reason": "這是 www.sasmo.sg 那條接管鏈的終點——聯盟廣告漏斗，與 SASMO 或任何教育單位無關。它本身沒有被接管，它就是接管方，所以標為 terminus 而不是 hijacked。本站 competitions.json 的說明文字為了警告讀者而點名了它，因此它會被裸網域擷取當成候選、實測回 HTTP 200，若不列在這裡就會被三態分類算進「健康」——等於用檢查器替廣告漏斗背書，正是本檔要防的事。",
+      "reason": "這是 www.sasmo.sg 那條接管鏈的終點——聯盟廣告漏斗，與 SASMO 或任何教育單位無關。它本身沒有被接管，它就是接管方，所以標為 terminus 而不是 hijacked。本站 competitions.json 的 sourceNote 為了提醒維護者而點名了它，因此它會被裸網域擷取當成候選、實測回 HTTP 200，若不列在這裡就會被三態分類算進「健康」——等於用檢查器替廣告漏斗背書，正是本檔要防的事。",
       "evidence": "2026-10-23 重測：https://arcade.now/ 直接回 HTTP 200（無轉址），<title>「70+ Free Arcade Games Online - No Downloads | Arcade.now」。同日 https://www.sasmo.sg/ 的轉址鏈照樣經過 https://arcade.now/lp1/play?subid=sasmo.sg&subid2=TW&subid3=en&click_id=…，subid2=TW 顯示這條漏斗會對台灣訪客投放。2026-08-28 首次記錄：https://arcade.now/ 同樣直接回 HTTP 200（當時沒有記標題），www.sasmo.sg 的轉址鏈同樣經過這裡。",
       "owner": "thc1006",
       "expires": "2027-01-31"
