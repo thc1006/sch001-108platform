@@ -25,9 +25,9 @@ const loose = (name) => new RegExp(`^${[...name].map((c) => c.replace(/[.*+?^${}
 
 // 和 axe 的 heading-order 一樣：報讀器看得到的標題，下一個最多只比上一個深一層。
 for (const p of PAGES) {
-    test(`${p}：標題不跳級，開新分頁的連結都說會開新分頁，aria-label 包含看得到的字`, async ({ page }) => {
+    test(`${p}：標題不跳級；開新分頁的連結都說會開新分頁；aria-label 包含看得到的字；同名的連結連到同一個地方`, async ({ page }) => {
         await page.goto(P(p), { waitUntil: 'networkidle' });
-        const { skips, silent, mismatched } = await page.evaluate(() => {
+        const { skips, silent, mismatched, ambiguous } = await page.evaluate(() => {
             const shown = (el) => el.checkVisibility({ visibilityProperty: true }) && !el.closest('[aria-hidden="true"]');
             const levels = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
                 .filter(shown)
@@ -41,11 +41,20 @@ for (const p of PAGES) {
             const mismatched = [...document.querySelectorAll('a[aria-label], button[aria-label]')]
                 .filter((el) => el.checkVisibility() && norm(el.innerText) && !norm(el.getAttribute('aria-label')).includes(norm(el.innerText)))
                 .map((el) => `${el.innerText.trim()} → ${el.getAttribute('aria-label')}`);
-            return { skips: levels.filter(([level], i) => i > 0 && level > levels[i - 1][0] + 1), silent, mismatched };
+            // 用連結清單瀏覽時只看得到名稱，同一個名稱連到不同地方就分不出來。
+            const targets = new Map();
+            for (const a of document.querySelectorAll('a[href]')) {
+                if (!a.checkVisibility() || a.closest('[aria-hidden="true"]')) continue;
+                const name = (a.getAttribute('aria-label') ?? a.textContent).replace(/\s+/g, '');
+                if (name) targets.set(name, (targets.get(name) ?? new Set()).add(a.href));
+            }
+            const ambiguous = [...targets].filter(([, hrefs]) => hrefs.size > 1).map(([name, hrefs]) => `${name}：${[...hrefs].join(' ')}`);
+            return { skips: levels.filter(([level], i) => i > 0 && level > levels[i - 1][0] + 1), silent, mismatched, ambiguous };
         });
         expect(skips).toEqual([]);
         expect(silent).toEqual([]);
         expect(mismatched).toEqual([]);
+        expect(ambiguous).toEqual([]);
     });
 }
 
