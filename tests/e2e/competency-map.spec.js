@@ -1,4 +1,4 @@
-// 素養地圖頁「AI 對照核心素養」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
+// 核心素養對照表頁「AI 對照核心素養」的頁面測試，閘道換成 fake-gateway.js 的假閘道。
 // 8001 埠服務的是 .link-root，要先建置。
 const { test, expect } = require('@playwright/test');
 const { sse, XSS_IMG, XSS_SCRIPT, stubBuiltInGateway, installFakeGateway, watchDraws, drawStats, afterFrames, reloadWithoutPerFrame } = require('./fake-gateway');
@@ -34,7 +34,7 @@ function liveSettingsUpFrom(el) {
     return found;
 }
 
-test.describe('素養地圖頁：AI 對照核心素養（competency-analysis 任務）', () => {
+test.describe('核心素養對照表：AI 對照核心素養（competency-analysis 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);
@@ -427,7 +427,7 @@ test.describe('素養地圖頁：AI 對照核心素養（competency-analysis 任
     });
 });
 
-test.describe('素養地圖頁：共用腳本 platform-ai.js 沒載入成功', () => {
+test.describe('核心素養對照表：共用腳本 platform-ai.js 沒載入成功', () => {
     const FAILURES = [
         ['回 404', (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' })],
         ['連線中斷', (route) => route.abort()],
