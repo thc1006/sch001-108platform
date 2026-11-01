@@ -169,13 +169,22 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
     test('沒有輸入（或只有空白）就按 → 顯示並唸出「請先輸入…」，焦點回到輸入框，不送出請求；同一句再出現也再唸', async ({ page }) => {
         await installFakeGateway(page);
         await watchStatus(page, '#ai-status');
+        // 先移焦點、後寫 status：焦點移動時螢幕閱讀器會打斷正在唸的話，順序反過來提示就被截掉。
+        await page.evaluate(() => {
+            const status = document.getElementById('ai-status');
+            document.getElementById('ai-interest-input').addEventListener('focusin', () => window.__order.push('focus'));
+            new MutationObserver(() => { if (status.textContent) window.__order.push('status'); })
+                .observe(status, { childList: true, characterData: true, subtree: true });
+        });
         const hint = '請先輸入你的興趣或關心的議題。';
         for (const value of ['', ' \n\t ']) {
             await page.fill('#ai-interest-input', value);
+            await page.evaluate(() => { window.__order = []; });
             await page.click('#ai-submit-btn');
             await expect(page.locator('#ai-interest-input')).toBeFocused();
             await expect(page.locator('#ai-results')).toHaveText(hint);
             await expect(page.locator('#ai-status')).toHaveText(hint);
+            expect(await page.evaluate(() => window.__order)).toEqual(['focus', 'status']);
         }
         expect(await statusWrites(page)).toEqual([hint, hint]);
         await expect(page.locator('#ai-workspace *')).toHaveCount(0);
