@@ -568,6 +568,85 @@ test('413 會關掉連線；宣告的 Content-Length 太大時不等 body 就回
     }
 });
 
+// 回應完立刻關的話，對方再送來的資料讓核心回 RST，還沒讀的回應跟著不見（Firefox 顯示 NS_ERROR_NET_RESET）
+test('413 之後替對方收完 body 再丟：送完整個 body 才讀回應的用戶端也收得到 413，連線還能送下一個請求', async () => {
+    const gw = await startGateway();
+    try {
+        const big = JSON.stringify({ input: { topic: 'x'.repeat(100_000) } });
+        const length = Buffer.byteLength(big);
+        for (const [framing, body] of [
+            [`Content-Length: ${length}`, big],
+            ['Transfer-Encoding: chunked', `${length.toString(16)}\r\n${big}\r\n0\r\n\r\n`],
+        ]) {
+            const socket = await rawSocket(gw.port);
+            socket.pause();
+            socket.write(`POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: ${ORIGIN}\r\nContent-Type: application/json\r\n${framing}\r\n\r\n`);
+            for (let i = 0; i < body.length; i += 8192) {
+                socket.write(body.slice(i, i + 8192));
+                await new Promise((resolve) => setImmediate(resolve));
+            }
+            await sleep(200);
+            socket.resume();
+            try {
+                await waitFor(() => socket.text.includes('"code":"payload_too_large"'), 5_000);
+                assert.match(socket.text, /^HTTP\/1\.1 413 /, framing);
+                assert.doesNotMatch(socket.text, /\r\nconnection: close\r\n/i, framing);
+                socket.text = '';
+                socket.write(rawPost('demo-json', { topic: 'x' }));
+                await waitFor(() => socket.text.includes('event: done'), 5_000);
+            } finally {
+                socket.destroy();
+            }
+        }
+    } finally {
+        await gw.stop();
+    }
+});
+
+test('拒絕之後對方停住、不送完 body：最多等 2 秒就關掉連線', async () => {
+    const gw = await startGateway();
+    try {
+        const socket = await rawSocket(gw.port);
+        socket.write('POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: https://evil.example\r\nContent-Type: application/json\r\n' +
+            'Content-Length: 1000\r\n\r\n{"input":');
+        await waitFor(() => /^HTTP\/1\.1 403 /.test(socket.text));
+        const started = Date.now();
+        await socket.whenClosed;
+        const waited = Date.now() - started;
+        assert.ok(waited >= 1_500 && waited < 5_000, `${waited}ms`);
+    } finally {
+        await gw.stop();
+    }
+});
+
+// 回應送完之後連線才斷的話，req 不會有 close：要看連線本身，否則名額要等 2 秒才還
+test('在丟 body 的連線被對方 RST：馬上讓出名額，不等 2 秒', async () => {
+    const gw = await startGateway({ server: { trustedProxies: ['127.0.0.1/32'] } });
+    const partial = 'POST /v1/tasks/demo-json HTTP/1.1\r\nHost: x\r\nOrigin: https://evil.example\r\nContent-Type: application/json\r\n' +
+        'Content-Length: 1000\r\n\r\n{"in';
+    const closedRightAway = async () => {
+        const socket = await rawSocket(gw.port);
+        socket.write(partial);
+        await waitFor(() => socket.text.includes('\r\n\r\n'));
+        socket.destroy();
+        return /\r\nconnection: close\r\n/i.test(socket.text);
+    };
+    const connections = () => new Promise((resolve) => gw.gateway.server.getConnections((err, n) => resolve(n)));
+    try {
+        // 同時在丟的上限是 256
+        const sockets = await Promise.all(Array.from({ length: 256 }, () => rawSocket(gw.port)));
+        for (const socket of sockets) socket.write(partial);
+        await waitFor(() => sockets.every((socket) => socket.text.includes('\r\n\r\n')), 10_000);
+        const started = Date.now();
+        assert.equal(await closedRightAway(), true, '256 個都在丟時，下一個直接關');
+        for (const socket of sockets) socket.resetAndDestroy();
+        while (await connections() > 0) await sleep(10);
+        if (Date.now() - started < 1_900) assert.equal(await closedRightAway(), false);
+    } finally {
+        await gw.stop();
+    }
+});
+
 test('body 超過上限且沒有 Content-Length（chunked）也會被擋', async () => {
     const gw = await startGateway();
     try {
@@ -590,8 +669,8 @@ test('body 超過上限且沒有 Content-Length（chunked）也會被擋', async
     }
 });
 
-// 不關連線的話，伺服器會替對方把無限長的 body 讀到 requestTimeout
-test('403／404／415 這類提早拒絕會關掉連線，不替對方讀完源源不絕的 body', async () => {
+// 不設上限的話，伺服器會替對方把無限長的 body 讀到 requestTimeout
+test('403／404／415 這類提早拒絕：源源不絕的 body 最多再收 256 KiB 就關掉連線', async () => {
     const gw = await startGateway();
     try {
         for (const [urlPath, headers] of [
@@ -599,20 +678,8 @@ test('403／404／415 這類提早拒絕會關掉連線，不替對方讀完源�
             ['/v1/tasks/nope', 'Origin: https://thc1006.github.io\r\nContent-Type: application/json\r\n'],
             ['/v1/tasks/demo-json', 'Origin: https://thc1006.github.io\r\nContent-Type: text/plain\r\n'],
         ]) {
-            const socket = net.connect(gw.port, '127.0.0.1');
-            socket.on('error', () => {});
-            socket.write(`POST ${urlPath} HTTP/1.1\r\nHost: x\r\n${headers}Transfer-Encoding: chunked\r\n\r\n`);
-            const chunk = `1000\r\n${'x'.repeat(0x1000)}\r\n`;
-            const pump = setInterval(() => { if (!socket.destroyed) socket.write(chunk); }, 1);
-            const reply = await new Promise((resolve, reject) => {
-                let text = '';
-                const timer = setTimeout(() => reject(new Error(`${urlPath}：2 秒內連線沒有被關掉`)), 2000);
-                socket.on('data', (c) => { text += c; });
-                socket.on('close', () => { clearTimeout(timer); resolve(text); });
-            });
-            clearInterval(pump);
+            const reply = await floodChunked(gw.port, urlPath, headers);
             assert.match(reply, /^HTTP\/1\.1 4\d\d/, urlPath);
-            assert.match(reply, /\r\nconnection: close\r\n/i, urlPath);
         }
     } finally {
         await gw.stop();
@@ -1975,13 +2042,12 @@ test('直接執行：第一次 SIGTERM 讓進行中的任務送出可重試的�
 });
 
 // 驗證失敗的請求不計入任務次數；收 body、解析、驗證都要花主執行緒的時間
-test('已經被限流的來源：讀 body 之前就回 429 並關掉連線，不替它收 body', async () => {
+test('已經被限流的來源：讀 body 之前就回 429，源源不絕的 body 最多再收 256 KiB 就關掉連線', async () => {
     const gw = await startGateway({ server: { rateLimitMax: 1 } });
     try {
         await readEvents(await post(gw.base, 'demo-json', { topic: 'a' }));
         const reply = await floodChunked(gw.port, '/v1/tasks/demo-json', `Origin: ${ORIGIN}\r\nContent-Type: application/json\r\n`);
         assert.match(reply, /^HTTP\/1\.1 429/);
-        assert.match(reply, /\r\nconnection: close\r\n/i);
         assert.match(reply, /"code":"rate_limited"/);
         assert.equal(gw.calls.length, 1);
     } finally {
@@ -2004,7 +2070,7 @@ test('所有到達的任務請求都計入每分鐘上限（驗證失敗的也�
         assert.equal(body.error.code, 'rate_limited');
         assert.ok(Number(res.headers.get('retry-after')) >= 1 && Number(res.headers.get('retry-after')) <= 60);
         assert.equal(gw.gateway.limiter.clients.size, 0, '驗證失敗與被擋下的請求都不計入任務次數');
-        // 超量時連 body 都不收
+        // 超量時不讀 body，最多再收 256 KiB 就丟掉、關連線
         const reply = await floodChunked(gw.port, '/v1/tasks/demo-json', `Origin: ${ORIGIN}\r\nContent-Type: application/json\r\n`);
         assert.match(reply, /^HTTP\/1\.1 429/);
         clock += 60_000;
@@ -2540,7 +2606,8 @@ test('斷路器：連續 2 個任務卡住就斷開，新任務在讀 body 之�
             const res = await post(gw.base, 'demo-json', { topic: 'x' });
             assert.equal(res.status, 503);
             assert.equal(res.headers.get('retry-after'), '18');
-            assert.equal(res.headers.get('connection'), 'close');
+            // body 收完就丟，連線照常留著
+            assert.equal(res.headers.get('connection'), 'keep-alive');
             assert.deepEqual(pick((await res.json()).error, ['code', 'retryAfter']), { code: 'busy', retryAfter: 18 });
         }
         assert.equal(gw.calls.length, 2);
