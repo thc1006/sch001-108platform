@@ -1,4 +1,4 @@
-// 計畫範本庫的「AI 計畫草擬工具」（AI 閘道的 study-plan 任務）：用假閘道驗證頁面怎麼送出、
+// 計畫範本庫的「AI 草擬學習計畫」（AI 閘道的 study-plan 任務）：用假閘道驗證頁面怎麼送出、
 // 顯示進度與結果、處理錯誤與取消。假閘道見 fake-gateway.js。
 //
 // 伺服器由 playwright.config.js 的 webServer 啟動（8001 埠是 .link-root，要先建置）。
@@ -57,7 +57,7 @@ async function expectPlan(page, plan) {
     await expect(result.locator('h3:has-text("預期產出") + ul > li')).toHaveText(plan.expected_outcome);
 }
 
-test.describe('計畫範本庫：AI 計畫草擬工具（study-plan 任務）', () => {
+test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(PAGE);
         await stubBuiltInGateway(page);

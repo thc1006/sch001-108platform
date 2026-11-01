@@ -167,7 +167,7 @@ export const TASK_DEFINITIONS = [
         },
     },
     {
-        // 自主學習 › 計畫範本庫的「AI 計畫草擬工具」（src/pages/autonomous-learning/plan-templates.astro）。
+        // 自主學習 › 計畫範本庫的「AI 草擬學習計畫」（src/pages/autonomous-learning/plan-templates.astro）。
         // 頁面只送主題，計畫固定 8 週，和頁面上的範本相同。week 只能是四個標籤之一，模型寫不出
         // Week 3-5 這種週次；items 只能是單一 schema，表達不了標籤的順序，由 output.check 檢查。
         id: 'study-plan',

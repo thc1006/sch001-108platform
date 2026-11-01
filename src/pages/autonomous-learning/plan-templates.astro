@@ -20,10 +20,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- AI 計畫草擬工具 -->
+        <!-- AI 草擬學習計畫 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
-            <h2 class="text-2xl font-bold mb-2">AI 計畫草擬工具</h2>
-            <p class="text-gray-600 mb-6">輸入你的自主學習主題，AI 將為你草擬一份包含目標、方法、週次進度與產出規劃的完整計畫草案。</p>
+            <h2 class="text-2xl font-bold mb-2">AI 草擬學習計畫</h2>
+            <p class="text-gray-600 mb-6">輸入自主學習主題，AI 會草擬一份 8 週的計畫，列出學習目標、執行方法、每兩週的進度和預期產出。</p>
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="planInput" maxlength="100" aria-label="你的自主學習主題" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-teal-700" placeholder="例如：分析手搖飲店的行銷策略">
                 <button id="generatePlanBtn" class="w-full sm:w-auto bg-teal-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-800 transition duration-300 flex items-center justify-center space-x-2 flex-shrink-0">
@@ -394,7 +394,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const weeklyPlanHtml = (data.weekly_plan || []).map(week => `<li><b>${md(week.week)}:</b> ${md(week.tasks)}</li>`).join('');
             const outcomeHtml = (data.expected_outcome || []).map(out => `<li>${md(out)}</li>`).join('');
 
-            // 結果在 h2「AI 計畫草擬工具」底下，小標題用 h3。prose 給 h3 的字比 h4 大、間距也不同，
+            // 結果在這一區的 h2 底下，小標題用 h3。prose 給 h3 的字比 h4 大、間距也不同，
             // 這些 class 讓它看起來和 prose 的 h4 一樣；第一個標題的上方間距由 prose 歸零
             const h3 = 'text-teal-800 font-bold text-[1em] leading-[1.5] mb-[0.5em]';
             planResult.innerHTML = `
