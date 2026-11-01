@@ -719,9 +719,11 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.ok(!techno.description.includes('仍沿用 Technovation Girls'));
     assert.ok(!techno.description.includes('Registration is currently closed'));
 
-    // Purple Comet 全站查無報名截止日，只有 2027-04-06 至 04-15 的競賽視窗
+    // Purple Comet 規則頁：報名期間「begins February 1 and continues through the end of the competition」，
+    // 官網沒寫時區，不填 opensAt 與 deadline，報名期間寫在 registrationNote。2027 屆競賽視窗 04-06 至 04-15。
     const purple = find('Purple Comet');
     assert.equal(purple.deadline, '');
+    assert.equal(purple.registrationNote, '2/1 開放報名，比賽結束前都可報名');
     assert.equal(purple.eventStartsAt, '2027-04-06');
     assert.equal(purple.eventEndsAt, '2027-04-15');
 
