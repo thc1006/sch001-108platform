@@ -249,6 +249,13 @@ test.describe('優質範例藝廊', () => {
 });
 
 test.describe('學長姐真心話', () => {
+    test('對話框裡的大頭照是裝飾，名字只在標題唸一次', async ({ page }) => {
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+        await page.locator('#interview-grid h2 > button').first().click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog.locator('img')).toHaveAttribute('alt', '');
+    });
+
     test('?view= 直接開啟那篇訪談，關閉後焦點回到那張卡片，網址拿掉 view', async ({ page }) => {
         const res = await page.request.get(`${ROOT}/career-exploration/senior-interviews.json`);
         const { interviews } = await res.json();
