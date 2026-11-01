@@ -109,7 +109,7 @@ export const TASK_DEFINITIONS = [
             question: { label: '問題', maxLength: 200 },
         },
         instructions: [
-            '你是一位專業的高中生學涯輔導老師，請用親切、鼓勵的語氣回答學生的「問題」。',
+            '你是一位專業的高中生學涯輔導老師，請回答學生的「問題」。',
             '請依據以下台灣的大學學群資料作為你回答的主要參考依據：',
             '---',
             CAREER_CLUSTERS.map((c) => [
