@@ -89,6 +89,12 @@ const MAX_CONNECTIONS = 2048;
 // 正式環境經過 Funnel 的學生、kubelet 的健康檢查都是那個位址（見 deploy/k3s/app.yaml 的 TRUSTED_PROXIES），
 // 這一道管不到；那裡慢慢送的標頭由 tailscaled 收完才轉送，到不了閘道
 const MAX_SOCKETS_PER_SOURCE = 64;
+// 拒絕時對方還在上傳的 body：回應之後替它收完、收到就丟，最多這麼多、這麼久，超過才關連線。回應完立刻
+// 關的話，對方再送來的資料讓核心回 RST，用戶端可能還沒讀到回應（Firefox 顯示 NS_ERROR_NET_RESET）。
+// 同時在丟的請求滿了，照舊立刻關
+const DISCARD_MAX_BYTES = 256 * 1024;
+const DISCARD_MAX_MS = 2_000;
+const MAX_DISCARDS = 256;
 // 標頭上限。任務請求的標頭只有幾個欄位，Node 預設的 16 KiB 只會讓每條慢連線多佔記憶體
 const MAX_HEADER_BYTES = 8 * 1024;
 // 標頭的個數上限（Node 的 maxHeadersCount，超過回 431）。上面只限位元組：8 KiB 塞約 940 個很短的
@@ -672,14 +678,51 @@ export function createGateway({
         return true;
     }
 
-    // 還沒讀完的 body 不必替它讀完：直接關掉連線，免得對方一路灌到 requestTimeout。
+    // 還沒讀完的 body 照 DISCARD_MAX_BYTES 的規則收完再丟，連線照常留著。宣告的長度超過上限、還在等
+    // 100 Continue（不會送 body 過來）或同時在丟的已滿，就直接關掉連線，免得對方一路灌到 requestTimeout。
     // 關機中也一律關：留著的話，代理會拿這條連線送下一個請求，落到這個要關的 pod
     function connectionHeader(req) {
-        return draining || hasUnreadBody(req) ? { connection: 'close' } : {};
+        if (draining) return { connection: 'close' };
+        if (!hasUnreadBody(req)) return {};
+        if (expectsContinue.has(req) || Number(req.headers['content-length']) > DISCARD_MAX_BYTES || discards >= MAX_DISCARDS) {
+            return { connection: 'close' };
+        }
+        discardBody(req);
+        return {};
     }
 
+    let discards = 0;
+    function discardBody(req) {
+        discards++;
+        const { socket } = req;
+        let received = 0;
+        let timer;
+        const done = () => {
+            if (!timer) return;
+            clearTimeout(timer);
+            timer = undefined;
+            discards--;
+            socket.off('close', done);
+        };
+        const cut = () => {
+            done();
+            socket.destroy();
+        };
+        timer = setTimeout(cut, DISCARD_MAX_MS);
+        req.on('data', (chunk) => {
+            received += chunk.length;
+            if (received > DISCARD_MAX_BYTES) cut();
+        });
+        req.once('end', done);
+        req.once('close', done);
+        // 回應送完之後連線才斷的話，req 不會有 close
+        socket.once('close', done);
+        req.resume();
+    }
+
+    // 呼叫端已經指定 connection: close 的，不替對方收 body
     function sendJson(req, res, status, body, headers = {}) {
-        headers = { ...headers, ...connectionHeader(req) };
+        if (!headers.connection) headers = { ...headers, ...connectionHeader(req) };
         res.writeHead(status, {
             'content-type': 'application/json; charset=utf-8',
             'cache-control': 'no-store',
@@ -809,10 +852,10 @@ export function createGateway({
         if (Number.isFinite(declared) && declared > byteLimit) return rejectTooLarge();
         if (!makeRoom(1, Number.isFinite(declared) ? declared : 1)) {
             const reason = bodyReads.size + 1 > maxBodyReads ? 'body_reads' : 'body_bytes';
-            return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) }, {}, reason);
+            return reject(503, 'busy', MESSAGES.busy, { retryAfter: jitter(5) }, { connection: 'close' }, reason);
         }
-        // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body
-        if (expectsContinue.has(req)) res.writeContinue();
+        // 提早的檢查都過了，才請送出 Expect: 100-continue 的用戶端開始送 body。回過之後就不算在等（見 connectionHeader）
+        if (expectsContinue.delete(req)) res.writeContinue();
         let raw;
         const read = { key, since: now(), received: 0, evict: () => {}, released: false };
         read.release = () => {
@@ -832,7 +875,8 @@ export function createGateway({
         } catch (err) {
             if (err instanceof HttpError) {
                 if (err.status === 413) return rejectTooLarge();
-                return reject(err.status, err.code, err.message, err.status === 503 ? { retryAfter: jitter(5) } : {}, {}, err.reason);
+                // 上傳太慢或讓位給別人的，不替它收完 body：直接關連線
+                return reject(err.status, err.code, err.message, err.status === 503 ? { retryAfter: jitter(5) } : {}, { connection: 'close' }, err.reason);
             }
             if (err instanceof ClientGone) {
                 const gone = err.serverTimeout ? { status: 408, code: 'request_timeout' } : { status: 499, code: 'client_closed' };
