@@ -1424,23 +1424,24 @@
     },
     {
       "title": "美國數學競賽 (AMC 10/12)",
-      "organizer": "Mathematical Association of America",
+      "organizer": "Mathematical Association of America（台灣由九九文教基金會、學習成就測驗協會承辦）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
       "region": "美國",
       "eligibility": "公開報名",
       "mode": "實體",
-      "deadline": "2026-10-15",
-      "opensAt": "2026-09-02T00:00:00-04:00",
-      "eventStartsAt": "2026-11-05",
-      "eventEndsAt": "2026-11-13",
+      "deadline": "2026-09-30",
+      "opensAt": "2026-09-18T00:00:00+08:00",
+      "eventStartsAt": "2026-11-06",
+      "eventEndsAt": "2026-11-14",
       "cycle": {
-        "closes": "10"
+        "closes": "09"
       },
-      "sourceCheckedAt": "2026-10-24",
-      "url": "https://maa.org/amcreg/",
-      "description": "由 Mathematical Association of America 主辦，AMC 12 的對象是「For high school students in grades 12 and below」、AMC 10 是「For high school students in grades 10 and below」。台灣學生不能自行報名：MAA 寫「International students participate in AMC competitions through one of our International Group Leaders (IGLs) ... Students must register for the competitions through the IGL in the country they reside」，官網的 2026-27 名單（International Group Leaders for 2026-27）列台灣的 IGL 為 Peter Shiue（shiue@unlv.nevada.edu）。2026-27 報名 9/2 開放，早鳥 9/30（US$55）、一般 10/15（US$75，新任 competition manager 的最後期限）、逾期 10/28（US$115，僅限續任）；考試日 AMC 10/12 A 為 11/5、B 為 11/13。考試日不是報名截止日。"
+      "sourceCheckedAt": "2026-11-01",
+      "url": "https://www.99cef.org.tw/maa-amc/",
+      "description": "由 Mathematical Association of America 主辦，AMC 12 的對象是「For high school students in grades 12 and below」、AMC 10 是「For high school students in grades 10 and below」。台灣由財團法人九九文教基金會與學習成就測驗協會承辦，分團體報名與個別報名，個別報名一律在網路上報名。台灣簡章的報考資格是在學學生，AMC 10 到高一、AMC 12 到高三，每項報名費 750 元。2026 年報名 9/18 至 9/30，已截止；考試 AMC 10A／12A 在 11/6（星期五）晚上，10B／12B 在 11/14（星期六）上午，A、B 卷命題範圍相同、題目不同，可以自己選。",
+      "sourceNote": "英文引文與 MAA 的報名規定在 https://maa.org/amcreg/ 與 https://maa.org/amc-international/。maa.org/amcreg 是給 competition manager（學校老師）註冊用的，台灣考生要向承辦單位報名，所以 url 指向九九文教基金會的 AMC 頁；2026 年簡章（報名與考試日期的出處）在 https://www.99cef.org.tw/15729/。"
     },
     {
       "title": "滑鐵盧數學競賽 (Waterloo Math Contests)",
