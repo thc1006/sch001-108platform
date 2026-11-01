@@ -330,10 +330,18 @@ test.describe('AI 功能沒有輸入就送出', () => {
             await page.click(button);
             await expect(field).toHaveAttribute('aria-invalid', 'true');
             await expect(field).toHaveAccessibleDescription(new RegExp(hint.replace('。', '\\。')));
+            // 描述多出來的那個 id 是畫面上的提示。提示約 100 毫秒後也會寫進 role="status"，等它寫完再往下，
+            // 畫面上同一句有兩處，所以下面只看提示本身。
+            const added = (await field.getAttribute('aria-describedby')).split(' ').filter((id) => !(before ?? '').split(' ').includes(id));
+            expect(added).toHaveLength(1);
+            const shown = page.locator(`#${added[0]}`);
+            await expect(shown).toHaveText(hint);
+            await expect(shown).toBeVisible();
+            await expect(page.locator('[role="status"]').filter({ hasText: hint })).toHaveCount(1);
             await field.pressSequentially('科');
             await expect(field).not.toHaveAttribute('aria-invalid');
             expect(await field.getAttribute('aria-describedby')).toBe(before);
-            await expect(page.getByText(hint)).toBeHidden();
+            await expect(shown).toBeHidden();
         });
     }
 });
