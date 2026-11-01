@@ -4,7 +4,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { runProbes, canonicalHost } from './link-health.lib.mjs';
-import { extractHeadText, visibleText } from './hijack-signals.lib.mjs';
+import { extractHeadText, pageMarkup, visibleText } from './hijack-signals.lib.mjs';
 import { matchHijacked, matchContentCheck } from './link-policy.lib.mjs';
 
 /** SOFT404_PROBE 是打隨機路徑時交給 runProbes 的設定。隨機路徑回 404 是預期的，不重試。 */
@@ -89,15 +89,17 @@ const attrs = (tag) => Object.fromEntries([...tag.matchAll(/([\w-]+)\s*=\s*(?:"(
 
 /**
  * pageFacts 從探測結果的 body 取出規則要看的東西：title、第一個 h1、canonical（照落點解析成完整網址）、可見文字的長度。
+ * 前三項只看 pageMarkup 留下的標記。
  * body 被壓縮或沒有讀時回傳 null，probe 對壓縮的回應不給 bodyHead。
  * @param {object} r probe 的結果 @returns {{title: string, h1: string, canonical: string, visible: number, complete: boolean}|null}
  */
 export function pageFacts(r) {
     if (typeof r?.bodyHead !== 'string') return null;
     const html = r.bodyHead;
-    const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1\b[^>]*>/i)?.[1] ?? '';
+    const markup = pageMarkup(html);
+    const h1 = markup.match(/<h1\b[^>]*>([\s\S]*?)<\/h1\b[^>]*>/i)?.[1] ?? '';
     let canonical = '';
-    for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+    for (const tag of markup.match(/<link\b[^>]*>/gi) ?? []) {
         const a = attrs(tag);
         if (!(a.rel ?? '').toLowerCase().split(/\s+/).includes('canonical') || !a.href) continue;
         try {
