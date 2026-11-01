@@ -336,6 +336,20 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => typeof window.PlatformAI.markInvalid)).toBe('function');
         });
 
+        // 頁面上已經有 v16 時，版號沒升的話這一份會提早返回，提示接在原本的說明後面。
+        test('v16 已經在頁面上時，這一份照樣載入，markInvalid 把提示放在描述最前面', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 16 };
+            });
+            await gotoFixture(page);
+            const ids = await page.evaluate(() => {
+                document.body.innerHTML = '<input id="topic" aria-describedby="limit"><p id="limit">最多 100 字</p><p id="hint">請先輸入主題。</p>';
+                PlatformAI.markInvalid(document.getElementById('topic'), document.getElementById('hint'));
+                return document.getElementById('topic').getAttribute('aria-describedby');
+            });
+            expect(ids).toBe('hint limit');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1789,13 +1803,13 @@ test.describe('PlatformAI 共用 module', () => {
             PlatformAI.markInvalid(document.getElementById('topic'), result.firstElementChild);
         });
 
-        test('輸入框標 aria-invalid，描述保留原本的、加上提示；連按兩次不重複加', async ({ page }) => {
+        test('輸入框標 aria-invalid，描述先唸提示、再唸原本的；連按兩次不重複加', async ({ page }) => {
             await showHint(page);
             await showHint(page);
             const input = page.locator('#topic');
             await expect(input).toHaveAttribute('aria-invalid', 'true');
-            await expect(input).toHaveAttribute('aria-describedby', 'limit topic-error');
-            await expect(input).toHaveAccessibleDescription('最多 100 字 請先輸入主題。');
+            await expect(input).toHaveAttribute('aria-describedby', 'topic-error limit');
+            await expect(input).toHaveAccessibleDescription('請先輸入主題。 最多 100 字');
         });
 
         test('開始輸入就拿掉標記，描述回到原本的，提示藏起來；之後再輸入不出錯', async ({ page }) => {
