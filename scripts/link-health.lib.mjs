@@ -306,13 +306,17 @@ export function staticUrlPolicy(raw, opts = {}) {
  * 回傳的 addresses 會原封不動交給 net.connect 的 lookup，所以「驗過的位址」與
  * 「實際連線的位址」是同一份，中間沒有第二次 DNS 查詢的窗口。
  *
+ * signal 中止時不再等 DNS，回傳 code 為 ABORT_ERR 的結果，歸入 unverified。
+ *
+ * @param {string} host @param {{allowLoopback?: boolean}} [opts] @param {AbortSignal} [signal]
  * @returns {Promise<{ok: true, addresses: {address:string,family:number}[]} | {ok: false, reason: string, code?: string}>}
  */
-export async function resolveAndVerify(host, opts = {}) {
+export async function resolveAndVerify(host, opts = {}, signal) {
     let addresses;
     try {
-        addresses = await dns.promises.lookup(host, { all: true, verbatim: true });
+        addresses = await untilAborted(dns.promises.lookup(host, { all: true, verbatim: true }), signal);
     } catch (err) {
+        if (signal?.aborted) return { ok: false, code: 'ABORT_ERR', reason: `等 ${host} 的 DNS 回應時逾時` };
         // Windows 的 getaddrinfo 對「查無此名」有時回 ENOENT 而非 ENOTFOUND（已實測：
         // 同一台機器上 .invalid 回 ENOTFOUND、某些 NODATA 情況回 ENOENT）。兩者語意
         // 相同，正規化成 ENOTFOUND，讓本機與 Linux runner 的分類結果一致。
@@ -326,6 +330,21 @@ export async function resolveAndVerify(host, opts = {}) {
         if (why) return { ok: false, reason: `${host} 解析到被封鎖的位址：${why}` };
     }
     return { ok: true, addresses };
+}
+
+/**
+ * untilAborted 等 promise，signal 先中止就丟出中止的原因。
+ * dns.lookup 跑在 libuv 的執行緒池，getaddrinfo 卡住時這裡不等了，那條執行緒仍要等它自己逾時才空出來。
+ */
+function untilAborted(promise, signal) {
+    if (!signal) return promise;
+    let onAbort;
+    const aborted = new Promise((_, reject) => {
+        onAbort = () => reject(signal.reason);
+        if (signal.aborted) onAbort();
+        else signal.addEventListener('abort', onAbort, { once: true });
+    });
+    return Promise.race([promise, aborted]).finally(() => signal.removeEventListener('abort', onAbort));
 }
 
 /** probe 回傳被封鎖時的形狀，讓呼叫端不必比對字串。 */
@@ -480,11 +499,11 @@ export async function probe(rawUrl, signal, opts = {}) {
         const url = statik.url;
 
         // ② DNS：解析出來的每一個位址都要過關，並把該份位址釘給連線層
-        const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts);
+        const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts, abort);
         if (!resolved.ok) {
             if (resolved.code) {
                 // 解析不到不是封鎖，照錯誤碼分類：ENOTFOUND 是 dead，
-                // EAI_AGAIN 等其他錯誤碼是 unverified。
+                // EAI_AGAIN、等 DNS 逾時的 ABORT_ERR 等其他錯誤碼是 unverified。
                 return settle({ status: 0, code: resolved.code, message: resolved.reason, finalUrl: url.href, redirects: chain });
             }
             return { ...blockedResult(resolved.reason, url.href), redirects: chain, hop };

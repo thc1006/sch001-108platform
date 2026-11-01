@@ -258,6 +258,56 @@ test('三態：DNS 沒有回任何位址 → 視同 ENOTFOUND（dead），不是
     assert.equal(isBlockedResult(r), false, '沒有答案不是位址政策封鎖');
 });
 
+/**
+ * hangingDns 讓測試 t 的 dns.lookup 不回應，像卡住的 getaddrinfo；releaseOne、releaseAll 讓卡住的查詢以 EAI_AGAIN 結束。
+ * 測試結束時（逾時也算）之後的查詢一律立刻失敗：故障注入改壞排隊之後，後面的測試才不會一直等不到位子。
+ * @param {import('node:test').TestContext} t
+ */
+function hangingDns(t) {
+    const pending = [];
+    const state = { running: 0, peak: 0, closed: false };
+    const fail = () => Object.assign(new Error('測試的 DNS 結束'), { code: 'EAI_AGAIN' });
+    const lookup = t.mock.method(dns.promises, 'lookup', () => {
+        if (state.closed) return Promise.reject(fail());
+        state.peak = Math.max(state.peak, ++state.running);
+        return new Promise((_, reject) => pending.push(() => {
+            state.running--;
+            reject(fail());
+        }));
+    });
+    const releaseAll = () => pending.splice(0).forEach((end) => end());
+    const close = () => {
+        state.closed = true;
+        releaseAll();
+    };
+    t.after(close);
+    return { lookup, state, releaseOne: () => pending.shift()?.(), releaseAll, close };
+}
+
+test('三態：signal 已經中止時不等 DNS，直接回傳 ABORT_ERR', { timeout: 10_000 }, async (t) => {
+    hangingDns(t);
+    const r = await probe('https://dns-aborted.example/', AbortSignal.abort());
+    assert.equal(r.code, 'ABORT_ERR');
+    assert.equal(classifyLink(r), 'unverified');
+});
+
+test('三態：DNS 卡住時照 signal 的時間回傳 ABORT_ERR，歸入 unverified，整批也不超過預算', { timeout: 10_000 }, async (t) => {
+    hangingDns(t);
+    let started = Date.now();
+    const r = await probe('https://dns-hang.example/', AbortSignal.timeout(200));
+    assert.ok(Date.now() - started < 2000, `花了 ${Date.now() - started} ms`);
+    assert.equal(r.status, 0);
+    assert.equal(r.code, 'ABORT_ERR');
+    assert.equal(classifyLink(r), 'unverified');
+    assert.equal(isDeadResult(r), false);
+    assert.equal(unverifiedBucket(r), 'unreachable');
+    assert.equal(describeResult(r), '連線逾時');
+    started = Date.now();
+    const { results } = await runProbes(['https://a.dns-hang.example/', 'https://b.dns-hang.example/'], { budgetMs: 300 });
+    assert.ok(Date.now() - started < 2000, `runProbes 花了 ${Date.now() - started} ms`);
+    assert.deepEqual(results.map((x) => [x.code, classifyLink(x)]), [['ABORT_ERR', 'unverified'], ['ABORT_ERR', 'unverified']]);
+});
+
 test('三態：逾時 → unverified', async () => {
     const slow = await probe(`${base}/slow`, AbortSignal.timeout(300), LOOPBACK_OK);
     assert.equal(slow.status, 0);
