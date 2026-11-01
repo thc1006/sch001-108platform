@@ -46,16 +46,16 @@ const current = (item: (typeof navItems)[number]) =>
         ))}
       </div>
 
-      <!-- 手機漢堡鈕 -->
+      <!-- 手機漢堡鈕。名稱不帶「開啟」，展開與否由 aria-expanded 說。 -->
       <button
         id="nav-toggle"
         type="button"
         class="md:hidden text-gray-600 hover:text-blue-700"
-        aria-label="開啟導覽選單"
+        aria-label="主選單"
         aria-expanded="false"
         aria-controls="mobile-menu"
       >
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg aria-hidden="true" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
