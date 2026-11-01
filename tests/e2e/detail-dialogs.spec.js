@@ -249,6 +249,15 @@ test.describe('優質範例藝廊', () => {
 });
 
 test.describe('學長姐真心話', () => {
+    test('卡片上的大頭照是裝飾，化名只在按鈕唸一次', async ({ page }) => {
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+        const cards = page.locator('#interview-grid > *');
+        await expect(cards.first()).toBeVisible();
+        const alts = await cards.locator('img').evaluateAll((imgs) => imgs.map((img) => img.getAttribute('alt')));
+        expect(alts.length).toBe(await cards.count());
+        expect(alts.filter((alt) => alt !== '')).toEqual([]);
+    });
+
     test('對話框裡的大頭照是裝飾，名字只在標題唸一次', async ({ page }) => {
         await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
         await page.locator('#interview-grid h2 > button').first().click();
