@@ -581,3 +581,26 @@ for (const p of FORM_PAGES) {
         expect(fields.filter((f) => Math.max(f.fill, f.border) < 3)).toEqual([]);
     });
 }
+
+// 只放大文字到 200%（WCAG 1.4.4）：卡片都是 overflow: hidden，裡面的長英文字、標籤列超出卡片就被切掉。
+test.describe('只放大文字到 200%，卡片裡的字不被切掉', () => {
+    for (const [rel, card] of [
+        ['advanced-resources/competitions.html', '.comp-card'],
+        ['advanced-resources/online-courses.html', '.course-card'],
+        ['advanced-resources/reading-list.html', '.book-card'],
+    ]) {
+        test(rel, async ({ page }) => {
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await page.goto(P(rel), { waitUntil: 'networkidle' });
+            await page.locator(card).first().waitFor();
+            await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+            const clipped = await page.locator(card).evaluateAll((cards) => cards.flatMap((c) => {
+                const out = c.scrollWidth > c.clientWidth + 1 ? [`${c.querySelector('h2, h3').textContent.trim()}：寬 ${c.scrollWidth} > ${c.clientWidth}`] : [];
+                // 固定高度的標題，字多到超出就疊到下一段上。
+                for (const h of c.querySelectorAll('h2, h3')) if (h.scrollHeight > h.clientHeight + 1) out.push(`${h.textContent.trim()}：標題高 ${h.scrollHeight} > ${h.clientHeight}`);
+                return out;
+            }));
+            expect(clipped).toEqual([]);
+        });
+    }
+});
