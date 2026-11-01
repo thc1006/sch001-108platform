@@ -247,6 +247,8 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
 
         await ask(page, '我喜歡電腦');
         await expect(hint).toBeHidden();
+        // 提示也要從 status 清掉，瀏覽模式讀到輸入框後面時不會再唸一次。
+        await expect(page.locator('#chat-status')).toHaveText('');
     });
 
     test('草稿出現後按「取消」→ 草稿移除，紀錄裡出現「已取消。」（不是錯誤的紅字），焦點回到輸入框；之後還能再問', async ({ page }) => {
