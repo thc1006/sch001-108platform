@@ -164,7 +164,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         <blockquote class="text-lg font-semibold text-gray-800 flex-grow">“${escapeHtml(item.quote)}”</blockquote>
                     </div>
                     <div class="p-6 bg-gray-50 flex items-center border-t">
-                        <img src="${encodeURI(item.photo_url)}" alt="${escapeHtml(item.name)}" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
+                        <img src="${encodeURI(item.photo_url)}" alt="" class="w-12 h-12 rounded-full mr-4 object-cover bg-gray-200" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}';">
                         <div>
                             <h2 class="font-bold text-gray-900"><button type="button" class="text-left cursor-pointer">${escapeHtml(item.name)}</button></h2>
                             <p class="text-sm text-gray-600">${escapeHtml(item.university)} ${escapeHtml(item.major)}</p>
