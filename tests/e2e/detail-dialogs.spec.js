@@ -89,6 +89,8 @@ for (const { name, path, grid, button, tabs } of PAGES) {
         });
 
         test('開著時頁面不捲動，關閉後捲動位置不變', async ({ page }) => {
+            // 卡片淡入時位置還在變，click 會判定不穩定而重新捲動，量到的 y 就不是點擊時的位置。
+            await page.locator(grid).evaluate((g) => Promise.all(g.getAnimations({ subtree: true }).map((a) => a.finished)));
             const card = page.locator(`${grid} > *`).nth(2);
             await card.scrollIntoViewIfNeeded();
             const y = await page.evaluate(() => window.scrollY);
