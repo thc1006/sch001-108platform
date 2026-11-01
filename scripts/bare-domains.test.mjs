@@ -498,7 +498,7 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // 重新查證新增的網域，而不是直接把數字改掉。
     //
     // 2026-11-01：IOAA 因台灣沒有參加而整筆移除。ioaastrophysics.org 與 www.ioaastrophysics.org 只出現在
-    // 它的 sourceNote，候選與通過各少 2 個。IOAA-jr 的 url 欄位仍是 ioaastrophysics.org。
+    // 它的 sourceNote，候選與通過各少 2 個。同日移除的 IOAA-jr 描述裡沒有裸網域，數字不變。
     //
     // 2026-11-01：/competitions/56/description 寫出台灣選拔 TEO 的網站，候選與通過各多 1 個。當天實測：
     //   www.ecolympiad.tw  200，<title> 開頭是「TEO」，NS 是 Cloudflare
