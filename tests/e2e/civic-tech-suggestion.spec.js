@@ -461,12 +461,12 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await expect(page.locator('#ai-workspace .ai-result-text')).toHaveText('Cofacts 真的假的');
         await push(page, sse('error', { code: 'incomplete', message }));
         await expect(results.locator('h3')).toHaveText('AI 推薦結果（沒有寫完）');
-        await expect(status).toHaveText(message + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。');
+        await expect(status).toHaveText(message + '已收到的部分在「AI 推薦結果」標題下。');
         // 草稿、進度與結果都不會寫進 status，每次只唸一句
         expect(await statusWrites(page)).toEqual([
             '已產生推薦結果，在「AI 推薦結果」標題下。',
             '已取消。',
-            message + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。',
+            message + '已收到的部分在「AI 推薦結果」標題下。',
         ]);
     });
 });

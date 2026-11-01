@@ -168,7 +168,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             p.className = (tone === 'error' ? 'text-red-700' : 'text-gray-600') + ' text-center font-semibold';
             p.textContent = text;
             aiResultContainer.appendChild(p);
-            announce(partial ? text + '已收到的部分在「AI 的回答（沒有寫完）」標題下。' : text);
+            announce(partial ? text + '已收到的部分在「AI 的回答」標題下。' : text);
         }
 
         // 回答框的 h3 讓按 H 跳標題的人找得到回答，回答裡的標題從 h4 開始。renderMarkdown 先 escape 再

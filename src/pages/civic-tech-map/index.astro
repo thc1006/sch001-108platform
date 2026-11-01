@@ -263,7 +263,7 @@ const formatDate = (iso: string) => {
             resultsArea.appendChild(partialBox);
           }
           showMessage(text, err && err.name === 'AbortError' ? 'info' : 'error');
-          if (err && err.partial) announce(text + '已收到的部分在「AI 推薦結果（沒有寫完）」標題下。');
+          if (err && err.partial) announce(text + '已收到的部分在「AI 推薦結果」標題下。');
         } finally {
           if (drawDraft) drawDraft.cancel();
           submitBtn.removeAttribute('aria-disabled');
