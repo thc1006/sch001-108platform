@@ -437,7 +437,9 @@ test('次數：第一輪就失敗、生成途中取消都記 0；排隊中取消
         await waitFor(() => gw.lines.filter((l) => / TASK /.test(l)).length === 2);
         const [queuedLog, runningLog] = gw.lines.filter((l) => / TASK /.test(l)).map(logFields);
         assert.deepEqual([queuedLog.outcome, queuedLog.rounds, ...countsOf(queuedLog)], ['aborted', undefined, undefined, undefined, undefined]);
-        assert.deepEqual([runningLog.outcome, runningLog.queue, ...countsOf(runningLog)], ['aborted', '0ms', '0', '0', '0']);
+        assert.deepEqual([runningLog.outcome, ...countsOf(runningLog)], ['aborted', '0', '0', '0']);
+        // 沒有排隊；CPU 被搶時 queue 可能記成 1ms 以上
+        assert.ok(Number.parseInt(runningLog.queue, 10) < 1_000, runningLog.queue);
     } finally {
         await gw.stop();
     }
