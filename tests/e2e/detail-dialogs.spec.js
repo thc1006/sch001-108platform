@@ -272,6 +272,15 @@ test.describe('學長姐真心話', () => {
         await expect(close.locator('svg')).toHaveAttribute('aria-hidden', 'true');
     });
 
+    test('搜尋框、探索 TIPS、複製連結按鈕的圖示也不給螢幕閱讀器', async ({ page }) => {
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+        await page.locator('#interview-grid h2 > button').first().click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        const icons = page.locator('svg.feather');
+        expect(await icons.count()).toBeGreaterThan(3);
+        expect(await icons.evaluateAll((svgs) => svgs.filter((s) => s.getAttribute('aria-hidden') !== 'true').map((s) => s.getAttribute('class')))).toEqual([]);
+    });
+
     test('?view= 直接開啟那篇訪談，關閉後焦點回到那張卡片，網址拿掉 view', async ({ page }) => {
         const res = await page.request.get(`${ROOT}/career-exploration/senior-interviews.json`);
         const { interviews } = await res.json();
