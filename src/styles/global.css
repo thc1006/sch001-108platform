@@ -65,6 +65,14 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* 列印預設不印背景，漸層沒了、字又是透明的，整段字就不見了。 */
+@media print {
+  .gradient-text,
+  .gradient-text-warm {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
 
 /* 卡片 hover 上浮效果 */
 .feature-card {

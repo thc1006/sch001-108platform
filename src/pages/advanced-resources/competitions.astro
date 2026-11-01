@@ -588,6 +588,10 @@ import data from '../../../public/advanced-resources/competitions.json';
       background: linear-gradient(100deg, #be123c, #c2410c);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
+    /* 列印不印背景，和 global.css 的 .gradient-text 一樣改回實色。 */
+    @media print {
+      .comp-title__accent { -webkit-text-fill-color: currentColor; background: none; }
+    }
     .comp-tagline {
       margin: 1.15rem 0 0; max-width: 42rem; font-size: 1.075rem; line-height: 1.75; color: #475569;
     }
