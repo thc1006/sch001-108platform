@@ -685,12 +685,12 @@
       "mode": "線上",
       "deadline": "",
       "registrationNote": "12 月起每日開放 · 須以第三方帳號登入",
-      "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "2026-10-25 查證時，官網 /2026 仍回 404，首頁仍是 2025 年的日曆，首頁與 About 頁都沒有停辦公告。",
+      "sourceCheckedAt": "2026-11-01",
+      "sourceNote": "2026-10-25 查證時，官網 /2026 仍回 404，首頁仍是 2025 年的日曆，首頁與 About 頁都沒有停辦公告。2026-11-01 查證時 /2026 已上線，逐字「The first puzzles will unlock on December 1st at midnight EST (UTC-5). See you then!」。",
       "recheckOn": "2026-12-01",
-      "recheckNote": "官網寫謎題 12 月 1 日開始，2026-10-27 的 /2026 仍回 404，12 月第一週回來查 2026 年有沒有照辦。",
+      "recheckNote": "2026 年活動頁寫 12 月 1 日開放謎題；開賽後照官網日曆補上 eventStartsAt 與 eventEndsAt，並確認今年的題數。",
       "url": "https://adventofcode.com/",
-      "description": "由 Eric Wastl 個人營運的 12 月程式解謎活動，官網逐字「Advent of Code is free to use, not free to copy」。不用另外註冊，但要拿到個人的題目輸入與提交答案，須先用 GitHub、Google、Twitter 或 Reddit 帳號登入，登入頁逐字「To play, please identify yourself via one of these services」；About 頁與登入頁都沒有年齡條件。2025 年起已改制：官方逐字「The puzzles still start on December 1st ... and puzzles come out every day (ending mid-December)」，2025 年實際只到第 12 題（12/1 至 12/12），不再是 12/1 至 12/25；官網並逐字載明「Advent of Code 2025 doesn't have a global leaderboard」，全球排行榜已取消；FAQ 也寫「Should I use AI to solve Advent of Code puzzles? No.」。官網還沒有 2026 年的活動頁，也沒有停辦公告。"
+      "description": "由 Eric Wastl 個人營運的 12 月程式解謎活動，官網逐字「Advent of Code is free to use, not free to copy」。不用另外註冊，但要拿到個人的題目輸入與提交答案，須先用 GitHub、Google、Twitter 或 Reddit 帳號登入，登入頁逐字「To play, please identify yourself via one of these services」；About 頁與登入頁都沒有年齡條件。2025 年起已改制：官方逐字「The puzzles still start on December 1st ... and puzzles come out every day (ending mid-December)」，2025 年實際只到第 12 題（12/1 至 12/12），不再是 12/1 至 12/25；官網並逐字載明「Advent of Code 2025 doesn't have a global leaderboard」，全球排行榜已取消；FAQ 也寫「Should I use AI to solve Advent of Code puzzles? No.」。2026 年的活動頁已上線，逐字「The first puzzles will unlock on December 1st at midnight EST (UTC-5)」，即台灣時間 12 月 1 日 13:00。"
     },
     {
       "title": "picoCTF",
