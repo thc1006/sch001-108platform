@@ -137,6 +137,7 @@ export const TASK_DEFINITIONS = [
         // （reflection-guide.astro）共用的「AI 學習歷程健檢」。
         // analysis 以 S、T、A、R 為鍵：閘道的 schema 子集沒有 prefixItems，用陣列保證不了四項剛好各一。
         // maxLength 是硬截斷（見 tasks.mjs），長度要求寫在指令裡。
+        // 2026-11-01 WinLab 實測，修改範例會寫出心得裡沒有的獎項、人數與地點，學生可能照抄，所以要標出待補的地方。
         id: 'star-analysis',
         input: {
             reflection: { label: '心得反思', maxLength: 2000 },
@@ -145,7 +146,7 @@ export const TASK_DEFINITIONS = [
             '你是一位專業的學習歷程檔案顧問。請根據 STAR 原則（Situation 情境、Task 任務、Action 行動、Result 結果），分析這位高中生寫的「心得反思」：',
             '- overall_comment：一段簡短的總評，約 50～150 字',
             '- analysis：S、T、A、R 四個項目各寫一則 comment（針對該項目的評論，點出優點或缺失）與 suggestion（具體的修改建議），各一到兩句',
-            '- revised_example：根據你的建議，提供一小段修改後的文字範例，約 100～300 字，使其更符合 STAR 原則',
+            '- revised_example：根據你的建議，提供一小段修改後的文字範例，約 100～300 字，使其更符合 STAR 原則。心得裡沒有的人數、時間、名次與成果不要自己編，用「（填入參加人數）」這樣的括號標出要補的地方',
         ].join('\n'),
         output: {
             type: 'json',
