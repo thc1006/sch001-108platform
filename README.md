@@ -22,7 +22,7 @@
 
 ### [自主學習](https://thc1006.github.io/sch001-108platform/autonomous-learning/)
 
-自主學習區首頁的 AI 自主學習教練依你的初步想法，給一份學習啟動包。
+自主學習區首頁的 AI 學習啟動包把初步想法聚焦成主題，附探索問題和資源類型。
 
 * [主題靈感產生器](https://thc1006.github.io/sch001-108platform/autonomous-learning/topic-ideas.html)：從學科和研究方法的組合、全球趨勢議題與社會議題範例找研究主題，也可以讓 AI 依興趣關鍵字發想。
 * [計畫範本庫](https://thc1006.github.io/sch001-108platform/autonomous-learning/plan-templates.html)：自主學習計畫的範本。輸入主題，AI 會草擬一份 8 週的計畫。
@@ -41,7 +41,7 @@
 
 ### [生涯探索](https://thc1006.github.io/sch001-108platform/career-exploration/)
 
-生涯探索區首頁的 AI 學涯導師回答升學和生涯的問題。每次只看當下這一題，不會參考先前的對話。
+生涯探索區首頁可以請 AI 依興趣推薦學群。每次只看當下這一題，不會參考先前的對話。
 
 * [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政十個學群。每個學群分六個主題：科系風向標、特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
 * [學長姐真心話](https://thc1006.github.io/sch001-108platform/career-exploration/senior-interviews.html)：學長姐的升學經驗。人物都用化名，內容綜合升學制度、公開數據和經驗分享寫成。
