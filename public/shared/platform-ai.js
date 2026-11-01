@@ -853,11 +853,12 @@
     // 區塊裡時，按 Esc 也會取消；沒給 escapeScope 時只看進度區塊。
     // 會先清空 container。container 和它的上層都不能是 live region，否則取消按鈕與每秒更新的
     // 秒數都可能被唸出來：Safari 用的 WebKit 會把計時器 aria-live="off" 裡的變化照樣算給外層
-    // （見 WebKit 的 AXObjectCache::handleTextChanged）。結果另外放進 live region。
+    // （見 WebKit 的 AXObjectCache::handleTextChanged）。結果由頁面處理：多數頁面用一直都在的
+    // role="status" 唸一句摘要，結果本身不在 live region；對話的回答放進 role="log" 的紀錄。
     // finish() 移除進度區塊時，焦點若還在區塊裡，例如剛按了取消，就交給 focusTarget，沒給才交給
     // container。focusTarget 給發起任務的控制項。空的 container 通常高度是 0，看不到焦點框，WebKit
-    // 也不把它放進無障礙樹（見 AccessibilityRenderObject::computeIsIgnored）。放結果的 live region
-    // 也不適合，螢幕閱讀器會在焦點移入時唸一次內容，live region 又唸一次。
+    // 也不把它放進無障礙樹（見 AccessibilityRenderObject::computeIsIgnored）。結果區也不適合，螢幕
+    // 閱讀器會在焦點移入時唸一次內容，頁面的 status 或 log 又唸一次。
     // 階段文字畫面上顯示一份（aria-hidden），另外寫進視覺上隱藏的 role="status"，螢幕閱讀器在
     // 階段改變時會唸出來。這個 status 插入時是空的，約 100 毫秒後才填入第一句：多數螢幕閱讀器
     // 不唸插入當下就已經在裡面的內容，只唸之後的變化。
