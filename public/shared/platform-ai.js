@@ -434,7 +434,9 @@
         err.code = code;
         err.retryable = Boolean(extra.retryable);
         err.retryAfter = extra.retryAfter;   // 建議幾秒後再試；沒有就是 undefined
-        err.requestId = extra.requestId;     // 回報問題時用來對照閘道的 log
+        // 回報問題時用來對照閘道的 log。讀 body 之前就被拒絕的（403、404、415、429 rate_limited、503 not_ready）
+        // 閘道不逐筆記，同一個代號每分鐘只記一行次數，對不到這個 id
+        err.requestId = extra.requestId;
         err.status = extra.status;
         err.field = extra.field;             // invalid_input：哪個欄位有問題
         err.partial = extra.partial;         // 出錯之前收到的片段接起來的全文，有看得見的字才有
