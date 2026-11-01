@@ -28,13 +28,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                         <ion-icon aria-hidden="true" name="sparkles-outline" class="text-3xl text-indigo-600"></ion-icon>
                     </div>
                     <div>
-                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">AI 推薦學群</h2>
+                        <h2 id="ai-advisor-heading" class="text-2xl md:text-3xl font-bold text-gray-900">AI 推薦學群</h2>
                         <p class="text-gray-600">回答參考大學科系羅盤裡 9 個學群的 ColleGo! 資料。</p>
                     </div>
                 </div>
 
-                {/* 對話視窗會捲，要能用 Tab 移到、用方向鍵捲動。名稱不叫「對話紀錄」，那是裡面 role="log" 的名稱。 */}
-                <div id="chat-window" tabindex="0" role="region" aria-label="對話" class="h-64 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4 space-y-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                {/* 對話視窗會捲，要能用 Tab 移到、用方向鍵捲動。名稱用這一區的標題；「對話紀錄」是裡面 role="log" 的名稱。 */}
+                <div id="chat-window" tabindex="0" role="region" aria-labelledby="ai-advisor-heading" class="h-64 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4 space-y-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     {/* 對話紀錄只放完成的訊息。串流中的草稿由程式接在紀錄後面，不在 live region 裡。 */}
                     <div id="chat-log" role="log" aria-label="對話紀錄" class="space-y-4">
                         <div class="flex gap-2 items-end">
