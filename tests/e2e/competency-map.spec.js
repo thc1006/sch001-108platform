@@ -496,3 +496,56 @@ test.describe('核心素養對照表：共用腳本 platform-ai.js 沒載入成�
         });
     }
 });
+
+// 文字色與底色一路疊到 <html>，途中元素的 opacity 也算進去，再算 WCAG 對比。在頁面裡執行。
+function textContrasts(root) {
+    const cv = document.createElement('canvas').getContext('2d');
+    const rgba = (c) => {
+        cv.clearRect(0, 0, 1, 1);
+        cv.fillStyle = 'rgba(0, 0, 0, 0)';
+        cv.fillStyle = c;
+        cv.fillRect(0, 0, 1, 1);
+        const [r, g, b, a] = cv.getImageData(0, 0, 1, 1).data;
+        return [r, g, b, a / 255];
+    };
+    const over = (top, bottom) => {
+        const a = top[3] + bottom[3] * (1 - top[3]);
+        if (!a) return [0, 0, 0, 0];
+        return [0, 1, 2].map((i) => (top[i] * top[3] + bottom[i] * bottom[3] * (1 - top[3])) / a).concat(a);
+    };
+    const lum = (c) => {
+        const [x, y, z] = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        return 0.2126 * x + 0.7152 * y + 0.0722 * z;
+    };
+    const out = [];
+    for (const el of root.querySelectorAll('*')) {
+        if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+        if (!el.checkVisibility({ visibilityProperty: true }) || el.closest('.sr-only')) continue;
+        let fg = rgba(getComputedStyle(el).color);
+        let bg = [0, 0, 0, 0];
+        for (let n = el; n; n = n.parentElement) {
+            const cs = getComputedStyle(n);
+            const b = rgba(cs.backgroundColor);
+            fg = over(fg, b);
+            bg = over(bg, b);
+            fg[3] *= Number(cs.opacity);
+            bg[3] *= Number(cs.opacity);
+        }
+        const white = [255, 255, 255, 1];
+        const [x, y] = [lum(over(fg, white)), lum(over(bg, white))].sort((p, q) => q - p);
+        out.push({ text: el.textContent.trim().slice(0, 20), ratio: Math.round(((x + 0.05) / (y + 0.05)) * 100) / 100 });
+    }
+    return out;
+}
+
+test('依學群篩選後，不相關的卡片文字仍有 4.5:1', async ({ page }) => {
+    await page.goto(PAGE);
+    for (const toggle of await page.locator('.accordion-toggle').all()) await toggle.click();
+    await page.selectOption('#cluster-filter', '資訊');
+    const unrelated = page.locator('.competency-card:not(.highlight)');
+    await expect(unrelated).not.toHaveCount(0);
+    // 卡片的樣式有 300ms 的轉場，停下來之後再量。
+    await page.waitForTimeout(500);
+    const low = (await page.locator('#competency-grid').evaluate(textContrasts)).filter((t) => t.ratio < 4.5);
+    expect(low).toEqual([]);
+});

@@ -116,7 +116,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             });
         }
 
-        // 不相關的卡片只是變淡，看不到畫面的人要靠卡片名稱後面的「（相關）」和 #filter-status 的筆數分辨。
+        // 不相關的卡片換成灰底、虛線外框，看不到畫面的人要靠卡片名稱後面的「（相關）」和 #filter-status 的筆數分辨。
         const filterStatus = document.getElementById('filter-status');
         filterSelect.addEventListener('change', (e) => {
             const selectedCluster = e.target.value;
@@ -125,14 +125,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             cards.forEach(card => {
                 const note = card.querySelector('.match-note');
                 if (selectedCluster === 'all') {
-                    card.classList.remove('highlight');
-                    card.style.opacity = '1';
+                    card.classList.remove('highlight', 'is-unrelated');
                     note.hidden = true;
                 } else {
                     const cardClusters = JSON.parse(card.dataset.clusters);
                     const isMatch = cardClusters.includes(selectedCluster);
                     card.classList.toggle('highlight', isMatch);
-                    card.style.opacity = isMatch ? '1' : '0.4';
+                    card.classList.toggle('is-unrelated', !isMatch);
                     note.hidden = !isMatch;
                     if (isMatch) matched++;
                 }
@@ -280,6 +279,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             transform: scale(1.02);
             box-shadow: 0 0 0 3px #8b5cf6, 0 10px 15px -3px rgb(0 0 0 / 0.1);
             border-color: #8b5cf6;
+        }
+        /* 不用 opacity：整張變淡會讓文字掉到 4.5:1 以下。 */
+        .competency-card.is-unrelated {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+            border-style: dashed;
+            box-shadow: none;
         }
     </style>
 </BaseLayout>
