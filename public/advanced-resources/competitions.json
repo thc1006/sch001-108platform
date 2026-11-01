@@ -1285,11 +1285,13 @@
       "eligibility": "公開報名",
       "mode": "實體",
       "deadline": "",
-      "registrationNote": "官網日期欄位全為 N/A",
-      "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。",
+      "registrationNote": "SEAMO X 限各地前 40% · 11/15 截止",
+      "sourceCheckedAt": "2026-11-01",
+      "recheckOn": "2026-11-16",
+      "recheckNote": "SEAMO X 2027 報名 11/15 截止，截止後改寫 registrationNote",
+      "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。10-23 查證時首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。11-01 首頁改列 SEAMO X 2027：「Registration Start Date 1 Nov 2026, 01:00 AM」「Registration Deadline 15 Nov 2026, 23:55 PM」「Competition Day 15 Jan 2027, 09:00 AM」「Exam Venue Bangkok, Thailand」，都沒有標時區；同頁寫「The top 40% locally will represent their region in the extended round.」。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。",
       "url": "https://www.seamo-official.org/",
-      "description": "商業營運的中小學數學競賽。官網只標示新加坡總部，費用不公開、由各國代理開發票。官網還沒有公布報名日期。官網的地區選單沒有台灣，台灣代理是 JoyEdu Academy（taiwan@seamo-official.org），要報名須自行去信。"
+      "description": "商業營運的中小學數學競賽。官網只標示新加坡總部，費用不公開、由各國代理開發票。官網首頁列的 SEAMO X 2027 是各地區成績前 40% 參加的延伸賽，報名 11/1 至 11/15（官網沒寫時區），2027-01-15 在泰國曼谷比賽。官網的地區選單沒有台灣，台灣代理是 JoyEdu Academy（taiwan@seamo-official.org），要報名須自行去信。"
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
