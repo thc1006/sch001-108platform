@@ -6,9 +6,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 <BaseLayout
   title="台灣教育處方籤 - 108課綱學習路徑導航手冊"
-  description="一個專為108課綱高中生設計的開源資源整合平台，提供自主學習、學習歷程、生涯探索的指引、工具與範例，旨在弭平城鄉教育資訊落差。"
+  description="給高中生的 108 課綱學習資源網站：自主學習、學習歷程檔案、大學學群、競賽和線上課程的資料整理在一起。"
   keywords="108課綱, 自主學習, 學習歷程, 多元表現, 生涯探索, 高中生, 開源, g0v, 台灣教育處方籤"
-  ogDescription="我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感。"
+  ogDescription="自主學習、學習歷程檔案、大學學群、競賽和線上課程的資料原本散在各處，這裡把它們整理在一起。"
 >
   <main id="main-content">
     <!-- 主視覺區塊 -->
@@ -22,10 +22,10 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
               <span class="@min-[12rem]:whitespace-nowrap">在 108 課綱的</span><span class="@min-[12rem]:whitespace-nowrap">迷霧中，</span><br /><span class="@min-[12rem]:whitespace-nowrap">為你點亮</span><span class="@min-[12rem]:whitespace-nowrap">一盞<span class="gradient-text">燈</span>。</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 mb-8">
-              我們知道你的迷惘與焦慮。這個網站，由一群走過這條路的學長姐打造，匯集了所有你需要的方法、資源與靈感，陪你走好高中這段探索之旅。
+              自主學習、學習歷程檔案、大學學群、競賽和線上課程的資料原本散在各處，這裡把它們整理在一起。
             </p>
             <a href="#paths" class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg hover:bg-blue-700 transform motion-safe:hover:-translate-y-1 transition duration-300 ease-in-out inline-block">
-              開始你的探索之旅 &rarr;
+              瀏覽專區 &rarr;
             </a>
           </div>
           <div class="flex items-center justify-center p-4">
@@ -64,8 +64,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     <section id="search-section" class="py-16 bg-blue-50">
       <div class="container mx-auto px-6">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-bold">需要找點什麼嗎？</h2>
-          <p class="text-gray-600 mt-2">一個搜尋，連結所有資源。</p>
+          <h2 class="text-3xl md:text-4xl font-bold">全站搜尋</h2>
+          <p class="text-gray-600 mt-2">查得到各頁的內容，以及競賽、課程、書單等資料頁裡的每一筆項目。</p>
         </div>
         <div class="max-w-3xl mx-auto">
           <div class="relative">
@@ -87,41 +87,39 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     <section id="paths" class="py-20">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold">選擇你的探索路徑</h2>
-          <p class="text-gray-600 mt-2">無論你處在哪個階段，這裡都有你需要的起點。</p>
+          <h2 class="text-3xl md:text-4xl font-bold">專區</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <a href="autonomous-learning/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6 mx-auto">
               <svg aria-hidden="true" class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m-6 3l6-3m0 0l6 3m-6-3v10"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold mb-3">1. 探索方向</h3>
-            <p class="text-gray-600">感到迷惘，不知道自主學習要做什麼？從這裡開始，尋找你的主題與熱情所在。</p>
+            <h3 class="text-2xl font-bold mb-3">自主學習</h3>
+            <p class="text-gray-600">AI 學習啟動包，以及找主題、擬計畫、找資源、學研究方法四個步驟的專頁。</p>
           </a>
           <a href="learning-portfolio/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-teal-100 mb-6 mx-auto">
               <svg aria-hidden="true" class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold mb-3">2. 打造歷程</h3>
-            <p class="text-gray-600">將你的學習經驗與反思，淬鍊成一份能展現個人特質的精彩學習歷程檔案。</p>
+            <h3 class="text-2xl font-bold mb-3">學習歷程</h3>
+            <p class="text-gray-600">AI 學習歷程健檢，以及優質範例、反思提問、多元表現活動、線上製作工具四個專頁。</p>
           </a>
           <a href="advanced-resources/index.html" class="feature-card block bg-white p-8 rounded-xl shadow-lg text-center">
             <div class="flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6 mx-auto">
               <svg aria-hidden="true" class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold mb-3">3. 深化專業</h3>
-            <p class="text-gray-600">已有明確目標？從這裡尋找頂尖的線上課程、競賽與書單，讓你的能力更上一層樓。</p>
+            <h3 class="text-2xl font-bold mb-3">進階資源</h3>
+            <p class="text-gray-600">線上課程、開放教育資源、國內外競賽、主題書單四個資源專頁，以及程式練功平台與科普頻道。</p>
           </a>
         </div>
       </div>
     </section>
 
-    <!-- 精選資源區塊 -->
+    <!-- 各專區的例子 -->
     <section id="showcase" class="py-20 bg-gray-200/50">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold">精選資源亮點</h2>
-          <p class="text-gray-600 mt-2">為你嚴選最實用的學習資源。</p>
+          <h2 class="text-3xl md:text-4xl font-bold">各專區的例子</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <a href="career-exploration/senior-interviews.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
@@ -132,12 +130,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
           <a href="advanced-resources/competitions.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
             <p class="text-sm font-semibold text-red-600 mb-2">競賽資訊</p>
             <h3 class="font-bold text-lg mb-2">旺宏科學獎</h3>
-            <p class="text-sm text-gray-600">有「高中諾貝爾獎」之稱，鼓勵高中生以原創性研究解決問題，獎金優渥。</p>
+            <p class="text-sm text-gray-600">旺宏教育基金會主辦的高中職科學研究競賽，每隊 1 到 3 人，需要一位高中職教師指導。</p>
           </a>
           <a href="learning-portfolio/tools.html" class="block bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
             <p class="text-sm font-semibold text-orange-700 mb-2">工具箱推薦</p>
-            <h3 class="font-bold text-lg mb-2">Notion - 你的第二大腦</h3>
-            <p class="text-sm text-gray-600">一個全功能的數位工作區，非常適合用來建立個人知識庫與管理自主學習專案。</p>
+            <h3 class="font-bold text-lg mb-2">Notion</h3>
+            <p class="text-sm text-gray-600">筆記、資料庫、看板和日曆放在同一個工作區，可以用來整理筆記、管理自主學習專案的進度。</p>
           </a>
         </div>
       </div>
@@ -146,8 +144,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     <!-- 關於我們簡介 -->
     <section class="py-20">
       <div class="container mx-auto px-6 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold">我們是誰？</h2>
-        <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">一個由學生為學生發起的開源專案，源自 g0v 黑客松，致力於用科技與設計，弭平教育資訊的落差。</p>
+        <h2 class="text-3xl md:text-4xl font-bold">關於本站</h2>
+        <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">這是一個開源專案，從 g0v 零時小學校的提案開始，是零時小學校 2021 年度的獲獎團隊之一。</p>
         <div class="flex flex-col sm:flex-row justify-center gap-4 mt-6">
           <a href="about.html" class="inline-block text-blue-600 font-bold hover:underline">
             了解我們的故事 &rarr;
