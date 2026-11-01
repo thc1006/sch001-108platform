@@ -63,12 +63,32 @@ test('isMention：引號前後有談詞語的字才算在談這個詞', () => {
     assert.equal(hitsOf('W01-hen-duo', '把「很多」改成數字'), 0);
 });
 
-test('引號：只有「逐字」「原文」後面和緊接的連續引號算引文，冒號後面照查', () => {
+test('引號：中文引文要接在「逐字」「原文」後面或緊接著前一段引文，冒號後面照查', () => {
     assert.equal(maskQuotes('逐字「A」「B」', '         '), '  qqqqqq ');
     assert.equal(maskQuotes('原文：「縣(市)」', '         '), '   qqqqqq');
     assert.equal(hitsOf('P01-double-dash', '可以這樣論述:「我想——讀企管」'), 1);
     assert.equal(hitsOf('P01-double-dash', '簡章逐字「我想——讀企管」'), 0);
     assert.equal(hitsOf('P01-double-dash', '見《學習——成長》一書'), 0);
+});
+
+test('引號：有英文字母、沒有中文的「」是外文原文，不寫「逐字」，引號裡的破折號與刪節號不檢查', () => {
+    assert.equal(maskQuotes('寫「A — b」', '        '), ' fffffff');
+    assert.equal(maskQuotes('寫「A，b」', '      '), '      ');
+    assert.equal(hitsOf('P01-double-dash', '官網寫「Grades 9——12」'), 0);
+    assert.equal(hitsOf('P01-double-dash', '簡章寫「我想——讀企管」'), 1);
+    assert.equal(hitsOf('P01-double-dash', '簡章寫「AI 學習——成長」'), 1);
+    assert.equal(hitsOf('P01-double-dash', '用「——」標出'), 1);
+    // 外文引文不帶起連續引號，後面的中文引號照查
+    assert.equal(hitsOf('P01-double-dash', '官網寫「Open」、「我想——讀企管」'), 1);
+    assert.equal(hitsOf('P01-double-dash', '逐字「Open」、「我想——讀企管」'), 0);
+    assert.equal(hitsOf('P02-single-dash', '官網寫「Deadline: TBA —」'), 0);
+    assert.equal(hitsOf('P11-ellipsis', '官網寫「Entry ...」'), 0);
+});
+
+test('引號：跨過外文引文的句型照查', () => {
+    assert.equal(hitsOf('S01-not-x-but-y', '不是「Python」而是「C++」'), 1);
+    assert.equal(hitsOf('S02-not-only', '不僅「Python」更要會「C++」'), 1);
+    assert.equal(hitsOf('K01-chat-residue', '希望「GPT」對你有幫助'), 1);
 });
 
 test('P09：依層次輪流用「」『』，開合不同種也算', () => {

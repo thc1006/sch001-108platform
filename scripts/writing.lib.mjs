@@ -3,7 +3,7 @@
 // 規則的基準筆數。
 //
 // 區塊是一段讀者看得到的文字：{ page, kind, tag, text, skip, bold, pointer? }。skip 和 text 等長，每個字元
-// 一個代號：' ' 一般文字，'a' 站外連結文字，'q' 引用的原文與書名，'u' 網址。
+// 一個代號：' ' 一般文字，'a' 站外連結文字，'q' 引用的原文與書名，'f' 外文引文，'u' 網址。
 
 /** PH 是模板字串 ${…} 的佔位符。執行時那裡多半是中文：P10 把它當成中文，英文 em dash 的判斷不把它當英文，回推原始檔時從這裡切開。 */
 export const PH = '\uE000';
@@ -14,12 +14,15 @@ const DROP = new Set(['script', 'style', 'code', 'pre', 'noscript', 'svg', 'temp
 /** NAME_FIELDS 是資料 JSON 裡的專有名稱欄位：競賽名、書名、機構名照官方寫法，不檢查。tips 底下的 title 是站方寫的，照查。 */
 const NAME_FIELDS = new Set(['title', 'name', 'org', 'organizer', 'author', 'original_title', 'provider', 'platform', 'university', 'major', 'category', 'tags', 'subjects', 'level', 'form', 'region', 'mode', 'lang', 'language', 'difficulty', 'pricing', 'type', 'theme']);
 const SKIP_KEYS = new Set(['id', 'url', 'link', 'photo_url', 'image', 'lastUpdated', 'date', 'deadline', 'slug', 'icon', 'thumbnail_url', 'logo', 'thumbnail', 'recheckNote', 'sourceNote']);
-// 只有明說照抄的「逐字」「原文」後面的「」算引文。冒號、說、寫後面多半是站方自己寫的示範句，照查。
+// 中文的「」只有接在明說照抄的「逐字」「原文」後面才算引文。冒號、說、寫後面多半是站方自己寫的示範句，照查。
 const ATTRIB = /(逐字|原文)\s*[：:]?\s*$/u;
+// 有英文字母、沒有中日文字和全形標點的「」是外文原文，不用寫「逐字」，和競賽頁的 markEnglishQuotes 用相同的字元判斷。
+const isForeignQuote = (q) => /[A-Za-z]/.test(q) && !/[\u3001-\u9fff\uff00-\uffef]/u.test(q);
 const DISPLAY_ATTRS = ['alt', 'title', 'aria-label', 'placeholder'];
 
 /**
- * maskQuotes 回傳標出引文與網址的 skip。引文是「逐字」「原文」後面的「」、緊接在它後面的連續引號，以及《》〈〉。
+ * maskQuotes 回傳標出引文與網址的 skip。「逐字」「原文」後面的「」、緊接在它後面的連續引號，以及《》〈〉標 'q'；
+ * 外文原文的「」標 'f'。
  * @param {string} text @param {string} skip 和 text 等長 @returns {string}
  */
 export function maskQuotes(text, skip) {
@@ -33,10 +36,11 @@ export function maskQuotes(text, skip) {
             depth++;
         } else if (text[i] === '」' && depth > 0 && --depth === 0) {
             const chained = lastQuoted >= 0 && /^[、，\s]*$/.test(text.slice(lastQuoted, open));
-            if (ATTRIB.test(text.slice(Math.max(0, open - 6), open)) || chained) {
-                mark(open, i + 1, 'q');
-                lastQuoted = i + 1;
-            }
+            const attributed = ATTRIB.test(text.slice(Math.max(0, open - 6), open)) || chained;
+            if (attributed) mark(open, i + 1, 'q');
+            else if (isForeignQuote(text.slice(open + 1, i))) mark(open, i + 1, 'f');
+            // 外文引文後面接的中文引號照查，只有「逐字」「原文」帶起的那串才連下去。
+            if (attributed) lastQuoted = i + 1;
         }
     }
     for (const m of text.matchAll(/https?:\/\/[^\s<>()（）「」，。]+|\b(?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|tw|io|dev|app|cc|me)(?:\/[^\s，。）」]*)?/giu)) {
@@ -318,7 +322,8 @@ function longSentences(b) {
 
 /**
  * RULES 是全部的自動規則。skip 是要略過的 skip 代號；names 為真時連專有名稱欄位也查；normal 回傳字串表示
- * 本站的正常用法；custom 用在不靠正規式的規則。規則的說明與例句在 CONTRIBUTING.md。
+ * 本站的正常用法；custom 用在不靠正規式的規則。規則的說明與例句在 CONTRIBUTING.md。外文引文 'f' 只有在純英文裡
+ * 也會命中的規則（P01、P02、P11）略過，其他規則照查，句型規則才抓得到跨過引號的句子。
  */
 export const RULES = [
     { id: 'W01-hen-duo', severity: 'block', skip: 'aqu', re: /很多(?![元樣])/gu },
@@ -337,8 +342,8 @@ export const RULES = [
     { id: 'W10-core', severity: 'warn', skip: 'aqu', re: /核心/gu, normal: (m) => (/^(素養|能力|課程|科目|期刊|知識|學科|必修|課|通識)/.test(after(m)) ? '課綱與系所用語' : null) },
     { id: 'W11-genuinely', severity: 'warn', skip: 'aqu', re: /真正(?:的)?/gu },
     { id: 'W12-mainland-register', severity: 'warn', skip: 'aqu', re: /信息(?!素)|視頻|軟件|硬件|數據庫|賦能|閉環|抓手|顆粒度|復盤|(?<!供應)鏈路/gu },
-    { id: 'P01-double-dash', severity: 'block', skip: 'aqu', re: /—{2,}|─{2,}|―+/gu },
-    { id: 'P02-single-dash', severity: 'block', skip: 'aqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal },
+    { id: 'P01-double-dash', severity: 'block', skip: 'afqu', re: /—{2,}|─{2,}|―+/gu },
+    { id: 'P02-single-dash', severity: 'block', skip: 'afqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal },
     {
         id: 'P04-halfwidth-punct', severity: 'block', skip: 'aqu',
         re: new RegExp(`(?<=${HAN})[,;:!?]|[,;:!?](?=${HAN})|(?<=${HAN})\\.(?=\\s|$|${HAN})`, 'gu'),
@@ -350,7 +355,7 @@ export const RULES = [
     { id: 'P09-quote-nesting', severity: 'block', skip: '', custom: quoteNesting },
     { id: 'P10-curly-quote', severity: 'block', skip: 'u', re: new RegExp(`[“”‘’](?=${HAN}|${PH})|(?<=${HAN}|${PH})[“”‘’]`, 'gu') },
     {
-        id: 'P11-ellipsis', severity: 'warn', skip: 'qu', re: /\.{3}|(?<!…)…(?!…)/gu,
+        id: 'P11-ellipsis', severity: 'warn', skip: 'fqu', re: /\.{3}|(?<!…)…(?!…)/gu,
         normal: (m, b) => ((/^(script|attr:placeholder)$/.test(b.tag) && b.text.length <= 30 && /(…|\.\.\.)$/.test(b.text)) || /(載入|讀取|搜尋|處理|產生|傳送)中…$/.test(b.text) ? '介面狀態' : /[A-Za-z)]\s*$/.test(before(m, 2)) && /^\s*[A-Za-z]/.test(after(m, 2)) ? '英文引文' : null),
     },
     { id: 'S01-not-x-but-y', severity: 'warn', skip: 'q', re: /(?:不是|並非|並不是|不只是)[^，。！？；—─]{1,20}[，,]?\s*(?:而是|才是)[^。！？；」]{1,24}|(?:關鍵|重點|問題)[^，。！？]{0,8}不在(?:於)?[^，。！？]{1,16}[，,]\s*(?:而在於?|而是)|與其(?:說)?[^。！？；]{1,30}?不如/gu },
