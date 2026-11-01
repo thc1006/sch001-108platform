@@ -646,10 +646,16 @@ test('沒有 key：503 not_ready，不會呼叫模型', async () => {
         assert.equal(res.status, 503);
         assert.equal((await res.json()).error.code, 'not_ready');
         assert.equal(res.headers.get('retry-after'), '30');
+        assert.equal((await post(gw.base, 'demo-json', { topic: 'x' })).status, 503);
         assert.equal(gw.calls.length, 0);
     } finally {
         await gw.stop();
     }
+    // 讀 body 之前的拒絕每分鐘記一行，5xx 記成 warn；reason 分得出是沒設定好，不是關機
+    assert.deepEqual(gw.logs.filter((l) => l.tag === 'REJECT').map((l) => [l.level, l.fields.code, l.fields.reason, l.fields.count]), [
+        ['warn', 'not_ready', 'config', 1],
+        ['warn', 'not_ready', 'config', 1],
+    ]);
 });
 
 test('JSON 任務：accepted → progress → done；SSE 標頭正確；任務指令在 system、學生資料在 user', async () => {
@@ -1741,6 +1747,8 @@ test('關機中收到的請求一律回 connection: close：readyz 回 draining�
     assert.equal(body.error.message, 'AI 服務正在更新，請稍後再試一次。');
     assert.equal(gw.calls.length, 4, '關機中的新任務沒有呼叫模型');
     await closing;
+    // reason 分得出是關機，不是沒設定好
+    assert.deepEqual(pick(gw.logs.find((l) => l.tag === 'REJECT').fields, ['status', 'code', 'reason']), { status: 503, code: 'not_ready', reason: 'shutdown' });
 });
 
 // 關機中的請求不必替它收 body：源源不絕的 body 也立刻拿到 503，而不是等到 body 的期限
@@ -3325,6 +3333,47 @@ test('標頭最多 64 個：30 個、64 個照常，66 個回 431；431 的 REJE
     } finally {
         await gw.stop();
     }
+});
+
+// kubelet 的容器 log 每 10 Mi 輪替、留 5 個檔（約 50 MB）：每次一行的話，灌這類請求就能把 USAGE 與 TASK 擠掉
+test('讀 body 之前的拒絕（403、404、415、429）每個代號每分鐘記一行；USAGE 照樣逐次計', async () => {
+    let clock = 0;
+    const gw = await startGateway({ server: { rateLimitMax: 1 }, now: () => clock });
+    const send = async (...args) => (await post(gw.base, ...args)).text();
+    try {
+        for (let i = 0; i < 3; i++) {
+            await send('demo-json', { topic: 'x' }, { origin: 'https://evil.example' });
+            await send('no-such-task', { topic: 'x' });
+            await send('demo-json', null, { headers: { 'content-type': 'text/plain' }, body: '{}' });
+            await send('demo-json', { topic: 'x' });
+        }
+        clock += 60_000;
+        await send('demo-json', { topic: 'x' }, { origin: 'https://evil.example' });
+    } finally {
+        await gw.stop();
+    }
+    // from 是各代號那一段開始的時間
+    const rejects = gw.logs.filter((l) => l.tag === 'REJECT').map((l) => {
+        if (l.fields.from === undefined) return [l.level, l.fields];
+        assert.match(l.fields.from, /^\d{4}-\d\d-\d\dT/);
+        return [l.level, { ...l.fields, from: 'T' }];
+    });
+    const from = 'T';
+    // 第一分鐘各代號的第一次立刻記；origin_not_allowed 的另外兩次在下一分鐘那一次時記，其餘的關機時記
+    assert.deepEqual(rejects, [
+        ['info', { status: 403, code: 'origin_not_allowed', count: 1 }],
+        ['info', { status: 404, code: 'unknown_task', count: 1 }],
+        ['info', { status: 415, code: 'unsupported_media_type', count: 1 }],
+        ['info', { status: 429, code: 'rate_limited', count: 1 }],
+        ['info', { status: 403, code: 'origin_not_allowed', count: 2, from }],
+        ['info', { status: 403, code: 'origin_not_allowed', count: 1 }],
+        ['info', { status: 404, code: 'unknown_task', count: 2, from }],
+        ['info', { status: 415, code: 'unsupported_media_type', count: 2, from }],
+        ['info', { status: 429, code: 'rate_limited', count: 1, from }],
+    ]);
+    const usage = gw.logs.filter((l) => l.tag === 'USAGE').at(-1).fields;
+    assert.equal(usage.rejected, 'origin_not_allowed:4,rate_limited:2,unknown_task:3,unsupported_media_type:3');
+    assert.equal(usage.requests, 13);
 });
 
 test('431 的 REJECT：關機時把這一段還沒記的次數記掉', async () => {
