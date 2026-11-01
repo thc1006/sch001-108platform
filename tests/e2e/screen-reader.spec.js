@@ -43,6 +43,20 @@ for (const p of PAGES) {
     });
 }
 
+// 區首頁的 h1、<title> 和導覽列上標著 aria-current="page" 的選項用同一個名稱。
+test.describe('區首頁的名稱和導覽列相同', () => {
+    for (const section of ['autonomous-learning', 'learning-portfolio', 'career-exploration', 'advanced-resources']) {
+        test(section, async ({ page }) => {
+            await page.goto(P(`${section}/index.html`));
+            const current = page.locator('header a[aria-current="page"]:visible');
+            await expect(current).toHaveCount(1);
+            const name = (await current.textContent()).trim();
+            await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(name);
+            await expect(page).toHaveTitle(`${name} - 台灣教育處方籤`);
+        });
+    }
+});
+
 // [頁面, 卡片, 篩選動作]。#result-status 寫在頁面的 HTML 裡，資料載入前就在，之後只換文字；
 // 載入時不念，使用者改了條件才寫入。
 const FILTERS = [
