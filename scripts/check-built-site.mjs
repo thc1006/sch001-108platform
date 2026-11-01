@@ -252,7 +252,7 @@ for (const rel of htmlFiles) {
     const count = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8')).competitions.length;
     const $ = cheerio.load(await readFile(path.join(DIST, rel), 'utf8'));
     const description = $('meta[name="description"]').attr('content') ?? '';
-    if (!description.includes(`彙整 ${count} 項`)) {
+    if (!description.startsWith(`${count} 項`)) {
         addError(rel, 'meta[name=description]', `應寫 competitions.json 的 ${count} 筆，實際：${description}`);
     }
 }
