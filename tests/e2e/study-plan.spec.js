@@ -129,7 +129,7 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
         for (const value of ['', ' \t ']) {
             await page.fill('#planInput', value);
             await page.click('#generatePlanBtn');
-            await expect(page.locator('#planResult')).toHaveText('請先輸入你的自主學習主題！');
+            await expect(page.locator('#planResult')).toHaveText('請先輸入你的自主學習主題。');
             await expect(page.locator('#planResult p')).toHaveClass(/text-red-700/);
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
@@ -253,11 +253,11 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
         await watchStatus(page, '#planStatus');
 
         await page.click('#generatePlanBtn');
-        await expect(result).toHaveText('請先輸入你的自主學習主題！');
-        await expect(status).toHaveText('請先輸入你的自主學習主題！');
+        await expect(result).toHaveText('請先輸入你的自主學習主題。');
+        await expect(status).toHaveText('請先輸入你的自主學習主題。');
         // 同一句再出現一次，也要再唸一次
         await page.click('#generatePlanBtn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的自主學習主題！', '請先輸入你的自主學習主題！']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的自主學習主題。', '請先輸入你的自主學習主題。']);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
         await page.fill('#planInput', '手搖飲');
@@ -272,7 +272,7 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
         await page.locator('#planWorkspace').getByRole('button', { name: '取消' }).click();
         await expect(result).toHaveText('已取消。');
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你的自主學習主題！', '請先輸入你的自主學習主題！', '已產生計畫草案，共 4 項週次進度。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你的自主學習主題。', '請先輸入你的自主學習主題。', '已產生計畫草案，共 4 項週次進度。', '已取消。']);
     });
 
     // 進度區塊放在 live region 裡的話，WebKit 會連計時器每秒的變化都通報（見頁面的註解）。

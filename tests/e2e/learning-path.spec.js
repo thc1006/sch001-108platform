@@ -146,7 +146,7 @@ test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任
         for (const value of ['', '   ']) {
             await page.fill('#pathInput', value);
             await page.click('#generatePathBtn');
-            await expect(page.locator('#pathResult')).toHaveText('請先輸入你想學習的主題！');
+            await expect(page.locator('#pathResult')).toHaveText('請先輸入你想學習的主題。');
             await expect(message).toHaveClass(/text-red-700/);
             await expect(message).not.toHaveClass(/text-gray-600/);
         }
@@ -270,11 +270,11 @@ test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任
         await watchStatus(page, '#pathStatus');
 
         await page.click('#generatePathBtn');
-        await expect(result).toHaveText('請先輸入你想學習的主題！');
-        await expect(status).toHaveText('請先輸入你想學習的主題！');
+        await expect(result).toHaveText('請先輸入你想學習的主題。');
+        await expect(status).toHaveText('請先輸入你想學習的主題。');
         // 同一句再出現一次，也要再唸一次
         await page.click('#generatePathBtn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你想學習的主題！', '請先輸入你想學習的主題！']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你想學習的主題。', '請先輸入你想學習的主題。']);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
         await page.fill('#pathInput', 'Python');
@@ -289,7 +289,7 @@ test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任
         await page.locator('#pathWork').getByRole('button', { name: '取消' }).click();
         await expect(result).toHaveText('已取消。');
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你想學習的主題！', '請先輸入你想學習的主題！', '已規劃學習路徑，共 4 個步驟。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你想學習的主題。', '請先輸入你想學習的主題。', '已規劃學習路徑，共 4 個步驟。', '已取消。']);
     });
 
     // WebKit 連 aria-live="off" 的子樹也算進外層的 live region，進度區塊的計時器放在 live region 裡，

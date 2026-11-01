@@ -234,7 +234,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             if (generatePathBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = pathInput.value.trim();
             if (!topic) {
-                showMessage('請先輸入你想學習的主題！');
+                showMessage('請先輸入你想學習的主題。');
                 return;
             }
 

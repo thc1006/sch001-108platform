@@ -130,7 +130,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             if (generateCoachBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = coachInput.value.trim();
             if (!topic) {
-                showMessage('請先輸入你的初步想法！');
+                showMessage('請先輸入你的初步想法。');
                 return;
             }
 

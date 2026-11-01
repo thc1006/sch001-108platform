@@ -143,7 +143,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         for (const value of ['', '   ']) {
             await page.fill('#ideaInput', value);
             await page.click('#generateIdeaBtn');
-            await expect(page.locator('#ideaResult')).toHaveText('請先輸入你的興趣關鍵字！');
+            await expect(page.locator('#ideaResult')).toHaveText('請先輸入你的興趣關鍵字。');
             await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-700/);
         }
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
@@ -241,7 +241,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
 
         await installFakeGateway(page, { chunks: [ACCEPTED, THINKING], hang: true });
         await page.click('#generateIdeaBtn');
-        await expect(result).toHaveText('請先輸入你的興趣關鍵字！');
+        await expect(result).toHaveText('請先輸入你的興趣關鍵字。');
 
         await page.fill('#ideaInput', '旅行');
         await page.click('#generateIdeaBtn');
@@ -270,11 +270,11 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await watchStatus(page, '#ideaStatus');
 
         await page.click('#generateIdeaBtn');
-        await expect(result).toHaveText('請先輸入你的興趣關鍵字！');
-        await expect(status).toHaveText('請先輸入你的興趣關鍵字！');
+        await expect(result).toHaveText('請先輸入你的興趣關鍵字。');
+        await expect(status).toHaveText('請先輸入你的興趣關鍵字。');
         // 同一句再出現一次，也要再唸一次
         await page.click('#generateIdeaBtn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字！', '請先輸入你的興趣關鍵字！']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字。', '請先輸入你的興趣關鍵字。']);
 
         await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
         await page.fill('#ideaInput', '旅行');
@@ -289,7 +289,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await page.locator('#ideaWorkspace').getByRole('button', { name: '取消' }).click();
         await expect(result).toHaveText('已取消。');
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字！', '請先輸入你的興趣關鍵字！', '已產生 3 個主題靈感。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你的興趣關鍵字。', '請先輸入你的興趣關鍵字。', '已產生 3 個主題靈感。', '已取消。']);
     });
 });
 

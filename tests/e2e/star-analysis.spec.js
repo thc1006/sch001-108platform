@@ -163,7 +163,7 @@ for (const p of PAGES) {
             for (const value of ['', ' \n\t ']) {
                 await page.fill('#reflectionInput', value);
                 await page.click('#analyzeBtn');
-                await expect(page.locator('#analysisResult')).toHaveText('請先貼上你的心得反思文字！');
+                await expect(page.locator('#analysisResult')).toHaveText('請先貼上你的心得反思文字。');
             }
             expect(await page.evaluate(() => window.__calls.length)).toBe(0);
         });
@@ -265,11 +265,11 @@ for (const p of PAGES) {
             await watchStatus(page, '#analysisStatus');
 
             await page.click('#analyzeBtn');
-            await expect(result).toHaveText('請先貼上你的心得反思文字！');
-            await expect(status).toHaveText('請先貼上你的心得反思文字！');
+            await expect(result).toHaveText('請先貼上你的心得反思文字。');
+            await expect(status).toHaveText('請先貼上你的心得反思文字。');
             // 同一句再出現一次，也要再唸一次
             await page.click('#analyzeBtn');
-            await expect.poll(() => statusWrites(page)).toEqual(['請先貼上你的心得反思文字！', '請先貼上你的心得反思文字！']);
+            await expect.poll(() => statusWrites(page)).toEqual(['請先貼上你的心得反思文字。', '請先貼上你的心得反思文字。']);
 
             await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
             await page.fill('#reflectionInput', '心得');
@@ -284,7 +284,7 @@ for (const p of PAGES) {
             await page.locator('#analysisWork').getByRole('button', { name: '取消' }).click();
             await expect(result).toHaveText('已取消。');
             await expect(status).toHaveText('已取消。');
-            expect(await statusWrites(page)).toEqual(['請先貼上你的心得反思文字！', '請先貼上你的心得反思文字！', '已完成健檢，有總評、STAR 四項分析與修改範例。', '已取消。']);
+            expect(await statusWrites(page)).toEqual(['請先貼上你的心得反思文字。', '請先貼上你的心得反思文字。', '已完成健檢，有總評、STAR 四項分析與修改範例。', '已取消。']);
         });
 
         // 進度區塊不能在 live region 裡：WebKit 把 aria-live="off" 子樹的變化也算進外層的 live region，
