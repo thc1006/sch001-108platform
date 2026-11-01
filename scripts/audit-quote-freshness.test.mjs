@@ -83,8 +83,9 @@ test('extractQuotes：掃描 description 以外的欄位', () => {
         description: '',
         eligibility: '逐字「open to high school students from any country」',
         registrationNote: '「Registration deadline: 31 March, 2026」',
+        sourceNote: '逐字「Results will be released on 01st Nov 2026」',
     });
-    assert.equal(qs.length, 2);
+    assert.equal(qs.length, 3);
 });
 
 test('故障注入：把空白字元類換回會吃掉 ASCII 的那種，selfTest 必須擋下', () => {

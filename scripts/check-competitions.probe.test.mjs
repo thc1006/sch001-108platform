@@ -306,6 +306,16 @@ test('schedule：registrationNote 有長度上限', () => {
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
 });
 
+test('schedule：sourceNote 選填，填了不能是空的或前後有空白', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+    assert.deepEqual(bad({ sourceNote: '2026-10-25 查證時官網首頁沒有日期。' }), []);
+    assert.ok(bad({ sourceNote: '' }).some((m) => m.includes('sourceNote')));
+    assert.ok(bad({ sourceNote: ' 紀錄' }).some((m) => m.includes('sourceNote')));
+    assert.ok(bad({ sourceNote: 3 }).some((m) => m.includes('必須是字串')));
+    assert.deepEqual(bad({ sourceNote: '紀'.repeat(1000) }), []);
+    assert.ok(bad({ sourceNote: '紀'.repeat(1001) }).some((m) => m.includes('過長')));
+});
+
 test('schedule：recheckOn 和 recheckNote 一起填，晚於 sourceCheckedAt，不晚於它一年後', () => {
     const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
     const ok = { sourceCheckedAt: '2026-10-27', recheckOn: '2027-01-15', recheckNote: '依據' };

@@ -180,7 +180,7 @@ async function pool(items, fn, n) {
 }
 
 const QUOTE_RE = /[「『]([^」』]{8,400})[」』]/g;
-const FIELDS = ['description', 'eligibility', 'registrationNote', 'organizer'];
+const FIELDS = ['description', 'eligibility', 'registrationNote', 'organizer', 'sourceNote'];
 
 export function extractQuotes(entry) {
     const out = [];

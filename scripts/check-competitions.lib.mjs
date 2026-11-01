@@ -48,6 +48,8 @@ export const ALLOWED_COMPETITION_FIELDS = new Set([
     // 預定重查日與依據（選填，見 recheckProblem）
     'recheckOn',
     'recheckNote',
+    // 給維護者的查證紀錄（選填，頁面不顯示）
+    'sourceNote',
 ]);
 
 // 連結健檢的實作在 link-health.lib.mjs。競賽看門狗與全站外部連結健檢都會在 runner 上、
@@ -172,6 +174,8 @@ export function validateInstant(value, field, label, errors) {
     return true;
 }
 
+const SOURCE_NOTE_MAX = 1000;
+
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
  *
@@ -186,6 +190,16 @@ export function validateSchedule(comp, label, errors) {
     validateDateOnly(comp.sourceCheckedAt, 'sourceCheckedAt', label, errors);
     const recheck = recheckProblem(comp);
     if (recheck) errors.push(`「${label}」的 ${recheck}`);
+    if (comp.sourceNote !== undefined) {
+        if (typeof comp.sourceNote !== 'string') {
+            errors.push(`「${label}」的 sourceNote 必須是字串`);
+        } else if (!comp.sourceNote || comp.sourceNote.trim() !== comp.sourceNote) {
+            errors.push(`「${label}」的 sourceNote 是空的或前後有空白`);
+        } else if ([...comp.sourceNote].length > SOURCE_NOTE_MAX) {
+            // 只記查證紀錄，不是另一份描述；寫不下的放進 commit 訊息。
+            errors.push(`「${label}」的 sourceNote 過長（上限 ${SOURCE_NOTE_MAX} 字，目前 ${[...comp.sourceNote].length} 字）`);
+        }
+    }
 
     if (comp.registrationNote !== undefined) {
         if (typeof comp.registrationNote !== 'string' || comp.registrationNote.trim() === '') {
