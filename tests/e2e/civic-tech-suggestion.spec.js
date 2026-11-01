@@ -166,14 +166,19 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('沒有輸入（或只有空白）就按 → 焦點回到輸入框，不送出請求，也不顯示任何東西', async ({ page }) => {
+    test('沒有輸入（或只有空白）就按 → 顯示並唸出「請先輸入…」，焦點回到輸入框，不送出請求；同一句再出現也再唸', async ({ page }) => {
         await installFakeGateway(page);
+        await watchStatus(page, '#ai-status');
+        const hint = '請先輸入你的興趣或關心的議題。';
         for (const value of ['', ' \n\t ']) {
             await page.fill('#ai-interest-input', value);
             await page.click('#ai-submit-btn');
             await expect(page.locator('#ai-interest-input')).toBeFocused();
+            await expect(page.locator('#ai-results')).toHaveText(hint);
+            await expect(page.locator('#ai-status')).toHaveText(hint);
         }
-        await expect(page.locator('#ai-results *, #ai-workspace *')).toHaveCount(0);
+        expect(await statusWrites(page)).toEqual([hint, hint]);
+        await expect(page.locator('#ai-workspace *')).toHaveCount(0);
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
