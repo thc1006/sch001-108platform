@@ -494,8 +494,11 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
         assert.match(host, /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/, `${host} 不是合法主機名`);
     }
 
-    // 實測基準：54 個候選、51 個真網域。資料變動時這個數字會變，屆時請一併
+    // 實測基準：52 個候選、49 個真網域。資料變動時這個數字會變，屆時請一併
     // 重新查證新增的網域，而不是直接把數字改掉。
+    //
+    // 2026-11-01：IOAA 因台灣沒有參加而整筆移除。ioaastrophysics.org 與 www.ioaastrophysics.org 只出現在
+    // 它的 sourceNote，候選與通過各少 2 個。IOAA-jr 的 url 欄位仍是 ioaastrophysics.org。
     //
     // 2026-11-01：/competitions/56/description 寫出台灣選拔 TEO 的網站，候選與通過各多 1 個。當天實測：
     //   www.ecolympiad.tw  200，<title> 開頭是「TEO」，NS 是 Cloudflare
@@ -545,8 +548,8 @@ test('真實語料：competitions.json 的擷取結果與實測一致', async ()
     // 引用的是 www.aksf.org 而不是 apex 的 aksf.org：apex 那台主機 https 連線
     // 會被重設、http 回 404（連測三次一致，DNS 解得到 193.2.68.165），內容在
     // www.aksf.org 上。引用 apex 的話，看門狗每週都會報一次永遠修不好的死連結。
-    assert.equal(candidates.length, 54, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
-    assert.equal(accepted.length, 51, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
+    assert.equal(candidates.length, 52, `stage 1 候選數變了（實際 ${candidates.length}）——請重新查證後再更新此基準`);
+    assert.equal(accepted.length, 49, `stage 2 通過數變了（實際 ${accepted.length}）——請重新查證後再更新此基準`);
 
     // ichosc.org 的 https 會逾時，IChO 的描述點名 www.ichosc.org。改回 apex 時候選數不變，要另外擋。
     assert.ok(!candidates.some((host) => host === 'ichosc.org'), 'IChO 的描述應寫 www.ichosc.org');
