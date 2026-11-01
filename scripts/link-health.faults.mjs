@@ -426,7 +426,7 @@ const guardMutations = [
         apply: (s) =>
             s
                 .replace('const statik = staticUrlPolicy(current, opts);', 'const statik = hop === 0 ? staticUrlPolicy(current, opts) : { ok: true, url: new URL(current) };')
-                .replace('const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts);', 'const resolved = hop === 0 ? await resolveAndVerify(canonicalHost(url.hostname), opts) : { ok: true, addresses: await (await import("node:dns")).promises.lookup(canonicalHost(url.hostname), { all: true }) };'),
+                .replace('const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts, abort);', 'const resolved = hop === 0 ? await resolveAndVerify(canonicalHost(url.hostname), opts, abort) : { ok: true, addresses: await (await import("node:dns")).promises.lookup(canonicalHost(url.hostname), { all: true }) };'),
     },
     {
         name: '不再檢查網址內嵌的帳號密碼',
@@ -476,9 +476,25 @@ const guardMutations = [
         name: '轉址那一跳的 DNS 答案不再檢查（靜態政策仍在）',
         apply: (s) =>
             s.replace(
-                'const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts);',
-                "const resolved = hop === 0 ? await resolveAndVerify(canonicalHost(url.hostname), opts) : await (await import('node:dns')).promises.lookup(canonicalHost(url.hostname), { all: true, verbatim: true }).then((addresses) => ({ ok: true, addresses }), (err) => ({ ok: false, code: err?.code || 'EDNS', reason: String(err?.message || err) }));",
+                'const resolved = await resolveAndVerify(canonicalHost(url.hostname), opts, abort);',
+                "const resolved = hop === 0 ? await resolveAndVerify(canonicalHost(url.hostname), opts, abort) : await (await import('node:dns')).promises.lookup(canonicalHost(url.hostname), { all: true, verbatim: true }).then((addresses) => ({ ok: true, addresses }), (err) => ({ ok: false, code: err?.code || 'EDNS', reason: String(err?.message || err) }));",
             ),
+    },
+    {
+        name: 'DNS 查詢不看 signal（getaddrinfo 卡住時整批跟著卡住）',
+        apply: (s) => s.replace('await untilAborted(dns.promises.lookup(host, { all: true, verbatim: true }), signal);', 'await dns.promises.lookup(host, { all: true, verbatim: true });'),
+    },
+    {
+        name: 'probe 沒把 signal 交給 DNS 查詢',
+        apply: (s) => s.replace('resolveAndVerify(canonicalHost(url.hostname), opts, abort);', 'resolveAndVerify(canonicalHost(url.hostname), opts);'),
+    },
+    {
+        name: 'untilAborted 不處理已經中止的 signal（一直等 DNS）',
+        apply: (s) => s.replace('        if (signal.aborted) onAbort();\n        else signal', '        signal'),
+    },
+    {
+        name: '等 DNS 逾時被當成網域不存在',
+        apply: (s) => s.replace("return { ok: false, code: 'ABORT_ERR', reason:", "return { ok: false, code: 'ENOTFOUND', reason:"),
     },
     {
         // 這一條不是 SSRF，但同在 link-health.lib.mjs。resolver 暫時失敗被當成網域不存在的話，
