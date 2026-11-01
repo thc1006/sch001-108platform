@@ -283,6 +283,8 @@ test('findFraming：西元年當申請年度的寫法', () => {
         ['２０２６ 升學趨勢', '2026 升學'],
         ['2027 年的申請', '2027 年的申請'],
         ['[2026 升學趨勢] 不是連結', '2026 升學'],
+        ['[2026 升學趨勢][x] 沒有定義，不是連結', '2026 升學'],
+        ['[某篇文章][a]談 2026 升學\n\n[a]: https://example.com/', '2026 升學'],
     ];
     for (const [src, phrase] of hits) assert.deepEqual(findFraming(src).map((h) => h.phrase), [phrase], src);
     const misses = [
@@ -300,6 +302,12 @@ test('findFraming：西元年當申請年度的寫法', () => {
         '- [Cheers「2026 大學申請全攻略」](https://example.com/)',
         '- [2026 大學「個人申請」面試必勝秘笈](https://example.com/2026-申請)',
         '依《2026 大學申請入學簡章》辦理',
+        '- [Cheers「2026 大學申請全攻略」][cheers]\n\n[cheers]: https://example.com/',
+        '- [2026 大學申請全攻略][]\n\n[2026 大學申請全攻略]: <https://example.com/> "2026 大學申請全攻略"',
+        "- [2026 大學申請全攻略]\n\n   [2026 大學申請全攻略]: https://example.com/ '2026 大學申請'",
+        '- [2026 升學趨勢][Ref]\n\n[ref]: https://example.com/',
+        '- [２０２６ 升學趨勢][] [**2026 申請**][]\n\n[２０２６ 升學趨勢]: https://example.com/a\n[**2026 申請**]: https://example.com/b',
+        '- [某篇][a]、[另一篇][b]\n\n[a]: https://example.com/a "2026 大學申請攻略"\n[b]: <https://example.com/b> (2026 申請)',
         '<!-- 2026 升學趨勢 -->',
         'https://example.com/2026升學趨勢',
         '12026 升學',
@@ -311,6 +319,86 @@ test('findFraming：西元年當申請年度的寫法', () => {
         '2026 年 - 升學',
     ];
     for (const src of misses) assert.deepEqual(findFraming(src), [], src);
+});
+
+test('findFraming、findYears：定義只認寫在同一行的，下一行一律照查', () => {
+    const framing = (...lines) => findFraming(lines.join('\n')).map((h) => `${h.line}:${h.phrase}`);
+    assert.deepEqual(framing('[2026 升學趨勢][a]', '', '[a]: <https://x/> "2026 大學申請攻略"'), []);
+    // 網址或標題寫到下一行的定義不認，那幾行照內文查，標籤也不算定義過。
+    assert.deepEqual(framing('[某][a]', '', '[a]: https://x/', '(2026 升學趨勢)'), ['4:2026 升學']);
+    assert.deepEqual(framing('[某][a]', '', '[a]: <https://x/>', "  '2026 申請'"), ['4:2026 申請']);
+    assert.deepEqual(framing('[2026 升學趨勢][a]', '', '[a]:', '<https://x/> "2026 申請"'), ['1:2026 升學', '4:2026 申請']);
+    assert.deepEqual(framing('[某][a]', '', '[a]: https://x/ "標題"', '(2026 升學趨勢是作者寫的)'), ['4:2026 升學']);
+    assert.deepEqual(framing('[某][a]', '', '[a]: https://x/', '"2026 升學" 趨勢'), ['4:2026 升學']);
+    assert.deepEqual(framing('[某][a]', '', '[a]:', '', '2026升學趨勢'), ['5:2026升學']);
+    assert.deepEqual(framing('正文[^1]', '', '[^1]:', '    2026 升學趨勢是作者的話'), ['4:2026 升學']);
+    assert.deepEqual(framing('正文[^1]', '', '[^1]: 註', '    "2026 升學趨勢"'), ['4:2026 升學'], '註腳的內容');
+    assert.deepEqual(years('[某][a]\n\n[a]: https://x/ "標題"\n(115 學年度起適用)'), ['text:115']);
+    assert.deepEqual(years('[某][a]\n\n[a]:\n(115 學年度起適用)'), ['text:115']);
+});
+
+test('findFraming、findYears：定義要在區塊開頭，插在段落或清單項目中間的 [id]: 不是定義，下一行照查', () => {
+    const framing = (...lines) => findFraming(lines.join('\n')).map((h) => `${h.line}:${h.phrase}`);
+    assert.deepEqual(years('這是一段話\n[注意]:\n今年115學年度起適用新制。'), ['text:115']);
+    assert.deepEqual(framing('這是一段話', '[注意]:', '2026升學趨勢整理。'), ['3:2026升學']);
+    assert.deepEqual(framing('- 項目文字', '  [a]: https://x/', '  (2026 升學趨勢)'), ['3:2026 升學']);
+    assert.deepEqual(framing('一段文字', '[2026 升學趨勢]: https://x/', '', '[2026 升學趨勢] 是作者的話'), ['4:2026 升學']);
+    assert.deepEqual(framing('# 標題', '[注意]:', '2026升學趨勢整理。'), ['3:2026升學']);
+    // 文件開頭、空行、ATX 標題、另一個定義、圍欄結束的下一行可以是定義；setext 標題和 HTML 區塊的下一行不算。
+    assert.deepEqual(framing('[2026 升學趨勢][a] [2026 申請][b]', '', '[a]: https://x/', '[b]: https://y/ "某篇"'), []);
+    assert.deepEqual(framing('# 標題', '[a]: https://x/', '', '[2026 升學趨勢][a]'), []);
+    assert.deepEqual(framing('```', 'x', '```', '[a]: https://x/', '', '[2026 升學趨勢][a]'), []);
+    assert.deepEqual(framing('標題', '===', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['5:2026 升學']);
+    assert.deepEqual(framing('<!-- 註解 -->', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['4:2026 升學']);
+    assert.deepEqual(framing('<!--', '註解', '-->', '[a]: https://x/', '', '[2026 升學趨勢][a]'), ['6:2026 升學']);
+});
+
+test('findFraming：不合規則的定義、HTML 區塊和程式碼裡的定義不算，\\[x] 和程式碼裡的 [x] 不是連結', () => {
+    for (const src of [
+        '[2026 升學趨勢]:\n\n[2026 升學趨勢] 是作者的話',
+        '[2026 升學趨勢]: 作者 整理\n\n[2026 升學趨勢] 是作者的話',
+        "[2026 升學趨勢]: /u '標題\n\n後半'\n\n[2026 升學趨勢] 是作者的話",
+        '<div>\n[2026 升學趨勢]: https://x/\n</div>\n\n[2026 升學趨勢] 是作者的話',
+        '```md\n[2026 升學趨勢]: https://x/\n```\n\n[2026 升學趨勢] 是作者的話',
+        '````\n```\n[2026 升學趨勢]: https://x/\n````\n\n[2026 升學趨勢] 是作者的話',
+        '```\n~~~\n[2026 升學趨勢]: https://x/\n```\n\n[2026 升學趨勢] 是作者的話',
+        '<!--\n[2026 升學趨勢]: https://x/\n\n[2026 升學趨勢] 是作者的話',
+        '正文[^1]\n\n[^1]: 註\n[2026 升學趨勢]: /u\n\n[2026 升學趨勢] 是作者的話',
+        '[2026 升學趨勢]: https://x/(\n\n[2026 升學趨勢] 是作者的話',
+        '[2026 升學趨勢]: https://x/\u0001\n\n[2026 升學趨勢] 是作者的話',
+        '<pre>\n\n[2026 升學趨勢]: https://x/\n</pre>\n\n[2026 升學趨勢] 是作者的話',
+        '<?php\n\n[2026 升學趨勢]: https://x/\n?>\n\n[2026 升學趨勢] 是作者的話',
+        '<![CDATA[\n\n[2026 升學趨勢]: https://x/\n]]>\n\n[2026 升學趨勢] 是作者的話',
+        '<!DOCTYPE x\n\n[2026 升學趨勢]: https://x/\n>\n\n[2026 升學趨勢] 是作者的話',
+        '<!--\n\n[2026 升學趨勢]: https://x/\n-->\n\n[2026 升學趨勢] 是作者的話',
+        '---\ntitle: t\n\n[2026 升學趨勢]: https://x/\n---\n\n[2026 升學趨勢] 是作者的話',
+    ]) assert.deepEqual(findFraming(src).map((h) => h.phrase).slice(-1), ['2026 升學'], src);
+    assert.deepEqual(findFraming('\\[2026 升學趨勢]\n\n[2026 升學趨勢]: https://x/').map((h) => h.line), [1]);
+    assert.deepEqual(findFraming('`[2026 升學趨勢]`\n\n[2026 升學趨勢]: https://x/').map((h) => h.line), [1]);
+    assert.deepEqual(findFraming('[2026 升學趨勢`][a]`\n\n[a]: https://x/').map((h) => h.line), [1]);
+    assert.deepEqual(findFraming('`a\n[2026 升學趨勢] b`\n\n[2026 升學趨勢]: https://x/').map((h) => h.line), [2], '跨行的程式碼');
+    assert.deepEqual(findFraming('`` a ` [2026 升學趨勢]\n\n[2026 升學趨勢]: https://x/'), [], '反引號沒有成對');
+    assert.deepEqual(findFraming('`` a ` [2026 升學趨勢] ` b\n\n[2026 升學趨勢]: https://x/').map((h) => h.line), [1], '反引號一樣長才成對');
+    assert.deepEqual(findFraming('`a\n\n[2026 升學趨勢] b`\n\n[2026 升學趨勢]: https://x/'), [], '程式碼不跨空行');
+    assert.deepEqual(findFraming('[2026 升學 *[某篇][a]*][a]\n\n[a]: https://x/').map((h) => h.phrase), ['2026 升學'], '連結文字裡不能有連結');
+    assert.deepEqual(findFraming('2026[^1]升學趨勢\n\n[^1]: 註').map((h) => h.line), [1], '註腳的參照不是字');
+});
+
+test('findFraming、cycleHints：[X][Y](網址) 的連結文字是 Y，[X] 照內文', () => {
+    assert.deepEqual(findFraming('[2026 升學趨勢][簡章](https://x/)').map((h) => h.phrase), ['2026 升學']);
+    assert.deepEqual(findFraming('見[2026 年申請][官方簡章](https://x/)。').map((h) => h.phrase), ['2026 年申請']);
+    assert.deepEqual(findFraming('[2026 升學趨勢][](https://x/)').map((h) => h.phrase), ['2026 升學']);
+    assert.deepEqual(cycleHints('[PDF][2026 申請簡章](https://x/)', 115).map((h) => `${h.kind}:${h.phrase}`), ['title:2026 申請簡章']);
+});
+
+test('findFraming：參考式連結的標籤去掉頭尾空白、合併中間的空白，frontmatter、程式碼與 HTML 註解裡的定義不算', () => {
+    assert.deepEqual(findFraming('[ 2026 升學趨勢 ][] [2026  升學趨勢][]\n\n[2026 升學趨勢]: https://x/'), []);
+    for (const src of [
+        '[2026 升學趨勢] 是我寫的\n\n```\n[2026 升學趨勢]: https://x/\n```',
+        '[2026 升學趨勢] 是我寫的\n\n~~~~\n[2026 升學趨勢]: https://x/\n~~~~',
+        '[2026 升學趨勢] 是我寫的\n\n<!--\n[2026 升學趨勢]: https://x/\n-->',
+        '---\n[2026 升學趨勢]: x\n---\n[2026 升學趨勢] 是我寫的',
+    ]) assert.deepEqual(findFraming(src).map((h) => h.phrase), ['2026 升學'], src);
 });
 
 test('checkContent：西元年當申請年度要報錯，附上位置和前後文', () => {
@@ -348,7 +436,13 @@ test('cycleHints：連結文字裡寫著 cycle 這一屆的標題', () => {
         '- [64 校 115 二階審查資料準備指引(今周刊)](https://example.com/b)',
         '- [【115審查資料準備指引】](https://example.com/c)',
         '- [Cheers「2026 大學申請全攻略」](https://example.com/d)',
-    ), ['1:115 備審資料準備指引一覽 — TKB', '2:64 校 115 二階審查資料準備指引(今周刊)', '3:【115審查資料準備指引】', '4:Cheers「2026 大學申請全攻略」']);
+        '- [115 備審指引彙整][t]',
+        '- [Cheers「2026 大學申請全攻略」][]',
+        '',
+        '[t]: https://example.com/t',
+        '[cheers「2026 大學申請全攻略」]: https://example.com/c',
+    ), ['1:115 備審資料準備指引一覽 — TKB', '2:64 校 115 二階審查資料準備指引(今周刊)', '3:【115審查資料準備指引】', '4:Cheers「2026 大學申請全攻略」',
+        '5:115 備審指引彙整', '6:Cheers「2026 大學申請全攻略」']);
     assert.deepEqual(titles(
         '- [115 學年度申請入學統計資料](https://example.com/a)',
         '- [適用115至119學年度入學](https://example.com/b)',
@@ -360,6 +454,7 @@ test('cycleHints：連結文字裡寫著 cycle 這一屆的標題', () => {
         '- [TISF 2026 臺灣國際科學展覽會](https://example.com/h)',
         '115 備審資料準備指引',
         '- [指引](https://example.com/115-備審)',
+        '- [115 備審資料準備指引][沒有定義]',
     ), []);
 });
 

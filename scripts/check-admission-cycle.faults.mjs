@@ -4,7 +4,7 @@
 //      不合規則、內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
 //      時程日期和別人文章的標題只列出來；
 //      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0；--remind 要寫出報告和 needs_attention
-//   B. 判斷：改壞 admission-cycle.lib.mjs，admission-cycle.test.mjs 必須失敗
+//   B. 判斷：改壞 admission-cycle.lib.mjs 或 markdown-refs.lib.mjs，admission-cycle.test.mjs 必須失敗
 //   C. 串接：改壞 check-admission-cycle.mjs，A 段至少要有一項失敗
 //   D. 排程：改壞 admission-cycle-check.yml，admission-cycle.test.mjs 必須失敗
 // 用固定的測資和日期，不用真實內容：真實內容哪天沒有 keep 或甄選會網址，這裡照樣測得到。
@@ -314,22 +314,61 @@ const libMutations = [
     ['沒有檔案也算通過', 'if (files.length === 0) return', 'if (false) return'],
     ['一個學年度都沒找到也算通過', 'if (found === 0) errors.push', 'if (false) errors.push'],
     ['西元年寫法不報錯', 'for (const h of findFraming(f.text)) {', 'for (const h of []) {'],
-    ['連結文字也算西元年寫法', '.replace(LINK_TEXT, blank).replace(', '.replace('],
+    ['連結文字也算西元年寫法', 'const text = blankLinks(maskForText(src), src).replace(', 'const text = maskForText(src).replace('],
     ['《》〈〉裡也算西元年寫法', ".replace(/[《〈][^》〉\\n]*[》〉]/g, blank)", ''],
     ['西元年寫法的間隔可以有標點和符號', "[^\\\\s\\\\d\\\\p{P}\\\\p{S}]){0,6}?", "[^\\\\s\\\\d]){0,6}?"],
     ['西元年寫法的間隔可以有符號', "\\\\p{P}\\\\p{S}]", "\\\\p{P}]"],
     ['西元年寫法的間隔可以換行', "(?:[^\\\\S\\\\n]*[^\\\\s", "(?:\\\\s*[^\\\\s"],
-    ['連結文字不必接網址', "const LINK_TEXT = /\\[([^\\]\\n]*)\\](?=\\()/g;", "const LINK_TEXT = /\\[([^\\]\\n]*)\\]/g;"],
+    ['連結文字不必接網址或定義', "if (masked[m.index + m[0].length] === '(') return true;", 'return true;'],
+    ['行內連結的文字也算', "if (masked[m.index + m[0].length] === '(') return true;", 'if (false) return true;'],
+    ['參考式連結的文字也算', 'return refs.has(refLabel(src.slice(a, b)));', 'return false;'],
+    ['參考式連結的標籤從替換過的文字取', 'refLabel(src.slice(a, b))', 'refLabel(masked.slice(a, b))'],
+    ['[文字][] 的標籤用空字串', 'm[2] ? m.indices[2] : m.indices[1]', 'm[2] !== undefined ? m.indices[2] : m.indices[1]'],
+    ['[X][Y](網址) 的 [X] 也當連結文字', '\\](?!\\())?/dg', '\\])?/dg'],
+    ['\\[x] 也當連結', 'masked[m.index - 1] === \'\\\\\' || ', ''],
+    ['程式碼裡的 [x] 也當連結', ' || code.some(([a, b]) => m.index < b && m.index + m[0].length > a)', ''],
+    ['程式碼的反引號不必一樣長', '/(?<!`)(`+)(?!`)[^]*?(?<!`)\\1(?!`)/g', '/(`+)[^]*?`/g'],
+    ['程式碼可以跨空行', ".filter((c) => !/\\n[ \\t]*\\n/.test(c[0]))", ''],
+    ['程式碼不能跨行', '(?!`)[^]*?(?<!`)', '(?!`)[^\\n]*?(?<!`)'],
+    ['只看 [x] 的開頭在不在程式碼裡', 'm.index < b && m.index + m[0].length > a', 'm.index > a && m.index < b'],
+    ['參考式連結的文字裡可以有 [', " || m[1].includes('[')", ''],
     ['西元年寫法的間隔放寬到 9 個字', '{0,6}?[^', '{0,9}?[^'],
     ['西元年寫法的間隔收緊到 5 個字', '{0,6}?[^', '{0,5}?[^'],
     ['西元年寫法少了審查', "|備審|審查|選才|", "|備審|選才|"],
     ['時程日期放寬到 9 月', 'const SCHEDULE_LAST_MONTH = 8;', 'const SCHEDULE_LAST_MONTH = 9;'],
     ['時程日期收緊到 7 月', 'const SCHEDULE_LAST_MONTH = 8;', 'const SCHEDULE_LAST_MONTH = 7;'],
     ['時程日期不看同一行的字', ' && SCHEDULE_WORD.test(lines[line - 1])', ''],
-    ['時程日期也看連結文字', 'const body = masked.replace(LINK_TEXT,', 'const body = masked.replace(/$^/g,'],
+    ['時程日期也看連結文字', 'const body = blankLinks(masked, src);', 'const body = masked;'],
     ['標題寫「115 學年度」也列', '(?:年|學年度|[至到', '(?:年|[至到'],
     ['標題只看民國年', ' || western.test(m[1])', ''],
     ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
+];
+// markdown-refs.lib.mjs 的突變，也用 admission-cycle.test.mjs 抓。
+const refsMutations = [
+    ['標籤分大小寫', 'replace(/\\s+/g, \' \').toLowerCase()', 'replace(/\\s+/g, \' \')'],
+    ['標籤不合併空白', 's.trim().replace(/\\s+/g, \' \').toLowerCase()', 's.trim().toLowerCase()'],
+    ['標籤不去頭尾空白', 's.trim().replace(/\\s+/g, \' \').toLowerCase()', 's.replace(/\\s+/g, \' \').toLowerCase()'],
+    ['定義前面的縮排不認', 'const DEFINITION = /^ {0,3}\\[', 'const DEFINITION = /^\\['],
+    ['註腳也當成一般的定義', '\\[(?!\\^)((?:', '\\[((?:'],
+    ['標題後面可以有字', '))?[ \\t]*$/;', '))?.*$/;'],
+    ['沒有網址也算定義', '[^\\s\\0-\\x1f\\x7f]*)(?:[ \\t]+', '[^\\s\\0-\\x1f\\x7f]*)?(?:[ \\t]+'],
+    ['網址不認角括號', ']:[ \\t]*(<[^<>\\n]*>|', ']:[ \\t]*(\\uFFFF|'],
+    ['網址可以有控制字元', '[^\\s<\\0-\\x1f\\x7f][^\\s\\0-\\x1f\\x7f]*', '[^\\s<]\\S*'],
+    ['網址的括號不必成對', ' && balanced(m[2])', ''],
+    ['段落中間也算定義', 'canStart && (m = line.match(DEFINITION))', '(m = line.match(DEFINITION))'],
+    ['標題下面不能接定義', 'canStart = ATX.test(line);', 'canStart = false;'],
+    ['setext 標題下面也能接定義', 'canStart = ATX.test(line);', 'canStart = ATX.test(line) || /^ {0,3}=+[ \\t]*$/.test(line);'],
+    ['圍欄結束的下一行不能接定義', 'fence = null; canStart = true;', 'fence = null; canStart = false;'],
+    ['HTML 區塊結束的下一行也能接定義', 'canStart = html === \'blank\';', 'canStart = true;'],
+    ['frontmatter 裡的也算定義', 'let pos = src.match(/^---\\n[^]*?\\n---(?=\\n|$)/)?.[0].length ?? 0;', 'let pos = 0;'],
+    ['程式碼裡的也算定義', '            fence = m[1];', '            fence = null;'],
+    ['結束的圍欄可以比較短', 'm[1].length >= fence.length', 'true'],
+    ['結束的圍欄可以換字元', 'm[1][0] === fence[0] && ', ''],
+    ['pre、script 這類區塊到空行為止', '[/^ {0,3}<(?:pre|script|style|textarea)(?:[\\s>]|$)/i, /<\\/(?:pre|script|style|textarea)>/i],', '[/^ {0,3}<(?:pre|script|style|textarea)(?:[\\s>]|$)/i, null],'],
+    ['<? 區塊不認', '[/^ {0,3}<\\?/, /\\?>/],', ''],
+    ['CDATA 區塊不認', '[/^ {0,3}<!\\[CDATA\\[/, /\\]\\]>/],', ''],
+    ['HTML 註解只到空行', '[/^ {0,3}<!--/, /-->/],', '[/^ {0,3}<!--/, null],'],
+    ['HTML 區塊裡的也算定義', '            html = m[1] && m[1].test(line.replace(m[0], \'\')) ? null : m[1] ?? \'blank\';', '            html = null;'],
 ];
 // 每一條都是曾經讓單元測試照樣通過的改法。
 const workflowMutations = [
@@ -405,6 +444,7 @@ for (const c of cases) {
 console.log('\nB. 改壞判斷（admission-cycle.test.mjs 必須失敗）：');
 reset();
 for (const m of libMutations) mutate('scripts/admission-cycle.lib.mjs', m, passes, '改壞之後單元測試還是通過');
+for (const m of refsMutations) mutate('scripts/markdown-refs.lib.mjs', m, passes, '改壞之後單元測試還是通過');
 
 console.log('\nC. 改壞串接（A 段至少一項必須失敗）：');
 for (const m of cliMutations) mutate('scripts/check-admission-cycle.mjs', m, () => cases.every((c) => problem(c) === null), 'A 段全部照樣符合');
@@ -415,6 +455,6 @@ for (const m of workflowMutations) mutate('.github/workflows/admission-cycle-che
 const after = baseline();
 console.log(after ? '\n還原後仍是綠燈。' : '\n還原後不是綠燈，沙盒沒有復原乾淨。');
 rmSync(WORK, { recursive: true, force: true });
-const total = cases.length + libMutations.length + cliMutations.length + workflowMutations.length;
+const total = cases.length + libMutations.length + refsMutations.length + cliMutations.length + workflowMutations.length;
 console.log(`故障注入：${pass} 項符合，${fail} 項不符（共 ${total} 項）`);
 process.exit(fail === 0 && after ? 0 : 1);
