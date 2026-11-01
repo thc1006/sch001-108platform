@@ -1089,6 +1089,38 @@ test('data：線上賽與決賽固定一地的競賽，region 照 _readme 的規
     assert.equal(find("World Scholar's Cup").region, '美國');
 });
 
+// 卡片把 eligibility 和 registrationNote 並排顯示。標「公開報名」又寫學生不能自己報名，同一張卡自相矛盾。
+// 只抓描述與 registrationNote 裡明寫的字眼。Purple Comet 這類要由成年人（老師或家長都可以）替隊伍報名的
+// 團體賽仍是公開報名，描述不要寫成「學生無法自行報名」。
+test('data：寫明學生不能自己報名的競賽，eligibility 不標公開報名', () => {
+    const SCHOOL_ONLY = new RegExp([
+        '無個人報名', '不(接受|受理|開放)個人報名', '(無法|不能|不得)(個人|自行|自己)報名',
+        '須由(就讀)?學校.{0,6}報名', '由學校統一報名', '以學校為單位', '學校驗證碼', '僅受理學校',
+        'not possible for students to individually register',
+        '[Ss]tudents (are not allowed to|may not|cannot) (do the application|register)',
+    ].join('|'));
+    const bad = DATA.competitions
+        .filter((c) => c.eligibility === '公開報名' && SCHOOL_ONLY.test(`${c.description} ${c.registrationNote ?? ''}`))
+        .map((c) => c.title);
+    assert.deepEqual(bad, []);
+
+    // 規則頁寫「Any adult aged 21 years or older may serve as a team supervisor」，家長也能建隊
+    assert.equal(find('Purple Comet').eligibility, '公開報名');
+    // 台灣承辦單位接受個別報名：九九文教基金會（AMC 10/12）、學習成就測驗協會（澳洲 AMC）
+    assert.equal(find('美國數學競賽 (AMC 10/12)').eligibility, '公開報名');
+    assert.equal(find('國際數學競賽—澳洲數學競賽').eligibility, '公開報名');
+    // CEMC：「It is not possible for students to individually register for a contest」
+    assert.equal(find('加拿大計算機競賽 (CCC)').eligibility, '經學校報名');
+    assert.equal(find('滑鐵盧數學競賽').eligibility, '經學校報名');
+    // 推薦單位是學校與「已向政府立案之社會團體」
+    assert.equal(find('總統教育獎').eligibility, '經學校報名');
+    // HiMCM「The advisor must complete the registration process for each team」；TISF 由學校統一寄出送展清冊；
+    // 閱讀心得要學校驗證碼、由學校篩選；語文競賽由學校報名初賽；歌謠比賽報名表由學校蓋印信送件
+    for (const needle of ['HiMCM', '台灣國際科學展覽會', '閱讀心得寫作比賽', '全國語文競賽', '歌謠比賽']) {
+        assert.equal(find(needle).eligibility, '經學校報名', needle);
+    }
+});
+
 // Jamboree 官網逐字「13–16 NOVEMBER, 2026」，api.igem.org 的 startDate 也是 2026-11-13。
 test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致', () => {
     const igem = find('iGEM');
