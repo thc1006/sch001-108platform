@@ -749,18 +749,20 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     .comp-elig { font-size: .875rem; color: var(--muted); margin: 0 0 .7rem; font-weight: 600; }
     .comp-card__desc { font-size: .875rem; line-height: 1.65; color: #475569; margin: 0; }
+    /* 只放大文字時，截止日和「前往官網」放不下一行就讓按鈕換行，不超出卡片。截止日用 flex: 1 1 0，
+       一般字級下照舊縮窄截止日、按鈕留在右邊。 */
     .comp-card__foot {
-      display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem;
       padding: .9rem 1.4rem; border-top: 1px solid var(--line); background: #fafbfc;
     }
-    .comp-deadline { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+    .comp-deadline { display: flex; flex-direction: column; gap: .1rem; flex: 1 1 0; }
     .comp-deadline__label { font-size: .875rem; color: var(--muted); font-weight: 600; }
     .comp-deadline__value {
       font-family: 'Space Mono', ui-monospace, monospace; font-size: .92rem; font-weight: 700; color: var(--ink);
       font-variant-numeric: tabular-nums;
     }
     .comp-cta {
-      display: inline-flex; align-items: center; gap: .35rem; flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: .35rem;
       padding: .55rem .95rem; border-radius: .6rem; background: var(--ink); color: #fff;
       font-size: .84rem; font-weight: 700; text-decoration: none; transition: background .2s, transform .2s;
     }

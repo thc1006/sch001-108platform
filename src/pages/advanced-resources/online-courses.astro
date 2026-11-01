@@ -145,10 +145,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     const titleLang = /[\u3000-\u9fff]/.test(course.title) ? '' : ' lang="en"';
                     card.innerHTML = `
                         <img src="${encodeURI(course.thumbnail_url)}" alt="" loading="lazy" class="w-full h-48 object-contain bg-gray-100 p-2" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e5e7eb/4b5563?text=Image+Not+Found';">
-                        <div class="p-6 flex-grow flex flex-col">
+                        <div class="p-6 flex-grow flex flex-col wrap-break-word">
                             <div class="flex-grow">
                                 <div class="flex flex-wrap justify-between items-center gap-y-1 mb-2">
-                                    <p class="grow basis-0 text-sm font-bold text-purple-600">${escapeHtml(course.platform)} - ${escapeHtml(course.provider)}</p>
+                                    <p class="grow basis-32 wrap-anywhere text-sm font-bold text-purple-600">${escapeHtml(course.platform)} - ${escapeHtml(course.provider)}</p>
                                     <div class="flex gap-2">
                                         <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.language === '中文' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}">${escapeHtml(course.language)}</span>
                                         <span class="text-xs font-semibold px-2 py-1 rounded-full ${course.difficulty === '入門' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(course.difficulty)}</span>
