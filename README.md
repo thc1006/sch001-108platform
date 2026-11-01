@@ -43,14 +43,14 @@
 
 生涯探索區首頁可以請 AI 依興趣推薦學群。每次只看當下這一題，不會參考先前的對話。
 
-* [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政十個學群。每個學群分六個主題：科系風向標、特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
+* [十大學群探索](https://thc1006.github.io/sch001-108platform/career-exploration/clusters/)：工程、資訊、管理、財經、社會與心理、大眾傳播、設計、生命科學、醫藥衛生、法政。每個學群分六個主題：科系風向標、特質與能力、多元表現亮點策略、自主學習與探究專題方向、常見迷思破解、申請備審與面試要點。
 * [學長姐真心話](https://thc1006.github.io/sch001-108platform/career-exploration/senior-interviews.html)：學長姐的升學經驗。人物都用化名，內容綜合升學制度、公開數據和經驗分享寫成。
 * [核心素養對照表](https://thc1006.github.io/sch001-108platform/career-exploration/competency-map.html)：108 課綱三面九項素養的說明，可以依學群篩選。貼上活動經驗，AI 會找出其中對應的素養。
 
 ### [進階資源](https://thc1006.github.io/sch001-108platform/advanced-resources/)
 
 * [線上課程](https://thc1006.github.io/sch001-108platform/advanced-resources/online-courses.html)：Coursera、edX、Khan Academy、freeCodeCamp 等平台上適合高中生的課程。
-* [開放教育資源](https://thc1006.github.io/sch001-108platform/advanced-resources/open-education.html)：AI 實驗室、開放科學、開放課程和國際科學社群的免費資源。
+* [開放教育資源](https://thc1006.github.io/sch001-108platform/advanced-resources/open-education.html)：AI 實驗室、開放科學、開放課程和國際科學社群公開的學習資源。
 * [國內外競賽資訊](https://thc1006.github.io/sch001-108platform/advanced-resources/competitions.html)：高中生可以參加的競賽，標出開放報名和即將截止的項目，可以依領域、地區、級別、形式篩選。
 * [主題書單推薦](https://thc1006.github.io/sch001-108platform/advanced-resources/reading-list.html)：十二個主題的書單，附推薦理由。
 
