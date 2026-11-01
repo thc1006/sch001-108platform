@@ -1827,7 +1827,7 @@
     },
     {
       "title": "國際數學競賽—澳洲數學競賽 (AMC, Australia)",
-      "organizer": "Australian Mathematics Trust",
+      "organizer": "Australian Maths Trust（台灣由學習成就測驗協會、九九文教基金會承辦）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
@@ -1837,11 +1837,11 @@
       "deadline": "",
       "eventStartsAt": "2027-08-03",
       "eventEndsAt": "2027-08-05",
-      "registrationNote": "報名開放日未公布 · 線上 7/30、紙本 6/25 截止",
+      "registrationNote": "台灣約 5 月下旬開放報名 · 2027 屆未公布",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "原 www.amt.edu.au 首頁查不到任何日期，賽事頁為 amt.edu.au/amc。",
-      "url": "https://amt.edu.au/amc",
-      "description": "由 Australian Maths Trust 主辦的中小學數學競賽，由學校報名、學生無法個人報名，可選線上或紙本作答。2027 屆考試 8 月 3 至 5 日；紙本報名截止日澳紐為 7/2，其他國家（含台灣）為 6/25（「Friday 25 June 2027 – International」），線上報名截止 7/30（「Friday 30 July 2027」）；費用為「AUD $9.30 per student」。官網寫「From 2027, the AMC Early Primary division will be part of our standard AMC offerings」。2026 屆考試 8 月 4 至 6 日已結束。"
+      "sourceNote": "原 www.amt.edu.au 首頁查不到任何日期，賽事頁為 amt.edu.au/amc，2027 屆的英文引文出自這一頁。AMT 只受理學校、自學家庭與補習機構註冊（https://amt.edu.au/competitions：「Only teachers and staff at a verified school, home school or coaching clinic can register students in our competitions」），台灣考生要向承辦單位報名，所以 url 指向學習成就測驗協會的澳洲 AMC 頁。",
+      "url": "https://www.gemt.org.tw/amc/",
+      "description": "由 Australian Maths Trust（AMT）主辦的中小學數學競賽。台灣試務自 2025 年起由學習成就測驗協會與九九文教基金會共同承辦，分團體報名與個別報名，個別報名一律在網路上報名，在台灣各考區紙本作答。2026 年報名 5/29 至 6/22、每人 750 元，8/4 晚上考試，已結束；承辦單位寫每年約五月下旬開放報名，2027 年的日期還沒公布。AMT 官網的 2027 屆考試是 8 月 3 至 5 日，直接向 AMT 報名的學校，紙本報名截止日澳紐為 7/2、其他國家為「Friday 25 June 2027 – International」，線上報名截止「Friday 30 July 2027」，費用「AUD $9.30 per student」；官網也寫「From 2027, the AMC Early Primary division will be part of our standard AMC offerings」。"
     },
     {
       "title": "普通型高級中等學校數理及資訊學科能力競賽",
