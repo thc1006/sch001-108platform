@@ -589,13 +589,24 @@ test.describe('只放大文字到 200%，卡片裡的字不被切掉', () => {
         ['advanced-resources/online-courses.html', '.course-card'],
         ['advanced-resources/reading-list.html', '.book-card'],
     ]) {
-        test(rel, async ({ page }) => {
+        for (const width of [1280, 320]) test(`${rel} ${width}px`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 800 });
             await page.emulateMedia({ reducedMotion: 'reduce' });
             await page.goto(P(rel), { waitUntil: 'networkidle' });
             await page.locator(card).first().waitFor();
             await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
             const clipped = await page.locator(card).evaluateAll((cards) => cards.flatMap((c) => {
-                const out = c.scrollWidth > c.clientWidth + 1 ? [`${c.querySelector('h2, h3').textContent.trim()}：寬 ${c.scrollWidth} > ${c.clientWidth}`] : [];
+                const title = c.querySelector('h2, h3').textContent.trim();
+                const out = c.scrollWidth > c.clientWidth + 1 ? [`${title}：寬 ${c.scrollWidth} > ${c.clientWidth}`] : [];
+                // 卡片裡任何一段字超出卡片右緣，也算被切掉。
+                const right = c.getBoundingClientRect().right;
+                const walker = document.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+                for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                    if (!n.textContent.trim() || n.parentElement.closest('.sr-only')) continue;
+                    const range = document.createRange();
+                    range.selectNodeContents(n);
+                    if ([...range.getClientRects()].some((r) => r.right > right + 1)) out.push(`${title}：「${n.textContent.trim().slice(0, 20)}」超出右緣`);
+                }
                 // 固定高度的標題，字多到超出就疊到下一段上。
                 for (const h of c.querySelectorAll('h2, h3')) if (h.scrollHeight > h.clientHeight + 1) out.push(`${h.textContent.trim()}：標題高 ${h.scrollHeight} > ${h.clientHeight}`);
                 return out;
