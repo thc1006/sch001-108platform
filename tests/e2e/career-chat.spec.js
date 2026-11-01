@@ -616,6 +616,23 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(log.locator('ion-icon:not([aria-hidden="true"])')).toHaveCount(0);
     });
 
+    test('對話視窗用 Shift+Tab 從輸入框移得到，有名稱，焦點看得到，可以用鍵盤捲動', async ({ page }) => {
+        const lines = Array.from({ length: 20 }, (_, i) => `第 ${i + 1} 行`).join('\n');
+        await installFakeGateway(page, { chunks: [ACCEPTED, done(lines)] });
+        await ask(page, '我喜歡電腦');
+        await expect(messages(page)).toHaveCount(3);
+
+        const chatWindow = page.getByRole('region', { name: '對話', exact: true });
+        await expect(page.locator('#chat-input')).toBeFocused();
+        await page.keyboard.press('Shift+Tab');
+        await expect(chatWindow).toBeFocused();
+        const outline = await chatWindow.evaluate((el) => ({ style: getComputedStyle(el).outlineStyle, width: parseFloat(getComputedStyle(el).outlineWidth) }));
+        expect(outline.style).not.toBe('none');
+        expect(outline.width).toBeGreaterThanOrEqual(2);
+        await page.keyboard.press('Home');
+        await expect.poll(() => chatWindow.evaluate((el) => el.scrollTop)).toBe(0);
+    });
+
     test('送出時捲到底；學生往上捲去看舊訊息時，新的片段與完成的回答不把他拉回底部', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
         const chatWindow = page.locator('#chat-window');
