@@ -51,6 +51,19 @@ for (const [width, open] of [[390, false], [390, true], [767, true], [768, false
         const shown = open || width >= 768;
         await expect(nav.getByRole('link')).toHaveText(shown ? ITEMS : ITEMS.slice(0, 1));
         if (shown) await expect(nav.getByRole('link', { name: '關於我們' })).toHaveAttribute('aria-current', 'page');
-        if (width < 768) await expect(nav.getByRole('button', { name: '開啟導覽選單' })).toHaveAttribute('aria-expanded', String(open));
+        if (width < 768) await expect(nav.getByRole('button', { name: '主選單', exact: true })).toHaveAttribute('aria-expanded', String(open));
     });
 }
+
+// 漢堡鈕的名稱不隨開合改變，狀態只由 aria-expanded 表示；圖示不在無障礙樹上。
+test('漢堡鈕的名稱固定是「主選單」，開合只改 aria-expanded；圖示對螢幕閱讀器隱藏', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto(`${BASE}/sch001-108platform/about.html`);
+    const toggle = page.locator('#nav-toggle');
+    await expect(toggle.locator('svg')).toHaveAttribute('aria-hidden', 'true');
+    for (const expanded of ['false', 'true', 'false']) {
+        await expect(toggle).toHaveAttribute('aria-expanded', expanded);
+        await expect(toggle).toHaveAccessibleName('主選單');
+        await toggle.click();
+    }
+});
