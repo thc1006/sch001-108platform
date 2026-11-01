@@ -148,7 +148,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             if (generateIdeaBtn.getAttribute('aria-disabled') === 'true') return;
             const interests = ideaInput.value.trim();
             if (!interests) {
-                showMessage('請先輸入你的興趣關鍵字！');
+                showMessage('請先輸入你的興趣關鍵字。');
                 return;
             }
 

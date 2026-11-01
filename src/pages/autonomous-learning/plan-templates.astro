@@ -342,7 +342,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             if (generatePlanBtn.getAttribute('aria-disabled') === 'true') return;
             const topic = planInput.value.trim();
             if (!topic) {
-                showMessage('請先輸入你的自主學習主題！');
+                showMessage('請先輸入你的自主學習主題。');
                 return;
             }
 

@@ -132,7 +132,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
 
         await page.fill('#coachInput', '');
         await page.click('#generateCoachBtn');
-        await expect(page.locator('#coachResult')).toHaveText('請先輸入你的初步想法！');
+        await expect(page.locator('#coachResult')).toHaveText('請先輸入你的初步想法。');
         await expect(page.locator('#coachResult h3')).toHaveCount(0);
         expect(await page.evaluate(() => window.__calls.length)).toBe(1); // 只有第一次
     });
@@ -229,11 +229,11 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await watchStatus(page, '#coachStatus');
 
         await page.click('#generateCoachBtn');
-        await expect(result).toHaveText('請先輸入你的初步想法！');
-        await expect(status).toHaveText('請先輸入你的初步想法！');
+        await expect(result).toHaveText('請先輸入你的初步想法。');
+        await expect(status).toHaveText('請先輸入你的初步想法。');
         // 同一句再出現一次，也要再唸一次
         await page.click('#generateCoachBtn');
-        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的初步想法！', '請先輸入你的初步想法！']);
+        await expect.poll(() => statusWrites(page)).toEqual(['請先輸入你的初步想法。', '請先輸入你的初步想法。']);
 
         await installFakeGateway(page, { chunks: [sse('accepted', { requestId: 'req-1', task: 'starter-pack' }), sse('done', { result: RESULT, rounds: 1, continuations: [], usage: {}, elapsedMs: 1000 })] });
         await page.fill('#coachInput', '貓咪');
@@ -248,7 +248,7 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await page.locator('#coachProgress').getByRole('button', { name: '取消' }).click();
         await expect(result).toHaveText('已取消。');
         await expect(status).toHaveText('已取消。');
-        expect(await statusWrites(page)).toEqual(['請先輸入你的初步想法！', '請先輸入你的初步想法！', '已產生學習啟動包，共 3 個探索問題。', '已取消。']);
+        expect(await statusWrites(page)).toEqual(['請先輸入你的初步想法。', '請先輸入你的初步想法。', '已產生學習啟動包，共 3 個探索問題。', '已取消。']);
     });
 
     // 進度區塊在 live region 裡的話，取消按鈕與每秒更新的秒數都可能被唸出來。
