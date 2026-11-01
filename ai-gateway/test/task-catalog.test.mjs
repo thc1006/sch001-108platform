@@ -30,6 +30,38 @@ test('每個任務都組得出訊息：學生的資料只在 user 訊息、包�
     }
 });
 
+// 語氣詞只能出現在否定的指令裡（「不寫……鼓勵」）。以逗號、分號、句號分句，分句要以否定的動詞開頭，
+// 後面不能再有「要」「請」這類要求：「請不時鼓勵」「不只要清楚也要鼓勵」都算要求語氣。
+// 只查全形驚嘆號：學群資料的出處 ColleGo! 帶半形的。
+const TONE_WORDS = /親切|活潑|鼓勵|溫暖|熱情|加油|！/;
+const NEGATED = /^\s*(?:不寫|不要|不用|避免|勿|別)(?:(?!要|請|應|需)[^])*$/;
+function toneOutsideNegation(text) {
+    return text.split(/[，；。\n]/).filter((clause) => TONE_WORDS.test(clause) && !NEGATED.test(clause));
+}
+
+test('toneOutsideNegation：要求語氣的句子抓得到，否定的指令不算', () => {
+    for (const text of [
+        '請用親切、鼓勵的語氣回答學生的問題。', '請用活潑、鼓勵的語氣，並以 Markdown 的星號列表格式回傳。', '語氣友善、鼓勵探索。',
+        '結尾加一句加油', '回答要溫暖', '你做得很好！', '請不時鼓勵學生', '不只要清楚，也要鼓勵學生', '不只要清楚也要鼓勵學生',
+        '不要只寫缺點也要鼓勵學生',
+    ]) {
+        assert.equal(toneOutsideNegation(text).length, 1, text);
+    }
+    for (const text of ['不寫客套話、空泛的稱讚與鼓勵，不用驚嘆號和表情符號。', '避免熱情的口號。', '以上取自 ColleGo! 的學群頁']) {
+        assert.deepEqual(toneOutsideNegation(text), [], text);
+    }
+});
+
+test('每個任務的 system 訊息都要求語氣平實，沒有要求親切、鼓勵這類語氣', () => {
+    for (const task of catalog.values()) {
+        const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
+        const [system] = buildMessages(task, validateInput(task, input));
+        assert.match(system.content, /語氣平實/, task.id);
+        assert.match(system.content, /不用驚嘆號和表情符號/, task.id);
+        assert.deepEqual(toneOutsideNegation(system.content), [], task.id);
+    }
+});
+
 // 依據見 task-catalog.mjs 的 TASK_DEFINITIONS。
 test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
     for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
