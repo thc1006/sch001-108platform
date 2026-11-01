@@ -235,6 +235,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const topic = pathInput.value.trim();
             if (!topic) {
                 showMessage('請先輸入你想學習的主題。');
+                // 快取裡的舊版 platform-ai.js 沒有 markInvalid。
+                if (typeof PlatformAI !== 'undefined' && PlatformAI.markInvalid) PlatformAI.markInvalid(pathInput, pathResult.lastElementChild);
                 return;
             }
 
