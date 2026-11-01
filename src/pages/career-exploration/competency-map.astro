@@ -23,7 +23,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         <section class="mb-12 p-4 bg-white rounded-xl shadow-md sticky top-16 z-30" data-autohide-filters>
             <div class="flex flex-col md:flex-row items-center gap-4">
                 <label for="cluster-filter" class="font-bold text-gray-700 shrink-0"><i data-feather="filter" class="inline-block -mt-1"></i> 依學群篩選：</label>
-                <select id="cluster-filter" class="w-full bg-gray-100 border-2 border-gray-200 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-hidden focus:bg-white focus:border-indigo-500">
+                <select id="cluster-filter" class="w-full bg-gray-100 border-2 border-gray-500 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-hidden focus:bg-white focus:border-indigo-500">
                     <option value="all">顯示所有</option>
                     <!-- 學群選項由 renderCompetencies() 動態填充 -->
                     </select>
@@ -43,7 +43,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                  </h2>
                  <p class="text-gray-600 mb-6">貼上你的活動經驗，AI 會從九項核心素養挑出 2 到 3 項，每項附一句寫作建議。</p>
                  <div class="mb-4">
-                     <textarea id="ai-input" maxlength="1000" aria-label="你的活動經驗" aria-describedby="ai-input-limit" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition" rows="4" placeholder="例如：我參加了學校的科展，從找資料、設計實驗到分析數據都自己來。過程中失敗了三次，但也學會了怎麼解決問題，最後有拿到佳作。"></textarea>
+                     <textarea id="ai-input" maxlength="1000" aria-label="你的活動經驗" aria-describedby="ai-input-limit" class="w-full px-4 py-3 border-2 border-gray-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition" rows="4" placeholder="例如：我參加了學校的科展，從找資料、設計實驗到分析數據都自己來。過程中失敗了三次，但也學會了怎麼解決問題，最後有拿到佳作。"></textarea>
                      <p id="ai-input-limit" class="mt-1 text-sm text-gray-500">最多 1000 字</p>
                  </div>
                  <button id="ai-generate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2">

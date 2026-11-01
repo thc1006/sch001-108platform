@@ -1,6 +1,8 @@
 // 低視能與鍵盤使用者：焦點不被 sticky header 或篩選面板整個蓋住、面板放得進視窗、文字對比、
 // 減少動態偏好、強制色彩模式下的焦點、矮視窗的手機選單。
 const { test, expect } = require('@playwright/test');
+const { readdirSync, readFileSync } = require('node:fs');
+const path = require('node:path');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const P = (p) => `${BASE}/sch001-108platform/${p}`;
@@ -519,5 +521,63 @@ for (const viewport of [{ width: 390, height: 260 }, { width: 320, height: 256 }
             }
         }
         expect(await page.evaluate(() => scrollY)).toBe(y);
+    });
+}
+
+// 輸入框和下拉選單的外框（或底色）和旁邊的底色至少 3:1，看得出哪裡可以輸入（WCAG 1.4.11）。
+// 只開 HTML 裡有表單元件的頁面。
+const DIST = path.resolve(__dirname, '../../.link-root/sch001-108platform');
+const walk = (dir, prefix = '') =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(path.join(dir, e.name), `${prefix}${e.name}/`) : e.name.endsWith('.html') ? [`${prefix}${e.name}`] : [],
+    );
+const FORM_PAGES = walk(DIST).filter((p) => /<(input|select|textarea)\b/.test(readFileSync(path.join(DIST, p), 'utf8')));
+
+/** fieldBoundaries 回傳每個看得到的文字輸入框、下拉選單、多行輸入框，外框與底色對外面底色的對比。在頁面裡執行。 */
+function fieldBoundaries() {
+    const cv = document.createElement('canvas').getContext('2d');
+    const rgba = (c) => {
+        cv.clearRect(0, 0, 1, 1);
+        cv.fillStyle = 'rgba(0, 0, 0, 0)';
+        cv.fillStyle = c;
+        cv.fillRect(0, 0, 1, 1);
+        const [r, g, b, a] = cv.getImageData(0, 0, 1, 1).data;
+        return [r, g, b, a / 255];
+    };
+    const over = (top, bottom) => [0, 1, 2].map((i) => top[i] * top[3] + bottom[i] * (1 - top[3])).concat(1);
+    const lum = (c) => {
+        const [x, y, z] = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+        return 0.2126 * x + 0.7152 * y + 0.0722 * z;
+    };
+    const ratio = (a, b) => {
+        const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+        return Math.round(((x + 0.05) / (y + 0.05)) * 100) / 100;
+    };
+    // 外面的底色：父元素往上第一個不透明的底色，中間半透明的一層層疊上去。
+    const backdrop = (el) => {
+        const layers = [];
+        for (let n = el; n; n = n.parentElement) {
+            const c = rgba(getComputedStyle(n).backgroundColor);
+            if (c[3] > 0) layers.push(c);
+            if (c[3] === 1) break;
+        }
+        return layers.reverse().reduce((under, c) => over(c, under), [255, 255, 255, 1]);
+    };
+    const fields = document.querySelectorAll('input:not([type=hidden], [type=checkbox], [type=radio]), select, textarea');
+    return [...fields].filter((el) => el.checkVisibility()).map((el) => {
+        const cs = getComputedStyle(el);
+        const outside = backdrop(el.parentElement);
+        const fill = ratio(over(rgba(cs.backgroundColor), outside), outside);
+        const border = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== 'none' ? ratio(over(rgba(cs.borderTopColor), outside), outside) : 0;
+        return { field: el.id || el.name, fill, border };
+    });
+}
+
+for (const p of FORM_PAGES) {
+    test(`${p}：輸入框與下拉選單的外框對旁邊至少 3:1`, async ({ page }) => {
+        await page.goto(P(p), { waitUntil: 'networkidle' });
+        const fields = await page.evaluate(fieldBoundaries);
+        expect(fields.length).toBeGreaterThan(0);
+        expect(fields.filter((f) => Math.max(f.fill, f.border) < 3)).toEqual([]);
     });
 }
