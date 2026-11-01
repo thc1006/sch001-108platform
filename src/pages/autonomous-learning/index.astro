@@ -226,19 +226,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 下一步提示
             const nextStep = document.createElement('p');
             nextStep.className = 'mt-4 text-sm';
-            nextStep.textContent = '接著可以到';
+            nextStep.textContent = '接著可以到「';
             const link1 = document.createElement('a');
             link1.href = 'topic-ideas.html';
             link1.className = 'font-semibold text-blue-600 hover:underline';
-            link1.textContent = '「主題靈感產生器」';
+            link1.textContent = '主題靈感產生器';
             nextStep.appendChild(link1);
-            nextStep.appendChild(document.createTextNode('或'));
+            nextStep.appendChild(document.createTextNode('」或「'));
             const link2 = document.createElement('a');
             link2.href = 'resource-map.html';
             link2.className = 'font-semibold text-blue-600 hover:underline';
-            link2.textContent = '「學習資源地圖」';
+            link2.textContent = '學習資源地圖';
             nextStep.appendChild(link2);
-            nextStep.appendChild(document.createTextNode('。'));
+            nextStep.appendChild(document.createTextNode('」。'));
 
             // 組裝所有元素
             container.appendChild(topicTitle);
