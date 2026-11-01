@@ -166,27 +166,27 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
 
-    test('沒有輸入（或只有空白）就按 → 顯示並唸出「請先輸入…」，焦點回到輸入框，不送出請求；同一句再出現也再唸', async ({ page }) => {
+    test('沒有輸入（或只有空白）就按 → 焦點留在按鈕上，輸入框標 aria-invalid、描述以提示開頭，「請先輸入…」唸一次，不送出請求；同一句再出現也再唸', async ({ page }) => {
         await installFakeGateway(page);
         await watchStatus(page, '#ai-status');
-        // 先移焦點、後寫 status：焦點移動時螢幕閱讀器會打斷正在唸的話，順序反過來提示就被截掉。
-        await page.evaluate(() => {
-            const status = document.getElementById('ai-status');
-            document.getElementById('ai-interest-input').addEventListener('focusin', () => window.__order.push('focus'));
-            new MutationObserver(() => { if (status.textContent) window.__order.push('status'); })
-                .observe(status, { childList: true, characterData: true, subtree: true });
-        });
         const hint = '請先輸入你的興趣或關心的議題。';
-        for (const value of ['', ' \n\t ']) {
-            await page.fill('#ai-interest-input', value);
-            await page.evaluate(() => { window.__order = []; });
-            await page.click('#ai-submit-btn');
-            await expect(page.locator('#ai-interest-input')).toBeFocused();
+        const input = page.locator('#ai-interest-input');
+        const button = page.locator('#ai-submit-btn');
+        for (const [i, value] of ['', ' \n\t '].entries()) {
+            await input.fill(value);
+            await button.focus();
+            await page.keyboard.press('Enter');
             await expect(page.locator('#ai-results')).toHaveText(hint);
             await expect(page.locator('#ai-status')).toHaveText(hint);
-            expect(await page.evaluate(() => window.__order)).toEqual(['focus', 'status']);
+            await expect(button).toBeFocused();
+            await expect(input).toHaveAttribute('aria-invalid', 'true');
+            const ids = (await input.getAttribute('aria-describedby')).split(' ');
+            expect(ids).toHaveLength(2);
+            expect(ids[1]).toBe('ai-char-count');
+            await expect(page.locator(`#${ids[0]}`)).toHaveText(hint);
+            // status 約 100 毫秒後才寫入，每按一次寫一次。
+            await expect.poll(() => statusWrites(page)).toEqual(Array(i + 1).fill(hint));
         }
-        expect(await statusWrites(page)).toEqual([hint, hint]);
         await expect(page.locator('#ai-workspace *')).toHaveCount(0);
         expect(await page.evaluate(() => window.__calls.length)).toBe(0);
     });
