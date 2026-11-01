@@ -265,6 +265,13 @@ test.describe('學長姐真心話', () => {
         await expect(dialog.locator('img')).toHaveAttribute('alt', '');
     });
 
+    test('對話框「關閉」按鈕裡的圖示不給螢幕閱讀器', async ({ page }) => {
+        await page.goto(`${ROOT}/career-exploration/senior-interviews.html`);
+        await page.locator('#interview-grid h2 > button').first().click();
+        const close = page.getByRole('dialog').getByRole('button', { name: '關閉' });
+        await expect(close.locator('svg')).toHaveAttribute('aria-hidden', 'true');
+    });
+
     test('?view= 直接開啟那篇訪談，關閉後焦點回到那張卡片，網址拿掉 view', async ({ page }) => {
         const res = await page.request.get(`${ROOT}/career-exploration/senior-interviews.json`);
         const { interviews } = await res.json();
