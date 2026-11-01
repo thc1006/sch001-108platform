@@ -454,7 +454,6 @@ const VERIFIED_ROUND2 = [
     // 國際科學奧林匹亞（各科）
     '國際數學奧林匹亞 (IMO)', '國際資訊奧林匹亞 (IOI)', '國際物理奧林匹亞 (IPhO)',
     '國際化學奧林匹亞 (IChO)', '國際生物奧林匹亞 (IBO)',
-    '國際初級天文奧林匹亞 (IOAA-jr)',
     '國際地球科學奧林匹亞 (IESO)',
     // 國際奧林匹亞與國家隊選拔
     'Regeneron ISEF 國際科技展覽會', '國際語言學奧林匹亞 (IOL)', '國際哲學奧林匹亞 (IPO)',
@@ -492,9 +491,9 @@ const VERIFIED_ROUND2 = [
     'GENIUS Olympiad 環境主題競賽', '丘成桐中學科學獎', 'Earth Science Week',
 ];
 
-test('data：第二輪逐筆查證的 95 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
-    // 原本 96 筆，IOAA 在 2026-11-01 因台灣沒有參加而移除，見下面的 REMOVED_LATER。
-    assert.equal(VERIFIED_ROUND2.length, 95, '清單長度變動代表有人動了查證範圍，請一併更新註解與 PR 說明');
+test('data：第二輪逐筆查證的 94 筆都必須留下查證日期（可更新，不可清掉或倒退）', () => {
+    // 原本 96 筆，IOAA 與 IOAA-jr 在 2026-11-01 因台灣沒有參加而移除，見下面的 REMOVED_LATER。
+    assert.equal(VERIFIED_ROUND2.length, 94, '清單長度變動代表有人動了查證範圍，請一併更新註解與 PR 說明');
     for (const needle of VERIFIED_ROUND2) assertVerified(needle);
 });
 
@@ -591,10 +590,15 @@ const REMOVED_LATER = [
         + 'Participating Countries 與 National Olympiads 頁都沒有台灣；'
         + 'FAQ：「If you are a student and want to participate in IOAA, you must approach your teachers and '
         + 'request them to form such a NOC」（2026-11-01 查證）'],
+    ['國際初級天文奧林匹亞 (IOAA-jr)',
+        'IOAA-Jr 2025 Regulations #1：「International Olympiad on Astronomy and Astrophysics - Junior (IOAA - Jr.) '
+        + 'is officially recognised as a daughter event of the International Olympiad on Astronomy and Astrophysics '
+        + '(IOAA). The statutes and regulations of IOAA will also be applicable for IOAA-Jr.」，台灣沒有 IOAA 的國家'
+        + '委員會；2026 年第 3 號通告的 25 個預報名國家也沒有台灣（2026-11-01 查證）'],
 ];
 
 test('data：第二輪之後移除的條目不得被加回來', () => {
-    assert.equal(REMOVED_LATER.length, 1);
+    assert.equal(REMOVED_LATER.length, 2);
     for (const [title, reason] of REMOVED_LATER) {
         assert.deepEqual(DATA.competitions.filter((c) => c.title === title).map((c) => c.title), [], `「${title}」已移除。理由：${reason}`);
     }
@@ -972,14 +976,6 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.equal(icho.eventStartsAt, '2026-07-10');
     assert.equal(icho.eventEndsAt, '2026-07-19');
     assert.match(icho.description, /2027 July 19-28, Chinese Taipei/, '2027 由我國主辦，是對台灣學生最重要的資訊');
-
-    // Junior IOAA 官網逐字：「an annual competition for junior high school students under the age of 16」，
-    // 第 5 屆「between the 1st and 8th November 2026 in Ubon Ratchathani, Thailand」
-    const ioaaJr = find('國際初級天文奧林匹亞');
-    assert.equal(ioaaJr.eventStartsAt, '2026-11-01');
-    assert.equal(ioaaJr.eventEndsAt, '2026-11-08');
-    assert.match(ioaaJr.description, /under the age of 16/);
-    assert.match(ioaaJr.url, /\/junior-ioaa\//, 'IOAA-jr 是獨立賽事，應指向 Junior IOAA 專頁');
 
     // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」、
     // 2027「The 68th IMO ... Budapest, Hungary (July 16-26, 2027)」
