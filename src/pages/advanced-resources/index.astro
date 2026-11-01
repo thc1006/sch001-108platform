@@ -110,6 +110,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    /* 列印不印背景，和 global.css 的 .gradient-text 一樣改回實色。 */
+    @media print {
+      .gradient-text-advanced { -webkit-text-fill-color: currentColor; background: none; }
+    }
     .resource-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
