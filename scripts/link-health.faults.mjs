@@ -6,7 +6,7 @@
  *
  *   A. 政策檔的每一條規則 → check-link-policy.mjs 必須以非零碼結束
  *   B. SSRF 防護、讀 body、JS 轉址與無法判定的分組 → link-health.test.mjs 必須失敗
- *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗
+ *   D. 接管偵測的每一段   → hijack-signals.test.mjs 必須失敗；取 <title> 之前拿掉的部分另外看 missing-titles、soft404 的測試
  *   C. 裸網域擷取的每一條  → bare-domains.test.mjs 必須失敗
  *   E. 判定、通知與報告內容 → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
  *   F. buildReport 的組裝   → link-health.test.mjs 或 hijack-signals.test.mjs 必須失敗
@@ -705,8 +705,8 @@ const hijackMutations = [
         name: '長度上限寫回正則量詞（過長的 title 會被整條丟掉而不是截斷）',
         apply: (s) =>
             s.replace(
-                'const t = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);',
-                'const t = html.match(/<title[^>]*>([\\s\\S]{0,300}?)<\\/title>/i);',
+                '/^<title[^>]*>([\\s\\S]*?)<\\/title',
+                '/^<title[^>]*>([\\s\\S]{0,300}?)<\\/title',
             ),
     },
     {
@@ -1393,6 +1393,10 @@ const soft404Mutations = [
         apply: (s) => s.replace('if (redirected(r) && ((ERROR_PATH.test(decode(fu.pathname))', 'if (((ERROR_PATH.test(decode(fu.pathname))'),
     },
     {
+        name: 'pageFacts 的 h1、canonical 直接看原文',
+        apply: (s) => s.replace('    const markup = pageMarkup(html);\n', '    const markup = html;\n'),
+    },
+    {
         name: '第 3 條不排除落點就是 canonical',
         apply: (s) => s.replace(' && dirPath(fu.pathname) !== dirPath(new URL(f.canonical).pathname)) {', ') {'),
     },
@@ -1831,13 +1835,7 @@ const hostJudgeMutations = [
 
 // missingTitles 的判定、重讀與隨機路徑。標題讀錯會把好網址判成失效，重讀或隨機路徑改壞時名單過期也看不出來。
 const titleMutations = [
-    { name: 'pageTitle 不跳過 script、svg 裡的 <title>', apply: (s) => s.replace("const html = r.bodyHead.replace(SKIP, ' ');", 'const html = r.bodyHead;') },
-    { name: 'pageTitle 不跳過 style', apply: (s) => s.replace('|<(script|style|svg)(?=', '|<(script|svg)(?=') },
-    { name: 'SKIP 把 <svg-icon> 當成 svg', apply: (s) => s.replace('|<(script|style|svg)(?=[\\s>/])', '|<(script|style|svg)\\b') },
-    { name: 'SKIP 不認 <svg/>', apply: (s) => s.replace('|<svg(?=[\\s/])[^>]*\\/>', '') },
-    { name: '沒有結尾的註解不吃到最後', apply: (s) => s.replace('/<!--[\\s\\S]*?(?:-->|$)|', '/<!--[\\s\\S]*?-->|') },
-    { name: '<title> 貪婪比對到最後一個 </title>', apply: (s) => s.replace('>([\\s\\S]*?)<\\/title\\s*>/i', '>([\\s\\S]*)<\\/title\\s*>/i') },
-    { name: '</title > 帶空白就認不出來', apply: (s) => s.replace('<\\/title\\s*>/i', '<\\/title>/i') },
+    { name: 'pageTitle 不跳過 script、svg 裡的 <title>', apply: (s) => s.replace('const t = rawTitle(r.bodyHead);', 'const t = r.bodyHead.match(/<title\\b[^>]*>([\\s\\S]*?)<\\/title\\s*>/i)?.[1];') },
     { name: '具名參照分大小寫', apply: (s) => s.replace('NAMED[e.toLowerCase()]', 'NAMED[e]') },
     { name: '數字參照不檢查範圍（&#99999999; 丟 RangeError）', apply: (s) => s.replace('return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m;', 'return String.fromCodePoint(n);') },
     { name: '不看 Content-Type（PDF、JSON 沒有 <title> 也比 ""）', apply: (s) => s.replace("const isHtml = (r) => /html/i.test(r?.contentType ?? '');", 'const isHtml = () => true;') },
@@ -1845,12 +1843,11 @@ const titleMutations = [
     { name: '重讀時不是 HTML 的不另外說明', apply: (s) => s.replace("    if (notHtml(x)) return unverified(", '    if (false) return unverified(') },
     { name: '確認那一輪不用 recheck.budgetMs', apply: (s) => s.replace('{ ...cfg, budgetMs: recheck.budgetMs }', '{ ...cfg, budgetMs: TITLE_RECHECK.budgetMs }') },
     { name: '頁面不健康的網址也打隨機路徑', apply: (s) => s.replace("        if (!check || !r || classifyLink(r) !== 'healthy') return;", '        if (!check) return;') },
-    { name: 'pageTitle 不認帶屬性的 <title>', apply: (s) => s.replace('<title\\b[^>]*>([', '<title>([') },
     { name: 'pageTitle 把空的回應當成沒有標題', apply: (s) => s.replace(' || !r.bodyHead.trim() || !isHtml(r)) return null;', ' || !isHtml(r)) return null;') },
     { name: '空的回應也判失效', apply: (s) => s.replace("    if (!x.bodyTruncated && !(x.bodyHead ?? '').trim()) return unverified('回應是空的', false);\n", '') },
     { name: '只解開 6 個具名參照', apply: (s) => s.replace("ndash: '–', ", '') },
-    { name: 'pageTitle 沒讀完也當成沒有標題（aesea 刪掉的頁面看不到）', apply: (s) => s.replace("return r.bodyTruncated || /<title\\b/i.test(html) ? null : '';", "return '';") },
-    { name: 'pageTitle 不解開字元參照', apply: (s) => s.replace('return normalizeTitle(decode(m[1]));', 'return normalizeTitle(m[1]);') },
+    { name: 'pageTitle 沒讀完也當成沒有標題（aesea 刪掉的頁面看不到）', apply: (s) => s.replace("return r.bodyTruncated || t === null ? null : '';", "return '';") },
+    { name: 'pageTitle 不解開字元參照', apply: (s) => s.replace('return normalizeTitle(decode(t));', 'return normalizeTitle(t);') },
     { name: '16KB 讀不到標題也不重讀', apply: (s) => s.replace('export const needsReread = (check, r) => !offList(check, r) && !notHtml(r);', 'export const needsReread = () => false;') },
     { name: '名單裡的標題一次就判失效', apply: (s) => s.replace("    if (!x.previous) return once('沒有重讀確認');\n    if (!listed(check, x.previous)) return once(", '    if (false) return once(') },
     { name: '不看前一次的標題', apply: (s) => s.replace('    if (!listed(check, x.previous)) return once(', '    if (false) return once(') },
@@ -1868,6 +1865,33 @@ const titleMutations = [
     { name: '寫了 API 的網址也看標題', apply: (s) => s.replace(' && !matchContentCheck([check], url) ? check : null;', ' ? check : null;') },
     { name: '重讀只讀 16KB', apply: (s) => s.replace('readBodyBytes: 256 * 1024 });', 'readBodyBytes: 16 * 1024 });') },
     { name: '不打隨機路徑', apply: (s) => s.replace('        randoms.set(randomSibling(url, token), check);\n', '') },
+];
+// 取 <title>、meta、h1、canonical 之前拿掉的那些部分，三支測試各自用到一部分。
+const markupMutations = [
+    { name: 'pageMarkup 什麼都不拿掉', apply: (s) => s.replace("return String(html).replace(INERT, (m, tag, title) => title ?? '');", 'return String(html);') },
+    { name: 'extractHeadText 直接看原文', apply: (s) => s.replace('    const html = pageMarkup(raw);\n', '    const html = raw;\n') },
+    { name: 'rawTitle 直接在原文找第一個 <title>', apply: (s) => s.replace('for (const m of String(html).matchAll(INERT)) {', 'for (const m of String(html).matchAll(/()(<title(?=[\\t\\n\\f\\r />])[\\s\\S]*?(?:<\\/title(?=[\\t\\n\\f\\r />])[^>]*>|$))/gi)) {') },
+    { name: 'rawTitle 改成在 pageMarkup 的結果上另外找（一連串沒有結尾的 <title 要平方時間）', apply: (s) => s.replace('    for (const m of String(html).matchAll(INERT)) {', "    const left = pageMarkup(html);\n    if (true) return left.match(/<title\\b[^>]*>([\\s\\S]*?)<\\/title\\s*>/i)?.[1] ?? (/<title\\b/i.test(left) ? null : undefined);\n    for (const m of String(html).matchAll(INERT)) {") },
+    { name: '不拿掉 style', apply: (s) => s.replace('|<(script|style|textarea|', '|<(script|textarea|') },
+    { name: '不拿掉 template', apply: (s) => s.replace('|noscript|template|svg|math)(', '|noscript|svg|math)(') },
+    { name: '不拿掉 noscript', apply: (s) => s.replace('|noframes|noscript|template|', '|noframes|template|') },
+    { name: '不拿掉 textarea', apply: (s) => s.replace('|<(script|style|textarea|', '|<(script|style|') },
+    { name: '<![CDATA[ 一路到 ]]>（瀏覽器在 HTML 裡只到第一個 >）', apply: (s) => s.replace('|<[!?][^>]*(?:>|$)|', '|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>|$)|<[!?][^>]*(?:>|$)|') },
+    { name: '不拿掉 iframe', apply: (s) => s.replace('|xmp|iframe|noembed|', '|xmp|noembed|') },
+    { name: '不拿掉 math', apply: (s) => s.replace('|template|svg|math)(', '|template|svg)(') },
+    { name: '不拿掉 xmp、noembed、noframes', apply: (s) => s.replace('|xmp|iframe|noembed|noframes|', '|iframe|') },
+    { name: '結束標籤不認 </script >', apply: (s) => s.replace('(?:<\\/\\1(?=[\\t\\n\\f\\r />])[^>]*>|$)', '(?:<\\/\\1>|$)') },
+    { name: '拿掉的地方補空白（<link<!-- -->rel=canonical> 變成 canonical）', apply: (s) => s.replace("(m, tag, title) => title ?? '');", "(m, tag, title) => title ?? ' ');") },
+    { name: '<svg-icon> 當成 svg', apply: (s) => s.replace('|svg|math)(?=[\\t\\n\\f\\r />])', '|svg|math)\\b') },
+    { name: '不認 <svg/>', apply: (s) => s.replace('|<(?:svg|math)(?=[\\t\\n\\f\\r /])[^>]*\\/>|', '|') },
+    { name: '沒有結尾的註解不吃到最後', apply: (s) => s.replace('<!--(?:-?>|[\\s\\S]*?(?:--!?>|$))|', '<!--(?:-?>|[\\s\\S]*?--!?>)|') },
+    { name: '<!---> 不算空註解', apply: (s) => s.replace('<!--(?:-?>|', '<!--(?:>|') },
+    { name: '註解不認 --!> 結尾', apply: (s) => s.replace('(?:--!?>|$)', '(?:-->|$)') },
+    { name: '標籤名稱後面的空白改回 \\s（NBSP 也算）', apply: (s) => s.replaceAll('[\\t\\n\\f\\r />]', '[\\s/>]').replaceAll('[\\t\\n\\f\\r /]', '[\\s/]') },
+    { name: '<!--> 不算空註解', apply: (s) => s.replace('<!--(?:-?>|[\\s\\S]*?', '<!--(?:[\\s\\S]*?') },
+    { name: '<title> 貪婪比對到最後', apply: (s) => s.replace('(<title(?=[\\t\\n\\f\\r />])[\\s\\S]*?(?:', '(<title(?=[\\t\\n\\f\\r />])[\\s\\S]*(?:') },
+    { name: '</title > 帶空白就認不出來', apply: (s) => s.replaceAll('<\\/title(?=[\\t\\n\\f\\r />])[^>]*>', '<\\/title>') },
+    { name: '不認帶屬性的 <title>', apply: (s) => s.replace('(<title(?=[\\t\\n\\f\\r />])', '(<title(?=>)').replace('/^<title[^>]*>(', '/^<title>(') },
 ];
 const titleReportMutations = [
     { name: 'needsAttention 不看過期的名單', apply: (s) => s.replace('        titleStale.length > 0 ||\n', '') },
@@ -1957,6 +1981,8 @@ await runMutants('C. 裸網域擷取規則的突變測試（bare-domains.test.mj
     'bare-domains.lib.mjs', bareDomainMutations, ['bare-domains.test.mjs'], RED('這條規則'));
 await runMutants('D. 接管偵測的突變測試（hijack-signals.test.mjs 必須紅）：',
     'hijack-signals.lib.mjs', hijackMutations, ['hijack-signals.test.mjs'], RED('這一段'));
+await runMutants('D. 取 <title>、meta 之前拿掉的部分（hijack-signals.test.mjs、missing-titles.test.mjs 或 soft404.test.mjs 必須紅）：',
+    'hijack-signals.lib.mjs', markupMutations, ['hijack-signals.test.mjs', 'missing-titles.test.mjs', 'soft404.test.mjs'], RED('這一段'));
 // E、F 兩段突變的是同一個檔案。兩支測試有一支紅就算擋下，報告的接線有一部分在 hijack-signals.test.mjs。
 await runMutants('E. 判定、通知與報告內容的突變測試（link-health.test.mjs 或 hijack-signals.test.mjs 必須紅）：',
     'check-external-links.lib.mjs', reportMutations, ['link-health.test.mjs', 'hijack-signals.test.mjs'], RED('這一段'));
@@ -1991,5 +2017,5 @@ console.log(after.code === 0 && afterTests === 0 ? '  ✅ 還原後仍為綠燈'
 rmSync(TMP, { recursive: true, force: true });
 
 console.log(`\n故障注入：${pass} 擋下 / ${fail} 漏掉（共 ${policyCases.length + guardMutations.length + bareDomainMutations.length + hijackMutations.length + reportMutations.length + assemblyMutations.length + policyLibMutations.length + mainMutations.length + soft404Mutations.length + soft404ReportMutations.length + hostPolicyMutations.length + hostJudgeMutations.length +
-    titleMutations.length + titleReportMutations.length + titleMainMutations.length + probeTypeMutations.length} 項）`);
+    titleMutations.length + markupMutations.length + titleReportMutations.length + titleMainMutations.length + probeTypeMutations.length} 項）`);
 process.exit(fail === 0 && after.code === 0 && afterTests === 0 ? 0 : 1);

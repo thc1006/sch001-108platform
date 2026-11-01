@@ -5,7 +5,7 @@
 import { runProbes, classifyLink, isBlockedResult, describeResult, unverifiedBucket, canonicalHost } from './link-health.lib.mjs';
 import { matchContentCheck, normalizeTitle, HOME_PATH } from './link-policy.lib.mjs';
 import { randomSibling } from './soft404.lib.mjs';
-import { inertText } from './hijack-signals.lib.mjs';
+import { inertText, rawTitle } from './hijack-signals.lib.mjs';
 
 /**
  * TITLE_PROBE 是重讀與打隨機路徑時交給 runProbes 的設定。2026-10-27 量過：www.aesea.org 不存在的頁面 <title>
@@ -27,25 +27,20 @@ const decode = (s) =>
         const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
         return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m;
     });
-// 註解、script、style、svg 裡的 <title> 不是頁面的標題。由左到右一次掃，script 字串裡的 <!-- 才不會吃掉後面。
-// 沒有結尾的一路算到讀到的最後。<svg-icon> 這類自訂元素不算，<svg/> 自己結束。
-const SKIP = /<!--[\s\S]*?(?:-->|$)|<svg(?=[\s/])[^>]*\/>|<(script|style|svg)(?=[\s>/])[\s\S]*?(?:<\/\1\s*>|$)/gi;
-
 // isHtml 判斷回應的 Content-Type 是不是 HTML。PDF、JSON、純文字本來就沒有 <title>，不拿來比名單裡的 ""。
 const isHtml = (r) => /html/i.test(r?.contentType ?? '');
 
 /**
- * pageTitle 回傳頁面的標題：第一個 <title>，解開字元參照、空白照 normalizeTitle 正規化。不限 <head>：www.aesea.org
+ * pageTitle 回傳頁面的標題：rawTitle 取到的第一個 <title>，解開字元參照、空白照 normalizeTitle 正規化。不限 <head>：www.aesea.org
  * 不存在的頁面把 <title> 放在 body 裡。整頁讀完沒有 <title> 回傳 ''；不是 HTML、沒讀完、<title> 沒讀到結尾、
  * 回應是空的、壓縮或沒有 body 回傳 null。
  * @param {object} r probe 的結果 @returns {string|null}
  */
 export function pageTitle(r) {
     if (typeof r?.bodyHead !== 'string' || r.bodySkipped || !r.bodyHead.trim() || !isHtml(r)) return null;
-    const html = r.bodyHead.replace(SKIP, ' ');
-    const m = html.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i);
-    if (m) return normalizeTitle(decode(m[1]));
-    return r.bodyTruncated || /<title\b/i.test(html) ? null : '';
+    const t = rawTitle(r.bodyHead);
+    if (typeof t === 'string') return normalizeTitle(decode(t));
+    return r.bodyTruncated || t === null ? null : '';
 }
 
 /**

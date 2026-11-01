@@ -31,6 +31,10 @@ function route(path) {
     if (p === '/collego/Highschool/Gone' || p === `/collego/Highschool/${TOKEN}`) return to('/collego/Login/Error404');
     if (p === '/collego/Login/Error404') return ok(page('Error', '發生錯誤'));
     if (p === '/fin/post-gone/') return ok(page('財金系網站', LONG, `<link rel="canonical" href="${base}/fin/">`));
+    // 註解、template、script 裡寫的標題、h1、canonical 不是頁面的，頁面本身是正常的文章。
+    if (p === '/inert/title') return ok(`<html><head><!-- <title>404 Not Found</title> --><title>文章</title></head><body>${LONG}</body></html>`);
+    if (p === '/inert/h1') return ok(page('文章', `<template><h1>找不到這個頁面</h1></template>${LONG}`));
+    if (p === '/inert/canonical') return ok(page('文章', LONG, `<script>var c = '<link rel="canonical" href="${base}/">';</script>`));
     if (p === '/iymc/en/') return to('/iymc/en/language?return_to=%2Fiymc%2Fen%2F');
     if (p === `/iymc/${TOKEN}/`) return to('/iymc/en/language');
     if (p === '/iymc/en/language') return ok(page('IYMC'));
@@ -106,6 +110,15 @@ test('fin.wp 式：回首頁的內容、canonical 指向上層目錄，第 3 條
     assert.deepEqual(by['/fin/post-gone/'].rules, [3]);
     assert.equal(by['/fin/post-gone/'].verdict, 'dead');
     assert.equal(out.randoms, 0);
+});
+
+test('註解、template、script 裡的標題、h1、canonical 不算數，判健康，也不重打', async () => {
+    const paths = ['/inert/title', '/inert/h1', '/inert/canonical'];
+    const { by } = await soft(paths);
+    for (const p of paths) {
+        assert.deepEqual(by[p], { verdict: 'healthy', rules: [] }, p);
+        assert.equal(hits.get(p), 1, `${p} 只打一次`);
+    }
 });
 
 test('iymc 式：語系頁帶 return_to，和隨機路徑的落點只差查詢字串，判健康', async () => {
@@ -270,6 +283,7 @@ test('judgeSoft404：標題、h1、canonical', () => {
     const at = (html) => judgeSoft404(url, r200(url, html, []), null, TOKEN).dead.map((d) => d.rule);
     assert.deepEqual(at(page('404 Not Found')), [2]);
     assert.deepEqual(at(page('文章', '<h1>找不到這個頁面</h1>' + LONG)), [2]);
+    assert.deepEqual(at(page('文章', '<h1>找不到<!-- -->頁面</h1>' + LONG)), [2], '瀏覽器顯示的是「找不到頁面」');
     assert.deepEqual(at(page('文章', LONG, '<link href="/Error.aspx" rel="canonical">')), [2]);
     assert.deepEqual(at(page('文章', LONG, "<link rel='canonical' href='https://x.test/'>")), [3]);
     assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://x.test/a/b">')), []);

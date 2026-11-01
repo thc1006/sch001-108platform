@@ -70,24 +70,52 @@ export const SQUAT_PHRASES = [
 const TITLE_MAX = 300;
 const DESC_MAX = 400;
 
+// 不是頁面標記的部分：註解，其他 <!…> 與 <?…>（<![CDATA[ 也是，和瀏覽器一樣到第一個 > 為止），script、style 這類內容是
+// 純文字的元素，開著 JS 時的 noscript，不在文件裡的 template，有自己 <title> 的 svg、math。由左到右一次掃，
+// script 字串裡的 <!-- 才不會吃掉後面；沒有結尾的一路算到讀到的最後。<title> 的內容是文字，整段留下。
+// 這不是解析器：屬性值裡的 <!-- 或 <script、沒有結尾的 svg 之後的 HTML 標籤、foreignObject 都會判錯。2026-10-27 錄到的完整頁面，標題和 parse5 取到的相同。
+const INERT = /<!--(?:-?>|[\s\S]*?(?:--!?>|$))|<[!?][^>]*(?:>|$)|<(?:svg|math)(?=[\t\n\f\r /])[^>]*\/>|<(script|style|textarea|xmp|iframe|noembed|noframes|noscript|template|svg|math)(?=[\t\n\f\r />])[\s\S]*?(?:<\/\1(?=[\t\n\f\r />])[^>]*>|$)|(<title(?=[\t\n\f\r />])[\s\S]*?(?:<\/title(?=[\t\n\f\r />])[^>]*>|$))/gi;
+
 /**
- * extractHeadText 從 HTML 前綴取出 <title> 與 meta description，取不到就回空字串，不猜。
+ * pageMarkup 拿掉 INERT 那些部分，給取 <title>、meta、h1、canonical 的規則用：註解裡的 <title>404</title> 不是頁面的標題。
+ * 拿掉的地方不補空白，和瀏覽器一樣：<link<!-- -->rel=canonical> 不是 <link rel=canonical>。
+ * @param {string} html @returns {string}
+ */
+export function pageMarkup(html) {
+    return String(html).replace(INERT, (m, tag, title) => title ?? '');
+}
+
+/**
+ * rawTitle 回傳 pageMarkup 留下的第一個 <title> 的內容，沒有 <title> 回傳 undefined，沒有 </title> 回傳 null。
+ * 直接取 INERT 的比對結果：另外用 regex 找的話，一連串沒有結尾的 <title 會讓比對變成平方時間。
+ * @param {string} html @returns {string|null|undefined}
+ */
+export function rawTitle(html) {
+    for (const m of String(html).matchAll(INERT)) {
+        if (m[2] !== undefined) return m[2].match(/^<title[^>]*>([\s\S]*?)<\/title(?=[\t\n\f\r />])[^>]*>$/i)?.[1] ?? null;
+    }
+    return undefined;
+}
+
+/**
+ * extractHeadText 從 HTML 前綴取出 <title> 與 meta description，只看 pageMarkup 留下的部分，取不到就回空字串，不猜。
  * 引號用反向參照鎖住同一個字元。寫成 `[^"']` 的話，content="Australia's best online pokies"
  * 只取得到 "Australia"，撇號之後的字全部看不到，等於現成的規避法。2026-08-28 實測，
  * 全站 93 個含英文 description 的目標有 3 個這樣被截斷。
  * 長度上限在取出之後才套用，不寫進量詞：`{0,300}?` 超過上限時整條比對失敗，「太長」會和
  * 「沒有 title」分不開。上限的用意是別讓報告爆掉，不是別看長標題。
  */
-export function extractHeadText(html) {
-    if (typeof html !== 'string' || !html) return { title: '', description: '' };
-    const t = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+export function extractHeadText(raw) {
+    if (typeof raw !== 'string' || !raw) return { title: '', description: '' };
+    const html = pageMarkup(raw);
+    const t = rawTitle(raw);
     const d =
         html.match(/<meta[^>]+name=(["'])description\1[^>]*content=(["'])([\s\S]*?)\2/i)?.[3] ??
         html.match(/<meta[^>]+content=(["'])([\s\S]*?)\1[^>]*name=(["'])description\3/i)?.[2] ??
         html.match(/<meta[^>]+property=(["'])og:description\1[^>]*content=(["'])([\s\S]*?)\2/i)?.[3] ??
         '';
     const clean = (s) => (s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    return { title: clean(t && t[1]).slice(0, TITLE_MAX), description: clean(d).slice(0, DESC_MAX) };
+    return { title: clean(t).slice(0, TITLE_MAX), description: clean(d).slice(0, DESC_MAX) };
 }
 
 /** inertText 把遠端可控的文字包成行內程式碼，`@`、`#` 和連結不會渲染；反引號換成單引號，內容就關不掉它。 */

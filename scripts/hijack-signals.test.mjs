@@ -13,6 +13,7 @@ import {
     opaqueShell,
     crossSiteRedirect,
     extractHeadText,
+    pageMarkup,
     contentSquatSignals,
     visibleText,
     detectHijackSignals,
@@ -74,6 +75,51 @@ test('extractHeadText：取不到就回空字串，不猜', () => {
     assert.deepEqual(extractHeadText(''), { title: '', description: '' });
     assert.deepEqual(extractHeadText(null), { title: '', description: '' });
     assert.equal(extractHeadText('<html><body>沒有 head</body></html>').title, '');
+});
+
+// 瀏覽器不會把這些地方的 <title>、meta 當成頁面的。前面那段寫死在頁面裡，後面才是真的 head。
+const FAKE_HEAD = '<title>Online Casino Free Spins</title><meta name="description" content="sports betting, no deposit bonus">';
+const INERT_CASES = {
+    註解: `<!-- ${FAKE_HEAD} -->`,
+    script: `<script>document.write('${FAKE_HEAD}')</script>`,
+    'JSON-LD': `<script type="application/ld+json">{"name":${JSON.stringify(FAKE_HEAD)}}</script>`,
+    'script >': `<script >var a = 1;</script ><!-- ${FAKE_HEAD} -->`,
+    style: `<style>/* ${FAKE_HEAD} */</style>`,
+    template: `<template>${FAKE_HEAD}</template>`,
+    noscript: `<noscript>${FAKE_HEAD}</noscript>`,
+    // HTML 裡的 <![CDATA[ 到第一個 > 就結束，吃掉的是 <title> 的開始標籤，後面的 meta 是真的元素。
+    CDATA: '<![CDATA[<title>Online Casino Free Spins</title>]]>',
+    textarea: `<textarea>${FAKE_HEAD}</textarea>`,
+    iframe: `<iframe>${FAKE_HEAD}</iframe>`,
+    xmp: `<xmp>${FAKE_HEAD}</xmp>`,
+    noembed: `<noembed>${FAKE_HEAD}</noembed>`,
+    noframes: `<noframes>${FAKE_HEAD}</noframes>`,
+    'svg 的 title': '<svg><title>Online Casino Free Spins</title></svg>',
+    'math 的 title': '<math><title>Online Casino Free Spins</title></math>',
+};
+
+test('extractHeadText：註解、script、style、template、noscript、CDATA 裡的 <title> 與 meta 不是頁面的', () => {
+    for (const [where, fake] of Object.entries(INERT_CASES)) {
+        const html = `<html><head>${fake}<title>國際科學展覽</title><meta name="description" content="高中生的科展"></head><body>x</body></html>`;
+        assert.deepEqual(extractHeadText(html), { title: '國際科學展覽', description: '高中生的科展' }, where);
+        assert.deepEqual(contentSquatSignals(html), [], where);
+        const r = { status: 200, finalUrl: 'https://x.test/', redirects: [], bodyHead: html };
+        assert.equal(detectHijackSignals('https://x.test/', r), null, `${where}：不報可疑`);
+    }
+    assert.equal(extractHeadText('<title>寫 <script> 的教學</title>').title, '寫 的教學', '<title> 裡的 <script> 是文字');
+    assert.equal(extractHeadText('<!--><title>真的</title>').title, '真的', '<!--> 是空註解');
+    assert.equal(extractHeadText('<!---><title>真的</title>').title, '真的', '<!---> 也是空註解');
+    assert.equal(extractHeadText('<!-- <title>假的</title> --!><title>真的</title>').title, '真的', '--!> 也結束註解');
+    // NBSP 不是 HTML 的空白，<script\u00a0x> 是不認得的元素，裡面的 <title> 是頁面的。和 parse5 的結果相同。
+    assert.equal(extractHeadText('<script\u00a0x><title>裡面</title></script><title>外面</title>').title, '裡面');
+    assert.equal(extractHeadText('<script>var s = "<!--";</script><title>真的</title>').title, '真的');
+    assert.equal(extractHeadText('<!-- 沒有結尾，a > b <title>註解裡</title>').title, '');
+    const cdata = extractHeadText('<![CDATA[ a > <title>真的</title><meta name="description" content="真的 meta"> ]]>');
+    assert.deepEqual(cdata, { title: '真的', description: '真的 meta' }, '和瀏覽器一樣，<![CDATA[ 到第一個 > 為止');
+});
+
+test('pageMarkup：拿掉的地方不補空白，<link<!-- -->rel=canonical> 不是 canonical', () => {
+    assert.equal(pageMarkup('<link<!-- -->rel="canonical" href="/"><h1>Not<!-- -->Found</h1>'), '<linkrel="canonical" href="/"><h1>NotFound</h1>');
 });
 
 test('extractHeadText：description 裡的撇號不得把內容截斷（現成的規避法）', () => {

@@ -94,6 +94,17 @@ test('pageTitle：不是 HTML 的回應沒有標題可比；名單有 "" 時，P
     assert.equal(judgeTitle(c, shell, { ...shell, previous: shell }).verdict, 'dead', 'collego 的 alert 殼是 text/html，照樣判失效');
 });
 
+test('pageTitle：template、noscript、CDATA、textarea 裡的 <title> 不算；一連串沒有結尾的 <title 也很快做完', () => {
+    for (const fake of ['<template><title>首頁 | 測試站</title></template>', '<noscript><title>首頁 | 測試站</title></noscript>',
+        '<![CDATA[<title>首頁 | 測試站</title>]]>', '<textarea><title>首頁 | 測試站</title></textarea>', '<?php echo "<title>x</title>" ?>']) {
+        assert.equal(pageTitle(ok200(`<head>${fake}<title>文章</title></head>`)), '文章', fake);
+        assert.equal(judgeTitle(check(), ok200(`<head>${fake}<title>文章</title></head>`)).verdict, 'healthy', fake);
+    }
+    const started = Date.now();
+    assert.equal(pageTitle(ok200('<title '.repeat(TITLE_PROBE.readBodyBytes / 7))), null);
+    assert.ok(Date.now() - started < 2000, `花了 ${Date.now() - started} ms`);
+});
+
 test('pageTitle：第一個 <title>，跳過註解、script、style、svg 裡的，解開字元參照、正規化空白', () => {
     assert.equal(pageTitle(ok200('<head><title>\n  世新大學 &#8211; 財金  </title></head>')), '世新大學 – 財金');
     assert.equal(pageTitle(ok200('<title>A &amp; B&nbsp;C &#x41;&bogus;</title>')), 'A & B C A&bogus;');
