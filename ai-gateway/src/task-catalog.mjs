@@ -81,7 +81,7 @@ export const TASK_DEFINITIONS = [
         },
     },
     {
-        // 生涯探索 › 素養地圖的「AI 對照核心素養」（src/pages/career-exploration/competency-map.astro）。
+        // 生涯探索 › 核心素養對照表的「AI 對照核心素養」（src/pages/career-exploration/competency-map.astro）。
         // 指令列出九項素養的代號與名稱：只給代號的話，名稱得靠模型自己記，記錯就誤導學生。
         // 名稱抄自 scripts/taxonomy.json，因為閘道的映像檔裡沒有那個檔案；test/task-catalog.test.mjs 比對兩邊。
         id: 'competency-analysis',

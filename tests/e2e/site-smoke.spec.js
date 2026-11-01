@@ -427,7 +427,7 @@ test.describe('自架的第三方函式庫', () => {
         expect(errors(), errors().join('\n')).toEqual([]);
     });
 
-    test('素養地圖的 feather icons 真的被替換成 SVG', async ({ page }) => {
+    test('核心素養對照表的 feather icons 真的被替換成 SVG', async ({ page }) => {
         const cdn = watchThirdParty(page);
         await page.goto(P('/career-exploration/competency-map.html'), { waitUntil: 'networkidle' });
 
