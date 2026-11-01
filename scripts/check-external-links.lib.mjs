@@ -517,7 +517,7 @@ export function renderReport(m) {
         lines.push(`### 🪤 網址回 2xx，內容卻是錯誤頁或首頁（軟 404）${soft404.length} 筆`, '');
         lines.push(
             '頁面回 2xx，三態會判健康，但下面的規則顯示原本的內容已經不在了。隔一段時間重打一次，兩次都命中同一條規則才列在這裡。',
-            '規則：1 轉址落在錯誤頁路徑；2 標題或 h1 寫著找不到，或 canonical 指向錯誤頁；3 canonical 指向上層目錄或根目錄；',
+            '規則：1 轉址落在錯誤頁路徑；2 標題或 h1 寫著找不到，或 canonical 指向錯誤頁；3 canonical 指向根目錄；',
             '4 轉址的落點和同目錄隨機路徑的落點相同。請用瀏覽器確認，失效的就換成現行網址。',
             '確認是誤判的，在 `scripts/link-policy.json` 的 entries 加一筆 match.url 的例外（reason／owner／expires），只壓這個網址；match.host 的例外壓不下軟 404。',
             '',

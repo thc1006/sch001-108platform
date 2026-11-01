@@ -30,7 +30,9 @@ function route(path) {
     const [p, q] = path.split('?');
     if (p === '/collego/Highschool/Gone' || p === `/collego/Highschool/${TOKEN}`) return to('/collego/Login/Error404');
     if (p === '/collego/Login/Error404') return ok(page('Error', '發生錯誤'));
-    if (p === '/fin/post-gone/') return ok(page('財金系網站', LONG, `<link rel="canonical" href="${base}/fin/">`));
+    if (p === '/fin/post-gone/') return ok(page('財金系網站', LONG, `<link rel="canonical" href="${base}/">`));
+    // 摘要頁、第 2 頁的 canonical 指向上層的完整閱讀版。
+    if (p === '/news/123/summary' || p === '/news/123/p/2') return ok(page('文章摘要', LONG, `<link rel="canonical" href="${base}/news/123/">`));
     // 註解、template、script 裡寫的標題、h1、canonical 不是頁面的，頁面本身是正常的文章。
     if (p === '/inert/title') return ok(`<html><head><!-- <title>404 Not Found</title> --><title>文章</title></head><body>${LONG}</body></html>`);
     if (p === '/inert/h1') return ok(page('文章', `<template><h1>找不到這個頁面</h1></template>${LONG}`));
@@ -105,7 +107,7 @@ test('collego 式：轉到 /Login/Error404，第 1 條判失效', async () => {
     assert.ok(by['/collego/Highschool/Gone'].rules.includes(1), JSON.stringify(by));
 });
 
-test('fin.wp 式：回首頁的內容、canonical 指向上層目錄，第 3 條判失效，不打隨機路徑', async () => {
+test('fin.wp 式：回首頁的內容、canonical 指向根目錄，第 3 條判失效，不打隨機路徑', async () => {
     const { by, out } = await soft(['/fin/post-gone/']);
     assert.deepEqual(by['/fin/post-gone/'].rules, [3]);
     assert.equal(by['/fin/post-gone/'].verdict, 'dead');
@@ -119,6 +121,16 @@ test('註解、template、script 裡的標題、h1、canonical 不算數，判�
         assert.deepEqual(by[p], { verdict: 'healthy', rules: [] }, p);
         assert.equal(hits.get(p), 1, `${p} 只打一次`);
     }
+});
+
+test('canonical 指向上層的完整閱讀版：判健康，也不重打', async () => {
+    const paths = ['/news/123/summary', '/news/123/p/2'];
+    const { by, out } = await soft(paths);
+    for (const p of paths) {
+        assert.deepEqual(by[p], { verdict: 'healthy', rules: [] }, p);
+        assert.equal(hits.get(p), 1, `${p} 只打一次`);
+    }
+    assert.equal(out.recheckSkipped, 0);
 });
 
 test('iymc 式：語系頁帶 return_to，和隨機路徑的落點只差查詢字串，判健康', async () => {
@@ -286,10 +298,13 @@ test('judgeSoft404：標題、h1、canonical', () => {
     assert.deepEqual(at(page('文章', '<h1>找不到<!-- -->頁面</h1>' + LONG)), [2], '瀏覽器顯示的是「找不到頁面」');
     assert.deepEqual(at(page('文章', LONG, '<link href="/Error.aspx" rel="canonical">')), [2]);
     assert.deepEqual(at(page('文章', LONG, "<link rel='canonical' href='https://x.test/'>")), [3]);
+    assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://x.test/index.php">')), [3]);
+    assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://y.test/">')), [3]);
+    assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://x.test/a/">')), [], 'canonical 指向上層目錄不算');
     assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://x.test/a/b">')), []);
     assert.deepEqual(at(page('文章', LONG, '<link rel="canonical" href="https://x.test/?p=1">')), [], 'canonical 帶查詢字串的不算上層目錄');
     assert.deepEqual(at(page('Error 4040 號公報')), []);
-    const up = r200('https://x.test/a/', page('文章', LONG, '<link rel="canonical" href="https://x.test/a/">'));
+    const up = r200('https://x.test/', page('文章', LONG, '<link rel="canonical" href="https://x.test/">'));
     assert.deepEqual(judgeSoft404(url, up, null, TOKEN).dead, [], '落點就是 canonical 時第 3 條不算，留給第 5 條');
 });
 
