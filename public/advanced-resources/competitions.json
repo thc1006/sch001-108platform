@@ -37,7 +37,7 @@
         "opens": "10",
         "closes": "11"
       },
-      "sourceCheckedAt": "2026-10-24",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://twsf.ntsec.gov.tw/",
       "description": "中等學校學生的科學研究競賽，也是 Regeneron ISEF 等國際科展的選拔賽。限具中華民國國籍、未滿 20 歲且就讀國內中等學校（含五專前三年級）者，由學校於每年 10–11 月送件期限內報名。2027 年報名作業注意事項原文：「報名期間：115年10月12日(一)至115年11月6日(五)下午5時止」，紙本資料須於 2026-11-13 前由學校掛號寄出；展期依日程表為 2027 年 1 月 25–30 日（暫定）。"
     },
@@ -71,7 +71,7 @@
       "eventStartsAt": "2026-08-15",
       "eventEndsAt": "2026-08-16",
       "registrationNote": "第 28 屆已截止 · 下屆依官網公告",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "sourceNote": "曾被記為停辦，並非如此：官網持續更新。",
       "url": "https://www.99cef.org.tw/trml-s/",
       "description": "正式名稱為「台灣區高中數學競賽」（Taiwan Regions Mathematics League），由財團法人九九文教基金會與政治大學、臺灣師範大學理學院合辦。第 28 屆已於 2026 年 8 月 15 至 16 日於台北、台中、高雄三區舉行完畢。資格：「全國公私立高級中學以下（含）在學學生」，每隊 9 名隊員、1 名指導教師與 1 名隊伍自聘試務人員；線上報名，學校報名者須加蓋學校用章。第 28 屆報名 2026-05-20 10:00 至 05-27、5/28 繳款；慣例於每年八月第三個週末競賽，下屆時程依官網公告。"
@@ -295,7 +295,7 @@
       "eventStartsAt": "2027-07-21",
       "eventEndsAt": "2027-07-28",
       "registrationNote": "經 TOL 選拔 · 初賽 2027/1/8 截止報名",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "recheckOn": "2026-12-10",
       "recheckNote": "TOL 預計 12 月初公布初賽報名資訊，屆時補上 opensAt 與 deadline",
       "url": "https://ioling.org/",
@@ -332,7 +332,7 @@
       "eventStartsAt": "2027-08-02",
       "eventEndsAt": "2027-08-09",
       "registrationNote": "經高中地理奧林匹亞選拔 · 由學校報名",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://www.geoolympiad.org/",
       "description": "由 International Geographical Union (IGU) Olympiad Commission 主辦的中學生地理競賽，含寫作測驗、多媒體測驗與野外實察，官網寫「an annual competition for the best 16 to 19-year-old geography students」，各國一隊至多 4 名學生加 2 名領隊。2026 年於土耳其伊斯坦堡舉行（8/11–17）已結束；官網 Future iGeos 列出 2027 年 8 月 2 至 9 日於拉脫維亞 Jelgava、2028 年 7 月 3 至 10 日於澳洲墨爾本舉行。台灣國手從中華民國地理學會主辦的高中地理奧林匹亞個人組選出，由就讀學校團體報名。個人組同時選拔次年 iGeo 代表隊儲備選手，原則上第 1 至 4 名為正取、第 5 至 8 名為備取；儲備選手要完成所有培訓課程，「並能積極投入且表現優異，才可成為正式代表隊員」；賽前培訓由臺師大地理學系負責。2026 年第 25 屆報名 6/1 至 6/22、個人組決賽 9/19，得獎名單已於 9/21 公告。",
       "sourceNote": "台灣選拔的出處：高中地理奧林匹亞官網 Q&A（https://geoolympiad.tw/info/）與 115 年第 25 屆競賽辦法（官網連到 Google Drive）。「賽前培訓由臺師大地理學系負責」出自臺師大 2026-08-19 發的新聞稿（中央社訊息平台 https://www.cna.com.tw/postwrite/chi/441963 ）：「賽前培訓則由臺灣師大地理學系負責」。"
@@ -623,7 +623,7 @@
       "mode": "實體",
       "deadline": "2027-02-11",
       "eventStartsAt": "2027-02-18",
-      "sourceCheckedAt": "2026-10-25",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://cemc.uwaterloo.ca/contests/ccc",
       "description": "由滑鐵盧大學 CEMC 主辦的程式競賽，須由學校向 CEMC 訂購並施測，學生無法個人報名，官網寫「It is not possible for students to individually register for a contest — all students must participate through their school」；自己的學校沒有參加的，可以找當地願意讓他們加入的其他學校。台灣學生在台灣的學校應試，只要「born on or after July 1, 2007」即符合 official 資格、可列 honour roll。CCO 邀請在加拿大學校應試、CCC Senior 成績頂尖的約 20 名 official 參賽者，CIW 邀請同樣條件中女性認同或非二元性別的約 10 名，官網另寫「Outstanding participants, including those who are Canadian citizens or permanent residents attending school outside of Canada, may also be invited」，人選由 CEMC 決定。2027 屆學校訂購截止 2027-02-11；競賽日分兩場：北美與南美 2/17、其餘地區（含台灣）2/18。2/18 是比賽日，不是報名截止日。"
     },
@@ -786,7 +786,7 @@
       "eventStartsAt": "2027-04-06",
       "eventEndsAt": "2027-04-15",
       "registrationNote": "2/1 開放報名，比賽結束前都可報名",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://purplecomet.org/",
       "description": "官網寫「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。每隊要有一位成年人當 supervisor：規則頁寫「Each team is required to have an adult supervisor」，也寫「Any adult aged 21 years or older may serve as a team supervisor」，老師或家長都可以，由這位成年人在官網註冊後建隊。隊員可以來自不同學校或在家自學，台灣不需任何國家代理。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。規則頁寫隊伍報名期間「begins February 1 and continues through the end of the competition」，2027 屆是 2 月 1 日到 4 月 15 日。"
     },
@@ -801,7 +801,7 @@
       "mode": "實體",
       "deadline": "",
       "registrationNote": "台灣由學校統一報名 · 該校須滿 20 人",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "sourceNote": "AKSF 官方會員國頁（www.aksf.org/countries.xhtml）逐字列有「Republic of China (Taiwan) (TW)」，承辦單位 Chinese Mathematics Association、網站 www.tmo.com.tw。MKT 的站內專頁是 www.tmo.com.tw/main/page/83d48be0-f6b0-11ec-8671-c3637dfe7247。",
       "url": "https://www.tmo.com.tw/",
       "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、各會員國各自辦理的中小學數學競賽，全為選擇題。AKSF 的會員國頁列的台灣會員是中華數學協會（Chinese Mathematics Association），協會網站的劃撥戶名是奧林匹克文化事業股份有限公司。台灣賽名為「MKT 袋鼠數學能力測驗」，官網寫「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」，高中生可參加。參加對象：「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」；舉辦資格：「該校須滿 20 位參加學生，由校方統一報名；參與各學校自行於期間選擇適合時間於校內舉辦，偏鄉、離島或特殊情況請與協會聯繫」。2026 年活動期間逐字「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」已結束，2027 年時程尚未公告，費用與名額要向就讀學校確認。"
@@ -822,7 +822,7 @@
       "cycle": {
         "closes": "11"
       },
-      "sourceCheckedAt": "2026-10-25",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://comap.org/contests/himcm-midmcm",
       "description": "美國 COMAP 主辦的高中數學建模競賽，每隊最多 4 人，隊員須來自同一所學校或同一個 program，並由同校（或同 program）的 faculty advisor 報名；以短期教學或競賽準備為主的補習班、考試與競賽培訓機構，以及數學或 STEM 學習中心，不算學校或 program。作品以英文撰寫、線上提交，台灣學生可參加。2026 年第 29 屆報名截止為 11 月 4 日 2:00 pm EST（台灣時間 11/5 03:00），逾時不受理，賽期 11 月 4–17 日，每隊報名費 US$100。"
     },
@@ -970,7 +970,7 @@
       "cycle": {
         "closes": "09"
       },
-      "sourceCheckedAt": "2026-10-25",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://globalyouth.wharton.upenn.edu/competitions/investment-competition/",
       "description": "由賓州大學華頓商學院 Wharton Global Youth Program 主辦的免費線上投資競賽，官網寫「High school students (see Rules) around the world who are interested in business and finance」皆可參加：4 至 6 人同校組隊、須有同校教師 advisor，隊長須於競賽首日滿 16 歲，官網寫「the competition is free for all participants. There is no registration fee」。全由自學生組成的隊伍要先經主辦單位核准，由家長擔任 advisor。規則頁寫「Students may not register themselves or their teams」，2026-27 屆由指導老師於 2026-08-10 至 09-11 17:00 ET 完成報名並建立學生帳號，報名已截止；9/15 釋出競賽細節、9/28 開始模擬交易、11/6 繳交投資政策書（IPS）、12/4 繳交期末報告，2027 年 4 月 29 至 30 日於費城舉行全球決賽，進入決賽的隊伍可選擇視訊參加，親自出席須自付旅費。（原名 KWHS Investment Competition，官方已更名。）"
     },
@@ -1319,7 +1319,7 @@
       "eventStartsAt": "2026-12-12",
       "eventEndsAt": "2026-12-13",
       "registrationNote": "經直轄市、縣（市）初賽複賽晉級決賽",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://language115.eduweb.tw/",
       "description": "教育部主辦、文化部與原住民族委員會、客家委員會協辦，115 年由基隆市政府承辦。高中學生組資格：「就讀公私立高級中等學校日、夜間部與進修學校且未滿二十歲、五專前三年學生」。學生由就讀學校報名學校所在地的直轄市、縣（市）初賽，逐級經複賽晉級決賽；初賽辦法由各縣市自訂，例如桃園市 115 年實施計畫寫初賽「由各校秉持公平公正公開的原則下自行擇期辦理，選拔校內優秀選手，代表學校參加複賽」；複賽「以直轄市、縣（市）為競賽單位」，決賽報名方式：「各競賽單位應於115年9月23日至10月20日前完成網路報名並電話確認」。115 年決賽：個人賽 2026-12-12 至 12-13，國語、臺灣台語、臺灣客語項目在基隆市立明德國中，臺灣原住民族語言項目在基隆市仁愛國小；團體賽（讀者劇場）2026-12-20 在明德國中。依《全國語文競賽舉辦原則》規定「於比賽半年前公告競賽實施要點，並架設專屬網站」，官網每年隨承辦縣市更換（116 年網址尚未建立）；language.moe.gov.tw 是教育部語文成果入口網，收錄舉辦原則與歷年成績，不是競賽官網。"
     },
@@ -1335,7 +1335,7 @@
       "deadline": "2027-03-15",
       "deadlineAt": "2027-03-15T12:00:00+08:00",
       "opensAt": "2027-02-01T00:00:00+08:00",
-      "sourceCheckedAt": "2026-10-24",
+      "sourceCheckedAt": "2026-11-01",
       "sourceNote": "115 學年度是兩梯次，不是三梯次。",
       "url": "https://www.shs.edu.tw/Customer/Information/EssayIndex",
       "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立中興大學附屬高級中學承辦。對象為全國高級中等學校在學學生（含非學校型態實驗教育學生），可個人或小組參賽，小組須同校同年級、最多 3 人；參賽學校應先辦理校內初賽再擇優投稿，學生註冊時需學校驗證碼。115 學年度分兩梯次：第一學期 2026-09-01 至 10-15 12:00、第二學期 2027-02-01 至 03-15 12:00，得獎分別於 2026-11-26 前與 2027-04-26 前公布。全程線上投稿與線上評審，無到場比賽日。"
@@ -1352,7 +1352,7 @@
       "deadline": "2027-03-10",
       "deadlineAt": "2027-03-10T12:00:00+08:00",
       "opensAt": "2027-02-01T00:00:00+08:00",
-      "sourceCheckedAt": "2026-10-24",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://www.shs.edu.tw/Customer/Information/OverIndex",
       "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立嘉義高級工業職業學校承辦（與小論文比賽的承辦學校不同）。對象為全國高級中等學校在學學生，學生用學校給的驗證碼註冊投稿，參賽學校在截稿後篩選作品，每校可投的篇數是班級數的兩倍。實施計畫規定「每位在學學生每學期僅能投稿一篇作品，每篇作品須為單一作者，不接受聯名投稿」，並明文「不得使用任何 AI 工具輔助參賽」。115 學年度兩梯次：第一學期 2026-09-01 至 10-08 12:00、第二學期 2027-02-01 至 03-10 12:00，成績分別於 2026-11-14 前與 2027-04-16 前公告。兩學期的截止日都比小論文比賽早（小論文是 10/15 與 3/15）。"
     },
@@ -1422,7 +1422,7 @@
       "mode": "實體",
       "deadline": "",
       "registrationNote": "由學校訂購 · 各賽事截止日不同",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://cemc.uwaterloo.ca/contests/",
       "description": "滑鐵盧大學 CEMC 主辦的一系列 5 至 12 年級數學競賽，採學校訂購制，須由學校或監考老師訂購，學生無法個人報名。台灣屬「Outside North and South America」區，CEMC 為該區另行公告考試日與訂購截止日。2026/27 學年主要期限：CSMC／CIMC 考試 2026-11-19、訂購截止 2026-10-22；Pascal／Cayley／Fermat 考試 2027-02-24 至 25、加拿大與印度以外地區訂購截止 2027-02-02；Euclid 考試 2027-04-07、訂購截止 2027-03-11；CCC 考試 2027-02-18、訂購截止 2027-02-11。各賽事截止日不同。"
     },
@@ -1583,7 +1583,7 @@
       "eventStartsAt": "2026-10-26",
       "eventEndsAt": "2026-10-30",
       "registrationNote": "僅受理學校團體報名",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://singapore.thimun.org/",
       "description": "由 THIMUN Foundation 主辦的新加坡模擬聯合國會議，僅受理學校團體報名：既有學校自動收到邀請，新學校須依 participation guidelines 另行申請；個人只能申請 Student Officer 或 Press，且須附 MUN Director 推薦函。2026 屆會議 10 月 26 至 30 日實體舉行，已結束；官網寫「THIMUN Singapore 2026 will be hosted at the International French School (IFS)」。報名時程為 4 月新學校提交申請、5 月繳交 Online Form I、6/12 預付款 €1,215 截止、9/14 繳交完整名單（Online Form II）並付清費用（學校團體費 €135、每人 €270）。2027 屆時程尚未公布。"
     },
@@ -1652,7 +1652,7 @@
       "mode": "實體",
       "deadline": "",
       "registrationNote": "推薦期程依教育部年度實施計畫",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://pea.k12ea.gov.tw/",
       "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生，分大專、高中、國中、國小四組，每年獎勵名額以 48 至 60 人為原則。學生不能自己報名，要由學校或已向政府立案的社會團體推薦，再逐級評選。高中組獎助學金每人 20 萬元；2026 年錄取 60 人（高中組 14 名）、7 月 3 日於總統府頒獎。官方辦理要點未訂固定推薦截止日，各年度期程寫在教育部當年的遴選實施計畫（2026 屆為 2025-11-27 至 2025-12-30）。"
     },
@@ -1669,7 +1669,7 @@
       "eventStartsAt": "2027-04-12",
       "eventEndsAt": "2027-04-22",
       "registrationNote": "經縣市初賽選拔 · 學校團體報名",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "url": "https://web.arte.gov.tw/country/",
       "description": "115 學年度起已更名：官方實施要點首行寫「115 學年度全國師生本土語及新住民語歌謠比賽實施要點」，要點內並回溯提及舊名「全國師生鄉土歌謠比賽」。教育部指導、決賽由國立臺灣藝術教育館主辦、新竹縣政府教育局承辦。純團體賽，高中職組：「就讀於公私立高級中學高中部及高級職業學校、五專一、二、三年級及七年一貫制大學一、二、三年級之學生組成之團隊，不得跨校組之」，舞臺上 10 至 65 人，且須在學校所在縣市報名、不得跨區。115 學年度：初賽 2026-12-20 前辦畢（報名期程由各縣市自訂）、決賽線上報名 2026-11-20 09:00 至 12-25 17:00、縣市轉送至 12-31、決賽預定 2027-04-12 至 04-22 於新竹縣政府文化局演藝廳。"
     },
@@ -1806,7 +1806,7 @@
       "eventStartsAt": "2027-08-03",
       "eventEndsAt": "2027-08-05",
       "registrationNote": "台灣約 5 月下旬開放報名 · 2027 屆未公布",
-      "sourceCheckedAt": "2026-10-23",
+      "sourceCheckedAt": "2026-11-01",
       "sourceNote": "原 www.amt.edu.au 首頁查不到任何日期，賽事頁為 amt.edu.au/amc，2027 屆的英文引文出自這一頁。AMT 只受理學校、自學家庭與補習機構註冊（https://amt.edu.au/competitions：「Only teachers and staff at a verified school, home school or coaching clinic can register students in our competitions」），台灣考生要向承辦單位報名，所以 url 指向學習成就測驗協會的澳洲 AMC 頁。",
       "url": "https://www.gemt.org.tw/amc/",
       "description": "由 Australian Maths Trust（AMT）主辦的中小學數學競賽。台灣試務自 2025 年起由學習成就測驗協會與九九文教基金會共同承辦，分團體報名與個別報名，個別報名一律在網路上報名，在台灣各考區紙本作答。2026 年報名 5/29 至 6/22、每人 750 元，8/4 晚上考試，已結束；承辦單位寫每年約五月下旬開放報名，2027 年的日期還沒公布。AMT 官網的 2027 屆考試是 8 月 3 至 5 日，直接向 AMT 報名的學校，紙本報名截止日澳紐為 7/2、其他國家為「Friday 25 June 2027 – International」，線上報名截止「Friday 30 July 2027」，費用「AUD $9.30 per student」；官網也寫「From 2027, the AMC Early Primary division will be part of our standard AMC offerings」。"
