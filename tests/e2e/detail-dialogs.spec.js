@@ -135,6 +135,13 @@ for (const { name, path, grid, button, tabs } of PAGES) {
             expect(box.y + box.height).toBeLessThanOrEqual(256);
         });
 
+        test('「關閉」按鈕至少 24x24', async ({ page }) => {
+            await page.locator(`${grid} ${button}`).first().click();
+            const box = await page.getByRole('dialog').getByRole('button', { name: '關閉' }).boundingBox();
+            expect(box.width).toBeGreaterThanOrEqual(24);
+            expect(box.height).toBeGreaterThanOrEqual(24);
+        });
+
         test('320x256 能讀的區域至少有視窗高度的六成，捲到底看得到內文最後一段', async ({ page }) => {
             await page.setViewportSize({ width: 320, height: 256 });
             await page.locator(`${grid} ${button}`).first().click();
