@@ -14,9 +14,12 @@ test.describe('公民科技專案頁', () => {
         for (const [i, p] of projects.entries()) {
             const card = cards.nth(i);
             await expect(card).toHaveAttribute('id', p.id);
+            // 名稱後面的「（官網）」只給螢幕報讀器，和專案一覽連到卡片的連結分開。sr-only 是絕對定位，
+            // Chromium 算名稱時會在前面補一個空白。
+            const name = new RegExp(`^${p.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?（官網）$`);
             const heading = card.getByRole('heading', { level: 3 });
-            await expect(heading).toHaveText(p.title);
-            await expect(heading.getByRole('link', { name: p.title, exact: true })).toHaveAttribute('href', p.url);
+            await expect(heading).toHaveAccessibleName(name);
+            await expect(heading.getByRole('link', { name })).toHaveAttribute('href', p.url);
             await expect(card.locator('dt')).toHaveText(['可以用的資料或工具', '題目例子', '做法']);
             await expect(card.locator('dd').nth(1)).toHaveText(p.topic);
             await expect(card.locator('dd li')).toHaveCount(p.tools.length);
