@@ -817,11 +817,10 @@
       "deadline": "",
       "eventStartsAt": "2027-04-06",
       "eventEndsAt": "2027-04-15",
-      "registrationNote": "官網未公布報名截止日",
+      "registrationNote": "2/1 開放報名，比賽結束前都可報名",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "官網查無報名截止日：2026-08-29 對首頁、/information、/rules、/instructions、/start/instructions、/faq、/changes 共 7 頁，逐一比對 deadline／due date／closes／last day／cut-off／cutoff／register by 七個詞，全部 0 命中；官方指引只說「We recommend that this be done well before」。不要自行推定截止日。",
       "url": "https://purplecomet.org/",
-      "description": "官網寫「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。每隊要有一位成年人當 supervisor：規則頁寫「Each team is required to have an adult supervisor」，也寫「Any adult aged 21 years or older may serve as a team supervisor」，老師或家長都可以，由這位成年人在官網註冊後建隊。隊員可以來自不同學校或在家自學，台灣不需任何國家代理。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。官網沒有寫報名截止日，只建議提早註冊。"
+      "description": "官網寫「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。每隊要有一位成年人當 supervisor：規則頁寫「Each team is required to have an adult supervisor」，也寫「Any adult aged 21 years or older may serve as a team supervisor」，老師或家長都可以，由這位成年人在官網註冊後建隊。隊員可以來自不同學校或在家自學，台灣不需任何國家代理。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。規則頁寫隊伍報名期間「begins February 1 and continues through the end of the competition」，2027 屆是 2 月 1 日到 4 月 15 日。"
     },
     {
       "title": "袋鼠數學競賽 (Math Kangaroo)",
