@@ -188,6 +188,27 @@ test.describe('外文標上 lang', () => {
         }
     });
 
+    test('頁尾的版權聲明、關於我們的英文名稱標 lang="en"', async ({ page }) => {
+        await page.goto(P('index.html'));
+        await expect(page.locator('footer [lang="en"]')).toHaveText('All Rights Reserved.');
+        await page.goto(P('about.html'));
+        await expect(page.locator('main [lang="en"]').first()).toHaveText('Taiwan K-12 Education Resource Integration Platform');
+    });
+
+    test('線上課程沒有中文的課名標 lang="en"，連結裡的課名也是', async ({ page }) => {
+        await page.goto(P('advanced-resources/online-courses.html'), { waitUntil: 'networkidle' });
+        const cards = await page.locator('.course-card').evaluateAll((els) => els.map((card) => ({
+            title: card.querySelector('h2').textContent,
+            lang: card.querySelector('h2').lang,
+            linkLang: card.querySelector('a .sr-only span').lang,
+        })));
+        expect(cards.filter((c) => !/[\u3000-\u9fff]/.test(c.title)).length).toBeGreaterThan(0);
+        for (const c of cards) {
+            const lang = /[\u3000-\u9fff]/.test(c.title) ? '' : 'en';
+            expect({ title: c.title, lang: c.lang, linkLang: c.linkLang }).toEqual({ title: c.title, lang, linkLang: lang });
+        }
+    });
+
     test('學群文章參考資料的英文標題標 lang="en"', async ({ page }) => {
         await page.goto(P('career-exploration/clusters/engineering/inquiry.html'));
         await expect(page.locator('.md-content a span[lang="en"]')).toHaveText(['On Indefinite Reflection of Light Beam Off of Convex Decreasing Curves']);
