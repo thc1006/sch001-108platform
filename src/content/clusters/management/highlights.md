@@ -8,7 +8,7 @@ description: 六個企管系的準備指引怎麼寫多元表現，教育部升�
 
 ## 六個企管系怎麼看多元表現
 
-各系採計的多元表現項目不同，準備指引的提問也不同。下表照各系 115 學年度的準備指引：
+各系採計的多元表現項目不同，準備指引的提問也不同。下表「採計的多元表現」照 116 學年度的校系分則，「準備指引寫的」照各系 115 學年度的準備指引：
 
 | 學系 | 採計的多元表現 | 準備指引寫的 |
 |---|---|---|
@@ -50,5 +50,11 @@ description: 六個企管系的準備指引怎麼寫多元表現，教育部升�
 - [國立中興大學企業管理學系 115 學年度大學申請入學第二階段甄試書面資料審查重點項目及準備指引](https://ba.nchu.edu.tw/front/Admissions/undergraduate/news.php?ID=f5077285ffd575aa5e9a9262f59fef6da890baf78c82e701f652bc47159ab086)
 - [115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】](https://www.scu.edu.tw/entrance/anounce/info/115/53.pdf)
 - [國立陽明交通大學 115 年大學申請入學第二階段指定項目甄試審查資料準備指引（管理科學學系）](https://aa.nycu.edu.tw/userfiles/aach/files/20260109091256255.pdf)
+- [台大工商管理學系企業管理組 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001502.htm)
+- [政大企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006202.htm)
+- [成大企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004332.htm)
+- [中興企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_003062.htm)
+- [東吳企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_005182.htm)
+- [陽明交大管理科學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013262.htm)
 - [教育部大學多元入學升學網「常見問題」](https://nsdua.moe.edu.tw/#/qa)
 - [學習歷程檔案「多元表現」10大地雷，你避開了嗎？專家曝備審製作教學，高中生上傳前必知（風傳媒轉載商周出版，呂宗昕，2022-11-20）](https://www.storm.mg/lifestyle/4616053)
