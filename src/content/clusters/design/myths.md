@@ -56,4 +56,6 @@ description: 常聽到的說法，對照 ColleGo!、IOH 文章、招聯會與教
 - [IOH 賴亭君〈設計系學姐帶你做備審！作品集範例、印刷、面試技巧全面剖析〉（2020-02-05）](https://ioh.tw/articles/ioharticles-設計系備審-作品集範例-面試準備)
 - [教育部大學多元入學升學網「常見問題」第 34 題（「三重二不」，招聯會「大學針對申請入學備審資料審查參考原則」的教育部轉述版本）、第 38 題（AI 工具）](https://nsdua.moe.edu.tw/#/qa)
 - [臺師大設計學系「系所簡介」](https://www.design.ntnu.edu.tw/?page_id=321)
+- [臺師大設計學系視覺設計組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_002552.htm)
+- [臺師大設計學系產品設計組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_002462.htm)
 - [中原商業設計學系產品設計組甲類 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_008442.htm)
