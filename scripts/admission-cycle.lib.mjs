@@ -2,14 +2,16 @@
 // 升學內容以 admission-cycle.json 的 cycle 那一屆大學申請入學為準。內文的「NNN 學年度」和甄選會
 // 網址 applyNNN／starNNN 的年度只能是 cycle 或 next，「113 至 115 學年度」這種區間要包含其中一個，
 // 其他的要列在 keep 才放行。next 也放行，換屆時才能一頁一個 PR 改成下一屆，最後再改 cycle。
+// 沒有學年度可比、但到某個日期會過時的行（引用指引的表格列、還沒公告的手冊），列在 watch。
 
 import { refLabel, refLabels } from './markdown-refs.lib.mjs';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MIN_REASON_CHARS = 10;
-const TOP_KEYS = new Set(['_readme', 'cycle', 'next', 'remindAfter', 'remindReason', 'keep']);
+const TOP_KEYS = new Set(['_readme', 'cycle', 'next', 'remindAfter', 'remindReason', 'keep', 'watch']);
 const TEXT_KEEP_KEYS = new Set(['file', 'text', 'cycle', 'reason', 'recheckAfter']);
 const URL_KEEP_KEYS = new Set(['url', 'cycle', 'reason', 'recheckAfter']);
+const WATCH_KEYS = new Set(['file', 'text', 'cycle', 'reason', 'recheckAfter']);
 
 // 只有分隔符號後面可以換行。換行前也算的話，一行以「114 學年度」結尾、下一行是「- 115 學年度」的清單，
 // 114 會被當成區間的開頭。
@@ -225,6 +227,8 @@ export function validateConfig(config) {
         }
     }
     if (!isReason(config.remindReason)) errors.push(`remindReason 要寫 remindAfter 這個日期的依據，至少 ${MIN_REASON_CHARS} 個字`);
+    if (Array.isArray(config.watch)) errors.push(...watchErrors(config.watch, cycleOk ? cycle : undefined));
+    else errors.push('watch 必須是陣列，沒有要追蹤的行時寫 []');
     if (!Array.isArray(config.keep)) {
         errors.push('keep 必須是陣列，沒有例外時寫 []');
         return errors;
@@ -262,6 +266,30 @@ export function validateConfig(config) {
     return errors;
 }
 
+/** watchErrors 檢查 watch 的每一筆。cycle 不合規則時是 undefined，不比對。 */
+function watchErrors(watch, cycle) {
+    const errors = [];
+    const seen = new Set();
+    watch.forEach((w, i) => {
+        const at = `watch[${i}]`;
+        if (!isPlainObject(w)) return errors.push(`${at} 必須是物件`);
+        for (const key of Object.keys(w)) {
+            if (!WATCH_KEYS.has(key)) errors.push(`${at} 有不認得的欄位「${key}」，watch 只能有 ${[...WATCH_KEYS].join('、')}`);
+        }
+        if (cycle !== undefined && w.cycle !== cycle) {
+            errors.push(`${at} 的 cycle 是 ${JSON.stringify(w.cycle)}，和設定檔的 cycle ${cycle} 不同。換屆時每一筆 watch 都要重新確認，還需要的把 cycle 改成 ${cycle}，不需要的刪掉`);
+        }
+        if (!isReason(w.reason)) errors.push(`${at} 的 reason 要寫這一行為什麼會過時、到時候對照什麼，至少 ${MIN_REASON_CHARS} 個字`);
+        if (!isRealDate(w.recheckAfter)) errors.push(`${at} 的 recheckAfter 必填，是存在的 YYYY-MM-DD 日期`);
+        if (!isMdPath(w.file)) errors.push(`${at} 的 file 必須是 .md 檔從 repo 根目錄起算的路徑`);
+        if (!isLine(w.text)) return errors.push(`${at} 的 text 必須是同一行裡的一段原文`);
+        const key = `${w.file}\n${w.text}`;
+        if (seen.has(key)) errors.push(`${at} 和前面的 watch 重複`);
+        seen.add(key);
+    });
+    return errors;
+}
+
 /**
  * excerpt 回傳 src 裡 start 那一行的前後幾十個字，錯誤訊息用來指出位置。
  * @param {string} src @param {number} start @param {number} end @returns {string}
@@ -277,7 +305,7 @@ function excerpt(src, start, end) {
 }
 
 /**
- * locate 回傳文字 keep 的 text 在檔案裡的位置。檔案不在、找不到或不只一處時回傳錯誤訊息。
+ * locate 回傳文字 keep 或 watch 的 text 在檔案裡的位置。檔案不在、找不到或不只一處時回傳錯誤訊息。
  * @param {Map<string, {text: string}>} byPath @param {{file: string, text: string}} k @param {string} at
  * @returns {number|string}
  */
@@ -327,19 +355,25 @@ function classify(files, keep, allowed) {
 }
 
 /**
- * checkContent 比對 files 的學年度與 config 的 cycle、next、keep，回傳錯誤訊息。
- * config 要先通過 validateConfig。沒有任何檔案，或一個學年度都找不到，都算錯：
+ * checkContent 比對 files 的學年度與 config 的 cycle、next、keep，並確認每筆 watch 的 text 還在，
+ * 回傳錯誤訊息。config 要先通過 validateConfig。沒有任何檔案，或一個學年度都找不到，都算錯：
  * 內容目錄搬走或比對規則壞掉時，什麼都沒比到不能當成通過。
  * @param {Array<{path: string, text: string}>} files path 從 repo 根目錄起算，和 keep 的 file 相同
- * @param {{cycle: number, next: number, keep: object[]}} config
+ * @param {{cycle: number, next: number, keep: object[], watch: object[]}} config
  * @returns {{errors: string[], found: number, kept: number}}
  */
 export function checkContent(files, config) {
-    const { cycle, next, keep } = config;
+    const { cycle, next, keep, watch } = config;
     if (files.length === 0) return { errors: ['src/content 底下沒有任何 .md 檔，沒有東西可以比對'], found: 0, kept: 0 };
     const allowed = new Set([cycle, next]);
     const { found, hits, spans, keepErrors } = classify(files, keep, allowed);
     const errors = [...keepErrors];
+    // 行改過了，watch 就找不到原文，要重新決定還要不要追蹤。
+    const byPath = new Map(files.map((f) => [f.path, f]));
+    watch.forEach((w, i) => {
+        const at = locate(byPath, w, `watch[${i}]`);
+        if (typeof at === 'string') errors.push(at);
+    });
     if (found === 0) errors.push(`${files.length} 個檔案裡找不到任何學年度或甄選會網址，比對規則可能壞了`);
     for (const f of files) {
         for (const h of findFraming(f.text)) {
@@ -392,12 +426,11 @@ export function pendingForNext(files, config) {
 }
 
 /**
- * dueKeeps 列出 recheckAfter 已經過了的 keep，當天還不算，和 remindAfter 一樣。
- * @param {{keep: object[]}} config @param {string} todayISO
- * @returns {Array<{index: number, keep: object}>}
+ * dueKeeps、dueWatches 列出 recheckAfter 已經過了的 keep、watch，當天還不算，和 remindAfter 一樣。
+ * @param {{keep: object[], watch: object[]}} config @param {string} todayISO
+ * @returns {Array<{index: number, entry: object}>}
  */
-export function dueKeeps(config, todayISO) {
-    return config.keep
-        .map((keep, index) => ({ index, keep }))
-        .filter(({ keep }) => isRealDate(keep.recheckAfter) && isPast(keep.recheckAfter, todayISO));
-}
+const dueIn = (list, todayISO) =>
+    list.map((entry, index) => ({ index, entry })).filter(({ entry }) => isRealDate(entry.recheckAfter) && isPast(entry.recheckAfter, todayISO));
+export const dueKeeps = (config, todayISO) => dueIn(config.keep, todayISO);
+export const dueWatches = (config, todayISO) => dueIn(config.watch, todayISO);
