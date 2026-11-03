@@ -1,8 +1,8 @@
 name: Admission Cycle Reminder
 
 # 內容學年度的每週提醒（#116）。過了 scripts/admission-cycle.json 的 remindAfter 而 cycle 還沒換、
-# 有 keep 或 watch 過了 recheckAfter，或檢查本身有錯，就開或更新一個 issue。不連網，只讀 repo 裡的檔案，
-# 不改檔案。
+# 有 keep 或 watch 過了 recheckAfter，或檢查本身有錯，就開或更新一個 issue。
+# 不連網、不改檔案，只讀 repo 裡的檔案。
 # 同一支檢查 ci.yml 每個 PR 都跑，在那裡日期只帶出警告，不會讓 PR 變紅。
 
 on:

@@ -2,7 +2,7 @@
 // 升學內容以 admission-cycle.json 的 cycle 那一屆大學申請入學為準。內文的「NNN 學年度」和甄選會
 // 網址 applyNNN／starNNN 的年度只能是 cycle 或 next，「113 至 115 學年度」這種區間要包含其中一個，
 // 其他的要列在 keep 才放行。next 也放行，換屆時才能一頁一個 PR 改成下一屆，最後再改 cycle。
-// 沒有學年度可比、但到某個日期會過時的行（引用指引的表格列、還沒公告的手冊），列在 watch。
+// 檢查看不到、但到某個日期會過時的行（引用指引的表格列、還沒公告的手冊），列在 watch。
 
 import { refLabel, refLabels } from './markdown-refs.lib.mjs';
 
@@ -444,12 +444,18 @@ export function fitReport(text, limit, note) {
     return text.slice(0, text.lastIndexOf('\n', limit - note.length - 1) + 1) + note;
 }
 
-/**
- * dueKeeps、dueWatches 列出 recheckAfter 已經過了的 keep、watch，當天還不算，和 remindAfter 一樣。
- * @param {{keep: object[], watch: object[]}} config @param {string} todayISO
- * @returns {Array<{index: number, entry: object}>}
- */
+// recheckAfter 當天還不算過，和 remindAfter 一樣。
 const dueIn = (list, todayISO) =>
     list.map((entry, index) => ({ index, entry })).filter(({ entry }) => isRealDate(entry.recheckAfter) && isPast(entry.recheckAfter, todayISO));
+
+/**
+ * dueKeeps 列出 recheckAfter 已經過了的 keep，沒填的不列。
+ * @param {{keep: object[]}} config @param {string} todayISO @returns {Array<{index: number, entry: object}>}
+ */
 export const dueKeeps = (config, todayISO) => dueIn(config.keep, todayISO);
+
+/**
+ * dueWatches 列出 recheckAfter 已經過了的 watch。
+ * @param {{watch: object[]}} config @param {string} todayISO @returns {Array<{index: number, entry: object}>}
+ */
 export const dueWatches = (config, todayISO) => dueIn(config.watch, todayISO);
