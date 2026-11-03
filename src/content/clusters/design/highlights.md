@@ -57,7 +57,7 @@ IOH 開放個人經驗平台 2017 年訪問的實踐工設系學生甘懷安說�
 
 - [IOH 林立麗〈設計作品集怎麼準備？實踐工設學長：比起畫技，展現原創性更重要〉（2017-02-07）](https://ioh.tw/articles/ioharticles-備審-面試-大學作品集-術科考試)
 - [IOH 賴亭君〈設計系學姐帶你做備審！作品集範例、印刷、面試技巧全面剖析〉（2020-02-05）](https://ioh.tw/articles/ioharticles-設計系備審-作品集範例-面試準備)
-- [116 學年度大學申請入學招生簡章（總則第 21 頁審查資料項目內容對照表），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
+- [116 學年度大學申請入學招生簡章第 21 頁的審查資料項目內容對照表，大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [教育部大學多元入學升學網「常見問題」第 39 題](https://nsdua.moe.edu.tw/#/qa)
 - [2026 TISDC 臺灣國際學生創意設計大賽簡章](https://www.tisdc.org/wp-content/uploads/2026TISDC-info-中文_0309.pdf)
 - [115 學年度全國學生美術比賽實施要點，國立臺灣藝術教育館](https://web.arte.gov.tw/nsac/rules.aspx)
