@@ -367,24 +367,21 @@ function classify(files, keep, allowed) {
 
 /**
  * checkContent 比對 files 的學年度與 config 的 cycle、next、keep，並確認每筆 watch 的 text 還在，
- * 回傳錯誤訊息。config 要先通過 validateConfig。沒有任何檔案，或一個學年度都找不到，都算錯：
+ * 回傳錯誤訊息，watch 的錯誤另外放在 watchErrors。config 要先通過 validateConfig。沒有任何檔案，或一個學年度都找不到，都算錯：
  * 內容目錄搬走或比對規則壞掉時，什麼都沒比到不能當成通過。
  * @param {Array<{path: string, text: string}>} files path 從 repo 根目錄起算，和 keep 的 file 相同
  * @param {{cycle: number, next: number, keep: object[], watch: object[]}} config
- * @returns {{errors: string[], found: number, kept: number}}
+ * @returns {{errors: string[], watchErrors: string[], found: number, kept: number}}
  */
 export function checkContent(files, config) {
     const { cycle, next, keep, watch } = config;
-    if (files.length === 0) return { errors: ['src/content 底下沒有任何 .md 檔，沒有東西可以比對'], found: 0, kept: 0 };
+    if (files.length === 0) return { errors: ['src/content 底下沒有任何 .md 檔，沒有東西可以比對'], watchErrors: [], found: 0, kept: 0 };
     const allowed = new Set([cycle, next]);
     const { found, hits, spans, keepErrors } = classify(files, keep, allowed);
-    const errors = [...keepErrors];
-    // 行改過了，watch 就找不到原文，要重新決定還要不要追蹤。
+    // text 那一段改過了，watch 就找不到原文，要重新決定還要不要追蹤。
     const byPath = new Map(files.map((f) => [f.path, f]));
-    watch.forEach((w, i) => {
-        const at = locate(byPath, w, `watch[${i}]`);
-        if (typeof at === 'string') errors.push(at);
-    });
+    const watchErrors = watch.map((w, i) => locate(byPath, w, `scripts/admission-cycle.json 的 watch[${i}]`)).filter((at) => typeof at === 'string');
+    const errors = [...keepErrors, ...watchErrors];
     if (found === 0) errors.push(`${files.length} 個檔案裡找不到任何學年度或甄選會網址，比對規則可能壞了`);
     for (const f of files) {
         for (const h of findFraming(f.text)) {
@@ -423,7 +420,7 @@ export function checkContent(files, config) {
         else if (inside.every((t) => allows(allowed, t))) errors.push(`keep[${i}] 的 text 裡的學年度本來就放行，不需要 keep`);
         // 其他情況是和別的 keep 重疊，上面已經報過。
     });
-    return { errors, found, kept: hits.filter((h) => h.by.length === 1).length };
+    return { errors, watchErrors, found, kept: hits.filter((h) => h.by.length === 1).length };
 }
 
 /**

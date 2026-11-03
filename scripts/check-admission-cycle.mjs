@@ -97,7 +97,7 @@ try {
     fail([`讀不到內容目錄 ${rel(CONTENT)}：${err.message}`]);
 }
 
-const { errors, found, kept } = checkContent(files, config);
+const { errors, watchErrors, found, kept } = checkContent(files, config);
 console.log(`學年度檢查：cycle ${cycle}、next ${next}，今天 ${today}（台灣時間），remindAfter ${remindAfter}`);
 console.log(`  ${rel(CONTENT)} 底下 ${files.length} 個 .md 檔，找到 ${found} 處學年度和甄選會網址，keep ${config.keep.length} 筆放行 ${kept} 處，watch ${config.watch.length} 筆`);
 
@@ -161,13 +161,16 @@ for (const [name, due, todo] of dueLists) {
 }
 
 if (errors.length) {
-    fail(
-        errors,
-        `內容以 ${cycle} 學年度申請入學為準：學年度要寫 ${cycle} 或 ${next}，區間要包含其中一個。確定要保留的舊年度，` +
-            `在 ${rel(CONFIG)} 的 keep 加一筆，文字寫 file、text、cycle、reason，網址寫 url、cycle、reason。` +
-            '「2026 升學趨勢」這類西元年寫法沒有 keep，拿掉年份或寫成學年度。',
-        sections,
-    );
+    const hints = [];
+    if (errors.length > watchErrors.length) {
+        hints.push(
+            `內容以 ${cycle} 學年度申請入學為準：學年度要寫 ${cycle} 或 ${next}，區間要包含其中一個。確定要保留的舊年度，` +
+                `在 ${rel(CONFIG)} 的 keep 加一筆，文字寫 file、text、cycle、reason，網址寫 url、cycle、reason。` +
+                '「2026 升學趨勢」這類西元年寫法沒有 keep，拿掉年份或寫成學年度。',
+        );
+    }
+    if (watchErrors.length) hints.push('watch 指的行改過了：內容不會再過時就刪掉這一筆，還要追蹤就把 text 換成新的原文。');
+    fail(errors, hints.join('\n'), sections);
 }
 if (remind) writeReport(sections, sections.length > 0);
 console.log('\n沒有問題。');
