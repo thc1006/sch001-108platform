@@ -66,7 +66,7 @@ ColleGo! 請兩位其他學群的大一學生分享申請入學的面試經驗�
 - [116 學年度大學申請入學校系分則：臺北市立大學中國語文學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_035072.htm)
 - [116 學年度大學申請入學校系分則：國立中正大學財務金融學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_041232.htm)
 - [116 學年度大學申請入學校系分則查詢（各校系列表），大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
-- [116 學年度大學申請入學招生簡章總則（第 12、21 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
+- [116 學年度大學申請入學招生簡章（第 12、21 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [〈看這篇搞懂教授怎麼問！成大生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-06-09）](https://blog.luckertw.com/interview-archaeology/)
 - [〈看這篇搞懂教授怎麼問！中山生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-07-16）](https://blog.luckertw.com/interview-archaeology-nsysu/)
 - [〈學長姐經驗談！申請入學面試常見問題大揭密（一）〉，ColleGo! 焦點話題（2023-04-14）](https://collego.edu.tw/Media/Article/754)
