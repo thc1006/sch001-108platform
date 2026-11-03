@@ -24,7 +24,7 @@ description: 工程學群申請常見的說法和教育部、招聯會、大學�
 
 ## APCS 組不用看學測？
 
-以清大、陽明交大資工為例，兩系申請入學除了甲組等一般分組，另設 APCS（大學程式設計先修檢測）組；APCS 組也要看學測，只是門檻和比重比甲組低。依 115 學年度校系分則，清大資工 APCS 組（校系代碼 011382）學測檢定數學 A 前標、用數學 A 做 10 倍篩選，學測佔甄選總成績 20%；同系甲組（電子資訊組，011352）國文、英文、數學 A、自然都要前標，學測佔 40%。陽明交大資工 APCS 組（013082）檢定數學 A 前標、自然均標，用數學 A 做 20 倍篩選，學測佔 20%；甲組（013062）檢定國文均標、英文前標、數學 A 頂標、自然頂標，學測佔 40%。兩校 APCS 組拿來倍率篩選的學測科目都只有數學 A。APCS 的檢定標準詳見〈科系風向標〉。
+以清大、陽明交大資工為例，兩系申請入學除了甲組等一般分組，另設 APCS（大學程式設計先修檢測）組；APCS 組也要看學測，只是門檻和比重比甲組低。依 116 學年度校系分則，清大資工 APCS 組（校系代碼 011412）學測檢定數學 A 前標、用數學 A 做 10 倍篩選，學測佔甄選總成績 20%；同系甲組（電子資訊組，011382）國文、英文、數學 A、自然都要前標，學測佔 40%。陽明交大資工 APCS 組（013082）檢定數學 A 前標，用數學 A 做 8 倍篩選，學測佔 20%；甲組（013062）檢定英文前標、數學 A 頂標、自然頂標，學測佔 40%。兩校 APCS 組拿來倍率篩選的學測科目都只有數學 A。APCS 的檢定標準詳見〈科系風向標〉。
 
 ## 念機械就是當黑手？女生不適合念機械、電機？
 
@@ -50,7 +50,7 @@ description: 工程學群申請常見的說法和教育部、招聯會、大學�
 - [〈學習歷程、備審資料與大學選才〉，教育部、大學招生委員會聯合會（2021 年 4 月，臺北市立陽明高中網站）](https://www.ymsh.tp.edu.tw/wp-content/uploads/doc/ym150/_self_store_17_self_attach_%E7%BF%92%E6%AD%B7%E7%A8%8B%E6%AA%94%E6%A1%88%E6%BA%96%E5%82%99%E5%BB%BA%E8%AD%B0-%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B%E8%88%87%E5%A4%A7%E5%AD%B8%E9%81%B8%E6%89%8D1100809.pdf)
 - [國立成功大學資訊工程學系「大學個人申請入學備審資料準備指引」（115 學年度）](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [TUN 大學網〈台大資工系教授：把握這原則 書審面試脫穎而出〉（2021-03-05）](https://university.1111.com.tw/zone/university/discussTopic.asp?cat=University&id=240720)
-- [115 學年度大學申請入學校系分則查詢（清大資工 APCS 組 011382／甲組 011352、陽明交大資工 013082／013062），大學甄選入學委員會](https://www.cac.edu.tw/apply115/query.php)
+- [116 學年度大學申請入學校系分則查詢（清大資工 APCS 組 011412／甲組 011382、陽明交大資工 013082／013062），大學甄選入學委員會](https://www.cac.edu.tw/apply116/query.php)
 - [ColleGo!「國立清華大學動力機械工程學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011036)
 - [ColleGo!「機械工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=14)
 - [ColleGo!「電機工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=9)
