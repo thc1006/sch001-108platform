@@ -9,7 +9,8 @@
 //     --remind 給每週排程用：另外寫出 admission-cycle-report.md，有錯誤或該提醒的事時在 GITHUB_OUTPUT
 //     寫 needs_attention=true，admission-cycle-check.yml 拿報告開 issue。
 //
-// 測試用 ADMISSION_CYCLE_TODAY（YYYY-MM-DD）指定今天，沒給就用台灣的日期。
+// 測試用 ADMISSION_CYCLE_TODAY（YYYY-MM-DD）指定今天，沒給就用台灣的日期；ADMISSION_CYCLE_REPORT_LIMIT
+// 指定報告的字數上限，沒給是 60000。
 import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,7 @@ import {
     dueKeeps,
     dueWatches,
     entryLine,
+    fitReport,
     isPast,
     isRealDate,
     pendingForNext,
@@ -34,13 +36,18 @@ const CONFIG = path.join(ROOT, 'scripts/admission-cycle.json');
 const CONTENT = path.join(ROOT, 'src/content');
 const REPORT = path.join(ROOT, 'admission-cycle-report.md');
 const remind = process.argv.includes('--remind');
+// GitHub issue 內文上限 65,536 字，超過時開不了 issue，留一點餘裕。
+const REPORT_LIMIT = Number(process.env.ADMISSION_CYCLE_REPORT_LIMIT) || 60000;
 const rel = (p) => path.relative(ROOT, p).split(path.sep).join('/');
 
-/** writeReport 寫出報告，第一行是機器標記，下一輪才認得出自己開的 issue。 */
+/** writeReport 寫出報告，第一行是機器標記，下一輪才認得出自己開的 issue。太長時截斷，完整的印在 log。 */
 function writeReport(sections, attention) {
     const body = [ADMISSION_CYCLE_MARKER, '', '## 內容的學年度', '', ...sections.flat()];
     if (!attention) body.push('沒有需要處理的事。', '');
-    writeFileSync(REPORT, body.join('\n'));
+    const full = body.join('\n');
+    const text = fitReport(full, REPORT_LIMIT, `\n報告超過 ${REPORT_LIMIT} 字，後面截掉了，其餘見 Actions log。\n`);
+    if (text !== full) console.log(`\n報告超過 ${REPORT_LIMIT} 字，寫進 issue 的版本截掉了後面。完整的報告：\n\n${full}`);
+    writeFileSync(REPORT, text);
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `needs_attention=${attention}\n`);
     console.log(`\n報告寫在 ${rel(REPORT)}。`);
 }

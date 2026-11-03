@@ -437,6 +437,16 @@ export function pendingForNext(files, config) {
 }
 
 /**
+ * fitReport 讓報告不超過 limit 個字，字數照 JavaScript 字串的長度算，和 GitHub issue 內文的上限一樣。
+ * 超過時在 limit 之前最後一個換行截斷，接上 note，結果連 note 也不超過 limit。
+ * @param {string} text @param {number} limit @param {string} note @returns {string}
+ */
+export function fitReport(text, limit, note) {
+    if (text.length <= limit) return text;
+    return text.slice(0, text.lastIndexOf('\n', limit - note.length - 1) + 1) + note;
+}
+
+/**
  * dueKeeps、dueWatches 列出 recheckAfter 已經過了的 keep、watch，當天還不算，和 remindAfter 一樣。
  * @param {{keep: object[], watch: object[]}} config @param {string} todayISO
  * @returns {Array<{index: number, entry: object}>}

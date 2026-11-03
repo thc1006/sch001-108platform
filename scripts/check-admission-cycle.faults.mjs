@@ -279,6 +279,16 @@ const cases = [
         report: /### 該重新確認的 watch\n\n2 筆[^\n]*\n\n- recheckAfter 2026-10-24：故障注入的測資，保留理由至少十個字。\n {2}- watch\[0\] `src\/content\/clusters\/b\/application\.md:5`\n {2}- watch\[1\] `src\/content\/clusters\/a\/overview\.md:10`\n/,
     },
     {
+        name: '--remind 報告超過上限：截斷並寫明，完整的印在 log',
+        args: ['--remind'],
+        env: { ADMISSION_CYCLE_TODAY: '2026-12-16', ADMISSION_CYCLE_REPORT_LIMIT: '300' },
+        code: 0,
+        attention: true,
+        expect: /完整的報告：\n\n<!-- admission-cycle-watchdog:v1 -->[^]*overview\.md`：第 2、3、6、8、10、12 行/,
+        report: /^<!-- admission-cycle-watchdog:v1 -->\n[^]*\n\n報告超過 300 字，後面截掉了，其餘見 Actions log。\n$/,
+        reportMax: 300,
+    },
+    {
         name: '--remind 內容有錯：以 1 結束，照樣通知，錯誤寫進報告',
         args: ['--remind'],
         inject: append(PAGE_B, '另見 114 學年度的統計。'),
@@ -312,6 +322,7 @@ function problem(c) {
     if (c.absent?.test(r.out)) return `輸出裡不該有 ${c.absent}`;
     if ('attention' in c && r.attention !== c.attention) return `needs_attention 是 ${r.attention}，應該是 ${c.attention}`;
     if (c.report === null && r.report !== null) return '不該寫出報告';
+    if (c.reportMax && (r.report ?? '').length > c.reportMax) return `報告有 ${r.report.length} 字，超過 ${c.reportMax}`;
     if (c.report && !c.report.test(r.report ?? '')) return `報告裡沒有 ${c.report}。報告：${(r.report ?? '（沒有報告）').replace(/\s+/g, ' ').slice(0, 240)}`;
     return null;
 }
@@ -403,6 +414,9 @@ const libMutations = [
     ['不檢查重複的 watch', 'if (seen.has(key)) errors.push(`${at} 和前面的 watch 重複`)', 'if (false) errors.push(`${at} 和前面的 watch 重複`)'],
     ['重複的 watch 只看 text', 'const key = `${w.file}\\n${w.text}`;', 'const key = w.text;'],
     ['watch 找不到原文也不報錯', "if (typeof at === 'string') errors.push(at);", 'if (false) errors.push(at);'],
+    ['截斷時沒扣掉說明的長度', 'limit - note.length - 1', 'limit - 1'],
+    ['沒超過上限也截斷', 'if (text.length <= limit) return text;', 'if (text.length < limit) return text;'],
+    ['截斷不找換行', "text.lastIndexOf('\\n', limit - note.length - 1) + 1", 'limit - note.length'],
     ['行號從 0 算', "f.text.slice(0, at).split('\\n').length", "f.text.slice(0, at).split('\\n').length - 1"],
     ['watch 的到期看 keep', 'dueIn(config.watch, todayISO)', 'dueIn(config.keep, todayISO)'],
     ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
@@ -457,6 +471,9 @@ const cliMutations = [
     ['watch 的 recheckAfter 拿 remindAfter 比', 'dueWatches(config, today)', 'dueWatches(config, remindAfter)'],
     ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
     ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],\n", ''],
+    ['報告不截斷', 'writeFileSync(REPORT, text);', 'writeFileSync(REPORT, full);'],
+    ['截斷時 log 不印完整的報告', 'if (text !== full) console.log(', 'if (false) console.log('],
+    ['報告的上限不看環境變數', 'Number(process.env.ADMISSION_CYCLE_REPORT_LIMIT) || 60000', '60000'],
     ['到期的項目不依理由分組', 'const key = `${entry.recheckAfter}：${entry.reason}`;', 'const key = `${entry.recheckAfter}：${entry.reason}${index}`;'],
     ['報告不寫行號', '`${entry.file}:${entryLine(files, entry) ?? \'?\'}`', '`${entry.file}`'],
     ['報告不列到期的項目', 'sections.push([`### 該重新確認的 ${name}`', '[].push([`### 該重新確認的 ${name}`'],

@@ -11,6 +11,7 @@ import {
     dueWatches,
     entryLine,
     findFraming,
+    fitReport,
     findYears,
     isPast,
     isRealDate,
@@ -561,6 +562,14 @@ test('entryLine：text 所在的行號，找不到或不只一處是 undefined',
     assert.equal(entryLine(files, watchOf(FILE, '至多 15 件')), undefined);
     assert.equal(entryLine(files, watchOf(FILE, '至多 10 件')), undefined);
     assert.equal(entryLine(files, watchOf('src/content/gone.md', '800 字')), undefined);
+});
+
+test('fitReport：不超過上限就不動，超過時在換行截斷，加上說明也不超過上限', () => {
+    const text = 'abcd\nefgh\nijkl\n';
+    assert.equal(fitReport(text, text.length, '…'), text);
+    assert.equal(fitReport(text, 14, '截掉了\n'), 'abcd\nefgh\n截掉了\n');
+    assert.equal(fitReport(text, 13, '截掉了\n'), 'abcd\n截掉了\n');
+    for (let limit = 5; limit < text.length; limit++) assert.ok(fitReport(text, limit, '!\n').length <= limit, String(limit));
 });
 
 test('admission-cycle.json：repo 裡的設定通過 validateConfig', () => {
