@@ -53,7 +53,7 @@ description: 財經學群個人申請第二階段：審查資料的項目與件�
 ## 參考來源
 
 - [115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊（第 1、9 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115apply_dupload_opflow_addf_115.pdf)
-- [中原大學財務金融學系 115 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_008292.htm)
+- [中原大學財務金融學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_008292.htm)
 - [國立中正大學財務金融學系 115 學年度大學申請入學第二階段指定項目甄試審查資料準備指引](https://deptfin.ccu.edu.tw/var/file/118/1118/img/157/B3-5-2.pdf)
 - [國立中興大學財務金融學系 115 學年度大學申請入學第二階段甄試書面資料審查重點項目及準備指引](https://www.fin.nchu.edu.tw/uploads/ckeditor/files/1141118%E6%9B%B4%E6%96%B0--115%20%20%20%E8%B2%A1%E9%87%91%E7%B3%BB-%E6%BA%96%E5%82%99%E6%8C%87%E5%BC%95.pdf)
 - [ColleGo!〈【112申請入學】財經學群小福袋〉](https://collego.edu.tw/Media/Article/349)
