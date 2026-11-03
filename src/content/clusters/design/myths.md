@@ -44,7 +44,7 @@ description: 常聽到的說法，對照 ColleGo!、IOH 文章、招聯會與教
 
 ## 參考來源
 
-- [115 學年度大學申請入學招生簡章（總則第 20 頁審查資料項目內容對照表），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
+- [116 學年度大學申請入學招生簡章（總則第 21 頁審查資料項目內容對照表），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [ColleGo! 大學選才與高中育才輔助系統「建築設計學群」](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=8)
 - [ColleGo!「工業設計學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=66)
 - [ColleGo!「商業設計學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=68)
