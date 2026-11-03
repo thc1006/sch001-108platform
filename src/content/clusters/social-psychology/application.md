@@ -20,7 +20,7 @@ description: 台大社會、社工、心理系與政大社會、心理系的準�
 | 政大社會系 | 核心能力是自發問題分析、社會關懷共好、溝通合作互動、自我認知探索；審查採綜合性評量，「不是集點積分方式評量」 |
 | 政大心理系 | 課程學習成果的書面報告重視學習過程的觀察與反思；自主學習計畫與成果著重歷程；綜整心得說明各項表現的影響與啟發；自述具體說明修習動機與心得 |
 
-甄選會的準備指引頁寫，116 學年度的資料預計 116 年 3 月更新。
+甄選會的準備指引頁寫，116 學年度的資料預計 116 年 3 月更新。116 學年度的校系分則，政大社會系、心理系都把 AI 使用聲明列為審查資料的一項。
 
 ### 政大社會系的參考題目
 
@@ -81,6 +81,7 @@ PTT 那篇心得寫，回答前「要稍微停頓思考一下給別人一點尊�
 - [國立臺灣大學心理學系 115 學年度書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/2070_心理系.pdf)
 - [國立政治大學社會學系 115 學年度審查資料準備指引](https://sociology.nccu.edu.tw/PageDocAll/Detail?fid=565&id=38893)
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
+- [116 學年度校系分則：政大社會學系（006062）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006062.htm)
 - [116 學年度校系分則：政大心理學系（006412）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006412.htm)
 - [心理系面試準備方針分享（2010-04-24）｜PTT SENIORHIGH 板](https://www.ptt.cc/bbs/SENIORHIGH/M.1272038439.A.517.html)
 - [心理系面試技巧，亞洲大學心理學系](https://psy.asia.edu.tw/zh_tw/high_school/highschool/interview)
