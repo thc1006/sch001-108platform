@@ -3,7 +3,7 @@
 // 判斷在 admission-cycle.lib.mjs。不連網。
 //
 //   node scripts/check-admission-cycle.mjs [--remind]
-//     設定或內容有錯就以 1 結束。過了 remindAfter、keep 過了 recheckAfter 只印警告，結束碼不看日期，
+//     設定或內容有錯就以 1 結束。過了 remindAfter、keep 或 watch 過了 recheckAfter 只印警告，結束碼不看日期，
 //     CI 才不會哪天突然變紅。
 //     寫著 cycle 這一屆的時程日期和別人文章的標題只列出來，不算錯誤。
 //     --remind 給每週排程用：另外寫出 admission-cycle-report.md，有錯誤或該提醒的事時在 GITHUB_OUTPUT
@@ -18,6 +18,7 @@ import {
     checkContent,
     cycleHints,
     dueKeeps,
+    dueWatches,
     isPast,
     isRealDate,
     pendingForNext,
@@ -90,7 +91,7 @@ try {
 
 const { errors, found, kept } = checkContent(files, config);
 console.log(`學年度檢查：cycle ${cycle}、next ${next}，今天 ${today}（台灣時間），remindAfter ${remindAfter}`);
-console.log(`  ${rel(CONTENT)} 底下 ${files.length} 個 .md 檔，找到 ${found} 處學年度和甄選會網址，keep ${config.keep.length} 筆放行 ${kept} 處`);
+console.log(`  ${rel(CONTENT)} 底下 ${files.length} 個 .md 檔，找到 ${found} 處學年度和甄選會網址，keep ${config.keep.length} 筆放行 ${kept} 處，watch ${config.watch.length} 筆`);
 
 // 一個檔案一行：「時程 19、20 行；標題 179 行」。
 const hints = new Map();
@@ -122,7 +123,7 @@ if (isPast(remindAfter, today)) {
         '',
         `1. 一頁一頁把內容改成 ${next} 學年度。${next} 是 next，改好的頁面現在就能合併。`,
         `2. 都改完之後，在 \`${rel(CONFIG)}\` 把 cycle 改成 ${next}、next 改成 ${next + 1}，remindAfter 改到 ${w.from} 到 ${w.to} 之間，remindReason 寫新日期的依據。`,
-        `3. keep 逐筆確認，還需要的把 cycle 改成 ${next}，不需要的刪掉。`,
+        `3. keep 和 watch 逐筆確認，還需要的把 cycle 改成 ${next}，不需要的刪掉。`,
         '',
         `cycle 改成 ${next} 之後不放行的有 ${pending.length} 處，在 ${lines.size} 個檔案，其中 ${pending.filter((h) => h.by.length).length} 處現在由 keep 放行：`,
         '',
@@ -131,15 +132,19 @@ if (isPast(remindAfter, today)) {
         ...(hints.size ? [hintHead, '', ...[...hints].map(([file, h]) => `- \`${file}\`：${h.text}`), ''] : []),
     ]);
 }
-const due = dueKeeps(config, today);
-for (const { index, keep } of due) {
-    warn('keep 該重新確認', `keep[${index}]（${keep.url ?? keep.file}）的 recheckAfter 是 ${keep.recheckAfter}，已經過了，請重新確認還需不需要。`);
-}
-if (due.length) {
+const dueLists = [
+    ['keep', dueKeeps(config, today), '請重新確認還需不需要'],
+    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],
+];
+for (const [name, due, todo] of dueLists) {
+    for (const { index, entry } of due) {
+        warn(`${name} 該重新確認`, `${name}[${index}]（${entry.url ?? entry.file}）的 recheckAfter 是 ${entry.recheckAfter}，已經過了，${todo}。`);
+    }
+    if (!due.length) continue;
     sections.push([
-        '### 該重新確認的 keep',
+        `### 該重新確認的 ${name}`,
         '',
-        ...due.map(({ index, keep }) => `- keep[${index}]（${keep.url ?? `${keep.file}：${keep.text}`}）的 recheckAfter 是 ${keep.recheckAfter}。理由：${keep.reason}`),
+        ...due.map(({ index, entry }) => `- ${name}[${index}]（${entry.url ?? `${entry.file}：${entry.text}`}）的 recheckAfter 是 ${entry.recheckAfter}。理由：${entry.reason}`),
         '',
     ]);
 }

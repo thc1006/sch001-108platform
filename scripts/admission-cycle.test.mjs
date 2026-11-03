@@ -8,6 +8,7 @@ import {
     checkContent,
     cycleHints,
     dueKeeps,
+    dueWatches,
     findFraming,
     findYears,
     isPast,
@@ -25,10 +26,12 @@ const cfg = (fields = {}) => ({
     remindAfter: '2026-12-15',
     remindReason: '測試用的日期，落在 116 學年度的範圍裡。',
     keep: [],
+    watch: [],
     ...fields,
 });
 const textKeep = (file, text, fields = {}) => ({ file, text, cycle: 115, reason: '測試用的保留理由，至少十個字。', ...fields });
 const urlKeep = (url, fields = {}) => ({ url, cycle: 115, reason: '測試用的保留理由，至少十個字。', ...fields });
+const watchOf = (file, text, fields = {}) => ({ file, text, cycle: 115, reason: '測試用的追蹤理由，至少十個字。', recheckAfter: '2027-03-31', ...fields });
 // 區間寫成「開頭-結尾」，例如 text:113-115。
 const years = (src) => findYears(src).map((t) => `${t.kind}:${t.from === undefined ? '' : `${t.from}-`}${t.year}`);
 const errorsOf = (files, config) => checkContent(files, config).errors;
@@ -150,6 +153,7 @@ test('validateConfig：cycle、next、remindAfter', () => {
     one({ remindAfter: '2027-02-29' }, /remindAfter 必須是存在的/);
     one({ remindReason: '太短' }, /remindReason/);
     one({ keep: undefined }, /keep 必須是陣列/);
+    one({ watch: undefined }, /watch 必須是陣列，沒有要追蹤的行時寫 \[\]/);
     one({ extra: 1 }, /不認得的欄位「extra」/);
     assert.deepEqual(validateConfig(null), ['設定檔的最外層必須是物件']);
 });
@@ -185,6 +189,31 @@ test('validateConfig：keep 的欄位', () => {
     assert.match(validateConfig(cfg({ keep: [dup, { ...dup }] })).join('\n'), /keep\[1\] 和前面的 keep 重複/);
     const u = urlKeep('https://www.cac.edu.tw/apply114/');
     assert.match(validateConfig(cfg({ keep: [u, { ...u }] })).join('\n'), /keep\[1\] 和前面的 keep 重複/);
+});
+
+test('validateConfig：watch 的欄位', () => {
+    const one = (w, re) => {
+        const errors = validateConfig(cfg({ watch: [w] }));
+        assert.equal(errors.length, 1, errors.join('\n'));
+        assert.match(errors[0], re);
+    };
+    assert.deepEqual(validateConfig(cfg({ watch: [watchOf('a.md', '至多 10 件')] })), []);
+    one(watchOf('a.md', '至多 10 件', { cycle: 114 }), /watch\[0\] 的 cycle 是 114，和設定檔的 cycle 115 不同/);
+    one(watchOf('a.md', '至多 10 件', { cycle: undefined }), /watch\[0\] 的 cycle 是 undefined/);
+    one(watchOf('a.md', '至多 10 件', { reason: '   九個字的追蹤理由喔   ' }), /watch\[0\] 的 reason 要寫這一行為什麼會過時/);
+    const { recheckAfter, ...undated } = watchOf('a.md', '至多 10 件');
+    one(undated, /watch\[0\] 的 recheckAfter 必填/);
+    one(watchOf('a.md', '至多 10 件', { recheckAfter: '2027-02-29' }), /watch\[0\] 的 recheckAfter 必填/);
+    one(watchOf('a.txt', '至多 10 件'), /watch\[0\] 的 file 必須是 \.md/);
+    one(watchOf('a.md', '至多\n10 件'), /watch\[0\] 的 text 必須是同一行/);
+    one(watchOf('a.md', ' '), /watch\[0\] 的 text 必須是同一行/);
+    one(watchOf('a.md', '至多 10 件', { url: 'https://example.com/' }), /watch\[0\] 有不認得的欄位「url」，watch 只能有 file、text、cycle、reason、recheckAfter/);
+    for (const w of [null, 'watch', ['x']]) one(w, /watch\[0\] 必須是物件/);
+    // cycle 本身不合規則時只報 cycle，不另外報每一筆 watch。
+    assert.equal(validateConfig(cfg({ cycle: 1150, watch: [watchOf('a.md', '至多 10 件')] })).length, 1);
+    const w = watchOf('a.md', '至多 10 件');
+    assert.deepEqual(validateConfig(cfg({ watch: [w, { ...w }] })), ['watch[1] 和前面的 watch 重複']);
+    assert.deepEqual(validateConfig(cfg({ watch: [w, { ...w, file: 'b.md' }, { ...w, text: '至多 10 件。' }] })), []);
 });
 
 const FILE = 'src/content/a.md';
@@ -263,6 +292,17 @@ test('checkContent：網址 keep 只放行完全相同的網址', () => {
     const errors = errorsOf(files, cfg({ keep: [urlKeep('https://www.cac.edu.tw/apply114/guide.php')] }));
     assert.equal(errors.length, 1, errors.join('\n'));
     assert.match(errors[0], /a\.md:2 網址 https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php#top 的 114/);
+});
+
+test('checkContent：watch 的 text 要在檔案裡只出現一次，行改過了就報錯', () => {
+    const files = doc('115 學年度的簡章', '多元表現至多 10 件', '每項 800 字', '每項 800 字');
+    const check = (w) => errorsOf(files, cfg({ watch: [w] }));
+    assert.deepEqual(check(watchOf(FILE, '多元表現至多 10 件')), []);
+    assert.deepEqual(check(watchOf(FILE, '多元表現至多 15 件')), ['watch[0] 的 text 在 src/content/a.md 裡找不到，內容改過了就更新或刪掉這一筆']);
+    assert.deepEqual(check(watchOf(FILE, '每項 800 字')), ['watch[0] 的 text 在 src/content/a.md 裡不只一處，加長到只出現一次']);
+    assert.match(check(watchOf('src/content/gone.md', '至多 10 件')).join('\n'), /watch\[0\] 的 file「src\/content\/gone\.md」不在比對的檔案裡/);
+    // watch 不放行學年度，和 keep 互不影響。
+    assert.match(errorsOf(doc('114 學年度的手冊'), cfg({ watch: [watchOf(FILE, '114 學年度的手冊')] })).join('\n'), /「114 學年度」裡的 114/);
 });
 
 test('checkContent：沒有檔案，或一個學年度都找不到，都不能算通過', () => {
@@ -504,6 +544,14 @@ test('dueKeeps：recheckAfter 過了才列，當天不列，沒填的不列', ()
     });
     assert.deepEqual(dueKeeps(config, '2027-03-31'), []);
     assert.deepEqual(dueKeeps(config, '2027-04-01').map((d) => d.index), [0]);
+});
+
+test('dueWatches：recheckAfter 過了才列，當天不列', () => {
+    const config = cfg({ watch: [watchOf(FILE, '至多 10 件', { recheckAfter: '2027-02-05' }), watchOf(FILE, '800 字')] });
+    assert.deepEqual(dueWatches(config, '2027-02-05'), []);
+    assert.deepEqual(dueWatches(config, '2027-02-06').map((d) => d.index), [0]);
+    assert.deepEqual(dueWatches(config, '2027-04-01').map((d) => d.index), [0, 1]);
+    assert.deepEqual(dueKeeps(config, '2027-04-01'), []);
 });
 
 test('admission-cycle.json：repo 裡的設定通過 validateConfig', () => {

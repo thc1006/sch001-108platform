@@ -2,7 +2,7 @@
 // check-admission-cycle.mjs 的故障注入，一次改一處，確認該紅的會紅、該放行的放行：
 //   A. 內容、keep、設定：寫進舊年度、西元年當申請年度、殭屍 keep、cycle 過期的 keep、next 和 remindAfter
 //      不合規則、內容目錄清空都要以 1 結束；cycle、next、「115 年度」和包含 cycle 的區間要放行；
-//      時程日期和別人文章的標題只列出來；
+//      watch 指的行改了、watch 沒有 recheckAfter 要以 1 結束；時程日期和別人文章的標題只列出來；
 //      過了 remindAfter 或 recheckAfter 只印警告，結束碼仍是 0；--remind 要寫出報告和 needs_attention
 //   B. 判斷：改壞 admission-cycle.lib.mjs 或 markdown-refs.lib.mjs，admission-cycle.test.mjs 必須失敗
 //   C. 串接：改壞 check-admission-cycle.mjs，A 段至少要有一項失敗
@@ -27,6 +27,7 @@ const PAGE_A = 'src/content/clusters/a/overview.md';
 const PAGE_B = 'src/content/clusters/b/application.md';
 const KEEP_TEXT = '多來自 111 學年度的舊統計';
 const KEEP_URL = 'https://www.cac.edu.tw/apply114/guide.php';
+const WATCH_TEXT = '116 學年度的簡章在 2026 年 11 月公告';
 
 const pages = {
     [PAGE_A]: [
@@ -56,6 +57,7 @@ const baselineConfig = () => ({
         { file: PAGE_A, text: KEEP_TEXT, cycle: 115, reason },
         { url: KEEP_URL, cycle: 115, reason },
     ],
+    watch: [{ file: PAGE_B, text: WATCH_TEXT, cycle: 115, reason, recheckAfter: '2026-12-31' }],
 });
 
 rmSync(WORK, { recursive: true, force: true });
@@ -143,6 +145,10 @@ const cases = [
     { name: 'keep 的年度本來就放行', inject: editConfig((c) => { c.keep.push({ file: PAGE_A, text: '115／116 學年度', cycle: 115, reason }); }), code: 1, expect: /keep\[2\] 的 text 裡的學年度本來就放行/ },
     { name: '重複的 keep', inject: editConfig((c) => { c.keep.push({ ...c.keep[0] }); }), code: 1, expect: /keep\[2\] 和前面的 keep 重複/ },
     { name: 'keep 的 reason 太短', inject: editConfig((c) => { c.keep[1].reason = '還沒上線'; }), code: 1, expect: /keep\[1\] 的 reason/ },
+    { name: 'watch 指的那一行改了', inject: replace(PAGE_B, '11 月公告', '11 月 3 日公告'), code: 1, expect: /watch\[0\] 的 text 在 \S+ 裡找不到/ },
+    { name: 'watch 的 text 在檔案裡不只一處', inject: append(PAGE_B, `${WATCH_TEXT}。`), code: 1, expect: /watch\[0\] 的 text 在 \S+ 裡不只一處/ },
+    { name: 'watch 沒有 recheckAfter', inject: editConfig((c) => { delete c.watch[0].recheckAfter; }), code: 1, expect: /watch\[0\] 的 recheckAfter 必填/ },
+    { name: 'watch 的 cycle 過期', inject: editConfig((c) => { c.watch[0].cycle = 114; }), code: 1, expect: /watch\[0\] 的 cycle 是 114，和設定檔的 cycle 115 不同/ },
     { name: 'next 不是 cycle + 1', inject: editConfig((c) => { c.next = 117; }), code: 1, expect: /next 必須是 cycle \+ 1，也就是 116/ },
     { name: 'remindAfter 晚了一天（2027-04-01）', inject: editConfig((c) => { c.remindAfter = '2027-04-01'; }), code: 1, expect: /remindAfter（2027-04-01）必須在 2026-08-01 到 2027-03-31 之間/ },
     { name: 'remindAfter 早了一天（2026-07-31）', inject: editConfig((c) => { c.remindAfter = '2026-07-31'; }), code: 1, expect: /必須在 2026-08-01 到 2027-03-31 之間/ },
@@ -206,6 +212,25 @@ const cases = [
         code: 0,
         absent: /警告/,
     },
+    {
+        name: '過了 watch 的 recheckAfter：只印警告',
+        inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
+        code: 0,
+        expect: /警告：watch\[0\]（src\/content\/clusters\/b\/application\.md）的 recheckAfter 是 2026-10-24，已經過了，請對照最新的資料改這一行/,
+    },
+    {
+        name: '過了 watch 的 recheckAfter：Actions 上發 warning annotation',
+        inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
+        env: { GITHUB_ACTIONS: 'true' },
+        code: 0,
+        expect: /^::warning title=watch 該重新確認::/m,
+    },
+    {
+        name: 'watch 的 recheckAfter 在今天之後、remindAfter 之前：不警告',
+        inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-11-01'; }),
+        code: 0,
+        absent: /警告/,
+    },
     { name: '不加 --remind：不寫報告，也不寫 needs_attention', env: { ADMISSION_CYCLE_TODAY: '2026-12-16' }, code: 0, attention: null, report: null },
     {
         name: '--remind 過了 remindAfter：通知，報告有機器標記和換屆後要改的地方',
@@ -232,6 +257,14 @@ const cases = [
         code: 0,
         attention: true,
         report: /### 該重新確認的 keep\n\n- keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）的 recheckAfter 是 2026-10-24。/,
+    },
+    {
+        name: '--remind 過了 watch 的 recheckAfter：通知',
+        args: ['--remind'],
+        inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
+        code: 0,
+        attention: true,
+        report: /### 該重新確認的 watch\n\n- watch\[0\]（src\/content\/clusters\/b\/application\.md：116 學年度的簡章在 2026 年 11 月公告）的 recheckAfter 是 2026-10-24。理由：故障注入/,
     },
     {
         name: '--remind 內容有錯：以 1 結束，照樣通知，錯誤寫進報告',
@@ -342,6 +375,23 @@ const libMutations = [
     ['時程日期也看連結文字', 'const body = blankLinks(masked, src);', 'const body = masked;'],
     ['標題寫「115 學年度」也列', '(?:年|學年度|[至到', '(?:年|[至到'],
     ['標題只看民國年', ' || western.test(m[1])', ''],
+    ['最外層不認 watch', "'keep', 'watch']);", "'keep']);"],
+    ['watch 不能有 recheckAfter', "const WATCH_KEYS = new Set(['file', 'text', 'cycle', 'reason', 'recheckAfter']);", "const WATCH_KEYS = new Set(['file', 'text', 'cycle', 'reason']);"],
+    ['watch 可以不是陣列', "else errors.push('watch 必須是陣列，沒有要追蹤的行時寫 []');", ''],
+    ['watch 不檢查是不是物件', 'if (!isPlainObject(w)) return errors.push(', 'if (false) return errors.push('],
+    ['watch 可以有不認得的欄位', 'if (!WATCH_KEYS.has(key))', 'if (false)'],
+    ['不檢查 watch 的 cycle', 'if (cycle !== undefined && w.cycle !== cycle)', 'if (false)'],
+    ['cycle 不合規則時也比對 watch 的 cycle', 'cycleOk ? cycle : undefined', 'cycle'],
+    ['watch 的 reason 可以太短', 'if (!isReason(w.reason))', 'if (false)'],
+    ['watch 的 recheckAfter 選填', 'if (!isRealDate(w.recheckAfter))', "if ('recheckAfter' in w && !isRealDate(w.recheckAfter))"],
+    ['watch 的 recheckAfter 不必是存在的日期', 'if (!isRealDate(w.recheckAfter))', "if (typeof w.recheckAfter !== 'string')"],
+    ['watch 的 file 可以不是 .md', 'if (!isMdPath(w.file))', 'if (false)'],
+    ['watch 的 text 可以跨行或空白', 'if (!isLine(w.text)) return', 'if (false) return'],
+    ['text 可以跨行', " && !/[\\r\\n]/.test(v)", ''],
+    ['不檢查重複的 watch', 'if (seen.has(key)) errors.push(`${at} 和前面的 watch 重複`)', 'if (false) errors.push(`${at} 和前面的 watch 重複`)'],
+    ['重複的 watch 只看 text', 'const key = `${w.file}\\n${w.text}`;', 'const key = w.text;'],
+    ['watch 找不到原文也不報錯', "if (typeof at === 'string') errors.push(at);", 'if (false) errors.push(at);'],
+    ['watch 的到期看 keep', 'dueIn(config.watch, todayISO)', 'dueIn(config.keep, todayISO)'],
     ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
 ];
 // markdown-refs.lib.mjs 的突變，也用 admission-cycle.test.mjs 抓。
@@ -391,6 +441,10 @@ const cliMutations = [
     ['不檢查設定檔', 'if (configErrors.length) fail(', 'if (false) fail('],
     ['不檢查 ADMISSION_CYCLE_TODAY', 'if (!isRealDate(today)) fail(', 'if (false) fail('],
     ['recheckAfter 拿 remindAfter 比', 'dueKeeps(config, today)', 'dueKeeps(config, remindAfter)'],
+    ['watch 的 recheckAfter 拿 remindAfter 比', 'dueWatches(config, today)', 'dueWatches(config, remindAfter)'],
+    ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
+    ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],\n", ''],
+    ['報告不列到期的項目', '    if (!due.length) continue;\n    sections.push([', '    if (!due.length) continue;\n    [].push(['],
     ['目錄也當成檔案讀', "e.isFile() && e.name.endsWith('.md')", "e.name.endsWith('.md')"],
     ['CRLF 不換成 LF', ".replace(/\\r\\n/g, '\\n')", ''],
     ['報告沒有機器標記', "[ADMISSION_CYCLE_MARKER, '',", "['',"],
