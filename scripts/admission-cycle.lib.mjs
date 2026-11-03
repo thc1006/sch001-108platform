@@ -280,7 +280,8 @@ function watchErrors(watch, cycle) {
             errors.push(`${at} 的 cycle 是 ${JSON.stringify(w.cycle)}，和設定檔的 cycle ${cycle} 不同。換屆時每一筆 watch 都要重新確認，還需要的把 cycle 改成 ${cycle}，不需要的刪掉`);
         }
         if (!isReason(w.reason)) errors.push(`${at} 的 reason 要寫這一行為什麼會過時、到時候對照什麼，至少 ${MIN_REASON_CHARS} 個字`);
-        if (!isRealDate(w.recheckAfter)) errors.push(`${at} 的 recheckAfter 必填，是存在的 YYYY-MM-DD 日期`);
+        if (!('recheckAfter' in w)) errors.push(`${at} 沒有 recheckAfter，watch 一定要寫預定重新對照的日期`);
+        else if (!isRealDate(w.recheckAfter)) errors.push(`${at} 的 recheckAfter 必須是存在的 YYYY-MM-DD 日期`);
         if (!isMdPath(w.file)) errors.push(`${at} 的 file 必須是 .md 檔從 repo 根目錄起算的路徑`);
         if (!isLine(w.text)) return errors.push(`${at} 的 text 必須是同一行裡的一段原文`);
         const key = `${w.file}\n${w.text}`;
