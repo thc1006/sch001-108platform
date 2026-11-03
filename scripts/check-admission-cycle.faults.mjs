@@ -122,7 +122,7 @@ const editConfig = (fn) => () => {
 };
 
 const cases = [
-    { name: '內文多了「114 學年度」', inject: append(PAGE_B, '另見 114 學年度的統計。'), code: 1, expect: /application\.md:7 「114 學年度」裡的 114 不是 115 或 116/ },
+    { name: '內文多了「114 學年度」', inject: append(PAGE_B, '另見 114 學年度的統計。'), code: 1, expect: /application\.md:7 「114 學年度」裡的 114 不是 115 或 116[^]*學年度要寫 115 或 116/, absent: /watch 指的行改過了/ },
     { name: '粗體的「**114** 學年度」', inject: append(PAGE_B, '**114** 學年度的規定'), code: 1, expect: /「114 學年度」裡的 114/ },
     { name: 'HTML 標籤包住的 114', inject: append(PAGE_B, '<strong>114</strong> 學年度的規定'), code: 1, expect: /「114 學年度」裡的 114/ },
     {
@@ -145,7 +145,19 @@ const cases = [
     { name: 'keep 的年度本來就放行', inject: editConfig((c) => { c.keep.push({ file: PAGE_A, text: '115／116 學年度', cycle: 115, reason }); }), code: 1, expect: /keep\[2\] 的 text 裡的學年度本來就放行/ },
     { name: '重複的 keep', inject: editConfig((c) => { c.keep.push({ ...c.keep[0] }); }), code: 1, expect: /keep\[2\] 和前面的 keep 重複/ },
     { name: 'keep 的 reason 太短', inject: editConfig((c) => { c.keep[1].reason = '還沒上線'; }), code: 1, expect: /keep\[1\] 的 reason/ },
-    { name: 'watch 指的那一行改了', inject: replace(PAGE_B, '11 月公告', '11 月 3 日公告'), code: 1, expect: /watch\[0\] 的 text 在 \S+ 裡找不到/ },
+    {
+        name: 'watch 指的那一行改了：寫出設定檔位置，只印 watch 的提示',
+        inject: replace(PAGE_B, '11 月公告', '11 月 3 日公告'),
+        code: 1,
+        expect: /scripts\/admission-cycle\.json 的 watch\[0\] 的 text 在 \S+ 裡找不到[^]*watch 指的行改過了：內容不會再過時就刪掉這一筆/,
+        absent: /學年度要寫/,
+    },
+    {
+        name: 'watch 和學年度都有錯：兩種提示都印',
+        inject: () => { replace(PAGE_B, '11 月公告', '11 月 3 日公告')(); append(PAGE_B, '另見 114 學年度的統計。')(); },
+        code: 1,
+        expect: /學年度要寫 115 或 116[^]*watch 指的行改過了/,
+    },
     { name: 'watch 的 text 在檔案裡不只一處', inject: append(PAGE_B, `${WATCH_TEXT}。`), code: 1, expect: /watch\[0\] 的 text 在 \S+ 裡不只一處/ },
     { name: 'watch 沒有 recheckAfter', inject: editConfig((c) => { delete c.watch[0].recheckAfter; }), code: 1, expect: /watch\[0\] 的 recheckAfter 必填/ },
     { name: 'watch 的 cycle 過期', inject: editConfig((c) => { c.watch[0].cycle = 114; }), code: 1, expect: /watch\[0\] 的 cycle 是 114，和設定檔的 cycle 115 不同/ },
@@ -413,7 +425,8 @@ const libMutations = [
     ['text 可以跨行', " && !/[\\r\\n]/.test(v)", ''],
     ['不檢查重複的 watch', 'if (seen.has(key)) errors.push(`${at} 和前面的 watch 重複`)', 'if (false) errors.push(`${at} 和前面的 watch 重複`)'],
     ['重複的 watch 只看 text', 'const key = `${w.file}\\n${w.text}`;', 'const key = w.text;'],
-    ['watch 找不到原文也不報錯', "if (typeof at === 'string') errors.push(at);", 'if (false) errors.push(at);'],
+    ['watch 找不到原文也不報錯', ".filter((at) => typeof at === 'string');", '.filter(() => false);'],
+    ['watch 的錯誤不另外回傳', '{ errors, watchErrors, found, kept: hits', '{ errors, watchErrors: [], found, kept: hits'],
     ['截斷時沒扣掉說明的長度', 'limit - note.length - 1', 'limit - 1'],
     ['沒超過上限也截斷', 'if (text.length <= limit) return text;', 'if (text.length < limit) return text;'],
     ['截斷不找換行', "text.lastIndexOf('\\n', limit - note.length - 1) + 1", 'limit - note.length'],
@@ -474,6 +487,8 @@ const cliMutations = [
     ['報告不截斷', 'writeFileSync(REPORT, text);', 'writeFileSync(REPORT, full);'],
     ['截斷時 log 不印完整的報告', 'if (text !== full) console.log(', 'if (false) console.log('],
     ['報告的上限不看環境變數', 'Number(process.env.ADMISSION_CYCLE_REPORT_LIMIT) || 60000', '60000'],
+    ['watch 錯誤也印學年度的提示', 'if (errors.length > watchErrors.length) {', 'if (true) {'],
+    ['watch 錯誤不印 watch 的提示', "if (watchErrors.length) hints.push('watch", "if (false) hints.push('watch"],
     ['到期的項目不依理由分組', 'const key = `${entry.recheckAfter}：${entry.reason}`;', 'const key = `${entry.recheckAfter}：${entry.reason}${index}`;'],
     ['報告不寫行號', '`${entry.file}:${entryLine(files, entry) ?? \'?\'}`', '`${entry.file}`'],
     ['報告不列到期的項目', 'sections.push([`### 該重新確認的 ${name}`', '[].push([`### 該重新確認的 ${name}`'],

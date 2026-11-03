@@ -300,9 +300,13 @@ test('checkContent：watch 的 text 要在檔案裡只出現一次，行改過�
     const files = doc('115 學年度的簡章', '多元表現至多 10 件', '每項 800 字', '每項 800 字');
     const check = (w) => errorsOf(files, cfg({ watch: [w] }));
     assert.deepEqual(check(watchOf(FILE, '多元表現至多 10 件')), []);
-    assert.deepEqual(check(watchOf(FILE, '多元表現至多 15 件')), ['watch[0] 的 text 在 src/content/a.md 裡找不到，內容改過了就更新或刪掉這一筆']);
-    assert.deepEqual(check(watchOf(FILE, '每項 800 字')), ['watch[0] 的 text 在 src/content/a.md 裡不只一處，加長到只出現一次']);
+    const missing = ['scripts/admission-cycle.json 的 watch[0] 的 text 在 src/content/a.md 裡找不到，內容改過了就更新或刪掉這一筆'];
+    assert.deepEqual(check(watchOf(FILE, '多元表現至多 15 件')), missing);
+    assert.deepEqual(checkContent(files, cfg({ watch: [watchOf(FILE, '多元表現至多 15 件')] })).watchErrors, missing);
+    assert.deepEqual(check(watchOf(FILE, '每項 800 字')), ['scripts/admission-cycle.json 的 watch[0] 的 text 在 src/content/a.md 裡不只一處，加長到只出現一次']);
     assert.match(check(watchOf('src/content/gone.md', '至多 10 件')).join('\n'), /watch\[0\] 的 file「src\/content\/gone\.md」不在比對的檔案裡/);
+    // 學年度的錯誤不算 watch 的錯誤。
+    assert.deepEqual(checkContent(doc('114 學年度'), cfg()).watchErrors, []);
     // watch 不放行學年度，和 keep 互不影響。
     assert.match(errorsOf(doc('114 學年度的手冊'), cfg({ watch: [watchOf(FILE, '114 學年度的手冊')] })).join('\n'), /「114 學年度」裡的 114/);
 });
