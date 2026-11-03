@@ -1,39 +1,921 @@
 {
   "_readme": "內容學年度漂移檢查的設定，規則在 scripts/admission-cycle.lib.mjs，由 scripts/check-admission-cycle.mjs 檢查。src/content 底下 .md 的「NNN 學年度」和甄選會網址 applyNNN／starNNN 的年度只能是 cycle 或 next，其他年度要在 keep 列一筆。「2026 升學趨勢」這類用西元年當申請年度的寫法一律報錯，沒有 keep。寫著 cycle 這一屆的時程日期和連結文字裡的文章標題不報錯，每次執行都列成提醒，換屆時對照簡章看。文字 keep 寫 file（從 repo 根目錄起算的路徑）、text（同一行裡、整個檔案只出現一次的原文，要包含完整的「NNN 學年度」，只放行這一段裡的年度）、cycle、reason。網址 keep 寫 url、cycle、reason，只放行完全相同的網址，給簡章公告後還沒更新的頁面用。recheckAfter 選填，是預定重新確認的日期。keep 的 cycle 必須等於上面的 cycle，換屆時每一筆都要重新確認。換屆的做法：next 本來就放行，先一頁一頁把內容改成 next，都改完再把 cycle 和 next 各加一，remindAfter 改到新的範圍並在 remindReason 寫依據，keep 確認後把 cycle 改成新的值。remindAfter 只能落在 next 那一屆考生升高三的 8 月 1 日到隔年 3 月 31 日之間。過了 remindAfter 而 cycle 還沒換，或過了某筆 keep 的 recheckAfter，CI 只印警告，不會失敗；每週排程 .github/workflows/admission-cycle-check.yml 會開 issue 提醒。",
-  "cycle": 115,
-  "next": 116,
-  "remindAfter": "2026-11-03",
-  "remindReason": "116 學年度申請入學招生簡章在 2026-11-03 公告（招聯會行事曆）。公告後每週提醒，直到內容對照簡章改完、cycle 換成 116。",
+  "cycle": 116,
+  "next": 117,
+  "remindAfter": "2027-11-03",
+  "remindReason": "117 學年度申請入學招生簡章預計在 2027 年 11 月初公告。招聯會行事曆上，114、115、116 學年度的簡章分別在 2024-11-04、2025-11-04、2026-11-03 公告；117 學年度的日程還沒列上行事曆（2026-11-04 查）。公告後每週提醒，直到內容對照簡章改完、cycle 換成 117。",
   "keep": [
+    {
+      "file": "src/content/clusters/design/application.md",
+      "text": "115 學年度統測簡章寫，專業二是實作題型",
+      "cycle": 116,
+      "reason": "引用 115 學年度統測簡章：設計群專業二是實作題型。116 學年度統測簡章 2026-11-13 開放下載，之後改引 116 學年度簡章，這筆就刪掉。",
+      "recheckAfter": "2026-11-13"
+    },
+    {
+      "file": "src/content/clusters/design/application.md",
+      "text": "115 學年度四技二專統一入學測驗簡章（第 III 頁、第 1 頁）",
+      "cycle": 116,
+      "reason": "115 學年度統測簡章的標題，是同一頁專業二實作題型那句的出處。116 學年度統測簡章 2026-11-13 開放下載，之後改引 116 學年度簡章，這筆就刪掉。",
+      "recheckAfter": "2026-11-13"
+    },
+    {
+      "file": "src/content/clusters/design/highlights.md",
+      "text": "115 學年度高中（職）組分西畫、書法、平面設計、漫畫、水墨畫、版畫六類",
+      "cycle": 116,
+      "reason": "全國學生美術比賽 115 學年度實施要點的分類。全國學生美術比賽用比賽自己的學年度，115 學年度（2026 年 8 月到 2027 年 7 月）是目前這一屆，和申請入學換屆無關。116 學年度實施要點公布後再改。",
+      "recheckAfter": "2027-09-30"
+    },
+    {
+      "file": "src/content/clusters/design/highlights.md",
+      "text": "115 學年度全國學生美術比賽實施要點",
+      "cycle": 116,
+      "reason": "全國學生美術比賽實施要點的標題，國立臺灣藝術教育館目前掛的是 115 學年度這一份。全國學生美術比賽用比賽自己的學年度，115 學年度（2026 年 8 月到 2027 年 7 月）是目前這一屆，和申請入學換屆無關。116 學年度實施要點公布後再改。",
+      "recheckAfter": "2027-09-30"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "115 學年度的手冊寫，勾選超過件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "清大工學院學士班 115 學年度的指引",
+      "cycle": 116,
+      "reason": "引用成大資工（含智慧系統實作組）與清大工學院學士班 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
     {
       "file": "src/content/clusters/engineering/application.md",
       "text": "記下 113 學年度清大資工特殊選才的面試",
-      "cycle": 115,
+      "cycle": 116,
       "reason": "交代這篇面試心得是哪一屆寫的，年份不隨換屆改變。"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "「大學個人申請入學備審資料準備指引」（115 學年度）",
+      "cycle": 116,
+      "reason": "成大資工 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "「115學年度清大工學院學士班大學申請入學審查資料準備指引」",
+      "cycle": 116,
+      "reason": "清大工學院學士班 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/inquiry.md",
+      "text": "清大工學院學士班 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用清大工學院學士班 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/inquiry.md",
+      "text": "「115學年度清大工學院學士班大學申請入學審查資料準備指引」",
+      "cycle": 116,
+      "reason": "清大工學院學士班 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/myths.md",
+      "text": "成大資工 115 學年度的準備指引在多元表現直接問",
+      "cycle": 116,
+      "reason": "引用成大資工 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/myths.md",
+      "text": "「大學個人申請入學備審資料準備指引」（115 學年度）",
+      "cycle": 116,
+      "reason": "成大資工 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "115 學年度的手冊寫，勾選超過規定件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "中正、中興財金 115 學年度的準備指引也這樣列",
+      "cycle": 116,
+      "reason": "引用中正、中興財金 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "中正財金 115 學年度的準備指引採計",
+      "cycle": 116,
+      "reason": "引用中正財金 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "| 中正財金 | 115 學年度準備指引的招生目標",
+      "cycle": 116,
+      "reason": "引用中正財金 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "| 中興財金 | 115 學年度準備指引寫",
+      "cycle": 116,
+      "reason": "引用中興財金 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "國立中正大學財務金融學系 115 學年度大學申請入學第二階段指定項目甄試審查資料準備指引",
+      "cycle": 116,
+      "reason": "中正財金 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "國立中興大學財務金融學系 115 學年度大學申請入學第二階段甄試書面資料審查重點項目及準備指引",
+      "cycle": 116,
+      "reason": "中興財金 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/highlights.md",
+      "text": "中正、中興財金 115 學年度的準備指引分別寫",
+      "cycle": 116,
+      "reason": "引用中正、中興財金 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/highlights.md",
+      "text": "國立中正大學財務金融學系 115 學年度大學申請入學第二階段指定項目甄試審查資料準備指引",
+      "cycle": 116,
+      "reason": "中正財金 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/highlights.md",
+      "text": "國立中興大學財務金融學系 115 學年度大學申請入學第二階段甄試書面資料審查重點項目及準備指引",
+      "cycle": 116,
+      "reason": "中興財金 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/overview.md",
+      "text": "政大金融系碩士班 115 學年度入學的金融管理組必修",
+      "cycle": 116,
+      "reason": "政大金融系碩士班 115 學年度入學的必修。碩士班必修科目表照入學學年度分，和申請入學無關。政大教務處還沒有 116 學年度入學的表（must/116/master/352m.pdf），公布後改成 116 學年度。",
+      "recheckAfter": "2027-08-31"
+    },
+    {
+      "file": "src/content/clusters/finance/overview.md",
+      "text": "政治大學金融學系碩士班 115 學年度入學專業必修科目一覽表",
+      "cycle": 116,
+      "reason": "政大金融系碩士班 115 學年度入學必修科目表的標題，是同一頁必修那句的出處。碩士班必修科目表照入學學年度分，和申請入學無關。政大教務處還沒有 116 學年度入學的表（must/116/master/352m.pdf），公布後改成 116 學年度。",
+      "recheckAfter": "2027-08-31"
+    },
+    {
+      "file": "src/content/clusters/info/application.md",
+      "text": "成大資工 115 學年度的準備指引分三個分頁",
+      "cycle": 116,
+      "reason": "引用成大資工 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/info/application.md",
+      "text": "115 學年度的手冊寫，勾選超過件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/info/application.md",
+      "text": "〈115學年度 國立成功大學 學習歷程檔案準備指引〉",
+      "cycle": 116,
+      "reason": "成大資工 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/info/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/info/highlights.md",
+      "text": "成大資工智慧系統實作組 115 學年度的準備指引",
+      "cycle": 116,
+      "reason": "引用成大資工智慧系統實作組 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/info/myths.md",
+      "text": "成大資工 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用成大資工 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/info/myths.md",
+      "text": "〈115學年度 國立成功大學 學習歷程檔案準備指引〉",
+      "cycle": 116,
+      "reason": "成大資工 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/info/overview.md",
+      "text": "115 學年度是 38 校、54 校系、185 個名額",
+      "cycle": 116,
+      "reason": "和前一屆比較 APCS 組的校系數與名額，116 學年度是 35 校、50 校系、186 個名額。117 換屆時換成 117 和 116 學年度的數字。"
+    },
+    {
+      "file": "src/content/clusters/info/overview.md",
+      "text": "115 學年度大學申請入學招生統計資料",
+      "cycle": 116,
+      "reason": "同一頁和前一屆比較 APCS 組那句（115 學年度是 38 校、54 校系、185 個名額）的出處，115 學年度是甄選會統計頁頁名的一部分。117 換屆時和那句一起換。"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "115 學年度的手冊寫，從學習歷程中央資料庫勾選超過規定件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "台大法律系 115 學年度的準備指引要求學習歷程自述",
+      "cycle": 116,
+      "reason": "引用台大法律系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "台大政治系 115 學年度的準備指引請考生",
+      "cycle": 116,
+      "reason": "引用台大政治系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "國立臺灣大學法律系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大法律系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/application.md",
+      "text": "國立臺灣大學政治學系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大政治系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/highlights.md",
+      "text": "台大政治系 115 學年度的準備指引也寫",
+      "cycle": 116,
+      "reason": "引用台大政治系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/highlights.md",
+      "text": "台大法律系 115 學年度的準備指引要求多元表現",
+      "cycle": 116,
+      "reason": "引用台大法律系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/highlights.md",
+      "text": "國立臺灣大學政治學系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大政治系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/highlights.md",
+      "text": "國立臺灣大學法律系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大法律系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/myths.md",
+      "text": "台大法律系 115 學年度的準備指引列的能力",
+      "cycle": 116,
+      "reason": "引用台大法律系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/myths.md",
+      "text": "國立臺灣大學法律系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大法律系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/traits.md",
+      "text": "台大法律系 115 學年度的書面資料準備指引",
+      "cycle": 116,
+      "reason": "引用台大法律系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/law/traits.md",
+      "text": "國立臺灣大學法律系 115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大法律系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "115 學年度準備指引列的審查資料",
+      "cycle": 116,
+      "reason": "引用台大生科系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "生科系書面資料準備指引還是 115 學年度的版本",
+      "cycle": 116,
+      "reason": "寫明台大網站上的生科系準備指引目前是 115 學年度的版本。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後改寫這句。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "台大生科系 115 學年度的指引沿用同樣的上限",
+      "cycle": 116,
+      "reason": "引用台大生科系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "台大生科系 115 學年度的指引，高中學習歷程反思",
+      "cycle": 116,
+      "reason": "引用台大生科系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
     },
     {
       "file": "src/content/clusters/life-science/application.md",
       "text": "2022 年在拉課力寫的 111 學年度特殊選才面試經驗",
-      "cycle": 115,
+      "cycle": 116,
       "reason": "交代這兩篇面試心得是哪一屆特殊選才的經驗，年份不隨換屆改變。"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "國立臺灣大學「生命科學系」115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大生科系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/inquiry.md",
+      "text": "台大生命科學系 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用台大生科系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/life-science/inquiry.md",
+      "text": "國立臺灣大學「生命科學系」115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大生科系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
     },
     {
       "file": "src/content/clusters/life-science/myths.md",
       "text": "清大生命科學系 114 學年度入學的必修",
-      "cycle": 115,
-      "reason": "系網站上最新的必修科目表是 114 學年度入學那一份，年份交代表的版本。換屆時看系上有沒有新的表。"
+      "cycle": 116,
+      "reason": "系網站上最新的必修科目表是 114 學年度入學那一份（2026-11-03 看過），年份交代表的版本。換屆時看系上有沒有新的表。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "下表照各系 115 學年度的準備指引",
+      "cycle": 116,
+      "reason": "引用台大企管組、政大企管、成大企管、中興企管、東吳企管與陽明交大管科 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "成大企管 115 學年度的準備指引列了",
+      "cycle": 116,
+      "reason": "引用成大企管 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "清華大學 115 學年度準備指引的誠信聲明原文",
+      "cycle": 116,
+      "reason": "引用清華大學 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "陽明交大 115 學年度的說明寫",
+      "cycle": 116,
+      "reason": "引用陽明交大 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "目前連到的是 115 學年度的指引",
+      "cycle": 116,
+      "reason": "轉述甄選會準備指引頁（apply116/guide.php）目前的註記：連到的是 115 學年度的指引，116 學年度的預計 2027 年 3 月更新。頁面更新後整句過時，要改寫或刪掉，不是只改年份。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立臺灣大學「工商管理學系-企業管理組」115 學年度",
+      "cycle": 116,
+      "reason": "台大企管組 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立政治大學 115 學年度企業管理學系",
+      "cycle": 116,
+      "reason": "政大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立成功大學 115 學年度各學系學習歷程檔案準備指引",
+      "cycle": 116,
+      "reason": "成大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立中興大學企業管理學系 115 學年度",
+      "cycle": 116,
+      "reason": "中興企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "[115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】",
+      "cycle": 116,
+      "reason": "東吳企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "清華大學 115 學年度大學申請入學審查資料準備指引",
+      "cycle": 116,
+      "reason": "清華大學 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "【申請入學】115學年度各學系書面審查資料準備指引",
+      "cycle": 116,
+      "reason": "陽明交大 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立陽明交通大學 115 學年度大學部個人申請入學個人資料表範例",
+      "cycle": 116,
+      "reason": "陽明交大 115 學年度個人資料表範例的標題，是 115 學年度準備指引的附件，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "「準備指引寫的」照各系 115 學年度的準備指引",
+      "cycle": 116,
+      "reason": "引用台大企管組、政大企管、成大企管、中興企管、東吳企管與陽明交大管科 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "國立臺灣大學「工商管理學系-企業管理組」115 學年度",
+      "cycle": 116,
+      "reason": "台大企管組 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "國立政治大學 115 學年度企業管理學系",
+      "cycle": 116,
+      "reason": "政大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "國立成功大學 115 學年度各學系學習歷程檔案準備指引",
+      "cycle": 116,
+      "reason": "成大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "國立中興大學企業管理學系 115 學年度",
+      "cycle": 116,
+      "reason": "中興企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/highlights.md",
+      "text": "[115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】",
+      "cycle": 116,
+      "reason": "東吳企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "台大企管組和政大企管 115 學年度的準備指引都寫",
+      "cycle": 116,
+      "reason": "引用台大企管組與政大企管 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "國立臺灣大學「工商管理學系-企業管理組」115 學年度",
+      "cycle": 116,
+      "reason": "台大企管組 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "國立政治大學 115 學年度企業管理學系",
+      "cycle": 116,
+      "reason": "政大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "國立成功大學 115 學年度各學系學習歷程檔案準備指引",
+      "cycle": 116,
+      "reason": "成大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "國立中興大學企業管理學系 115 學年度",
+      "cycle": 116,
+      "reason": "中興企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/inquiry.md",
+      "text": "[115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】",
+      "cycle": 116,
+      "reason": "東吳企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "政大企管 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用政大企管 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "六個企管系 115 學年度的準備指引",
+      "cycle": 116,
+      "reason": "引用台大企管組、政大企管、成大企管、中興企管、東吳企管與陽明交大管科 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "國立臺灣大學「工商管理學系-企業管理組」115 學年度",
+      "cycle": 116,
+      "reason": "台大企管組 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "國立政治大學 115 學年度企業管理學系",
+      "cycle": 116,
+      "reason": "政大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "國立中興大學企業管理學系 115 學年度",
+      "cycle": 116,
+      "reason": "中興企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "國立成功大學 115 學年度各學系學習歷程檔案準備指引",
+      "cycle": 116,
+      "reason": "成大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/myths.md",
+      "text": "[115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】",
+      "cycle": 116,
+      "reason": "東吳企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "各系 115 學年度的審查資料準備指引",
+      "cycle": 116,
+      "reason": "引用台大企管組、政大企管、成大企管、中興企管、東吳企管與陽明交大管科 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "國立臺灣大學「工商管理學系-企業管理組」115 學年度",
+      "cycle": 116,
+      "reason": "台大企管組 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "國立政治大學 115 學年度企業管理學系",
+      "cycle": 116,
+      "reason": "政大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "國立成功大學 115 學年度各學系學習歷程檔案準備指引",
+      "cycle": 116,
+      "reason": "成大企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "國立中興大學企業管理學系 115 學年度",
+      "cycle": 116,
+      "reason": "中興企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/overview.md",
+      "text": "[115 學年度大學申請入學審查資料準備指引【東吳大學_企業管理學系】",
+      "cycle": 116,
+      "reason": "東吳企管 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/mass-comm/application.md",
+      "text": "115 學年度的手冊寫，勾選超過規定件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
     },
     {
       "file": "src/content/clusters/mass-comm/application.md",
       "text": "這是 112 學年度的觀察",
-      "cycle": 115,
+      "cycle": 116,
       "reason": "交代 ColleGo! 小福袋那段口試比例的說法寫於 112 學年度，年份不隨換屆改變。"
+    },
+    {
+      "file": "src/content/clusters/mass-comm/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/medicine/application.md",
+      "text": "以臺大醫學系 115 學年度的指引為例",
+      "cycle": 116,
+      "reason": "引用臺大醫學系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/application.md",
+      "text": "臺大醫學系 115 學年度的準備指引要求每項",
+      "cycle": 116,
+      "reason": "引用臺大醫學系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/application.md",
+      "text": "「醫學系-自費與公費組」115 學年度",
+      "cycle": 116,
+      "reason": "臺大醫學系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/highlights.md",
+      "text": "臺大醫學系 115 學年度的準備指引，在特殊優良表現",
+      "cycle": 116,
+      "reason": "引用臺大醫學系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/highlights.md",
+      "text": "「醫學系-自費與公費組」115 學年度",
+      "cycle": 116,
+      "reason": "臺大醫學系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/inquiry.md",
+      "text": "臺大醫學系 115 學年度的準備指引就採計這一項",
+      "cycle": 116,
+      "reason": "引用臺大醫學系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/inquiry.md",
+      "text": "「醫學系-自費與公費組」115 學年度",
+      "cycle": 116,
+      "reason": "臺大醫學系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/myths.md",
+      "text": "[115學年度大學「申請入學」招生校系參採「學科能力測驗科目」一覽表",
+      "cycle": 116,
+      "reason": "115 學年度參採學測科目一覽表的標題，用來和 116 學年度比較：中山醫醫學系 116 學年度才改採社會。117 換屆時改成和 116 學年度比較，或刪掉。"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "115 學年度有軍費生、自費生和退輔會代訓公費生",
+      "cycle": 116,
+      "reason": "出處是國防醫學大學 115 學年度大學部招生資訊。國防醫學大學醫學系走軍事學校正期班甄選入學，不是甄選會的管道。116 學年度的招生資訊還沒找到（2026-11-04 查），找到後改。",
+      "recheckAfter": "2027-01-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "115 學年度申請入學，臺大醫學系不再參採英文",
+      "cycle": 116,
+      "reason": "歷史敘述：臺大醫學系與中國醫中醫學系是 115 學年度申請入學改採社會的，年份不隨換屆改變。"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "115 學年度，清大、中興大學、中山大學的學士後醫學系",
+      "cycle": 116,
+      "reason": "三校學士後醫學系各 30 個公費生名額，出處是 2025 年中央社報導與中山大學 115 學年度學士後醫學系簡章。學士後醫學系不是甄選會的管道。中山大學 116 學年度學士後醫學系簡章還沒公告（115 學年度在 2026 年 1 月 22 日開始報名），公告後改。",
+      "recheckAfter": "2027-01-31"
     },
     {
       "file": "src/content/clusters/medicine/overview.md",
       "text": "大專校院各校科系別概況（114 學年度科系名稱",
-      "cycle": 115,
-      "reason": "這裡的 114 學年度是教育部統計處科系別概況的資料年度，不是申請入學的屆別。換屆時看教育部有沒有公布新一年的資料。"
+      "cycle": 116,
+      "reason": "這裡的 114 學年度是教育部統計處科系別概況的資料年度，不是申請入學的屆別。換屆時看教育部有沒有公布新一年的資料。",
+      "recheckAfter": "2027-04-30"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "國防醫學大學「115學年度大學部招生資訊」",
+      "cycle": 116,
+      "reason": "國防醫學大學 115 學年度大學部招生資訊的標題，是同一頁軍費生、自費生那句的出處。國防醫學大學醫學系走軍事學校正期班甄選入學，不是甄選會的管道。116 學年度的招生資訊還沒找到（2026-11-04 查），找到後改。",
+      "recheckAfter": "2027-01-31"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "115 學年度軍事學校正期班甄選入學招生簡章總則部分條文修正對照表",
+      "cycle": 116,
+      "reason": "國防醫學院改名為國防醫學大學的依據，是 115 學年度軍事學校正期班簡章總則修正對照表的標題，年份不隨換屆改變。"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "[115學年度大學「申請入學」招生校系參採「學科能力測驗科目」一覽表",
+      "cycle": 116,
+      "reason": "115 學年度參採學測科目一覽表的標題，用來和 116 學年度比較：臺大醫學系與中國醫中醫學系 115 學年度改採社會，中山醫醫學系 116 學年度才改。117 換屆時改成和 116 學年度比較，或刪掉。"
+    },
+    {
+      "file": "src/content/clusters/medicine/overview.md",
+      "text": "115學年度《學士後醫學系》招生簡章公告",
+      "cycle": 116,
+      "reason": "中山大學 115 學年度學士後醫學系簡章的標題，是同一頁三校後醫公費生名額那句的出處。學士後醫學系不是甄選會的管道。中山大學 116 學年度學士後醫學系簡章還沒公告（115 學年度在 2026 年 1 月 22 日開始報名），公告後改。",
+      "recheckAfter": "2027-01-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "115 學年度的手冊寫，勾選超過件數",
+      "cycle": 116,
+      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "台大三個系與政大社會系摘自 115 學年度的準備指引",
+      "cycle": 116,
+      "reason": "引用台大社會、社工、心理系與政大社會系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "政大社會系 115 學年度的指引寫",
+      "cycle": 116,
+      "reason": "引用政大社會系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "[115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的標題，是同一頁勾選超過件數那句的出處。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的標題與連結。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "國立臺灣大學社會學系 115 學年度書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大社會系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "國立臺灣大學社會工作學系 115 學年度書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大社工系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "國立臺灣大學心理學系 115 學年度書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大心理系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/application.md",
+      "text": "國立政治大學社會學系 115 學年度審查資料準備指引",
+      "cycle": 116,
+      "reason": "政大社會系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/highlights.md",
+      "text": "政大社會系 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用政大社會系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/highlights.md",
+      "text": "國立政治大學社會學系 115 學年度審查資料準備指引",
+      "cycle": 116,
+      "reason": "政大社會系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/myths.md",
+      "text": "政大社會系 115 學年度的準備指引寫",
+      "cycle": 116,
+      "reason": "引用政大社會系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/myths.md",
+      "text": "台大心理系 115 學年度的指引就要考生",
+      "cycle": 116,
+      "reason": "引用台大心理系 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/myths.md",
+      "text": "國立政治大學社會學系 115 學年度審查資料準備指引",
+      "cycle": 116,
+      "reason": "政大社會系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/social-psychology/myths.md",
+      "text": "國立臺灣大學心理學系 115 學年度書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大心理系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "url": "https://www.cac.edu.tw/apply115/document/115apply_dupload_opflow_addf_115.pdf",
+      "cycle": 116,
+      "reason": "115 學年度審查資料上傳作業操作說明手冊的網址，工程、財經、資訊、法政、大眾傳播、社會與心理六個學群的申請備審頁引用，出處是勾選超過件數不能儲存那句。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後換成 116 版的網址。",
+      "recheckAfter": "2027-02-05"
+    },
+    {
+      "url": "https://www.cac.edu.tw/apply115/Classification_BriefForm.php",
+      "cycle": 116,
+      "reason": "115 學年度參採學測科目一覽表的網址，醫藥衛生學群的 overview.md、myths.md 用來和 116 學年度比較：臺大醫學系與中國醫中醫學系 115 學年度改採社會，中山醫醫學系 116 學年度才改。117 換屆時改成和 116 學年度比較，或刪掉。"
     }
   ]
 }
