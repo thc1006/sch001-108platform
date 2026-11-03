@@ -37,7 +37,7 @@ ColleGo! 每個學類頁都有「學類體驗」，列出高中可以先做的�
 
 ## 參考來源
 
-- [116 學年度大學申請入學招生簡章（總則第 21 頁審查資料項目內容對照表），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
+- [116 學年度大學申請入學招生簡章第 21 頁的審查資料項目內容對照表，大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [親子天下 廖嘉瑜〈自主學習計畫怎麼寫？各校自主學習範例/線上資源/課程一次看〉](https://www.parenting.com.tw/article/5093328)
 - [108 課綱資訊網自主學習專區（教育部國教署）](https://shs.k12ea.gov.tw/site/12basic/category?root=42&cid=42)
 - [政府網站營運交流平台〈以「使用者」為中心的設計思考5步驟(上)〉](https://www.webguide.nat.gov.tw/article/299/show)
