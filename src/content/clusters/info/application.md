@@ -40,7 +40,7 @@ description: 台大、清大、陽明交大、成大資工與政大資管 116 �
 
 ## 件數與檔案
 
-甄選會 115 學年度的上傳操作手冊寫，審查資料分為修課紀錄、課程學習成果、多元表現、學習歷程自述、「其他」五大項。從學習歷程中央資料庫勾選時，課程學習成果至多 3 件、多元表現至多 10 件，超過系統就不能儲存。用 PDF 上傳時，每一大項的檔案以 5MB 為限。
+116 學年度申請入學簡章總則寫，審查資料分為修課紀錄、課程學習成果、多元表現、學習歷程自述、「其他」五大項，每一大項的 PDF 檔以 5MB 為限。從學習歷程中央資料庫勾選時，課程學習成果至多 3 件、多元表現至多 10 件。116 學年度的上傳操作手冊還沒公告，115 學年度的手冊寫，勾選超過件數，系統就不能儲存。
 
 ## 誠信
 
@@ -51,7 +51,7 @@ description: 台大、清大、陽明交大、成大資工與政大資管 116 �
 ## 參考來源
 
 - [116 學年度申請入學校系分則：台大資訊工程學系（001582）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001582.htm)、[同系 APCS 組（001592）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001592.htm)、[清大資訊工程學系 APCS 組（011412）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_011412.htm)、[陽明交大資訊工程學系 APCS 組（013082）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013082.htm)、[成大資訊工程學系（004502）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004502.htm)、[同系智慧系統組（004512）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004512.htm)、[同系普渡雙聯組（004522）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004522.htm)、[政大資訊管理學系（006212）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006212.htm)，大學甄選入學委員會
-- [116 學年度大學「申請入學」招生簡章總則（第 12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
+- [116 學年度大學「申請入學」招生簡章總則（第 10 至 12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [成功大學資工系〈115學年度 國立成功大學 學習歷程檔案準備指引〉（2025-02-13）](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [ColleGo!「國立清華大學資訊工程學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)
 - [ColleGo!「國立政治大學資訊管理學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006026)
