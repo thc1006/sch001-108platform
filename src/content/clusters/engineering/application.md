@@ -28,7 +28,7 @@ description: 工程學群個人申請第二階段：審查資料的項目與件�
 
 ## 筆試
 
-有些校系第二階段考筆試。以台大工學院四個系與電資學院的電機系 115 學年度的校系分則為例：
+有些校系第二階段考筆試。以台大工學院四個系與電資學院的電機系 116 學年度的校系分則為例：
 
 | 學系 | 筆試 | 佔甄選總成績 |
 | :---- | :---- | :---- |
@@ -36,7 +36,7 @@ description: 工程學群個人申請第二階段：審查資料的項目與件�
 | 化工、材料 | 綜合筆試（B）：物理、化學，工學院 B 組共同試題 | 30% |
 | 電機 | 數學筆試、物理筆試；數學筆試用電資學院共同試題，同時報考電機、資工（含大學程式設計先修檢測 APCS 組）的，成績分送兩系 | 各 15% |
 
-台大電機的分則另寫，筆試二科總和成績一般生在前 235 名的，才給書面審查成績。清大資工甲組與陽明交大資工甲組也考筆試，各佔 10%。
+台大電機的分則另寫，筆試二科總和成績一般生在前 240 名的，才給書面審查成績。清大資工甲組考筆試，陽明交大資工甲組考團體面談（含筆試），各佔 10%。
 
 ## 面試
 
@@ -51,11 +51,11 @@ description: 工程學群個人申請第二階段：審查資料的項目與件�
 - [國立成功大學資訊工程學系「大學個人申請入學備審資料準備指引」（115 學年度）](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [清大工學院學士班「115學年度清大工學院學士班大學申請入學審查資料準備指引」](https://ipe.site.nthu.edu.tw/p/406-1300-302214,r825.php?Lang=zh-tw)
 - [《學習歷程 大學申請入學第二階段準備指南》（第 63 至 73、94、97、99 頁），教育部高等教育司（2025）](https://adm21.cmu.edu.tw/sites/default/files/%E5%AD%B8%E7%BF%92%E6%AD%B7%E7%A8%8B-%E5%A4%A7%E5%AD%B8%E7%94%B3%E8%AB%8B%E5%85%A5%E5%AD%B8%E7%AC%AC%E4%BA%8C%E9%9A%8E%E6%AE%B5%E6%BA%96%E5%82%99%E6%8C%87%E5%8D%97.pdf)
-- [國立臺灣大學土木工程學系 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001322.htm)
-- [國立臺灣大學機械工程學系 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001332.htm)
-- [國立臺灣大學化學工程學系 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001342.htm)
-- [國立臺灣大學材料科學與工程學系 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001362.htm)
-- [國立臺灣大學電機工程學系 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001572.htm)
-- [國立清華大學資訊工程學系甲組 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_011352.htm)
-- [國立陽明交通大學資訊工程學系甲組 115 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_013062.htm)
+- [國立臺灣大學土木工程學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001322.htm)
+- [國立臺灣大學機械工程學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001332.htm)
+- [國立臺灣大學化學工程學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001342.htm)
+- [國立臺灣大學材料科學與工程學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001362.htm)
+- [國立臺灣大學電機工程學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001572.htm)
+- [國立清華大學資訊工程學系甲組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_011382.htm)
+- [國立陽明交通大學資訊工程學系甲組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013062.htm)
 - [113 資工系特選心得（HackMD）](https://hackmd.io/@Viecon-342524/ryZRVU8zT)
