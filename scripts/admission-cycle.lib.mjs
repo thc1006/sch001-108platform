@@ -30,6 +30,8 @@ const CAC_URL = /(?<![\w.-])(?:https?:\/\/)?(?:[a-z0-9-]+\.)*cac\.edu\.tw\/(?:ap
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isReason = (v) => typeof v === 'string' && [...v.trim()].length >= MIN_REASON_CHARS;
+const isMdPath = (v) => typeof v === 'string' && v.endsWith('.md');
+const isLine = (v) => typeof v === 'string' && v.trim() !== '' && !/[\r\n]/.test(v);
 // 「115 至 119 學年度入學適用第三期」這種有效期間，在 115 到 119 都還是對的，所以區間看有沒有包含，不只看結尾。
 const allows = (years, t) => (t.from === undefined ? years.has(t.year) : [...years].some((y) => t.from <= y && y <= t.year));
 
@@ -250,8 +252,8 @@ export function validateConfig(config) {
                 errors.push(`${at} 的網址年度是 ${found[0].year}，本來就放行，不需要 keep`);
             } else key = `url\n${k.url}`;
         } else {
-            if (typeof k.file !== 'string' || !k.file.endsWith('.md')) errors.push(`${at} 的 file 必須是 .md 檔從 repo 根目錄起算的路徑`);
-            if (typeof k.text !== 'string' || !k.text.trim() || /[\r\n]/.test(k.text)) errors.push(`${at} 的 text 必須是同一行裡的一段原文`);
+            if (!isMdPath(k.file)) errors.push(`${at} 的 file 必須是 .md 檔從 repo 根目錄起算的路徑`);
+            if (!isLine(k.text)) errors.push(`${at} 的 text 必須是同一行裡的一段原文`);
             else key = `text\n${k.file}\n${k.text}`;
         }
         if (key && seen.has(key)) errors.push(`${at} 和前面的 keep 重複`);
@@ -275,6 +277,20 @@ function excerpt(src, start, end) {
 }
 
 /**
+ * locate 回傳文字 keep 的 text 在檔案裡的位置。檔案不在、找不到或不只一處時回傳錯誤訊息。
+ * @param {Map<string, {text: string}>} byPath @param {{file: string, text: string}} k @param {string} at
+ * @returns {number|string}
+ */
+function locate(byPath, k, at) {
+    const f = byPath.get(k.file);
+    if (!f) return `${at} 的 file「${k.file}」不在比對的檔案裡，檔案改名或刪掉了就更新或刪掉這一筆`;
+    const start = f.text.indexOf(k.text);
+    if (start < 0) return `${at} 的 text 在 ${k.file} 裡找不到，內容改過了就更新或刪掉這一筆`;
+    if (f.text.indexOf(k.text, start + 1) >= 0) return `${at} 的 text 在 ${k.file} 裡不只一處，加長到只出現一次`;
+    return start;
+}
+
+/**
  * classify 列出 files 裡年度不在 allowed 的學年度，以及各自被哪幾筆 keep 放行。
  * 文字 keep 只放行完整落在 text 那一段裡的學年度，同一行其他地方的不算。
  * spans 是每筆文字 keep 在檔案裡的位置，找不到或不只一處的不在裡面，原因放在 keepErrors。
@@ -285,11 +301,8 @@ function classify(files, keep, allowed) {
     const keepErrors = [];
     keep.forEach((k, i) => {
         if (!isPlainObject(k) || 'url' in k || typeof k.text !== 'string') return;
-        const f = byPath.get(k.file);
-        if (!f) return keepErrors.push(`keep[${i}] 的 file「${k.file}」不在比對的檔案裡，檔案改名或刪掉了就更新或刪掉這一筆`);
-        const at = f.text.indexOf(k.text);
-        if (at < 0) return keepErrors.push(`keep[${i}] 的 text 在 ${k.file} 裡找不到，內容改過了就更新或刪掉這一筆`);
-        if (f.text.indexOf(k.text, at + 1) >= 0) return keepErrors.push(`keep[${i}] 的 text 在 ${k.file} 裡不只一處，加長到只出現一次`);
+        const at = locate(byPath, k, `keep[${i}]`);
+        if (typeof at === 'string') return keepErrors.push(at);
         spans.set(i, { file: k.file, start: at, end: at + k.text.length });
     });
     const hits = [];

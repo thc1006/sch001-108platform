@@ -305,7 +305,7 @@ const libMutations = [
     ['全形數字不轉半形', '.replace(/[０-９]/g,', '.replace(/$^/g,'],
     ['空白可以跨行', "const SP = '[^\\\\S\\\\r\\\\n]*';", "const SP = '\\\\s*';"],
     ['keep 放行整個檔案', 's.file === f.path && s.start <= t.start && t.end <= s.end', 's.file === f.path'],
-    ['keep 的 text 不只一處也接受', 'if (f.text.indexOf(k.text, at + 1) >= 0)', 'if (false)'],
+    ['keep 的 text 不只一處也接受', 'if (f.text.indexOf(k.text, start + 1) >= 0)', 'if (false)'],
     ['網址 keep 用開頭比對', 'k.url === t.phrase', 't.phrase.startsWith(k.url)'],
     ['不檢查 keep 的 cycle', 'if (cycleOk && k.cycle !== cycle)', 'if (false)'],
     ['不檢查 next', 'else if (next !== cycle + 1)', 'else if (false)'],
