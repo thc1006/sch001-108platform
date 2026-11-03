@@ -3,21 +3,21 @@ cluster: 資訊學群
 topic: 申請備審與面試要點
 order: 6
 title: 資訊學群申請備審與面試要點：校系分則、準備指引、件數與誠信
-description: 台大、清大、陽明交大、成大資工與政大資管 115 學年度申請入學的學測檢定與第二階段比例，成大資工準備指引對各項審查資料的要求，審查資料的件數上限，以及學習歷程失真的後果。
+description: 台大、清大、陽明交大、成大資工與政大資管 116 學年度申請入學的學測檢定與第二階段比例，成大資工準備指引對各項審查資料的要求，審查資料的件數上限，以及學習歷程失真的後果。
 ---
 
 ## 第二階段看什麼
 
-申請入學第一階段看學測的檢定與篩選，APCS（大學程式設計先修檢測）組另看 APCS；第二階段由校系自訂項目與比例。下表是幾個系 115 學年度的校系分則，清大、陽明交大資工只列 APCS 組，116 學年度以甄選會公告的簡章為準。
+申請入學第一階段看學測的檢定與篩選，APCS（大學程式設計先修檢測）組另看 APCS；第二階段由校系自訂項目與比例。下表是幾個系 116 學年度的校系分則，清大、陽明交大資工只列 APCS 組。
 
 | 校系 | 第一階段檢定 | 甄選總成績 |
 | :---- | :---- | :---- |
 | 台大資工 | 英文、數學 A、自然頂標 | 學測 20%、審查資料 50%、數學筆試 30% |
 | 台大資工 APCS 組 | 英文、數學 A、自然前標；APCS 兩科 4 級 | 學測 20%、審查資料 60%、數學筆試 20% |
 | 清大資工 APCS 組 | 數學 A 前標；APCS 兩科 4 級 | 學測 20%、審查資料 40%、口試 40% |
-| 陽明交大資工 APCS 組 | 數學 A 前標、自然均標；APCS 兩科 4 級 | 學測 20%、審查資料 35%、口試 45% |
+| 陽明交大資工 APCS 組 | 數學 A 前標；APCS 兩科 4 級 | 學測 20%、審查資料 35%、口試 45% |
 | 成大資工 | 英文均標、數學 A 前標、自然前標 | 學測 50%、審查資料 40%、認識本系及筆試 10% |
-| 成大資工智慧系統組 | 英文均標、數學 A 前標 | 學測 35%、審查資料 40%、上機考試 25% |
+| 成大資工智慧系統組 | 英文均標、數學 A 前標 | 學測 35%、審查資料 30%、上機考試 35% |
 | 政大資管 | 國文、英文、數學 A 前標 | 學測 40%、審查資料 25%、面試 35% |
 
 台大資工兩組的審查資料都設 70 分檢定，簡章總則寫，指定項目未達校系所訂的檢定標準，不予錄取。台大資工數學筆試用電資學院共同試題，同時報考電機系和資工系的，筆試成績分送兩系。成大資工的筆試和「認識本系」活動同一天，內容以當天教學內容為主，沒參加的不予錄取。
@@ -50,8 +50,8 @@ description: 台大、清大、陽明交大、成大資工與政大資管 115 �
 
 ## 參考來源
 
-- [115 學年度申請入學校系分則：台大資訊工程學系（001582）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001582.htm)、[同系 APCS 組（001592）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001592.htm)、[清大資訊工程學系 APCS 組（011382）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_011382.htm)、[陽明交大資訊工程學系 APCS 組（013082）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_013082.htm)、[成大資訊工程學系（004492）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_004492.htm)、[同系智慧系統組（004502）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_004502.htm)、[同系普渡雙聯組（004512）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_004512.htm)、[政大資訊管理學系（006212）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_006212.htm)，大學甄選入學委員會
-- [115 學年度大學「申請入學」招生簡章（總則第 12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
+- [116 學年度申請入學校系分則：台大資訊工程學系（001582）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001582.htm)、[同系 APCS 組（001592）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001592.htm)、[清大資訊工程學系 APCS 組（011412）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_011412.htm)、[陽明交大資訊工程學系 APCS 組（013082）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013082.htm)、[成大資訊工程學系（004502）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004502.htm)、[同系智慧系統組（004512）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004512.htm)、[同系普渡雙聯組（004522）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004522.htm)、[政大資訊管理學系（006212）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006212.htm)，大學甄選入學委員會
+- [116 學年度大學「申請入學」招生簡章總則（第 12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [成功大學資工系〈115學年度 國立成功大學 學習歷程檔案準備指引〉（2025-02-13）](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [ColleGo!「國立清華大學資訊工程學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)
 - [ColleGo!「國立政治大學資訊管理學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006026)
