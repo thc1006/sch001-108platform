@@ -56,8 +56,8 @@ IOH 開放個人經驗平台 2017 年刊出的文章引述北醫醫學系吳瑞�
 
 ## 參考來源
 
-- [重要時程 — 申請入學｜大學甄選入學委員會](https://www.cac.edu.tw/apply115/schedule.php)
-- [115 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重、面試說明與甄試日期）｜大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/TotalGsdShow.htm)
+- [重要時程 — 申請入學｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
+- [116 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重、面試說明與甄試日期）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
 - [115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊（第 1、9、11 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115apply_dupload_opflow_addf_115.pdf)
 - [115 學年度大學「申請入學」招生簡章（總則第 16 頁：資料假借、冒用、偽造、變造之處理；分則第 20 頁：審查資料項目對照表與綜整心得字數、圖片上限），輔仁大學網站的節錄版｜大學甄選入學委員會](https://travellerlink.fju.edu.tw/Admission/data/Bulletins/027e07b6-9d80-4dc3-8af6-5676891f90f3.pdf)
 - [116學年度大學「申請入學」招生校系參採「學科能力測驗科目」一覽表（頁首寫確切內容以預計 11 月 3 日公告的正式簡章為準）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/Classification_BriefForm.php)

@@ -46,6 +46,6 @@ ColleGo! 兩個學類頁都把對方列為容易混淆的學類。職能治療�
 - [重點科別培育公費醫師制度計畫（第三期），附件「衛生福利部重點科別培育公費醫師待遇分發訓練及服務簡則(適用115至119學年度入學)」與計畫核定版（PDF 第 34 頁，頁碼 30：「服務年數不包含訓練」）｜衛生福利部醫事司](https://dep.mohw.gov.tw/DOMA/cp-955-86926-106.html)
 - [如何將「參與志願服務」透過反思呈現在學習歷程檔案中？（暨南大學社會政策與社會工作學系梁鎧麟助理教授，外部投稿）｜ColleGo!](https://collego.edu.tw/Media/Article/131)
 - [牙醫系教授看個申面試：我也不知道你的術科成績，別被標準給嚇跑（2016-04-02）｜IOH 開放個人經驗平台](https://ioh.tw/articles/大學教授看面試_160402)
-- [115 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重）｜大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/TotalGsdShow.htm)
+- [116 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重與學測參採科目）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
 - [參加國際數理學科奧林匹亞競賽及國際科學展覽成績優良學生升學優待辦法 第三條（金／銀／銅牌的保送與推薦範圍）、第四條（國際科學展覽）、第七條（保送醫學系、牙醫學系另定審查），全國法規資料庫](https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=H0060021)
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心（2017-03-06）｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
