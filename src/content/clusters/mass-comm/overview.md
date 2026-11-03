@@ -66,7 +66,7 @@ ColleGo! 寫，系上以跨媒體整合為核心，兼顧影視製作、新聞�
 - [ColleGo!「資訊傳播學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=3)
 - [ColleGo!「政治大學傳播學院大一大二不分系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006031)
 - [政大傳播學院「大一大二不分系」](https://comm.nccu.edu.tw/PageDoc?fid=11335)
-- [115 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（社會組）](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_006242.htm)
+- [116 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（社會組）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006252.htm)
 - [ColleGo!「陽明交通大學傳播與科技學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=013028)
 - [陽明交大傳播與科技學系「系所沿革」](https://dcat.nycu.edu.tw/about-us/our-mission/)
 - [陽明交大傳播與科技學系首頁](https://dcat.nycu.edu.tw/)
