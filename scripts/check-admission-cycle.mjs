@@ -64,9 +64,13 @@ function fail(errors, hint, sections = []) {
     process.exit(1);
 }
 
-/** warn 印出警告。在 Actions 上另發 annotation，run 的摘要頁看得到；跳脫照 @actions/core 的 escapeData。 */
-function warn(title, message) {
+/**
+ * warn 印出警告和 details 的每一行。在 Actions 上另發一則 annotation，只有 message，run 的摘要頁看得到；
+ * 跳脫照 @actions/core 的 escapeData。
+ */
+function warn(title, message, details = []) {
     console.log(`\n警告：${message}`);
+    for (const d of details) console.log(`  ${d}`);
     if (process.env.GITHUB_ACTIONS === 'true') {
         console.log(`::warning title=${title}::${message.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
     }
@@ -142,15 +146,18 @@ if (isPast(remindAfter, today)) {
 }
 const dueLists = [
     ['keep', dueKeeps(config, today), '請重新確認還需不需要'],
-    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],
+    ['watch', dueWatches(config, today), '新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延'],
 ];
 // 網址 keep 寫網址，其他寫檔名和行號。
 const where = (entry) => entry.url ?? `${entry.file}:${entryLine(files, entry) ?? '?'}`;
 for (const [name, due, todo] of dueLists) {
-    for (const { index, entry } of due) {
-        warn(`${name} 該重新確認`, `${name}[${index}]（${entry.url ?? entry.file}）的 recheckAfter 是 ${entry.recheckAfter}，已經過了，${todo}。`);
-    }
     if (!due.length) continue;
+    // annotation 一個 step 最多顯示 10 則，每一類只發一則，逐筆的列在 log。
+    warn(
+        `${name} 該重新確認`,
+        `${name} 有 ${due.length} 筆過了 recheckAfter，${todo}。`,
+        due.map(({ index, entry }) => `${name}[${index}]（${where(entry)}）recheckAfter ${entry.recheckAfter}`),
+    );
     // 同一個理由常有幾十筆，報告裡一個理由只印一次，issue 內文才不會超過上限。
     const groups = new Map();
     for (const { index, entry } of due) {

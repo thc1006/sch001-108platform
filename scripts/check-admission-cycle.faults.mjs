@@ -216,7 +216,7 @@ const cases = [
         name: '過了 keep 的 recheckAfter：只印警告',
         inject: editConfig((c) => { c.keep[1].recheckAfter = '2026-10-24'; }),
         code: 0,
-        expect: /警告：keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）的 recheckAfter 是 2026-10-24，已經過了/,
+        expect: /警告：keep 有 1 筆過了 recheckAfter，請重新確認還需不需要。\n {2}keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）recheckAfter 2026-10-24/,
     },
     {
         name: 'keep 的 recheckAfter 在今天之後、remindAfter 之前：不警告',
@@ -228,14 +228,25 @@ const cases = [
         name: '過了 watch 的 recheckAfter：只印警告',
         inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
         code: 0,
-        expect: /警告：watch\[0\]（src\/content\/clusters\/b\/application\.md）的 recheckAfter 是 2026-10-24，已經過了，請對照最新的資料改這一行/,
+        expect: /警告：watch 有 1 筆過了 recheckAfter，新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延。\n {2}watch\[0\]（src\/content\/clusters\/b\/application\.md:5）recheckAfter 2026-10-24/,
     },
     {
         name: '過了 watch 的 recheckAfter：Actions 上發 warning annotation',
         inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
         env: { GITHUB_ACTIONS: 'true' },
         code: 0,
-        expect: /^::warning title=watch 該重新確認::/m,
+        expect: /^::warning title=watch 該重新確認::watch 有 1 筆過了 recheckAfter，[^%\n]*$/m,
+    },
+    {
+        name: '兩筆 watch 到期：annotation 只發一則',
+        inject: editConfig((c) => {
+            c.watch[0].recheckAfter = '2026-10-24';
+            c.watch.push({ file: PAGE_A, text: '本頁不引用', cycle: 115, reason, recheckAfter: '2026-10-24' });
+        }),
+        env: { GITHUB_ACTIONS: 'true' },
+        code: 0,
+        expect: /^::warning title=watch 該重新確認::watch 有 2 筆/m,
+        absent: /::warning title=watch[^]*::warning title=watch/,
     },
     {
         name: 'watch 的 recheckAfter 在今天之後、remindAfter 之前：不警告',
@@ -483,12 +494,14 @@ const cliMutations = [
     ['recheckAfter 拿 remindAfter 比', 'dueKeeps(config, today)', 'dueKeeps(config, remindAfter)'],
     ['watch 的 recheckAfter 拿 remindAfter 比', 'dueWatches(config, today)', 'dueWatches(config, remindAfter)'],
     ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
-    ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],\n", ''],
+    ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延'],\n", ''],
     ['報告不截斷', 'writeFileSync(REPORT, text);', 'writeFileSync(REPORT, full);'],
     ['截斷時 log 不印完整的報告', 'if (text !== full) console.log(', 'if (false) console.log('],
     ['報告的上限不看環境變數', 'Number(process.env.ADMISSION_CYCLE_REPORT_LIMIT) || 60000', '60000'],
     ['watch 錯誤也印學年度的提示', 'if (errors.length > watchErrors.length) {', 'if (true) {'],
     ['watch 錯誤不印 watch 的提示', "if (watchErrors.length) hints.push('watch", "if (false) hints.push('watch"],
+    ['警告不列逐筆的位置', '    for (const d of details) console.log(`  ${d}`);\n', ''],
+    ['逐筆各發一則 annotation', '    if (!due.length) continue;\n', '    if (!due.length) continue;\n    for (const d of due) warn(`${name} 該重新確認`, String(d.index));\n'],
     ['到期的項目不依理由分組', 'const key = `${entry.recheckAfter}：${entry.reason}`;', 'const key = `${entry.recheckAfter}：${entry.reason}${index}`;'],
     ['報告不寫行號', '`${entry.file}:${entryLine(files, entry) ?? \'?\'}`', '`${entry.file}`'],
     ['報告不列到期的項目', 'sections.push([`### 該重新確認的 ${name}`', '[].push([`### 該重新確認的 ${name}`'],
