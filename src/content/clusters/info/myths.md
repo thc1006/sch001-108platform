@@ -12,7 +12,7 @@ description: 資訊學群申請常見的說法和 ColleGo!、教育部升學網�
 
 ## APCS 考高分就能錄取？
 
-不能保證。申請入學的 APCS（大學程式設計先修檢測）組在第一階段用 APCS 檢定或篩選，第二階段都看審查資料。115 學年度 54 個 APCS 組裡，52 個第二階段也採計學測，5 個把 APCS 成績再列為第二階段的項目，有些系另有面試、口試或筆試。以 115 學年度台大資工 APCS 組為例，APCS 兩科都要 4 級，甄選總成績是學測 20%、審查資料 60%、數學筆試 20%。各系的比例詳見〈申請備審與面試要點〉，APCS 的級分規定詳見〈科系風向標〉。
+不能保證。申請入學的 APCS（大學程式設計先修檢測）組在第一階段用 APCS 檢定或篩選，第二階段都看審查資料。116 學年度 50 個 APCS 組的第二階段都採計學測，5 個把 APCS 成績再列為第二階段的項目，有些系另有面試、口試或筆試。以 116 學年度台大資工 APCS 組為例，APCS 兩科都要 4 級，甄選總成績是學測 20%、審查資料 60%、數學筆試 20%。各系的比例詳見〈申請備審與面試要點〉，APCS 的級分規定詳見〈科系風向標〉。
 
 ## 作品越多越好？
 
@@ -48,8 +48,8 @@ description: 資訊學群申請常見的說法和 ColleGo!、教育部升學網�
 - [成功大學資工系〈115學年度 國立成功大學 學習歷程檔案準備指引〉（2025-02-13）](https://www.csie.ncku.edu.tw/zh-hant/news/13048)
 - [ColleGo!「資訊工程學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=1)
 - [ColleGo!「資訊管理學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=7)
-- [115 學年度申請入學校系分則查詢：APCS 組（54 筆），大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/APCS.htm)
-- [115 學年度申請入學校系分則：台大資訊工程學系 APCS 組（001592），大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001592.htm)
+- [116 學年度申請入學校系分則查詢：APCS 組（50 筆），大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/APCS.htm)
+- [116 學年度申請入學校系分則：台大資訊工程學系 APCS 組（001592），大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001592.htm)
 - [常見問題，教育部大學多元入學升學網](https://nsdua.moe.edu.tw/#/qa)
 - [自主學習計畫怎麼寫？各校自主學習範例、資源一次看（2025-02-06 更新），親子天下](https://www.parenting.com.tw/article/5093328)
 - [申請入學考生用ChatGPT寫備審資料 大學師提醒勿複製貼上（2024-02-27），中央社](https://www.cna.com.tw/news/ahel/202402270207.aspx)
