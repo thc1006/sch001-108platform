@@ -90,13 +90,14 @@
       "match": {
         "host": "www.aesea.org"
       },
-      "reason": "亞太能源科學教育協會（Next.js）。不存在的頁面回 HTTP 200，<head> 裡沒有標題，<title> 在 body 裡，是首頁的標題。2026-10-19 的週報裡這台主機的網址都判健康，GitHub runner 連得到頁面；runner 上讀到的標題沒有另外實測。",
-      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/competitions/ibridge 回 200，<title>「iBridge橋梁設計與載重競賽 - AESEA 亞太能源與科學教育協會」在第 1806 byte。/competitions/sch001-linkcheck-…、/competitions/no-such-race、/sch001-linkcheck-… 都回 200、約 30 KB，</head> 在第 1879 byte，<title>「亞太能源科學教育協會 AESEA」在第 29 KB 左右（隨路徑長度變，量到 28999 到 29351 byte），body 裡另有「找不到頁面」。首頁 / 的標題也是「亞太能源科學教育協會 AESEA」。robots.txt 只擋 /admin、/portal。",
+      "reason": "亞太能源科學教育協會（Next.js）。不存在的頁面回 HTTP 200，<head> 裡沒有標題，<title> 在 body 裡，是首頁的標題。網站分中文、英文兩種語言，GitHub runner 讀到的是英文的頁面，所以兩種語言的不存在頁面標題都列。",
+      "evidence": "2026-10-27 在台灣用健檢的 UA 查：/competitions/ibridge 回 200，<title>「iBridge橋梁設計與載重競賽 - AESEA 亞太能源與科學教育協會」在第 1806 byte。/competitions/sch001-linkcheck-…、/competitions/no-such-race、/sch001-linkcheck-… 都回 200、約 30 KB，</head> 在第 1879 byte，<title>「亞太能源科學教育協會 AESEA」在第 29 KB 左右（隨路徑長度變，量到 28999 到 29351 byte），body 裡另有「找不到頁面」。首頁 / 的標題也是「亞太能源科學教育協會 AESEA」。robots.txt 只擋 /admin、/portal。2026-11-02 的週報（#306）裡，runner 打的隨機路徑 /competitions/sch001-linkcheck-… 回 2xx，標題是「AESEA · Asia-Pacific Energy & Science Education Association」。2026-11-03 在台灣帶 Cookie NEXT_LOCALE=en 查：/en 和 /en/competitions/sch001-linkcheck-… 的 <title> 都是這個英文標題（原始碼寫成 &amp;），body 裡另有「not found」；/en/competitions/ibridge 的 <title> 是「iBridge Bridge Design Challenge - AESEA Asia-Pacific」。",
       "owner": "thc1006",
       "expires": "2027-01-31",
       "urls": [],
       "missingTitles": [
-        "亞太能源科學教育協會 AESEA"
+        "亞太能源科學教育協會 AESEA",
+        "AESEA · Asia-Pacific Energy & Science Education Association"
       ]
     },
     {
