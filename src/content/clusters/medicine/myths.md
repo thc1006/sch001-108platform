@@ -42,7 +42,6 @@ ColleGo! 兩個學類頁都把對方列為容易混淆的學類。職能治療�
 - [ColleGo!「醫學檢驗學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=38)
 - [ColleGo!「語療聽力學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=126)
 - [115學年度大學「申請入學」招生校系參採「學科能力測驗科目」一覽表（學校代碼 001 臺大、012 中國醫藥大學、020 輔仁大學、026 中山醫學大學、152 馬偕醫學大學）｜大學甄選入學委員會](https://www.cac.edu.tw/apply115/Classification_BriefForm.php)
-- [116學年度大學「申請入學」招生校系參採「學科能力測驗科目」一覽表（2026-10-27 公告；學校代碼同上）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/Classification_BriefForm.php)
 - [重點科別培育公費醫師制度計畫（第三期），附件「衛生福利部重點科別培育公費醫師待遇分發訓練及服務簡則(適用115至119學年度入學)」與計畫核定版（PDF 第 34 頁，頁碼 30：「服務年數不包含訓練」）｜衛生福利部醫事司](https://dep.mohw.gov.tw/DOMA/cp-955-86926-106.html)
 - [如何將「參與志願服務」透過反思呈現在學習歷程檔案中？（暨南大學社會政策與社會工作學系梁鎧麟助理教授，外部投稿）｜ColleGo!](https://collego.edu.tw/Media/Article/131)
 - [牙醫系教授看個申面試：我也不知道你的術科成績，別被標準給嚇跑（2016-04-02）｜IOH 開放個人經驗平台](https://ioh.tw/articles/大學教授看面試_160402)
