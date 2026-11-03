@@ -38,7 +38,7 @@ description: 法政學群申請入學第二階段的審查資料規定，台大�
 
 ## 面試
 
-甄選會的重要日程寫，116 學年度的指定項目甄試由大學在 5 月 13 日到 5 月 30 日之間自訂。上表七個系的甄試日期在 116 年 5 月 16 日到 5 月 23 日之間：台大政治系 5 月 16 日，北大法律系、政大外交系、政大公行系 5 月 21 日，政大法律系、政大政治系 5 月 22 日，台大法律系 5 月 23 日。
+甄選會的重要時程寫，116 學年度的指定項目甄試由大學在 5 月 13 日到 5 月 30 日之間自訂。上表七個系的甄試日期：台大政治系 5 月 16 日，北大法律系、政大外交系、政大公行系 5 月 21 日，政大法律系、政大政治系 5 月 22 日，台大法律系 5 月 23 日。
 
 上表七個系裡，分則寫到面試或口試看什麼的有兩個。政大公行系寫，面試「在評量學生公共事務相關素養及思辨表達能力」。政大外交系寫，學生的表達、溝通、組織能力以及對國際事務的理解，都列入考評。
 
@@ -52,7 +52,7 @@ description: 法政學群申請入學第二階段的審查資料規定，台大�
 
 - [115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊，大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115apply_dupload_opflow_addf_115.pdf)
 - [116 學年度大學申請入學招生簡章總則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
-- [116 學年度大學申請入學重要日程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
+- [116 學年度大學申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [116 學年度校系分則：台大法律學系法學組（001602）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001602.htm)
 - [116 學年度校系分則：台大法律學系司法組（001612）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001612.htm)
 - [116 學年度校系分則：台大法律學系財經法學組（001622）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001622.htm)
