@@ -9,6 +9,7 @@ import {
     cycleHints,
     dueKeeps,
     dueWatches,
+    entryLine,
     findFraming,
     findYears,
     isPast,
@@ -552,6 +553,14 @@ test('dueWatches：recheckAfter 過了才列，當天不列', () => {
     assert.deepEqual(dueWatches(config, '2027-02-06').map((d) => d.index), [0]);
     assert.deepEqual(dueWatches(config, '2027-04-01').map((d) => d.index), [0, 1]);
     assert.deepEqual(dueKeeps(config, '2027-04-01'), []);
+});
+
+test('entryLine：text 所在的行號，找不到或不只一處是 undefined', () => {
+    const files = doc('第一行', '每項 800 字', '至多 10 件', '至多 10 件');
+    assert.equal(entryLine(files, watchOf(FILE, '800 字')), 2);
+    assert.equal(entryLine(files, watchOf(FILE, '至多 15 件')), undefined);
+    assert.equal(entryLine(files, watchOf(FILE, '至多 10 件')), undefined);
+    assert.equal(entryLine(files, watchOf('src/content/gone.md', '800 字')), undefined);
 });
 
 test('admission-cycle.json：repo 裡的設定通過 validateConfig', () => {
