@@ -256,7 +256,7 @@ const cases = [
         inject: editConfig((c) => { c.keep[1].recheckAfter = '2026-10-24'; }),
         code: 0,
         attention: true,
-        report: /### 該重新確認的 keep\n\n- keep\[1\]（https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php）的 recheckAfter 是 2026-10-24。/,
+        report: /### 該重新確認的 keep\n\n1 筆的 recheckAfter 已經過了，.*\n\n- recheckAfter 2026-10-24：故障注入的測資，保留理由至少十個字。\n {2}- keep\[1\] `https:\/\/www\.cac\.edu\.tw\/apply114\/guide\.php`\n/,
     },
     {
         name: '--remind 過了 watch 的 recheckAfter：通知',
@@ -264,7 +264,19 @@ const cases = [
         inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
         code: 0,
         attention: true,
-        report: /### 該重新確認的 watch\n\n- watch\[0\]（src\/content\/clusters\/b\/application\.md：116 學年度的簡章在 2026 年 11 月公告）的 recheckAfter 是 2026-10-24。理由：故障注入/,
+        report: /### 該重新確認的 watch\n\n1 筆的 recheckAfter 已經過了，.*\n\n- recheckAfter 2026-10-24：故障注入的測資，保留理由至少十個字。\n {2}- watch\[0\] `src\/content\/clusters\/b\/application\.md:5`\n/,
+    },
+    {
+        name: '--remind 到期的項目理由相同：理由只印一次，各列行號',
+        args: ['--remind'],
+        inject: editConfig((c) => {
+            c.keep[0].recheckAfter = '2026-10-24';
+            c.watch[0].recheckAfter = '2026-10-24';
+            c.watch.push({ file: PAGE_A, text: '本頁不引用', cycle: 115, reason, recheckAfter: '2026-10-24' });
+        }),
+        code: 0,
+        attention: true,
+        report: /### 該重新確認的 watch\n\n2 筆[^\n]*\n\n- recheckAfter 2026-10-24：故障注入的測資，保留理由至少十個字。\n {2}- watch\[0\] `src\/content\/clusters\/b\/application\.md:5`\n {2}- watch\[1\] `src\/content\/clusters\/a\/overview\.md:10`\n/,
     },
     {
         name: '--remind 內容有錯：以 1 結束，照樣通知，錯誤寫進報告',
@@ -391,6 +403,7 @@ const libMutations = [
     ['不檢查重複的 watch', 'if (seen.has(key)) errors.push(`${at} 和前面的 watch 重複`)', 'if (false) errors.push(`${at} 和前面的 watch 重複`)'],
     ['重複的 watch 只看 text', 'const key = `${w.file}\\n${w.text}`;', 'const key = w.text;'],
     ['watch 找不到原文也不報錯', "if (typeof at === 'string') errors.push(at);", 'if (false) errors.push(at);'],
+    ['行號從 0 算', "f.text.slice(0, at).split('\\n').length", "f.text.slice(0, at).split('\\n').length - 1"],
     ['watch 的到期看 keep', 'dueIn(config.watch, todayISO)', 'dueIn(config.keep, todayISO)'],
     ['換屆清單用現在的 cycle 判斷', 'new Set([config.next, config.next + 1])', 'new Set([config.cycle, config.next])'],
 ];
@@ -444,7 +457,9 @@ const cliMutations = [
     ['watch 的 recheckAfter 拿 remindAfter 比', 'dueWatches(config, today)', 'dueWatches(config, remindAfter)'],
     ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
     ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],\n", ''],
-    ['報告不列到期的項目', '    if (!due.length) continue;\n    sections.push([', '    if (!due.length) continue;\n    [].push(['],
+    ['到期的項目不依理由分組', 'const key = `${entry.recheckAfter}：${entry.reason}`;', 'const key = `${entry.recheckAfter}：${entry.reason}${index}`;'],
+    ['報告不寫行號', '`${entry.file}:${entryLine(files, entry) ?? \'?\'}`', '`${entry.file}`'],
+    ['報告不列到期的項目', 'sections.push([`### 該重新確認的 ${name}`', '[].push([`### 該重新確認的 ${name}`'],
     ['目錄也當成檔案讀', "e.isFile() && e.name.endsWith('.md')", "e.name.endsWith('.md')"],
     ['CRLF 不換成 LF', ".replace(/\\r\\n/g, '\\n')", ''],
     ['報告沒有機器標記', "[ADMISSION_CYCLE_MARKER, '',", "['',"],

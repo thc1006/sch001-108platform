@@ -319,6 +319,17 @@ function locate(byPath, k, at) {
 }
 
 /**
+ * entryLine 回傳文字 keep 或 watch 的 text 在 files 裡的行號，找不到或不只一處時回傳 undefined。
+ * @param {Array<{path: string, text: string}>} files @param {{file: string, text: string}} entry
+ * @returns {number|undefined}
+ */
+export function entryLine(files, entry) {
+    const f = files.find((x) => x.path === entry.file);
+    const at = f && typeof entry.text === 'string' ? locate(new Map([[f.path, f]]), entry, '') : '';
+    return typeof at === 'number' ? f.text.slice(0, at).split('\n').length : undefined;
+}
+
+/**
  * classify 列出 files 裡年度不在 allowed 的學年度，以及各自被哪幾筆 keep 放行。
  * 文字 keep 只放行完整落在 text 那一段裡的學年度，同一行其他地方的不算。
  * spans 是每筆文字 keep 在檔案裡的位置，找不到或不只一處的不在裡面，原因放在 keepErrors。

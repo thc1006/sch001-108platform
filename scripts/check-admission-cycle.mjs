@@ -19,6 +19,7 @@ import {
     cycleHints,
     dueKeeps,
     dueWatches,
+    entryLine,
     isPast,
     isRealDate,
     pendingForNext,
@@ -136,17 +137,20 @@ const dueLists = [
     ['keep', dueKeeps(config, today), '請重新確認還需不需要'],
     ['watch', dueWatches(config, today), '請對照最新的資料改這一行，再更新或刪掉這一筆'],
 ];
+// 網址 keep 寫網址，其他寫檔名和行號。
+const where = (entry) => entry.url ?? `${entry.file}:${entryLine(files, entry) ?? '?'}`;
 for (const [name, due, todo] of dueLists) {
     for (const { index, entry } of due) {
         warn(`${name} 該重新確認`, `${name}[${index}]（${entry.url ?? entry.file}）的 recheckAfter 是 ${entry.recheckAfter}，已經過了，${todo}。`);
     }
     if (!due.length) continue;
-    sections.push([
-        `### 該重新確認的 ${name}`,
-        '',
-        ...due.map(({ index, entry }) => `- ${name}[${index}]（${entry.url ?? `${entry.file}：${entry.text}`}）的 recheckAfter 是 ${entry.recheckAfter}。理由：${entry.reason}`),
-        '',
-    ]);
+    // 同一個理由常有幾十筆，報告裡一個理由只印一次，issue 內文才不會超過上限。
+    const groups = new Map();
+    for (const { index, entry } of due) {
+        const key = `${entry.recheckAfter}：${entry.reason}`;
+        groups.set(key, [...(groups.get(key) ?? []), `  - ${name}[${index}] \`${where(entry)}\``]);
+    }
+    sections.push([`### 該重新確認的 ${name}`, '', `${due.length} 筆的 recheckAfter 已經過了，${todo}。`, '', ...[...groups].flatMap(([key, items]) => [`- recheckAfter ${key}`, ...items]), '']);
 }
 
 if (errors.length) {
