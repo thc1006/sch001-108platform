@@ -8,7 +8,7 @@ description: 以台大生命科學系 115 學年度申請入學為例，看第�
 
 ## 台大生科系的第二階段
 
-台大生命科學系 115 學年度申請入學的校系分則，甄選總成績由學測 20%、審查資料 35%、筆試 25%、口試 20% 組成，口試成績未達 70 分不予錄取。分則寫，筆試與口試的注意事項考前到系網查詢。各校系的項目和比例不同，以報考當年的分則為準。
+台大生命科學系 116 學年度申請入學的校系分則，甄選總成績由學測 20%、審查資料 35%、筆試 25%、口試 20% 組成，口試成績未達 70 分不予錄取。分則寫，筆試與口試的注意事項考前到系網查詢。各校系的項目和比例不同，以報考當年的分則為準。
 
 系上的書面資料準備指引列了四類審查資料：
 
@@ -21,11 +21,11 @@ description: 以台大生命科學系 115 學年度申請入學為例，看第�
 
 115 學年度申請入學招生簡章寫，課程學習成果從學習歷程中央資料庫勾選至多 3 件，多元表現至多 10 件，另外上傳一份多元表現綜整心得，字數合計至多 800 字、圖片至多 3 張，台大生科系的指引沿用綜整心得的上限。本站查了系名含生命科學、生物、生醫、食品等字的 148 個校系，115 學年度分則都沒有另訂綜整心得的字數，要看各系的準備指引。
 
-其他學群有校系訂得更嚴，例如台大大氣系寫「多元表現(N.綜整心得)：500字內」，台大財金系另限二頁；政大土耳其語文系則在分則寫，字數與格式要到系網下載準備指引。前面 148 個校系的選法是系名含生命科學、生物、生化、生醫、生態、食品、微生物、植物、昆蟲、醫學科學、醫學工程、農業化學、土壤其中一組字。
+其他學群有校系訂得更嚴。116 學年度的分則裡，台大大氣系寫「多元表現(N.綜整心得)：500字內」，台大財金系另限二頁；政大土耳其語文系則寫，自傳、綜整心得和學習歷程自述照系網公告的當年度準備指引撰寫。前面 148 個校系的選法是系名含生命科學、生物、生化、生醫、生態、食品、微生物、植物、昆蟲、醫學科學、醫學工程、農業化學、土壤其中一組字。
 
 ## 學習歷程自述的題目
 
-簡章對學習歷程自述沒有訂字數上限，各系在分則或準備指引自己訂。用字數限的，中正財金系的就讀動機限 100 字，北市大中國語文系每項限 1200 字；政大教育系則寫總字數約 2000 字。用頁數限的，政大財管系三項各 1 頁 A4，台大財金系三項合計 6 頁，並寫「超出部分不予計分」。台大生科系的高中學習歷程反思在 1000 字內、以 2 頁為原則，從五題裡擇要回答，不適用的不用寫：
+簡章對學習歷程自述沒有訂字數上限，各系在分則或準備指引自己訂。116 學年度的分則，用字數限的，中正財金系的就讀動機限 100 字，北市大中國語文系每項限 1200 字；政大教育系則寫總字數約 2000 字。用頁數限的，政大財管系三項各 1 頁 A4，台大財金系三項合計 6 頁，並寫「超出部分不予計分」。台大生科系的高中學習歷程反思在 1000 字內、以 2 頁為原則，從五題裡擇要回答，不適用的不用寫：
 
 1. 什麼機緣讓你開始對生命科學產生興趣？如果和某位生物老師或人物有關，描述經過與感受。
 2. 你通常用什麼方法鑽研生命科學，讓你覺得學習充滿樂趣？也問你怎麼看學校的生物課和實驗課。
@@ -57,15 +57,15 @@ ColleGo! 請兩位其他學群的大一學生分享申請入學的面試經驗�
 ## 參考來源
 
 - [國立臺灣大學「生命科學系」115 學年度大學申請入學第二階段甄試書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/B010_生科系.pdf)
-- [115 學年度大學申請入學校系分則：國立臺灣大學生命科學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001632.htm)
-- [115 學年度大學申請入學校系分則：國立臺灣大學大氣科學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001152.htm)
-- [115 學年度大學申請入學校系分則：國立臺灣大學財務金融學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_001532.htm)
-- [115 學年度大學申請入學校系分則：國立政治大學土耳其語文學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_006312.htm)
-- [115 學年度大學申請入學校系分則：國立政治大學財務管理學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_006222.htm)
-- [115 學年度大學申請入學校系分則：國立政治大學教育學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_006042.htm)
-- [115 學年度大學申請入學校系分則：臺北市立大學中國語文學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_035062.htm)
-- [115 學年度大學申請入學校系分則：國立中正大學財務金融學系，大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/html/115_041232.htm)
-- [115 學年度大學申請入學校系分則查詢（各校系列表），大學甄選入學委員會](https://www.cac.edu.tw/apply115/system/ColQry_115xappLyfOrStu_Azd5gP29/TotalGsdShow.htm)
+- [116 學年度大學申請入學校系分則：國立臺灣大學生命科學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001632.htm)
+- [116 學年度大學申請入學校系分則：國立臺灣大學大氣科學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001152.htm)
+- [116 學年度大學申請入學校系分則：國立臺灣大學財務金融學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001532.htm)
+- [116 學年度大學申請入學校系分則：國立政治大學土耳其語文學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006322.htm)
+- [116 學年度大學申請入學校系分則：國立政治大學財務管理學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006232.htm)
+- [116 學年度大學申請入學校系分則：國立政治大學教育學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006042.htm)
+- [116 學年度大學申請入學校系分則：臺北市立大學中國語文學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_035072.htm)
+- [116 學年度大學申請入學校系分則：國立中正大學財務金融學系，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_041232.htm)
+- [116 學年度大學申請入學校系分則查詢（各校系列表），大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
 - [115 學年度大學「申請入學」招生簡章（第 11、20 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply115/)
 - [〈看這篇搞懂教授怎麼問！成大生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-06-09）](https://blog.luckertw.com/interview-archaeology/)
 - [〈看這篇搞懂教授怎麼問！中山生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-07-16）](https://blog.luckertw.com/interview-archaeology-nsysu/)
