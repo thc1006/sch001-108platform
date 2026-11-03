@@ -56,10 +56,10 @@ IOH 開放個人經驗平台 2017 年刊出的文章引述北醫醫學系吳瑞�
 
 ## 參考來源
 
-- [重要時程 — 申請入學｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
+- [116 學年度申請入學重要時程｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [116 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重、面試說明與甄試日期）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
-- [116 學年度大學申請入學招生簡章總則（第 10 頁：審查資料五大項；第 11 頁：每一大項 5MB；第 12 頁：課程學習成果、多元表現的勾選件數；第 17 頁：資料假借、冒用、偽造、變造之處理；分則第 21 頁：審查資料項目內容對照表與綜整心得字數、圖片上限），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
-- [審查資料準備指引 — 申請入學（「116學年度資料預計於116年3月更新」）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
+- [116 學年度大學申請入學招生簡章總則（第 10–12、17、21 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
+- [申請入學審查資料準備指引（「116學年度資料預計於116年3月更新」）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [國立臺灣大學「醫學系-自費與公費組」115 學年度大學申請入學第二階段甄試書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/4010_醫學系.pdf)
 - [教育部大學多元入學升學網「常見問題」：「大學審查『審查資料』行之已久，各大學校系有沒有審查時共通的原則呢？」（招聯會「大學針對申請入學備審資料審查參考原則」的「三重二不」）](https://nsdua.moe.edu.tw/#/qa)
 - [北醫醫學系教授談面試：別再隱惡揚善！讓我看見你的核心（2017-03-06）｜IOH 開放個人經驗平台](https://ioh.tw/articles/ioharticles-大學備審-醫學系面試)
