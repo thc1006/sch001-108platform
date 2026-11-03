@@ -204,8 +204,9 @@ test('validateConfig：watch 的欄位', () => {
     one(watchOf('a.md', '至多 10 件', { cycle: undefined }), /watch\[0\] 的 cycle 是 undefined/);
     one(watchOf('a.md', '至多 10 件', { reason: '   九個字的追蹤理由喔   ' }), /watch\[0\] 的 reason 要寫這一行為什麼會過時/);
     const { recheckAfter, ...undated } = watchOf('a.md', '至多 10 件');
-    one(undated, /watch\[0\] 的 recheckAfter 必填/);
-    one(watchOf('a.md', '至多 10 件', { recheckAfter: '2027-02-29' }), /watch\[0\] 的 recheckAfter 必填/);
+    one(undated, /watch\[0\] 沒有 recheckAfter，watch 一定要寫/);
+    one(watchOf('a.md', '至多 10 件', { recheckAfter: '2027-02-29' }), /watch\[0\] 的 recheckAfter 必須是存在的 YYYY-MM-DD 日期/);
+    one(watchOf('a.md', '至多 10 件', { recheckAfter: undefined }), /watch\[0\] 的 recheckAfter 必須是存在的/);
     one(watchOf('a.txt', '至多 10 件'), /watch\[0\] 的 file 必須是 \.md/);
     one(watchOf('a.md', '至多\n10 件'), /watch\[0\] 的 text 必須是同一行/);
     one(watchOf('a.md', ' '), /watch\[0\] 的 text 必須是同一行/);
