@@ -60,5 +60,5 @@ ColleGo! 生命科學學類頁（資料更新時間 2026/10/2）引用的 104 �
 - [〈念生科系CP值低是因為系很爛？統計沒意義？還是誤上賊船？〉顏聖紘，udn 鳴人堂（2016-07-19）](https://opinion.udn.com/opinion/story/7492/1838547)
 - [〈生命科學不是在討論人生哲理！我們在實驗室為生物謀求幸福〉，IOH 開放個人經驗平台（2015-10-22）](https://ioh.tw/articles/成大生命科學系-陳楷畬)
 - [教育部大學多元入學升學網「常見問題」：〈大學審查「審查資料」行之已久，各大學校系有沒有審查時共通的原則呢？〉](https://nsdua.moe.edu.tw/#/qa)
-- [清華大學醫學科學系—FAQ](https://dms.site.nthu.edu.tw/p/404-1267-176138.php?Lang=zh-tw)
+- [清華大學醫學科學系 FAQ](https://dms.site.nthu.edu.tw/p/404-1267-176138.php?Lang=zh-tw)
 - [清華大學生命科學系「必修科目表」](https://dls.site.nthu.edu.tw/p/405-1473-189988,c17696.php?Lang=zh-tw)
