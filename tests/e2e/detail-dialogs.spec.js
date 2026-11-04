@@ -458,6 +458,7 @@ test.describe('國內外競賽的詳細資訊', () => {
             await page.keyboard.press('Escape');
             await expect(page.getByRole('dialog')).toBeHidden();
             await expect(term ? page.locator('#search-input') : opener(page, '有詳細資訊')).toBeFocused();
+            if (term) await expect(page.locator('#result-count')).toHaveText('1 項結果');
         });
     }
 
