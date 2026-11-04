@@ -233,7 +233,7 @@ export function validateSchedule(comp, label, errors) {
         if (typeof comp.registrationNote !== 'string' || comp.registrationNote.trim() === '') {
             errors.push(`「${label}」的 registrationNote 必須是非空字串`);
         } else if ([...comp.registrationNote.trim()].length > 30) {
-            // 它會直接當成卡片的狀態列文字，過長會撐破版面。詳細說明請寫進 details。
+            // 競賽頁把它原樣放進卡片的截止欄或對話框的徽章，過長會撐高版面。詳細說明請寫進 details。
             errors.push(`「${label}」的 registrationNote 過長（上限 30 字，目前 ${[...comp.registrationNote.trim()].length} 字）`);
         }
     }
