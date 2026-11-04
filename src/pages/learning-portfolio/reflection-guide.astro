@@ -130,10 +130,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
         }
 
-        // 連按同一個情境不會抽到剛才那題。
+        // 連按同一個情境不會抽到剛才那題；題庫只有一題時照樣出那題。
         let lastQuestion = '';
         function generateQuestion(category) {
-            const questions = reflectionData[category].filter((q) => q !== lastQuestion);
+            const all = reflectionData[category];
+            const questions = all.length > 1 ? all.filter((q) => q !== lastQuestion) : all;
             const selectedQuestion = questions[Math.floor(Math.random() * questions.length)];
             lastQuestion = selectedQuestion;
 
