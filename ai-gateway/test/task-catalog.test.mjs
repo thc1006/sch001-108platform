@@ -369,7 +369,7 @@ const REVIEWED_PROJECTS = {
     'national-treasure': '9d9169472f5b',
     'lawtrace': '541a118afbb6',
     'vtaiwan': '61bcf0d56826',
-    'civil-iot': 'e309baf94cce',
+    'civil-iot': 'efe575db7ad8',
 };
 
 test('civic-tech-suggestion：projects.json 的 description 或 status 改了，指令那一行要跟著重看', () => {
