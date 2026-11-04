@@ -10,6 +10,7 @@
 npm ci
 npm run dev
 npm run verify:site
+npm run check:writing
 ```
 
 瀏覽器測試要先裝 Chromium，再照 GitHub Pages 的路徑放一份建置結果：
@@ -221,7 +222,7 @@ export function sameSite(aHost, bHost) {
 
 `npm run check:writing` 讀建置後的 dist，報出命中的原始檔和行號，回推不到時報頁面路徑。會擋的規則（block）新增命中就失敗；其他規則（warn）只報，每一筆寫在 `.reports/writing.json`。規則代號對應的節：W01–W03「寫數字」；W04、W05、W13、W14、W17 和 S「每句都帶來新資訊」；其餘的 W 和 K01「不背書，不喊話」；C「寫出處」；P「標點」；F「粗體、表情符號與引語」；K02、K03、U「卡片與介面文字」。
 
-被擋的時候：
+被擋的時候，改完先執行 `npm run build:deployable` 重建 dist 再跑：
 
 - 新增的命中：改寫那一句。
 - 照抄的外部原文、官方名稱或當反例引用的句子：在 `scripts/writing-allow.json` 寫明原文片段、出處和理由。
