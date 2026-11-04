@@ -1,6 +1,6 @@
 {
   "_readme": "線上課程資料來源檔。online-courses.html 會在載入時 fetch() 此檔並渲染。新增或修改課程請直接編輯下方 courses 陣列，不需要動 HTML。欄位：title / provider / platform / category / difficulty / language（中文 或 英文）/ certificate（true 或 false）/ tags（字串陣列）/ description / url / thumbnail_url。",
-  "lastUpdated": "2026-11-01",
+  "lastUpdated": "2026-11-05",
   "courses": [
     {
       "title": "李宏毅 — 生成式 AI 與機器學習",
@@ -16,7 +16,7 @@
         "Deep Learning",
         "LLM"
       ],
-      "description": "台大電機系李宏毅老師的公開課程。個人網站列出 2026 年春季在內的歷年課程網頁，有投影片、作業與上課影片。內容涵蓋 LLM、RAG、AI Agent 等技術。",
+      "description": "台大電機系李宏毅老師的機器學習與生成式 AI 課，用中文講，講解淺顯，適合拿來入門機器學習。課程網頁有歷年的投影片、作業和上課影片，內容包括 LLM、RAG、AI Agent。",
       "url": "https://speech.ee.ntu.edu.tw/~hylee/index.php",
       "thumbnail_url": "img/courses/ntu-hylee.jpg"
     },
@@ -35,7 +35,7 @@
         "JavaScript",
         "開源"
       ],
-      "description": "freeCodeCamp 是美國的非營利組織，網站程式碼在 GitHub 以 BSD-3-Clause 授權開源。透過瀏覽器裡的互動練習與專案從零學習網頁開發，課程與證書都免費。",
+      "description": "freeCodeCamp 是美國的非營利組織，在瀏覽器裡用互動練習和專案從零學網頁開發，課程和證書都免費。",
       "url": "https://www.freecodecamp.org/",
       "thumbnail_url": "img/courses/freecodecamp.png"
     },
@@ -104,7 +104,7 @@
         "C語言",
         "演算法"
       ],
-      "description": "哈佛大學 David J. Malan 主講的計算機科學與程式設計入門課，教演算法思維、抽象化、資料結構等概念。edX 標示約 12 週、每週 6 到 18 小時，可以自訂進度。",
+      "description": "哈佛大學 David J. Malan 主講的計算機科學與程式設計入門課，教演算法思維、抽象化、資料結構等概念。雖然是入門課，作業份量重：約 12 週，每週 6 到 18 小時，可以自訂進度。",
       "url": "https://www.edx.org/course/introduction-computer-science-harvardx-cs50x",
       "thumbnail_url": "img/courses/cs50.png"
     },
@@ -121,7 +121,7 @@
         "幸福感",
         "正向心理學"
       ],
-      "description": "耶魯大學 Laurie Santos 教授的線上課程，改編自校內的「Psychology and the Good Life」。耶魯新聞 2018 年稱那門課是耶魯史上最受歡迎的課，開課第一年近四分之一的大學部學生選修。課程用心理學研究探討如何提升自己的幸福感與建立正向習慣。",
+      "description": "耶魯大學 Laurie Santos 教授的線上課，是耶魯最受歡迎的心理學課的線上版，用心理學研究談怎麼提升幸福感、建立好習慣。",
       "url": "https://www.coursera.org/learn/the-science-of-well-being",
       "thumbnail_url": "img/courses/science-of-well-being.jpeg"
     },
@@ -137,7 +137,7 @@
         "微積分",
         "數學"
       ],
-      "description": "可汗學院的 Calculus 1 課程，8 個單元：極限與連續、導數的定義與基本規則、連鎖律等進階微分、導數的應用、函數分析、積分、微分方程、積分的應用。有教學影片與練習題，免費。",
+      "description": "可汗學院的 Calculus 1，從極限、導數教到積分，有教學影片和練習題，免費。",
       "url": "https://www.khanacademy.org/math/calculus-1",
       "thumbnail_url": "img/courses/khan-calculus.png"
     },
@@ -172,7 +172,7 @@
         "個體經濟",
         "總體經濟"
       ],
-      "description": "可汗學院經濟學的總覽頁，包括個體經濟學、總體經濟學（各有 AP 版）、金融與資本市場、個人理財等課程。個體經濟學 9 個單元，講供需、彈性、消費者理論、市場結構與市場失靈；總體經濟學 8 個單元，講經濟指標與景氣循環、國民所得、金融部門與開放經濟。",
+      "description": "可汗學院的經濟學課程，有個體經濟學、總體經濟學，也有個人理財，附教學影片和練習題，免費。",
       "url": "https://www.khanacademy.org/economics-finance-domain",
       "thumbnail_url": "img/courses/khan-economics.png"
     }
