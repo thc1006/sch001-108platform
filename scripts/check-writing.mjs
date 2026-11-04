@@ -107,7 +107,8 @@ const sources = git('ls-files', '-z', 'src', 'public').split('\0').filter((f) =>
 // 改了原始檔沒有重建時，筆數和 --update-baseline 都照舊的 dist 算，--update-baseline 會下修 0 個並以 0 結束。
 const builtAt = existsSync(path.join(DIST, 'build-info.json')) ? statSync(path.join(DIST, 'build-info.json')).mtimeMs : Infinity;
 const newer = sources.filter((f) => existsSync(path.join(ROOT, f)) && statSync(path.join(ROOT, f)).mtimeMs > builtAt);
-if (newer.length) console.warn(`警告：${newer[0]} 等 ${newer.length} 個原始檔比 dist 新，結果是舊內容的。先執行 npm run build:deployable 再跑。`);
+const staleWarning = newer.length ? `警告：${newer[0]} 等 ${newer.length} 個原始檔比 dist 新，結果是舊內容的。先執行 npm run build:deployable 再跑。` : '';
+if (staleWarning) console.warn(staleWarning);
 const index = sourceIndex(sources.map((p) => ({ path: p, content: readFileSync(path.join(ROOT, p), 'utf8') })));
 const jsonCache = new Map();
 function preferred(page) {
@@ -213,6 +214,8 @@ if (over.length) {
     }
     console.error('改寫這些句子，寫法見 CONTRIBUTING.md 的「網站內容」。照抄的外部原文、官方名稱或當反例引用的句子，在 scripts/writing-allow.json 加一條。'
         + '在「」裡談某個詞時，前後加上「這類」「例如」。');
+    // 開頭的警告在長清單上面，捲過去就看不到了。
+    if (staleWarning) console.error(staleWarning);
 }
 
 mkdirSync(path.dirname(REPORT), { recursive: true });
