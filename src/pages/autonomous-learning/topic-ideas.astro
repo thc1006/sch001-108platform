@@ -87,7 +87,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <!-- 靈感矩陣 -->
         <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">2. 靈感矩陣</h2>
-            <p class="text-gray-600 mb-6">選一個學科領域和一種研究方法，有題目例子就會顯示。</p>
+            <p class="text-gray-600 mb-6">選一個學科領域和一種研究方法，看看兩個組在一起可以做什麼題目。</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                     <h3 id="matrix-category-label" class="font-bold mb-3">選擇一個學科領域：</h3>
@@ -299,6 +299,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 '科技-數位創作': '用 Python 爬取 PTT 特定版面的文章，進行文字雲情緒分析。',
                 '藝術-數位創作': '學習 Blender 軟體，為一首詩或一首歌製作3D動態影像。',
                 '生活-問卷調查': '調查不同年級學生對於「外送平台」的依賴程度與消費習慣。'
+            },
+            // 沒有題目例子的組合，依研究方法顯示這裡的問題。
+            prompts: {
+                '文獻探討': '這個領域有哪個主題，找得到書、報導或論文來讀？',
+                '問卷調查': '你想問哪一群人什麼問題？',
+                '訪談': '你可以訪問誰，想聽他講哪段經驗？',
+                '實驗': '你想比較哪兩種做法的差別？',
+                '田野調查': '你可以去哪裡實地觀察，要記錄什麼？',
+                '數位創作': '你想做成網站、影片還是程式？'
             }
         };
 
@@ -349,7 +358,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         function updateMatrixResult() {
             if (selectedCategory && selectedMethod) {
                 const key = `${selectedCategory}-${selectedMethod}`;
-                const resultText = matrixData.results[key] || `「${selectedCategory}」與「${selectedMethod}」的組合還沒有題目例子。`;
+                const resultText = matrixData.results[key] || `「${selectedCategory}」和「${selectedMethod}」的組合還沒有現成的例子。可以先想：${matrixData.prompts[selectedMethod]}想不出來的話，把這兩個詞輸入「AI 個人化發想」。`;
                 matrixResultContainer.textContent = '';
                 const p = document.createElement('p');
                 p.className = 'text-xl font-semibold text-center text-blue-800';
