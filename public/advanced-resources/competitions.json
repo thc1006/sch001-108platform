@@ -637,7 +637,7 @@
       "sourceNote": "Starters 規則「Our contests are open to all programmers across the globe」。Code of Conduct「Residents of the following countries and territories are not eligible to win prizes/laddus/goodies, or earn any compensation due to legal restrictions」，名單 24 個，無台灣。服務條款（Last Updated on 8th July 2024）「you represent that you are at least the age of majority in your state or province of residence, or that you are the age of majority ... and you have given us your consent to allow any of your minor dependents to use this site」。2026-08-29 查官方賽程 API 顯示 9 月場次為 Starters 254（9/2）、255（9/9）、256（9/16）。舊制停辦的依據：同一支 API（www.codechef.com/api/list/contests/all，公開、無需登入）回傳 present 1 筆、future 5 筆、past 20 筆，三段合計對這三個系列 0 命中，對 Starters 11 命中。該 API 的 past 只回最近 20 場、是一個視窗而非全部歷史，所以能斷定的是「現在與未來都不再舉辦」，而不是「歷史上從未存在」。",
       "url": "https://www.codechef.com/",
       "description": "印度 CodeChef Inc. 營運的線上程式競賽平台，註冊免費、常年開放，每週三有 Starters。未成年人要由家長或監護人同意才能使用。",
-      "details": "Starters 每場兩小時，全世界的人都能參賽，另有 Monday Munch DSA Challenge、Placement Prep Weekends 等系列。舊制的 Long Challenge、Cook-Off 與 LunchTime 已停辦。\n有 24 個國家和地區的居民因法律限制不能領獎或領報酬，台灣不在名單裡。這條限制的是領獎，不影響參賽。\n服務條款要求使用者已成年，未成年人要由家長或監護人同意。"
+      "details": "Starters 每場兩小時，全世界的人都能參賽，另有 Monday Munch DSA Challenge、Placement Prep Weekends 等系列。舊制的 Long Challenge、Cook-Off 與 LunchTime 已停辦。\n有 24 個國家和地區的居民因法律限制不能領獎或領報酬，台灣不在名單裡。這條限制的是領獎，不影響參賽。"
     },
     {
       "title": "LeetCode Weekly Contest",
@@ -829,8 +829,7 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "舊網域 zindi.africa 會轉址到現行的 zindi.world。使用條款「You must be at least 18 years of age to use the Zindi Website」，並補充「Alternatively, you must be duly represented by your parent, or legal guardian」。",
       "url": "https://zindi.world/competitions",
-      "description": "以新興市場議題為主的資料科學與 AI 競賽平台，各賽事各自倒數、無平台統一截止日。未滿 18 歲須由家長或法定代理人代表。",
-      "details": "未滿 18 歲的人，要由家長或法定監護人代表同意使用條款，才能使用網站和參賽。"
+      "description": "以新興市場議題為主的資料科學與 AI 競賽平台，各賽事各自倒數、無平台統一截止日。未滿 18 歲須由家長或法定代理人代表。"
     },
     {
       "title": "AIcrowd 機器學習挑戰賽",
@@ -847,7 +846,7 @@
       "sourceNote": "首頁幾乎沒有賽事資訊，實際入口是 /challenges。條款「you are of sixteen (16) years of age or that you duly obtained the consent of your legal representative(s)」。",
       "url": "https://www.aicrowd.com/challenges",
       "description": "AIcrowd Ltd 營運的機器學習挑戰平台，各賽事分階段倒數、無平台統一截止日。條款要求 16 歲以上，或取得法定代理人同意。",
-      "details": "AIcrowd Ltd 位在瑞士 EPFL Innovation Park。年齡門檻比其他資料科學平台寬，未滿 16 歲的取得法定代理人同意也能使用。"
+      "details": "AIcrowd Ltd 位在瑞士 EPFL Innovation Park。年齡門檻比其他資料科學平台寬。"
     },
     {
       "title": "Purple Comet! Math Meet",
