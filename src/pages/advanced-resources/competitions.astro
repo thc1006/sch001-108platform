@@ -836,9 +836,10 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
 
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
-    /* 欄數照卡片的最小寬度 18rem 決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，
-       每欄只剩約 6 個中文字。一般字級時 1280 寬三欄，1024、768 寬兩欄，360 寬一欄。 */
-    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: 0 2rem; }
+    /* 欄數照卡片的最小寬度決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，每欄只剩約
+       6 個中文字。最小寬度用 19rem：64rem 以下 .comp-gridwrap 的內容寬最多 975px，放不下三欄（976px），
+       到 64rem 內容寬又變窄，欄數才不會在 1024 寬掉回兩欄。一般字級時 688 寬起兩欄，1088 寬起三欄。 */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
     /* 卡片用 subgrid 和同一列的卡片共用三列：內文、「詳細資訊」、截止欄。內文或截止欄的行數不同時，
