@@ -279,11 +279,17 @@ test('freshBaselineProblems：新規則的基準要等於現在的命中數，�
     assert.match(freshBaselineProblems(policy, after, { K02: { 'c.json': 2, 'd.md': 1 } }).join(), /d\.md/);
     assert.match(freshBaselineProblems(policy, after, {}).join(), /c\.json/);
 });
+test('verifyPolicy：規則 id 要是大寫字母、兩位數字、連字號和小寫說明', () => {
+    for (const id of ['w01-x', 'W1-x', 'W01', 'W01-Hen', 'W01_hen']) {
+        assert.match(verifyPolicy({ rules: {} }, { rules: { [id]: { baseline: {} } } }, [{ id, severity: 'block' }]).join(), /規則 id/, id);
+    }
+    assert.deepEqual(verifyPolicy({ rules: {} }, { rules: { 'K02-placeholder': { baseline: {} } } }, [{ id: 'K02-placeholder', severity: 'block' }]), []);
+});
 test('verifyPolicy：新加的規則可以帶著上線時的基準', () => {
-    const two = [...only, { id: 'K02', severity: 'block' }];
-    assert.deepEqual(verifyPolicy(policy, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 2 } } } }, two), []);
-    assert.match(verifyPolicy(policy, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 0.5 } } } }, two).join(), /非負整數/);
-    assert.match(verifyPolicy({ rules: { K02: { baseline: {} } } }, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 2 } } } }, two).join(), /多出/);
+    const two = [...only, { id: 'K02-placeholder', severity: 'block' }];
+    assert.deepEqual(verifyPolicy(policy, { rules: { ...policy.rules, 'K02-placeholder': { baseline: { 'c.json': 2 } } } }, two), []);
+    assert.match(verifyPolicy(policy, { rules: { ...policy.rules, 'K02-placeholder': { baseline: { 'c.json': 0.5 } } } }, two).join(), /非負整數/);
+    assert.match(verifyPolicy({ rules: { 'K02-placeholder': { baseline: {} } } }, { rules: { ...policy.rules, 'K02-placeholder': { baseline: { 'c.json': 2 } } } }, two).join(), /多出/);
 });
 
 test('網址與網域整段標成 u，裡面的字不算命中', () => {

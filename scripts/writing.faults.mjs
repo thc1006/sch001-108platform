@@ -196,6 +196,7 @@ const mutations = [
     ['非整數基準不擋', 'if (!isCount(n))', 'if (false)'],
     ['policy 少了 block 規則不擋', "if (!(id in after.rules)) problems.push(`${id}：RULES", "if (false) problems.push(`${id}：RULES"],
     ['policy 多了非 block 規則不擋', 'if (!block.has(id)) problems.push', 'if (false) problems.push'],
+    ['規則 id 不檢查格式', 'if (!/^[A-Z]\\d{2}-[a-z0-9-]+$/.test(id))', 'if (false)'],
     ['後接詞少了這兩個字', '|這兩個字|這幾個字|', '|'],
     ['英文 em dash 不看拉丁字母', "if (/[A-Za-z]/.test(b.slice(-1)) && /[A-Za-z]/.test(a[0] ?? '')) return '英文裡的 em dash';", "if (true) return '英文裡的 em dash';"],
     ['改到的行少算一行', 'k < Number(m[2] ?? 1)', 'k < Number(m[2] ?? 1) - 1'],
