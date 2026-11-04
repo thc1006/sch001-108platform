@@ -64,6 +64,13 @@
       "kind": "name",
       "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=1",
       "reason": "ColleGo! 資訊學群列的學類名稱。"
+    },
+    {
+      "file": "src/pages/learning-portfolio/reflection-guide.astro",
+      "text": "只寫「學到很多」",
+      "rule": "W01-hen-duo",
+      "kind": "counterexample",
+      "reason": "舉心得常見的空泛寫法當反例，說明為什麼要照 STAR 寫。"
     }
   ]
 }
