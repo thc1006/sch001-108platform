@@ -4,7 +4,7 @@ import * as cheerio from 'cheerio';
 
 import {
     PH, RULES, allowCovers, changedLines, pickAnnotations, allowOccurrences, allowProblems, compareBaseline, findHits, isMention, jsonBlocks, locate,
-    lowerBaseline, maskQuotes, pageBlocks, scriptStrings, sourceIndex, verifyPolicy,
+    lowerBaseline, freshBaselineProblems, maskQuotes, pageBlocks, scriptStrings, sourceIndex, verifyPolicy,
 } from './writing.lib.mjs';
 
 const block = (text, extra = {}) => ({ page: 'a.html', kind: 'html', tag: 'p', text, skip: maskQuotes(text, ' '.repeat(text.length)), bold: [], ...extra });
@@ -270,6 +270,14 @@ test('verifyPolicy：擋基準變大、新鍵、刪規則、非整數，以及�
     assert.match(verifyPolicy(policy, { rules: {} }, only).join(), /刪了/);
     assert.match(verifyPolicy({ rules: {} }, { rules: {} }, only).join(), /policy 沒有/);
     assert.match(verifyPolicy({ rules: {} }, { rules: { 'W02': { baseline: {} } } }, only).join(), /不是 block/);
+});
+test('freshBaselineProblems：新規則的基準要等於現在的命中數，已有的規則不比', () => {
+    const after = { rules: { ...policy.rules, K02: { baseline: { 'c.json': 2 } } } };
+    assert.deepEqual(freshBaselineProblems(policy, after, { K02: { 'c.json': 2 } }), []);
+    assert.deepEqual(freshBaselineProblems(policy, after, { 'W01-hen-duo': { 'a.md': 9 }, K02: { 'c.json': 2 } }), []);
+    assert.match(freshBaselineProblems(policy, after, { K02: { 'c.json': 1 } }).join(), /基準是 2，現在有 1 筆/);
+    assert.match(freshBaselineProblems(policy, after, { K02: { 'c.json': 2, 'd.md': 1 } }).join(), /d\.md/);
+    assert.match(freshBaselineProblems(policy, after, {}).join(), /c\.json/);
 });
 test('verifyPolicy：新加的規則可以帶著上線時的基準', () => {
     const two = [...only, { id: 'K02', severity: 'block' }];

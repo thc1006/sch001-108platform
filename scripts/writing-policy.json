@@ -1,5 +1,5 @@
 {
- "_readme": "check:writing 的棘輪基準。規則的嚴重度以 writing.lib.mjs 的 RULES 為準，這裡只存 block 規則每個原始檔（回推不到的記 page:頁面路徑）目前允許的筆數。超過就失敗；少於基準時執行 npm run check:writing -- --update-baseline 下修。一類清完後 baseline 是空物件，規則鍵留著。",
+ "_readme": "check:writing 的棘輪基準。規則的嚴重度以 writing.lib.mjs 的 RULES 為準，這裡只存 block 規則每個原始檔（回推不到的記 page:頁面路徑）目前允許的筆數。超過或少於都失敗；少於基準時在同一個 PR 執行 npm run check:writing -- --update-baseline 下修。新規則以上線時的實際筆數當基準。一類清完後 baseline 是空物件，規則鍵留著。",
  "rules": {
   "W01-hen-duo": {
    "baseline": {

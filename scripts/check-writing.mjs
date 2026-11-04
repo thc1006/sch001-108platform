@@ -3,13 +3,14 @@
 //
 //   node scripts/check-writing.mjs [--annotate <git-ref>]
 //     檢查建置後的 dist（SITE_DIST 可指定別份）：<main>、header、footer、頁面標題與屬性、頁面腳本裡會顯示的字串，
-//     以及頁面在瀏覽器端讀的資料 JSON。block 規則任何檔案的筆數超過 writing-policy.json 的基準、
+//     以及頁面在瀏覽器端讀的資料 JSON。block 規則任何檔案的筆數和 writing-policy.json 的基準不同、
 //     writing-allow.json 有錯，或掃到的頁面不完整，就以 1 結束；warn 規則只報。完整結果寫進
 //     .reports/writing.json。--annotate 只對和 <git-ref> 相比改到的行發 GitHub annotation。
 //   node scripts/check-writing.mjs --update-baseline
 //     把基準下修成 min(現值, 基準)，不新增鍵也不調高。有檔案超過基準時以 1 結束。
 //   node scripts/check-writing.mjs --verify <git-ref>
-//     比較 <git-ref> 和工作區的 writing-policy.json，見 writing.lib.mjs 的 verifyPolicy。不讀 dist。
+//     比較 <git-ref> 和工作區的 writing-policy.json，見 writing.lib.mjs 的 verifyPolicy。<git-ref> 沒有的規則
+//     另外讀 dist，基準要等於現在的命中數，見 freshBaselineProblems。
 //
 // commit 訊息與 PR 說明還沒有檢查。
 import { execFileSync } from 'node:child_process';
@@ -18,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
 
-import { RULES, allowCovers, changedLines, pickAnnotations, scriptStrings, allowOccurrences, allowProblems, compareBaseline, findHits, jsonBlocks, locate, lowerBaseline, pageBlocks, sourceIndex, verifyPolicy } from './writing.lib.mjs';
+import { RULES, allowCovers, changedLines, pickAnnotations, scriptStrings, allowOccurrences, allowProblems, compareBaseline, findHits, freshBaselineProblems, jsonBlocks, locate, lowerBaseline, pageBlocks, sourceIndex, verifyPolicy } from './writing.lib.mjs';
 
 const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
 const DIST = path.resolve(ROOT, process.env.SITE_DIST || 'dist');
@@ -31,6 +32,7 @@ const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8'
 const args = process.argv.slice(2);
 const argAfter = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : undefined; };
 
+let verifyBefore = null;
 if (args.includes('--verify')) {
     const ref = argAfter('--verify');
     if (!ref) usage('--verify 後面要接一個 git ref。');
@@ -54,10 +56,15 @@ if (args.includes('--verify')) {
         console.error(`${ref} 的 writing-policy.json 讀不出來：${err.message}`);
         process.exit(1);
     }
-    const problems = verifyPolicy(before, JSON.parse(readFileSync(POLICY, 'utf8')));
+    const after = JSON.parse(readFileSync(POLICY, 'utf8'));
+    const problems = verifyPolicy(before, after);
     for (const p of problems) console.error(p);
-    if (!problems.length) console.log(`writing-policy.json 和 ${ref} 相比沒有放寬。`);
-    process.exit(problems.length ? 1 : 0);
+    // 新加的規則沒有舊基準可比，要讀 dist 算現在的命中數。
+    if (problems.length || Object.keys(after.rules).every((id) => id in before.rules)) {
+        if (!problems.length) console.log(`writing-policy.json 和 ${ref} 相比沒有放寬。`);
+        process.exit(problems.length ? 1 : 0);
+    }
+    verifyBefore = { ref, before };
 }
 
 function usage(message) {
@@ -162,6 +169,12 @@ const counts = {};
 for (const h of hits) { counts[h.rule] ??= {}; counts[h.rule][h.key] = (counts[h.rule][h.key] ?? 0) + 1; }
 
 const policy = JSON.parse(readFileSync(POLICY, 'utf8'));
+if (verifyBefore) {
+    const fresh = freshBaselineProblems(verifyBefore.before, policy, counts);
+    for (const p of fresh) console.error(p);
+    if (!fresh.length) console.log(`writing-policy.json 和 ${verifyBefore.ref} 相比沒有放寬，新規則的基準等於現在的命中數。`);
+    process.exit(fresh.length ? 1 : 0);
+}
 if (args.includes('--update-baseline')) {
     const { over, under } = compareBaseline(policy, counts);
     writeFileSync(POLICY, `${JSON.stringify(lowerBaseline(policy, counts), null, 1)}\n`);
@@ -179,7 +192,10 @@ console.log('規則  嚴重度  筆數');
 for (const [id, sev, n] of rows) console.log(`${id}  ${sev}  ${n}`);
 console.log(`\n掃了 ${htmlPages.length} 頁、${dataFiles.length} 個資料檔，${blocks.length} 個區塊。`);
 for (const w of allowWarnings) console.log(`警告：writing-allow.json ${w}`);
-if (under.length) console.log(`\n${under.length} 處比基準少，執行 npm run check:writing -- --update-baseline 下修基準。`);
+if (under.length) {
+    console.error(`\n${under.length} 處比基準少，在同一個 PR 執行 npm run check:writing -- --update-baseline 下修基準：`);
+    for (const u of under) console.error(`  ${u.rule}  ${u.key}  ${u.count} 筆，基準 ${u.baseline}`);
+}
 for (const e of allowErrors) console.error(`writing-allow.json ${e}，這一條不放行。`);
 if (over.length) {
     console.error(`\n${over.length} 處超過基準：`);
@@ -211,4 +227,5 @@ if (annotateRef) {
     if (rest) console.log(`改到的行還有 ${rest} 筆命中沒有標，見 step summary 和 artifact 的 writing.json。`);
 }
 
-process.exit(over.length || allowErrors.length ? 1 : 0);
+// 基準比現值多也擋：多出來的額度會讓之後新增的命中過關。
+process.exit(over.length || under.length || allowErrors.length ? 1 : 0);
