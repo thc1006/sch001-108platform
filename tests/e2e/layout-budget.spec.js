@@ -737,12 +737,16 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         });
     }
 
+    /**
+     * textBefore 回傳緊接在 [data-after-panel] 前面的那段字：連結前面是截止欄，「詳細資訊」前面是摘要。
+     * 點它不會讓任何元素取得焦點，也不會被 header 蓋住。
+     */
+    const textBefore = (page) => page.locator('[data-after-panel]').locator('xpath=preceding-sibling::*[1]');
+
     // 點過面板後面的文字，沒有元素有焦點，Shift+Tab 從點的位置往回找。這時不會有 focusout。
     test('competitions：沒有元素有焦點時 Shift+Tab 回到面板', async ({ page }) => {
         await conceal(page, PAGES.competitions);
-        // 點同一張卡片的截止日期標籤，它在連結前面，也不會被 header 蓋住。
-        const label = page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label');
-        await label.click();
+        await textBefore(page).click();
         const before = await state(page);
         expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
         await page.keyboard.press('Shift+Tab');
@@ -814,7 +818,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         'focus()': (page) =>
             page.locator('[data-autohide-filters]').evaluate((panel, sel) => [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus(), FOCUSABLE),
         '沒有焦點時 Shift+Tab': async (page) => {
-            await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').click();
+            await textBefore(page).click();
             await page.keyboard.press('Shift+Tab');
         },
     };
@@ -837,7 +841,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     // 點擊造成的焦點移動不放回面板，只限那一次點擊。
     test('competitions：用滑鼠點過卡片文字之後，Shift+Tab 回到面板', async ({ page }) => {
         await conceal(page, PAGES.competitions);
-        await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').click();
+        await textBefore(page).click();
         await page.locator('[data-after-panel]').evaluate((el) => el.focus({ preventScroll: true }));
         const before = await state(page);
         await page.keyboard.press('Shift+Tab');
@@ -873,7 +877,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         const before = await conceal(page, PAGES.competitions);
         // 按下時焦點不動，focusout 才會發生。
         await page.evaluate(() => document.addEventListener('mousedown', (e) => e.preventDefault()));
-        const box = await page.locator('[data-after-panel]').locator('xpath=ancestor::article').locator('.comp-deadline__label').boundingBox();
+        const box = await textBefore(page).boundingBox();
         await page.mouse.move(box.x + 4, box.y + box.height / 2);
         await page.mouse.down();
         await page.locator('[data-autohide-filters]').evaluate(async (panel, sel) => {

@@ -202,6 +202,66 @@ for (const { name, path, grid, button, tabs } of PAGES) {
     });
 }
 
+// 競賽頁只有填了 details 的卡片有按鈕，所以不放進上面的 PAGES。資料換成固定的三筆。
+test.describe('國內外競賽的詳細資訊', () => {
+    const entry = (title, fields) => ({
+        title, organizer: '主辦單位', category: '資訊', level: '全國', form: '個人', region: '台灣',
+        eligibility: '公開報名', mode: '線上', url: 'https://example.com/', description: `${title}的摘要`, ...fields,
+    });
+    const COMPETITIONS = [
+        entry('沒有詳細資訊', {}),
+        entry('有詳細資訊', { details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。' }),
+        entry('詳細資訊是空字串', { details: '' }),
+    ];
+
+    test.beforeEach(async ({ page }) => {
+        await page.route('**/advanced-resources/competitions.json', (route) => route.fulfill({ json: { competitions: COMPETITIONS } }));
+        await page.goto(`${ROOT}/advanced-resources/competitions.html`);
+        await expect(page.locator('.comp-card')).toHaveCount(COMPETITIONS.length);
+    });
+
+    test('只有 details 不是空字串的卡片有按鈕', async ({ page }) => {
+        const titles = await page.locator('.comp-card').evaluateAll((cards) =>
+            cards.filter((c) => c.querySelector('button')).map((c) => c.querySelector('h2').textContent));
+        expect(titles).toEqual(['有詳細資訊']);
+        // sr-only 的文字前後，Chromium 算名稱時會補空白。
+        await expect(page.locator('.comp-card button')).toHaveAccessibleName(/^詳細資訊\s?：有詳細資訊$/);
+        await expect(page.locator('.comp-card button')).toHaveAttribute('aria-haspopup', 'dialog');
+    });
+
+    test('Enter 開啟，焦點移進對話框，對話框有 details 全文，Esc 關閉後回到按鈕', async ({ page }) => {
+        const opener = page.locator('.comp-card button');
+        await opener.focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog', { name: '有詳細資訊', exact: true });
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toBeFocused();
+        await expect(dialog.locator('.comp-dialog__details')).toHaveText(COMPETITIONS[1].details);
+        await expect(dialog.getByRole('link')).toHaveAccessibleName(/^前往官網\s?：有詳細資訊（另開新分頁）$/);
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(opener).toBeFocused();
+    });
+
+    test('按「關閉」後回到按鈕，按鈕裡的 × 不給螢幕閱讀器，按鈕至少 24x24', async ({ page }) => {
+        const opener = page.locator('.comp-card button');
+        await opener.click();
+        const close = page.getByRole('dialog').getByRole('button', { name: '關閉', exact: true });
+        await expect(close.locator('span')).toHaveAttribute('aria-hidden', 'true');
+        const box = await close.boundingBox();
+        expect(box.width).toBeGreaterThanOrEqual(24);
+        expect(box.height).toBeGreaterThanOrEqual(24);
+        await close.click();
+        await expect(page.getByRole('dialog')).toBeHidden();
+        await expect(opener).toBeFocused();
+    });
+
+    test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
+        await page.locator('#search-input').fill('甲乙丙');
+        await expect(page.locator('.comp-card h2')).toHaveText(['有詳細資訊']);
+    });
+});
+
 test.describe('研究方法工具箱的推薦', () => {
     test('推薦結果的按鈕開啟對話框，關閉後焦點回到那個按鈕', async ({ page }) => {
         await page.goto(`${ROOT}/autonomous-learning/methodology.html`);
