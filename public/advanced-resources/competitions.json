@@ -1646,7 +1646,7 @@
     },
     {
       "title": "美國高中生數學邀請賽 (AIME)",
-      "organizer": "Mathematical Association of America",
+      "organizer": "Mathematical Association of America（台灣由九九文教基金會、學習成就測驗協會承辦）",
       "category": "數理",
       "level": "國際",
       "form": "個人",
@@ -1658,10 +1658,10 @@
       "eventEndsAt": "2027-02-06",
       "registrationNote": "邀請制 · 依 AMC 成績晉級",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "更正：先前記載「官網未載明台灣的應試方式」並不成立，而且與本資料的 AMC 10/12 條目自相矛盾。AMC International 頁在 maa.org/amc-international/。AIME 頁：「Students who score 100 or above on AMC 10 and 85 or above on AMC 12 (and meet other eligibility requirements) will qualify to register for AIME」「Only students aged 13 and older will be eligible to take AIME」「Participants in the AMC international program should follow the policies of the International Group Leader for their country/region」。FAQ：「Are there still two AIME exams, AIME I and AIME II? No」。AMC International 頁：「Students must register for the competitions through the IGL in the country they reside」。",
-      "url": "https://maa.org/maa-invitational-competitions/",
-      "description": "AMC 10／12 達標才能報的晉級賽，比 AMC 難，要滿 13 歲。AIME I、II 已取消，2027 年只考一次。台灣經 MAA 指定的 IGL 報名。",
-      "details": "2027 屆起，AMC 10 拿 100 分以上或 AMC 12 拿 85 分以上，且符合其他資格，就能報名。\n比賽在 2027 年 2 月 5 至 6 日，沒有補考。報名費 US$85，美國和加拿大的考場由 Pearson Professional Centers 承辦。\n參加 AMC 國際計畫的考生，照所在國家／地區的 International Group Leader（IGL）規定，經居住地的 IGL 報名。MAA 列的 2026-27 年台灣 IGL 是 Peter Shiue（shiue@unlv.nevada.edu），同時負責上海和台灣。"
+      "sourceNote": "九九文教基金會 AMC 頁的 AIME 分頁：承辦單位「財團法人九九文教基金會、學習成就測驗協會」，測驗日期「每年二月」，「每年ㄧ月開放報名：一律使用網路報名」，作答 3 小時、簡答題 15 題、不允許使用計算機，頁面沒有列報名費，所以 url 指向這一頁。MAA 的 AIME 頁在 maa.org/maa-invitational-competitions/：「Students who score 100 or above on AMC 10 and 85 or above on AMC 12 (and meet other eligibility requirements) will qualify to register for AIME」「Only students aged 13 and older will be eligible to take AIME」，報名費 US$85，美加考場由 Pearson Professional Centers 承辦，「Participants in the AMC international program should follow the policies of the International Group Leader for their country/region」。FAQ：「Are there still two AIME exams, AIME I and AIME II? No」。AMC International 頁（maa.org/amc-international/）列 2026-27 年台灣的 IGL 是 Peter Shiue（shiue@unlv.nevada.edu），負責上海與台灣，並寫「Students must register for the competitions through the IGL in the country they reside」。",
+      "url": "https://www.99cef.org.tw/maa-amc/",
+      "description": "AMC 10／12 達標才能報的晉級賽，比 AMC 難，要滿 13 歲。台灣由九九文教基金會與學習成就測驗協會承辦，每年 1 月網路報名。",
+      "details": "2027 屆起，AMC 10 拿 100 分以上或 AMC 12 拿 85 分以上，且符合其他資格，就能報名。\n2027 年只考一次，比賽在 2 月 5 至 6 日，沒有補考。報名費依承辦單位公告。\n考試 3 小時，15 題簡答題，不能用計算機。"
     },
     {
       "title": "臺灣青年學生物理辯論競賽 (TYPT)",
