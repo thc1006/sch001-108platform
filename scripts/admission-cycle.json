@@ -145,6 +145,20 @@
       "recheckAfter": "2027-03-31"
     },
     {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "中正財金 115 學年度的準備指引要在自述第一頁放",
+      "cycle": 116,
+      "reason": "引用中正財金 115 學年度準備指引的重點注意事項：學習歷程自述第一頁放系上的申請入學個人資料表。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "中興財金 115 學年度的準備指引也舉了這個例子",
+      "cycle": 116,
+      "reason": "引用中興財金 115 學年度準備指引的學習歷程自述說明：高中學習歷程反思舉例寫修習相關領域科目或課程的動機、理由及修課心得。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
       "file": "src/content/clusters/finance/highlights.md",
       "text": "中正、中興財金 115 學年度的準備指引分別寫",
       "cycle": 116,
