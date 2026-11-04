@@ -280,7 +280,7 @@
       "registrationNote": "須由就讀學校報名 · 不接受個人報名",
       "sourceCheckedAt": "2026-10-23",
       "recheckOn": "2026-12-19",
-      "recheckNote": "第 18、19 屆全國初選報名簡章在 12/18 公告（2024、2025 年），第 17 屆在 12/29，還沒公告就把 recheckOn 改成 2026-12-30；IGEO 原網域 www.igeoscied.org 接回了就拿掉 description 的「IGEO 的原網站目前連不上」，sourceNote 和連結政策（link-policy）裡 ieso-info.org 那筆的 reason 改回原網域，還沒接回就留給那筆 2027-01-31 到期時重查。",
+      "recheckNote": "第 18、19 屆全國初選報名簡章在 12/18 公告（2024、2025 年），第 17 屆在 12/29，還沒公告就把 recheckOn 改成下一個週一；IGEO 原網域 www.igeoscied.org 接回了就拿掉 description 的「IGEO 的原網站目前連不上，國際賽資訊以臺灣選訓網站為準。」這句，sourceNote 和連結政策（link-policy）裡 ieso-info.org 那筆的 reason 改回原網域，還沒接回就留給那筆 2027-01-31 到期時重查。",
       "sourceNote": "IGEO 原網站 www.igeoscied.org 最晚 2026-09-25 起連不上（2026-11-04 仍是如此）；IGEO 在 2026-10-23（台灣時間）於官方 Facebook 粉絲專頁公告臨時網站 https://sites.google.com/view/igeoscied ，說明原網域移轉期間先用這個網址。2026-10-29 查證時，臨時網站還沒有 IESO 的章程與歷屆試題。原先登記的 ieso-info.org 網域已被轉作澳洲線上博弈網站（標題「Best Online Pokies in Australia 2026」），與 IESO 完全無關，不要再連過去。",
       "url": "https://tpmso.k12ea.gov.tw/ieso/",
       "description": "中學生地球科學競賽，由 International Geoscience Education Organisation (IGEO) 主辦。IGEO 的原網站目前連不上，國際賽資訊以臺灣選訓網站為準。台灣選訓由教育部國教署委託臺師大地球科學系辦理：第 19 屆全國初選報名 2026-01-05 至 01-12、初選 3/7、選訓決賽營 4/8 至 4/19、國家代表隊選拔營 5/5 至 5/17、輔導營 6 至 8 月，國際賽 2026 年 8 月 20 至 27 日於義大利杜林（Torino）舉行，已結束；第 20 屆 2027 年 8 月 22 至 28 日於日本島根舉行。須由就讀學校報名，不接受個人報名。"
