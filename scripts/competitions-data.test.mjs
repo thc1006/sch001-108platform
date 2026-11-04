@@ -992,8 +992,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(icho.sourceNote, /2027 July 19-28, Chinese Taipei/, '官網原文留在 sourceNote');
     assert.match(icho.description, /2027 年由(?:台灣|臺灣|我國)主辦|由(?:台灣|臺灣|我國)主辦[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
-    // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」已結束，
-    // 2027「The 68th IMO will be held in Budapest, Hungary (July 16-26, 2027)」
+    // IMO 官網首頁：「Upcoming IMO 2027 Budapest, Hungary - July 16-26, 2027」。2026 屆在上海，已結束。
     const imo = find('國際數學奧林匹亞');
     assert.equal(imo.eventStartsAt, '2027-07-16');
     assert.equal(imo.eventEndsAt, '2027-07-26');
