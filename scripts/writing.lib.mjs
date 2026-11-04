@@ -53,7 +53,7 @@ export function maskQuotes(text, skip) {
 
 /**
  * isMention 判斷命中是不是在談這個詞本身，例如「把「很多」改成數字」：命中單獨在一對「」裡，而且這串相連的引號
- * 前面接著把、像是、例如、比如、寫成、改成這類詞，或後面接著這類、這種、這兩個字、的句型這類詞。沒有這些詞的「真心話」
+ * 前面接著把、像是、例如、比如、寫成、改成、別寫、叫、名為這類詞，或後面接著這類、這種、這兩個字、的句型這類詞。沒有這些詞的「真心話」
  * 是強調，照算。已知限制：「例如「真心話」系列講座」這種標題也會被當成在談詞語。
  * @param {string} text @param {number} index @param {number} len @returns {boolean}
  */
@@ -65,7 +65,10 @@ export function isMention(text, index, len) {
     let a = open, b = close + 1;
     for (let m; (m = text.slice(0, a).match(/「[^「」]{1,12}」[、\s]?$/)); ) a -= m[0].length;
     for (let m; (m = text.slice(b).match(/^[、\s]?「[^「」]{1,12}」/)); ) b += m[0].length;
-    return /(把|像是|例如|比如|諸如|寫成|改成|換成|叫做|稱為|這個詞|用詞|字眼|說法)\s*$/u.test(text.slice(Math.max(0, a - 6), a))
+    // 「用「——」標出」是在用破折號，「用」只對詞語算。
+    const pre = text.slice(Math.max(0, a - 6), a);
+    return /(把|像是|例如|比如|諸如|寫成|改成|換成|叫做|稱為|這個詞|用詞|字眼|說法|別寫|不要寫|避免|名為|叫)\s*$/u.test(pre)
+        || (/用\s*$/u.test(pre) && /\p{Script=Han}/u.test(text.slice(index, index + len)))
         || /^\s*(這類|這種|這些|等詞|等字|一詞|這個詞|這兩個字|這幾個字|之類|的句型|句型|的寫法|這個寫法)/u.test(text.slice(b, b + 6));
 }
 
