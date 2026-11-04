@@ -14,7 +14,7 @@
  *
  * 執行：  npm run test:site-faults    （需先 npm run build:deployable）
  */
-import { readFileSync, writeFileSync, renameSync, readdirSync, existsSync, mkdirSync, rmSync, cpSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, copyFileSync, readdirSync, existsSync, mkdirSync, rmSync, cpSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 
@@ -29,6 +29,7 @@ import { staticImportSpecifiers } from './site-contract.lib.mjs';
 // 後面檢查或上傳的就是它。用副本讓這個風險在結構上不存在，而不是靠還原寫得夠好。
 const SOURCE = process.env.SITE_DIST_SOURCE || 'dist';
 const DIST = process.env.SITE_DIST_WORK || 'dist-faultcheck';
+const DETAILS_FILES = [`${DIST}/advanced-resources/competitions.json`, `${DIST}/advanced-resources/competitions.html`];
 if (!existsSync(SOURCE)) {
   console.error(`找不到建置產物 ${SOURCE}/，請先執行 npm run build:deployable`);
   process.exit(1);
@@ -91,6 +92,18 @@ const cases = [
     expect: /應寫 competitions\.json 的 \d+ 筆/,
     file: `${DIST}/advanced-resources/competitions.html`,
     mutate: (t) => t.replace(/(<meta name="description" content=")\d+ 項/, (_, head) => `${head}130＋ 項`),
+  },
+  {
+    name: '競賽資料有 details，頁面卻沒有顯示它的對話框',
+    expect: /頁面沒有顯示它的對話框/,
+    apply: () => {
+      for (const f of DETAILS_FILES) copyFileSync(f, `${f}.bak`);
+      const json = `${DIST}/advanced-resources/competitions.json`;
+      writeFileSync(json, readFileSync(json, 'utf8').replace(/"description":\s*"/, '"details": "故障注入的詳細資訊。",\n      "description": "'));
+      const html = `${DIST}/advanced-resources/competitions.html`;
+      writeFileSync(html, readFileSync(html, 'utf8').replaceAll('comp-dialog__details', 'comp-dialog__gone'));
+    },
+    undo: () => { for (const f of DETAILS_FILES) renameSync(`${f}.bak`, f); },
   },
   {
     name: 'fragment 目標 id 被改名',
