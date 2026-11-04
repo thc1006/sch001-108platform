@@ -586,6 +586,22 @@ export function verifyPolicy(before, after, rules = RULES) {
     return problems;
 }
 
+/**
+ * freshBaselineProblems 回傳 before 沒有的規則裡，基準和現在的命中數 counts 不同的鍵。新規則沒有舊基準可比，
+ * 基準只能是上線時的實際筆數。
+ */
+export function freshBaselineProblems(before, after, counts) {
+    const problems = [];
+    for (const [id, { baseline = {} }] of Object.entries(after.rules)) {
+        if (id in before.rules) continue;
+        const now = counts[id] ?? {};
+        for (const key of new Set([...Object.keys(baseline), ...Object.keys(now)])) {
+            if ((baseline[key] ?? 0) !== (now[key] ?? 0)) problems.push(`${id}：新規則 ${key} 的基準是 ${baseline[key] ?? 0}，現在有 ${now[key] ?? 0} 筆`);
+        }
+    }
+    return problems;
+}
+
 // ---- annotation ----
 
 /** changedLines 從 git diff -U0 的輸出取出新版本被改到的行，回傳「檔案:行號」的集合。 */
