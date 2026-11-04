@@ -496,7 +496,9 @@
       "registrationNote": "亞洲賽區 · 2027 時程未公布",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://yauaward-asia.hk",
-      "description": "由清華大學主辦、清華大學丘成桐數學科學中心承辦的中學生科學獎，分中國內地、亞洲與北美三個賽區。台灣學生必須走亞洲賽區（yauaward-asia.hk，由香港科學院營運），官方規則劃分「海外賽區（亞洲賽區）報名範圍：除中國內地外，中國港澳台地區及亞洲其他國家的中學生」，不能用內地賽區網站報名。1 至 3 名同校學生組隊、不得跨校。2026 亞洲賽區時程（HKT）：6/11 報名截止、6/15 繳交研究大綱、8/17 入選隊伍繳交完整報告，均已結束；10 至 11 月於香港口試，金銀獎再赴北京參加 12 月的總決賽。2027 屆尚未公布。此賽事列入中國教育部競賽白名單、章程載明「貫徹黨的教育方針」，且要赴港、赴中，牽涉證件、簽證與研究資料出境。"
+      "description": "北京清華大學主辦的中學生科學獎，1 至 3 名同校學生組隊、不得跨校。台灣學生要從亞洲賽區報名，口試在香港，金銀獎再赴北京參加總決賽。",
+      "details": "清華大學丘成桐數學科學中心承辦，分中國內地、亞洲與北美三個賽區。亞洲賽區（yauaward-asia.hk）設在香港，由香港科學院、清華大學丘成桐數學科學中心與香港中文大學數學科學研究所合辦，官網寫「YHSA(Asia) is based in Hong Kong and co-organised by The Hong Kong Academy of Sciences (ASHK), Yau Mathematical Sciences Centre of Tsinghua University and The Institute of Mathematical Sciences of The Chinese University of Hong Kong」。官方規則劃分「海外賽區（亞洲賽區）報名範圍：除中國內地外，中國港澳台地區及亞洲其他國家的中學生」，台灣學生不能用內地賽區網站報名。\n2026 亞洲賽區時程（HKT）：6/11 報名截止、6/15 繳交研究大綱、8/17 入選隊伍繳交完整報告，均已結束。香港口試在 10 至 11 月，北京總決賽在 12 月。2027 屆尚未公布。\n丘成桐中學科學獎列入中國教育部競賽白名單，章程載明「貫徹黨的教育方針」。參賽要赴港、赴中，牽涉證件、簽證與研究資料出境。",
+      "sourceNote": "亞洲賽區的主辦單位照官網更正：2026-11-05 查 https://yauaward-asia.hk/background 寫「YHSA(Asia) is based in Hong Kong and co-organised by The Hong Kong Academy of Sciences (ASHK), Yau Mathematical Sciences Centre of Tsinghua University and The Institute of Mathematical Sciences of The Chinese University of Hong Kong」，更正前寫「由香港科學院營運」。摘要寫「北京清華大學」：2026-11-05 查證，亞洲賽區官網首頁 https://yauaward-asia.hk/ 寫「Result announcement of YHSA Finale at Tsinghua University, Beijing」，內地賽區官網 https://www.yau-awards.com/ 頁尾寫「竞赛总部办公室：北京市海淀区清华大学静斋 丘成桐数学科学中心」。"
     },
     {
       "title": "倫敦國際青年科學論壇 (LIYSF)",
@@ -968,7 +970,8 @@
       },
       "sourceCheckedAt": "2026-10-25",
       "url": "https://conrad.spacecenter.org/",
-      "description": "結合科學、創新與創業的全球高中團隊競賽，現由休士頓太空中心（Space Center Houston）辦理。每隊 2–5 人、開放 13–18 歲學生並須有 18 歲以上教練，接受國際隊伍，所有提交內容須為英文。2026–27 賽季第一階段（Activation）8/27 開始、免費，10/29 23:59（美國中部時間）截止；第二階段（Innovation）收件至 2027-01-07，須繳每隊 499 美元；入選決賽的隊伍受邀參加 2027 年 4 月 21–24 日在休士頓太空中心舉行的創新高峰會，每人另繳 499 美元、交通與住宿自付，兩項費用都可申請補助。"
+      "description": "結合科學、創新與創業的全球高中團隊競賽，13–18 歲學生組隊並須有 18 歲以上教練，接受國際隊伍，所有提交內容須為英文。第一階段免費，之後要繳費。",
+      "details": "現由休士頓太空中心（Space Center Houston）辦理，每隊 2–5 人。\n2026–27 賽季第一階段（Activation）8/27 開始，10/29 23:59（美國中部時間）截止。第二階段（Innovation）收件至 2027-01-07，每隊繳 499 美元。入選決賽的隊伍受邀參加 2027 年 4 月 21–24 日在休士頓太空中心舉行的創新高峰會，每人另繳 499 美元，交通與住宿自付。\n兩項費用都可申請補助。"
     },
     {
       "title": "Blue Ocean 學生創業競賽",
@@ -1314,7 +1317,8 @@
       "registrationNote": "各場次報名時程分別公告",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.scholarscup.org/",
-      "description": "跨學科團隊學術競賽（寫作、辯論、搶答、團隊測驗），分 junior（13 歲以下）與 senior（14 歲以上）兩組，3 人一隊（2 人亦可），允許跨校跨國組隊。學習材料：「All our materials are free to all participants」，另收場次費用。台灣設有場次：2026 年新竹站 3 月 21 至 22 日於新竹縣美國學校與陽明交大舉行，資格：「only students attending school in Taiwan are permitted to register」，已結束；2027 年新竹站已排定 3 月 13 至 14 日於新竹縣美國學校舉行，場次頁尚未刊登資格與報名截止日。2026 年 Tournament of Champions 11 月 12 至 18 日於美國耶魯大學舉行。各場次報名截止日於各場次頁面另行公告。"
+      "description": "跨學科團隊學術競賽（寫作、辯論、搶答、團隊測驗），可跨校跨國組隊，學習材料免費、另收場次費用。台灣設有場次，各場次報名截止日另行公告。",
+      "details": "分 junior（13 歲以下）與 senior（14 歲以上）兩組，3 人一隊，2 人也可以。學習材料的說明是「All our materials are free to all participants」。各場次的報名截止日公告在該場次頁面。\n2026 年新竹站 3 月 21 至 22 日在新竹縣美國學校與陽明交大舉行，已結束，資格：「only students attending school in Taiwan are permitted to register」。2027 年新竹站已排定 3 月 13 至 14 日在新竹縣美國學校舉行，場次頁尚未刊登資格與報名截止日。\n2026 年 Tournament of Champions 11 月 12 至 18 日在美國耶魯大學舉行。"
     },
     {
       "title": "國際歷史競賽—亞洲盃 (IHBB Asia)",
@@ -1423,7 +1427,8 @@
       "sourceCheckedAt": "2026-11-01",
       "sourceNote": "115 學年度是兩梯次，不是三梯次。",
       "url": "https://www.shs.edu.tw/Customer/Information/EssayIndex",
-      "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立中興大學附屬高級中學承辦。對象為全國高級中等學校在學學生（含非學校型態實驗教育學生），可個人或小組參賽，小組須同校同年級、最多 3 人；參賽學校應先辦理校內初賽再擇優投稿，學生註冊時需學校驗證碼。115 學年度分兩梯次：第一學期 2026-09-01 至 10-15 12:00、第二學期 2027-02-01 至 03-15 12:00，得獎分別於 2026-11-26 前與 2027-04-26 前公布。全程線上投稿與線上評審，無到場比賽日。"
+      "description": "全國高級中等學校在學學生的線上小論文比賽，可個人或同校同年級小組參賽。學校先辦校內初賽再擇優投稿，學生註冊時需學校驗證碼。",
+      "details": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立中興大學附屬高級中學承辦。非學校型態實驗教育學生也可參加，小組最多 3 人。\n115 學年度分兩梯次：第一學期 2026-09-01 至 10-15 12:00，第二學期 2027-02-01 至 03-15 12:00。得獎分別在 2026-11-26 前與 2027-04-26 前公布。\n投稿與評審全程在線上，沒有到場比賽日。"
     },
     {
       "title": "全國高中職閱讀心得寫作比賽",
@@ -1573,7 +1578,8 @@
       "sourceCheckedAt": "2026-10-25",
       "sourceNote": "台灣的區域負責人查自 firstinspires.org/find-local-support 這一頁呼叫的 first-search API，region「Chinese Taipei」下 FRC 的 Regional Director 與 FTC 的 Partner 都是 Rene Cheng。",
       "url": "https://www.firstinspires.org/programs/frc/",
-      "description": "由 FIRST（For Inspiration and Recognition of Science and Technology）主辦的高中生機器人競賽，官網寫對象是「Grades 9-12 | Ages 14-18」，隊伍自 Kit of Parts 出發設計、編寫並製造工業級機器人，2024-2025 賽季參與 35 國。2027 賽季主題 BIOCORE presented by Haas：隊伍報名 2026-06-17 12:00（美東時間）開放，官方寫「The season registration due date is November 17, 2026」，官網行事曆寫賽事報名 11/17 12:00 PM（美東時間，台灣時間 11/18 01:00）截止、初始賽事費同日 5:00 PM 前付清，每隊賽季報名費 US$6,500；2027-01-09 Kickoff、FIRST Championship 2027-04-28 至 05-01。FIRST 官網列的台灣（Chinese Taipei）FRC 區域負責人（Regional Director）是 Rene Cheng（rcheng@firstpartners.org），FTC 的 Partner 也是他。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
+      "description": "FIRST 主辦的高中生機器人競賽，對象為 9–12 年級、14–18 歲，隊伍設計、編寫並製造工業級機器人，每隊要繳賽季報名費。",
+      "details": "FIRST 全名 For Inspiration and Recognition of Science and Technology，官網寫對象是「Grades 9-12 | Ages 14-18」。隊伍從 Kit of Parts 出發製作機器人，2024-2025 賽季有 35 國參與。\n2027 賽季主題 BIOCORE presented by Haas。隊伍報名 2026-06-17 12:00（美東時間）開放，官方寫「The season registration due date is November 17, 2026」。官網行事曆寫賽事報名 11/17 12:00 PM（美東時間，台灣時間 11/18 01:00）截止，初始賽事費同日 5:00 PM 前付清，每隊賽季報名費 US$6,500。\n2027-01-09 Kickoff，FIRST Championship 在 2027-04-28 至 05-01。\nFIRST 官網列的台灣（Chinese Taipei）FRC 區域負責人（Regional Director）是 Rene Cheng（rcheng@firstpartners.org），FTC 的 Partner 也是他。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
     },
     {
       "title": "VEX 機器人世界錦標賽",
@@ -1589,7 +1595,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "2026-10-25 查證時，vexrobotics.com/competition 是 VEX 商店網站裡的競賽介紹頁，頁上找在地賽事的「VEX Events >」連到 events.vex.com；roboticseducation.org 已轉址至 recf.org。",
       "url": "https://events.vex.com/",
-      "description": "VEX Robotics, Inc.（Innovation First 旗下）與 REC Foundation 已分家，現在有兩個互不承認的世界賽。RobotEvents（robotevents.com）首頁寫「RECF is not authorized to organize, promote, approve, or manage VEX Robotics competitions. Any competition organized, promoted, or managed by RECF that involves VEX products is not sanctioned by VEX Robotics, Inc. and will not qualify teams for the 2026–2027 VEX Robotics World Championship.」。VEX 路線 2026-27 主題為 V5 Robotics Competition「Override」（官網標示 Middle / High School，高中生適用），賽事與報名見 VEX 官方賽事網站 events.vex.com；RECF 路線改為 Engage／Achieve（Under 19，高中生適用）／Inspire，RECF World Championship 2027-04-25 至 05-07 於美國聖路易。"
+      "description": "VEX Robotics, Inc. 與 REC Foundation 已分家，各辦互不承認的機器人世界賽，兩邊都有高中生適用的組別，各賽事各自報名。",
+      "details": "VEX Robotics, Inc. 屬於 Innovation First 旗下。RobotEvents（robotevents.com）首頁寫「RECF is not authorized to organize, promote, approve, or manage VEX Robotics competitions. Any competition organized, promoted, or managed by RECF that involves VEX products is not sanctioned by VEX Robotics, Inc. and will not qualify teams for the 2026–2027 VEX Robotics World Championship.」。\nVEX 路線 2026-27 主題為 V5 Robotics Competition「Override」，官網標示 Middle / High School。賽事與報名見 VEX 官方賽事網站 events.vex.com。\nRECF 路線改為 Engage／Achieve（Under 19）／Inspire，高中生適用 Achieve。RECF World Championship 2027-04-25 至 05-07 在美國聖路易舉行。"
     },
     {
       "title": "WRO 世界機器人奧林匹亞",
@@ -1607,7 +1614,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "更正：先前記載「台灣承辦單位藏在互動地圖彈窗中無法取出」並不成立。官方會員國頁自己載入的資料來源 https://www.wro.events/countries/json 逐字列出 Chinese Taipei 的 national organizer 是「ESUN Robot Association in Taiwan」。",
       "url": "https://wro-association.org/",
-      "description": "由 World Robot Olympiad Association（新加坡登記的非營利組織）主辦，2026 年主題「Robots Meet Culture」，分 RoboMission（Elementary／Junior／Senior）、RoboSports、Future Innovators 與 Future Engineers 等組，涵蓋 8 至 19 歲（Future Engineers 可至 22 歲），以競賽當年的年齡計。官網寫「Teams can only qualify for the International Final through the WRO competition in their country」，沒有全球統一報名截止日。2026 國際決賽 12 月 8 至 10 日於波多黎各聖胡安舉行。台灣的承辦單位是台灣玉山機器人協會（ESUN Robot Association in Taiwan，www.era.org.tw），站上設有「WRO（World Robot Olympiad）全國中小學機器人大賽暨國際奧林匹亞機器人總決賽」的不分區線上賽、北中南分區賽與各縣市校際盃。台灣學生須先參加該協會辦理的國內賽，不能直接向國際主辦報名。"
+      "description": "以隊伍參加的國際機器人競賽，涵蓋 8 至 19 歲。台灣學生須先參加台灣玉山機器人協會辦理的國內賽，不能直接向國際主辦報名。",
+      "details": "由 World Robot Olympiad Association 主辦，這是在新加坡登記的非營利組織。2026 年主題「Robots Meet Culture」，分 RoboMission（Elementary／Junior／Senior）、RoboSports、Future Innovators 與 Future Engineers 等組。Future Engineers 可到 22 歲，年齡以競賽當年計。\n官網寫「Teams can only qualify for the International Final through the WRO competition in their country」，沒有全球統一報名截止日。2026 國際決賽 12 月 8 至 10 日在波多黎各聖胡安舉行。\n台灣的承辦單位是台灣玉山機器人協會（ESUN Robot Association in Taiwan，www.era.org.tw），站上設有「WRO（World Robot Olympiad）全國中小學機器人大賽暨國際奧林匹亞機器人總決賽」的不分區線上賽、北中南分區賽與各縣市校際盃。"
     },
     {
       "title": "國際化學競賽 (IChC)",
@@ -1738,7 +1746,8 @@
       },
       "sourceCheckedAt": "2026-10-25",
       "url": "https://ghresource.k12ea.gov.tw/nss/p/LivingTechnologyCompetition",
-      "description": "以科技與工程設計解決生活中問題的高中競賽，由國立基隆女中與生活科技學科中心（新北市立板橋高中）主辦、教育部國教署指導。分任務挑戰組（每隊 4–5 人，2026 年題目「漁法有據」）與創意設計組（每隊 1–4 人，題目「海洋永續」），可跨校組隊。全國公私立高中在學學生（含綜合高中學術學程及職業學校普通科）可報名，先上傳報名表、提案書等文件初選，入選隊伍再到現場決賽。2026 年第 18 屆收件原訂 3/20，延到 3/30 17:00，5/19 於基隆女中決賽；2022 至 2025 年的收件截止分別是 3/22、3/17、3/8、3/14。"
+      "description": "以科技與工程設計解決生活中問題的高中競賽，分任務挑戰組與創意設計組，可跨校組隊。先上傳報名表、提案書等文件初選，入選隊伍再到現場決賽。",
+      "details": "國立基隆女中與生活科技學科中心（新北市立板橋高中）主辦，教育部國教署指導。全國公私立高中在學學生可報名，含綜合高中學術學程及職業學校普通科。\n任務挑戰組每隊 4–5 人，2026 年題目「漁法有據」；創意設計組每隊 1–4 人，題目「海洋永續」。\n2026 年第 18 屆收件原訂 3/20，延到 3/30 17:00，5/19 在基隆女中決賽。2022 至 2025 年的收件截止分別是 3/22、3/17、3/8、3/14。"
     },
     {
       "title": "總統教育獎",
@@ -1753,7 +1762,9 @@
       "registrationNote": "推薦期程依教育部年度實施計畫",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://pea.k12ea.gov.tw/",
-      "description": "表揚以積極態度面對逆境、力學不倦並具特殊才能或卓越表現的學生，分大專、高中、國中、國小四組，每年獎勵名額以 48 至 60 人為原則。學生不能自己報名，要由學校或已向政府立案的社會團體推薦，再逐級評選。高中組獎助學金每人 20 萬元；2026 年錄取 60 人（高中組 14 名）、7 月 3 日於總統府頒獎。官方辦理要點未訂固定推薦截止日，各年度期程寫在教育部當年的遴選實施計畫（2026 屆為 2025-11-27 至 2025-12-30）。"
+      "description": "表揚身處逆境仍奮發向上，並有良好品行或特殊才能的中華民國籍在學學生，設有高中組。學生不能自己報名，要由學校或已向政府立案的社會團體推薦，再逐級評選。",
+      "details": "分大專、高中、國中、國小四組，每年獎勵名額以 48 至 60 人為原則。高中組獎助學金每人 20 萬元。2026 年錄取 60 人，高中組 14 名，7 月 3 日在總統府頒獎。\n官方辦理要點未訂固定推薦截止日，各年度期程寫在教育部當年的遴選實施計畫，2026 屆是 2025-11-27 至 2025-12-30。",
+      "sourceNote": "摘要的表揚對象照辦理要點改寫：2026-11-05 查 https://pea.k12ea.gov.tw/page/11 ，第十一點寫推薦對象「為具中華民國籍，就讀國內下列公、私立學校之在學學生」，條件「為於逆境中，仍能奮發向上及樂觀進取」，並具服務奉獻、孝行表現、友愛行為等足堪楷模的表現，或在語言、藝術、科學、體育等領域「具有特殊才能，出類拔萃」，二者之一。要點沒有原本 description 寫的「力學不倦」「卓越表現」。"
     },
     {
       "title": "全國師生本土語及新住民語歌謠比賽（原鄉土歌謠比賽）",
@@ -1844,7 +1855,8 @@
       "registrationNote": "辦理時間不固定 · 依官網公告",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.aesea.org/competitions/ibridge",
-      "description": "以輕木條（balsa）搭建橋梁並實測承重的工程實作競賽，以「最大載重÷橋梁自重」的結構效率評分。官網列 2025 第二屆的主辦單位為國立高雄科技大學土木工程系與亞太能源科學教育協會（2023 第一屆由國立成功大學土木工程學系主辦）。分國中小組與高中職組，各限 15 隊。官網僅見兩屆紀錄（2023 年 6 月、2025 年 12 月），辦理時間並不固定；2025 屆報名至 11/28 17:00、12/13 競賽，共 20 隊參賽。官網目前的訊息原文：「2025 iBridge盃橋梁載重暨創新設計競賽 以順利完成！敬請期待下次賽事！」，第三屆時程尚未公告。"
+      "description": "以輕木條（balsa）搭建橋梁並實測承重的工程實作競賽，以結構效率評分，分國中小組與高中職組，以隊伍參賽。辦理時間不固定。",
+      "details": "結構效率的算法是「最大載重÷橋梁自重」。官網列 2025 第二屆的主辦單位為國立高雄科技大學土木工程系與亞太能源科學教育協會，2023 第一屆由國立成功大學土木工程學系主辦。兩組各限 15 隊。\n官網只見兩屆紀錄，分別在 2023 年 6 月與 2025 年 12 月。2025 屆報名至 11/28 17:00，12/13 競賽，共 20 隊參賽。\n官網目前的訊息原文：「2025 iBridge盃橋梁載重暨創新設計競賽 以順利完成！敬請期待下次賽事！」，第三屆時程尚未公告。"
     },
     {
       "title": "臺灣數學奧林匹亞競賽 (TMO)",
@@ -2098,7 +2110,8 @@
       "recheckOn": "2026-11-16",
       "recheckNote": "2026 屆 11/14–15 舉行、報名到活動結束，結束後改成 2027 屆的資訊。",
       "url": "https://www.spaceappschallenge.org/",
-      "description": "以 NASA 開放資料為題的兩天黑客松，不限科系與經驗、免費參加。隊伍最多 6 人；參加在地活動（Local Event）可單人成隊，線上 Universal Event 的隊伍至少 2 人才能進入全球評選。未滿 18 歲須由家長或法定監護人代為報名並全程陪同，FAQ 寫「If under the age of 18, participants must be registered for the event by a parent or legal guardian and must be accompanied by a parent or legal guardian at all times during the event」。2026 年於 11 月 14–15 日舉行，可報名至 11/15 活動結束；全球設有 450 個以上實體會場，台灣有臺北、臺中、高雄三個在地活動，官網皆標示為線上（Virtual）。"
+      "description": "以 NASA 開放資料為題的兩天黑客松，不限科系與經驗、免費參加，可組隊。未滿 18 歲須由家長或法定監護人代為報名並全程陪同。",
+      "details": "隊伍最多 6 人。參加在地活動（Local Event）可單人成隊，線上 Universal Event 的隊伍至少 2 人才能進入全球評選。\n未滿 18 歲的規定，FAQ 原文是「If under the age of 18, participants must be registered for the event by a parent or legal guardian and must be accompanied by a parent or legal guardian at all times during the event」。\n2026 年在 11 月 14–15 日舉行，可報名至 11/15 活動結束。全球設有 450 個以上實體會場，台灣有臺北、臺中、高雄三個在地活動，官網都標示為線上（Virtual）。"
     },
     {
       "title": "國際科學奧林匹亞—臺灣代表隊選訓",
