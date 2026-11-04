@@ -833,9 +833,9 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
     assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3 月 15 日'));
     // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。兩個日期都寫完整，跨年也看得出年份。
-    assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2099-12-31 截止' });
-    assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2100-03-01 截止' });
-    assert.deepEqual(at({ opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放' });
+    assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 起、2099-12-31 截止' });
+    assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 起、2100-03-01 截止' });
+    assert.deepEqual(at({ opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 起' });
     assert.deepEqual(at({ registrationNote: '由學校報名' }), { label: '報名', value: '由學校報名' });
     assert.deepEqual(at({}), due('未公布'));
 });
@@ -936,7 +936,7 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     const upcoming = { ...cycle, cycle: undefined, deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00', eventStartsAt: '2100-01-10' };
     for (const c of [upcoming, { ...upcoming, details: '詳細內容' }]) {
         assert.equal(label(render(c)), '報名期間');
-        assert.equal(value(render(c)), '預計 2099-12-15 開放、2099-12-31 截止');
+        assert.equal(value(render(c)), '預計 2099-12-15 起、2099-12-31 截止');
     }
     assert.match(render(upcoming), /<span class="comp-deadline__label">賽事日期<\/span><span class="comp-deadline__value">2100-01-10<\/span>/);
     // 有 details 的卡片徽章只放短標籤，registrationNote 和下次截止日在截止欄與對話框裡。
