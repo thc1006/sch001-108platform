@@ -221,6 +221,7 @@ test.describe('部署產物 smoke test', () => {
             expect([...url.searchParams.keys()], url.href).toEqual(['current_college_id']);
             expect(url.searchParams.get('current_college_id'), slug).toBe(String(CLUSTER_CARDS[slug][0]));
             await expect(details.locator('h3')).toHaveText(CLUSTER_CARDS[slug][1]);
+            await expect(details.locator('a', { hasText: '完整清單見 ColleGo!' })).toHaveAttribute('href', url.href);
             seen.push(slug);
         }
         expect(seen.sort()).toEqual(Object.keys(CLUSTER_CARDS).sort());

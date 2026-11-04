@@ -164,7 +164,7 @@ test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一�
 
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
 // 自己抄一份，靠這個測試防止兩邊漂移。majorData 是 JS 物件字面值而不是 JSON，所以交給 vm 求值。
-test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、核心素養、主要學類、相關職類）', () => {
+test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、核心素養、相關科系、常見出路）', () => {
     const { instructions } = catalog.get('career-chat');
     const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
     assert.ok(literal, '頁面裡找不到 const majorData = [...];');
@@ -173,8 +173,8 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
         `學群：${c.name}`,
         `簡介：${c.description}`,
         `重視程度前兩名的核心素養：${c.competencies.join('、')}`,
-        `主要學類：${c.majors.join('、')}`,
-        `相關職類：${c.careers.join('、')}`,
+        `相關科系：${c.majors.join('、')}`,
+        `常見出路（舉例）：${c.careers.join('、')}`,
     ].join('\n'));
     // 學群資料夾在兩行 --- 之間，逐塊比對：多一個、少一個、順序不同或欄位多了字都會不一樣。
     const section = instructions.split('\n---\n')[1] ?? '';
