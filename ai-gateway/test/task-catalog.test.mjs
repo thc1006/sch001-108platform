@@ -353,7 +353,7 @@ const REVIEWED_PROJECTS = {
     'cofacts': '3845286e9e7d',
     'amis-moedict': '3132eb3b1d27',
     'thaubing': '69cd2318d3aa',
-    'national-treasure': '84de664b8b13',
+    'national-treasure': '9d9169472f5b',
     'lawtrace': '541a118afbb6',
     'vtaiwan': '61bcf0d56826',
     'civil-iot': 'e309baf94cce',
