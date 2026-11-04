@@ -1,6 +1,6 @@
 {
-  "_readme": "公民科技專案頁的資料。src/pages/civic-tech-map/index.astro 在建置時讀這個檔案產生頁面，build-search-index.js 用它建搜尋索引，scripts/check-civic-tech.mjs 檢查格式。欄位：id 是頁面上的錨點（小寫英數與連字號），其他頁面有連到 #thaubing、#national-treasure、#cofacts；name 和 title 不同時，搜尋索引把它當別名；title 是頁面、搜尋結果與 AI 閘道 civic-tech-suggestion 任務指令裡的專案名稱，要和 ai-gateway/src/task-catalog.mjs 一字不差，ai-gateway/test/task-catalog.test.mjs 會比對；theme 是專案列表裡的一兩個詞；description 寫專案是什麼；tools 是學生可以用的資料或工具，url 選填；topic 是題目例子；steps 是做法；sourceCheckedAt 是最後一次查證的日期；source 選填，資料不是取自官網時寫出處；recheckAfter 選填，過了這天 check-civic-tech 會提醒重查，理由寫在 recheckNote；subjects、competencies（108 課綱核心素養代碼，見 scripts/taxonomy.json）、sdgs、tags 只給搜尋用，頁面不顯示；status 限 active、maintenance、dormant，閘道指令會照它註明狀態。",
-  "lastUpdated": "2026-10-31",
+  "_readme": "公民科技專案頁的資料。src/pages/civic-tech-map/index.astro 在建置時讀這個檔案產生頁面，build-search-index.js 用它建搜尋索引，scripts/check-civic-tech.mjs 檢查格式。欄位：id 是頁面上的錨點（小寫英數與連字號），其他頁面有連到 #thaubing、#national-treasure、#cofacts；name 和 title 不同時，搜尋索引把它當別名；title 是頁面、搜尋結果與 AI 閘道 civic-tech-suggestion 任務指令裡的專案名稱，要和 ai-gateway/src/task-catalog.mjs 一字不差，ai-gateway/test/task-catalog.test.mjs 會比對；theme 是專案列表裡的一兩個詞；description 寫專案是什麼；tools 是學生可以用的資料或工具，url 選填；topic 是題目例子；steps 是做法；sourceCheckedAt 是最後一次查證的日期；source 選填，資料不是取自官網時寫出處；recheckAfter 選填，過了這天 check-civic-tech 會提醒重查，理由寫在 recheckNote；subjects、competencies（108 課綱核心素養代碼，見 scripts/taxonomy.json）、sdgs、tags 只給搜尋用，頁面不顯示；status 限 active、maintenance、dormant：active 是專案方還在更新網站、資料或功能，maintenance 是既有的資料或服務還能用、沒有新的進度，dormant 是近期幾無活動、要提醒讀者查證；閘道指令會照它註明狀態。",
+  "lastUpdated": "2026-11-04",
   "projects": [
     {
       "id": "disfactory",
@@ -93,19 +93,19 @@
       "theme": "台灣史料",
       "org": "Taiwan National Treasure Foundation",
       "url": "https://www.nationaltreasure.tw/",
-      "description": "志工到美國國家檔案館翻拍和台灣有關的檔案，年代從 1887 到 1977 年，放上網站讓大家閱讀、搜尋、校對。實地翻拍從 2020 年起暫停，已經上傳的檔案照常開放。",
+      "description": "志工到美國國家檔案館翻拍和台灣有關的檔案，年代從 1887 年到 1970 年代末，放上網站讓大家閱讀、搜尋、校正。組團的實地翻拍從 2020 年起暫停。去過檔案館的人，可以從網站上傳自己翻拍的影像，審核通過後公開。",
       "tools": [
         { "name": "寶藏庫", "note": "從首頁進去，依美援、農復會、中美斷交等卷宗分類瀏覽，也可以全文搜尋" },
         { "name": "校正模式", "note": "改正機器辨識和翻譯的錯字，不用註冊" }
       ],
       "topic": "美援時期的報告，怎麼描述當時台灣的某個產業？",
       "steps": "在寶藏庫的美援分類挑一份報告，用校正模式改正辨識和翻譯，再對照課本或其他史料寫一篇短文。",
-      "sourceCheckedAt": "2026-10-31",
+      "sourceCheckedAt": "2026-11-04",
       "subjects": ["歷史", "英文"],
       "competencies": ["C3", "A3"],
       "sdgs": [],
       "tags": ["數位典藏", "歷史檔案", "群眾外包", "台灣史"],
-      "status": "maintenance"
+      "status": "active"
     },
     {
       "id": "lawtrace",
