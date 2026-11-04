@@ -534,7 +534,8 @@ export function lowerBaseline(policy, counts) {
 
 /**
  * verifyPolicy 比較目標分支與這次的 policy，回傳問題清單。policy 的規則要和 RULES 的 block 規則一致；目標分支
- * 有的規則不能刪；基準要是非負整數，不能變大，也不能多出新鍵。新加的 block 規則要以空的基準加入。
+ * 有的規則不能刪；基準要是非負整數。目標分支已有的規則，基準不能變大，也不能多出新鍵；新加的規則以上線時站上的
+ * 命中當基準。
  */
 export function verifyPolicy(before, after, rules = RULES) {
     const problems = [];
@@ -543,11 +544,11 @@ export function verifyPolicy(before, after, rules = RULES) {
     for (const id of Object.keys(after.rules)) if (!block.has(id)) problems.push(`${id}：policy 有這條，RULES 不是 block`);
     for (const id of Object.keys(before.rules)) if (!(id in after.rules)) problems.push(`${id}：目標分支有這條規則的基準，這次刪了`);
     for (const [id, { baseline = {} }] of Object.entries(after.rules)) {
-        const old = before.rules[id]?.baseline ?? {};
+        const old = id in before.rules ? before.rules[id].baseline ?? {} : null;
         for (const [key, n] of Object.entries(baseline)) {
             if (!isCount(n)) problems.push(`${id}：${key} 的基準 ${JSON.stringify(n)} 不是非負整數`);
-            else if (!(key in old)) problems.push(`${id}：多出基準鍵 ${key}`);
-            else if (n > old[key]) problems.push(`${id}：${key} 的基準從 ${old[key]} 變成 ${n}`);
+            else if (old && !(key in old)) problems.push(`${id}：多出基準鍵 ${key}`);
+            else if (old && n > old[key]) problems.push(`${id}：${key} 的基準從 ${old[key]} 變成 ${n}`);
         }
     }
     return problems;

@@ -85,8 +85,10 @@ const mutations = [
     ['沒列在 policy 的 block 規則不檢查', "for (const rule of rules.filter((r) => r.severity === 'block').map((r) => r.id)) {", 'for (const rule of Object.keys(policy.rules)) {'],
     ['下修變成照現值', 'Math.min(counts[rule]?.[key] ?? 0, n)', '(counts[rule]?.[key] ?? n)'],
     ['降到 0 的鍵留著', 'if (v > 0) next[key] = v;', 'next[key] = v;'],
-    ['基準變大不擋', 'else if (n > old[key])', 'else if (false)'],
-    ['新鍵不擋', 'else if (!(key in old))', 'else if (false)'],
+    ['基準變大不擋', 'else if (old && n > old[key])', 'else if (false)'],
+    ['新鍵不擋', 'else if (old && !(key in old))', 'else if (false)'],
+    ['已有的規則也當成新加的', 'const old = id in before.rules ? before.rules[id].baseline ?? {} : null;', 'const old = null;'],
+    ['新加的規則不能帶基準', 'const old = id in before.rules ? before.rules[id].baseline ?? {} : null;', 'const old = before.rules[id]?.baseline ?? {};'],
     ['刪規則不擋', "if (!(id in after.rules)) problems.push(`${id}：目標分支", "if (false) problems.push(`${id}：目標分支"],
     ['非整數基準不擋', 'if (!isCount(n))', 'if (false)'],
     ['policy 少了 block 規則不擋', "if (!(id in after.rules)) problems.push(`${id}：RULES", "if (false) problems.push(`${id}：RULES"],
@@ -145,6 +147,10 @@ function baseWith(policy) {
     return gitIn(['commit-tree', gitIn(['mktree'], `040000 tree ${scripts}\tscripts\n`), '-m', 'writing faults base']);
 }
 const BASE = baseWith(policyText);
+// 目標分支少了一條有基準的規則，等於這次才加這條規則。
+const baseRules = JSON.parse(policyText).rules;
+const NEW_RULE = Object.keys(baseRules).find((id) => Object.keys(baseRules[id].baseline).length);
+const BASE_WITHOUT_RULE = baseWith(JSON.stringify({ rules: Object.fromEntries(Object.entries(baseRules).filter(([id]) => id !== NEW_RULE)) }));
 const BROKEN = baseWith('{ 壞掉的 JSON');
 
 /** sandbox 建一份給一個 worker 用的副本，回傳路徑與還原用的函式。 */
@@ -224,6 +230,7 @@ const cases = [
     ['--verify 基準調高', editPolicy((r) => { r['W01-hen-duo'].baseline[firstKey(r, 'W01-hen-duo')] += 1; }), ['--verify', BASE], 1],
     ['--verify 刪規則鍵', editPolicy((r) => { delete r['W04-filler-signpost']; }), ['--verify', BASE], 1],
     ['--verify 多出新鍵', editPolicy((r) => { r['W04-filler-signpost'].baseline['src/none.md'] = 1; }), ['--verify', BASE], 1],
+    ['--verify 新加的規則帶著基準', () => {}, ['--verify', BASE_WITHOUT_RULE], 0],
     ['--verify ref 不存在', () => {}, ['--verify', 'no-such-ref-for-writing-faults'], 1],
     ['--verify 目標分支的基準壞掉', () => {}, ['--verify', BROKEN], 1],
     ['--annotate 乾淨的副本', () => {}, ['--annotate', 'HEAD'], 0],
