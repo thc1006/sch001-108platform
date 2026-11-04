@@ -360,58 +360,6 @@ import data from '../../../public/advanced-resources/competitions.json';
         return s.label;
       }
 
-      // 賽事日期，也就是「比賽哪天舉行」，與「報名何時截止」是兩回事。比賽日期填進
-      // deadline 的話，頁面會把它顯示成「報名截止」。
-      function eventLabel(c) {
-        if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
-        const short = (d) => Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10));
-        // 已經辦完的賽事必須講清楚。資料裡有「上一屆」的賽事日期（iBridge 的
-        // 2025-12-13、APIO 的 2026-05-09），顯示成「2025-12-13 舉行」會讀起來像是
-        // 即將舉行，比不顯示還糟。
-        const last = (typeof c.eventEndsAt === 'string' && c.eventEndsAt) || c.eventStartsAt;
-        const past = Date.UTC(
-          Number(last.slice(0, 4)), Number(last.slice(5, 7)) - 1, Number(last.slice(8, 10)),
-        ) < todayTaipeiUTC();
-        if (typeof c.eventEndsAt === 'string' && c.eventEndsAt && c.eventEndsAt !== c.eventStartsAt) {
-          const range = c.eventStartsAt.slice(0, 4) + ' 賽事 ' + short(c.eventStartsAt) + '–' + short(c.eventEndsAt);
-          return past ? '上屆 ' + range + ' 已結束' : range;
-        }
-        return past ? '上屆 ' + c.eventStartsAt + ' 已結束' : c.eventStartsAt + ' 舉行';
-      }
-
-      // 卡片底部那一欄的標題與內容。OPhO、NASA 這類沒有公布報名截止日的競賽，欄位裡
-      // 放的是賽事日期，標題寫「報名截止」就等於把賽事日期說成報名截止。標題由內容實際
-      // 是什麼決定，兩者一起算、放在同一個物件回傳，才不會各算各的：沒有 deadline、只有
-      // cycle 與賽事日期時，內容同時講報名與賽事，標題是「報名截止」。
-      function deadlineField(c, s) {
-        const ev = eventLabel(c);
-        const value = deadlineLabel(c, s);
-        // 內容只剩賽事資訊時才叫「賽事日期」；只要含有報名相關敘述就是「報名截止」。
-        const eventOnly = !!ev && value === ev;
-        return { label: eventOnly ? '賽事日期' : '報名截止', value: value };
-      }
-
-      // 卡片底部的「報名截止」欄位：有週期時把它講清楚，而不是只寫「依官網公告」
-      function deadlineLabel(c, s) {
-        const ev = eventLabel(c);
-        if (s.key === 'cycle') {
-          const p = s.closes.split('-');
-          const when = p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月';
-          const base = c.deadline
-            ? '本屆 ' + c.deadline + ' 已截止 · 每年約 ' + when
-            : '每年約 ' + when + '截止';
-          return ev ? base + ' · ' + ev : base;
-        }
-        if (s.key === 'upcoming') {
-          const base = '預計 ' + s.opens + ' 開放報名' + (s.next ? ' · ' + s.next + ' 截止' : '');
-          return ev ? base + ' · ' + ev : base;
-        }
-        // 沒有報名截止日但知道賽事日期時，寧可顯示賽事日期，也不要謊稱「依官網公告」
-        // 之外還有截止日。兩者都沒有才退回「依官網公告」。
-        if (!c.deadline) return ev || (s.note ? s.label : '依官網公告');
-        return ev ? c.deadline + ' · ' + ev : c.deadline;
-      }
-
       function accentFor(cat) {
         return CATEGORY_ACCENT[cat] || DEFAULT_ACCENT;
       }
@@ -446,7 +394,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       }
 
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
-      // registrationNote。本屆截止日和賽事日期在對話框裡，由 deadlineField 算。
+      // registrationNote。本屆截止日和賽事日期在對話框裡，由 fullDeadline 算。
       function cardDeadline(c, s) {
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s) };
         if (s.key === 'cycle') return { label: '報名截止', value: '每年約 ' + cycleWhen(s) };
@@ -463,7 +411,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         return Number(p[0]) + ' 月' + (p[1] ? ' ' + Number(p[1]) + ' 日' : '');
       }
 
-      // eventText 是截止欄另放一行的賽事日期。標籤已經是「賽事日期」，內容不再寫「賽事」。
+      // eventText 是賽事日期，標籤已經是「賽事日期」，內容不再寫「賽事」。已辦完的寫「已結束」：iBridge 的
+      // 「2025-12-13」只寫日期會讀起來像即將舉行。
       function eventText(c) {
         if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
         const end = typeof c.eventEndsAt === 'string' && c.eventEndsAt && c.eventEndsAt !== c.eventStartsAt ? c.eventEndsAt : '';
@@ -473,8 +422,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         return past ? '上屆 ' + range + '，已結束' : range;
       }
 
-      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。不用 deadlineField：它用「·」把報名和賽事接在
-      // 一起（「·」可能不念），賽事寫成「2027 賽事 7/18–7/25」，接在「賽事日期」後面念兩次，7/18 也像分數。
+      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。報名和賽事分兩行，不用「·」接（可能不念，也分不出
+      // 哪個日期是報名）。沒有截止日時賽事日期放在截止欄，標題寫「賽事日期」，不說成報名截止。
       function fullDeadline(c, s) {
         const event = eventText(c);
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: event };
