@@ -949,8 +949,8 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     // 名稱下面那一行用「、」分隔，「其他」「個人/團體」「混合」顯示成念得懂的寫法。
     const facts = (html) => html.match(/<p class="comp-facts">([^<]*)<\/p>/)[1];
     const fields = { region: '其他', level: '國際', form: '個人/團體', eligibility: '公開報名', mode: '混合' };
-    assert.equal(facts(render({ ...cycle, ...fields })), '其他地區、國際、個人或團體、公開報名、實體與線上');
-    assert.equal(facts(render({ ...cycle, ...fields, region: '台灣', form: '個人', mode: '線上' })), '台灣、國際、個人、公開報名、線上');
+    assert.equal(facts(render({ ...cycle, ...fields })), '其他地區、國際賽、個人或團體、公開報名、實體與線上');
+    assert.equal(facts(render({ ...cycle, ...fields, region: '台灣', level: '校際/地區', form: '個人', mode: '線上' })), '台灣、校際或地區賽、個人、公開報名、線上');
     // 用 H 鍵跳到名稱的人，接著聽到的是這張卡片的類型與狀態。
     for (const c of [cycle, { ...cycle, details: '詳細內容' }]) {
         assert.match(render(c), /^<article[^>]*><div class="comp-card__body"><h2 class="comp-card__title">/);
