@@ -211,7 +211,8 @@ if (over.length) {
         console.error(`  ${o.rule}  ${o.key}  ${o.count} 筆，基準 ${o.baseline}`);
         for (const h of hits.filter((x) => x.rule === o.rule && x.key === o.key)) console.error(`    ${h.line ? `第 ${h.line} 行` : h.block.page}「${readable(h.match)}」：${context(h)}`);
     }
-    console.error('改寫這些句子，寫法見 CONTRIBUTING.md 的「網站內容」。照抄的外部原文、官方名稱或當反例引用的句子，在 scripts/writing-allow.json 加一條。');
+    console.error('改寫這些句子，寫法見 CONTRIBUTING.md 的「網站內容」。照抄的外部原文、官方名稱或當反例引用的句子，在 scripts/writing-allow.json 加一條。'
+        + '在「」裡談某個詞時，前後加上「這類」「例如」。');
 }
 
 mkdirSync(path.dirname(REPORT), { recursive: true });
