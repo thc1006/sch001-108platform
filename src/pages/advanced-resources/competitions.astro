@@ -428,10 +428,16 @@ import data from '../../../public/advanced-resources/competitions.json';
         return s.label;
       }
 
+      // upcomingText 是尚未開放時截止欄的內容。兩個日期都寫完整：只寫月日的話跨年時看不出年份，
+      // 「12-11」也可能被念成減法；用「、」不用「·」，NVDA 預設設定下「·」可能不念。
+      function upcomingText(s) {
+        return '預計 ' + s.opens + ' 開放' + (s.next ? '、' + s.next + ' 截止' : '');
+      }
+
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
       // registrationNote。本屆截止日和賽事日期在對話框裡，由 deadlineField 算。
       function cardDeadline(c, s) {
-        if (s.key === 'upcoming') return { label: '報名期間', value: '預計 ' + s.opens + (s.next ? ' · ' + s.next.slice(5) + ' 截止' : '') };
+        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s) };
         if (s.key === 'cycle') {
           const p = s.closes.split('-');
           return { label: '報名截止', value: '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月') };
@@ -439,11 +445,11 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
       }
 
-      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時 deadlineField 的內容從開放日寫起，
-      // 標籤寫「報名截止」的話，報讀軟體連著念聽起來是矛盾的。
+      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時不用 deadlineField：它的內容從開放日
+      // 寫起，標籤卻是「報名截止」，報讀軟體連著念聽起來是矛盾的；賽事日期另放一行，不算在報名期間裡。
       function fullDeadline(c, s) {
-        const dField = deadlineField(c, s);
-        return s.key === 'upcoming' ? { label: '報名期間', value: dField.value } : dField;
+        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: eventLabel(c) };
+        return deadlineField(c, s);
       }
 
       // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
@@ -455,7 +461,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         return badgeText(s);
       }
 
-      // footHtml 是截止欄與「前往官網」。dField 是 { label, value }。
+      // footHtml 是截止欄與「前往官網」。dField 是 { label, value, event }，event 是另放一行的賽事日期。
       function footHtml(c, dField) {
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
         // 「資料更新」會讓人以為每一筆都在那天查證過。有逐筆查證日期的就據實顯示，
@@ -469,6 +475,9 @@ import data from '../../../public/advanced-resources/competitions.json';
             '<div class="comp-deadline">' +
               '<span class="comp-deadline__label">' + escapeHtml(dField.label) + '</span>' +
               '<span class="comp-deadline__value">' + escapeHtml(dField.value) + '</span>' +
+              (dField.event
+                ? '<span class="comp-deadline__label">賽事日期</span><span class="comp-deadline__value">' + escapeHtml(dField.event) + '</span>'
+                : '') +
               checkedText +
             '</div>' +
             '<a class="comp-cta" href="' + safeUrl(c.url) + '" target="_blank" rel="noopener noreferrer">' +
@@ -880,6 +889,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     .comp-deadline { display: flex; flex-direction: column; gap: .1rem; flex: 1 1 8rem; }
     .comp-deadline__label { font-size: .875rem; color: var(--muted); }
+    .comp-deadline__value + .comp-deadline__label { margin-top: .25rem; }
     .comp-deadline__value { font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
     .comp-checked { display: block; margin-top: .15rem; font-size: .875rem; color: var(--muted); }
     /* position: relative 讓可讀名稱後半的 sr-only（absolute）以按鈕定位，不依卡片或對話框的位置。 */
