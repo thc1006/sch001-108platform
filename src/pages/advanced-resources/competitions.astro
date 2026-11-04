@@ -716,6 +716,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         })
         .catch((err) => {
           console.error('競賽資料載入失敗：', err);
+          countEl.textContent = '';
           grid.innerHTML = '';
           grid.setAttribute('aria-busy', 'false');
           empty.hidden = false;
