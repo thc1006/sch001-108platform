@@ -350,7 +350,7 @@ function longSentences(b) {
 export const RULES = [
     { id: 'W01-hen-duo', severity: 'block', skip: 'aqu', re: /很多(?![元樣])/gu },
     { id: 'W02-vague-quantity', severity: 'warn', skip: 'aqu', re: /許多|大量|眾多|諸多|無數|海量|各式各樣|各種各樣|各種|不少(?!於)/gu },
-    { id: 'W03-intensifier', severity: 'warn', skip: 'aqu', re: /非常|極其|極為|極具|十分(?!鐘|之)|相當(?!於)|超級|無比|格外|高度(?=\p{Script=Han})/gu, normal: (m) => (m[0] === '高度' && /^(差|約|為|是|計|公尺|限制)/.test(after(m)) ? '物理高度' : null) },
+    { id: 'W03-intensifier', severity: 'warn', skip: 'aqu', re: /非常|極其|極為|極具(?!體)|十分(?!鐘|之)|相當(?!於)|超級|無比|格外|高度(?=\p{Script=Han})/gu, normal: (m) => (m[0] === '高度' && /^(差|約|為|是|計|公尺|限制)/.test(after(m)) ? '物理高度' : null) },
     { id: 'W04-filler-signpost', severity: 'block', skip: 'aqu', re: /值得(?:注意|一提)的是|值得一提|綜上所述|總而言之|總之|毫無疑問|不言而喻|眾所周知|換句話說|簡而言之|說到底(?!線)|歸根究[柢底]|歸根結[柢底]|總的來說|整體而言|整體來說|總體而言|綜合而言|總結來說(?!明)|總結而言|一言以蔽之|毋庸置疑|無庸置疑|換言之|不言可喻/gu },
     // 「由 x + 2 = 5 由此可見」「綜合來看診斷結果」「顯而易見的錯誤」也是正常寫法，放在 warn 的 W05。
     { id: 'W05-filler-addition', severity: 'warn', skip: 'aqu', re: /此外|除此之外|與此同時|事實上|本質上|顯然|顯而易見|由此可見|不難看出|不難發現|不可否認|無可否認|綜合來看/gu, normal: (m) => (m[0] === '事實上' && before(m, 1) === '在' ? '建立在事實上' : null) },
@@ -402,7 +402,7 @@ export const RULES = [
     { id: 'S05-weak-verb', severity: 'warn', skip: 'q', re: /進行(?![的中了多各一兩])(?=\p{Script=Han}{2})|作出|加以|予以/gu },
     { id: 'S06-rhetorical', severity: 'warn', skip: 'aqu', re: /你(?:是否|是不是)(?:也)?(?:曾|常|有過|覺得|想過)|有沒有想過|你知道嗎|想像一下|試想(?!題)|不是嗎？/gu },
     { id: 'S08-long-sentence', severity: 'warn', skip: '', custom: longSentences },
-    { id: 'C01-vague-attribution', severity: 'warn', skip: 'q', re: /(?:教授|老師|委員|學者|專家)們?(?:普遍|大多|多半|一致)(?:認為|指出|表示|建議)|(?:專家|學者|業界|許多人|很多人|大家|一般人|多數人)(?:普遍|大多|多半|一致)?(?:認為|指出|表示|建議)|(?:有|許多|很多|多項)研究(?:指出|顯示|發現|證實)|(?<!數)據統計|(?<!數)據說|據了解|普遍認為/gu },
+    { id: 'C01-vague-attribution', severity: 'warn', skip: 'q', re: /(?:教授|老師|委員|學者|專家)們?(?:普遍|大多|多半|一致)(?:認為|指出|表示|建議)|(?:專家|學者|業界|許多人|很多人|大家|一般人|多數人)(?:普遍|大多|多半|一致)?(?:認為|指出|表示|建議)|(?:有|許多|很多|多項)研究(?:指出|顯示|發現|證實)|(?<![數依根])據統計|(?<!數)據說|據了解|普遍認為/gu },
     {
         id: 'C02-unsourced-rank', severity: 'warn', skip: 'aq', re: /(?:全球|全世界|世界|全台|台灣|臺灣|全國|國內|亞洲)(?:最[大多早高]|第一|首[創座個])|(?<!歷)史上最/gu,
         normal: (m) => (/(號稱|自稱|官網|官方|據|稱)[^。]{0,8}$/.test(before(m, 12)) ? '已標明是誰說的' : null),
