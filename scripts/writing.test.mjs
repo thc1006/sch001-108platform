@@ -376,8 +376,15 @@ const blockCases = [
     // W14 已知的漏抓：「這是邁向未來的重要一步」。
     ['K02-placeholder', [
         '截止日 TBD。', '[填入參加人數]', '【請填日期】', '面試常問你為什麼想讀 XX 系。', '在20XX年舉辦', 'ＸＸ大學', '○○高中', '〇〇國中',
-        'TODO 補上', 'FIXME', 'Lorem ipsum dolor', 'lorem ipsum', '日期 2026-XX-XX', '官網寫「截止日 TBD」', '「[填入人數]」',
-    ], ['「你為什麼想讀 XX 系？」這類題目常被問。', '「○○高中」這類寫法', 'XXL 尺寸', '二〇〇八年', 'XX 染色體', '4xx 錯誤', 'RTX 40xx']],
+        'Lorem ipsum dolor', 'lorem ipsum', '日期 2026-XX-XX', '「截止日 TBD」', '「[填入人數]」', '報名截止日：20XX 年 3 月 31 日。',
+        '20xx 年', '202X 年', '截止日 TBA，請留意官網。', 'XX 月 XX 日公布',
+    ], [
+        '「你為什麼想讀 XX 系？」這類題目常被問。', '「你為什麼想讀ＸＸ系？」這類題目', '「你為什麼想讀 xx 系？」這類題目', '「○○高中」這類寫法',
+        'XXL 尺寸', '二〇〇八年', 'XX 染色體', '4xx 錯誤', 'RTX 40xx', '顯示卡 RTX 40xx 系列', '第 XX 屆超級盃在 1986 年舉行。', '羅馬數字 XX 是 20。',
+        '請在程式裡留 TODO 註解，之後再回來改。', 'VS Code 的 TODO Highlight 擴充套件會標出待辦。', 'FIXME 是程式註解常用的標記。',
+        '官網逐字「Final round: TBD」', '報名時程官網標示 TBA。', '官網明示下一屆截止日 TBD',
+    ]],
+    // K02 已知的漏抓：「X 月 X 日」「○月○日」「（請填入信箱）」「{主辦單位名稱}」「[Your Name]」「日期待補」。
     ['K03-markdown-residue', [
         '**重點：** 先寫結論', '## 研究動機', '```js', '詳見[官網](https://example.org/)', '見[說明](/about/)',
         '網址 https://example.org/?utm_source=chatgpt.com', '網址 https://example.org/?utm_source=perplexity',
@@ -408,6 +415,12 @@ for (const [id, yes, no] of [...blockCases, ...warnCases]) {
         for (const t of no) assert.equal(hitsOf(id, t), 0, t);
     });
 }
+
+test('K02：TODO、FIXME 只查資料 JSON', () => {
+    assert.equal(hitsOf('K02-placeholder', 'TODO 補上', { kind: 'json' }), 1);
+    assert.equal(hitsOf('K02-placeholder', 'FIXME', { kind: 'json' }), 1);
+    assert.equal(hitsOf('K02-placeholder', 'TODO 補上'), 0);
+});
 
 test('U01：只看腳本和屬性裡的介面文字', () => {
     assert.equal(hitsOf('U01-ui-message', '抱歉，發生未知的錯誤。', { tag: 'script' }), 2);
