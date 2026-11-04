@@ -27,6 +27,9 @@
  *      又帶查詢字串的網址。
  *      contentChecks 的主機與網址也要對得上盤點，對不上就是殭屍條目。
  *
+ *   6. 盤點的網址不帶 utm_source=chatgpt.com 這類參數。從 ChatGPT、Copilot 複製的連結會帶著它，
+ *      拿掉之後網址照樣能開。
+ *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
  * 只寫在說明文字裡的裸網域（inventory.bareDomainCandidates）。少了後者，指向裸網域的政策會被誤判成殭屍。
  *
@@ -131,6 +134,22 @@ for (const { url, check } of contentCheckGaps(contentChecks, urls)) {
         message: check.missingTitles
             ? `${url} 的路徑是首頁、又帶查詢字串，標題檢查不看它。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或改連不帶查詢字串的網址。`
             : `${check.match.host} 對任何路徑都回 200，狀態碼看不出 ${url} 還在不在。請在 link-policy.json 的 contentChecks 寫明這個網址用哪個 API 驗內容，或替這台主機宣告 missingTitles。`,
+    });
+}
+
+// 第 6 項。
+for (const url of urls) {
+    let source;
+    try {
+        source = new URL(url).searchParams.get('utm_source') ?? '';
+    } catch {
+        continue;
+    }
+    if (!/^(chatgpt|openai|copilot)/i.test(source)) continue;
+    const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
+    errors.push({
+        where: [...new Set(occ.map((o) => o.file))].join('、') || '(未知出處)',
+        message: `${url} 帶著 AI 工具加上的 utm_source=${source}，請拿掉這個參數。`,
     });
 }
 
