@@ -920,6 +920,12 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
         assert.equal(value(render(c)), '預計 2099-12-15 開放、2099-12-31 截止');
     }
     assert.match(render(upcoming), /<span class="comp-deadline__label">賽事日期<\/span><span class="comp-deadline__value">2100-01-10 舉行<\/span>/);
+    // 有 details 的卡片徽章只放短標籤，registrationNote 和下次截止日在截止欄與對話框裡。
+    const badge = (html) => html.match(/<span class="comp-status">([^<]*)<\/span>/)[1];
+    assert.equal(badge(render({ ...cycle, details: '詳細內容' })), '本屆已截止');
+    const noted = { ...cycle, cycle: undefined, deadline: undefined, registrationNote: '由學校報名', eventStartsAt: '2099-08-01' };
+    assert.equal(badge(render({ ...noted, details: '詳細內容' })), '依官網公告');
+    assert.equal(badge(render(noted)), '由學校報名');
     // 用 H 鍵跳到名稱的人，接著聽到的是這張卡片的類型與狀態。
     for (const c of [cycle, { ...cycle, details: '詳細內容' }]) {
         assert.match(render(c), /^<article[^>]*><div class="comp-card__body"><h2 class="comp-card__title">/);
