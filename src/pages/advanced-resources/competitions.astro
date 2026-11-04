@@ -442,14 +442,18 @@ import data from '../../../public/advanced-resources/competitions.json';
           const p = s.closes.split('-');
           return { label: '報名截止', value: '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月') };
         }
-        return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
+        if (c.deadline) return { label: '報名截止', value: c.deadline };
+        // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
+        if (s.note) return { label: '報名', value: s.label };
+        return { label: '報名截止', value: '依官網公告' };
       }
 
       // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時不用 deadlineField：它的內容從開放日
       // 寫起，標籤卻是「報名截止」，報讀軟體連著念聽起來是矛盾的；賽事日期另放一行，不算在報名期間裡。
       function fullDeadline(c, s) {
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: eventLabel(c) };
-        return deadlineField(c, s);
+        const dField = deadlineField(c, s);
+        return s.note && dField.value === s.label ? { label: '報名', value: dField.value } : dField;
       }
 
       // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
