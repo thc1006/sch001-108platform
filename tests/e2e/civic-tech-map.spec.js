@@ -7,7 +7,7 @@ const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const PAGE = `${BASE}/sch001-108platform/civic-tech-map/index.html`;
 
 test.describe('公民科技專案頁', () => {
-    test('每個專案一張卡片，依序寫出名稱（連到官網）、資料或工具、題目例子和做法', async ({ page }) => {
+    test('每個專案一張卡片，依序寫出名稱（連到官網）、資料或工具、題目例子、做法、相關科目和核心素養', async ({ page }) => {
         await page.goto(PAGE);
         const cards = page.locator('article');
         await expect(cards).toHaveCount(projects.length);
@@ -20,9 +20,12 @@ test.describe('公民科技專案頁', () => {
             const heading = card.getByRole('heading', { level: 3 });
             await expect(heading).toHaveAccessibleName(name);
             await expect(heading.getByRole('link', { name })).toHaveAttribute('href', p.url);
-            await expect(card.locator('dt')).toHaveText(['可以用的資料或工具', '題目例子', '做法']);
+            await expect(card.locator('dt')).toHaveText(['可以用的資料或工具', '題目例子', '做法', '相關科目', '核心素養']);
             await expect(card.locator('dd').nth(1)).toHaveText(p.topic);
-            await expect(card.locator('dd li')).toHaveCount(p.tools.length);
+            await expect(card.locator('dd').nth(0).getByRole('listitem')).toHaveCount(p.tools.length);
+            await expect(card.locator('dd').nth(3).getByRole('listitem')).toHaveText(p.subjects);
+            // 素養標籤是代碼加名稱，例如「A2 系統思考與解決問題」
+            await expect(card.locator('dd').nth(4).getByRole('listitem')).toHaveText(p.competencies.map((c) => new RegExp(`^${c} \\S`)));
         }
     });
 
