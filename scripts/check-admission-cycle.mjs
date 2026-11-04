@@ -52,14 +52,14 @@ function writeReport(sections, attention) {
     console.log(`\n報告寫在 ${rel(REPORT)}。`);
 }
 
-/** fail 印出錯誤後以 1 結束。--remind 時錯誤也寫進報告，issue 才看得到。 */
+/** fail 印出錯誤後以 1 結束。--remind 時錯誤也寫進報告，issue 才看得到；放在最前面，報告截斷時錯誤最後才截到。 */
 function fail(errors, hint, sections = []) {
     console.error(`\n錯誤 ${errors.length} 項：`);
     for (const e of errors) console.error(`  ${e}`);
     if (hint) console.error(`\n${hint}`);
     if (remind) {
         const list = errors.map((e) => `- ${e.replace(/\n\s*/g, '\n  ')}`);
-        writeReport([...sections, ['### 檢查的錯誤', '', ...list, '']], true);
+        writeReport([['### 檢查的錯誤', '', ...list, ''], ...sections], true);
     }
     process.exit(1);
 }
