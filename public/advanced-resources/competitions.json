@@ -80,7 +80,8 @@
       "sourceCheckedAt": "2026-11-01",
       "sourceNote": "曾被記為停辦，並非如此：官網持續更新。",
       "url": "https://www.99cef.org.tw/trml-s/",
-      "description": "正式名稱為「台灣區高中數學競賽」（Taiwan Regions Mathematics League），由財團法人九九文教基金會與政治大學、臺灣師範大學理學院合辦。第 28 屆已於 2026 年 8 月 15 至 16 日於台北、台中、高雄三區舉行完畢。資格：「全國公私立高級中學以下（含）在學學生」，每隊 9 名隊員、1 名指導教師與 1 名隊伍自聘試務人員；線上報名，學校報名者須加蓋學校用章。第 28 屆報名 2026-05-20 10:00 至 05-27、5/28 繳款；慣例於每年八月第三個週末競賽，下屆時程依官網公告。"
+      "description": "九九文教基金會與政治大學、臺灣師範大學理學院合辦的數學團體賽，全國高中以下在學學生組隊參加。線上報名、要繳費，學校報名者須加蓋學校用章。",
+      "details": "正式名稱為「台灣區高中數學競賽」（Taiwan Regions Mathematics League）。資格：「全國公私立高級中學以下（含）在學學生」。每隊 9 名隊員、1 名指導教師與 1 名隊伍自聘試務人員。\n慣例於每年八月第三個週末競賽。第 28 屆報名 2026-05-20 10:00 至 05-27、5/28 繳款，2026 年 8 月 15 至 16 日在台北、台中、高雄三區舉行完畢。下屆時程依官網公告。"
     },
     {
       "title": "外交小尖兵世界領航營",
@@ -200,7 +201,8 @@
       "registrationNote": "由 TMO 選拔國家隊 · 無個人報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.imo-official.org/",
-      "description": "中學生數學競賽。第 67 屆 2026 年 7 月 10 至 21 日於中國上海舉行已結束；第 68 屆 2027 年 7 月 16 至 26 日於匈牙利布達佩斯舉行。台灣採國手選拔制，由教育部委託臺師大數學系的數學奧林匹亞辦公室辦理（APMO 初選、TMO、IMO 三階段選訓營）。選拔 2027 年國手的 APMO 初選報名已於 2026-10-14 截止，初選 2026-11-14 舉行；簡章寫應考學生「需由就讀學校或戶籍地主管機關推薦報名」，公告寫「以學校為單位統一報名（不接受個人報名）」。"
+      "description": "中學生的國際數學競賽。台灣採國手選拔制，由數學奧林匹亞辦公室辦理 APMO 初選、TMO、IMO 三階段選訓營，學生須經學校報名。",
+      "details": "數學奧林匹亞辦公室由教育部委託臺師大數學系辦理。簡章寫應考學生「需由就讀學校或戶籍地主管機關推薦報名」，公告寫「以學校為單位統一報名（不接受個人報名）」。\n選拔 2027 年國手的 APMO 初選報名已於 2026-10-14 截止，初選 2026-11-14 舉行。\n第 67 屆 2026 年 7 月 10 至 21 日在中國上海舉行，已結束。第 68 屆 2027 年 7 月 16 至 26 日在匈牙利布達佩斯舉行。"
     },
     {
       "title": "國際資訊奧林匹亞 (IOI)",
@@ -235,7 +237,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "臺灣物奧選訓辦公室的網址是 tpmso.k12ea.gov.tw/ipho/。原先登記的 ipho2026.com 只是單屆網站，常設官網為臺灣物奧選訓辦公室所連結的 ipho-new.org。",
       "url": "https://www.ipho-new.org/",
-      "description": "中學生物理競賽，官網自述為「the most prestigious international physics competition for secondary school students」，各國代表隊至多 5 人。第 56 屆 2026 年 7 月 4 至 12 日於哥倫比亞 Bucaramanga 舉行已結束。國際官網尚未公告 2027 屆；臺灣物奧選訓辦公室公告第 57 屆由沙烏地阿拉伯主辦、2027 年 7 月 4 至 12 日舉行。台灣採國手選拔制，須經就讀學校報名：選拔 2027 年國手的初選報名已於 2026-09-30 截止，初選 2026-11-07、複選 2027-02-20、決選研習營 2027-03-15 至 04-03。"
+      "description": "中學生的國際物理競賽。台灣採國手選拔制，經初選、複選與決選研習營選出代表隊，須經就讀學校報名。",
+      "details": "官網自述為「the most prestigious international physics competition for secondary school students」，各國代表隊至多 5 人。\n選拔 2027 年國手的初選報名已於 2026-09-30 截止。初選 2026-11-07，複選 2027-02-20，決選研習營 2027-03-15 至 04-03。\n第 56 屆 2026 年 7 月 4 至 12 日在哥倫比亞 Bucaramanga 舉行，已結束。國際官網尚未公告 2027 屆；臺灣物奧選訓辦公室公告第 57 屆由沙烏地阿拉伯主辦，2027 年 7 月 4 至 12 日舉行。"
     },
     {
       "title": "國際化學奧林匹亞 (IChO)",
@@ -387,7 +390,8 @@
       },
       "sourceCheckedAt": "2026-10-23",
       "url": "https://apmo-official.org/",
-      "description": "亞太地區函授制數學競賽，由各國代表於本國同步舉辦並寄回評分，官網明訂亞太與西太平洋國家於每年 3 月第二個週二上午應試。參賽者須未正式註冊大學且於當年 7 月 1 日前未滿 20 歲，各國至多送 10 人成績正式參賽。台灣不開放個人報名，須經數學奧林匹亞辦公室選拔：2027 屆初選 2026-11-14 舉行，報名 9/29 至 10/14 已截止，簡章應考資格：「未滿 20 歲（計至中華民國 116 年 7 月 1 日）本國籍高級中等以下學校在學學生或參與非學校型態實驗教育者，需由就讀學校或戶籍地主管機關推薦報名」；辦公室預定行事曆列 APMO 2027 於 2027-03-09（二）在臺北、高雄考區應試。"
+      "description": "亞太地區函授制數學競賽，參賽者須未正式註冊大學、當年 7 月 1 日前未滿 20 歲。台灣限本國籍，不開放個人報名，須經數學奧林匹亞辦公室選拔。",
+      "details": "各國代表在本國同步舉辦並寄回評分，各國至多送 10 人成績正式參賽。\n台灣初選的簡章應考資格：「未滿 20 歲（計至中華民國 116 年 7 月 1 日）本國籍高級中等以下學校在學學生或參與非學校型態實驗教育者，需由就讀學校或戶籍地主管機關推薦報名」。2027 屆初選 2026-11-14 舉行，報名 9/29 至 10/14，已截止。\n官網明訂亞太與西太平洋國家於每年 3 月第二個週二上午應試。辦公室預定行事曆列 APMO 2027 於 2027-03-09（二）在臺北、高雄考區應試。"
     },
     {
       "title": "亞洲物理奧林匹亞 (APhO)",
@@ -407,7 +411,8 @@
       },
       "sourceCheckedAt": "2026-10-23",
       "url": "https://tpmso.k12ea.gov.tw/ipho/",
-      "description": "亞洲區中學生物理競賽。章程限「The age of the participants should not exceed twenty on June 30th of the year of the competition」，且須為高中在學或當年畢業尚未入大學者，每隊至多 8 人。第 26 屆 2026 年 5 月 17 至 25 日於韓國釜山舉行已結束；第 27 屆 2027 年 5 月 16 至 24 日於泰國呵叻（Nakhon Ratchasima）的 Suranaree University of Technology 舉行（主辦方網站 science.sut.ac.th/apho2027/）。台灣由物理奧林匹亞選訓產生代表隊，2026 年選拔要點寫選訓決賽營「正取 8 名、備取 2 名」，正取者「代表我國參加 2026 年第 26 屆亞洲物理奧林匹亞競賽」；國內初選由學生向就讀學校報名，2027 屆簡章寫「凡對物理有興趣之在學學生，均可向所就讀學校自由報名，各校報名人數不限制，由就讀學校彙整名單」；非學校型態實驗教育者的報名方式，簡章原文：「由各該直轄市、縣(市)主管機關報名」。2027 屆國內初選 2026-11-07 舉行，報名已於 9/30 截止，國教署 2026-09-15 函將報名資格修正為須具中華民國國籍。APhO 各屆網站由主辦國自建，相關公告見臺灣選訓辦公室網站。"
+      "description": "亞洲區中學生物理競賽，參賽者當年 6 月 30 日不超過 20 歲。台灣由物理奧林匹亞選訓產生代表隊，學生向就讀學校報名國內初選，須具中華民國國籍。",
+      "details": "章程限「The age of the participants should not exceed twenty on June 30th of the year of the competition」，且須為高中在學或當年畢業尚未入大學者。每隊至多 8 人。\n2027 屆簡章寫「凡對物理有興趣之在學學生，均可向所就讀學校自由報名，各校報名人數不限制，由就讀學校彙整名單」；非學校型態實驗教育者的報名方式，簡章原文：「由各該直轄市、縣(市)主管機關報名」。國籍的限制是國教署 2026-09-15 函修正的報名資格。\n2027 屆國內初選 2026-11-07 舉行，報名已於 9/30 截止。2026 年選拔要點寫選訓決賽營「正取 8 名、備取 2 名」，正取者「代表我國參加 2026 年第 26 屆亞洲物理奧林匹亞競賽」。\n第 26 屆 2026 年 5 月 17 至 25 日在韓國釜山舉行，已結束。第 27 屆 2027 年 5 月 16 至 24 日在泰國呵叻（Nakhon Ratchasima）的 Suranaree University of Technology 舉行，主辦方網站是 science.sut.ac.th/apho2027/。APhO 各屆網站由主辦國自建，相關公告見臺灣選訓辦公室網站。"
     },
     {
       "title": "亞太資訊奧林匹亞 (APIO)",
@@ -445,7 +450,8 @@
       "registrationNote": "由國家代表隊參賽 · 無個人報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.egmo.org/",
-      "description": "鼓勵女性中學生投入數學的國際競賽，官網寫「made exclusively for high school female students」「Participation is by invitation only, with each country nominating up to four students」，參賽國已逾 60 國並含非歐洲國家。台灣有參賽，官網國家頁以 Taiwan (TWN) 列出 2023 年起的紀錄，2023 年只派觀察員，2024 至 2026 年各有成績（2026 年為 2 銀 1 銅）。第 15 屆 2026 年 4 月 9 至 15 日於法國波爾多舉行已結束；第 16 屆 2027 年 4 月 11 至 17 日於克羅埃西亞 Šibenik 舉行，2028 年 4 月 7 至 13 日於立陶宛維爾紐斯舉行。台灣選拔由數學奧林匹亞辦公室辦理，2027 屆 EGMO 初選已於 2026-09-19 舉行（報名 9/1 至 9/10，由就讀學校或各該主管機關推薦報名，公告寫「網路報名，以學校為單位統一報名（不接受個人報名）」），報名資格限生理女性、未滿 20 歲（計至 2027-04-01）的本國籍在學學生。"
+      "description": "鼓勵女性中學生投入數學的國際競賽，由各國提名參賽。台灣由數學奧林匹亞辦公室選拔，限生理女性、未滿 20 歲的本國籍在學學生，由學校或主管機關推薦報名。",
+      "details": "官網寫「made exclusively for high school female students」「Participation is by invitation only, with each country nominating up to four students」。參賽國已逾 60 國，也有非歐洲國家。\n未滿 20 歲的年齡計至 2027-04-01。2027 屆 EGMO 初選已於 2026-09-19 舉行，報名 9/1 至 9/10，公告寫「網路報名，以學校為單位統一報名（不接受個人報名）」。\n官網國家頁以 Taiwan (TWN) 列出 2023 年起的紀錄：2023 年只派觀察員，2024 至 2026 年各有成績，2026 年為 2 銀 1 銅。\n第 15 屆 2026 年 4 月 9 至 15 日在法國波爾多舉行，已結束。第 16 屆 2027 年 4 月 11 至 17 日在克羅埃西亞 Šibenik，2028 年 4 月 7 至 13 日在立陶宛維爾紐斯舉行。"
     },
     {
       "title": "歐洲女子資訊奧林匹亞 (EGOI)",
@@ -531,7 +537,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "Countries & Regions 頁在 immchallenge.org/countries-regions/。2026 年完整結果是 2026_IMMC_Results.pdf，共 68 隊。",
       "url": "https://www.immchallenge.org/",
-      "description": "由 COMAP (the Consortium for Mathematics and Its Applications) 與 NeoUnion ESC Organization 主辦的中學生數學建模競賽，自述為「the world's premier international mathematical modeling competition for secondary school students」，各國／區至多 2 隊晉級國際賽。2026 屆於 2 至 4 月間的五日窗口進行、8 月 5 至 9 日於美國波士頓頒獎；2027 屆競賽期間依 COMAP 官網為「February 1 — April 26, 2027」，隊伍於期間內自選連續五日作答。共同主辦方 NeoUnion 官網寫「IMMC 2027 Summit will be held in Hong Kong in the summer of 2027」，確切日期尚未公布。官網 Countries & Regions 頁列出各國／區的承辦單位，台灣在「China (Mainland, Hong Kong, Macau, Taiwan)」這一項，承辦單位為 NeoUnion ESC Organization（info@neounion.net），須向該單位報名。官網 2026 年完整結果有 2 隊來自台灣的學校，Country/Region Represented 欄為「Taiwan, China」，成績為 Honorable Mention 與 Successful Participant。"
+      "description": "中學生數學建模團體賽，隊伍在競賽期間內自選連續五日作答，部分隊伍晉級國際賽。台灣學生須向承辦單位 NeoUnion ESC Organization 報名。",
+      "details": "由 COMAP (the Consortium for Mathematics and Its Applications) 與 NeoUnion ESC Organization 主辦，自述為「the world's premier international mathematical modeling competition for secondary school students」。各國／區至多 2 隊晉級國際賽。\n官網 Countries & Regions 頁列出各國／區的承辦單位。台灣在「China (Mainland, Hong Kong, Macau, Taiwan)」這一項，承辦單位 NeoUnion ESC Organization 的信箱是 info@neounion.net。\n2027 屆競賽期間依 COMAP 官網為「February 1 — April 26, 2027」。共同主辦方 NeoUnion 官網寫「IMMC 2027 Summit will be held in Hong Kong in the summer of 2027」，確切日期尚未公布。2026 屆在 2 至 4 月間的五日窗口進行，8 月 5 至 9 日在美國波士頓頒獎。\n官網 2026 年完整結果有 2 隊來自台灣的學校，Country/Region Represented 欄為「Taiwan, China」，成績為 Honorable Mention 與 Successful Participant。"
     },
     {
       "title": "國際青年物理學家辯論賽 (IYPT)",
@@ -548,7 +555,8 @@
       "registrationNote": "由 TYPT 選拔國家隊 · 無個人報名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.iypt.org/",
-      "description": "中學生以團隊形式對開放式物理題進行研究與辯論的國際賽事，參賽逾 38 國，各國多以國內選拔賽組隊，台灣經臺灣青年學生物理辯論競賽（TYPT）選拔（官網存有 Chinese Taipei 的申請文件）。2026 屆 7 月 5 至 12 日於瑞士蘇黎世舉行已結束；第 40 屆 2027 年 7 月 5 至 12 日於紐西蘭奧克蘭舉行，17 道賽題已於 2026 年 7 月公布。2027 屆預先報名只開放給各國授權代表，官網寫「Authorized representatives of the IMOs can apply by registering as team managers in the CC system」「Deadline: December 15. 2026 (midnight, Central European Time)」，學生不能個人報名。"
+      "description": "中學生組隊研究開放式物理題並辯論的國際賽事，各國多以國內選拔賽組隊。台灣經 TYPT 選拔，學生不能個人報名。",
+      "details": "參賽逾 38 國。台灣的選拔賽是臺灣青年學生物理辯論競賽（TYPT），官網存有 Chinese Taipei 的申請文件。\n2027 屆預先報名只開放給各國授權代表，官網寫「Authorized representatives of the IMOs can apply by registering as team managers in the CC system」「Deadline: December 15. 2026 (midnight, Central European Time)」。\n第 40 屆 2027 年 7 月 5 至 12 日在紐西蘭奧克蘭舉行，17 道賽題已於 2026 年 7 月公布。2026 屆 7 月 5 至 12 日在瑞士蘇黎世舉行，已結束。"
     },
     {
       "title": "Codeforces 程式競賽",
@@ -804,7 +812,8 @@
       "registrationNote": "2/1 開放報名，比賽結束前都可報名",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://purplecomet.org/",
-      "description": "官網寫「a free, annual, international, online, team, mathematics competition designed for middle and high school students」，1 至 6 人一隊、高中組 90 分鐘 30 題，2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。每隊要有一位成年人當 supervisor：規則頁寫「Each team is required to have an adult supervisor」，也寫「Any adult aged 21 years or older may serve as a team supervisor」，老師或家長都可以，由這位成年人在官網註冊後建隊。隊員可以來自不同學校或在家自學，台灣不需任何國家代理。2027 屆競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。規則頁寫隊伍報名期間「begins February 1 and continues through the end of the competition」，2027 屆是 2 月 1 日到 4 月 15 日。"
+      "description": "免費的國際線上數學團體賽，國中與高中生組隊參加，每隊要有一位成年人當 supervisor。隊員可以來自不同學校或在家自學，台灣不需任何國家代理。",
+      "details": "官網寫「a free, annual, international, online, team, mathematics competition designed for middle and high school students」。1 至 6 人一隊，高中組 90 分鐘 30 題。2025 年有 80 國逾 12,000 名學生、逾 4,000 隊參加。\n規則頁寫「Each team is required to have an adult supervisor」，也寫「Any adult aged 21 years or older may serve as a team supervisor」。老師或家長都可以，由這位成年人在官網註冊後建隊。\n規則頁寫隊伍報名期間「begins February 1 and continues through the end of the competition」，2027 屆是 2 月 1 日到 4 月 15 日。競賽視窗 4 月 6 日至 15 日，隊伍可自選視窗內任一時間開始。"
     },
     {
       "title": "袋鼠數學競賽 (Math Kangaroo)",
@@ -820,7 +829,8 @@
       "sourceCheckedAt": "2026-11-01",
       "sourceNote": "AKSF 官方會員國頁（www.aksf.org/countries.xhtml）逐字列有「Republic of China (Taiwan) (TW)」，承辦單位 Chinese Mathematics Association、網站 www.tmo.com.tw。MKT 的站內專頁是 www.tmo.com.tw/main/page/83d48be0-f6b0-11ec-8671-c3637dfe7247。",
       "url": "https://www.tmo.com.tw/",
-      "description": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌、各會員國各自辦理的中小學數學競賽，全為選擇題。AKSF 的會員國頁列的台灣會員是中華數學協會（Chinese Mathematics Association），協會網站的劃撥戶名是奧林匹克文化事業股份有限公司。台灣賽名為「MKT 袋鼠數學能力測驗」，官網寫「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」，高中生可參加。參加對象：「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」；舉辦資格：「該校須滿 20 位參加學生，由校方統一報名；參與各學校自行於期間選擇適合時間於校內舉辦，偏鄉、離島或特殊情況請與協會聯繫」。2026 年活動期間原文：「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」，已結束，2027 年時程尚未公告，費用與名額要向就讀學校確認。"
+      "description": "各會員國各自辦理的中小學數學競賽，全為選擇題。台灣賽名為「MKT 袋鼠數學能力測驗」，由學校統一報名、在校內舉辦，高中生可參加。",
+      "details": "由 Association Kangourou sans Frontières（法國登記的國際協會）統籌。AKSF 的會員國頁列的台灣會員是中華數學協會（Chinese Mathematics Association），協會網站的劃撥戶名是奧林匹克文化事業股份有限公司。\n官網寫「MKT 袋鼠數學能力測驗由中華數學協會取得法國 AKSF 授權，並授權給全國各級學校招集該校學生於期間在校內進行」，分級最高到「Student（高中二、三年級）」。\n參加對象：「全國各縣市之公私立各級學校（幼兒園、國小、國中、高中）及職業學校在學學生」。舉辦資格：「該校須滿 20 位參加學生，由校方統一報名；參與各學校自行於期間選擇適合時間於校內舉辦，偏鄉、離島或特殊情況請與協會聯繫」。費用與名額要向就讀學校確認。\n2026 年活動期間原文：「2026 年 03 月 19 日(四) ～ 04 月 8 日(三)」，已結束。2027 年時程尚未公告。"
     },
     {
       "title": "高中數學建模競賽 (HiMCM)",
@@ -840,7 +850,8 @@
       },
       "sourceCheckedAt": "2026-11-01",
       "url": "https://comap.org/contests/himcm-midmcm",
-      "description": "美國 COMAP 主辦的高中數學建模競賽，每隊最多 4 人，隊員須來自同一所學校或同一個 program，並由同校（或同 program）的 faculty advisor 報名；以短期教學或競賽準備為主的補習班、考試與競賽培訓機構，以及數學或 STEM 學習中心，不算學校或 program。作品以英文撰寫、線上提交，台灣學生可參加。2026 年第 29 屆報名截止為 11 月 4 日 2:00 pm EST（台灣時間 11/5 03:00），逾時不受理，賽期 11 月 4–17 日，每隊報名費 US$100。"
+      "description": "美國 COMAP 主辦的高中數學建模團體賽，隊員須來自同一所學校或同一個 program，由 faculty advisor 報名，每隊要繳報名費。",
+      "details": "每隊最多 4 人，faculty advisor 要和隊員同校（或同 program）。以短期教學或競賽準備為主的補習班、考試與競賽培訓機構，以及數學或 STEM 學習中心，不算學校或 program。\n作品以英文撰寫、線上提交，台灣學生可參加。2026 年第 29 屆報名截止為 11 月 4 日 2:00 pm EST（台灣時間 11/5 03:00），逾時不受理。賽期 11 月 4–17 日，每隊報名費 US$100。"
     },
     {
       "title": "USAII 全球 AI 黑客松 (Global AI Hackathon)",
@@ -1299,7 +1310,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "原 www.sasmo.sg 網域已失守，會經 301／302 轉址到 arcade.now 的聯盟廣告頁，與 SASMO 完全無關，現行官網為 sasmo.simcc.org。",
       "url": "https://sasmo.simcc.org/",
-      "description": "由 SIMCC（Singapore International Mastery Contests Centre）主辦，官網寫「SASMO is open to all Kindergarten 2, Pri 1 to 6, Secondary 1 to 4 and JC1/2 students (K2 to grade 12 students)」，高中生可參加。台灣由 SIMCC 官方 country partner「Ding Sheng Global」承辦（simcc.tw），資格為「須在台灣的學校就讀」；2026 屆台灣報名 3/9 至 3/31、線上考試 4/18、報名費新台幣 800 元，2027 屆尚未公布。"
+      "description": "SIMCC 主辦的數學競賽，K2 到 12 年級可參加。台灣由「Ding Sheng Global」承辦，資格為「須在台灣的學校就讀」，要繳報名費。",
+      "details": "SIMCC 全名 Singapore International Mastery Contests Centre，官網寫「SASMO is open to all Kindergarten 2, Pri 1 to 6, Secondary 1 to 4 and JC1/2 students (K2 to grade 12 students)」。\nDing Sheng Global 是 SIMCC 官方 country partner（simcc.tw）。2026 屆台灣報名 3/9 至 3/31，4/18 線上考試，報名費新台幣 800 元。2027 屆尚未公布。"
     },
     {
       "title": "東南亞數學奧林匹亞 (SEAMO)",
@@ -1317,7 +1329,8 @@
       "recheckNote": "SEAMO X 2027 報名 11/15 截止，截止後改寫 registrationNote",
       "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。10-23 查證時首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。11-01 首頁改列 SEAMO X 2027：「Registration Start Date 1 Nov 2026, 01:00 AM」「Registration Deadline 15 Nov 2026, 23:55 PM」「Competition Day 15 Jan 2027, 09:00 AM」「Exam Venue Bangkok, Thailand」，都沒有標時區；同頁寫「The top 40% locally will represent their region in the extended round.」。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。",
       "url": "https://www.seamo-official.org/",
-      "description": "商業營運的中小學數學競賽。官網只標示新加坡總部，費用不公開、由各國代理開發票。官網首頁列的 SEAMO X 2027 是各地區成績前 40% 參加的延伸賽，報名 11/1 至 11/15（官網沒寫時區），2027-01-15 在泰國曼谷比賽。官網的地區選單沒有台灣，台灣代理是 JoyEdu Academy（taiwan@seamo-official.org），要報名須自行去信。"
+      "description": "商業營運的中小學數學競賽，費用不公開、由各國代理開發票。官網的地區選單沒有台灣，要報名須自行去信台灣代理 JoyEdu Academy。",
+      "details": "官網只標示新加坡總部。台灣代理的信箱是 taiwan@seamo-official.org。\n官網首頁列的 SEAMO X 2027 是各地區成績前 40% 參加的延伸賽，報名 11/1 至 11/15（官網沒寫時區），2027-01-15 在泰國曼谷比賽。"
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
@@ -1333,7 +1346,8 @@
       "registrationNote": "依 SASMO 等獎項晉級 · 限 1,500 名",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://steamahead.simcc.org/ijmo/",
-      "description": "官網寫「IJMO is organised by SIMCC in collaboration with country council partners in over 50 countries」，適用年級為 GRADES 1 TO 12，高中生可參加，台灣經 SIMCC 台灣夥伴（Ding Sheng Global Technology／simcc.tw）報名。屬商業性質競賽。2026 屆已公告，IJMO 頁寫「Competition Date: 12 December 2026」；STEAM AHEAD 官網首頁寫「11–16 December 2026 · Tashkent, Uzbekistan. Five international competitions in mathematics, science, informatics, cybersecurity and arts. Registration closes 11 November 2026.」，IJMO 是這五項之一，即 2026 屆在烏茲別克塔什干舉行、報名 2026-11-11 截止，報名細節須洽各國夥伴（「Kindly check with your country partner for registration and competition details」）。參賽須先在 SIMCC 系列賽事得獎，IJMO 頁寫「Participants who achieved Silver and above in AMO 2025 and SASMO 2026 qualify to join IJMO directly without training. Those who achieved a Bronze in AMO 2025 and SASMO 2026 may join, but only through the IJMO training program」，SIMOC 2026 則是銅獎以上免訓練、佳作須受訓。名額：「IJMO registration is limited to 1,500 slots, allocated strictly on a first-come, first-served basis」。台灣端的 SIMCC 夥伴頁（simcc.tw/sasmo-2026/）列出晉級鏈 SASMO、SIMOC、IJMO，SASMO 銀牌（8%–20%）以上可取得「參加STEAM AHEAD-IJMO（全球賽）競賽資格」，銅牌（21%–40%）只給 SIMOC 資格，所以台灣學生要參加 IJMO，須先在 SASMO、AMO 等 SIMCC 賽事得獎。"
+      "description": "SIMCC 與各國夥伴合辦的商業性質數學競賽，1 到 12 年級可參加。須先在 SASMO、AMO 等 SIMCC 賽事得獎，台灣經 SIMCC 台灣夥伴報名。",
+      "details": "官網寫「IJMO is organised by SIMCC in collaboration with country council partners in over 50 countries」，適用年級為 GRADES 1 TO 12。台灣的夥伴是 Ding Sheng Global Technology（simcc.tw）。\nIJMO 頁寫「Participants who achieved Silver and above in AMO 2025 and SASMO 2026 qualify to join IJMO directly without training. Those who achieved a Bronze in AMO 2025 and SASMO 2026 may join, but only through the IJMO training program」。SIMOC 2026 則是銅獎以上免訓練、佳作須受訓。\n台灣端的 SIMCC 夥伴頁（simcc.tw/sasmo-2026/）列出晉級鏈 SASMO、SIMOC、IJMO：SASMO 銀牌（8%–20%）以上可取得「參加STEAM AHEAD-IJMO（全球賽）競賽資格」，銅牌（21%–40%）只給 SIMOC 資格。\n2026 屆已公告，IJMO 頁寫「Competition Date: 12 December 2026」。STEAM AHEAD 官網首頁寫「11–16 December 2026 · Tashkent, Uzbekistan. Five international competitions in mathematics, science, informatics, cybersecurity and arts. Registration closes 11 November 2026.」，IJMO 是這五項之一，也就是 2026 屆在烏茲別克塔什干舉行、報名 2026-11-11 截止。\n名額：「IJMO registration is limited to 1,500 slots, allocated strictly on a first-come, first-served basis」。報名細節須洽各國夥伴（「Kindly check with your country partner for registration and competition details」）。"
     },
     {
       "title": "全國語文競賽",
@@ -1418,7 +1432,8 @@
       "registrationNote": "2026 屆已結束 · 2027 屆未公布",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://opho.physoly.org/",
-      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名；2026 屆已於 8 月 21–23 日舉行完畢，2027 屆時程尚未公布。"
+      "description": "學生社群發起的全程線上物理競賽，開放高中生與大學生，1–3 人一隊，單一回合含簡答、詳答與模擬實驗題。台灣學生可自行組隊報名。",
+      "details": "2026 屆已於 8 月 21–23 日舉行完畢，2027 屆時程尚未公布。"
     },
     {
       "title": "美國數學競賽 (AMC 10/12)",
@@ -1438,7 +1453,8 @@
       },
       "sourceCheckedAt": "2026-11-01",
       "url": "https://www.99cef.org.tw/maa-amc/",
-      "description": "由 Mathematical Association of America 主辦，AMC 12 的對象是「For high school students in grades 12 and below」、AMC 10 是「For high school students in grades 10 and below」。台灣由財團法人九九文教基金會與學習成就測驗協會承辦，分團體報名與個別報名，個別報名一律在網路上報名。台灣簡章的報考資格是在學學生，AMC 10 到高一、AMC 12 到高三，每項報名費 750 元。2026 年報名 9/18 至 9/30，已截止；考試 AMC 10A／12A 在 11/6（星期五）晚上，10B／12B 在 11/14（星期六）上午，A、B 卷命題範圍相同、題目不同，可以自己選。",
+      "description": "依台灣簡章，AMC 10 到高一、AMC 12 到高三的在學學生可報考。分團體報名與個別報名，個別報名一律在網路上報名，要繳報名費。",
+      "details": "由 Mathematical Association of America 主辦。AMC 12 的對象是「For high school students in grades 12 and below」，AMC 10 是「For high school students in grades 10 and below」。\n台灣由財團法人九九文教基金會與學習成就測驗協會承辦，每項報名費 750 元。\n2026 年報名 9/18 至 9/30，已截止。AMC 10A／12A 在 11/6（星期五）晚上考，10B／12B 在 11/14（星期六）上午。A、B 卷命題範圍相同、題目不同，可以自己選。",
       "sourceNote": "英文引文與 MAA 的報名規定在 https://maa.org/amcreg/ 與 https://maa.org/amc-international/。maa.org/amcreg 是給 competition manager（學校老師）註冊用的，台灣考生要向承辦單位報名，所以 url 指向九九文教基金會的 AMC 頁；2026 年簡章（報名與考試日期的出處）在 https://www.99cef.org.tw/15729/。"
     },
     {
@@ -1454,7 +1470,8 @@
       "registrationNote": "由學校訂購 · 各賽事截止日不同",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://cemc.uwaterloo.ca/contests/",
-      "description": "滑鐵盧大學 CEMC 主辦的一系列 5 至 12 年級數學競賽，採學校訂購制，須由學校或監考老師訂購，學生無法個人報名。台灣屬「Outside North and South America」區，CEMC 為該區另行公告考試日與訂購截止日。2026/27 學年主要期限：CSMC／CIMC 考試 2026-11-19、訂購截止 2026-10-22；Pascal／Cayley／Fermat 考試 2027-02-24 至 25、加拿大與印度以外地區訂購截止 2027-02-02；Euclid 考試 2027-04-07、訂購截止 2027-03-11；CCC 考試 2027-02-18、訂購截止 2027-02-11。各賽事截止日不同。"
+      "description": "滑鐵盧大學 CEMC 主辦的一系列 5 至 12 年級數學競賽，採學校訂購制，須由學校或監考老師訂購，學生無法個人報名。",
+      "details": "台灣屬「Outside North and South America」區，CEMC 為該區另行公告考試日與訂購截止日，各賽事截止日不同。\n2026/27 學年主要期限：CSMC／CIMC 考試 2026-11-19、訂購截止 2026-10-22；Pascal／Cayley／Fermat 考試 2027-02-24 至 25、加拿大與印度以外地區訂購截止 2027-02-02；Euclid 考試 2027-04-07、訂購截止 2027-03-11；CCC 考試 2027-02-18、訂購截止 2027-02-11。"
     },
     {
       "title": "美國電腦科學聯盟程式競賽 (ACSL)",
@@ -1636,7 +1653,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "更正：先前記載「官網未載明台灣的應試方式」並不成立，而且與本資料的 AMC 10/12 條目自相矛盾。AMC International 頁在 maa.org/amc-international/。",
       "url": "https://maa.org/maa-invitational-competitions/",
-      "description": "AMC 10／12 的晉級賽，2027 屆有兩項重大改制：晉級門檻改為固定分數，官網寫「Students who score 100 or above on AMC 10 and 85 or above on AMC 12 (and meet other eligibility requirements) will qualify to register for AIME」；並新增年齡下限「Only students aged 13 and older will be eligible to take AIME」。AIME I／AIME II 已取消，官網 FAQ 寫「Are there still two AIME exams, AIME I and AIME II? No」，改為 2027 年 2 月 5 至 6 日的單一競賽視窗、無補考。報名費 US$85。美加考場由 Pearson Professional Centers 承辦。AIME 頁寫「Participants in the AMC international program should follow the policies of the International Group Leader for their country/region」，而 MAA 的 AMC International 頁列出「International Group Leaders for 2026-27 … Peter Shiue　Countries: Shanghai and Taiwan　Email: shiue@unlv.nevada.edu」，並規定「Students must register for the competitions through the IGL in the country they reside」。台灣考生即經由這位 IGL 報名與應試。"
+      "description": "AMC 10／12 的晉級賽，AMC 達固定分數、年滿 13 歲才能報名；AIME I／AIME II 已取消。台灣考生經 MAA 列出的 IGL 報名與應試。",
+      "details": "分數門檻與年齡下限都是 2027 屆的改制。官網寫「Students who score 100 or above on AMC 10 and 85 or above on AMC 12 (and meet other eligibility requirements) will qualify to register for AIME」，並新增年齡下限「Only students aged 13 and older will be eligible to take AIME」。\n官網 FAQ 寫「Are there still two AIME exams, AIME I and AIME II? No」，兩場考試已取消。2027 年改為 2 月 5 至 6 日的單一競賽視窗，沒有補考。報名費 US$85，美加考場由 Pearson Professional Centers 承辦。\nAIME 頁寫「Participants in the AMC international program should follow the policies of the International Group Leader for their country/region」。MAA 的 AMC International 頁列出「International Group Leaders for 2026-27 … Peter Shiue　Countries: Shanghai and Taiwan　Email: shiue@unlv.nevada.edu」，並規定「Students must register for the competitions through the IGL in the country they reside」。"
     },
     {
       "title": "臺灣青年學生物理辯論競賽 (TYPT)",
@@ -1653,7 +1671,9 @@
       "eventEndsAt": "2027-03-08",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://typt.phy.ntnu.edu.tw/",
-      "description": "由臺灣師範大學物理學系主辦（賽事冠名徐有庠盃），優勝隊伍為 IYPT 國際賽的選拔基礎。資格：「參賽學生為全國公私立高中職一~三年級學生，每隊由三~五位學生組成」，領隊的規定照報名規則原文：「由各校教師/實習教師/曾擔任國手大專院校學生(須提供在學證明)組織領導團隊，每隊一～二位領隊教師帶隊參加競賽」，報名上限 26 隊、每校至多 2 隊，亦可跨校聯合組隊。第 19 屆（2027）已開放網路報名，官網原文：「報名期間：115. 10. 15 （中午開始報名）~ 116. 01. 28 (中午12:00截止)」「競賽日期：116. 03. 05 ~ 116. 03. 08」，即報名 2026-10-15 中午起至 2027-01-28、競賽 2027-03-05 至 03-08；報名系統頁原文：「報名時間(~2027-01-28 23:59:59)」，與公告的中午截止不一致。題目已於 2026-08-12 公告（採 2027 IYPT 題目）。第 18 屆報名規則頁原載「競賽日期： 115. 03. 06 ~ 115. 03. 09」，即 2026-03-06 至 03-09，已辦完。"
+      "description": "臺灣師範大學物理學系主辦的高中職物理辯論團體賽，優勝隊伍為 IYPT 國際賽的選拔基礎。可以跨校聯合組隊，網路報名。",
+      "details": "賽事冠名徐有庠盃。資格：「參賽學生為全國公私立高中職一~三年級學生，每隊由三~五位學生組成」。領隊的規定照報名規則原文：「由各校教師/實習教師/曾擔任國手大專院校學生(須提供在學證明)組織領導團隊，每隊一～二位領隊教師帶隊參加競賽」。\n報名上限 26 隊，每校至多 2 隊。題目已於 2026-08-12 公告，採 2027 IYPT 題目。\n第 19 屆（2027）已開放網路報名，官網原文：「報名期間：115. 10. 15 （中午開始報名）~ 116. 01. 28 (中午12:00截止)」「競賽日期：116. 03. 05 ~ 116. 03. 08」，即報名 2026-10-15 中午起至 2027-01-28、競賽 2027-03-05 至 03-08。報名系統頁原文：「報名時間(~2027-01-28 23:59:59)」，與公告的中午截止不一致。",
+      "sourceNote": "第 18 屆報名規則頁原載「競賽日期： 115. 03. 06 ~ 115. 03. 09」，即 2026-03-06 至 03-09，已辦完。"
     },
     {
       "title": "全國高中生活科技學藝競賽",
@@ -1790,7 +1810,8 @@
       "recheckOn": "2027-01-04",
       "recheckNote": "2027 屆筆試訂在 2027-02-03，報名簡章到 2026-10-27 仍未公告，2026 屆的報名期是 1/12 至 1/20，在報名開始前回來查。",
       "url": "https://tpmso.k12ea.gov.tw/tmo/",
-      "description": "我國 IMO 國手選拔的一環，由教育部國教署委託臺灣師範大學數學系「數學奧林匹亞辦公室」承辦。2026 屆簡章寫「本競賽擇優錄取約30名進入本年度IMO第一階段選訓決賽營」，報名資格限歷屆亞太數學奧林匹亞研習營（APMOC）學員（依年度另有推薦或結訓條件）與曾獲選 IMO／APMO 我國代表選手者，應屆 APMOC 學員無須另行報名、直接赴試。2026 屆報名公告寫「一律採網路報名，須由就讀學校或主管機關統一報名，不接受個人報名」；教育部遴選學生參加國際數理學科奧林匹亞競賽作業要點第四點規定「擬參加本競賽之學生，應經由就讀學校於各學科選訓計畫所定期間內，向承辦大學或機構報名」，未取得學籍的非學校型態實驗教育學生則經由直轄市、縣（市）主管機關報名。官網 2026-08-28 公告 2027 年度預定行事曆：TMO 訂於 2027-02-03 在臺北考區（臺師大公館校區）筆試，TMO 報名簡章尚未公告（2026 屆的報名期是 1/12 09:00 至 1/20 17:00）；同體系 EGMO 初選 2026-09-19 已辦畢，APMO 初選 2026-11-14（報名已於 10/14 17:00 截止），APMO 複選 2027-01-27（原名 APMO 初選考試第二階段）。行事曆註明「本行事曆所列日期皆為預定時程，僅供參考；各項活動實際辦理日期，以本辦公室正式公告之簡章為準」。"
+      "description": "IMO 國手選拔的一環，由數學奧林匹亞辦公室承辦。限歷屆 APMOC 學員與曾獲選 IMO／APMO 我國代表選手者，須經學校或主管機關報名。",
+      "details": "承辦的是教育部國教署委託臺灣師範大學數學系的「數學奧林匹亞辦公室」。2026 屆簡章寫「本競賽擇優錄取約30名進入本年度IMO第一階段選訓決賽營」。\nAPMOC 是亞太數學奧林匹亞研習營，學員的報名資格依年度另有推薦或結訓條件。應屆 APMOC 學員無須另行報名，直接赴試。\n2026 屆報名公告寫「一律採網路報名，須由就讀學校或主管機關統一報名，不接受個人報名」。教育部遴選學生參加國際數理學科奧林匹亞競賽作業要點第四點規定「擬參加本競賽之學生，應經由就讀學校於各學科選訓計畫所定期間內，向承辦大學或機構報名」，未取得學籍的非學校型態實驗教育學生則經由直轄市、縣（市）主管機關報名。\n官網 2026-08-28 公告 2027 年度預定行事曆：TMO 訂於 2027-02-03 在臺北考區（臺師大公館校區）筆試。TMO 報名簡章尚未公告，2026 屆的報名期是 1/12 09:00 至 1/20 17:00。\n同體系的 EGMO 初選 2026-09-19 已辦畢，APMO 初選 2026-11-14（報名已於 10/14 17:00 截止），APMO 複選 2027-01-27（原名 APMO 初選考試第二階段）。行事曆註明「本行事曆所列日期皆為預定時程，僅供參考；各項活動實際辦理日期，以本辦公室正式公告之簡章為準」。"
     },
     {
       "title": "全國資訊奧林匹亞—台灣選拔賽 (TOI)",
@@ -1842,7 +1863,8 @@
       "sourceCheckedAt": "2026-11-01",
       "sourceNote": "原 www.amt.edu.au 首頁查不到任何日期，賽事頁為 amt.edu.au/amc，2027 屆的英文引文出自這一頁。AMT 只受理學校、自學家庭與補習機構註冊（https://amt.edu.au/competitions：「Only teachers and staff at a verified school, home school or coaching clinic can register students in our competitions」），台灣考生要向承辦單位報名，所以 url 指向學習成就測驗協會的澳洲 AMC 頁。",
       "url": "https://www.gemt.org.tw/amc/",
-      "description": "由 Australian Maths Trust（AMT）主辦的中小學數學競賽。台灣試務自 2025 年起由學習成就測驗協會與九九文教基金會共同承辦，分團體報名與個別報名，個別報名一律在網路上報名，在台灣各考區紙本作答。2026 年報名 5/29 至 6/22、每人 750 元，8/4 晚上考試，已結束；承辦單位寫每年約五月下旬開放報名，2027 年的日期還沒公布。AMT 官網的 2027 屆考試是 8 月 3 至 5 日，直接向 AMT 報名的學校，紙本報名截止日澳紐為 7/2、其他國家為「Friday 25 June 2027 – International」，線上報名截止「Friday 30 July 2027」，費用「AUD $9.30 per student」；官網也寫「From 2027, the AMC Early Primary division will be part of our standard AMC offerings」。"
+      "description": "Australian Maths Trust（AMT）主辦的中小學數學競賽。台灣分團體報名與個別報名，個別報名一律在網路上報名，在台灣各考區紙本作答，要繳費。",
+      "details": "台灣試務自 2025 年起由學習成就測驗協會與九九文教基金會共同承辦。承辦單位寫每年約五月下旬開放報名，2027 年的日期還沒公布。2026 年報名 5/29 至 6/22、每人 750 元，8/4 晚上考試，已結束。\nAMT 官網的 2027 屆考試是 8 月 3 至 5 日。直接向 AMT 報名的學校，紙本報名截止日澳紐為 7/2、其他國家為「Friday 25 June 2027 – International」，線上報名截止「Friday 30 July 2027」，費用「AUD $9.30 per student」。官網也寫「From 2027, the AMC Early Primary division will be part of our standard AMC offerings」。"
     },
     {
       "title": "普通型高級中等學校數理及資訊學科能力競賽",
@@ -1858,7 +1880,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "國教署業務頁只有制度說明、沒有年度日程。",
       "url": "https://www.k12ea.gov.tw/Tw/Station/AffairDetail?filter=63F293A9-0155-41A3-97B7-46E43E4685FE&id=f8bd9371-62d7-4626-9f6c-ee105a6a3692",
-      "description": "正式名稱為「普通型高級中等學校數理及資訊學科能力競賽」（俗稱全國高中學科能力競賽）。複賽由國教署與臺北市、新北市、臺中市、高雄市政府教育局主辦並委託學校承辦，決賽由國教署主辦並委由各學科承辦校（115 學年度數學、物理、化學、生物在臺師大，資訊在政治大學資訊學院，地球科學在中央大學太空科學與工程學系）辦理。資格：「全國高級中等學校各年級在學之普通科及綜合高中學程一年級與二、三年級學術學程學生」，明文不含外國僑民學校學生。經主管機關許可參與非學校型態實驗教育、未取得學籍的「無學籍自學生」，依戶籍所在地歸屬的複賽區別，自己向該區複賽承辦學校報名、參加該校的校內初賽（報名方式依各校計畫）。成績達標的自學生由該校以外加名額薦送複賽，其他學生由就讀學校逐級選薦。115 學年度計畫（2026-04-01 頒布）僅訂期限不訂賽日：校內初賽 2026-10-15 前辦畢、複賽 2026-11-13 前辦畢、決賽報名 2026-11-20 前、決賽 2026-12-31 前辦畢，各科確切日期地點由承辦學校另行通知。"
+      "description": "數學、物理、化學、生物、資訊、地球科學的高中學科競賽，分校內初賽、複賽、決賽三級，學生由就讀學校逐級選薦。",
+      "details": "正式名稱為「普通型高級中等學校數理及資訊學科能力競賽」，俗稱全國高中學科能力競賽。資格：「全國高級中等學校各年級在學之普通科及綜合高中學程一年級與二、三年級學術學程學生」，明文不含外國僑民學校學生。\n經主管機關許可參與非學校型態實驗教育、未取得學籍的「無學籍自學生」，依戶籍所在地歸屬的複賽區別，自己向該區複賽承辦學校報名、參加該校的校內初賽，報名方式依各校計畫。成績達標的自學生由該校以外加名額薦送複賽。\n複賽由國教署與臺北市、新北市、臺中市、高雄市政府教育局主辦並委託學校承辦。決賽由國教署主辦，委由各學科承辦校辦理：115 學年度數學、物理、化學、生物在臺師大，資訊在政治大學資訊學院，地球科學在中央大學太空科學與工程學系。\n115 學年度計畫（2026-04-01 頒布）僅訂期限不訂賽日：校內初賽 2026-10-15 前辦畢、複賽 2026-11-13 前辦畢、決賽報名 2026-11-20 前、決賽 2026-12-31 前辦畢。各科確切日期地點由承辦學校另行通知。"
     },
     {
       "title": "The Concord Review 中學歷史論文期刊",
@@ -1920,7 +1943,8 @@
       "registrationNote": "2026 屆已截止 · 2027 屆未公布",
       "sourceCheckedAt": "2026-10-25",
       "url": "https://iymc.info/en/",
-      "description": "官網寫「The International Youth Math Challenge is coordinated by Edu.Harbour」，主辦團隊有多位成員在德國，屬線上競賽：Qualification Round 免費，晉級 Pre-Final Round 須繳 13 歐元報名費（另有經濟弱勢補助），三個年齡組的前三名有現金獎，獎項頁列的金額合計 1,400 美元。資格：「Current high school and university students from all grades and countries are eligible to participate」，台灣學生可直接個人線上報名。主辦方自己說明「IYMC does not intend to be an alternative to established competitions like the International Mathematical Olympiad (IMO) ... Instead, IYMC serves as a supplementary program」。2026 屆 Qualification Round 截止 2026-09-27 23:59 UTC，Pre-Final 於 11 月、Final 於 12 月；2025 屆的 Qualification Round 則是 2025-11-30 截止，兩屆月份不同，2027 屆時程尚未公布。"
+      "description": "線上數學競賽，全球的高中生與大學生都能直接個人報名。Qualification Round 免費，晉級 Pre-Final Round 要繳報名費。",
+      "details": "官網寫「The International Youth Math Challenge is coordinated by Edu.Harbour」，主辦團隊有多位成員在德國。資格：「Current high school and university students from all grades and countries are eligible to participate」。\nPre-Final Round 的報名費是 13 歐元，另有經濟弱勢補助。三個年齡組的前三名有現金獎，獎項頁列的金額合計 1,400 美元。\n2026 屆 Qualification Round 截止 2026-09-27 23:59 UTC，Pre-Final 於 11 月、Final 於 12 月。2025 屆的 Qualification Round 則是 2025-11-30 截止，兩屆月份不同，2027 屆時程尚未公布。\n主辦方自己說明「IYMC does not intend to be an alternative to established competitions like the International Mathematical Olympiad (IMO) ... Instead, IYMC serves as a supplementary program」。"
     },
     {
       "title": "國際天文與天文物理競賽 (IAAC)",
