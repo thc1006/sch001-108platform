@@ -432,9 +432,11 @@ import data from '../../../public/advanced-resources/competitions.json';
       }
 
       // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
-      // 寫的是賽事日期時，registrationNote 放在徽章；週期型的徽章帶下次截止日；其餘用短標籤。
+      // 寫的是賽事日期時，registrationNote 放在徽章；週期型的徽章帶下次截止日，截止欄已經寫了本屆已截止
+      // 時只寫「下次約」；其餘用短標籤。
       function dialogBadge(s, dField) {
-        if ((s.note && dField.value !== s.label) || s.key === 'cycle') return statusText(s);
+        if (s.note && dField.value !== s.label) return statusText(s);
+        if (s.key === 'cycle') return s.label === '本屆已截止' ? '下次約 ' + s.next : statusText(s);
         return badgeText(s);
       }
 

@@ -853,6 +853,15 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         assert.notEqual(badge, dField.value, c.title);
     }
     assert.ok(inBadge > 0, '前置：要有 registrationNote 只放得進徽章的競賽');
+    // 週期型的徽章帶下次截止日；截止欄寫了「本屆 X 已截止」時，徽章不再寫「本屆已截止」。
+    const cycles = data.competitions.map((c) => [c, f.getStatus(c)]).filter(([, s]) => s.key === 'cycle');
+    assert.ok(cycles.length > 0, '前置：要有週期型的競賽');
+    for (const [c, s] of cycles) {
+        const dField = f.deadlineField(c, s);
+        const badge = f.dialogBadge(s, dField);
+        assert.ok(badge.includes(s.next), `${c.title}：${badge}`);
+        if (dField.value.includes('本屆')) assert.ok(!badge.includes('本屆已截止'), `${c.title}：${badge}`);
+    }
     // 沒有 registrationNote 的「依官網」用短標籤。
     assert.equal(f.dialogBadge(f.getStatus({}), f.deadlineField({}, f.getStatus({}))), '依官網公告');
 });
