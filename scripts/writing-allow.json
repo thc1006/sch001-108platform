@@ -50,14 +50,6 @@
       "reason": "引號裡照抄長庚大學中醫學系 116 學年度申請入學校系分則的備註，原文就是半形括號。"
     },
     {
-      "file": "src/content/clusters/life-science/application.md",
-      "text": "台大大氣系寫「多元表現(N.綜整心得)：500字內」",
-      "rule": "P05-halfwidth-paren",
-      "kind": "quote",
-      "source": "https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_001152.htm",
-      "reason": "引號裡照抄臺灣大學大氣科學系 116 學年度申請入學校系分則的審查資料說明，原文就是半形括號。"
-    },
-    {
       "file": "src/pages/career-exploration/index.astro",
       "text": "數據統計",
       "rule": "C01-vague-attribution",
