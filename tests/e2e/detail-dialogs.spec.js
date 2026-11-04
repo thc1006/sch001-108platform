@@ -218,6 +218,8 @@ test.describe('國內外競賽的詳細資訊', () => {
         entry('詳細資訊只有空白', { details: '  \n ' }),
         entry('詳細資訊很長', { details: LONG }),
         entry(LONG_TITLE, { details: LONG }),
+        // 尚未開放的排在最前面。
+        entry('尚未開放', { details: '報名方式。', deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00', eventStartsAt: '2100-01-10' }),
     ];
     /** opener 回傳名稱是 title 的卡片上的「詳細資訊」按鈕。 */
     const opener = (page, title) =>
@@ -232,10 +234,22 @@ test.describe('國內外競賽的詳細資訊', () => {
     test('只有 details 不是空白的卡片有按鈕', async ({ page }) => {
         const titles = await page.locator('.comp-card').evaluateAll((cards) =>
             cards.filter((c) => c.querySelector('button')).map((c) => c.querySelector('h2').textContent));
-        expect(titles).toEqual(['有詳細資訊', '詳細資訊很長', LONG_TITLE]);
+        expect(titles).toEqual(['尚未開放', '有詳細資訊', '詳細資訊很長', LONG_TITLE]);
         // sr-only 的文字前後，Chromium 算名稱時會補空白。
         await expect(opener(page, '有詳細資訊')).toHaveAccessibleName(/^詳細資訊\s?：有詳細資訊$/);
         await expect(opener(page, '有詳細資訊')).toHaveAttribute('aria-haspopup', 'dialog');
+    });
+
+    test('尚未開放：卡片和對話框的截止欄都寫報名期間，賽事日期另放一行', async ({ page }) => {
+        const card = page.locator('.comp-card').filter({ has: page.getByRole('heading', { name: '尚未開放', exact: true }) });
+        const value = '預計 2099-12-15 開放、2099-12-31 截止';
+        await expect(card.locator('.comp-deadline__label')).toHaveText(['報名期間']);
+        await expect(card.locator('.comp-deadline__value')).toHaveText([value]);
+        await opener(page, '尚未開放').click();
+        const dialog = page.getByRole('dialog', { name: '尚未開放', exact: true });
+        await expect(dialog.locator('.comp-deadline__label')).toHaveText(['報名期間', '賽事日期']);
+        await expect(dialog.locator('.comp-deadline__value')).toHaveText([value, '2100-01-10 舉行']);
+        await expect(dialog.locator('.comp-status')).toHaveText('尚未開放');
     });
 
     test('畫面上類型與狀態在名稱上面，DOM 裡名稱在前面', async ({ page }) => {
