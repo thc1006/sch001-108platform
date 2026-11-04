@@ -45,7 +45,9 @@ function writeReport(sections, attention) {
     const body = [ADMISSION_CYCLE_MARKER, '', '## 內容的學年度', '', ...sections.flat()];
     if (!attention) body.push('沒有需要處理的事。', '');
     const full = body.join('\n');
-    const text = fitReport(full, REPORT_LIMIT, `\n報告超過 ${REPORT_LIMIT} 字，後面截掉了，其餘見 Actions log。\n`);
+    const { GITHUB_SERVER_URL: server, GITHUB_REPOSITORY: repo, GITHUB_RUN_ID: run } = process.env;
+    const log = server && repo && run ? `這次執行的 log：\n${server}/${repo}/actions/runs/${run}` : ' Actions log。';
+    const text = fitReport(full, REPORT_LIMIT, `\n報告超過 ${REPORT_LIMIT} 字，後面截掉了，其餘見${log}\n`);
     if (text !== full) console.log(`\n報告超過 ${REPORT_LIMIT} 字，寫進 issue 的版本截掉了後面。完整的報告：\n\n${full}`);
     writeFileSync(REPORT, text);
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `needs_attention=${attention}\n`);
