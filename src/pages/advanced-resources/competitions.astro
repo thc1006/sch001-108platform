@@ -400,9 +400,28 @@ import data from '../../../public/advanced-resources/competitions.json';
           .join(' · ');
       }
 
-      // 卡片底部的截止欄與「前往官網」。
-      function footHtml(c, s) {
-        const dField = deadlineField(c, s);
+      // badgeText 是狀態徽章的短標籤。registrationNote 已經寫在截止欄，徽章不再重複一次。
+      function badgeText(s) {
+        if (s.key === 'soon' || s.key === 'open') return statusText(s);
+        if (s.key === 'upcoming') return '尚未開放';
+        if (s.key === 'site') return '依官網公告';
+        return s.label;
+      }
+
+      // cardDeadline 是卡片截止欄的內容，只放一行。本屆截止日、賽事日期這些完整時程放在對話框，
+      // 由 deadlineField 算；全部放在卡片上的話，同一列卡片的截止欄會有一到四行。
+      function cardDeadline(c, s) {
+        if (s.key === 'upcoming') return '預計 ' + s.opens + ' 開放';
+        if (s.key === 'cycle') {
+          const p = s.closes.split('-');
+          return '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月');
+        }
+        if (c.deadline) return c.deadline;
+        return s.note ? s.label : '依官網公告';
+      }
+
+      // footHtml 是截止欄與「前往官網」。dField 是 { label, value }。
+      function footHtml(c, dField) {
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
         // 「資料更新」會讓人以為每一筆都在那天查證過。有逐筆查證日期的就據實顯示，
         // 沒有的就不顯示，不要假裝有。
@@ -437,7 +456,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         return (
           '<div class="comp-kicker">' +
             '<span class="comp-cat">' + escapeHtml(c.category) + '</span>' +
-            '<span class="comp-status">' + escapeHtml(statusText(s)) + '</span>' +
+            '<span class="comp-status">' + escapeHtml(badgeText(s)) + '</span>' +
           '</div>'
         );
       }
@@ -460,7 +479,7 @@ import data from '../../../public/advanced-resources/competitions.json';
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
               more +
             '</div>' +
-            footHtml(c, s) +
+            footHtml(c, { label: '報名截止', value: cardDeadline(c, s) }) +
           '</article>'
         );
       }
@@ -481,7 +500,7 @@ import data from '../../../public/advanced-resources/competitions.json';
             '<p class="comp-dialog__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '<p class="comp-dialog__details">' + markEnglishQuotes(escapeHtml(c.details)) + '</p>' +
           '</div>' +
-          footHtml(c, s);
+          footHtml(c, deadlineField(c, s));
         dialog.querySelector('.comp-dialog__close').addEventListener('click', detail.close);
         detail.open(opener);
       }

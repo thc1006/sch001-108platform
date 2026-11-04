@@ -790,3 +790,36 @@ test('recheck：重查當天的真實資料一筆都不該列出', async () => {
     assert.ok(wouldCover.length >= 60,
         `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
 });
+
+// 卡片上的徽章與截止欄只放短的內容，完整時程在對話框。registrationNote 同時放進徽章的話，
+// 兩處會一字不差（2026-11-05 對 117 筆算，35 筆）。
+test('card：徽章只用短標籤，截止欄不放本屆與賽事日期', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'cardDeadline']
+        .map(grab).join('\n');
+    const f = new Function(`${bundle}; return { getStatus, badgeText, cardDeadline };`)();
+    const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
+    const badge = /^(報名中 · 剩 \d+ 天|即將截止 · 剩 \d+ 天|今日截止|尚未開放|本屆已截止|每年固定辦理|依官網公告|已截止)$/;
+    for (const c of data.competitions) {
+        const s = f.getStatus(c);
+        assert.match(f.badgeText(s), badge, c.title);
+        const value = f.cardDeadline(c, s);
+        // registrationNote 是主辦單位的報名方式，照原樣放，裡面可能有「舉行」。
+        if (value !== (c.registrationNote || '').trim()) assert.doesNotMatch(value, /本屆|賽事|舉行|已結束/, `${c.title}：${value}`);
+        if (c.registrationNote) assert.notEqual(f.badgeText(s), c.registrationNote.trim(), c.title);
+    }
+    // 固定的幾種狀態。
+    const at = (c) => f.cardDeadline(c, f.getStatus(c));
+    assert.equal(at({ deadline: '2099-12-11' }), '2099-12-11');
+    assert.equal(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), '每年約 7 月');
+    assert.equal(at({ cycle: { closes: '03-15' } }), '每年約 3/15');
+    assert.equal(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), '預計 2099-12-15 開放');
+    assert.equal(at({ registrationNote: '由學校報名' }), '由學校報名');
+    assert.equal(at({}), '依官網公告');
+});
