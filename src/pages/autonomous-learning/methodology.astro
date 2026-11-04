@@ -87,15 +87,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             switch(answer) {
                 case 'qualitative':
                     recommendedTypes = ['qualitative'];
-                    resultText = '聽起來你的研究偏向「質化」，建議你從以下方法著手：';
+                    resultText = '聽起來你的研究偏向「質化」，也就是了解人的想法和經驗，可以先從這些方法開始：';
                     break;
                 case 'quantitative':
                     recommendedTypes = ['quantitative'];
-                    resultText = '聽起來你的研究偏向「量化」，建議你從以下方法著手：';
+                    resultText = '聽起來你的研究偏向「量化」，也就是用數字或數據驗證關係，可以先從這些方法開始：';
                     break;
                 case 'creative':
                     recommendedTypes = ['creative'];
-                    resultText = '聽起來你的研究偏向「創作實踐」，建議你從以下方法著手：';
+                    resultText = '聽起來你的研究偏向「創作導向」，也就是做出一個作品，可以先從這些方法開始：';
                     break;
                 // 下一題出現在按鈕下方，焦點移過去，報讀器才會念出題目。
                 case 'other1':
