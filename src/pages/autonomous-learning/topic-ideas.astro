@@ -358,11 +358,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         function updateMatrixResult() {
             if (selectedCategory && selectedMethod) {
                 const key = `${selectedCategory}-${selectedMethod}`;
-                const resultText = matrixData.results[key] || `「${selectedCategory}」和「${selectedMethod}」的組合還沒有現成的例子。可以先想：${matrixData.prompts[selectedMethod]}想不出來的話，把這兩個詞輸入「AI 個人化發想」。`;
+                const example = matrixData.results[key];
                 matrixResultContainer.textContent = '';
                 const p = document.createElement('p');
-                p.className = 'text-xl font-semibold text-center text-blue-800';
-                p.textContent = resultText;
+                // 沒有例子時的引導有好幾行，置中的大號粗體字對低視能的人不好讀，改用一般字級靠左。
+                p.className = example ? 'text-xl font-semibold text-center text-blue-800' : 'text-base text-left text-gray-700';
+                p.textContent = example || `「${selectedCategory}」和「${selectedMethod}」的組合還沒有現成的例子。可以先想：${matrixData.prompts[selectedMethod]}想不出來的話，把這兩個詞輸入「AI 個人化發想」。`;
                 matrixResultContainer.appendChild(p);
             }
         }
