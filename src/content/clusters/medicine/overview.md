@@ -22,7 +22,7 @@ ColleGo! 寫本學群以醫學學類為重心，並從學類間的關係圖分�
 
 高中生考醫學系有三個管道：
 
-- 繁星推薦：由高中推薦，以在校學業成績的全校排名百分比為主，適合三年在校成績都穩定的學生。醫學系、牙醫學系屬於第八類學群，通過篩選後還要參加各校的指定項目甄試。
+- 繁星推薦：由高中推薦，以在校學業成績的全校排名百分比為主，適合三年在校成績都穩定的學生。學測要先通過各校的檢定標準，醫學系多要求幾科頂標：116 學年度 11 所醫學系都要求至少兩科頂標，其中臺大、成大、陽明交大、中山醫、長庚、慈濟要求四科頂標。醫學系、牙醫學系屬於第八類學群，通過篩選後還要參加各校的指定項目甄試。
 - 個人申請：第一階段看學測，第二階段看審查資料和面試、筆試或實作。
 - 分發入學：看分科測驗成績，部分校系也採計學測。
 
@@ -83,7 +83,7 @@ ColleGo! 的物理治療、職能治療學類頁互相把對方列為容易混�
 - [ColleGo!「呼吸治療學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=42)
 - [ColleGo!「獸醫學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=46)
 - [ColleGo!「語療聽力學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=126)
-- [116 學年度大學繁星推薦第八類學群校系查詢（醫學系 11 校、牙醫學系 7 校）｜大學甄選入學委員會](https://www.cac.edu.tw/star116/system/ColQry_116StarForxStudent_F7zO89eK/SGroup8.htm)
+- [116 學年度大學繁星推薦第八類學群校系查詢（醫學系 11 校、牙醫學系 7 校的學測檢定標準與甄試日期）｜大學甄選入學委員會](https://www.cac.edu.tw/star116/system/ColQry_116StarForxStudent_F7zO89eK/SGroup8.htm)
 - [116 學年度大學申請入學校系分則查詢：查詢所有校系（各校醫學系、牙醫學系、牙體技術學系、中醫學系、藥學系的名額、學測參採科目、甄試項目與備註）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
 - [116 學年度大學申請入學校系分則：義守大學醫學系(公費生)，備註「本系屬衛福部『重點科別公費醫師』」｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_045362.htm)
 - [大專校院各校科系別概況（114 學年度科系名稱為「醫學系」的學士班 12 校；清大、中興、中山列為「學士後醫學系」）｜教育部統計處](https://data.gov.tw/dataset/9621)
