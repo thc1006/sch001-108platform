@@ -861,9 +861,13 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     for (const [c, s] of cycles) {
         const dField = f.deadlineField(c, s);
         const badge = f.dialogBadge(s, dField);
-        assert.ok(badge.includes(s.next), `${c.title}：${badge}`);
+        assert.ok(badge.includes(`下次約 ${s.next} 截止`), `${c.title}：${badge}`);
         if (dField.value.includes('本屆')) assert.ok(!badge.includes('本屆已截止'), `${c.title}：${badge}`);
     }
+    // 沒有本屆截止日的週期型，徽章留著「每年固定辦理」。
+    const yearly = f.getStatus({ cycle: { closes: '03-15' } });
+    assert.equal(yearly.label, '每年固定辦理');
+    assert.equal(f.dialogBadge(yearly, f.deadlineField({ cycle: { closes: '03-15' } }, yearly)), `每年固定辦理，下次約 ${yearly.next} 截止`);
     // 沒有 registrationNote 的「依官網」用短標籤。
     assert.equal(f.dialogBadge(f.getStatus({}), f.deadlineField({}, f.getStatus({}))), '依官網公告');
 });
