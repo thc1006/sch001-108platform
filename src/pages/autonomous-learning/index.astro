@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import civic from '../../../public/civic-tech-map/projects.json';
 ---
 
 <BaseLayout
@@ -75,6 +76,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     <p class="text-gray-600 text-sm">文獻探討、問卷、訪談等 6 種研究方法的步驟和常見陷阱。</p>
                 </a>
             </div>
+        </section>
+
+        {/* 第 1、3 步都用得到，放不進其中一張步驟卡，所以單獨一塊。 */}
+        <section class="mt-12 max-w-4xl mx-auto">
+            <a href="../civic-tech-map/index.html" class="step-card block bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-2">公民科技專案</h2>
+                <p class="text-gray-600 text-sm">{civic.projects.length} 個專案公開的資料與工具，各附題目例子和做法，也可以請 AI 幫你挑。</p>
+            </a>
         </section>
 
         <!-- 嵌入的影片資源 -->
