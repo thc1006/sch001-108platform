@@ -444,10 +444,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       // registrationNote。本屆截止日和賽事日期在對話框裡，由 deadlineField 算。
       function cardDeadline(c, s) {
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s) };
-        if (s.key === 'cycle') {
-          const p = s.closes.split('-');
-          return { label: '報名截止', value: '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月') };
-        }
+        if (s.key === 'cycle') return { label: '報名截止', value: '每年約 ' + cycleWhen(s) };
         if (c.deadline) return { label: '報名截止', value: c.deadline };
         // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
         if (s.note) return { label: '報名', value: s.label };
@@ -455,13 +452,35 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: '未公布' };
       }
 
-      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時不用 deadlineField：它的內容從開放日
-      // 寫起，標籤卻是「報名截止」，報讀軟體連著念聽起來是矛盾的；賽事日期另放一行，不算在報名期間裡。
+      function cycleWhen(s) {
+        const p = s.closes.split('-');
+        return p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月';
+      }
+
+      // eventText 是截止欄另放一行的賽事日期。標籤已經是「賽事日期」，內容不再寫「賽事」。
+      function eventText(c) {
+        if (typeof c.eventStartsAt !== 'string' || !c.eventStartsAt) return '';
+        const end = typeof c.eventEndsAt === 'string' && c.eventEndsAt && c.eventEndsAt !== c.eventStartsAt ? c.eventEndsAt : '';
+        const last = end || c.eventStartsAt;
+        const past = Date.UTC(Number(last.slice(0, 4)), Number(last.slice(5, 7)) - 1, Number(last.slice(8, 10))) < todayTaipeiUTC();
+        const range = end ? c.eventStartsAt + ' 至 ' + end : c.eventStartsAt;
+        return past ? '上屆 ' + range + '，已結束' : range;
+      }
+
+      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。不用 deadlineField：它用「·」把報名和賽事接在
+      // 一起（「·」可能不念），賽事寫成「2027 賽事 7/18–7/25」，接在「賽事日期」後面念兩次，7/18 也像分數。
       function fullDeadline(c, s) {
-        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: eventLabel(c) };
-        const dField = deadlineField(c, s);
-        if (s.note && dField.value === s.label) return { label: '報名', value: dField.value };
-        return dField.value === '依官網公告' ? { label: dField.label, value: '未公布' } : dField;
+        const event = eventText(c);
+        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: event };
+        if (s.key === 'cycle') {
+          const value = (c.deadline ? '本屆 ' + c.deadline + ' 已截止、' : '') + '每年約 ' + cycleWhen(s);
+          return { label: '報名截止', value: value, event: event };
+        }
+        if (c.deadline) return { label: '報名截止', value: c.deadline, event: event };
+        // 沒有截止日時，有賽事日期就放賽事日期，registrationNote 由 dialogBadge 放進徽章。
+        if (event) return { label: '賽事日期', value: event };
+        if (s.note) return { label: '報名', value: s.label };
+        return { label: '報名截止', value: '未公布' };
       }
 
       // dialogBadge 是截止欄為 fullDeadline 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
