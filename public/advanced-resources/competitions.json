@@ -96,7 +96,8 @@
       "registrationNote": "115 年度已截止 · 下屆依官網公告",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://youthtaiwan.mofa.gov.tw/",
-      "description": "外交部與教育部合辦，以英語為工具探討國際議題。辦理形式逐年調整：113 年為「選拔活動」（9/1–9/30 報名）、114 年改辦「英語種籽隊培訓營」（報名截止 4/29），115 年再改為「外交小尖兵世界領航營」。115 年度資格原文：「全國高級中等學校一至二年級(含參與高級中等教育階段非學校型態實驗教育學生)及五專一至三年級在學學生」，須取得符合 CEFR B1 的英檢證明，113 或 114 年度曾獲選出國參訪者不得報名。115 年度報名 2026-03-16 至 04-30（網路報名），分兩區辦理 5 天 4 夜培訓營（第一區 7/13 至 7/17、第二區 7/20 至 7/24），各區擇優 10 人預計於 116 年寒假出國參訪，名單已於 8/26 公布。116 年度時程尚未公告。"
+      "description": "外交部與教育部合辦，以英語為工具探討國際議題，辦理形式逐年調整。對象是高中一、二年級與五專一至三年級學生，須有 CEFR B1 的英檢證明，網路報名。",
+      "details": "115 年度資格原文：「全國高級中等學校一至二年級(含參與高級中等教育階段非學校型態實驗教育學生)及五專一至三年級在學學生」。113 或 114 年度曾獲選出國參訪者不得報名。\n113 年為「選拔活動」（9/1–9/30 報名），114 年改辦「英語種籽隊培訓營」（報名截止 4/29），115 年再改為「外交小尖兵世界領航營」。\n115 年度報名期間是 2026-03-16 至 04-30，分兩區辦理 5 天 4 夜培訓營，第一區 7/13 至 7/17、第二區 7/20 至 7/24。各區擇優 10 人，預計於 116 年寒假出國參訪，名單已於 8/26 公布。\n116 年度時程尚未公告。"
     },
     {
       "title": "台灣國際學生創意設計大賽 (TISDC)",
@@ -317,7 +318,8 @@
       "recheckOn": "2026-12-10",
       "recheckNote": "TOL 預計 12 月初公布初賽報名資訊，屆時補上 opensAt 與 deadline",
       "url": "https://ioling.org/",
-      "description": "以邏輯推理破解陌生語言的中學生競賽，官網章程規定參賽者須「less than 20 years old on the first day of the competition」且為大學前學生，各國一隊至多 4 人。第 23 屆 2026 年 7 月 26 日至 8 月 2 日於羅馬尼亞布加勒斯特舉行，已結束；第 24 屆 2027 年 7 月 21 至 28 日於泰國曼谷舉行，報名時程官網標示 TBA。台灣國手由國立臺灣大學語言學研究所主辦的臺灣語言學奧林匹亞（TOL）選拔。TOL 官網 2026-08-12 預告的 2027 年時程：高中生推薦管道 2026-10-01 至 12-15 開放，受推薦的高中生直接參加複賽；初賽 1/30 上午，國高中生都能報名，1/8 報名截止；複賽 2/20 下午，參加者是初賽前 25%、2026 語言學科展前 8 名與受推薦的高中生；複賽前 25%（取前 25 至 50 名）進入第一階段國手培訓（3/13–14，暫定），再參加 3 至 4 月的決賽，決賽前 8 名成為正式國手。初賽報名資訊預計 12 月初公布。"
+      "description": "以邏輯推理破解陌生語言的中學生競賽，有年齡上限。台灣國手由國立臺灣大學語言學研究所主辦的臺灣語言學奧林匹亞（TOL）選拔，國高中生都能報名初賽。",
+      "details": "官網章程規定參賽者須「less than 20 years old on the first day of the competition」且為大學前學生，各國一隊至多 4 人。\n第 23 屆 2026 年 7 月 26 日至 8 月 2 日於羅馬尼亞布加勒斯特舉行，已結束。第 24 屆 2027 年 7 月 21 至 28 日於泰國曼谷舉行，報名時程官網標示 TBA。\nTOL 官網 2026-08-12 預告了 2027 年時程。高中生推薦管道 2026-10-01 至 12-15 開放，受推薦的高中生直接參加複賽；初賽 1/30 上午，1/8 報名截止。\n複賽 2/20 下午，參加者是初賽前 25%、2026 語言學科展前 8 名與受推薦的高中生。複賽前 25%（取前 25 至 50 名）進入第一階段國手培訓（3/13–14，暫定），再參加 3 至 4 月的決賽，決賽前 8 名成為正式國手。\n初賽報名資訊預計 12 月初公布。"
     },
     {
       "title": "國際哲學奧林匹亞 (IPO)",
@@ -335,7 +337,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "參賽規則在官網 ?page_id=1706，章程在 ?page_id=2。更正：先前記載「How to participate 頁的各國管道清單同樣沒有，目前查無台灣代表團的報名管道」有兩處不成立。該頁沒有各國管道清單，它寫的是沒有代表團的國家該怎麼辦，逐字「What to do if your country does not have an existing national IPO delegation? Contact IPO Executive Board for assistance : board.ipo@gmail.com . IPO Executive Board can assist in the creation of a new delegation if needed.」。官網首頁的 Countries 清單連出 57 個國家頁，逐一核對沒有台灣或 Chinese Taipei（首頁另有一段新聞逐字寫 2026 年「A record 57 national delegations participated」）。正式選拔管道逐字要求經「a national philosophical society affiliated with the Fédération Internationale des Sociétés de Philosophie (FISP)」辦理，而 FISP 官網的國家學會名單（www.fisp.org/members/national-societies，71 個國家／地區標題、110 個學會）沒有 TAIWAN 標題，唯一提到台灣的是列在 CHINA 標題下的「Chinese Association of Philosophy (CAP) in Taiwan, China」，且該筆未附任何網址。",
       "url": "https://www.philosophy-olympiad.org/",
-      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽。參賽規則寫「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、主辦國至多 10 人；資格：「open to high school students from any country」；章程寫年齡上限：「The maximum age of a pupil is 20 by the end of the calendar year in which IPO takes place」。第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行已結束，2027 屆主辦國尚未公布。台灣目前沒有代表團。官網 How to participate 頁寫，沒有代表團的國家可聯絡 IPO 執行委員會（board.ipo@gmail.com）協助成立，要件是合格的哲學教師、對全國學生開放的選拔過程，以及與 FISP 或全國性哲學學會的連結。新代表團的加入：「Admission of any new delegation is subject to approval by the hosts and the National Organising Committee of that year’s International Philosophy Olympiad」，並取決於主辦方的接待量能。"
+      "description": "中學生以英、法、德、西其中一種非母語撰寫哲學論文的競賽，有年齡上限，只接受國家代表團，不收個別學生。台灣目前沒有代表團。",
+      "details": "參賽規則寫「IPO only accepts national delegations, not independent students, teams or schools」，各國至多 2 人、主辦國至多 10 人。資格：「open to high school students from any country」。章程寫年齡上限：「The maximum age of a pupil is 20 by the end of the calendar year in which IPO takes place」。\n第 34 屆 2026 年 5 月 14 至 17 日於波蘭華沙舉行，已結束，2027 屆主辦國尚未公布。\n官網 How to participate 頁寫，沒有代表團的國家可聯絡 IPO 執行委員會（board.ipo@gmail.com）協助成立，要件是合格的哲學教師、對全國學生開放的選拔過程，以及與 FISP 或全國性哲學學會的連結。新代表團的加入：「Admission of any new delegation is subject to approval by the hosts and the National Organising Committee of that year’s International Philosophy Olympiad」，並取決於主辦方的接待量能。"
     },
     {
       "title": "國際地理奧林匹亞 (iGeo)",
@@ -1031,7 +1034,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "官網仍停留在 2026 屆且頁內自相矛盾（同頁並列「registration is now closed」與「registration is now open」）。",
       "url": "https://www.johnlockeinstitute.com/essay-competition",
-      "description": "John Locke Institute 主辦的全球高中生論文競賽，官網寫「Entry ... is open to students from any country」，資格為投稿截止日當天未滿 19 歲，未滿 15 歲者列 Junior Category。報名與投稿是兩個不同期限：2026 屆報名 2/2 23:59 GMT 開放、3/31 23:59 GMT 截止（逾期補報名須付 US$10，至 4/30），投稿 5/31 23:59 GMT 截止，另可付費延長 7 天（£25）或 21 天（£75）。基本參賽免費。2027 屆時程尚未公布。"
+      "description": "John Locke Institute 主辦的全球高中生論文競賽，各國學生都能參加，限投稿截止日當天未滿 19 歲。報名與投稿是兩個不同期限，基本參賽免費。",
+      "details": "官網寫「Entry ... is open to students from any country」。未滿 15 歲者列 Junior Category。\n2026 屆報名 2/2 23:59 GMT 開放、3/31 23:59 GMT 截止，逾期補報名須付 US$10，至 4/30。投稿 5/31 23:59 GMT 截止，另可付費延長 7 天（£25）或 21 天（£75）。\n2027 屆時程尚未公布。"
     },
     {
       "title": "Cambridge Re:Think 論文競賽（非劍橋大學主辦）",
@@ -1046,7 +1050,8 @@
       "registrationNote": "2027 屆時程尚未公布",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://cambridge-research.org/essay-competition/",
-      "description": "主辦單位是登記於劍橋科學園區的 Cambridge Centre for International Research, Ltd，官網頁尾聲明「Cambridge Centre for International Research, Ltd is not affiliated to the University of Cambridge or its constituent colleges」。同一頁寫頒獎典禮與晚宴辦在劍橋大學 King's College，也寫評審「comprises leading researchers and professors from Harvard, MIT, Stanford, Cambridge, and Oxford」，2026 年的題目也由包含劍橋在內多所大學的教授提供。免費參加，官網寫「open to students aged 11 to 18 who have not yet commenced undergraduate studies at the time of submission」，分 Junior（11–13）與 Senior（14–18）。2026 屆 1/15 開放、5/10 投稿截止（官網未標時刻與時區）已結束，7/31 為頒獎日而非截止日；2027 屆尚未公布。"
+      "description": "線上論文競賽，主辦單位 CCIR 官網聲明與劍橋大學沒有隸屬關係。免費參加，收 11 至 18 歲、尚未開始大學學業的學生。",
+      "details": "主辦單位是登記於劍橋科學園區的 Cambridge Centre for International Research, Ltd，官網頁尾聲明「Cambridge Centre for International Research, Ltd is not affiliated to the University of Cambridge or its constituent colleges」。\n同一頁寫頒獎典禮與晚宴辦在劍橋大學 King's College，也寫評審「comprises leading researchers and professors from Harvard, MIT, Stanford, Cambridge, and Oxford」。2026 年的題目也由包含劍橋在內多所大學的教授提供。\n官網寫「open to students aged 11 to 18 who have not yet commenced undergraduate studies at the time of submission」，分 Junior（11–13）與 Senior（14–18）。\n2026 屆 1/15 開放、5/10 投稿截止（官網未標時刻與時區），已結束；7/31 為頒獎日而非截止日。2027 屆尚未公布。"
     },
     {
       "title": "紐約時報學生寫作競賽 (NYT Student Contests)",
@@ -1062,7 +1067,8 @@
       "sourceCheckedAt": "2026-08-27",
       "sourceNote": "nytimes.com/learning/student-contest-calendar 會轉址到 2020-21 年度舊文，不要用。",
       "url": "https://www.nytimes.com/spotlight/learning-contests",
-      "description": "紐約時報 The Learning Network 每學年舉辦 7 項學生競賽。2026-27 學年：100 字個人敘事 9/16–10/28、視覺藝術 10/28–12/9、STEM 訪談影片 2027/1/6–2/17、社論寫作 2/17–3/31、Podcast 3/31–5/12、暑期閱讀 6/4–11、7/2–9、7/30–8/6，另有全學年進行的 Current Events Conversation。官網寫「Students from anywhere in the world can participate, but submissions must be in English. Entries must not be processed through automated translation tools, including Google Translate and other generative A.I. tools」，開放 13 至 19 歲中學生，大學生不可。"
+      "description": "紐約時報 The Learning Network 每學年舉辦的系列競賽。全球 13 至 19 歲中學生可參加，須用英文，不得經自動翻譯或生成式 AI 處理。",
+      "details": "每學年有 7 項學生競賽。2026-27 學年：100 字個人敘事 9/16–10/28、視覺藝術 10/28–12/9、STEM 訪談影片 2027/1/6–2/17、社論寫作 2/17–3/31、Podcast 3/31–5/12、暑期閱讀 6/4–11、7/2–9、7/30–8/6，另有全學年進行的 Current Events Conversation。\n官網寫「Students from anywhere in the world can participate, but submissions must be in English. Entries must not be processed through automated translation tools, including Google Translate and other generative A.I. tools」。大學生不可參加。"
     },
     {
       "title": "世界歷史學家論文獎 (World Historian Student Essay)",
@@ -1079,7 +1085,8 @@
       "recheckOn": "2026-11-05",
       "recheckNote": "官網 2026-10-27 仍寫「The deadline for 2027 will be announced by early November」，11 月上旬回來查 2027 年的截止日。",
       "url": "https://www.thewha.org/prizes-awarded-by-the-wha",
-      "description": "世界歷史學會（WHA）主辦的中學生歷史論文獎，官網寫「an international competition open to students enrolled in grades K–12 in public, private, and parochial schools, and those in home-study programs」，不須具 WHA 會員資格，台灣學生可投稿。論文約 1000 字，須從官網題目中擇一並說明它與自己及世界史的關係，題目：「Your view of a family story related to a historical event or your personal family cultural background, or an issue of personal relevance or specific regional history/knowledge」；決選作品會經 AI 檢測。首獎 500 美元並附一年 WHA 會員資格。2027 年截止日尚未公布，官網寫「The deadline for 2027 will be announced by early November」。"
+      "description": "世界歷史學會（WHA）主辦的中學生歷史論文獎，不須是會員，台灣學生可投稿。從官網題目擇一寫論文，說明題目與自己及世界史的關係。",
+      "details": "官網寫「an international competition open to students enrolled in grades K–12 in public, private, and parochial schools, and those in home-study programs」。\n論文約 1000 字。題目：「Your view of a family story related to a historical event or your personal family cultural background, or an issue of personal relevance or specific regional history/knowledge」。決選作品會經 AI 檢測。\n首獎 500 美元並附一年 WHA 會員資格。\n2027 年截止日尚未公布，官網寫「The deadline for 2027 will be announced by early November」。"
     },
     {
       "title": "Foyle 年度青年詩人獎",
@@ -1096,7 +1103,8 @@
       },
       "sourceCheckedAt": "2026-10-25",
       "url": "https://foyleyoungpoets.org/",
-      "description": "英國詩社（The Poetry Society）主辦的國際青年詩歌獎，接受全球 11–17 歲（以當屆 7/31 為準）青少年免費投稿，詩作須以英文寫作（可夾用母語或其他語言的詞句）、不超過 40 行且未曾發表。2026 屆規定英國投稿者每人最多 3 首、英國以外每人限 1 首，2025 屆每人可投多首。固定每年 7 月 31 日午夜（BST）截止，得獎名單於同年秋季公布；2026 屆已截止，得獎名單已公布。官網明文嚴禁使用 ChatGPT、Claude、Gemini 等生成式 AI 創作。"
+      "description": "英國詩社（The Poetry Society）主辦的國際青年詩歌獎，全球 11 至 17 歲青少年可免費投稿英文詩，作品須未曾發表，不得用生成式 AI 創作。",
+      "details": "年齡以當屆 7/31 為準。詩作可夾用母語或其他語言的詞句，不超過 40 行。\n2026 屆規定英國投稿者每人最多 3 首、英國以外每人限 1 首，2025 屆每人可投多首。\n固定每年 7 月 31 日午夜（BST）截止，得獎名單於同年秋季公布。2026 屆已截止，得獎名單已公布。\n官網明文嚴禁使用 ChatGPT、Claude、Gemini 等工具。"
     },
     {
       "title": "ESU 國際公眾演說競賽",
@@ -1114,7 +1122,8 @@
       "sourceCheckedAt": "2026-10-25",
       "sourceNote": "官網 International network 頁的名單共 49 筆（44 個 ESU、5 個合作組織），沒有台灣；IPSC 與 International network 兩頁、2015 與 2017 年的參賽國名單、2022 年的分組表也都查無台灣。",
       "url": "https://www.esu.org/ipsc/",
-      "description": "英語聯盟（ESU）主辦的國際公眾演說競賽，開放 16–20 歲學生，40 多國代表參加。決賽者須為該國英語聯盟或其他公眾演說賽事的全國冠軍；報名表寫「Registrations forms are to be filled out by national organisers only」，各國 ESU 登記國內選拔賽的期限是 2026-11-30；2027 屆 IPSC Week 為 7 月 5–9 日於倫敦舉行。依 2026-27 主辦單位手冊，國內選拔賽須由登記在案的該國 ESU，或在當地立案、具 ESU 合作組織（Partner Organisation）資格的慈善團體主辦。ESU 的國際網絡名單沒有台灣，目前查不到台灣的選拔管道，參加方式要向 ESU 詢問。"
+      "description": "英語聯盟（ESU）主辦的國際公眾演說競賽，收 16 至 20 歲學生。決賽者須是該國全國賽冠軍，由各國主辦單位報名，目前查不到台灣的選拔管道。",
+      "details": "參加的有 40 多國代表。全國冠軍指該國英語聯盟或其他公眾演說賽事的冠軍。\n報名表寫「Registrations forms are to be filled out by national organisers only」，各國 ESU 登記國內選拔賽的期限是 2026-11-30。2027 屆 IPSC Week 為 7 月 5–9 日於倫敦舉行。\n依 2026-27 主辦單位手冊，國內選拔賽須由登記在案的該國 ESU，或在當地立案、具 ESU 合作組織（Partner Organisation）資格的慈善團體主辦。\nESU 的國際網絡名單沒有台灣，參加方式要向 ESU 詢問。"
     },
     {
       "title": "世界中學生辯論錦標賽 (WSDC)",
@@ -1131,7 +1140,8 @@
       "registrationNote": "經 Taiwan Debate Union 選拔",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://wsdcdebating.org/",
-      "description": "由 WSDC Ltd. 主辦的世界中學生英語辯論錦標賽，由各國辯論組織選派國家代表隊（每隊 3 至 5 人），官網 National Organisations 頁列出 86 個國家／地區組織。台灣以 Taiwan 之名列於其中，國家組織為 Taiwan Debate Union，學生須經該組織選拔。官網 WSDC Rules（2026 年 8 月版）的年齡條款寫「have reached their 14th birthday by the first day of debates at the Championships」且「not have reached their 20th birthday by the day of the grand final at the Championships」；高等教育機構的第一學期若在比賽首日當天或之前開始，即不具資格。2026 年 7 月 14 至 24 日於肯亞舉行，已結束；2027 屆主辦國與日期尚未公布。"
+      "description": "世界中學生英語辯論錦標賽，由各國辯論組織選派國家代表隊，有年齡限制。台灣的國家組織是 Taiwan Debate Union，學生須經該組織選拔。",
+      "details": "主辦單位是 WSDC Ltd.，每隊 3 至 5 人。官網 National Organisations 頁列出 86 個國家／地區組織，台灣以 Taiwan 之名列於其中。\n官網 WSDC Rules（2026 年 8 月版）的年齡條款寫「have reached their 14th birthday by the first day of debates at the Championships」且「not have reached their 20th birthday by the day of the grand final at the Championships」。高等教育機構的第一學期若在比賽首日當天或之前開始，即不具資格。\n2026 年 7 月 14 至 24 日於肯亞舉行，已結束；2027 屆主辦國與日期尚未公布。"
     },
     {
       "title": "哈佛模擬聯合國 (HMUN)",
@@ -1300,7 +1310,8 @@
       "recheckOn": "2026-11-22",
       "recheckNote": "台北場報名 11/21 截止，之後改成當時還能報名的線上場，官網 2026-10-27 列的是 Online Fall（報名到 12/5，Gamma 題組）、Online History Bee Gold Set（報名到 2027-02-22）與 Online Spring（報名到 2027-03-31，Alpha 題組）。",
       "url": "https://iacompetitionsasia.com/",
-      "description": "由 International Academic Competitions 亞洲暨大洋洲分部主辦的歷史知識搶答競賽（History Bee 個人賽／History Bowl 團體賽），面向國小至高中學生。2026-27 賽季台北場（Taipei Fall History Bee and Bowl）2026 年 12 月 5 日於康橋國際學校舉行，報名截止 2026 年 11 月 21 日。官網已確認的亞洲與線上場次自 2026 年 10 月 24 日延續至 2027 年 4 月 10 至 11 日，各場次報名截止日不同（2026-10-10 至 2027-03-31）。規則寫「Schools may only play each question set ONCE (Gamma, Beta, and Alpha), meaning each school can play a maximum of three Regionals each year」。"
+      "description": "歷史知識搶答競賽，分個人賽 History Bee 與團體賽 History Bowl，收國小至高中學生。亞洲各地與線上都有場次，包括台北場。",
+      "details": "主辦單位是 International Academic Competitions 亞洲暨大洋洲分部。\n2026-27 賽季台北場（Taipei Fall History Bee and Bowl）2026 年 12 月 5 日於康橋國際學校舉行，報名截止 2026 年 11 月 21 日。官網已確認的亞洲與線上場次自 2026 年 10 月 24 日延續至 2027 年 4 月 10 至 11 日，各場次報名截止日不同（2026-10-10 至 2027-03-31）。\n規則寫「Schools may only play each question set ONCE (Gamma, Beta, and Alpha), meaning each school can play a maximum of three Regionals each year」。"
     },
     {
       "title": "新加坡與亞洲數學奧林匹亞 (SASMO)",
@@ -1371,7 +1382,8 @@
       "registrationNote": "經直轄市、縣（市）初賽複賽晉級決賽",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://language115.eduweb.tw/",
-      "description": "教育部主辦、文化部與原住民族委員會、客家委員會協辦，115 年由基隆市政府承辦。高中學生組資格：「就讀公私立高級中等學校日、夜間部與進修學校且未滿二十歲、五專前三年學生」。學生由就讀學校報名學校所在地的直轄市、縣（市）初賽，逐級經複賽晉級決賽；初賽辦法由各縣市自訂，例如桃園市 115 年實施計畫寫初賽「由各校秉持公平公正公開的原則下自行擇期辦理，選拔校內優秀選手，代表學校參加複賽」；複賽「以直轄市、縣（市）為競賽單位」，決賽報名方式：「各競賽單位應於115年9月23日至10月20日前完成網路報名並電話確認」。115 年決賽：個人賽 2026-12-12 至 12-13，國語、臺灣台語、臺灣客語項目在基隆市立明德國中，臺灣原住民族語言項目在基隆市仁愛國小；團體賽（讀者劇場）2026-12-20 在明德國中。依《全國語文競賽舉辦原則》規定「於比賽半年前公告競賽實施要點，並架設專屬網站」，官網每年隨承辦縣市更換（116 年網址尚未建立）；language.moe.gov.tw 是教育部語文成果入口網，收錄舉辦原則與歷年成績，不是競賽官網。"
+      "description": "教育部主辦的語文競賽，項目含國語、臺灣台語、臺灣客語、臺灣原住民族語言與讀者劇場。高中組限未滿二十歲，由就讀學校報名所在縣市的初賽，逐級經複賽晉級決賽。",
+      "details": "文化部與原住民族委員會、客家委員會協辦，115 年由基隆市政府承辦。高中學生組資格：「就讀公私立高級中等學校日、夜間部與進修學校且未滿二十歲、五專前三年學生」。\n初賽辦法由各縣市自訂，例如桃園市 115 年實施計畫寫初賽「由各校秉持公平公正公開的原則下自行擇期辦理，選拔校內優秀選手，代表學校參加複賽」。複賽「以直轄市、縣（市）為競賽單位」，決賽報名方式：「各競賽單位應於115年9月23日至10月20日前完成網路報名並電話確認」。\n115 年決賽的個人賽 2026-12-12 至 12-13，國語、臺灣台語、臺灣客語項目在基隆市立明德國中，臺灣原住民族語言項目在基隆市仁愛國小。團體賽（讀者劇場）2026-12-20 在明德國中。\n依《全國語文競賽舉辦原則》規定「於比賽半年前公告競賽實施要點，並架設專屬網站」，官網每年隨承辦縣市更換（116 年網址尚未建立）。language.moe.gov.tw 是教育部語文成果入口網，收錄舉辦原則與歷年成績，不是競賽官網。"
     },
     {
       "title": "全國高級中等學校小論文寫作比賽",
@@ -1404,7 +1416,8 @@
       "opensAt": "2027-02-01T00:00:00+08:00",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://www.shs.edu.tw/Customer/Information/OverIndex",
-      "description": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立嘉義高級工業職業學校承辦（與小論文比賽的承辦學校不同）。對象為全國高級中等學校在學學生，學生用學校給的驗證碼註冊投稿，參賽學校在截稿後篩選作品，每校可投的篇數是班級數的兩倍。實施計畫規定「每位在學學生每學期僅能投稿一篇作品，每篇作品須為單一作者，不接受聯名投稿」，並明文「不得使用任何 AI 工具輔助參賽」。115 學年度兩梯次：第一學期 2026-09-01 至 10-08 12:00、第二學期 2027-02-01 至 03-10 12:00，成績分別於 2026-11-14 前與 2027-04-16 前公告。兩學期的截止日都比小論文比賽早（小論文是 10/15 與 3/15）。"
+      "description": "全國高級中等學校在學學生的閱讀心得寫作比賽，每學期一梯次，單一作者投稿。學生用學校給的驗證碼註冊投稿，由學校篩選作品，不得使用 AI 工具。",
+      "details": "教育部國教署指導、全國高級中等學校圖書館輔導團執行，115 學年度由國立嘉義高級工業職業學校承辦（與小論文比賽的承辦學校不同）。\n篩選在截稿後進行，每校可投的篇數是班級數的兩倍。實施計畫規定「每位在學學生每學期僅能投稿一篇作品，每篇作品須為單一作者，不接受聯名投稿」，並明文「不得使用任何 AI 工具輔助參賽」。\n115 學年度第一學期 2026-09-01 至 10-08 12:00、第二學期 2027-02-01 至 03-10 12:00，成績分別於 2026-11-14 前與 2027-04-16 前公告。兩學期的截止日都比小論文比賽早（小論文是 10/15 與 3/15）。"
     },
     {
       "title": "全國中小學科學探究競賽—這樣教我就懂",
@@ -1903,7 +1916,8 @@
       "registrationNote": "每年 8/1、11/1、2/1、5/1 收稿",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://tcr.org/submit",
-      "description": "The Concord Review, Inc. 發行的中學生歷史研究論文季刊，自述為「the only quarterly journal in the world to publish the academic research papers of secondary students」，作者來自 46 國。這是期刊投稿而非競賽：採滾動收稿，官網寫「Deadlines to be considered for specific issues are August 1 (Winter), November 1 (Spring), February 1 (Summer) and May 1 (Fall)」，資格：「You may submit a paper to The Concord Review if you completed the paper before finishing secondary school」。投稿須付費，投稿表單標價為 eBook US$90、美國紙本 US$120、國際紙本 US$150（台灣適用，皆含一年訂閱）；eBook 方案的說明文字仍寫投稿費 $70，與標價不一致，以結帳金額為準。"
+      "description": "The Concord Review, Inc. 發行的中學生歷史研究論文季刊，採滾動收稿，屬期刊投稿，不是競賽。論文須在中學畢業前完成，投稿須付費。",
+      "details": "自述為「the only quarterly journal in the world to publish the academic research papers of secondary students」，作者來自 46 國。\n官網寫「Deadlines to be considered for specific issues are August 1 (Winter), November 1 (Spring), February 1 (Summer) and May 1 (Fall)」。資格：「You may submit a paper to The Concord Review if you completed the paper before finishing secondary school」。\n投稿表單標價為 eBook US$90、美國紙本 US$120、國際紙本 US$150（台灣適用，皆含一年訂閱）。eBook 方案的說明文字仍寫投稿費 $70，與標價不一致，以結帳金額為準。"
     },
     {
       "title": "哈佛克里姆森全球論文競賽 (HCGEC)",
@@ -1919,7 +1933,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "2026-10-25 逐頁查過官網 sitemap 列出的 93 頁，沒有一頁說明這個競賽與哈佛大學無關。",
       "url": "https://www.essaycomp.org/",
-      "description": "由哈佛學生報 The Harvard Crimson 與商業留學顧問公司 Crimson Education 共同主辦，官網寫「Hosted online by The Harvard Crimson and Crimson Education」，參賽條款載明主辦方（Promoter）是紐西蘭公司 Crimson Consulting Limited。這不是哈佛大學官方競賽。資格依 FAQ 為 10 至 18 歲、2027 年 2 至 3 月比賽期間在讀中學，已畢業者須在 2027 年 9 月前尚未入讀大學；台灣屬 APAC 賽區。報名費：「The registration fee is US$15 during the Early Bird period (ends December 15, 2026) and US$20 for Regular registration (ends February 10, 2027)」。2027 屆報名 2026-10-01 已開放、2027-02-10 截止，2/23 分區投稿截止、3/19 全球決賽投稿截止、3/31 公布得主，截止時間皆為 23:59（GMT+0），即台灣時間隔日 07:59。"
+      "description": "哈佛學生報與商業留學顧問公司 Crimson Education 合辦的線上論文競賽，不是哈佛大學官方競賽。收 10 至 18 歲中學生，須付報名費。",
+      "details": "官網寫「Hosted online by The Harvard Crimson and Crimson Education」，參賽條款載明主辦方（Promoter）是紐西蘭公司 Crimson Consulting Limited。\n資格依 FAQ：2027 年 2 至 3 月比賽期間在讀中學，已畢業者須在 2027 年 9 月前尚未入讀大學。台灣屬 APAC 賽區。\n報名費：「The registration fee is US$15 during the Early Bird period (ends December 15, 2026) and US$20 for Regular registration (ends February 10, 2027)」。2027 屆報名 2026-10-01 已開放、2027-02-10 截止，2/23 分區投稿截止、3/19 全球決賽投稿截止、3/31 公布得主。截止時間皆為 23:59（GMT+0），即台灣時間隔日 07:59。"
     },
     {
       "title": "Ayn Rand Institute 論文競賽",
@@ -1935,7 +1950,8 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "2026-10-23 開啟官網，頁首輪播逐字標示「Next Deadline」「TBD」「Coming soon」，「Upcoming Contests」底下沒有列出任何競賽，選擇競賽的區塊顯示逐字「Unable to load contest information. Please check back later.」。不要沿用舊年度日期自行推定。",
       "url": "https://aynrand.org/students/essay-contests",
-      "description": "Ayn Rand Institute 針對其小說舉辦的論文獎學金競賽，含 Anthem、The Fountainhead 與 Atlas Shrugged 三項，獎學金最高 US$25,000。資格：「The Anthem contest is open to all middle & high school students worldwide, ages 13 and older. The Fountainhead contest is open to all middle & high school students worldwide, ages 13 and older. The Atlas Shrugged contest is open to all high school, college, and graduate students worldwide」，並明載「All participants must be enrolled in school during the contest period」與「International students are welcome to participate」，台灣學生可參加。下一屆截止日官方尚未公布。"
+      "description": "Ayn Rand Institute 以其小說為題的論文獎學金競賽，共三項。13 歲以上的在學中學生可參加，收國際學生。",
+      "details": "三項是 Anthem、The Fountainhead 與 Atlas Shrugged，獎學金最高 US$25,000。\n資格：「The Anthem contest is open to all middle & high school students worldwide, ages 13 and older. The Fountainhead contest is open to all middle & high school students worldwide, ages 13 and older. The Atlas Shrugged contest is open to all high school, college, and graduate students worldwide」。官網並明載「All participants must be enrolled in school during the contest period」與「International students are welcome to participate」，台灣學生可參加。\n下一屆截止日官方尚未公布。"
     },
     {
       "title": "國際青年數學挑戰賽 (IYMC)",
