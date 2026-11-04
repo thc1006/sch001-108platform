@@ -405,11 +405,12 @@ import data from '../../../public/advanced-resources/competitions.json';
         return CATEGORY_ACCENT[cat] || DEFAULT_ACCENT;
       }
 
-      // factsText 是名稱下面那一行淡色小字，沒填的欄位跳過。
+      // factsText 是主辦單位下面那一行小字，沒填的欄位跳過。用「、」分隔：「·」在 NVDA 預設設定下可能不念，
+      // 中文語音也幾乎不停頓。
       function factsText(c) {
         return [c.region, c.level, c.form, c.eligibility, c.mode]
           .filter((x) => typeof x === 'string' && x)
-          .join(' · ');
+          .join('、');
       }
 
       // badgeText 是有 details 的卡片的狀態徽章，只放短標籤。registrationNote 寫在 cardDeadline 的截止欄。
