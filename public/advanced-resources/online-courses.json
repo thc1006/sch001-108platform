@@ -16,7 +16,7 @@
         "Deep Learning",
         "LLM"
       ],
-      "description": "台大電機系李宏毅老師的機器學習與生成式 AI 課，用中文講，講解淺顯，適合拿來入門機器學習。課程網頁有歷年的投影片、作業和上課影片，內容包括 LLM、RAG、AI Agent。",
+      "description": "台大電機系李宏毅老師的機器學習與生成式 AI 課，用中文講，講解淺顯。沒有基礎的話先看 2024 年的「生成式 AI 導論」，不需要先修，作業有寫程式的部分，沒寫過程式也有範例可以跟；機器學習課的作業要用 Python。課程網頁有歷年的投影片、作業和上課影片，內容包括 LLM、RAG、AI Agent。",
       "url": "https://speech.ee.ntu.edu.tw/~hylee/index.php",
       "thumbnail_url": "img/courses/ntu-hylee.jpg"
     },
