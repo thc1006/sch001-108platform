@@ -248,7 +248,7 @@ test.describe('國內外競賽的詳細資訊', () => {
         await opener(page, '尚未開放').click();
         const dialog = page.getByRole('dialog', { name: '尚未開放', exact: true });
         await expect(dialog.locator('.comp-deadline__label')).toHaveText(['報名期間', '賽事日期']);
-        await expect(dialog.locator('.comp-deadline__value')).toHaveText([value, '2100-01-10 舉行']);
+        await expect(dialog.locator('.comp-deadline__value')).toHaveText([value, '2100-01-10']);
         await expect(dialog.locator('.comp-status')).toHaveText('尚未開放');
     });
 

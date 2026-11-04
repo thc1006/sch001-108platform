@@ -813,7 +813,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
         assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
         return m[0];
     };
-    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'upcomingText', 'cardDeadline']
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'upcomingText', 'cycleWhen', 'cardDeadline']
         .map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, badgeText, cardDeadline };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
@@ -850,7 +850,7 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         return m[0];
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
-        'eventLabel', 'deadlineField', 'deadlineLabel', 'upcomingText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+        'eventLabel', 'deadlineField', 'deadlineLabel', 'upcomingText', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, fullDeadline, dialogBadge };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
@@ -883,6 +883,13 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     assert.equal(yearly.label, '每年固定辦理');
     assert.equal(f.dialogBadge(yearly, f.fullDeadline({ cycle: { closes: '03-15' } }, yearly)), `每年固定辦理，下次約 ${yearly.next} 截止`);
     // 什麼時程都沒有時，徽章是「依官網公告」，截止欄是「未公布」，不寫同一句。
+    // 截止欄寫報名的部分不用「·」接，也不夾賽事日期；賽事日期另放一行，不再寫「賽事」。
+    for (const c of data.competitions) {
+        const dField = f.fullDeadline(c, f.getStatus(c));
+        if (dField.label === '報名截止' || dField.label === '報名期間') assert.doesNotMatch(dField.value, /·|賽事|舉行/, `${c.title}：${dField.value}`);
+        if (dField.label === '賽事日期') assert.doesNotMatch(dField.value, /·|賽事|舉行|\//, `${c.title}：${dField.value}`);
+        if (dField.event) assert.doesNotMatch(dField.event, /賽事|舉行/, `${c.title}：${dField.event}`);
+    }
     const none = f.fullDeadline({}, f.getStatus({}));
     assert.deepEqual([f.dialogBadge(f.getStatus({}), none), none.value], ['依官網公告', '未公布']);
 });
@@ -898,7 +905,7 @@ async function cardRenderer() {
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'eventLabel',
         'deadlineField', 'deadlineLabel', 'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
-        'upcomingText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
+        'upcomingText', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
     const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
     return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
 }
@@ -922,7 +929,7 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     const render = await cardRenderer();
     const value = (html) => html.match(/<span class="comp-deadline__value">([^<]*)<\/span>/)[1];
     const cycle = { title: '測試', organizer: '主辦單位', category: '資訊', url: 'https://example.com/', description: '摘要', deadline: '2000-07-01', cycle: { closes: '07' } };
-    assert.equal(value(render(cycle)), '本屆 2000-07-01 已截止 · 每年約 7 月');
+    assert.equal(value(render(cycle)), '本屆 2000-07-01 已截止、每年約 7 月');
     assert.equal(value(render({ ...cycle, details: '詳細內容' })), '每年約 7 月');
     const label = (html) => html.match(/<span class="comp-deadline__label">([^<]*)<\/span>/)[1];
     // 沒有 details 的卡片和有 details 的寫法相同，賽事日期另放一行。
@@ -931,7 +938,7 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
         assert.equal(label(render(c)), '報名期間');
         assert.equal(value(render(c)), '預計 2099-12-15 開放、2099-12-31 截止');
     }
-    assert.match(render(upcoming), /<span class="comp-deadline__label">賽事日期<\/span><span class="comp-deadline__value">2100-01-10 舉行<\/span>/);
+    assert.match(render(upcoming), /<span class="comp-deadline__label">賽事日期<\/span><span class="comp-deadline__value">2100-01-10<\/span>/);
     // 有 details 的卡片徽章只放短標籤，registrationNote 和下次截止日在截止欄與對話框裡。
     const badge = (html) => html.match(/<span class="comp-status">([^<]*)<\/span>/)[1];
     assert.equal(badge(render({ ...cycle, details: '詳細內容' })), '本屆已截止');
