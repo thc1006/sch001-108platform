@@ -173,6 +173,7 @@ const cliMutations = [
     ['--verify 新規則的現值不同也通過', 'process.exit(fresh.length ? 1 : 0);', 'process.exit(0);', '--verify 新規則基準灌水'],
     ['不讀資料 JSON', 'for (const f of dataFiles) {', 'for (const f of []) {', '資料 JSON 加「很多」'],
     ['shared 的 js 不記粗體', "tag: 'script', text, skip: ' '.repeat(text.length), bold });", "tag: 'script', text, skip: ' '.repeat(text.length), bold: [] });", 'shared 的 js 加粗體標籤'],
+    ['報表照印 PH', "const readable = (s) => String(s).replaceAll(PH, '${…}');", 'const readable = (s) => String(s);', 'shared 的 js 的粗體標籤裡有 ${…}'],
     ['不掃 shared 的 js', " || /^shared\\/[^/]+\\.js$/.test(f)", '', 'shared 的 js 加「——」'],
     ['不讀頁面', 'htmlPages.forEach((page, i) =>', 'htmlPages.slice(0, 0).forEach((page, i) =>', '乾淨的副本'],
     ['不掃 header 與 footer', 'withChrome: i === 0', 'withChrome: false', 'header 加「很多」'],
@@ -263,6 +264,8 @@ const cases = [
     ['header 加「很多」', (b) => b.edit(b.html[0], (t) => t.replace(/(<header[^>]*>)/, '$1<p>頁首很多字</p>')), [], 1],
     ['shared 的 js 加粗體標籤', (b) => b.edit('shared/platform-ai.js', (t) => `${t}\nwindow.__writingFault = \`<b>注入標籤：</b>說明\`;\n`), [], 0,
         (r) => !!r?.hits.some((h) => h.rule === 'F01-bold-label' && h.match === '注入標籤：')],
+    ['shared 的 js 的粗體標籤裡有 ${…}', (b) => b.edit('shared/platform-ai.js', (t) => `${t}\nwindow.__writingFault = \`<b>\${k}：</b>注入說明\`;\n`), [], 0,
+        (r) => !!r?.hits.some((h) => h.rule === 'F01-bold-label' && h.match === '${…}：' && h.context.includes('${…}： 注入說明'))],
     ['shared 的 js 加「——」', (b) => b.edit('shared/platform-ai.js', (t) => `${t}\nwindow.__writingFault = '一段——說明';\n`), [], 1],
     ['資料 JSON 加「很多」', (b) => b.edit('career-exploration/senior-interviews.json', (t) => t.replace('"content_html": "', '"content_html": "<p>注入的很多</p>')), [], 1],
     // 原始檔沒有這個欄位，pointer 找不到行，命中只能記成頁面路徑。
