@@ -738,15 +738,24 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     }
 
     /**
-     * textBefore 回傳緊接在 [data-after-panel] 前面的那段字：連結前面是截止欄，「詳細資訊」前面是摘要。
-     * 點它不會讓任何元素取得焦點，也不會被 header 蓋住。
+     * textBefore 回傳緊接在 [data-after-panel] 前面那段字最後一行左邊的一點：連結前面是截止欄，
+     * 「詳細資訊」前面是摘要。點它不會讓任何元素取得焦點。conceal 讓 [data-after-panel] 停在離視窗頂端
+     * 400px 以上的地方，點最後一行，摘要再長也不會點到 header 底下。
      */
-    const textBefore = (page) => page.locator('[data-after-panel]').locator('xpath=preceding-sibling::*[1]');
+    const textBefore = (page) =>
+        page.locator('[data-after-panel]').locator('xpath=preceding-sibling::*[1]').evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return { x: r.left + 4, y: r.bottom - 6 };
+        });
+    const clickTextBefore = async (page) => {
+        const { x, y } = await textBefore(page);
+        await page.mouse.click(x, y);
+    };
 
     // 點過面板後面的文字，沒有元素有焦點，Shift+Tab 從點的位置往回找。這時不會有 focusout。
     test('competitions：沒有元素有焦點時 Shift+Tab 回到面板', async ({ page }) => {
         await conceal(page, PAGES.competitions);
-        await textBefore(page).click();
+        await clickTextBefore(page);
         const before = await state(page);
         expect(await page.evaluate(() => document.activeElement === document.body), '前置：點文字後沒有元素有焦點').toBe(true);
         await page.keyboard.press('Shift+Tab');
@@ -818,7 +827,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         'focus()': (page) =>
             page.locator('[data-autohide-filters]').evaluate((panel, sel) => [...panel.querySelectorAll(sel)].filter((el) => el.checkVisibility()).at(-1).focus(), FOCUSABLE),
         '沒有焦點時 Shift+Tab': async (page) => {
-            await textBefore(page).click();
+            await clickTextBefore(page);
             await page.keyboard.press('Shift+Tab');
         },
     };
@@ -841,7 +850,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     // 點擊造成的焦點移動不放回面板，只限那一次點擊。
     test('competitions：用滑鼠點過卡片文字之後，Shift+Tab 回到面板', async ({ page }) => {
         await conceal(page, PAGES.competitions);
-        await textBefore(page).click();
+        await clickTextBefore(page);
         await page.locator('[data-after-panel]').evaluate((el) => el.focus({ preventScroll: true }));
         const before = await state(page);
         await page.keyboard.press('Shift+Tab');
@@ -854,7 +863,8 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         test.skip(browserName !== 'chromium', '要用 CDP 不等回應地送出事件');
         const before = await conceal(page, PAGES.competitions);
         const at = await page.locator('[data-after-panel]').evaluate((el) => {
-            document.addEventListener('click', (e) => e.preventDefault(), true);
+            // 連結不跳頁；[data-after-panel] 是「詳細資訊」時，也不讓它開對話框。
+            document.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, true);
             const r = el.getBoundingClientRect();
             return { x: r.left + 8, y: r.top + r.height / 2 };
         });
@@ -877,8 +887,8 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         const before = await conceal(page, PAGES.competitions);
         // 按下時焦點不動，focusout 才會發生。
         await page.evaluate(() => document.addEventListener('mousedown', (e) => e.preventDefault()));
-        const box = await textBefore(page).boundingBox();
-        await page.mouse.move(box.x + 4, box.y + box.height / 2);
+        const { x, y } = await textBefore(page);
+        await page.mouse.move(x, y);
         await page.mouse.down();
         await page.locator('[data-autohide-filters]').evaluate(async (panel, sel) => {
             await new Promise((r) => setTimeout(r, 0));

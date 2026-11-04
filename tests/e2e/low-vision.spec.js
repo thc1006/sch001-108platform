@@ -366,12 +366,20 @@ test('已截止的競賽卡片，次要文字仍有 4.5:1', async ({ page }) => 
     await card.waitFor();
     await card.evaluate((el) => el.classList.add('is-closed'));
     await page.addScriptTag({ content: CONTRAST });
-    const m = await card.evaluate((el) => ({
-        opacity: getComputedStyle(el).opacity,
-        org: window.__ratio(getComputedStyle(el.querySelector('.comp-card__org')).color, getComputedStyle(el).backgroundColor),
-    }));
+    const m = await card.evaluate((el) => {
+        // 字的顏色對它所在那一塊的底色：內文是卡片的底色，截止欄是底部的底色。
+        const on = (sel, box) => window.__ratio(getComputedStyle(el.querySelector(sel)).color, getComputedStyle(box).backgroundColor);
+        const foot = el.querySelector('.comp-foot');
+        return {
+            opacity: getComputedStyle(el).opacity,
+            ratios: {
+                org: on('.comp-card__org', el), facts: on('.comp-facts', el),
+                label: on('.comp-deadline__label', foot), checked: on('.comp-checked', foot),
+            },
+        };
+    });
     expect(m.opacity).toBe('1');
-    expect(m.org).toBeGreaterThanOrEqual(4.5);
+    for (const [name, ratio] of Object.entries(m.ratios)) expect(ratio, name).toBeGreaterThanOrEqual(4.5);
 });
 
 test.describe('手機選單收合的時機（320x256）', () => {
@@ -589,7 +597,8 @@ test.describe('只放大文字到 200%，卡片裡的字不被切掉', () => {
         ['advanced-resources/online-courses.html', '.course-card'],
         ['advanced-resources/reading-list.html', '.book-card'],
     ]) {
-        for (const width of [1280, 320]) test(`${rel} ${width}px`, async ({ page }) => {
+        // 競賽卡片的截止欄和「前往官網」在 412、820 寬最容易擠在同一行。
+        for (const width of rel.includes('competitions') ? [1280, 820, 412, 320] : [1280, 320]) test(`${rel} ${width}px`, async ({ page }) => {
             await page.setViewportSize({ width, height: 800 });
             await page.emulateMedia({ reducedMotion: 'reduce' });
             await page.goto(P(rel), { waitUntil: 'networkidle' });
@@ -606,6 +615,14 @@ test.describe('只放大文字到 200%，卡片裡的字不被切掉', () => {
                     const range = document.createRange();
                     range.selectNodeContents(n);
                     if ([...range.getClientRects()].some((r) => r.right > right + 1)) out.push(`${title}：「${n.textContent.trim().slice(0, 20)}」超出右緣`);
+                }
+                // 截止欄和按鈕排在同一行時，截止欄至少要有 8rem，不能被擠成一字一行；換到自己一行時就是整行寬。
+                const deadline = c.querySelector('.comp-deadline');
+                if (deadline) {
+                    const foot = deadline.parentElement;
+                    const line = foot.clientWidth - parseFloat(getComputedStyle(foot).paddingLeft) - parseFloat(getComputedStyle(foot).paddingRight);
+                    const min = Math.min(8 * parseFloat(getComputedStyle(document.documentElement).fontSize), line);
+                    if (deadline.getBoundingClientRect().width < min - 1) out.push(`${title}：截止欄寬 ${Math.round(deadline.getBoundingClientRect().width)} < ${Math.round(min)}`);
                 }
                 // 固定高度的標題，字多到超出就疊到下一段上。
                 for (const h of c.querySelectorAll('h2, h3')) if (h.scrollHeight > h.clientHeight + 1) out.push(`${h.textContent.trim()}：標題高 ${h.scrollHeight} > ${h.clientHeight}`);

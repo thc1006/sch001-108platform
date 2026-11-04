@@ -202,17 +202,23 @@ for (const { name, path, grid, button, tabs } of PAGES) {
     });
 }
 
-// 競賽頁只有填了 details 的卡片有按鈕，所以不放進上面的 PAGES。資料換成固定的三筆。
+// 競賽頁只有填了 details 的卡片有按鈕，所以不放進上面的 PAGES，那一組的檢查在這裡照做一次。資料換成固定的幾筆。
 test.describe('國內外競賽的詳細資訊', () => {
     const entry = (title, fields) => ({
         title, organizer: '主辦單位', category: '資訊', level: '全國', form: '個人', region: '台灣',
         eligibility: '公開報名', mode: '線上', url: 'https://example.com/', description: `${title}的摘要`, ...fields,
     });
+    const LONG = Array.from({ length: 12 }, (_, i) => `第 ${i + 1} 段寫報名方式、評分標準和獎項，字數多到對話框要捲動才看得完。`).join('\n');
     const COMPETITIONS = [
         entry('沒有詳細資訊', {}),
-        entry('有詳細資訊', { details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。' }),
+        entry('有詳細資訊', { details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。\n\n第三段。', sourceCheckedAt: '2026-11-01' }),
         entry('詳細資訊是空字串', { details: '' }),
+        entry('詳細資訊只有空白', { details: '  \n ' }),
+        entry('詳細資訊很長', { details: LONG }),
     ];
+    /** opener 回傳名稱是 title 的卡片上的「詳細資訊」按鈕。 */
+    const opener = (page, title) =>
+        page.locator('.comp-card').filter({ has: page.getByRole('heading', { name: title, exact: true }) }).getByRole('button');
 
     test.beforeEach(async ({ page }) => {
         await page.route('**/advanced-resources/competitions.json', (route) => route.fulfill({ json: { competitions: COMPETITIONS } }));
@@ -220,41 +226,162 @@ test.describe('國內外競賽的詳細資訊', () => {
         await expect(page.locator('.comp-card')).toHaveCount(COMPETITIONS.length);
     });
 
-    test('只有 details 不是空字串的卡片有按鈕', async ({ page }) => {
+    test('只有 details 不是空白的卡片有按鈕', async ({ page }) => {
         const titles = await page.locator('.comp-card').evaluateAll((cards) =>
             cards.filter((c) => c.querySelector('button')).map((c) => c.querySelector('h2').textContent));
-        expect(titles).toEqual(['有詳細資訊']);
+        expect(titles).toEqual(['有詳細資訊', '詳細資訊很長']);
         // sr-only 的文字前後，Chromium 算名稱時會補空白。
-        await expect(page.locator('.comp-card button')).toHaveAccessibleName(/^詳細資訊\s?：有詳細資訊$/);
-        await expect(page.locator('.comp-card button')).toHaveAttribute('aria-haspopup', 'dialog');
+        await expect(opener(page, '有詳細資訊')).toHaveAccessibleName(/^詳細資訊\s?：有詳細資訊$/);
+        await expect(opener(page, '有詳細資訊')).toHaveAttribute('aria-haspopup', 'dialog');
     });
 
-    test('Enter 開啟，焦點移進對話框，對話框有 details 全文，Esc 關閉後回到按鈕', async ({ page }) => {
-        const opener = page.locator('.comp-card button');
-        await opener.focus();
+    test('Enter 開啟，焦點移進對話框，details 一行一段，Esc 關閉後回到按鈕', async ({ page }) => {
+        const button = opener(page, '有詳細資訊');
+        await button.focus();
         await page.keyboard.press('Enter');
         const dialog = page.getByRole('dialog', { name: '有詳細資訊', exact: true });
         await expect(dialog).toBeVisible();
         await expect(dialog).toBeFocused();
-        await expect(dialog.locator('.comp-dialog__details')).toHaveText(COMPETITIONS[1].details);
+        await expect(dialog.locator('.comp-dialog__details p')).toHaveText(['第一段。', '第二段寫報名方式，只有這裡有甲乙丙。', '第三段。']);
         await expect(dialog.getByRole('link')).toHaveAccessibleName(/^前往官網\s?：有詳細資訊（另開新分頁）$/);
+        await expect(dialog.locator('.comp-checked')).toHaveText('官網查證 2026-11-01');
         await page.keyboard.press('Escape');
         await expect(dialog).toBeHidden();
-        await expect(opener).toBeFocused();
+        await expect(button).toBeFocused();
+        await expect(page.locator('#comp-dialog')).toBeEmpty();
     });
 
-    test('按「關閉」後回到按鈕，按鈕裡的 × 不給螢幕閱讀器，按鈕至少 24x24', async ({ page }) => {
-        const opener = page.locator('.comp-card button');
-        await opener.click();
-        const close = page.getByRole('dialog').getByRole('button', { name: '關閉', exact: true });
+    test('空白鍵開啟，按「關閉」後回到按鈕，開著時 Tab 不會離開對話框', async ({ page }) => {
+        const button = opener(page, '有詳細資訊');
+        await button.focus();
+        await page.keyboard.press('Space');
+        const dialog = page.getByRole('dialog', { name: '有詳細資訊', exact: true });
+        await expect(dialog).toBeVisible();
+        // 背景是 inert，焦點只會在對話框裡，或是離開頁面時的 <body>。
+        for (let i = 0; i < 12; i++) {
+            await page.keyboard.press('Tab');
+            const where = await dialog.evaluate((d) => d.contains(document.activeElement) || document.activeElement === document.body);
+            expect(where).toBe(true);
+        }
+        const close = dialog.getByRole('button', { name: '關閉', exact: true });
         await expect(close.locator('span')).toHaveAttribute('aria-hidden', 'true');
         const box = await close.boundingBox();
         expect(box.width).toBeGreaterThanOrEqual(24);
         expect(box.height).toBeGreaterThanOrEqual(24);
-        await close.click();
-        await expect(page.getByRole('dialog')).toBeHidden();
-        await expect(opener).toBeFocused();
+        await close.focus();
+        await page.keyboard.press('Enter');
+        await expect(dialog).toBeHidden();
+        await expect(button).toBeFocused();
     });
+
+    test('點對話框外面關閉，從對話框裡拖曳到外面放開不算', async ({ page }) => {
+        const button = opener(page, '有詳細資訊');
+        await button.click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        const inner = await dialog.boundingBox();
+        await page.mouse.move(inner.x + 20, inner.y + 20);
+        await page.mouse.down();
+        await page.mouse.move(5, 5);
+        await page.mouse.up();
+        await expect(dialog).toBeVisible();
+        await page.mouse.click(5, 5);
+        await expect(dialog).toBeHidden();
+        await expect(button).toBeFocused();
+    });
+
+    test('開著時頁面不捲動，關閉後捲動位置不變', async ({ page }) => {
+        // 置中時按鈕要在釘住的篩選面板下面，click 才不會為了避開面板再捲一次。
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.locator('#competition-grid').evaluate((g) => Promise.all(g.getAnimations({ subtree: true }).map((a) => a.finished)));
+        const button = opener(page, '詳細資訊很長');
+        await button.scrollIntoViewIfNeeded();
+        const y = await page.evaluate(() => window.scrollY);
+        expect(y, '前置：頁面要捲過').toBeGreaterThan(0);
+        await button.click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+        await page.mouse.move(5, 5);
+        await page.mouse.wheel(0, 600);
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
+        // 關閉後若有平滑捲動，要等它停下才量：連續 10 個畫面 scrollY 都沒變才算停下。
+        const settled = await page.evaluate(() => new Promise((resolve) => {
+            let last = scrollY;
+            let same = 0;
+            const tick = () => {
+                same = scrollY === last ? same + 1 : 0;
+                last = scrollY;
+                if (same >= 10) resolve(last);
+                else requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+        }));
+        expect(settled).toBe(y);
+    });
+
+    test('320x256 也捲得到對話框最後的「前往官網」，一般尺寸不會多出捲軸', async ({ page }) => {
+        const button = opener(page, '詳細資訊很長');
+        await button.click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        expect(await dialog.evaluate((d) => d.scrollHeight - d.clientHeight)).toBe(0);
+        await page.keyboard.press('Escape');
+
+        await page.setViewportSize({ width: 320, height: 256 });
+        await button.click();
+        const link = dialog.getByRole('link');
+        await link.scrollIntoViewIfNeeded();
+        const box = await link.boundingBox();
+        expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height).toBeLessThanOrEqual(256);
+    });
+
+    for (const { width, height, zoom } of [{ width: 320, height: 256 }, { width: 360, height: 640 }, { width: 1280, height: 720, zoom: true }]) {
+        test(`${width}x${height}${zoom ? ' 只放大文字到 200%' : ''}：能讀的區域至少有視窗高度的六成，捲到底看得到最後一段`, async ({ page }) => {
+            await page.setViewportSize({ width, height });
+            if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+            await opener(page, '詳細資訊很長').click();
+            const dialog = page.getByRole('dialog');
+            await expect(dialog).toBeVisible();
+            const m = await dialog.evaluate((d) => {
+                // 從內文區往上找真的在捲的那一層，量它的高度；捲到底之後內文最後一個元素要在它裡面。
+                const body = d.querySelector(':scope > .overflow-y-auto');
+                let box = body;
+                while (box !== d && !(/auto|scroll/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight + 1)) box = box.parentElement;
+                box.scrollTop = box.scrollHeight;
+                const last = [...body.querySelectorAll('*')].filter((el) => el.checkVisibility()).pop();
+                return { area: box.clientHeight, lastBottom: last.getBoundingClientRect().bottom, boxBottom: box.getBoundingClientRect().bottom };
+            });
+            expect(m.area).toBeGreaterThanOrEqual(height * 0.6);
+            expect(m.lastBottom).toBeLessThanOrEqual(m.boxBottom + 1);
+        });
+    }
+
+    for (const width of [1280, 320]) {
+        test(`${width}px 只放大文字到 200%，對話框裡的字不超出右緣`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 800 });
+            await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+            await opener(page, '有詳細資訊').click();
+            const dialog = page.getByRole('dialog');
+            await expect(dialog).toBeVisible();
+            const out = await dialog.evaluate((d) => {
+                const right = d.getBoundingClientRect().right;
+                const bad = d.scrollWidth > d.clientWidth + 1 ? [`寬 ${d.scrollWidth} > ${d.clientWidth}`] : [];
+                const walker = document.createTreeWalker(d, NodeFilter.SHOW_TEXT);
+                for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                    if (!n.textContent.trim() || n.parentElement.closest('.sr-only')) continue;
+                    const range = document.createRange();
+                    range.selectNodeContents(n);
+                    if ([...range.getClientRects()].some((r) => r.right > right + 1)) bad.push(n.textContent.trim().slice(0, 20));
+                }
+                return bad;
+            });
+            expect(out).toEqual([]);
+        });
+    }
 
     test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
         await page.locator('#search-input').fill('甲乙丙');
