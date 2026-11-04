@@ -347,6 +347,13 @@ export const RULES = [
     { id: 'W12-mainland-register', severity: 'warn', skip: 'aqu', re: /信息(?!素)|視頻|軟件|硬件|數據庫|賦能|閉環|抓手|顆粒度|復盤|(?<!供應)鏈路/gu },
     { id: 'W13-era-opener', severity: 'block', skip: 'aqu', re: /在(?:當今|現今|如今|今日|這個|這樣一個)[^。，！？]{0,14}(?:時代|社會|世界|浪潮)(?:中|下|裡)?|隨著[^。，！？]{1,18}(?:的)?(?:發展|普及|進步|興起|到來|演進|盛行|崛起)/gu },
     { id: 'W14-significance', severity: 'block', skip: 'aqu', re: /具有(?:非常|十分|極為)?(?:重要|深遠|重大|積極)(?:的)?意義|意義(?:重大|深遠)|深遠(?:的)?影響|(?:開啟|翻開|寫下)(?:了)?(?:嶄新|全新|新)(?:的)?(?:篇章|一頁)|未來可期|無限(?:的)?可能|擁抱未來|迎接未來|標誌著|見證了|奠定(?:了)?(?:堅實|良好|穩固)?(?:的)?基礎|不可磨滅|根植於|這意味著/gu },
+    { id: 'W15-grand-promise', severity: 'warn', skip: 'aqu', re: /陪(?:你|您)(?:走|一起|度過|完成)|陪伴(?:你|您|學生|孩子)|每一步|每個孩子|每一位(?:學生|孩子)|世界級|心路歷程|觸角|為(?:每個|每位)?[^。，]{0,6}敞開|帶到[^。，]{0,10}面前|不再有[^。，]{0,8}(?:差距|落差|門檻)|屬於(?:你|自己)的(?:方向|答案|路|舞台|未來)/gu },
+    // 資料卡片的最後一句常是評價。前面寫了是誰說的就放行，「耶魯新聞稱…最受歡迎」是有出處的事實。
+    {
+        id: 'W16-card-verdict', severity: 'warn', skip: 'aqu',
+        re: /是[^。，；]{0,16}的(?:寶庫|入門磚|敲門磚|絕佳(?:資源|選擇|入門|工具)|好幫手|首選|利器|不二(?:選擇|法門)|最佳(?:選擇|入門|工具|資源))|適合(?:用來)?(?:培養|打好|訓練|激發|引發)|(?:能|可以)?引發(?:強烈的)?(?:好奇心|興趣)|生動有趣|有趣易懂|淺顯易懂|高品質|最受歡迎(?:的)?|(?:全球|國際|台灣|臺灣)?知名的|以[^。，]{1,10}聞名|廣受(?:好評|歡迎)|備受(?:好評|推崇|肯定)|絕佳/gu,
+        normal: (m) => (/(號稱|自稱|官網|官方|據|稱|寫|說|指出|表示)[^。]{0,12}$/.test(before(m, 16)) ? '已標明是誰說的' : null),
+    },
     { id: 'P01-double-dash', severity: 'block', skip: 'afqu', re: /—{2,}|─{2,}|―+/gu },
     { id: 'P02-single-dash', severity: 'block', skip: 'afqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal },
     {
@@ -360,12 +367,15 @@ export const RULES = [
     { id: 'P09-quote-nesting', severity: 'block', skip: '', custom: quoteNesting },
     { id: 'P10-curly-quote', severity: 'block', skip: 'u', re: new RegExp(`[“”‘’](?=${HAN}|${PH})|(?<=${HAN}|${PH})[“”‘’]`, 'gu') },
     {
-        id: 'P11-ellipsis', severity: 'warn', skip: 'fqu', re: /\.{3}|(?<!…)…(?!…)/gu,
+        id: 'P11-ellipsis', severity: 'warn', skip: 'fqu', re: /\.{3}|(?<!…)…(?!…)|⋯+/gu,
         normal: (m, b) => ((/^(script|attr:placeholder)$/.test(b.tag) && b.text.length <= 30 && /(…|\.\.\.)$/.test(b.text)) || /(載入|讀取|搜尋|處理|產生|傳送)中…$/.test(b.text) ? '介面狀態' : /[A-Za-z)]\s*$/.test(before(m, 2)) && /^\s*[A-Za-z]/.test(after(m, 2)) ? '英文引文' : null),
     },
     { id: 'S01-not-x-but-y', severity: 'warn', skip: 'q', re: /(?:不是|並非|並不是|不只是)[^，。！？；—─]{1,20}[，,]?\s*(?:而是|才是)[^。！？；」]{1,24}|(?:關鍵|重點|問題)[^，。！？]{0,8}不在(?:於)?[^，。！？]{1,16}[，,]\s*(?:而在於?|而是)|與其(?:說)?[^。！？；]{1,30}?不如/gu },
     { id: 'S02-not-only', severity: 'warn', skip: 'q', re: /(?:不僅|不只|不光)(?:是)?[^。！？；]{1,30}?(?:更|還|而且)(?:是)?/gu },
+    { id: 'S03-not-x-is-y', severity: 'warn', skip: 'q', re: /(?:不是|並非)[^，。！？；「」]{1,20}[，,]\s*(?:是|就是)(?!否)[^。！？；]{1,20}/gu },
+    { id: 'S04-adverb-de', severity: 'warn', skip: 'aqu', re: /(?:清晰|有效|系統性|系統化|深入|全面|精準|充分|高效|靈活|完整)地(?=\p{Script=Han})|更(?:好|有效|深入|全面)地/gu },
     { id: 'S05-weak-verb', severity: 'warn', skip: 'q', re: /進行(?![的中了多各一兩])(?=\p{Script=Han}{2})|作出|加以|予以/gu },
+    { id: 'S06-rhetorical', severity: 'warn', skip: 'aqu', re: /你(?:是否|是不是)(?:也)?(?:曾|常|有|覺得|想過)|有沒有想過|你知道嗎|想像一下|試想|不是嗎？/gu },
     { id: 'S08-long-sentence', severity: 'warn', skip: '', custom: longSentences },
     { id: 'C01-vague-attribution', severity: 'warn', skip: 'q', re: /(?:教授|老師|委員|學者|專家)們?(?:普遍|大多|多半|一致)(?:認為|指出|表示|建議)|(?:專家|學者|業界|許多人|很多人|大家|一般人|多數人)(?:普遍|大多|多半|一致)?(?:認為|指出|表示|建議)|(?:有|許多|很多|多項)研究(?:指出|顯示|發現|證實)|(?<!數)據統計|(?<!數)據說|據了解|普遍認為/gu },
     {
@@ -383,6 +393,11 @@ export const RULES = [
     },
     // Markdown 連結的網址標成 'u'，所以不略過網址。
     { id: 'K03-markdown-residue', severity: 'block', skip: '', re: /\*\*[^*\n]{1,40}\*\*|(?:^|\s)#{1,4}\s+\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot)/gu },
+    // 錯誤訊息和按鈕文字在腳本和屬性裡。內文的「抱歉」多半是訪談裡的話。
+    {
+        id: 'U01-ui-message', severity: 'warn', skip: 'aqu', re: /抱歉|不好意思|發生(?:未知|不明)?(?:的)?錯誤|出了(?:一)?點問題|出錯了|糟糕|哎呀|系統錯誤|操作失敗|檢查檔案路徑|網站管理員/gu,
+        normal: (m, b) => (b.tag === 'script' || b.tag.startsWith('attr') ? null : '不在腳本或屬性裡'),
+    },
 ];
 
 /**
