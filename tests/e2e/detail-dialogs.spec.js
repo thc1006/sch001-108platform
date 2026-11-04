@@ -378,7 +378,7 @@ test.describe('國內外競賽的詳細資訊', () => {
         expect(settled).toBe(y);
     });
 
-    test('320x256 也捲得到對話框最後的「前往官網」，內容短時不會多出捲軸', async ({ page }) => {
+    test('320x256 也捲得到對話框裡的「前往官網」，內容短時不會多出捲軸', async ({ page }) => {
         await opener(page, '有詳細資訊').click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
