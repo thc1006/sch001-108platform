@@ -460,7 +460,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         return dField.value === '依官網公告' ? { label: dField.label, value: '未公布' } : dField;
       }
 
-      // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
+      // dialogBadge 是截止欄為 fullDeadline 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
       // 寫的是賽事日期時，registrationNote 放在徽章；週期型的徽章帶下次截止日，寫明是截止日，不然聽起來像
       // 比賽日期，截止欄已經寫了本屆已截止時不再寫一次；其餘用短標籤。
       function dialogBadge(s, dField) {
