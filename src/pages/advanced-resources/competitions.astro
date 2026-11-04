@@ -489,9 +489,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: '未公布' };
       }
 
-      // dialogBadge 是截止欄為 fullDeadline 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
-      // 寫的是賽事日期時，registrationNote 放在徽章；週期型的徽章帶下次截止日，寫明是截止日，不然聽起來像
-      // 比賽日期，截止欄已經寫了本屆已截止時不再寫一次；其餘用短標籤。
+      // dialogBadge 是對話框和沒有 details 的卡片的徽章。截止欄寫賽事日期時放 registrationNote；週期型寫
+      // 「下次約 X 截止」，只寫日期聽起來像比賽日期。
       function dialogBadge(s, dField) {
         if (s.note && dField.value !== s.label) return statusText(s);
         if (s.key === 'cycle') return (s.label === '本屆已截止' ? '' : s.label + '，') + '下次約 ' + s.next + ' 截止';
@@ -866,12 +865,11 @@ import data from '../../../public/advanced-resources/competitions.json';
       outline: 2px solid var(--primary); outline-offset: 2px;
     }
 
-    /* 左右內距最多 1.5rem，窄螢幕照視窗寬縮到 1rem：360 寬只放大文字到 200% 時，1.5rem 是 48px，
-       外層和卡片的內距吃掉之後，摘要每行只剩約 5 個字。卡片的 --pad 同理。 */
+    /* 左右內距用 clamp：一般字級時 375 寬以上是 1.5rem。只放大文字到 200% 時 6.5vw 比 1rem 小，360 寬
+       縮到 1rem（32px），原本 1.5rem 是 48px，摘要每行只剩約 5 個字。卡片的 --pad 同理。 */
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem clamp(1rem, 6.5vw, 1.5rem) 5rem; }
-    /* 欄數照卡片的最小寬度決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，每欄只剩約
-       6 個中文字。最小寬度用 19rem：64rem 以下 .comp-gridwrap 的內容寬最多 975px，放不下三欄（976px），
-       到 64rem 內容寬又變窄，欄數才不會在 1024 寬掉回兩欄。一般字級時 688 寬起兩欄，1088 寬起三欄。 */
+    /* 欄數照卡片最小寬度決定，放大文字時跟著減少。19rem 讓 64rem 以下最寬 975px 的內容區排不下三欄，
+       欄數才不會在 1024 寬掉回兩欄。 */
     .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
