@@ -412,7 +412,7 @@ import data from '../../../public/advanced-resources/competitions.json';
           .join(' · ');
       }
 
-      // badgeText 是狀態徽章的短標籤。registrationNote 已經寫在截止欄，徽章不再重複一次。
+      // badgeText 是有 details 的卡片的狀態徽章，只放短標籤。registrationNote 寫在 cardDeadline 的截止欄。
       function badgeText(s) {
         if (s.key === 'soon' || s.key === 'open') return statusText(s);
         if (s.key === 'upcoming') return '尚未開放';
@@ -431,8 +431,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
       }
 
-      // dialogBadge 是對話框的徽章。截止欄 dField 寫的是賽事日期時，registrationNote 放在徽章；
-      // 週期型的徽章帶下次截止日。其餘用短標籤，同一件事不寫兩次。
+      // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
+      // 寫的是賽事日期時，registrationNote 放在徽章；週期型的徽章帶下次截止日；其餘用短標籤。
       function dialogBadge(s, dField) {
         if ((s.note && dField.value !== s.label) || s.key === 'cycle') return statusText(s);
         return badgeText(s);
@@ -482,6 +482,9 @@ import data from '../../../public/advanced-resources/competitions.json';
       function cardHtml(c, i) {
         const s = c._status;
         const delay = Math.min(i, 14);
+        // details 是選填。沒有的卡片打不開對話框，截止欄和徽章照對話框的寫法放完整時程與 registrationNote。
+        const dField = hasDetails(c) ? cardDeadline(c, s) : deadlineField(c, s);
+        const badge = hasDetails(c) ? badgeText(s) : dialogBadge(s, dField);
         const more = hasDetails(c)
           ? '<button type="button" class="comp-more" aria-haspopup="dialog" data-idx="' + c._idx + '">' +
               '詳細資訊<span class="sr-only">：' + escapeHtml(c.title) + '</span>' +
@@ -491,14 +494,13 @@ import data from '../../../public/advanced-resources/competitions.json';
           '<article class="comp-card ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + ';--i:' + delay + '">' +
             '<div class="comp-card__body">' +
               '<h2 class="comp-card__title">' + escapeHtml(c.title) + '</h2>' +
-              kickerHtml(c, badgeText(s)) +
+              kickerHtml(c, badge) +
               '<p class="comp-card__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
               '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '</div>' +
             '<div class="comp-card__more">' + more + '</div>' +
-            // details 是選填。沒有的卡片打不開對話框，截止欄照舊放完整時程。
-            footHtml(c, hasDetails(c) ? cardDeadline(c, s) : deadlineField(c, s)) +
+            footHtml(c, dField) +
           '</article>'
         );
       }
