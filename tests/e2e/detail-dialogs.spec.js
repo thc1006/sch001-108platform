@@ -213,7 +213,7 @@ test.describe('國內外競賽的詳細資訊', () => {
     const LONG_TITLE = 'Wharton Global High School Investment Competition 華頓商學院全球高中生投資競賽（線上）';
     const COMPETITIONS = [
         entry('沒有詳細資訊', {}),
-        entry('有詳細資訊', { details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。\n\n第三段。\n<b>x</b>', sourceCheckedAt: '2026-11-01' }),
+        entry('有詳細資訊', { region: '其他', details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。\n\n第三段。\n<b>x</b>', sourceCheckedAt: '2026-11-01' }),
         entry('詳細資訊是空字串', { details: '' }),
         entry('詳細資訊只有空白', { details: '  \n ' }),
         entry('詳細資訊很長', { details: LONG }),
@@ -487,6 +487,11 @@ test.describe('國內外競賽的詳細資訊', () => {
             else expect(await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(window.__counts)))))).toEqual([]);
         });
     }
+
+    test('搜尋卡片上看得到的「其他地區」找得到地區是「其他」的卡片', async ({ page }) => {
+        await page.locator('#search-input').fill('其他地區');
+        await expect(page.locator('.comp-card h2')).toHaveText(['有詳細資訊']);
+    });
 
     test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
         await page.locator('#search-input').fill('甲乙丙');
