@@ -271,6 +271,12 @@ test('verifyPolicy：擋基準變大、新鍵、刪規則、非整數，以及�
     assert.match(verifyPolicy({ rules: {} }, { rules: {} }, only).join(), /policy 沒有/);
     assert.match(verifyPolicy({ rules: {} }, { rules: { 'W02': { baseline: {} } } }, only).join(), /不是 block/);
 });
+test('verifyPolicy：新加的規則可以帶著上線時的基準', () => {
+    const two = [...only, { id: 'K02', severity: 'block' }];
+    assert.deepEqual(verifyPolicy(policy, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 2 } } } }, two), []);
+    assert.match(verifyPolicy(policy, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 0.5 } } } }, two).join(), /非負整數/);
+    assert.match(verifyPolicy({ rules: { K02: { baseline: {} } } }, { rules: { ...policy.rules, K02: { baseline: { 'c.json': 2 } } } }, two).join(), /多出/);
+});
 
 test('網址與網域整段標成 u，裡面的字不算命中', () => {
     const t = '見 https://example.org/很多——頁 與 abc.org.tw/很多';
