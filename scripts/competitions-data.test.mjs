@@ -290,7 +290,7 @@ test('data：本輪查證到的賽事日期與週期', () => {
     assert.equal(esu.eventStartsAt, '2027-07-05');
     assert.equal(esu.eventEndsAt, '2027-07-09');
     assert.equal(esu.cycle, undefined);
-    assert.ok(esu.registrationNote?.includes('無公開報名'));
+    assert.ok(esu.registrationNote?.includes('台灣目前沒有選拔管道'));
 
     // Brain Bee 主辦單位報名頁：「報名：2026 年 5 月 9 日截止」
     //   第一階段 2026-05-23 筆試、第二階段 2026-06-27 口試
@@ -735,7 +735,7 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     // 官網競賽區塊顯示「Unable to load contest information. Please check back later.」與「NEXT DEADLINE / TBD」
     const ari = find('Ayn Rand');
     assert.equal(ari.deadline, '');
-    assert.ok(ari.registrationNote?.includes('TBD'));
+    assert.ok(ari.registrationNote?.includes('未公布'));
 
     // 官網時程寫報名到 2027-03-11 23:59 UTC，但報名平台 my.technovation.org 逐字「Registration closed」、
     // Get Involved 頁逐字「Student registration is closed」。填了截止日卡片就會顯示「報名中」，
