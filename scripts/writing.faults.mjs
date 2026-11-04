@@ -82,6 +82,8 @@ const mutations = [
     ['W13 時代後面接「史」也算', '(?:時代|社會|世界|浪潮)(?![學史各觀地])', '(?:時代|社會|世界|浪潮)'],
     ['W13 少了「日新月異」', '|日新月異', ''],
     ['拿掉 W14', "{ id: 'W14-significance', severity: 'block',", "{ id: 'W14-significance', severity: 'block', custom: () => [],"],
+    ['W14「奠定基礎」不必有形容詞', '奠定(?:了)?(?:堅實|良好|穩固)(?:的)?基礎', '奠定(?:了)?(?:堅實|良好|穩固)?(?:的)?基礎'],
+    ['拿掉 W17', "{ id: 'W17-weighty-verb', severity: 'warn',", "{ id: 'W17-weighty-verb', severity: 'warn', custom: () => [],"],
     ['拿掉 K02', "id: 'K02-placeholder', severity: 'block',", "id: 'K02-placeholder', severity: 'block', custom: () => [],"],
     ['K02 引號裡的 XX 也算', "normal: (m) => (/^(?:XX+|xx+|ＸＸ|○○|〇〇)$/.test(m[0]) && inQuote(m) ? '引號裡代替名稱的 XX' : null),", ''],
     ['K02 引號裡的 TBD 也放行', "/^(?:XX+|xx+|ＸＸ|○○|〇〇)$/.test(m[0]) && inQuote(m)", 'inQuote(m)'],
