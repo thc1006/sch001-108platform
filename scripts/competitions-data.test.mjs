@@ -939,10 +939,9 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
 
     // AIME 官網 FAQ 逐字：「Are there still two AIME exams, AIME I and AIME II? No」
     const aime = find('美國高中生數學邀請賽');
-    // 提到 AIME I／II 的那一欄要同時寫已取消，摘要和詳細資訊各自看。
-    for (const field of [aime.description, aime.details ?? '']) {
-        assert.ok(!/AIME I\b|AIME II/.test(field) || /已取消/.test(field),
-            'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
+    // 對話框先顯示摘要，所以已取消寫在摘要就好，details 可以照引 FAQ 原文。
+    if (/AIME I\b|AIME II/.test(textOf(aime))) {
+        assert.match(aime.description, /已取消/, 'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
     }
     assert.equal(aime.eventStartsAt, '2027-02-05');
     assert.equal(aime.eventEndsAt, '2027-02-06');
@@ -985,7 +984,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.equal(icho.eventStartsAt, '2026-07-10');
     assert.equal(icho.eventEndsAt, '2026-07-19');
     assert.match(textOf(icho), /2027 July 19-28, Chinese Taipei/, '請保留官網逐字原文');
-    assert.match(icho.description, /2027[^。]*(?:台灣|我國)|(?:台灣|我國)[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
+    assert.match(icho.description, /2027 年由(?:台灣|臺灣|我國)主辦|由(?:台灣|臺灣|我國)主辦[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
     // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」、
     // 2027「The 68th IMO ... Budapest, Hungary (July 16-26, 2027)」
