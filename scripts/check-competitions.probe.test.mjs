@@ -817,7 +817,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
         .map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, badgeText, cardDeadline };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
-    const badge = /^(報名中 · 剩 \d+ 天|即將截止 · 剩 \d+ 天|今日截止|尚未開放|本屆已截止|每年固定辦理|依官網公告|已截止)$/;
+    const badge = /^(報名中 · 剩 \d+ 天|即將截止 · 剩 \d+ 天|今日截止|尚未開放|本屆已截止，每年舉辦|每年固定辦理|依官網公告|已截止)$/;
     for (const c of data.competitions) {
         const s = f.getStatus(c);
         assert.match(f.badgeText(s), badge, c.title);
@@ -941,7 +941,7 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     assert.match(render(upcoming), /<span class="comp-deadline__label">賽事日期<\/span><span class="comp-deadline__value">2100-01-10<\/span>/);
     // 有 details 的卡片徽章只放短標籤，registrationNote 和下次截止日在截止欄與對話框裡。
     const badge = (html) => html.match(/<span class="comp-status">([^<]*)<\/span>/)[1];
-    assert.equal(badge(render({ ...cycle, details: '詳細內容' })), '本屆已截止');
+    assert.equal(badge(render({ ...cycle, details: '詳細內容' })), '本屆已截止，每年舉辦');
     const noted = { ...cycle, cycle: undefined, deadline: undefined, registrationNote: '由學校報名', eventStartsAt: '2099-08-01' };
     assert.equal(badge(render({ ...noted, details: '詳細內容' })), '依官網公告');
     assert.equal(badge(render(noted)), '由學校報名');
