@@ -1333,10 +1333,10 @@
       "sourceCheckedAt": "2026-11-01",
       "recheckOn": "2026-11-16",
       "recheckNote": "SEAMO X 2027 報名 11/15 截止，截止後改寫 registrationNote",
-      "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。10-23 查證時首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。11-01 首頁改列 SEAMO X 2027：「Registration Start Date 1 Nov 2026, 01:00 AM」「Registration Deadline 15 Nov 2026, 23:55 PM」「Competition Day 15 Jan 2027, 09:00 AM」「Exam Venue Bangkok, Thailand」，都沒有標時區；同頁寫「The top 40% locally will represent their region in the extended round.」。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。",
+      "sourceNote": "contact 頁內嵌的 partners 資料把新加坡等多個秘書處的開票法人列為 SEAMO PTE LTD（登記號 201831267E，地址同 Global HQ）；官網並連向多家補習與教材業者。成績頁有 2016、2017 與 2019 至 2026 年各屆（10-23 查證時 2026 年一欄逐字「Results will be released on 01st Nov 2026 at 09:00:00 SGT」）。10-23 查證時首頁的 Exam Period Starts、Registration Start Date、Registration Deadline、Region 四個欄位全部顯示 N/A。11-01 首頁改列 SEAMO X 2027：「Registration Start Date 1 Nov 2026, 01:00 AM」「Registration Deadline 15 Nov 2026, 23:55 PM」「Competition Day 15 Jan 2027, 09:00 AM」（11-05 改成「Competition Day 16 Jan 2027, 08:00 AM」）「Exam Venue Bangkok, Thailand」，都沒有標時區；同頁寫「The top 40% locally will represent their region in the extended round.」。contact 頁的地區下拉選單列出 23 個地區（另有 Other），不含 Taiwan；同一頁內嵌的 partners 資料共 37 筆，台灣代理是 partner_title「JoyEdu Academy」、business_name「JoyEdu Academy Pty. Ltd.」。Guidelines 頁（/page/guidelines）：「SEAMO caters to students aged 5 to 18 years.」",
       "url": "https://www.seamo-official.org/",
-      "description": "新加坡 SEAMO PTE LTD 辦的收費數學競賽，不屬於教育部委託的國際奧林匹亞選訓。官網地區選單沒有台灣，要寫信給台灣代理 JoyEdu Academy。",
-      "details": "報名費沒有公開，由各國代理收費、開發票。台灣代理的信箱是 taiwan@seamo-official.org。\nSEAMO X 2027 是各地區成績前 40% 的人參加的延伸賽，報名 2026-11-01 至 11-15 23:55，沒有標時區（Registration Deadline 15 Nov 2026, 23:55 PM），2027-01-15 在泰國曼谷比賽。"
+      "description": "新加坡民營公司辦的收費數學競賽，收 5 到 18 歲，高中生可以報，不屬於教育部委託的國際奧林匹亞選訓。報名要寫信給台灣代理 JoyEdu Academy。",
+      "details": "主辦的是 SEAMO PTE LTD。官網的地區選單沒有台灣。報名費沒有公開，由各國代理收費、開發票。台灣代理的信箱是 taiwan@seamo-official.org。\nSEAMO X 2027 是各地區成績前 40% 的人參加的延伸賽，報名 2026-11-01 至 11-15 23:55，沒有標時區（Registration Deadline 15 Nov 2026, 23:55 PM）。比賽 2027-01-16 08:00 在泰國曼谷。"
     },
     {
       "title": "國際青少年數學奧林匹亞 (IJMO)",
