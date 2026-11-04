@@ -387,16 +387,16 @@ import data from '../../../public/advanced-resources/competitions.json';
         return CATEGORY_ACCENT[cat] || DEFAULT_ACCENT;
       }
 
-      function cardHtml(c, i) {
-        const s = c._status;
-        const accent = accentFor(c.category);
-        const urgent = s.key === 'soon' && s.days <= 7 ? ' is-urgent' : '';
-        const delay = Math.min(i, 14);
-        const meta = [c.region, c.level, c.form]
-          .map((x) => '<li class="comp-tag">' + escapeHtml(x) + '</li>')
-          .join('');
+      // factsText 是名稱下面那一行淡色小字，沒填的欄位跳過。
+      function factsText(c) {
+        return [c.region, c.level, c.form, c.eligibility, c.mode]
+          .filter((x) => typeof x === 'string' && x)
+          .join(' · ');
+      }
+
+      // 卡片底部的截止欄與「前往官網」。
+      function footHtml(c, s) {
         const dField = deadlineField(c, s);
-        const deadlineText = escapeHtml(dField.value);
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
         // 「資料更新」會讓人以為每一筆都在那天查證過。有逐筆查證日期的就據實顯示，
         // 沒有的就不顯示，不要假裝有。
@@ -405,29 +405,37 @@ import data from '../../../public/advanced-resources/competitions.json';
             ? '<span class="comp-checked">官網查證 ' + escapeHtml(c.sourceCheckedAt) + '</span>'
             : '';
         return (
+          '<div class="comp-foot">' +
+            '<div class="comp-deadline">' +
+              '<span class="comp-deadline__label">' + escapeHtml(dField.label) + '</span>' +
+              '<span class="comp-deadline__value">' + escapeHtml(dField.value) + '</span>' +
+              checkedText +
+            '</div>' +
+            '<a class="comp-cta" href="' + safeUrl(c.url) + '" target="_blank" rel="noopener noreferrer">' +
+              '前往官網<span class="sr-only">：' + escapeHtml(c.title) + '（另開新分頁）</span>' +
+            '</a>' +
+          '</div>'
+        );
+      }
+
+      function cardHtml(c, i) {
+        const s = c._status;
+        const accent = accentFor(c.category);
+        const urgent = s.key === 'soon' && s.days <= 7 ? ' is-urgent' : '';
+        const delay = Math.min(i, 14);
+        return (
           '<article class="comp-card is-' + s.key + urgent + '" style="--accent:' + accent + ';--i:' + delay + '">' +
-            '<span class="comp-card__bar" aria-hidden="true"></span>' +
             '<div class="comp-card__body">' +
-              '<div class="comp-card__head">' +
+              '<div class="comp-kicker">' +
                 '<span class="comp-cat">' + escapeHtml(c.category) + '</span>' +
                 '<span class="comp-status">' + escapeHtml(statusText(s)) + '</span>' +
               '</div>' +
               '<h2 class="comp-card__title">' + escapeHtml(c.title) + '</h2>' +
-              '<p class="comp-card__org">' + escapeHtml(c.organizer) + '</p>' +
-              '<ul class="comp-meta">' + meta + '</ul>' +
-              '<p class="comp-elig">' + escapeHtml(c.eligibility) + ' · ' + escapeHtml(c.mode) + '</p>' +
+              '<p class="comp-card__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
+              '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '</div>' +
-            '<div class="comp-card__foot">' +
-              '<div class="comp-deadline">' +
-                '<span class="comp-deadline__label">' + escapeHtml(dField.label) + '</span>' +
-                '<span class="comp-deadline__value">' + deadlineText + '</span>' +
-                checkedText +
-              '</div>' +
-              '<a class="comp-cta" href="' + safeUrl(c.url) + '" target="_blank" rel="noopener noreferrer">' +
-                '前往官網<span class="sr-only">：' + escapeHtml(c.title) + '（另開新分頁）</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>' +
-              '</a>' +
-            '</div>' +
+            footHtml(c, s) +
           '</article>'
         );
       }
@@ -609,12 +617,6 @@ import data from '../../../public/advanced-resources/competitions.json';
     .stat-num--open { color: #15803d; }
     .stat-num--soon { color: #b45309; }
     .stat-label { font-size: .82rem; color: var(--muted); font-weight: 600; }
-    .comp-checked {
-      display: block;
-      margin-top: .15rem;
-      font-size: .72rem;
-      color: var(--muted);
-    }
     .comp-updated {
       margin: 0 0 .15rem auto; font-size: .78rem; color: var(--muted);
       font-family: 'Space Mono', ui-monospace, monospace;
@@ -698,14 +700,15 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
 
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
-    .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
+    .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
-    /* overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。 */
+    /* overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。
+       外框透明：強制色彩模式會拿掉陰影，外框換成系統色，卡片的邊界才看得到。 */
     .comp-card {
       position: relative; display: flex; flex-direction: column; overflow: hidden; overflow-wrap: anywhere;
-      background: #fff; border: 1px solid var(--line); border-radius: 1.15rem;
-      box-shadow: 0 1px 2px rgba(15,23,42,.04);
+      background: #fff; border: 1px solid transparent; border-radius: .5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
       transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s, border-color .28s;
       animation: compRise .5s cubic-bezier(.2,.7,.2,1) backwards;
       animation-delay: calc(var(--i, 0) * 45ms);
@@ -713,24 +716,18 @@ import data from '../../../public/advanced-resources/competitions.json';
     @keyframes compRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
     .comp-card:hover {
       transform: translateY(-6px);
-      border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-      box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--accent) 60%, transparent), 0 8px 16px -12px rgba(15,23,42,.15);
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
     }
-    .comp-card__bar { height: 5px; width: 100%; background: var(--accent); background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 35%, #fff)); }
-    .comp-card__body { padding: 1.35rem 1.4rem 1rem; flex: 1; }
+    .comp-card__body { padding: 1.5rem; flex: 1; }
     /* 狀態說明可能很長（「報名開放日未公布 · 線上 7/30、紙本 6/25 截止」），放不下時換到下一行再折行，
        不要超出卡片被裁掉。 */
-    .comp-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .7rem; }
+    .comp-kicker { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
     .comp-cat {
-      position: relative; padding-left: .9rem; font-size: .875rem; font-weight: 800;
-      letter-spacing: .03em; color: color-mix(in srgb, var(--accent) 72%, #1e293b); white-space: nowrap;
-    }
-    .comp-cat::before {
-      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-      width: .45rem; height: .45rem; border-radius: 999px; background: var(--accent);
+      font-size: .875rem; font-weight: 700; line-height: 1.75rem;
+      color: color-mix(in srgb, var(--accent) 72%, #1e293b); white-space: nowrap;
     }
     .comp-status {
-      font-size: .875rem; font-weight: 700; padding: .22rem .6rem; border-radius: .75rem;
+      font-size: .875rem; font-weight: 600; padding: .25rem .5rem; border-radius: .75rem;
       background: #f1f5f9; color: #475569;
     }
     .is-open .comp-status { background: #dcfce7; color: #15803d; }
@@ -740,38 +737,29 @@ import data from '../../../public/advanced-resources/competitions.json';
     .is-site .comp-status { background: #eef2f7; color: #475569; }
     .is-closed .comp-status { background: #f1f5f9; color: #475569; }
     .is-urgent .comp-status { background: #fee2e2; color: #b91c1c; }
-    .comp-card__title { font-size: 1.14rem; font-weight: 800; line-height: 1.35; color: var(--ink); margin: 0 0 .3rem; }
-    .comp-card__org { font-size: .82rem; color: var(--muted); margin: 0 0 .8rem; }
-    .comp-meta { display: flex; flex-wrap: wrap; gap: .35rem; list-style: none; padding: 0; margin: 0 0 .55rem; }
-    .comp-tag {
-      font-size: .875rem; font-weight: 600; color: #475569; background: #f1f5f9;
-      padding: .18rem .5rem; border-radius: .4rem;
-    }
-    .comp-elig { font-size: .875rem; color: var(--muted); margin: 0 0 .7rem; font-weight: 600; }
-    .comp-card__desc { font-size: .875rem; line-height: 1.65; color: #475569; margin: 0; }
+    .comp-card__title { font-size: 1.25rem; font-weight: 700; line-height: 1.75rem; color: var(--ink); margin: 0 0 .5rem; }
+    .comp-card__org { font-size: .875rem; color: var(--muted); margin: 0 0 .25rem; }
+    .comp-facts { font-size: .875rem; color: var(--muted); margin: 0 0 1rem; }
+    .comp-card__desc { font-size: 1rem; line-height: 1.65; color: #374151; margin: 0; }
     /* 只放大文字時，截止日和「前往官網」放不下一行就讓按鈕換行，不超出卡片。截止日用 flex: 1 1 0，
        一般字級下照舊縮窄截止日、按鈕留在右邊。 */
-    .comp-card__foot {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem;
-      padding: .9rem 1.4rem; border-top: 1px solid var(--line); background: #fafbfc;
+    .comp-foot {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+      padding: 1rem; background: #f9fafb;
     }
     .comp-deadline { display: flex; flex-direction: column; gap: .1rem; flex: 1 1 0; }
-    .comp-deadline__label { font-size: .875rem; color: var(--muted); font-weight: 600; }
-    .comp-deadline__value {
-      font-family: 'Space Mono', ui-monospace, monospace; font-size: .92rem; font-weight: 700; color: var(--ink);
-      font-variant-numeric: tabular-nums;
-    }
+    .comp-deadline__label { font-size: .875rem; color: var(--muted); }
+    .comp-deadline__value { font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
+    .comp-checked { display: block; margin-top: .15rem; font-size: .875rem; color: var(--muted); }
     .comp-cta {
-      display: inline-flex; align-items: center; gap: .35rem;
-      padding: .55rem .95rem; border-radius: .6rem; background: var(--ink); color: #fff;
-      font-size: .84rem; font-weight: 700; text-decoration: none; transition: background .2s, transform .2s;
+      display: inline-flex; align-items: center; padding: .5rem 1rem; border-radius: .5rem;
+      background: #0369a1; color: #fff; font-weight: 700; text-decoration: none; transition: background .3s;
     }
-    .comp-cta svg { width: .95rem; height: .95rem; transition: transform .2s; }
-    .comp-cta:hover { background: var(--primary); }
-    .comp-cta:hover svg { transform: translateX(2px); }
+    .comp-cta:hover { background: #075985; }
     /* 已截止的卡片用灰色的強調色與底色表示，不用 opacity：整張變淡會讓次要文字掉到 3:1 左右。
        --accent 是卡片的行內樣式，要 !important 才蓋得過。 */
     .comp-card.is-closed { --accent: #64748b !important; background: #f8fafc; }
+    .comp-card.is-closed .comp-foot { background: #f1f5f9; }
     .comp-card:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 
     .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
@@ -814,10 +802,9 @@ import data from '../../../public/advanced-resources/competitions.json';
     @media (prefers-reduced-motion: reduce) {
       .comp-card { animation: none; }
       .comp-card:hover { transform: none; }
-      .comp-cta:hover svg { transform: none; }
     }
     @supports not (color: color-mix(in srgb, red 50%, white)) {
-      .comp-card:hover { border-color: var(--accent); box-shadow: 0 18px 40px -18px rgba(15,23,42,.35); }
+      .comp-card:focus-within { border-color: var(--accent); }
     }
   </style>
 </BaseLayout>
