@@ -169,31 +169,31 @@ test.describe('按了按鈕才出現的結果', () => {
 });
 
 test.describe('外文標上 lang', () => {
-    // 照頁面的 escapeHtml 與 markEnglishQuotes 算 description 裡該標幾段。先跳脫：「&」跳脫成「&amp;」之後也算英文。
-    const englishQuotes = (text) =>
-        [...String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]).matchAll(/「([^「」]*[A-Za-z][^「」]*)」/g)]
-            .filter((m) => !/[\u3001-\u9fff\uff00-\uffef]/.test(m[1])).length;
+    // 有英文字母、沒有中日文字和全形標點的「」是照抄的英文原文。
+    const isEnglish = (t) => /[A-Za-z]/.test(t) && !/[\u3001-\u9fff\uff00-\uffef]/.test(t);
 
-    test('競賽摘要裡照抄的英文引文標 lang="en"，裡面沒有中文', async ({ page, request }) => {
-        const { competitions } = await (await request.get(P('advanced-resources/competitions.json'))).json();
+    test('競賽摘要裡每段英文引文都標 lang="en"，標了的都沒有中文', async ({ page }) => {
         await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
-        await expect(page.locator('.comp-card')).toHaveCount(competitions.length);
-        const spans = page.locator('.comp-card__desc span[lang="en"]');
-        await expect(spans).toHaveCount(competitions.reduce((n, c) => n + englishQuotes(c.description), 0));
-        const texts = await spans.allTextContents();
-        expect(texts.filter((t) => /[\u3001-\u9fff]/.test(t))).toEqual([]);
+        await expect(page.locator('.comp-card').first()).toBeVisible();
+        const descs = await page.locator('.comp-card__desc').evaluateAll((els) => els.map((el) => ({
+            quotes: [...el.textContent.matchAll(/「([^「」]*)」/g)].map((m) => m[1]),
+            spans: [...el.querySelectorAll('span[lang="en"]')].map((s) => s.textContent),
+        })));
+        for (const { quotes, spans } of descs) expect(spans).toEqual(quotes.filter(isEnglish));
     });
 
-    test('競賽詳細資訊裡的英文引文在對話框裡標 lang="en"，裡面沒有中文', async ({ page }) => {
+    test('「&」「"」這類只有符號的引文不標 lang="en"，對話框裡的 details 也照同樣的規則', async ({ page }) => {
         const competitions = [{
             title: '測試競賽', organizer: '主辦單位', category: '資訊', level: '國際', form: '個人', region: '美國',
-            eligibility: '公開報名', mode: '線上', url: 'https://example.com/', description: '摘要',
-            details: '簡章原文：「Open to students aged 13-18」。另一段「English 和中文」不標。',
+            eligibility: '公開報名', mode: '線上', url: 'https://example.com/',
+            description: '「Open to all」「A & B」「&」「"」「<>」「R&D 計畫」「2026」',
+            details: '簡章原文：「Grades 9-12」。\n「&」「English 和中文」「Q&A」',
         }];
         await page.route('**/advanced-resources/competitions.json', (route) => route.fulfill({ json: { competitions } }));
         await page.goto(P('advanced-resources/competitions.html'));
+        await expect(page.locator('.comp-card__desc span[lang="en"]')).toHaveText(['Open to all', 'A & B']);
         await page.locator('.comp-card button').click();
-        await expect(page.getByRole('dialog').locator('span[lang="en"]')).toHaveText(['Open to students aged 13-18']);
+        await expect(page.getByRole('dialog').locator('.comp-dialog__details span[lang="en"]')).toHaveText(['Grades 9-12', 'Q&A']);
     });
 
     test('書單的原文書名照 original_lang 標 lang', async ({ page, request }) => {

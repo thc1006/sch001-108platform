@@ -181,11 +181,13 @@ import data from '../../../public/advanced-resources/competitions.json';
       }
 
       // markEnglishQuotes 把說明裡照抄官網的英文引文標上 lang="en"，報讀器才會換英文語音念。
-      // 只看「」裡沒有中日文字的段落，全形空白不算；輸入是 escapeHtml 處理過的字串。
+      // 只看「」裡有英文字母、沒有中日文字的段落，全形空白不算。輸入是 escapeHtml 處理過的字串，
+      // 先拿掉跳脫字元再找字母，「&」跳脫成 &amp; 之後不算英文。
       function markEnglishQuotes(html) {
-        return html.replace(/「([^「」]*[A-Za-z][^「」]*)」/g, (m, inner) => (
-          /[\u3001-\u9fff\uff00-\uffef]/.test(inner) ? m : '「<span lang="en">' + inner + '</span>」'
-        ));
+        return html.replace(/「([^「」]*)」/g, (m, inner) => {
+          const text = inner.replace(/&(?:amp|lt|gt|quot|#39);/g, '');
+          return /[A-Za-z]/.test(text) && !/[\u3001-\u9fff\uff00-\uffef]/.test(text) ? '「<span lang="en">' + inner + '</span>」' : m;
+        });
       }
 
       // 僅允許 http(s) 連結，擋掉 javascript: 等協定（縱深防禦；資料源本已受看門狗把關）。
