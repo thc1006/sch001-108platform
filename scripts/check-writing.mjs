@@ -201,7 +201,7 @@ const rows = RULES.map((r) => [r.id, r.severity, hits.filter((h) => h.rule === r
 console.log('規則  嚴重度  筆數');
 for (const [id, sev, n] of rows) console.log(`${id}  ${sev}  ${n}`);
 console.log('代號的字母：W 用詞、P 標點、S 句型、C 出處、F 粗體、K 沒刪乾淨的字、U 介面文字，說明見 CONTRIBUTING.md 的「網站內容」。');
-console.log(`\n掃了 ${htmlPages.length} 頁、${dataFiles.length} 個資料檔，${blocks.length} 個區塊。`);
+console.log(`\n掃了 ${htmlPages.length} 頁、${dataFiles.length} 個資料檔，${blocks.length} 個區塊。warn 規則只報不擋，每一筆寫在 ${path.relative(ROOT, REPORT)}。`);
 for (const w of allowWarnings) console.log(`警告：writing-allow.json ${w}`);
 if (under.length) {
     console.error(`\n${under.length} 處比基準少，要在同一個 PR 下修基準：先執行 npm run build:deployable 重建 dist，再執行 npm run check:writing -- --update-baseline，`
@@ -213,8 +213,9 @@ if (over.length) {
     console.error(`\n${over.length} 處超過基準：`);
     for (const o of over) {
         console.error(`  ${o.rule}  ${o.key}  ${o.count} 筆，基準 ${o.baseline}`);
-        for (const h of hits.filter((x) => x.rule === o.rule && x.key === o.key)) console.error(`    ${h.line ? `第 ${h.line} 行` : h.block.page}：${context(h)}`);
+        for (const h of hits.filter((x) => x.rule === o.rule && x.key === o.key)) console.error(`    ${h.line ? `第 ${h.line} 行` : h.block.page}「${readable(h.match)}」：${context(h)}`);
     }
+    console.error('改寫這些句子，寫法見 CONTRIBUTING.md 的「網站內容」。照抄的外部原文、官方名稱或當反例引用的句子，在 scripts/writing-allow.json 加一條。');
 }
 
 mkdirSync(path.dirname(REPORT), { recursive: true });
