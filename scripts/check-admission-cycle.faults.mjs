@@ -93,9 +93,10 @@ function check(env = {}, args = []) {
     rmSync(REPORT, { force: true });
     rmSync(OUTPUT, { force: true });
     // GITHUB_OUTPUT 指到沙盒，CI 上不會把故障注入的結果寫進真正的 step output。不測 annotation 的
-    // 案例不設 GITHUB_ACTIONS，子行程才不會多發 ::warning。
+    // 案例不設 GITHUB_ACTIONS，子行程才不會多發 ::warning；GITHUB_RUN_ID 也拿掉，報告裡才不會有 CI 的網址。
     const base = { ...process.env, ADMISSION_CYCLE_TODAY: '2026-10-25', GITHUB_OUTPUT: OUTPUT };
     delete base.GITHUB_ACTIONS;
+    delete base.GITHUB_RUN_ID;
     const cli = path.join(SCRIPTS, 'check-admission-cycle.mjs');
     let code = 0;
     let out;
@@ -342,6 +343,21 @@ const cases = [
         report: /### 檢查的錯誤\n\n- src\/content\/clusters\/b\/application\.md:7 「114 學年度」裡的 114 不是 115 或 116\n  另見/,
     },
     {
+        name: '--remind 在 Actions 上報告超過上限：截斷說明附上這次執行的網址',
+        args: ['--remind'],
+        env: {
+            ADMISSION_CYCLE_TODAY: '2026-12-16',
+            ADMISSION_CYCLE_REPORT_LIMIT: '300',
+            GITHUB_SERVER_URL: 'https://github.com',
+            GITHUB_REPOSITORY: 'owner/repo',
+            GITHUB_RUN_ID: '123',
+        },
+        code: 0,
+        attention: true,
+        report: /\n\n報告超過 300 字，後面截掉了，其餘見這次執行的 log：\nhttps:\/\/github\.com\/owner\/repo\/actions\/runs\/123\n$/,
+        reportMax: 300,
+    },
+    {
         name: '--remind 內容有錯又超過上限：錯誤在報告最前面，沒被截掉',
         args: ['--remind'],
         env: { ADMISSION_CYCLE_TODAY: '2026-12-16', ADMISSION_CYCLE_REPORT_LIMIT: '400' },
@@ -529,6 +545,7 @@ const cliMutations = [
     ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
     ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延'],\n", ''],
     ['報告不截斷', 'writeFileSync(REPORT, text);', 'writeFileSync(REPORT, full);'],
+    ['截斷說明不附網址', 'server && repo && run ?', 'false ?'],
     ['錯誤放在報告最後', "writeReport([['### 檢查的錯誤', '', ...list, ''], ...sections], true);", "writeReport([...sections, ['### 檢查的錯誤', '', ...list, '']], true);"],
     ['截斷時 log 不印完整的報告', 'if (text !== full) console.log(', 'if (false) console.log('],
     ['報告的上限不看環境變數', 'Number(process.env.ADMISSION_CYCLE_REPORT_LIMIT) || 60000', '60000'],
