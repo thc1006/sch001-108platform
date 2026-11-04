@@ -1,11 +1,11 @@
 {
   "_readme": "線上製作工具資料來源檔。tools.html 會在載入時 fetch() 此檔並渲染。新增或修改工具請直接編輯下方 tools 陣列，不需要動 HTML。欄位：name=工具名；category=分類；description=說明；best_for=最適用情境；pricing=收費方式；url=官網；logo=工具 logo 的相對路徑。",
-  "lastUpdated": "2026-11-01",
+  "lastUpdated": "2026-11-05",
   "tools": [
     {
       "name": "Canva",
       "category": "簡報排版",
-      "description": "線上設計平台，內建模板，可以做學習歷程檔案、簡報和海報。",
+      "description": "線上設計平台，套用現成模板就能做學習歷程檔案、簡報和海報，不需要設計基礎。",
       "best_for": "簡報、海報",
       "pricing": "免費增值",
       "url": "https://www.canva.com/",
@@ -14,7 +14,7 @@
     {
       "name": "Figma",
       "category": "簡報排版",
-      "description": "雲端 UI/UX 設計工具，可以多人同時編輯，也可以用來排報告的版面。",
+      "description": "雲端 UI/UX 設計工具，可以多人同時編輯。要花一些時間學，但報告的版面可以完全自己排。",
       "best_for": "自訂版面、多人協作",
       "pricing": "免費增值",
       "url": "https://www.figma.com/",
@@ -59,7 +59,7 @@
     {
       "name": "DaVinci Resolve",
       "category": "影音剪輯",
-      "description": "影片剪輯軟體，基礎版免費，也有調色、特效和聲音後製。",
+      "description": "專業的影片剪輯軟體，基礎版免費，也有調色、特效和聲音後製。功能多，要花時間學。",
       "best_for": "影片剪輯、調色",
       "pricing": "免費",
       "url": "https://www.blackmagicdesign.com/products/davinciresolve",
