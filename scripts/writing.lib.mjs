@@ -603,6 +603,7 @@ export function verifyPolicy(before, after, rules = RULES) {
     const block = new Set(rules.filter((r) => r.severity === 'block').map((r) => r.id));
     for (const id of block) if (!(id in after.rules)) problems.push(`${id}：RULES 是 block，policy 沒有這條`);
     for (const id of Object.keys(after.rules)) if (!block.has(id)) problems.push(`${id}：policy 有這條，RULES 不是 block`);
+    for (const id of Object.keys(after.rules)) if (!/^[A-Z]\d{2}-[a-z0-9-]+$/.test(id)) problems.push(`${id}：規則 id 要寫成 W01-hen-duo 這樣`);
     for (const id of Object.keys(before.rules)) if (!(id in after.rules)) problems.push(`${id}：目標分支有這條規則的基準，這次刪了`);
     for (const [id, { baseline = {} }] of Object.entries(after.rules)) {
         const old = id in before.rules ? before.rules[id].baseline ?? {} : null;
