@@ -1536,6 +1536,13 @@
       "recheckAfter": "2027-11-03"
     },
     {
+      "file": "src/content/clusters/info/application.md",
+      "text": "上表有口試或面試的是清大、陽明交大資工 APCS 組和政大資管；台大資工兩組考數學筆試，成大資工考筆試，智慧系統（實作）組考上機。",
+      "cycle": 116,
+      "reason": "照 116 學年度校系分則表的指定項目寫，行內沒有學年度，檢查看不到。117 學年度簡章預計 2027 年 11 月初公告，公告後和上面的表一起重對。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
       "file": "src/content/clusters/law/application.md",
       "text": "簡章總則寫，審查資料分為修課紀錄、課程學習成果、多元表現、學習歷程自述及其他 5 大項，以 PDF 上傳時每一大項的檔案以 5MB 為限。",
       "cycle": 116,
