@@ -83,6 +83,14 @@ function walk(dir, out = []) {
 if (!existsSync(DIST)) usage(`找不到 ${path.relative(ROOT, DIST)}/，請先執行 npm run build:deployable。`);
 const distFiles = walk(DIST).map((f) => path.relative(DIST, f).split(path.sep).join('/')).sort();
 const htmlPages = distFiles.filter((f) => f.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(f));
+// dist 是舊的時候，筆數和 --update-baseline 都照舊內容算，--update-baseline 會下修 0 個並以 0 結束。
+try {
+    const built = JSON.parse(readFileSync(path.join(DIST, 'build-info.json'), 'utf8')).commit;
+    const head = git('rev-parse', 'HEAD').trim();
+    if (built && built !== 'unknown' && built !== head) console.warn(`警告：dist 是 ${built.slice(0, 12)} 建的，HEAD 是 ${head.slice(0, 12)}。改過內容請先執行 npm run build:deployable。`);
+} catch {
+    // 沒有 build-info.json 或不在 git 裡時不比。
+}
 
 // ---- 取文字 ----
 const blocks = [];
@@ -196,7 +204,8 @@ console.log('代號的字母：W 用詞、P 標點、S 句型、C 出處、F 粗
 console.log(`\n掃了 ${htmlPages.length} 頁、${dataFiles.length} 個資料檔，${blocks.length} 個區塊。`);
 for (const w of allowWarnings) console.log(`警告：writing-allow.json ${w}`);
 if (under.length) {
-    console.error(`\n${under.length} 處比基準少，在同一個 PR 執行 npm run check:writing -- --update-baseline 下修基準：`);
+    console.error(`\n${under.length} 處比基準少，要在同一個 PR 下修基準：先執行 npm run build:deployable 重建 dist，再執行 npm run check:writing -- --update-baseline，`
+        + '把 scripts/writing-policy.json 和這次的改動一起 commit。沒有本機環境的話，直接把 writing-policy.json 裡那一行的數字改成下面的筆數。');
     for (const u of under) console.error(`  ${u.rule}  ${u.key}  ${u.count} 筆，基準 ${u.baseline}`);
 }
 for (const e of allowErrors) console.error(`writing-allow.json ${e}，這一條不放行。`);
@@ -217,6 +226,7 @@ writeFileSync(REPORT, JSON.stringify({
 if (process.env.GITHUB_STEP_SUMMARY) {
     const md = ['### 寫作檢查', '', '| 規則 | 嚴重度 | 筆數 |', '| --- | --- | --- |', ...rows.map((r) => `| ${r.join(' | ')} |`), ''];
     if (over.length) md.push(`超過基準 ${over.length} 處：`, '', ...over.map((o) => `- ${o.rule} ${o.key}：${o.count} 筆，基準 ${o.baseline}`), '');
+    if (under.length) md.push(`比基準少 ${under.length} 處，在同一個 PR 把 scripts/writing-policy.json 的數字改成現在的筆數：`, '', ...under.map((u) => `- ${u.rule} ${u.key}：${u.count} 筆，基準 ${u.baseline}`), '');
     if (allowErrors.length) md.push('writing-allow.json 的錯誤：', '', ...allowErrors.map((e) => `- ${e}`), '');
     md.push('完整清單在 artifact 的 writing.json。', '');
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, md.join('\n'));
