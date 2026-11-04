@@ -435,12 +435,14 @@ test.describe('國內外競賽的詳細資訊', () => {
     }
 
     // 篩選後卡片在畫面上的順序和資料的順序不同，按鈕要開它自己那一筆，關閉後焦點回到它。
+    // 開啟前焦點留在搜尋框：原生 <dialog> 關閉時把焦點還給開啟前的元素，焦點本來就在按鈕上的話，
+    // 少傳開啟的按鈕也測不出來。
     test('搜尋之後開啟，對話框是那張卡片的，關閉後焦點回到它的按鈕', async ({ page }) => {
         await page.locator('#search-input').fill('很長');
         await expect(page.locator('.comp-card h2')).toHaveText(['詳細資訊很長']);
+        await expect(page.locator('#search-input')).toBeFocused();
         const button = opener(page, '詳細資訊很長');
-        await button.focus();
-        await page.keyboard.press('Enter');
+        await button.dispatchEvent('click');
         await expect(page.getByRole('dialog', { name: '詳細資訊很長', exact: true })).toBeVisible();
         await page.keyboard.press('Escape');
         await expect(button).toBeFocused();
