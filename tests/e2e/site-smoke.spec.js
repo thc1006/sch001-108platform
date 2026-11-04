@@ -228,7 +228,7 @@ test.describe('部署產物 smoke test', () => {
         expect(errors(), errors().join('\n')).toEqual([]);
     });
 
-    test('學群簡介的出處連到同一個學群的 ColleGo! 介紹', async ({ page }) => {
+    test('學群簡介下的「想看更多」連到同一個學群的 ColleGo! 介紹', async ({ page }) => {
         const errors = watchForErrors(page);
         // 法政學群不在科系羅盤上，代碼是 2026-10-30 開 current_college_id=15 讀頁面標題對出來的。
         const clusters = { ...CLUSTER_CARDS, law: [15, '法政學群', '法政學群'] };
@@ -241,7 +241,7 @@ test.describe('部署產物 smoke test', () => {
             await page.goto(P(`/career-exploration/clusters/${slug}/index.html`));
             const link = page.locator('a', { hasText: 'ColleGo!「' });
             await expect(link, slug).toHaveAttribute('href', `https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=${id}`);
-            await expect(link, slug).toHaveText(`ColleGo!「${collegoName}」的介紹`);
+            await expect(link, slug).toHaveText(`ColleGo!「${collegoName}」介紹`);
         }
         expect(errors(), errors().join('\n')).toEqual([]);
     });
