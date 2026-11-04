@@ -342,10 +342,10 @@ test.describe('國內外競賽的詳細資訊', () => {
     for (const { width, height, zoom } of [{ width: 320, height: 256 }, { width: 360, height: 640 }, { width: 1280, height: 720, zoom: true }]) {
         test(`${width}x${height}${zoom ? ' 只放大文字到 200%' : ''}：能讀的區域至少有視窗高度的六成，捲到底看得到最後一段`, async ({ page }) => {
             await page.setViewportSize({ width, height });
-            if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
             await opener(page, '詳細資訊很長').click();
             const dialog = page.getByRole('dialog');
             await expect(dialog).toBeVisible();
+            if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
             const m = await dialog.evaluate((d) => {
                 // 從內文區往上找真的在捲的那一層，量它的高度；捲到底之後內文最後一個元素要在它裡面。
                 const body = d.querySelector(':scope > .overflow-y-auto');
@@ -361,12 +361,13 @@ test.describe('國內外競賽的詳細資訊', () => {
     }
 
     for (const width of [1280, 320]) {
-        test(`${width}px 只放大文字到 200%，對話框裡的字不超出右緣`, async ({ page }) => {
+        test(`${width}px 打開對話框後只放大文字到 200%，裡面的字不超出右緣`, async ({ page }) => {
             await page.setViewportSize({ width, height: 800 });
-            await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+            // 先開再放大：先放大的話，釘住的篩選面板會蓋住卡片上的按鈕。
             await opener(page, '有詳細資訊').click();
             const dialog = page.getByRole('dialog');
             await expect(dialog).toBeVisible();
+            await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
             const out = await dialog.evaluate((d) => {
                 const right = d.getBoundingClientRect().right;
                 const bad = d.scrollWidth > d.clientWidth + 1 ? [`寬 ${d.scrollWidth} > ${d.clientWidth}`] : [];
