@@ -534,8 +534,10 @@ import data from '../../../public/advanced-resources/competitions.json';
             '<p class="comp-dialog__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '<div class="comp-dialog__details">' + details + '</div>' +
             footHtml(c, dField) +
+            // 捲到底時頂端的 × 已經捲走，iOS 沒有 Esc，點外面能點的地方每側只有十幾 px。
+            '<button type="button" class="comp-dialog__close-end">關閉</button>' +
           '</div>';
-        dialog.querySelector('.comp-dialog__close').addEventListener('click', detail.close);
+        dialog.querySelectorAll('.comp-dialog__close, .comp-dialog__close-end').forEach((b) => b.addEventListener('click', detail.close));
         lastOpener = opener;
         detail.open(opener);
       }
@@ -803,7 +805,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-reset:hover { border-bottom-color: var(--primary); }
     .comp-chip:focus-visible, .comp-reset:focus-visible,
     .comp-search__clear:focus-visible, .comp-cta:focus-visible,
-    .comp-more:focus-visible, .comp-dialog__close:focus-visible {
+    .comp-more:focus-visible, .comp-dialog__close:focus-visible, .comp-dialog__close-end:focus-visible {
       outline: 2px solid var(--primary); outline-offset: 2px;
     }
 
@@ -898,6 +900,11 @@ import data from '../../../public/advanced-resources/competitions.json';
       font-size: 1.875rem; line-height: 1; color: #6b7280;
     }
     .comp-dialog__close:hover { color: #1f2937; }
+    .comp-dialog__close-end {
+      display: block; margin: 1rem 0 0 auto; padding: .5rem 1rem; border: 1px solid #6b7280; border-radius: .5rem;
+      background: #fff; color: #374151; font-weight: 600; cursor: pointer;
+    }
+    .comp-dialog__close-end:hover { background: #f3f4f6; }
     .comp-dialog__body { padding: 1.5rem; }
     .comp-dialog__desc, .comp-dialog__details p { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
     .comp-dialog__body .comp-foot { margin-top: 1.5rem; border-radius: .5rem; }

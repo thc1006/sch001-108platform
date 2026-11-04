@@ -275,13 +275,43 @@ test.describe('國內外競賽的詳細資訊', () => {
             const where = await dialog.evaluate((d) => d.contains(document.activeElement) || document.activeElement === document.body);
             expect(where).toBe(true);
         }
-        const close = dialog.getByRole('button', { name: '關閉', exact: true });
+        // 頂端的 × 和最後面的「關閉」都叫「關閉」。
+        const close = dialog.getByRole('button', { name: '關閉', exact: true }).first();
         await expect(close.locator('span')).toHaveAttribute('aria-hidden', 'true');
         const box = await close.boundingBox();
         expect(box.width).toBeGreaterThanOrEqual(24);
         expect(box.height).toBeGreaterThanOrEqual(24);
         await close.focus();
         await page.keyboard.press('Enter');
+        await expect(dialog).toBeHidden();
+        await expect(button).toBeFocused();
+    });
+
+    test('Tab 順序是 ×、「前往官網」、「關閉」；320x256 捲到底按「關閉」，焦點回到按鈕', async ({ page }) => {
+        const button = opener(page, LONG_TITLE);
+        await button.focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeFocused();
+        const closes = dialog.getByRole('button', { name: '關閉', exact: true });
+        await expect(closes).toHaveCount(2);
+        await page.keyboard.press('Tab');
+        await expect(closes.first()).toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(dialog.getByRole('link')).toBeFocused();
+        await page.keyboard.press('Tab');
+        await expect(closes.last()).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(button).toBeFocused();
+
+        await page.setViewportSize({ width: 320, height: 256 });
+        await page.keyboard.press('Enter');
+        await expect(dialog).toBeVisible();
+        await dialog.evaluate((d) => { d.scrollTop = d.scrollHeight; });
+        const end = closes.last();
+        const box = await end.boundingBox();
+        expect(box.y + box.height).toBeLessThanOrEqual(256);
+        await end.click();
         await expect(dialog).toBeHidden();
         await expect(button).toBeFocused();
     });
