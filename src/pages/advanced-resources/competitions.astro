@@ -173,6 +173,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       const resetBtn = document.getElementById('filter-reset');
       const dialog = document.getElementById('comp-dialog');
       const detail = DetailDialog.setup(dialog);
+      dialog.addEventListener('close', () => { dialog.innerHTML = ''; });
 
       function escapeHtml(v) {
         return String(v).replace(/[&<>"']/g, (c) => (
@@ -488,21 +489,23 @@ import data from '../../../public/advanced-resources/competitions.json';
 
       function openDetail(c, opener) {
         const s = c._status;
+        // 一行一段，報讀軟體可以按段落跳。
+        const details = c.details.split('\n').filter((line) => line.trim())
+          .map((line) => '<p>' + markEnglishQuotes(escapeHtml(line)) + '</p>').join('');
+        // 只有標題列固定，其餘跟著內文捲動，視窗矮或放大文字時讀得到的範圍才夠大。
         dialog.innerHTML =
-          '<div class="comp-dialog__head ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
-            '<div>' +
-              kickerHtml(c, s) +
-              '<h2 id="comp-dialog-title" class="comp-dialog__title">' + escapeHtml(c.title) + '</h2>' +
-            '</div>' +
+          '<div class="comp-dialog__head">' +
+            '<h2 id="comp-dialog-title" class="comp-dialog__title">' + escapeHtml(c.title) + '</h2>' +
             '<button type="button" class="comp-dialog__close" aria-label="關閉"><span aria-hidden="true">&times;</span></button>' +
           '</div>' +
-          '<div class="comp-dialog__body overflow-y-auto">' +
+          '<div class="comp-dialog__body overflow-y-auto ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
+            kickerHtml(c, s) +
             '<p class="comp-dialog__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
             '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
             '<p class="comp-dialog__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
-            '<p class="comp-dialog__details">' + markEnglishQuotes(escapeHtml(c.details)) + '</p>' +
-          '</div>' +
-          footHtml(c, deadlineField(c, s));
+            '<div class="comp-dialog__details">' + details + '</div>' +
+            footHtml(c, deadlineField(c, s)) +
+          '</div>';
         dialog.querySelector('.comp-dialog__close').addEventListener('click', detail.close);
         detail.open(opener);
       }
@@ -848,7 +851,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-dialog { color: var(--ink); overflow-wrap: anywhere; }
     .comp-dialog__head {
       display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
-      padding: 1.5rem; border-bottom: 1px solid var(--line);
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
     }
     .comp-dialog__title { font-size: 1.5rem; font-weight: 700; line-height: 1.35; margin: 0; }
     .comp-dialog__close {
@@ -858,9 +861,8 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     .comp-dialog__close:hover { color: #1f2937; }
     .comp-dialog__body { padding: 1.5rem; flex-grow: 1; }
-    .comp-dialog__desc, .comp-dialog__details { font-size: 1rem; line-height: 1.65; color: #374151; margin: 0; }
-    .comp-dialog__desc { margin-bottom: 1rem; }
-    .comp-dialog__details { white-space: pre-line; }
+    .comp-dialog__desc, .comp-dialog__details p { font-size: 1rem; line-height: 1.65; color: #374151; margin: 0 0 .75rem; }
+    .comp-dialog__body .comp-foot { margin-top: 1.5rem; border-radius: .5rem; }
 
     .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
     .comp-empty svg { width: 3rem; height: 3rem; color: var(--faint); margin: 0 auto 1rem; }
