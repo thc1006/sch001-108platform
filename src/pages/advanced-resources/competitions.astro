@@ -416,8 +416,12 @@ import data from '../../../public/advanced-resources/competitions.json';
 
       // factsText 是主辦單位下面那一行小字，沒填的欄位跳過。用「、」分隔：「·」在 NVDA 預設設定下可能不念，
       // 中文語音也幾乎不停頓。
+      // 幾個資料裡的值單獨念聽不懂，顯示時改寫，資料不改。
       function factsText(c) {
-        return [c.region, c.level, c.form, c.eligibility, c.mode]
+        const region = { '其他': '其他地區' }[c.region] || c.region;
+        const form = { '個人/團體': '個人或團體' }[c.form] || c.form;
+        const mode = { '混合': '實體與線上' }[c.mode] || c.mode;
+        return [region, c.level, form, c.eligibility, mode]
           .filter((x) => typeof x === 'string' && x)
           .join('、');
       }
