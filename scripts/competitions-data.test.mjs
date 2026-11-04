@@ -31,6 +31,10 @@ const DATA = JSON.parse(
     readFileSync(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'),
 );
 
+// 卡片上的摘要和「詳細資訊」裡的內容接起來。description 的內容會分到 details，只讀 description 的
+// 否定斷言會在搬走之後一律通過。
+const textOf = (c) => [c.description, c.details].filter(Boolean).join(' ');
+
 const find = (needle) => {
     const hits = DATA.competitions.filter((c) => c.title.includes(needle));
     assert.equal(hits.length, 1, `「${needle}」應恰好比對到 1 筆，實際 ${hits.length} 筆`);
@@ -128,7 +132,7 @@ test('data：國家隊選拔類競賽不得憑賽事月份捏造報名截止', (
     assert.ok(!apio.cycle?.closes, 'APIO 的 5 月是比賽月份，不得放進 cycle.closes');
     assert.equal(apio.eventStartsAt, '2026-05-09');
     assert.equal(apio.eventEndsAt, '2026-05-10', '比賽視窗跨 5/9 與 5/10，不是單日');
-    assert.match(apio.description, /5 月 9 日 08:00 至 10 日 20:00（UTC\+8）/);
+    assert.match(textOf(apio), /5 月 9 日 08:00 至 10 日 20:00（UTC\+8）/);
     assert.ok(apio.registrationNote?.includes('無公開報名'));
 });
 
@@ -739,9 +743,9 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     assert.equal(techno.deadlineAt, undefined);
     assert.ok(techno.registrationNote?.includes('2027-03-11'));
     // 舊平台 my.technovationchallenge.org 已改成轉介頁，描述不能再寫舊平台的狀態
-    assert.ok(techno.description.includes('報名平台已搬到 my.technovation.org'));
-    assert.ok(!techno.description.includes('仍沿用 Technovation Girls'));
-    assert.ok(!techno.description.includes('Registration is currently closed'));
+    assert.ok(textOf(techno).includes('報名平台已搬到 my.technovation.org'));
+    assert.ok(!textOf(techno).includes('仍沿用 Technovation Girls'));
+    assert.ok(!textOf(techno).includes('Registration is currently closed'));
 
     // Purple Comet 規則頁：報名期間「begins February 1 and continues through the end of the competition」，
     // 官網沒寫時區，不填 opensAt 與 deadline，報名期間寫在 registrationNote。2027 屆競賽視窗 04-06 至 04-15。
@@ -833,7 +837,7 @@ test('data：重查時官網已公布下一屆時程的競賽，日期照官網�
     assert.equal(typt.deadlineAt, '2027-01-28T12:00:00+08:00');
     assert.equal(typt.eventStartsAt, '2027-03-05');
     assert.equal(typt.eventEndsAt, '2027-03-08');
-    assert.match(typt.description, /116\. 03\. 05 ~ 116\. 03\. 08/, '請保留官網逐字原文');
+    assert.match(textOf(typt), /116\. 03\. 05 ~ 116\. 03\. 08/, '請保留官網逐字原文');
 
     // 有截止日時卡片不顯示 registrationNote，這幾筆不留著它
     for (const c of [bowSeat, earthPrize, aahsff, hcgec, typt]) assert.equal(c.registrationNote, undefined, c.title);
@@ -930,13 +934,16 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // Advent of Code 官網逐字：「puzzles come out every day (ending mid-December)」，
     // 且「Advent of Code 2025 doesn't have a global leaderboard.」
     const aoc = find('Advent of Code');
-    assert.match(aoc.description, /12 題|12\/12/);
-    assert.match(aoc.description, /排行榜/);
+    assert.match(textOf(aoc), /12 題|12\/12/);
+    assert.match(textOf(aoc), /排行榜/);
 
     // AIME 官網 FAQ 逐字：「Are there still two AIME exams, AIME I and AIME II? No」
     const aime = find('美國高中生數學邀請賽');
-    assert.ok(!/AIME I\b|AIME II/.test(aime.description) || /已取消/.test(aime.description),
-        'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
+    // 提到 AIME I／II 的那一欄要同時寫已取消，摘要和詳細資訊各自看。
+    for (const field of [aime.description, aime.details ?? '']) {
+        assert.ok(!/AIME I\b|AIME II/.test(field) || /已取消/.test(field),
+            'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
+    }
     assert.equal(aime.eventStartsAt, '2027-02-05');
     assert.equal(aime.eventEndsAt, '2027-02-06');
     assert.match(aime.url, /maa-invitational-competitions/);
@@ -944,21 +951,22 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // IJSO 官網逐字：「for students who are fifteen years or younger on 31st December of the
     // competition year」，且 2026 屆在保加利亞索菲亞（舊資料寫德國是錯的）
     const ijso = find('國際國中科學奧林匹亞');
-    assert.match(ijso.description, /fifteen years or younger on 31st December/);
+    assert.match(textOf(ijso), /fifteen years or younger on 31st December/);
     assert.match(ijso.registrationNote, /15 歲以下/, '年齡上限必須出現在狀態列，不能只藏在描述裡');
-    assert.match(ijso.description, /保加利亞/);
-    assert.ok(!/德國/.test(ijso.description), '2026 屆在索菲亞，德國是錯的');
+    assert.match(textOf(ijso), /保加利亞/);
+    assert.ok(!/德國/.test(textOf(ijso)), '2026 屆在索菲亞，德國是錯的');
 
     // LIYSF 官網逐字「Participation is open to students of science aged between 16 and 21 years old」，
     // 且「The participation fee/charge is £3,450.00 GBP per student.」，是公開申請不是邀請制。
     const liysf = find('倫敦國際青年科學論壇');
     assert.equal(liysf.eligibility, '公開報名');
-    assert.match(liysf.description, /3,450/);
+    assert.match(textOf(liysf), /3,450/);
 
     // EGMO／EGOI 的台灣參賽為真：官網國家頁列有 Taiwan (TWN)／Taiwan
-    assert.match(find('歐洲女子數學奧林匹亞').description, /Taiwan/);
-    assert.match(find('歐洲女子資訊奧林匹亞').description, /Taiwan|台灣/);
+    assert.match(textOf(find('歐洲女子數學奧林匹亞')), /Taiwan/);
+    assert.match(textOf(find('歐洲女子資訊奧林匹亞')), /Taiwan|台灣/);
 
+    // 以下警語要寫在卡片上的摘要（description），只看卡片的學生也要知道。
     // 官網的參加國名單沒有台灣，要據實寫出，不得暗示台灣有選拔管道。
     assert.match(find('國際哲學奧林匹亞').description, /台灣目前沒有代表團/);
 
@@ -976,14 +984,15 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(icho.organizer, /International Chemistry Olympiad Steering Committee/);
     assert.equal(icho.eventStartsAt, '2026-07-10');
     assert.equal(icho.eventEndsAt, '2026-07-19');
-    assert.match(icho.description, /2027 July 19-28, Chinese Taipei/, '2027 由我國主辦，是對台灣學生最重要的資訊');
+    assert.match(textOf(icho), /2027 July 19-28, Chinese Taipei/, '請保留官網逐字原文');
+    assert.match(icho.description, /2027[^。]*(?:台灣|我國)|(?:台灣|我國)[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
     // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」、
     // 2027「The 68th IMO ... Budapest, Hungary (July 16-26, 2027)」
     const imo = find('國際數學奧林匹亞');
     assert.equal(imo.eventStartsAt, '2026-07-10');
     assert.equal(imo.eventEndsAt, '2026-07-21');
-    assert.match(imo.description, /布達佩斯|Budapest/);
+    assert.match(textOf(imo), /布達佩斯|Budapest/);
 
     // IOI 官網：2026 Uzbekistan「from August 9th to 16th」、「Germany was selected to host IOI 2027」
     const ioi = find('國際資訊奧林匹亞');
@@ -1007,34 +1016,34 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
 // #70 在 2026-10-25 更正的描述。每一句的官網原文寫在更正它的 commit 訊息裡。
 test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => {
     // 完整結果 PDF 的 Country/Region Represented 欄逐字「Taiwan, China」，每個國家／地區至多 2 隊
-    const immc = find('國際數學建模挑戰賽').description;
+    const immc = textOf(find('國際數學建模挑戰賽'));
     assert.match(immc, /「Taiwan, China」/);
     assert.ok(!/未見 Chinese Taipei|沒有獨立賽區/.test(immc), 'IMMC 的 2026 年結果有 2 隊來自台灣的學校');
 
     // 賽事規則、Code of Conduct、服務條款都有參賽與年齡條文
-    assert.ok(!/未刊登年齡或國籍限制/.test(find('CodeChef').description));
+    assert.ok(!/未刊登年齡或國籍限制/.test(textOf(find('CodeChef'))));
 
     // 條款 1.3 在 2026 年 9 月到 10 月之間從 13:00 改成 16:00 (GMT)
-    const sony = find('Sony 世界攝影獎').description;
+    const sony = textOf(find('Sony 世界攝影獎'));
     assert.match(sony, /5 January 2027 at 16:00 \(GMT\)/);
     assert.ok(!/13:00/.test(sony), 'Sony 青年組現在只寫 16:00 (GMT)');
 
-    assert.ok(!/沒有加註任何免責聲明/.test(find('哈佛克里姆森全球論文競賽').description), '要寫明查了哪些頁');
-    assert.ok(!/帶一般瀏覽器 User-Agent/.test(find('LeetCode').description), '單日實測不寫進描述');
+    assert.ok(!/沒有加註任何免責聲明/.test(textOf(find('哈佛克里姆森全球論文競賽'))), '要寫明查了哪些頁');
+    assert.ok(!/帶一般瀏覽器 User-Agent/.test(textOf(find('LeetCode'))), '單日實測不寫進描述');
     // APhO 的常設網站還在（只有 http，2018 年之後沒更新）
-    assert.ok(!/沒有常設官網/.test(find('亞洲物理奧林匹亞').description));
+    assert.ok(!/沒有常設官網/.test(textOf(find('亞洲物理奧林匹亞'))));
 
     // A 區：要點與簡章沒有「不受理／不接受個人報名」這句，改引原文寫的報名管道
     for (const needle of ['袋鼠數學競賽', '全國資訊奧林匹亞', '國際資訊奧林匹亞 (IOI)', '全國語文競賽']) {
-        assert.ok(!/不受理個人報名|不接受個人報名/.test(find(needle).description), needle);
+        assert.ok(!/不受理個人報名|不接受個人報名/.test(textOf(find(needle))), needle);
     }
-    assert.ok(!/台灣不開放個人報名/.test(find('亞洲物理奧林匹亞').description));
-    assert.ok(!/不再有早鳥/.test(find('FIRST 機器人競賽').description), 'FRC 仍分初始與加報賽事兩段付款期限');
+    assert.ok(!/台灣不開放個人報名/.test(textOf(find('亞洲物理奧林匹亞'))));
+    assert.ok(!/不再有早鳥/.test(textOf(find('FIRST 機器人競賽'))), 'FRC 仍分初始與加報賽事兩段付款期限');
     assert.equal(find('全國中小學科學展覽會').registrationNote, '經地方科展選拔 · 無個人報名管道');
     assert.equal(find('全國資訊奧林匹亞').registrationNote, '須由學校或主管機關報名');
 
     // 卡片用 escapeHtml 顯示描述，Markdown 記號會原樣出現在畫面上
-    const marked = DATA.competitions.filter((c) => /\*\*|`/.test(c.description)).map((c) => c.title);
+    const marked = DATA.competitions.filter((c) => /\*\*|`/.test(textOf(c))).map((c) => c.title);
     assert.deepEqual(marked, [], '描述不得含 ** 或反引號');
 });
 
@@ -1050,10 +1059,10 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
         ['國際天文與天文物理競賽', /線上商業競賽/],
         ['VEX 機器人世界錦標賽', /HTTP 200 空殼/],
     ];
-    for (const [needle, re] of old) assert.ok(!re.test(find(needle).description), needle);
+    for (const [needle, re] of old) assert.ok(!re.test(textOf(find(needle))), needle);
     // 改寫成查過哪幾份文件與原文
     for (const needle of ['Codeforces', 'AtCoder', 'Project Euler']) {
-        assert.ok(!/無年齡或國籍限制/.test(find(needle).description), needle);
+        assert.ok(!/無年齡或國籍限制/.test(textOf(find(needle))), needle);
     }
 
     // 要先用 GitHub、Google、Twitter 或 Reddit 帳號登入才拿得到題目輸入
@@ -1110,7 +1119,7 @@ test('data：寫明學生不能自己報名的競賽，eligibility 不標公開�
         '[Ss]tudents (are not allowed to|may not|cannot) (do the application|register)',
     ].join('|'));
     const bad = DATA.competitions
-        .filter((c) => c.eligibility === '公開報名' && SCHOOL_ONLY.test(`${c.description} ${c.registrationNote ?? ''}`))
+        .filter((c) => c.eligibility === '公開報名' && SCHOOL_ONLY.test(`${textOf(c)} ${c.registrationNote ?? ''}`))
         .map((c) => c.title);
     assert.deepEqual(bad, []);
 
@@ -1136,7 +1145,7 @@ test('data：iGEM 2026 Grand Jamboree 從 11/13 開始，欄位與描述一致',
     const igem = find('iGEM');
     assert.equal(igem.eventStartsAt, '2026-11-13');
     assert.equal(igem.eventEndsAt, '2026-11-16');
-    assert.match(igem.description, /Grand Jamboree 2026-11-13 至 11-16/);
+    assert.match(textOf(igem), /Grand Jamboree 2026-11-13 至 11-16/);
 });
 
 // #195 範圍一在 2026-10-25 重查改過的值。官網原文寫在各筆的 commit 訊息裡。
