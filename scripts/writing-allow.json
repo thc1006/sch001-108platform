@@ -59,38 +59,6 @@
     },
     {
       "file": "src/pages/career-exploration/index.astro",
-      "text": "處理組織系統內外人事物的各種問題",
-      "rule": "W02-vague-quantity",
-      "kind": "quote",
-      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=16",
-      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
-    },
-    {
-      "file": "src/pages/career-exploration/index.astro",
-      "text": "以收最大效益",
-      "rule": "W08-superlative",
-      "kind": "quote",
-      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=16",
-      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
-    },
-    {
-      "file": "src/pages/career-exploration/index.astro",
-      "text": "並且提供各種助人專業訓練",
-      "rule": "W02-vague-quantity",
-      "kind": "quote",
-      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=10",
-      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
-    },
-    {
-      "file": "src/pages/career-exploration/index.astro",
-      "text": "以各種媒體將訊息",
-      "rule": "W02-vague-quantity",
-      "kind": "quote",
-      "source": "https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=11",
-      "reason": "科系羅盤的學群簡介逐字照 ColleGo! 學群頁的「簡要介紹」。"
-    },
-    {
-      "file": "src/pages/career-exploration/index.astro",
       "text": "數據統計",
       "rule": "C01-vague-attribution",
       "kind": "name",

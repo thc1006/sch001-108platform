@@ -181,6 +181,14 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     assert.deepEqual(section.split('\n\n'), blocks);
 });
 
+test('科系羅盤的學群簡介與 src/data/clusters.ts 一字不差', () => {
+    const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
+    const majorData = vm.runInThisContext(literal);
+    const source = readFileSync(new URL('../../src/data/clusters.ts', import.meta.url), 'utf8');
+    const clusters = new Map([...source.matchAll(/\bname: '([^']+)'.*\bdescription: '([^']+)'/g)].map((m) => [m[1], m[2]]));
+    for (const c of majorData) assert.equal(c.description, clusters.get(c.name), c.name);
+});
+
 test('star-analysis：心得反思最多 2000 字（頁面的輸入框同樣限制 2000）', () => {
     const task = catalog.get('star-analysis');
     assert.equal(validateInput(task, { reflection: '寫'.repeat(2000) }).reflection.length, 2000);
