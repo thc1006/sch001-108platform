@@ -434,10 +434,9 @@ import data from '../../../public/advanced-resources/competitions.json';
         return s.label;
       }
 
-      // upcomingText 是尚未開放時截止欄的內容。兩個日期都寫完整：只寫月日的話跨年時看不出年份，
-      // 「12-11」也可能被念成減法；用「、」不用「·」，NVDA 預設設定下「·」可能不念。
+      // 日期寫完整，跨年也看得出年份。徽章已經寫「尚未開放」，這裡用「起」。
       function upcomingText(s) {
-        return '預計 ' + s.opens + ' 開放' + (s.next ? '、' + s.next + ' 截止' : '');
+        return '預計 ' + s.opens + ' 起' + (s.next ? '、' + s.next + ' 截止' : '');
       }
 
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或

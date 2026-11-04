@@ -242,7 +242,7 @@ test.describe('國內外競賽的詳細資訊', () => {
 
     test('尚未開放：卡片和對話框的截止欄都寫報名期間，賽事日期另放一行', async ({ page }) => {
         const card = page.locator('.comp-card').filter({ has: page.getByRole('heading', { name: '尚未開放', exact: true }) });
-        const value = '預計 2099-12-15 開放、2099-12-31 截止';
+        const value = '預計 2099-12-15 起、2099-12-31 截止';
         await expect(card.locator('.comp-deadline__label')).toHaveText(['報名期間']);
         await expect(card.locator('.comp-deadline__value')).toHaveText([value]);
         await opener(page, '尚未開放').click();
