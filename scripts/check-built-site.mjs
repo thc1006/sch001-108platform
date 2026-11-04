@@ -249,11 +249,18 @@ for (const rel of htmlFiles) {
 // 競賽頁的描述在建置時從 competitions.json 算筆數，改回寫死的數字時這裡會擋下。
 {
     const rel = 'advanced-resources/competitions.html';
-    const count = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8')).competitions.length;
-    const $ = cheerio.load(await readFile(path.join(DIST, rel), 'utf8'));
+    const { competitions } = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8'));
+    const count = competitions.length;
+    const html = await readFile(path.join(DIST, rel), 'utf8');
+    const $ = cheerio.load(html);
     const description = $('meta[name="description"]').attr('content') ?? '';
     if (!description.startsWith(`${count} 項`)) {
         addError(rel, 'meta[name=description]', `應寫 competitions.json 的 ${count} 筆，實際：${description}`);
+    }
+    // 資料拆出 details 時頁面要有顯示它的對話框，否則那些內容從網站上消失，其他檢查都照樣過。
+    const withDetails = competitions.filter((c) => typeof c.details === 'string' && c.details).length;
+    if (withDetails && !html.includes('comp-dialog__details')) {
+        addError(rel, 'details', `competitions.json 有 ${withDetails} 筆 details，頁面沒有顯示它的對話框（comp-dialog__details）`);
     }
 }
 
