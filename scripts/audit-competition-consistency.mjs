@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 競賽資料內部一致性稽核（人工分診輔助工具，非 CI 關卡）。
- * 交叉比對 description 的敘述與 category/form/eligibility/mode 等結構化欄位。
+ * 交叉比對 description、details 的敘述與 category/form/eligibility/mode 等結構化欄位。
  * 這類矛盾，例如描述寫「須具 APCS 三級分」但 eligibility 標「公開報名」，
  * 不需連外網就能抓出來。
  *
@@ -34,7 +34,7 @@ const ONSITE_WORDS = /實體(舉行|競賽|賽)|現場(簡報|競賽|比賽)|於
 const UNI_WORDS = /大專|大學(在學|生)|university|大學階段/i;
 
 for (const c of d.competitions) {
-    const desc = c.description || '';
+    const desc = [c.description, c.details].filter(Boolean).join(' ');
 
     // form vs 敘述
     if (c.form === '個人' && TEAM_WORDS.test(desc) && !SOLO_WORDS.test(desc)) {
