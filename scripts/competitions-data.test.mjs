@@ -1058,7 +1058,7 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
     const old = [
         ['Codeforces', /首頁對自動化存取回 403/],
         ['Advent of Code', /免費、無需報名/],
-        ['Major League Hacking', /多數大學主辦場次實務上只收大學生|遍及百國/],
+        ['Major League Hacking', /遍及百國/],
         ['Cambridge Re:Think', /唯一連結/],
         ['全美高中生影展', /官網只列日期，未標時刻與時區/],
         ['倫敦國際青年科學論壇', /「By 30th May latest」/],
@@ -1066,10 +1066,13 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
         ['VEX 機器人世界錦標賽', /HTTP 200 空殼/],
     ];
     for (const [needle, re] of old) assert.ok(!re.test(textOf(find(needle))), needle);
-    // 改寫成查過哪幾份文件與原文
+    // 摘要寫結論「不限年齡和國籍」，查了哪幾份文件寫在 sourceNote
     for (const needle of ['Codeforces', 'AtCoder', 'Project Euler']) {
-        assert.ok(!/無年齡或國籍限制/.test(textOf(find(needle))), needle);
+        assert.match(find(needle).description, /不限年齡和國籍/, needle);
+        assert.ok(!/隱私權政策|登入頁都沒有/.test(textOf(find(needle))), needle);
     }
+    // 規則收國高中生，但學生要知道多數場次不收高中生
+    assert.match(find('Major League Hacking').description, /多數大學辦的場次只收大學生/);
 
     // 要先用 GitHub、Google、Twitter 或 Reddit 帳號登入才拿得到題目輸入
     assert.ok(!/無需報名/.test(find('Advent of Code').registrationNote));
