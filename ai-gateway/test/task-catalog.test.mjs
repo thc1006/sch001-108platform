@@ -152,11 +152,12 @@ test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相�
     assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
 });
 
-test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一個下一步建議，200 字內，不約學生下次再談', () => {
+test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一個下一步建議，說不出興趣時幫忙找線索，200 字內，不約學生下次再談', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
     assert.match(instructions, /說明為什麼推薦/);
     assert.match(instructions, /具體的下一步探索建議/);
+    assert.match(instructions, /學生說不出興趣時，從日常喜歡做的事或擅長的科目幫他找線索/);
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
