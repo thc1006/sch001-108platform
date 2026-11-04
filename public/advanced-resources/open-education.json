@@ -113,7 +113,7 @@
       "name": "Gemma 開放模型與開發文件",
       "org": "Google DeepMind",
       "url": "https://gemma.ai/",
-      "description": "Google 以 Gemini 同源技術做的輕量開放模型家族，可在一般電腦本地執行，並有官方文件。Gemma 4 採 Apache 2.0 授權，較早的 Gemma 模型適用 Google 的 Gemma 使用條款（Gemma Terms of Use）。",
+      "description": "Google 的輕量開放模型，可以免費下載，在一般電腦上執行，有官方文件。想自己在電腦上跑 AI 模型可以從這裡開始。",
       "tags": [
         "開源模型",
         "官方文件",
