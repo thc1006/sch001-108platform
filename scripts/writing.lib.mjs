@@ -419,11 +419,13 @@ export const RULES = [
             : /^(?:TODO|FIXME)$/.test(m[0]) && b.kind !== 'json' ? '內文談到程式裡的標記'
             : /^TB[AD]$/.test(m[0]) && /(?:標示|明示|寫著?|顯示)[^。，；]{0,8}$/.test(before(m, 12)) ? '轉述官網標示的 TBA' : null),
     },
-    // Markdown 連結和 utm_source 都在網址裡，所以不用 skip 略過網址；網址裡的其他符號由 normal 放行。
+    // Markdown 連結和 utm_source 都在網址裡，所以不用 skip 略過網址；網址裡的其他符號由 normal 放行。粗體要包住
+    // 中文、兩側不是英數字，「2**3」「a**b**c」不算；標題只看區塊開頭，「加上 # 主題標籤」不算。
     {
         id: 'K03-markdown-residue', severity: 'block', skip: '',
-        re: /\*\*[^*\n]{1,40}\*\*|(?:^|\s)#{1,4}\s+(?!\d)\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot|perplexity)/gu,
-        normal: (m, b) => (b.skip[m.index] === 'u' && !m[0].startsWith('utm_source') ? '網址裡的符號' : null),
+        re: /(?<![\w*])\*\*(?=[^*\n]*\p{Script=Han})(?=\S)[^*\n]{1,40}?(?<=\S)\*\*(?![\w*])|(?<![\w_])__(?=[^_\n]*\p{Script=Han})(?=\S)[^_\n]{1,40}?(?<=\S)__(?![\w_])|^#{1,6}\s+\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot|perplexity)/gu,
+        normal: (m, b) => (b.skip[m.index] === 'u' && !m[0].startsWith('utm_source') ? '網址裡的符號'
+            : /(?:例如|像是|寫成)\s*$/.test(before(m, 6)) || /^\s*(?:這類|這種|的寫法)/.test(after(m, 6)) ? '談 Markdown 寫法' : null),
     },
     // 錯誤訊息和按鈕文字在腳本和屬性裡。內文的「抱歉」多半是訪談裡的話。
     {

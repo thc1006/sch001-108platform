@@ -387,8 +387,15 @@ const blockCases = [
     // K02 已知的漏抓：「X 月 X 日」「○月○日」「（請填入信箱）」「{主辦單位名稱}」「[Your Name]」「日期待補」。
     ['K03-markdown-residue', [
         '**重點：** 先寫結論', '## 研究動機', '```js', '詳見[官網](https://example.org/)', '見[說明](/about/)',
-        '網址 https://example.org/?utm_source=chatgpt.com', '網址 https://example.org/?utm_source=perplexity',
-    ], ['用 C# 寫程式', '第 1 名', 'Issue # 12', '網址 https://example.org/a**b**c']],
+        '網址 https://example.org/?utm_source=chatgpt.com', '網址 https://example.org/?utm_source=perplexity', '__報名資格__：高中職在學學生。',
+        '###### 備註', '說明 **重點** 在這裡',
+    ], [
+        '用 C# 寫程式', '第 1 名', 'Issue # 12', '網址 https://example.org/a**b**c', 'Python 用 2**3 表示 2 的 3 次方，3**2 是 9。',
+        '指數的寫法 a**b**c 在 Python 是右結合。', '在 IG 貼文加上 # 主題標籤，例如 #SDGs。', 'Python 的 __init__ 方法',
+        '在 Markdown 裡，用 ** 包住文字會變成粗體，例如 **重點** 這類寫法。', '網址 https://example.org/**中文**/x', '2**次方**是指數',
+        '**Note:** 先寫結論',
+    ]],
+    // K03 已知的漏抓：只有英文的粗體「**Note:**」、段落中間的「## 標題」、「* 項目」「1. 項目」這類清單符號。
 ];
 const warnCases = [
     ['W03-intensifier', ['這題極具挑戰'], ['這題有挑戰']],
