@@ -796,16 +796,16 @@ import data from '../../../public/advanced-resources/competitions.json';
       transform: translateY(-6px);
       box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
     }
-    .comp-card__body { padding: 1.5rem; flex: 1; }
-    /* 狀態說明可能很長（「報名開放日未公布 · 線上 7/30、紙本 6/25 截止」），放不下時換到下一行再折行，
-       不要超出卡片被裁掉。 */
+    /* 直向排列，「詳細資訊」用 margin-top: auto 靠到底，同一列卡片的按鈕對齊。 */
+    .comp-card__body { display: flex; flex-direction: column; padding: 1.5rem; flex: 1; }
+    /* 只放大文字時，「藝術設計」和「即將截止 · 剩 30 天」放不下一行，狀態換到下一行，不超出卡片。 */
     .comp-kicker { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
     .comp-cat {
-      font-size: .875rem; font-weight: 700; line-height: 1.75rem;
+      font-size: .875rem; font-weight: 700; line-height: 1.25rem;
       color: color-mix(in srgb, var(--accent) 72%, #1e293b); white-space: nowrap;
     }
     .comp-status {
-      font-size: .875rem; font-weight: 600; padding: .25rem .5rem; border-radius: .75rem;
+      font-size: .875rem; font-weight: 600; line-height: 1.25rem; padding: .25rem .5rem; border-radius: .75rem;
       background: #f1f5f9; color: #475569;
     }
     .is-open .comp-status { background: #dcfce7; color: #15803d; }
@@ -818,31 +818,33 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-card__title { font-size: 1.25rem; font-weight: 700; line-height: 1.75rem; color: var(--ink); margin: 0 0 .5rem; }
     .comp-card__org, .comp-dialog__org { font-size: .875rem; color: var(--muted); margin: 0 0 .25rem; }
     .comp-facts { font-size: .875rem; color: var(--muted); margin: 0 0 1rem; }
-    .comp-card__desc { font-size: 1rem; line-height: 1.65; color: #374151; margin: 0; }
+    .comp-card__desc { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
+    .comp-card__desc:last-child { margin-bottom: 0; }
     .comp-more {
-      margin-top: .75rem; padding: .25rem 0; border: 0; background: none; cursor: pointer;
-      font-size: .875rem; font-weight: 700; color: #0369a1; text-decoration: underline; text-underline-offset: .2em;
+      align-self: flex-start; margin-top: auto; padding: .25rem 0; border: 0; background: none; cursor: pointer;
+      font-size: .875rem; font-weight: 700; color: #0069a8; text-decoration: underline; text-underline-offset: .2em;
     }
-    .comp-more:hover { color: #075985; }
-    /* 只放大文字時，截止日和「前往官網」放不下一行就讓按鈕換行，不超出卡片。截止日用 flex: 1 1 0，
-       一般字級下照舊縮窄截止日、按鈕留在右邊。 */
+    .comp-more:hover { color: #00598a; }
+    /* 截止欄的基準寬度用 rem：只放大文字時一起變寬，放不下就讓「前往官網」換行，截止欄不會被擠成
+       一字一行。8rem 是 320px 寬、一般字級時兩者還排得進一行的寬度。 */
     .comp-foot {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
       padding: 1rem; background: #f9fafb;
     }
-    .comp-deadline { display: flex; flex-direction: column; gap: .1rem; flex: 1 1 0; }
+    .comp-deadline { display: flex; flex-direction: column; gap: .1rem; flex: 1 1 8rem; }
     .comp-deadline__label { font-size: .875rem; color: var(--muted); }
     .comp-deadline__value { font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
     .comp-checked { display: block; margin-top: .15rem; font-size: .875rem; color: var(--muted); }
     .comp-cta {
       display: inline-flex; align-items: center; padding: .5rem 1rem; border-radius: .5rem;
-      background: #0369a1; color: #fff; font-weight: 700; text-decoration: none; transition: background .3s;
+      background: #0069a8; color: #fff; font-weight: 700; text-decoration: none; transition: background .3s;
     }
-    .comp-cta:hover { background: #075985; }
+    .comp-cta:hover { background: #00598a; }
     /* 已截止的卡片用灰色的強調色與底色表示，不用 opacity：整張變淡會讓次要文字掉到 3:1 左右。
        --accent 是行內樣式，要 !important 才蓋得過。 */
     .is-closed { --accent: #64748b !important; }
     .comp-card.is-closed { background: #f8fafc; }
+    .comp-card .comp-foot { border-top: 1px solid var(--line); }
     .comp-card.is-closed .comp-foot { background: #f1f5f9; }
     .comp-card:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 
@@ -861,7 +863,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     .comp-dialog__close:hover { color: #1f2937; }
     .comp-dialog__body { padding: 1.5rem; flex-grow: 1; }
-    .comp-dialog__desc, .comp-dialog__details p { font-size: 1rem; line-height: 1.65; color: #374151; margin: 0 0 .75rem; }
+    .comp-dialog__desc, .comp-dialog__details p { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
     .comp-dialog__body .comp-foot { margin-top: 1.5rem; border-radius: .5rem; }
 
     .comp-empty { text-align: center; padding: 4.5rem 1.5rem; color: var(--muted); }
