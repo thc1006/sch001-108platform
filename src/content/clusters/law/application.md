@@ -125,6 +125,7 @@ description: 台大、政大、北大法律與政治相關校系 116 學年度�
 - [116 學年度校系分則：政大政治學系（006052）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006052.htm)
 - [116 學年度校系分則：政大外交學系（006142）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006142.htm)
 - [116 學年度校系分則：政大公共行政學系（006082）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006082.htm)
+- [ColleGo!「國立政治大學公共行政學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006010)
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [國立臺灣大學法律系 115 學年度大學申請入學第二階段甄試書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/A010_%E6%B3%95%E5%BE%8B%E7%B3%BB.pdf)
 - [國立臺灣大學政治學系 115 學年度大學申請入學第二階段甄試書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/3020_%E6%94%BF%E6%B2%BB%E7%B3%BB.pdf)

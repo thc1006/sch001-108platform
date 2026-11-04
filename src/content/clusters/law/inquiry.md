@@ -73,6 +73,7 @@ ColleGo! 每個學類頁都有「學類體驗」，列出高中生可以先做�
 
 ## 參考來源
 
+- [ColleGo!「國立政治大學公共行政學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=006010)
 - [司法院裁判書查詢](https://judgment.judicial.gov.tw/FJUD/default.aspx)
 - [政府資料開放平臺](https://data.gov.tw/)
 - [中央選舉委員會選舉資料庫](https://db.cec.gov.tw/)
