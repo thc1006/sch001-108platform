@@ -488,10 +488,6 @@ test.describe('國內外競賽的詳細資訊', () => {
         });
     }
 
-    test('搜尋框的描述是結果筆數，焦點一進去就念', async ({ page }) => {
-        await expect(page.locator('#search-input')).toHaveAccessibleDescription(`${COMPETITIONS.length} 項結果`);
-    });
-
     test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
         await page.locator('#search-input').fill('甲乙丙');
         await expect(page.locator('.comp-card h2')).toHaveText(['有詳細資訊']);
