@@ -486,8 +486,8 @@ import data from '../../../public/advanced-resources/competitions.json';
               '<p class="comp-card__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
               '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
-              more +
             '</div>' +
+            '<div class="comp-card__more">' + more + '</div>' +
             // details 是選填。沒有的卡片打不開對話框，截止欄照舊放完整時程。
             footHtml(c, hasDetails(c) ? cardDeadline(c, s) : deadlineField(c, s)) +
           '</article>'
@@ -790,11 +790,13 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
-    /* overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。
+    /* 卡片用 subgrid 和同一列的卡片共用三列：內文、「詳細資訊」、截止欄。內文或截止欄的行數不同時，
+       同一列的按鈕和截止欄照樣對齊。
+       overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。
        外框透明：強制色彩模式會拿掉陰影，外框換成系統色，卡片的邊界才看得到。 */
     .comp-card {
-      position: relative; display: flex; flex-direction: column; overflow: hidden; overflow-wrap: anywhere;
-      background: #fff; border: 1px solid transparent; border-radius: .5rem;
+      position: relative; display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0;
+      overflow: hidden; overflow-wrap: anywhere; background: #fff; border: 1px solid transparent; border-radius: .5rem;
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
       transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s, border-color .28s;
       animation: compRise .5s cubic-bezier(.2,.7,.2,1) backwards;
@@ -805,8 +807,9 @@ import data from '../../../public/advanced-resources/competitions.json';
       transform: translateY(-6px);
       box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
     }
-    /* 直向排列，「詳細資訊」用 margin-top: auto 靠到底，同一列卡片的按鈕對齊。 */
-    .comp-card__body { display: flex; flex-direction: column; padding: 1.5rem; flex: 1; }
+    .comp-card__body { display: flex; flex-direction: column; padding: 1.5rem 1.5rem .75rem; }
+    .comp-card__more { padding: 0 1.5rem 1.5rem; }
+    .comp-card__more:empty { padding: 0 0 .75rem; }
     /* DOM 裡名稱在類型與狀態前面，用 H 鍵跳到名稱的人接著聽到這張卡片的狀態；畫面上用 order 排回名稱上面。 */
     .comp-card .comp-kicker { order: -1; }
     /* 只放大文字時，「藝術設計」和「即將截止 · 剩 30 天」放不下一行，狀態換到下一行，不超出卡片。 */
@@ -829,10 +832,9 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-card__title { font-size: 1.25rem; font-weight: 700; line-height: 1.75rem; color: var(--ink); margin: 0 0 .5rem; }
     .comp-card__org, .comp-dialog__org { font-size: .875rem; color: var(--muted); margin: 0 0 .25rem; }
     .comp-facts { font-size: .875rem; color: var(--muted); margin: 0 0 1rem; }
-    .comp-card__desc { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
-    .comp-card__desc:last-child { margin-bottom: 0; }
+    .comp-card__desc { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0; }
     .comp-more {
-      align-self: flex-start; margin-top: auto; padding: .25rem 0; border: 0; background: none; cursor: pointer;
+      padding: .25rem 0; border: 0; background: none; cursor: pointer;
       font-size: .875rem; font-weight: 700; color: #0069a8; text-decoration: underline; text-underline-offset: .2em;
     }
     .comp-more:hover { color: #00598a; }
@@ -919,6 +921,10 @@ import data from '../../../public/advanced-resources/competitions.json';
     @media (prefers-reduced-motion: reduce) {
       .comp-card { animation: none; }
       .comp-card:hover { transform: none; }
+    }
+    @supports not (grid-template-rows: subgrid) {
+      .comp-card { display: flex; flex-direction: column; }
+      .comp-card__body { flex: 1; }
     }
     @supports not (color: color-mix(in srgb, red 50%, white)) {
       .comp-card:focus-within { border-color: var(--accent); }
