@@ -41,6 +41,39 @@ const find = (needle) => {
     return hits[0];
 };
 
+/**
+ * pageAt 用競賽頁實際用的函式，回傳在 iso 這一刻畫出來的樣子。shown(c) 是對話框（以及沒有 details 的卡片）
+ * 的徽章與截止欄，card(c) 是有 details 的卡片的徽章與截止欄。
+ */
+function pageAt(iso) {
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}——若已改名請同步更新本測試`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
+        'upcomingText', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+    const fixed = new Date(iso).getTime();
+    class FixedDate extends Date {
+        constructor(...a) { super(...(a.length ? a : [fixed])); }
+        static now() { return fixed; }
+    }
+    const f = new Function('Date', `${bundle}; return { getStatus, badgeText, cardDeadline, fullDeadline, dialogBadge };`)(FixedDate);
+    return {
+        shown(c) {
+            const s = f.getStatus(c);
+            const d = f.fullDeadline(c, s);
+            return { status: f.dialogBadge(s, d), field: d.label, label: d.value, event: d.event || '' };
+        },
+        card(c) {
+            const s = f.getStatus(c);
+            const d = f.cardDeadline(c, s);
+            return { status: f.badgeText(s), field: d.label, label: d.value };
+        },
+    };
+}
+
 /** 2026-08-27 這一輪逐筆查證涵蓋的競賽。 */
 const VERIFIED_2026_08_27 = [
     '台灣國際科學展覽會',
@@ -272,154 +305,123 @@ test('data：本輪查證到的賽事日期與週期', () => {
 });
 
 // 資料對了不等於畫面對了。#82 修掉的正是「資料是賽事日期、卡片寫成報名截止」，
-// 那個錯誤只在顯示層看得見。這裡把真正的前端函式從 .astro 抽出來跑，
-// 把 2026-08-27 當天的卡片文字釘住。
+// 那個錯誤只在顯示層看得見。這裡把頁面實際用的函式從 .astro 抽出來跑，
+// 把 2026-08-27 當天對話框（以及沒有 details 的卡片）的徽章與截止欄釘住。
 test('display：查證過的競賽在卡片上顯示正確的狀態與日期欄', () => {
-    const src = readFileSync(
-        new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
-        'utf8',
-    );
-    const grab = (name) => {
-        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
-        assert.ok(m, `在 competitions.astro 抽不到 ${name}——若已改名請同步更新本測試`);
-        return m[0];
-    };
-    const bundle = [
-        'todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC',
-        'getStatus', 'statusText', 'eventLabel', 'deadlineField', 'deadlineLabel',
-    ].map(grab).join('\n');
+    const page = pageAt('2026-08-27T04:00:00Z');
+    const card = (needle) => page.shown(find(needle));
+    const noDate = (c) => !/\d{4}-\d{2}-\d{2}/.test(c.status + c.label + c.event);
 
-    // 台北時間 2026-08-27 12:00
-    const fixed = new Date('2026-08-27T04:00:00Z').getTime();
-    class FixedDate extends Date {
-        constructor(...a) {
-            super(...(a.length ? a : [fixed]));
-        }
-        static now() {
-            return fixed;
-        }
-    }
-    const f = new Function(
-        'Date',
-        `${bundle}; return { getStatus, statusText, deadlineField, deadlineLabel };`,
-    )(FixedDate);
-
-    const card = (needle) => {
-        const c = find(needle);
-        const s = f.getStatus(c);
-        const d = f.deadlineField(c, s);
-        return { status: f.statusText(s), field: d.label, label: d.value };
-    };
-
-    // 2026 屆報名已截止、2027 屆未公布：狀態列講報名，日期欄只講上屆的比賽日，不推下一屆。
+    // 2026 屆報名已截止、2027 屆未公布：狀態講報名，日期欄只講上屆的比賽日，不推下一屆。
     assert.deepEqual(card('My First CTF'), {
         status: '2026 屆已截止 · 2027 屆未公布',
         field: '賽事日期',
-        label: '上屆 2026-05-16 已結束',
+        label: '上屆 2026-05-16，已結束',
+        event: '',
     });
 
     // 沒有公開報名：狀態列必須說清楚，日期欄顯示賽事日期而不是假的截止日
     assert.deepEqual(card('亞太數學奧林匹亞'), {
         status: '每年 3 月舉行 · 無公開報名',
         field: '賽事日期',
-        label: '2027-03-09 舉行',
+        label: '2027-03-09',
+        event: '',
     });
     assert.deepEqual(card('亞太資訊奧林匹亞'), {
         status: '每年 5 月舉行 · 無公開報名',
         field: '賽事日期',
-        label: '上屆 2026 賽事 5/9–5/10 已結束',
+        label: '上屆 2026-05-09 至 2026-05-10，已結束',
+        event: '',
     });
 
     // 官網未公布下屆截止日：不得出現任何具體日期
     const wha = card('世界歷史學家論文獎');
-    assert.equal(wha.status, '2027 年截止日 11 月初公布');
-    assert.ok(!/\d{4}-\d{2}-\d{2}/.test(wha.label), '不得憑空生出一個截止日期');
+    assert.deepEqual([wha.field, wha.label], ['報名', '2027 年截止日 11 月初公布']);
+    assert.ok(noDate(wha), '不得憑空生出一個截止日期');
 
     // 只辦過兩屆、間隔不固定：顯示賽事日期，不推算下一屆
     const ibridge = card('iBridge');
     assert.equal(ibridge.status, '辦理時間不固定 · 依官網公告');
-    assert.equal(ibridge.label, '上屆 2025-12-13 已結束');
+    assert.equal(ibridge.label, '上屆 2025-12-13，已結束');
     assert.ok(!/下次約/.test(ibridge.status));
 
-    // 報名 9/16 才開放，今天（8/27）不得顯示「報名中」
-    assert.equal(card('Diamond Challenge').status, '尚未開放 · 預計 2026-09-16 開放');
+    // 報名 9/16 才開放，今天（8/27）不得顯示「報名中」，卡片和對話框都一樣
+    const diamond = card('Diamond Challenge');
+    assert.equal(diamond.status, '尚未開放');
+    assert.match(diamond.label, /^預計 2026-09-16 起/);
+    assert.equal(page.card(find('Diamond Challenge')).status, '尚未開放');
 
     // 報名中的兩筆：剩餘天數以帶時區的精確時刻換算成台北日曆日
     assert.equal(card('哈佛克里姆森商業個案分析賽').status, '報名中 · 剩 49 天');
     assert.equal(card('Conrad Challenge').status, '報名中 · 剩 64 天');
 
-    // 本屆已截止但知道週期
-    assert.equal(card('台灣國際學生創意設計大賽').status, '本屆已截止 · 下次約 2027-07-31');
+    // 本屆已截止但知道週期：截止欄講本屆，徽章講下次截止日
+    assert.deepEqual(card('台灣國際學生創意設計大賽'), {
+        status: '下次約 2027-07-31 截止',
+        field: '報名截止',
+        label: '本屆 2026-07-15 已截止、每年約 7 月',
+        event: '',
+    });
 
-    // 第 24 屆 10/1 才開放報名，日期欄同時講報名期間與上一屆的決賽
-    assert.equal(card('育秀盃').label, '預計 2026-10-01 開放報名 · 2026-12-31 截止 · 上屆 2026-04-24 已結束');
+    // 第 24 屆 10/1 才開放報名，截止欄講報名期間，上一屆的決賽另放一行
+    assert.deepEqual(card('育秀盃'), {
+        status: '尚未開放',
+        field: '報名期間',
+        label: '預計 2026-10-01 起、2026-12-31 截止',
+        event: '上屆 2026-04-24，已結束',
+    });
 
-    // 2027 屆 10/12 才開放報名，8/27 這天顯示開放日與截止日
-    assert.equal(card('台灣國際科學展覽會').label, '預計 2026-10-12 開放報名 · 2026-11-06 截止 · 2027 賽事 1/25–1/30');
+    // 2027 屆 10/12 才開放報名，8/27 這天顯示開放日與截止日，賽事日期另放一行
+    assert.deepEqual(card('台灣國際科學展覽會'), {
+        status: '尚未開放',
+        field: '報名期間',
+        label: '預計 2026-10-12 起、2026-11-06 截止',
+        event: '2027-01-25 至 2027-01-30',
+    });
 
     // 沒有 deadline、只有 cycle 與賽事日期的條目：就地建一筆，不靠資料裡剛好有這種條目
-    const cycleOnly = { deadline: '', cycle: { closes: '11' }, eventStartsAt: '2027-01-25', eventEndsAt: '2027-01-30' };
-    const cs = f.getStatus(cycleOnly);
-    assert.deepEqual(
-        { status: f.statusText(cs), ...f.deadlineField(cycleOnly, cs) },
-        { status: '每年固定辦理 · 下次約 2026-11-30', label: '報名截止', value: '每年約 11 月截止 · 2027 賽事 1/25–1/30' },
-    );
+    assert.deepEqual(page.shown({ deadline: '', cycle: { closes: '11' }, eventStartsAt: '2027-01-25', eventEndsAt: '2027-01-30' }), {
+        status: '每年固定辦理，下次約 2026-11-30 截止',
+        field: '報名截止',
+        label: '每年約 11 月',
+        event: '2027-01-25 至 2027-01-30',
+    });
 
     // 沒有任何日期主張的兩筆：狀態列講規則，不得出現數字日期
     for (const needle of ['外交小尖兵', '總統教育獎']) {
-        const c = card(needle);
-        assert.ok(!/\d{4}-\d{2}-\d{2}/.test(c.status + c.label), `${needle} 不得顯示未經查證的日期`);
+        assert.ok(noDate(card(needle)), `${needle} 不得顯示未經查證的日期`);
     }
 });
 
 // 上面那個測試釘的是「這 18 筆現在長什麼樣」，逐筆列舉；這一個釘的是「任何一筆
 // 都不可以出現的形狀」，涵蓋日後新增的資料。
 //
-// 兩種形狀：
-//   1. 已辦完的賽事寫成「2025-12-13 舉行」，讀起來像即將舉行，比不顯示還糟。
-//   2. 欄位標題與內容各說各話：沒有 deadline、只有 cycle 與賽事日期的條目，標題若只看
-//      c.eventStartsAt 就會寫「賽事日期」，內容卻是「每年約 11 月截止 · …」。
-//      所以標題與內容都由 deadlineField() 決定。
+// 三種形狀：
+//   1. 已辦完的賽事寫成「2025-12-13」，讀起來像即將舉行，比不顯示還糟。
+//   2. 欄位標題與內容各說各話：標題「賽事日期」，內容卻在講報名。
+//   3. 賽事混進報名的欄位：標題「報名截止」或「報名期間」，內容卻講賽事（「賽事」「舉行」「已結束」）；
+//      有 details 的卡片截止欄只放報名，也一樣。只比日期會誤報：HiMCM 的報名截止日就是開賽日。
 test('display：已辦完的賽事必須標示為已結束，且欄位標題與內容一致', () => {
-    // readFileSync 已在檔案頂端 import（本檔是 ESM，不能用 require）
-    const src = readFileSync(
-        new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
-        'utf8',
-    );
-    const grab = (name) => {
-        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
-        assert.ok(m, `抽不到 ${name}`);
-        return m[0];
-    };
-    const bundle = [
-        'todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC',
-        'getStatus', 'statusText', 'eventLabel', 'deadlineField', 'deadlineLabel',
-    ].map(grab).join('\n');
-
-    const fixed = new Date('2026-08-27T04:00:00Z').getTime();
-    class FixedDate extends Date {
-        constructor(...a) { super(...(a.length ? a : [fixed])); }
-        static now() { return fixed; }
-    }
-    const f = new Function('Date', `${bundle}; return { getStatus, deadlineField };`)(FixedDate);
-
-    const data = JSON.parse(
-        readFileSync(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'),
-    );
+    const page = pageAt('2026-08-27T04:00:00Z');
     const TODAY = '2026-08-27';
     const offenders = [];
 
-    for (const c of data.competitions) {
-        const s = f.getStatus(c);
-        const { label, value } = f.deadlineField(c, s);
-
+    for (const c of DATA.competitions) {
+        const d = page.shown(c);
+        const eventShown = d.field === '賽事日期' ? d.label : d.event;
         const last = c.eventEndsAt || c.eventStartsAt;
-        if (typeof last === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(last) && last < TODAY && !/已結束|上屆/.test(value)) {
-            offenders.push(`${c.title}：賽事已於 ${last} 結束，卻顯示「${value}」`);
+        if (typeof last === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(last) && last < TODAY && !/已結束/.test(eventShown)) {
+            offenders.push(`${c.title}：賽事已於 ${last} 結束，卻顯示「${eventShown}」`);
         }
-        if (label === '賽事日期' && /截止|報名/.test(value)) {
-            offenders.push(`${c.title}：標題「賽事日期」但內容在講報名——「${value}」`);
+        if (d.field === '賽事日期' && /截止|報名/.test(d.label)) {
+            offenders.push(`${c.title}：標題「賽事日期」但內容在講報名：「${d.label}」`);
         }
+        const eventWords = /賽事|舉行|已結束/;
+        if ((d.field === '報名截止' || d.field === '報名期間') && eventWords.test(d.label)) {
+            offenders.push(`${c.title}：標題「${d.field}」但內容講賽事：「${d.label}」`);
+        }
+        const k = page.card(c);
+        if (k.field !== '報名' && eventWords.test(k.label)) offenders.push(`${c.title}：有 details 的卡片截止欄講賽事：「${k.label}」`);
     }
     assert.deepEqual(offenders, [], '卡片顯示與事實不符：\n  ' + offenders.join('\n  '));
 });
@@ -1174,74 +1176,52 @@ test('data：#195 範圍一重查改過的週期、日期與主辦單位不得�
 });
 
 test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日期欄', () => {
-    const src = readFileSync(
-        new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url),
-        'utf8',
-    );
-    const grab = (name) => {
-        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
-        assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
-        return m[0];
-    };
-    const bundle = [
-        'todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC',
-        'getStatus', 'statusText', 'eventLabel', 'deadlineField', 'deadlineLabel',
-    ].map(grab).join('\n');
+    const page = pageAt('2026-08-27T04:00:00Z');
+    const card = (needle) => page.shown(find(needle));
 
-    const fixed = new Date('2026-08-27T04:00:00Z').getTime();
-    class FixedDate extends Date {
-        constructor(...a) { super(...(a.length ? a : [fixed])); }
-        static now() { return fixed; }
-    }
-    const f = new Function(
-        'Date',
-        `${bundle}; return { getStatus, statusText, deadlineField };`,
-    )(FixedDate);
-
-    const card = (needle) => {
-        const c = find(needle);
-        const s = f.getStatus(c);
-        const d = f.deadlineField(c, s);
-        return { status: f.statusText(s), field: d.label, label: d.value };
-    };
-
-    // 報名截止與考試日並陳，且欄位標題是「報名截止」而不是「賽事日期」
+    // 報名截止與考試日並陳，欄位標題講報名而不是「賽事日期」，考試日另放一行
     assert.deepEqual(card('APCS'), {
-        status: '尚未開放 · 預計 2026-11-23 開放',
-        field: '報名截止',
-        label: '預計 2026-11-23 開放報名 · 2026-12-11 截止 · 2027-01-10 舉行',
+        status: '尚未開放',
+        field: '報名期間',
+        label: '預計 2026-11-23 起、2026-12-11 截止',
+        event: '2027-01-10',
     });
     assert.deepEqual(card('加拿大計算機競賽'), {
         status: '報名中 · 剩 168 天',
         field: '報名截止',
-        label: '2027-02-11 · 2027-02-18 舉行',
+        label: '2027-02-11',
+        event: '2027-02-18',
     });
 
     // 小論文與閱讀心得必須顯示各自的截止日，不能同一天
-    assert.equal(card('小論文寫作比賽').label, '預計 2027-02-01 開放報名 · 2027-03-15 截止');
-    assert.equal(card('閱讀心得寫作比賽').label, '預計 2027-02-01 開放報名 · 2027-03-10 截止');
+    assert.equal(card('小論文寫作比賽').label, '預計 2027-02-01 起、2027-03-15 截止');
+    assert.equal(card('閱讀心得寫作比賽').label, '預計 2027-02-01 起、2027-03-10 截止');
 
     // 報名已結束、但決賽還沒到：狀態講報名、日期欄講賽事，且不得顯示成「已結束」
     assert.deepEqual(card('旺宏科學獎'), {
         status: '第 25 屆已截止 · 下屆依官網公告',
         field: '賽事日期',
-        label: '2026 賽事 9/5–9/6',
+        label: '2026-09-05 至 2026-09-06',
+        event: '',
     });
 
     // 沒有公開報名的：狀態列必須說清楚，日期欄顯示賽事而不是假的截止日
     assert.deepEqual(card('亞洲物理奧林匹亞'), {
         status: '每年 5 月舉行 · 由國家代表隊參賽',
         field: '賽事日期',
-        label: '2027 賽事 5/16–5/24',
+        label: '2027-05-16 至 2027-05-24',
+        event: '',
     });
     assert.equal(card('臺灣數學奧林匹亞競賽').status, '須由學校或主管機關報名 · 不接受個人報名');
-    assert.equal(card('普通型高級中等學校數理及資訊').status, '經校內初賽選拔 · 由學校選薦');
+    // 沒有賽事日期時，報名方式寫在截止欄
+    assert.deepEqual(card('普通型高級中等學校數理及資訊').field, '報名');
+    assert.equal(card('普通型高級中等學校數理及資訊').label, '經校內初賽選拔 · 由學校選薦');
 
     // 官網未公布下屆時程的，不得出現任何具體日期
     for (const needle of ['Ayn Rand', '東南亞數學奧林匹亞']) {
         const c = card(needle);
         assert.ok(
-            !/\d{4}-\d{2}-\d{2}/.test(c.status + c.label),
+            !/\d{4}-\d{2}-\d{2}/.test(c.status + c.label + c.event),
             `${needle} 不得顯示未經查證的日期，實際顯示「${c.status}／${c.label}」`,
         );
     }
@@ -1251,7 +1231,9 @@ test('display：第二輪查證的競賽在卡片上顯示正確的狀態與日�
     assert.equal(card('Earth Science Week').status, '報名中 · 剩 51 天');
     assert.equal(card('FIRST 機器人競賽').status, '報名中 · 剩 83 天');
 
-    // 尚未開放報名的不得顯示「報名中」
-    assert.equal(card('GENIUS Olympiad').status, '尚未開放 · 預計 2026-12-15 開放');
-    assert.equal(card('美國數學競賽 (AMC 10/12)').status, '尚未開放 · 預計 2026-09-18 開放');
+    // 尚未開放報名的不得顯示「報名中」，截止欄寫開放日
+    for (const [needle, opens] of [['GENIUS Olympiad', '2026-12-15'], ['美國數學競賽 (AMC 10/12)', '2026-09-18']]) {
+        assert.equal(card(needle).status, '尚未開放');
+        assert.ok(card(needle).label.startsWith(`預計 ${opens} 起`), card(needle).label);
+    }
 });
