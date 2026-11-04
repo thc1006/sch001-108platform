@@ -831,15 +831,16 @@ test('data：重查時官網已公布下一屆時程的競賽，日期照官網�
     assert.equal(hcgec.deadline, '2027-02-10');
     assert.equal(hcgec.deadlineAt, '2027-02-10T23:59:00Z');
 
-    // TYPT 第 19 屆逐字「報名期間：115. 10. 15 （中午開始報名）~ 116. 01. 28 (中午12:00截止)」
-    // 「競賽日期：116. 03. 05 ~ 116. 03. 08」。報名系統頁寫到 23:59:59，和公告不一致；報名規則頁逐字
+    // TYPT 第 19 屆首頁「報名期間：115. 10. 15 （中午開始報名）~ 116. 01. 28 (中午12:00截止)」
+    // 「競賽日期：116. 03. 05 ~ 116. 03. 08」。報名系統頁寫到 23:59:59，和公告不一致；報名規則頁
     // 「官方公告之報名截止日後（詳見首頁）系統將關閉」，所以以首頁公告的中午為準。
     const typt = find('臺灣青年學生物理辯論競賽');
     assert.equal(typt.deadline, '2027-01-28');
     assert.equal(typt.deadlineAt, '2027-01-28T12:00:00+08:00');
     assert.equal(typt.eventStartsAt, '2027-03-05');
     assert.equal(typt.eventEndsAt, '2027-03-08');
-    assert.match(textOf(typt), /116\. 03\. 05 ~ 116\. 03\. 08/, '請保留官網逐字原文');
+    assert.match(textOf(typt), /2027-03-05 至 03-08/);
+    assert.match(typt.sourceNote, /116\. 03\. 05 ~ 116\. 03\. 08/, '官網原文留在 sourceNote');
 
     // 有截止日時卡片不顯示 registrationNote，這幾筆不留著它
     for (const c of [bowSeat, earthPrize, aahsff, hcgec, typt]) assert.equal(c.registrationNote, undefined, c.title);
@@ -990,12 +991,13 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(icho.sourceNote, /2027 July 19-28, Chinese Taipei/, '官網原文留在 sourceNote');
     assert.match(icho.description, /2027 年由(?:台灣|臺灣|我國)主辦|由(?:台灣|臺灣|我國)主辦[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
-    // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」、
-    // 2027「The 68th IMO ... Budapest, Hungary (July 16-26, 2027)」
+    // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」已結束，
+    // 2027「The 68th IMO will be held in Budapest, Hungary (July 16-26, 2027)」
     const imo = find('國際數學奧林匹亞');
-    assert.equal(imo.eventStartsAt, '2026-07-10');
-    assert.equal(imo.eventEndsAt, '2026-07-21');
-    assert.match(textOf(imo), /布達佩斯|Budapest/);
+    assert.equal(imo.eventStartsAt, '2027-07-16');
+    assert.equal(imo.eventEndsAt, '2027-07-26');
+    assert.match(textOf(imo), /2027 年 7 月 16 至 26 日在匈牙利布達佩斯/);
+    assert.match(imo.sourceNote, /Budapest, Hungary - July 16-26, 2027/, '官網原文留在 sourceNote');
 
     // IOI 官網：2026 Uzbekistan「from August 9th to 16th」、「Germany was selected to host IOI 2027」
     const ioi = find('國際資訊奧林匹亞');
