@@ -401,6 +401,45 @@ test.describe('國內外競賽的詳細資訊', () => {
     });
 });
 
+// 擁有者要同一列的卡片長度一致：摘要和截止欄的行數不同時，「詳細資訊」和截止欄仍要對齊。
+test.describe('國內外競賽卡片同一列對齊', () => {
+    const NOTES = ['由學校報名', '經各縣市初賽選拔後由學校統一報名，不受理個人報名'];
+    const COMPETITIONS = [1, 8, 3, 6, 1, 4].map((n, i) => ({
+        title: `第 ${i + 1} 項競賽`, organizer: '主辦單位', category: '資訊', level: '全國', form: '個人', region: '台灣',
+        eligibility: '公開報名', mode: '線上', url: 'https://example.com/',
+        description: '這一段摘要的長度每張不同。'.repeat(n), details: '詳細內容。', registrationNote: NOTES[i % 2],
+    }));
+
+    for (const width of [1280, 768]) {
+        test(`${width}px：同一列卡片的「詳細資訊」與截止欄 top 相同`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 900 });
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await page.route('**/advanced-resources/competitions.json', (route) => route.fulfill({ json: { competitions: COMPETITIONS } }));
+            await page.goto(`${ROOT}/advanced-resources/competitions.html`);
+            await expect(page.locator('.comp-card .comp-more')).toHaveCount(COMPETITIONS.length);
+            const rows = await page.locator('.comp-card').evaluateAll((cards) => {
+                const byRow = new Map();
+                for (const c of cards) {
+                    const top = Math.round(c.getBoundingClientRect().top);
+                    const at = (sel) => c.querySelector(sel).getBoundingClientRect();
+                    if (!byRow.has(top)) byRow.set(top, []);
+                    byRow.get(top).push({ more: at('.comp-more').top, foot: at('.comp-foot').top, desc: at('.comp-card__desc').height });
+                }
+                return [...byRow.values()];
+            });
+            const wide = rows.filter((r) => r.length > 1);
+            expect(wide.length, '前置：要有兩張以上卡片排在同一列').toBeGreaterThan(0);
+            expect(wide.some((r) => new Set(r.map((c) => Math.round(c.desc))).size > 1), '前置：同一列的摘要高度要不同').toBe(true);
+            for (const r of wide) {
+                for (const key of ['more', 'foot']) {
+                    const tops = r.map((c) => c[key]);
+                    expect(Math.max(...tops) - Math.min(...tops), key).toBeLessThanOrEqual(1);
+                }
+            }
+        });
+    }
+});
+
 test.describe('研究方法工具箱的推薦', () => {
     test('推薦結果的按鈕開啟對話框，關閉後焦點回到那個按鈕', async ({ page }) => {
         await page.goto(`${ROOT}/autonomous-learning/methodology.html`);

@@ -738,13 +738,14 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     }
 
     /**
-     * textBefore 回傳緊接在 [data-after-panel] 前面那段字最後一行左邊的一點：連結前面是截止欄，
-     * 「詳細資訊」前面是摘要。點它不會讓任何元素取得焦點。conceal 讓 [data-after-panel] 停在離視窗頂端
+     * textBefore 回傳 [data-after-panel] 前面那段字最後一行左邊的一點：連結前面是截止欄，「詳細資訊」
+     * 前面是同一張卡片的摘要。點它不會讓任何元素取得焦點。conceal 讓 [data-after-panel] 停在離視窗頂端
      * 400px 以上的地方，點最後一行，摘要再長也不會點到 header 底下。
      */
     const textBefore = (page) =>
-        page.locator('[data-after-panel]').locator('xpath=preceding-sibling::*[1]').evaluate((el) => {
-            const r = el.getBoundingClientRect();
+        page.locator('[data-after-panel]').evaluate((el) => {
+            const text = el.matches('.comp-more') ? el.closest('.comp-card').querySelector('.comp-card__desc') : el.previousElementSibling;
+            const r = text.getBoundingClientRect();
             return { x: r.left + 4, y: r.bottom - 6 };
         });
     const clickTextBefore = async (page) => {
