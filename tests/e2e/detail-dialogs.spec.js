@@ -463,7 +463,12 @@ test.describe('國內外競賽的詳細資訊', () => {
     });
 
     // 搜尋框停 160ms 才重新渲染卡片，這段時間內開啟對話框，按鈕會在對話框開著時被換掉。
-    for (const [term, where] of [['', '同一筆的新按鈕'], ['很長', '搜尋框']]) {
+    // 筆數變了就要重念：先清空 #result-count，再寫回筆數。
+    for (const [term, where, counts] of [
+        ['', '同一筆的新按鈕，筆數沒變不重念', []],
+        ['甲乙丙', '同一筆的新按鈕，重念筆數', ['', '1 項結果']],
+        ['很長', '搜尋框，重念筆數', ['', '1 項結果']],
+    ]) {
         test(`開著時卡片被重新渲染，關閉後焦點交給${where}`, async ({ page }) => {
             const button = opener(page, '有詳細資訊');
             await button.click();
@@ -471,12 +476,21 @@ test.describe('國內外競賽的詳細資訊', () => {
             const old = await button.elementHandle();
             await page.locator('#search-input').evaluate((el, t) => { el.value = t; el.dispatchEvent(new Event('input')); }, term);
             await expect.poll(() => old.evaluate((el) => el.isConnected)).toBe(false);
+            await page.locator('#result-count').evaluate((el) => {
+                window.__counts = [];
+                new MutationObserver(() => window.__counts.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true });
+            });
             await page.keyboard.press('Escape');
             await expect(page.getByRole('dialog')).toBeHidden();
-            await expect(term ? page.locator('#search-input') : opener(page, '有詳細資訊')).toBeFocused();
-            if (term) await expect(page.locator('#result-count')).toHaveText('1 項結果');
+            await expect(term === '很長' ? page.locator('#search-input') : opener(page, '有詳細資訊')).toBeFocused();
+            if (counts.length) await expect.poll(() => page.evaluate(() => window.__counts)).toEqual(counts);
+            else expect(await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(window.__counts)))))).toEqual([]);
         });
     }
+
+    test('搜尋框的描述是結果筆數，焦點一進去就念', async ({ page }) => {
+        await expect(page.locator('#search-input')).toHaveAccessibleDescription(`${COMPETITIONS.length} 項結果`);
+    });
 
     test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
         await page.locator('#search-input').fill('甲乙丙');

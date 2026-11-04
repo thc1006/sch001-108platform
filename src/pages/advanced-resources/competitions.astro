@@ -56,6 +56,7 @@ import data from '../../../public/advanced-resources/competitions.json';
               id="search-input"
               placeholder="搜尋競賽名稱、主辦單位、關鍵字…"
               aria-label="關鍵字搜尋競賽"
+              aria-describedby="result-count"
               autocomplete="off"
             />
             <button id="search-clear" class="comp-search__clear" type="button" aria-label="清除搜尋" hidden>
@@ -174,6 +175,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       const dialog = document.getElementById('comp-dialog');
       const detail = DetailDialog.setup(dialog);
       let lastOpener = null;
+      let openCount = '';
       // 搜尋框停 160ms 才 render()。這段時間內開啟對話框，按鈕會被換掉，detail-dialog.js 還不了焦點，
       // 就交給同一筆的新按鈕，篩掉了就交給搜尋框。
       dialog.addEventListener('close', () => {
@@ -181,12 +183,12 @@ import data from '../../../public/advanced-resources/competitions.json';
         if (lastOpener && !lastOpener.isConnected) {
           const again = grid.querySelector('.comp-more[data-idx="' + lastOpener.dataset.idx + '"]');
           (again || searchInput).focus();
-          // 退回搜尋框時，對話框開著的期間 #result-count 改過的筆數沒被念出來，下一個畫面重寫一次。
-          if (!again) {
-            const count = countEl.textContent;
-            countEl.textContent = '';
-            requestAnimationFrame(() => { countEl.textContent = count; });
-          }
+        }
+        // 對話框開著時改過的筆數，背景是 inert，報讀軟體不一定念。先清空，下一個畫面寫回去。
+        if (countEl.textContent !== openCount) {
+          const count = countEl.textContent;
+          countEl.textContent = '';
+          requestAnimationFrame(() => { countEl.textContent = count; });
         }
         lastOpener = null;
       });
@@ -562,6 +564,7 @@ import data from '../../../public/advanced-resources/competitions.json';
           '</div>';
         dialog.querySelectorAll('.comp-dialog__close, .comp-dialog__close-end').forEach((b) => b.addEventListener('click', detail.close));
         lastOpener = opener;
+        openCount = countEl.textContent;
         detail.open(opener);
       }
 
