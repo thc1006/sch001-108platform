@@ -189,7 +189,8 @@ const REPEAT_MIN = 12;
  * 也驗證同樣選填、填了就要合法的 recheckOn、recheckNote、sourceNote、registrationNote、details。
  *
  * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對：那需要假設一個
- * 時區，而假設時區正是這組欄位要消滅的東西。
+ * 時區，而假設時區正是這組欄位要消滅的東西。唯一的例外是有 opensAt、只有 deadline
+ * 沒有 deadlineAt 時，照競賽頁的算法把 opensAt 換成台北日期來比。
  */
 export function validateSchedule(comp, label, errors) {
     validateInstant(comp.deadlineAt, 'deadlineAt', label, errors);
@@ -259,12 +260,12 @@ export function validateSchedule(comp, label, errors) {
     if (!Number.isNaN(opensMs) && !Number.isNaN(closesMs) && opensMs >= closesMs) {
         errors.push(`「${label}」的 opensAt 不早於 deadlineAt`);
     }
-    // 只有 deadline（日期）時照台北日期比。競賽頁會寫成「預計 X 開放、Y 截止」，Y 不晚於 X 就自相矛盾。
-    if (!Number.isNaN(opensMs) && typeof comp.deadline === 'string' && DATE_ONLY_RE.test(comp.deadline)) {
+    // 沒有 deadlineAt 時，競賽頁把 deadline 當台北日期，截止日早於開放日就自相矛盾。同一天開放、同一天截止放行。
+    if (!Number.isNaN(opensMs) && Number.isNaN(closesMs) && typeof comp.deadline === 'string' && DATE_ONLY_RE.test(comp.deadline)) {
         const opensDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' })
             .format(new Date(opensMs));
-        if (comp.deadline <= opensDay) {
-            errors.push(`「${label}」的 deadline（${comp.deadline}）不晚於 opensAt 的台北日期（${opensDay}）`);
+        if (comp.deadline < opensDay) {
+            errors.push(`「${label}」的 deadline（${comp.deadline}）早於 opensAt 的台北日期（${opensDay}）`);
         }
     }
 
