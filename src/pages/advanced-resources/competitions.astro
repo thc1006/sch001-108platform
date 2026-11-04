@@ -138,7 +138,7 @@ import data from '../../../public/advanced-resources/competitions.json';
   </main>
 
   {/* 競賽的完整說明。放在卡片外面開，在卡片裡展開會把同一列的卡片一起撐高。內容由 openDetail() 填入。 */}
-  <dialog id="comp-dialog" aria-labelledby="comp-dialog-title" class="modal-content comp-dialog bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent open:flex flex-col"></dialog>
+  <dialog id="comp-dialog" aria-labelledby="comp-dialog-title" class="modal-content comp-dialog bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent"></dialog>
 
   <script is:inline src="../shared/detail-dialog.js"></script>
   <script is:inline>
@@ -500,13 +500,14 @@ import data from '../../../public/advanced-resources/competitions.json';
         const details = c.details.split('\n').filter((line) => line.trim())
           .map((line) => '<p>' + markEnglishQuotes(escapeHtml(line)) + '</p>').join('');
         const dField = deadlineField(c, s);
-        // 只有標題列固定，其餘跟著內文捲動，視窗矮或放大文字時讀得到的範圍才夠大。
+        // 整個對話框一起捲。開啟後焦點在 <dialog>，方向鍵和 PageDown 捲的是它；內層另外捲的話鍵盤捲不動，
+        // 固定的標題列在放大文字時也會佔掉大半個視窗。
         dialog.innerHTML =
           '<div class="comp-dialog__head">' +
             '<h2 id="comp-dialog-title" class="comp-dialog__title">' + escapeHtml(c.title) + '</h2>' +
             '<button type="button" class="comp-dialog__close" aria-label="關閉"><span aria-hidden="true">&times;</span></button>' +
           '</div>' +
-          '<div class="comp-dialog__body overflow-y-auto ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
+          '<div class="comp-dialog__body ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
             kickerHtml(c, dialogBadge(s, dField)) +
             '<p class="comp-dialog__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
             '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
@@ -874,7 +875,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       font-size: 1.875rem; line-height: 1; color: #6b7280;
     }
     .comp-dialog__close:hover { color: #1f2937; }
-    .comp-dialog__body { padding: 1.5rem; flex-grow: 1; }
+    .comp-dialog__body { padding: 1.5rem; }
     .comp-dialog__desc, .comp-dialog__details p { font-size: 1rem; line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
     .comp-dialog__body .comp-foot { margin-top: 1.5rem; border-radius: .5rem; }
 
