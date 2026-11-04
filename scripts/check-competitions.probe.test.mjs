@@ -310,13 +310,16 @@ test('schedule：registrationNote 有長度上限', () => {
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
 });
 
-test('schedule：deadline 要晚於 opensAt 的台北日期', () => {
+test('schedule：沒有 deadlineAt 時，deadline 不得早於 opensAt 的台北日期', () => {
     const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
     assert.deepEqual(bad({ opensAt: '2026-11-23T09:00:00+08:00', deadline: '2026-12-11' }), []);
-    assert.ok(bad({ opensAt: '2026-12-15T00:00:00+08:00', deadline: '2026-12-11' }).some((m) => m.includes('不晚於 opensAt')));
-    assert.ok(bad({ opensAt: '2026-12-11T09:00:00+08:00', deadline: '2026-12-11' }).some((m) => m.includes('不晚於 opensAt')));
-    // 2026-12-14 20:00 美東是台北 12-15 09:00，台北日期已經是截止日。
-    assert.ok(bad({ opensAt: '2026-12-14T20:00:00-05:00', deadline: '2026-12-15' }).some((m) => m.includes('（2026-12-15）')));
+    assert.ok(bad({ opensAt: '2026-12-15T00:00:00+08:00', deadline: '2026-12-11' }).some((m) => m.includes('早於 opensAt')));
+    // 同一天開放、同一天截止不算矛盾。
+    assert.deepEqual(bad({ opensAt: '2026-12-11T09:00:00+08:00', deadline: '2026-12-11' }), []);
+    // 2026-12-14 20:00 美東是台北 12-15 09:00，晚於 12-14 截止。
+    assert.ok(bad({ opensAt: '2026-12-14T20:00:00-05:00', deadline: '2026-12-14' }).some((m) => m.includes('（2026-12-15）')));
+    // 有 deadlineAt 時只比時刻：美東 12-14 20:00 開放、12-15 23:59 截止，報名期 28 小時；opensAt 換成台北已是 12-15。
+    assert.deepEqual(bad({ opensAt: '2026-12-14T20:00:00-05:00', deadline: '2026-12-15', deadlineAt: '2026-12-15T23:59:00-05:00' }), []);
 });
 
 test('details 在欄位白名單裡，拿掉的話資料一有 details 就會被當成未知欄位', () => {
