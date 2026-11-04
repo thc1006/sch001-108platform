@@ -911,7 +911,7 @@
       "organizer": "United States Artificial Intelligence Institute",
       "category": "資訊",
       "level": "國際",
-      "form": "個人/團體",
+      "form": "團體",
       "region": "全球線上",
       "eligibility": "公開報名",
       "mode": "線上",
@@ -920,10 +920,10 @@
       "eventEndsAt": "2026-06-21",
       "registrationNote": "2027 屆時程尚未公布",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "官網「open to students worldwide across multiple academic levels, including High School, Undergraduate, Graduate, and Doctoral programs」；「Each track has a $5,000 prize pool」。FAQ「Participants had the flexibility to compete individually or as part of a team」（2026-11-05 查）。官網是賽後回顧頁，沒有寫報名費。",
+      "sourceNote": "Devpost 上的 2026 正式規則頁（/rules，2026-11-05 查；https 對腳本回 Cloudflare 403，http 拿得到）：「Team Size: 2-5 members (no solo participants)」「Age : At least 14 years old (Parental consent required if under 18)」「Location : From any country worldwide」「Phase 1: AI Readiness Qualifier (REQUIRED)」「Only top-scoring qualified teams receive approval codes for Phase 2」。官網「open to students worldwide across multiple academic levels, including High School, Undergraduate, Graduate, and Doctoral programs」「808 global teams advanced to the final round」「Each track has a $5,000 prize pool」。官網 FAQ 寫「Participants had the flexibility to compete individually or as part of a team」，和正式規則不一致，以正式規則為準。官網和正式規則都沒有寫報名費。",
       "url": "https://aihackathon.usaii.org/",
-      "description": "USAII 辦的全球線上 AI 黑客松，高中到博士班學生都能報，可個人或組隊，台灣學生可直接參加。USAII 是發 AI 證照的民營機構，不是大學或學術單位。",
-      "details": "USAII 全名 United States Artificial Intelligence Institute。參賽者依學程分組比賽，高中組是 9 至 12 年級。\n2026 屆報名 6/6 23:59 ET 截止，6 月 14 至 21 日舉行，共 6,085 人報名、808 隊參賽。每一組的獎金池是 US$5,000。\n2027 屆未公布。"
+      "description": "USAII（發 AI 證照的民營機構）辦的線上 AI 黑客松，各國的高中到博士班學生都能報，要 2 至 5 人組隊。限 14 歲以上，未滿 18 歲要家長同意。",
+      "details": "USAII 全名 United States Artificial Intelligence Institute，不是大學或學術單位。隊員可以跨校、跨國，每個人都要在 Devpost 各自報名。隊上成員學程不同的，照最高的學程分組；高中組是 9 至 12 年級。\n報名後要先通過 AI Readiness Qualifier 才能進正式賽：線上回答 8 題 AI 思考題、由 AI 評分，分數高的隊伍才拿得到正式賽的代碼。\n2026 屆報名 6/6 23:59 ET 截止，資格賽 6/7 至 6/10，正式賽 6 月 14 至 21 日。共 6,085 人報名，808 隊進入決賽。每一組的獎金池是 US$5,000。\n2027 屆未公布。"
     },
     {
       "title": "Major League Hacking (MLH) 黑客松賽季",
