@@ -53,7 +53,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <!-- 左欄：情境式提問 -->
             <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">工具一：情境式提問</h2>
-                <p class="text-gray-600 mb-6">選擇你參與的活動情境，這裡會隨機出一題反思問題。</p>
+                <p class="text-gray-600 mb-6">選擇你參與的活動情境，這裡會隨機出一題反思問題，再按一次會換一題。</p>
                 <div id="reflection-category-btns" role="group" aria-label="活動情境" class="flex flex-wrap gap-3 mb-6">
                     <!-- 情境按鈕由 renderCategoryButtons() 填入 -->
                 </div>
@@ -130,10 +130,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             });
         }
 
+        // 連按同一個情境不會抽到剛才那題。
+        let lastQuestion = '';
         function generateQuestion(category) {
-            const questions = reflectionData[category];
-            const randomIndex = Math.floor(Math.random() * questions.length);
-            const selectedQuestion = questions[randomIndex];
+            const questions = reflectionData[category].filter((q) => q !== lastQuestion);
+            const selectedQuestion = questions[Math.floor(Math.random() * questions.length)];
+            lastQuestion = selectedQuestion;
 
             questionOutput.textContent = '';
             const p = document.createElement('p');
