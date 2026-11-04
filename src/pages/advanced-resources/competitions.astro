@@ -812,15 +812,16 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
     /* 欄數照卡片的最小寬度 18rem 決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，
        每欄只剩約 6 個中文字。一般字級時 1280 寬三欄，1024、768 寬兩欄，360 寬一欄。 */
-    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: 2rem; }
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: 0 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
     /* 卡片用 subgrid 和同一列的卡片共用三列：內文、「詳細資訊」、截止欄。內文或截止欄的行數不同時，
-       同一列的按鈕和截止欄照樣對齊。
+       同一列的按鈕和截止欄照樣對齊。.comp-grid 的列間距不是 0 時，空的「詳細資訊」列會被撐開，
+       所以列間距是 0，卡片之間的上下距離用 margin-bottom。
        overflow-wrap: anywhere：只放大文字時，說明裡的長英文字放不下一行，不斷開就超出卡片被切掉。
        外框透明：強制色彩模式會拿掉陰影，外框換成系統色，卡片的邊界才看得到。 */
     .comp-card {
-      position: relative; display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0;
+      position: relative; display: grid; grid-template-rows: subgrid; grid-row: span 3; margin-bottom: 2rem;
       overflow: hidden; overflow-wrap: anywhere; background: #fff; border: 1px solid transparent; border-radius: .5rem;
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
       transition: transform .28s cubic-bezier(.2,.7,.2,1), box-shadow .28s, border-color .28s;
