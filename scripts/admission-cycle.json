@@ -464,6 +464,27 @@
       "recheckAfter": "2027-03-31"
     },
     {
+      "file": "src/content/clusters/management/application.md",
+      "text": "陽明交大 115 學年度的說明寫",
+      "cycle": 116,
+      "reason": "引用陽明交大 115 學年度準備指引的內容：個人資料表上勾選 AI 使用情形、本人簽名不能打字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "【申請入學】115學年度各學系書面審查資料準備指引",
+      "cycle": 116,
+      "reason": "陽明交大 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "國立陽明交通大學 115 學年度大學部個人申請入學個人資料表範例",
+      "cycle": 116,
+      "reason": "陽明交大 115 學年度個人資料表範例的標題，是 115 學年度準備指引的附件，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。重對時直接看各系自己的頁面。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
       "file": "src/content/clusters/management/highlights.md",
       "text": "「準備指引寫的」照各系 115 學年度的準備指引",
       "cycle": 116,
