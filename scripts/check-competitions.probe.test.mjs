@@ -824,7 +824,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2099-12-31 截止' });
     assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2100-03-01 截止' });
     assert.deepEqual(at({ opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放' });
-    assert.deepEqual(at({ registrationNote: '由學校報名' }), due('由學校報名'));
+    assert.deepEqual(at({ registrationNote: '由學校報名' }), { label: '報名', value: '由學校報名' });
     assert.deepEqual(at({}), due('依官網公告'));
 });
 
@@ -838,19 +838,21 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         return m[0];
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
-        'eventLabel', 'deadlineField', 'deadlineLabel', 'dialogBadge'].map(grab).join('\n');
-    const f = new Function(`${bundle}; return { getStatus, deadlineField, dialogBadge };`)();
+        'eventLabel', 'deadlineField', 'deadlineLabel', 'upcomingText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+    const f = new Function(`${bundle}; return { getStatus, fullDeadline, dialogBadge };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
     assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
     let inBadge = 0;
     for (const c of list) {
         const s = f.getStatus(c);
-        const dField = f.deadlineField(c, s);
+        const dField = f.fullDeadline(c, s);
         const badge = f.dialogBadge(s, dField);
         const note = c.registrationNote.trim();
         assert.ok(badge.includes(note) || dField.value.includes(note), `${c.title}：徽章「${badge}」、截止欄「${dField.value}」`);
         if (badge.includes(note)) inBadge++;
+        // 截止欄寫的是 registrationNote 時，標籤是「報名」。
+        else assert.equal(dField.label, '報名', c.title);
         // 徽章和截止欄不寫同一句。
         assert.notEqual(badge, dField.value, c.title);
     }
@@ -859,7 +861,7 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     const cycles = data.competitions.map((c) => [c, f.getStatus(c)]).filter(([, s]) => s.key === 'cycle');
     assert.ok(cycles.length > 0, '前置：要有週期型的競賽');
     for (const [c, s] of cycles) {
-        const dField = f.deadlineField(c, s);
+        const dField = f.fullDeadline(c, s);
         const badge = f.dialogBadge(s, dField);
         assert.ok(badge.includes(`下次約 ${s.next} 截止`), `${c.title}：${badge}`);
         if (dField.value.includes('本屆')) assert.ok(!badge.includes('本屆已截止'), `${c.title}：${badge}`);
@@ -867,9 +869,9 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     // 沒有本屆截止日的週期型，徽章留著「每年固定辦理」。
     const yearly = f.getStatus({ cycle: { closes: '03-15' } });
     assert.equal(yearly.label, '每年固定辦理');
-    assert.equal(f.dialogBadge(yearly, f.deadlineField({ cycle: { closes: '03-15' } }, yearly)), `每年固定辦理，下次約 ${yearly.next} 截止`);
+    assert.equal(f.dialogBadge(yearly, f.fullDeadline({ cycle: { closes: '03-15' } }, yearly)), `每年固定辦理，下次約 ${yearly.next} 截止`);
     // 沒有 registrationNote 的「依官網」用短標籤。
-    assert.equal(f.dialogBadge(f.getStatus({}), f.deadlineField({}, f.getStatus({}))), '依官網公告');
+    assert.equal(f.dialogBadge(f.getStatus({}), f.fullDeadline({}, f.getStatus({}))), '依官網公告');
 });
 
 /** cardHtml 抽出競賽頁的 cardHtml 和它用到的函式，回傳畫一張卡片的 render(c)。 */
