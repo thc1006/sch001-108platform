@@ -791,9 +791,9 @@ test('recheck：重查當天的真實資料一筆都不該列出', async () => {
         `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
 });
 
-// 卡片上的徽章與截止欄只放短的內容，完整時程在對話框。registrationNote 同時放進徽章的話，
-// 兩處會一字不差（2026-11-05 對 117 筆算，35 筆）。
-test('card：徽章只用短標籤，截止欄不放本屆與賽事日期', async () => {
+// 卡片的徽章只放短標籤。registrationNote 同時放進徽章的話，和截止欄一字不差（2026-11-05 對 117 筆
+// 算，35 筆）。有 details 的卡片截止欄也只放一項，完整時程在對話框。
+test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽事日期', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
     const grab = (name) => {
@@ -809,17 +809,19 @@ test('card：徽章只用短標籤，截止欄不放本屆與賽事日期', asyn
     for (const c of data.competitions) {
         const s = f.getStatus(c);
         assert.match(f.badgeText(s), badge, c.title);
-        const value = f.cardDeadline(c, s);
+        const { value } = f.cardDeadline(c, s);
         // registrationNote 是主辦單位的報名方式，照原樣放，裡面可能有「舉行」。
         if (value !== (c.registrationNote || '').trim()) assert.doesNotMatch(value, /本屆|賽事|舉行|已結束/, `${c.title}：${value}`);
         if (c.registrationNote) assert.notEqual(f.badgeText(s), c.registrationNote.trim(), c.title);
     }
     // 固定的幾種狀態。
     const at = (c) => f.cardDeadline(c, f.getStatus(c));
-    assert.equal(at({ deadline: '2099-12-11' }), '2099-12-11');
-    assert.equal(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), '每年約 7 月');
-    assert.equal(at({ cycle: { closes: '03-15' } }), '每年約 3/15');
-    assert.equal(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), '預計 2099-12-15 開放');
-    assert.equal(at({ registrationNote: '由學校報名' }), '由學校報名');
-    assert.equal(at({}), '依官網公告');
+    const due = (value) => ({ label: '報名截止', value });
+    assert.deepEqual(at({ deadline: '2099-12-11' }), due('2099-12-11'));
+    assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
+    assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3/15'));
+    // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。
+    assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '開放報名', value: '預計 2099-12-15' });
+    assert.deepEqual(at({ registrationNote: '由學校報名' }), due('由學校報名'));
+    assert.deepEqual(at({}), due('依官網公告'));
 });

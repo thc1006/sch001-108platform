@@ -411,16 +411,15 @@ import data from '../../../public/advanced-resources/competitions.json';
         return s.label;
       }
 
-      // cardDeadline 是卡片截止欄的內容，只放一行。本屆截止日、賽事日期這些完整時程放在對話框，
-      // 由 deadlineField 算；全部放在卡片上的話，同一列卡片的截止欄會有一到四行。
+      // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
+      // registrationNote。本屆截止日和賽事日期在對話框裡，由 deadlineField 算。
       function cardDeadline(c, s) {
-        if (s.key === 'upcoming') return '預計 ' + s.opens + ' 開放';
+        if (s.key === 'upcoming') return { label: '開放報名', value: '預計 ' + s.opens };
         if (s.key === 'cycle') {
           const p = s.closes.split('-');
-          return '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月');
+          return { label: '報名截止', value: '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月') };
         }
-        if (c.deadline) return c.deadline;
-        return s.note ? s.label : '依官網公告';
+        return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
       }
 
       // footHtml 是截止欄與「前往官網」。dField 是 { label, value }。
@@ -482,7 +481,8 @@ import data from '../../../public/advanced-resources/competitions.json';
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
               more +
             '</div>' +
-            footHtml(c, { label: '報名截止', value: cardDeadline(c, s) }) +
+            // details 是選填。沒有的卡片打不開對話框，截止欄照舊放完整時程。
+            footHtml(c, hasDetails(c) ? cardDeadline(c, s) : deadlineField(c, s)) +
           '</article>'
         );
       }
