@@ -61,6 +61,10 @@ test('isMention：引號前後有談詞語的字才算在談這個詞', () => {
     assert.equal(at('把「很多」「許多」改成數字', '許多'), true);
     assert.equal(at('「很多」「許多」這類詞', '很多'), true);
     assert.equal(hitsOf('W01-hen-duo', '把「很多」改成數字'), 0);
+    for (const t of ['用「很多」會讓讀者猜', '別寫「很多」', '不要寫「很多」', '避免「很多」', 'App 叫「一次搞懂」', '名為「一次搞懂」的 App']) {
+        const w = t.includes('很多') ? '很多' : '一次搞懂';
+        assert.equal(at(t, w), true, t);
+    }
 });
 
 test('引號：中文引文要接在「逐字」「原文」後面或緊接著前一段引文，冒號後面照查', () => {
