@@ -307,6 +307,11 @@ test('isMention：「例如」後面的引號算在談詞語', () => {
     assert.equal(isMention('「很多」這兩個字', 1, 2), true);
 });
 
+test('C01：學類名稱「數據統計」不算「據統計」', () => {
+    assert.equal(hitsOf('C01-vague-attribution', '據統計，八成學生選了理組。'), 1);
+    assert.equal(hitsOf('C01-vague-attribution', '主要學類有資訊工程、數據統計。'), 0);
+});
+
 test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
 });

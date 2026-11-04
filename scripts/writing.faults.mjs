@@ -70,6 +70,7 @@ const mutations = [
     ['步驟鏈兩段就算', 'parts.length >= 3 &&', ''],
     ['彎引號不看佔位符', '(?=${HAN}|${PH})', '(?=${HAN})'],
     ['長句連引號裡的字也算', 'quoted.has(m.index + k) || ', ''],
+    ['「數據統計」也算據統計', '|(?<!數)據統計|', '|據統計|'],
     ['略過的範圍照算', 'if (f.len > 0 && r.skip &&', 'if (false &&'],
     ['談詞語的引號照算', 'if (f.len > 0 && isMention(b.text, f.index, f.len))', 'if (false)'],
     ['回推時短片段也找', 'if (snip.length < 4) continue;', 'if (snip.length < 2) continue;'],
