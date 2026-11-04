@@ -4,7 +4,7 @@
  * 這支跑在每個 PR 上，而且完全不連外網：它檢查的是「政策本身有沒有腐爛」，
  * 那件事必須是確定性的，不能取決於今天某個站台連不連得上。
  *
- * 檢查四件事：
+ * 檢查六件事：
  *
  *   1. link-policy.json 的每一筆例外都合法：精確網址或精確主機名、有 reason／
  *      owner／expires、期限未過、期限不超過上限。過期就讓 CI 紅，這是刻意的：
@@ -27,7 +27,7 @@
  *      又帶查詢字串的網址。
  *      contentChecks 的主機與網址也要對得上盤點，對不上就是殭屍條目。
  *
- *   6. 盤點的網址不帶 utm_source=chatgpt.com 這類參數。從 ChatGPT、Copilot 複製的連結會帶著它，
+ *   6. 盤點的網址不帶 utm_source=chatgpt.com 這類參數。從 ChatGPT、Copilot、Perplexity 複製的連結會帶著它，
  *      拿掉之後網址照樣能開。
  *
  * 比對的目標包含兩種來源：盤點的網址（inventory.urls，也包括說明文字裡帶 scheme 的網址）與
@@ -141,11 +141,11 @@ for (const { url, check } of contentCheckGaps(contentChecks, urls)) {
 for (const url of urls) {
     let source;
     try {
-        source = new URL(url).searchParams.get('utm_source') ?? '';
+        source = new URL(url).searchParams.getAll('utm_source').find((v) => /^(chatgpt|openai|copilot|perplexity)/i.test(v));
     } catch {
         continue;
     }
-    if (!/^(chatgpt|openai|copilot)/i.test(source)) continue;
+    if (!source) continue;
     const occ = inventory.urls.find((u) => u.url === url)?.occurrences ?? [];
     errors.push({
         where: [...new Set(occ.map((o) => o.file))].join('、') || '(未知出處)',

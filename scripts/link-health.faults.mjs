@@ -371,6 +371,14 @@ const policyCases = [
         }),
     },
     {
+        name: '盤點的網址第二個 utm_source 才是 AI 工具',
+        expect: /utm_source=perplexity/,
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: 'https://example.org/page?utm_source=site&utm_source=perplexity', occurrences: [{ file: 'data.json', location: '/0/url' }] }],
+        }),
+    },
+    {
         name: '盤點來自故障注入用的副本，不是要部署的 dist/',
         expect: /不是實際要部署的 dist/,
         inventory: () => ({ ...baselineInventory, generatedFrom: 'dist-faultcheck' }),
