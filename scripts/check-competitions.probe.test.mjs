@@ -856,3 +856,33 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     // 沒有 registrationNote 的「依官網」用短標籤。
     assert.equal(f.dialogBadge(f.getStatus({}), f.deadlineField({}, f.getStatus({}))), '依官網公告');
 });
+
+/** cardHtml 抽出競賽頁的 cardHtml 和它用到的函式，回傳畫一張卡片的 render(c)。 */
+async function cardRenderer() {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'eventLabel',
+        'deadlineField', 'deadlineLabel', 'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
+        'cardDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
+    const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
+    return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
+}
+
+/** cardText 把卡片的 HTML 換成報讀軟體念得到的文字。 */
+const cardText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+
+// 沒有 details 的卡片打不開對話框。截止欄寫的是賽事日期時，registrationNote 只能放在徽章（IMO 的「由 TMO 選拔國家隊 · 無個人報名」）。
+// 有 deadline 的競賽，getStatus 不看 registrationNote，頁面上本來就沒有它。
+test('card：沒有 details、沒有 deadline 的卡片看得到 registrationNote 全文', async () => {
+    const render = await cardRenderer();
+    const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
+    const list = data.competitions.filter((c) => !(typeof c.details === 'string' && c.details.trim()) && !c.deadline && c.registrationNote);
+    assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
+    for (const c of list) assert.ok(cardText(render(c)).includes(c.registrationNote.trim()), c.title);
+});
