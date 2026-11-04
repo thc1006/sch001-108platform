@@ -1080,7 +1080,7 @@ test('data：#195 B 區改寫的描述與 HITCON 的狀態列不得被改回舊�
 // #195 範圍三：要等官網更新或報名期換場的條目，看門狗在這些日期之後的第一份週報通知。
 test('data：#195 範圍三的條目設了預定重查日', () => {
     const due = {
-        世界歷史學家論文獎: '2026-11-05', // 官網：「The deadline for 2027 will be announced by early November」
+        世界歷史學家論文獎: '2026-11-16', // 官網 2026-11-05 仍寫「The deadline for 2027 will be announced by early November」
         Technovation: '2026-11-10', // season-status API 的 doors 裡 student 的 open 2026-10-27 仍是 false
         'NASA Space Apps': '2026-11-16', // 2026 屆 11/14–15 舉行
         'IHBB Asia': '2026-11-22', // 台北場報名 11/21 截止
