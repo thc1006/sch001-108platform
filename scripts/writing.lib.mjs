@@ -409,12 +409,15 @@ export const RULES = [
     { id: 'F01-bold-label', severity: 'warn', skip: '', names: true, custom: (b) => b.bold.filter((x) => x.label).map((x) => ({ index: Math.max(0, b.text.indexOf(x.own)), len: x.own.length, note: x.own })) },
     { id: 'F02-bold-dense', severity: 'warn', skip: '', custom: (b) => (['p', 'li', 'dd', 'td', 'div'].includes(b.tag) && b.bold.length >= 2 ? [{ index: 0, len: 0, note: `${b.bold.length} 處粗體` }] : []) },
     { id: 'K01-chat-residue', severity: 'block', skip: 'q', re: /希望(?:這|以上|本文|這些|這篇)?[^。！？]{0,6}(?:對你|對您)?有(?:所)?幫助|讓我們(?=陪|為|一起|來|帶|的)|我們(?:來|一起)(?:看看|探討)|如果你(?:還)?有(?:任何)?(?:問題|疑問)|歡迎(?:隨時)?(?:提問|詢問)|作為(?:一個)?\s?AI|截至我的(?:知識|訓練)|^(?:好的|當然)[，！,!]/gu },
-    // 「你為什麼想讀 XX 系？」這類題目原本就用 XX、○○ 代替名稱，引號裡的放行；引號裡的 TBD 照抓。
-    // 「二〇〇八」的〇〇是數字，「4xx」「XX 染色體」不是佔位字。
+    // 「你為什麼想讀 XX 系？」這類題目原本就用 XX、○○ 代替名稱，引號裡的放行；引號裡的 TBD 照抓。XX 要接系、
+    // 大學、月、日這類字才算，「第 XX 屆」「XX 染色體」不算。TODO、FIXME 只查資料 JSON，內文常在談程式。
+    // 「官網標示 TBA」是轉述官網的狀態，不是沒換掉的字。
     {
-        id: 'K02-placeholder', severity: 'block', skip: 'u',
-        re: /\[(?:填入|插入|你的|您的|請填|名稱|日期)[^\]]{0,20}\]|【(?:填入|插入|請填)[^】]{0,20}】|(?<![A-Za-z0-9])(?:XX+|xx+)(?![A-Za-z0-9]|\s?染色體)|20(?:XX|xx)年|ＸＸ|○○|(?<![一二三四五六七八九十〇零兩])〇〇(?![一二三四五六七八九十〇零兩])|\bTODO\b|\bTBD\b|FIXME|[Ll]orem ipsum|20\d\d-(?:XX|xx)-(?:XX|xx)/gu,
-        normal: (m) => (/^(?:XX+|xx+|ＸＸ|○○|〇〇)$/.test(m[0]) && inQuote(m) ? '引號裡代替名稱的 XX' : null),
+        id: 'K02-placeholder', severity: 'block', skip: 'fqu',
+        re: /\[(?:填入|插入|你的|您的|請填|名稱|日期)[^\]]{0,20}\]|【(?:填入|插入|請填)[^】]{0,20}】|(?<![A-Za-z0-9])(?:XX+|xx+)(?=\s?(?:學系|系|大學|高中|國中|國小|公司|老師|同學|月|日|號))|20(?:XX|xx)\s?年|202X(?![A-Za-z])|ＸＸ|○○|(?<![一二三四五六七八九十〇零兩])〇〇(?![一二三四五六七八九十〇零兩])|\bTODO\b|\bTBD\b|\bTBA\b|FIXME|[Ll]orem ipsum|20\d\d-(?:XX|xx)-(?:XX|xx)/gu,
+        normal: (m, b) => (/^(?:XX+|xx+|ＸＸ|○○|〇〇)$/.test(m[0]) && inQuote(m) ? '引號裡代替名稱的 XX'
+            : /^(?:TODO|FIXME)$/.test(m[0]) && b.kind !== 'json' ? '內文談到程式裡的標記'
+            : /^TB[AD]$/.test(m[0]) && /(?:標示|明示|寫著?|顯示)[^。，；]{0,8}$/.test(before(m, 12)) ? '轉述官網標示的 TBA' : null),
     },
     // Markdown 連結和 utm_source 都在網址裡，所以不用 skip 略過網址；網址裡的其他符號由 normal 放行。
     {
