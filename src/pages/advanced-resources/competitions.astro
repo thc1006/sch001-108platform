@@ -452,9 +452,10 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: '未公布' };
       }
 
+      // cycleWhen 寫「7 月 31 日」不寫「7/31」，報讀軟體可能把斜線念成分數。
       function cycleWhen(s) {
         const p = s.closes.split('-');
-        return p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月';
+        return Number(p[0]) + ' 月' + (p[1] ? ' ' + Number(p[1]) + ' 日' : '');
       }
 
       // eventText 是截止欄另放一行的賽事日期。標籤已經是「賽事日期」，內容不再寫「賽事」。

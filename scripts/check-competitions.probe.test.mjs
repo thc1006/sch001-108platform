@@ -831,7 +831,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     const due = (value) => ({ label: '報名截止', value });
     assert.deepEqual(at({ deadline: '2099-12-11' }), due('2099-12-11'));
     assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
-    assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3/15'));
+    assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3 月 15 日'));
     // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。兩個日期都寫完整，跨年也看得出年份。
     assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2099-12-31 截止' });
     assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2100-03-01 截止' });
