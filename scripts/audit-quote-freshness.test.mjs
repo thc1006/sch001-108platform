@@ -81,11 +81,12 @@ test('extractQuotes：帶年份的中文也算——那類多半是官網的時�
 test('extractQuotes：掃描 description 以外的欄位', () => {
     const qs = extractQuotes({
         description: '',
+        details: '官網寫「Teams of up to four students may register」',
         eligibility: '逐字「open to high school students from any country」',
         registrationNote: '「Registration deadline: 31 March, 2026」',
         sourceNote: '逐字「Results will be released on 01st Nov 2026」',
     });
-    assert.equal(qs.length, 3);
+    assert.equal(qs.length, 4);
 });
 
 test('故障注入：把空白字元類換回會吃掉 ASCII 的那種，selfTest 必須擋下', () => {
