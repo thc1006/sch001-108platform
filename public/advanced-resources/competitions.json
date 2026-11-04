@@ -360,9 +360,9 @@
       "registrationNote": "經高中地理奧林匹亞選拔 · 由學校報名",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://www.geoolympiad.org/",
-      "description": "國際中學生地理競賽，含寫作測驗、多媒體測驗與野外實察。台灣國手從中華民國地理學會主辦的高中地理奧林匹亞個人組選出，由就讀學校團體報名。",
-      "details": "由 International Geographical Union (IGU) Olympiad Commission 主辦，官網寫「an annual competition for the best 16 to 19-year-old geography students」。各國一隊至多 4 名學生，另加 2 名領隊。\n2026 年在土耳其伊斯坦堡舉行（8/11–17），已結束。官網 Future iGeos 列出 2027 年 8 月 2 至 9 日在拉脫維亞 Jelgava、2028 年 7 月 3 至 10 日在澳洲墨爾本舉行。\n高中地理奧林匹亞個人組同時選拔次年 iGeo 代表隊儲備選手，原則上第 1 至 4 名為正取、第 5 至 8 名為備取。儲備選手要完成所有培訓課程，「並能積極投入且表現優異，才可成為正式代表隊員」。賽前培訓由臺師大地理學系負責。\n2026 年第 25 屆報名 6/1 至 6/22，個人組決賽 9/19，得獎名單已於 9/21 公告。",
-      "sourceNote": "台灣選拔的出處：高中地理奧林匹亞官網 Q&A（https://geoolympiad.tw/info/）與 115 年第 25 屆競賽辦法（官網連到 Google Drive）。「賽前培訓由臺師大地理學系負責」出自臺師大 2026-08-19 發的新聞稿（中央社訊息平台 https://www.cna.com.tw/postwrite/chi/441963 ）：「賽前培訓則由臺灣師大地理學系負責」。"
+      "description": "中學生地理競賽裡層級最高的國際賽，有寫作、多媒體測驗與野外實察。台灣國手從高中地理奧林匹亞個人組選出，由就讀學校團體報名。",
+      "details": "由國際地理學聯合會（IGU）的奧林匹亞委員會主辦，每年一次，對象是 16 到 19 歲的學生。各國一隊至多 4 名學生，另加 2 名領隊。\n2026 年在土耳其伊斯坦堡舉行（8/11–17），已結束。2027 年 8 月 2 至 9 日在拉脫維亞 Jelgava、2028 年 7 月 3 至 10 日在澳洲墨爾本舉行。\n高中地理奧林匹亞由中華民國地理學會主辦，每年 6 月報名、9 月個人組決賽（2026 年第 25 屆是 6/1 至 6/22 報名、9/19 決賽）。個人組同時選出次年 iGeo 的儲備選手，原則上第 1 至 4 名正取、第 5 至 8 名備取。儲備選手要上完所有培訓課程、表現優異，才會成為正式隊員。賽前培訓由臺師大地理學系負責。",
+      "sourceNote": "iGeo 官網：「an annual competition for the best 16 to 19-year-old geography students」；Future iGeos 頁列出 2027 Jelgava、2028 墨爾本。台灣選拔的出處：高中地理奧林匹亞官網 Q&A（https://geoolympiad.tw/info/）與 115 年第 25 屆競賽辦法（官網連到 Google Drive），儲備選手「並能積極投入且表現優異，才可成為正式代表隊員」；得獎名單 2026-09-21 公告。「賽前培訓由臺師大地理學系負責」出自臺師大 2026-08-19 發的新聞稿（中央社訊息平台 https://www.cna.com.tw/postwrite/chi/441963 ）：「賽前培訓則由臺灣師大地理學系負責」。"
     },
     {
       "title": "國際國中科學奧林匹亞 (IJSO)",
@@ -534,8 +534,9 @@
       "eventEndsAt": "2027-06-12",
       "sourceCheckedAt": "2026-10-25",
       "url": "https://geniusolympiad.org/",
-      "description": "8–12 年級、活動當日滿 13 歲且未上大學可參加，在美國舉行。台灣學生可直接向 IGO 報名，須本人赴美以英文發表答辯，未滿 18 歲須有成人陪同，要繳費。",
-      "details": "官網寫「Founded and organized by Terra Science and Education and hosted by St. John Fisher University」。資格：「Open to students in grades 8-12 (or the equivalent) from any country」。\n規則寫「Apply directly to IGO to be reviewed and selected, only if there is no NGO in your country」。官網 Country Fairs 頁列出 12 個國家／地區（Australasia、Bangladesh、China Regional、Georgia、Greece、Indonesia、Kyrgyzstan、Pakistan、South Korea、Spain、Ukraine、Zimbabwe），沒有台灣。\nChina Regional 的規則是「All students who want to become IGO finalists and attend a school in China Regional must compete in and be selected through GENIUS Olympiad China Regional」，承辦的 Aseeder 在自己網站的 GENIUS 頁把台灣列在「华南区」的聯絡範圍。台灣學生報名 AI、Coding、Entrepreneurship、Robotics、Science、Short Film 這 6 類前，可先寫信向主辦單位確認。\n2027 屆官方日程標示為 TENTATIVE：12/15 開放報名，3/1 23:59 EST 報名截止，5/5 參加者註冊截止，6/7 至 6/12 在 St. John Fisher University 舉行。首頁的申請流程區塊則寫 3/1 9:00 AM US EST。\n報名費 US$75，參加費 US$695 或 US$495，陪同的成人也付全額。"
+      "description": "美國辦的環境主題國際賽，8–12 年級、活動當日滿 13 歲且未上大學可參加。台灣學生可直接報名，須本人赴美用英文發表答辯，未滿 18 歲要有成人陪同，要繳費。",
+      "details": "由 Terra Science and Education 創辦並主辦，在 St. John Fisher University 舉行，各國學生都能參加。\n台灣沒有在地的承辦單位，可以直接向主辦單位報名。中國的承辦單位把台灣列在它的華南區聯絡範圍，報名 AI、程式、創業、機器人、科學、短片這 6 類以前，可以先寫信問主辦單位要走哪個管道。\n2027 屆時程是暫定的：12/15 開放報名，3/1 23:59（美東時間，台灣時間 3/2 12:59）報名截止，5/5 參加者註冊截止，6/7 至 6/12 舉行。官網另一處把截止寫成 3/1 上午 9:00（美東，台灣時間 3/1 22:00），在那之前送出比較保險。\n報名費 US$75，參加費 US$695 或 US$495，陪同的成人也付全額。",
+      "sourceNote": "官網：「Founded and organized by Terra Science and Education and hosted by St. John Fisher University」；資格「Open to students in grades 8-12 (or the equivalent) from any country」。規則：「Apply directly to IGO to be reviewed and selected, only if there is no NGO in your country」。Country Fairs 頁列 12 個國家／地區（Australasia、Bangladesh、China Regional、Georgia、Greece、Indonesia、Kyrgyzstan、Pakistan、South Korea、Spain、Ukraine、Zimbabwe），沒有台灣。China Regional：「All students who want to become IGO finalists and attend a school in China Regional must compete in and be selected through GENIUS Olympiad China Regional」，承辦的 Aseeder 在 GENIUS 頁把台灣列在「华南区」。官方日程標 TENTATIVE，寫「March 1, 11.59 PM EST Application DEADLINE」；首頁申請流程寫 3/1 9:00 AM US EST。"
     },
     {
       "title": "國際數學建模挑戰賽 (IMMC)",
@@ -780,8 +781,9 @@
       "registrationNote": "平台型 · 各賽事各自截止",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.drivendata.org/competitions/",
-      "description": "以社會公益與科學議題為主的資料科學競賽平台，各賽事各有截止日。實際查閱的一場限 18 歲以上，年齡門檻以各場的 rules 頁為準。",
-      "details": "賽事由各贊助單位與 DrivenData 合辦，平台沒有統一的截止日，各場規則不盡相同。\n實際查閱的賽事規則要求參賽者「at the date of entry, are at least eighteen years of age and the age of majority in their jurisdiction of residence」，未滿 18 歲的高中生不符該場資格。"
+      "description": "以社會公益與科學議題為主的資料科學競賽平台，各場各自截止。有些場次限 18 歲以上，報名前先看該場規則的年齡條件。",
+      "details": "賽事由各贊助單位與 DrivenData 合辦，平台沒有統一的截止日，各場規則不同。\n有一場的規則要求報名時年滿 18 歲，而且已達居住地的成年年齡，未滿 18 歲的高中生不能參加那一場。",
+      "sourceNote": "查閱的那一場賽事規則要求參賽者「at the date of entry, are at least eighteen years of age and the age of majority in their jurisdiction of residence」。"
     },
     {
       "title": "Zindi 資料科學競賽",
@@ -1176,10 +1178,10 @@
         "closes": "11"
       },
       "sourceCheckedAt": "2026-10-24",
-      "sourceNote": "原 hmun.org 已成停放網域，現行官網為 harvardmun.org。",
+      "sourceNote": "原 hmun.org 已成停放網域，現行官網為 harvardmun.org。資格：「applicants must be 13 years of age or older」「college students are not eligible to apply」。",
       "url": "https://www.harvardmun.org/",
       "description": "哈佛大學國際關係協會主辦的模擬聯合國會議，在美國波士頓舉行。13 歲以上、會議期間就讀或剛畢業於高中者可參加，大學生不符資格；以代表團報名，每位代表要繳費。",
-      "details": "資格的原文是「applicants must be 13 years of age or older」與「college students are not eligible to apply」。代表團上限 20 人，Faculty Advisor 須 18 歲以上。\n第 74 屆於 2027 年 1 月 28 至 31 日舉行。報名 2026-06-01 開放，分三階段：Priority 至 9/1，每位代表 US$115；General 至 10/1，US$130；Late 至 11/1，US$210。"
+      "details": "代表團上限 20 人，帶隊的指導老師（Faculty Advisor）要滿 18 歲。\n第 74 屆在 2027 年 1 月 28 至 31 日舉行。報名 2026-06-01 開放，分三階段：Priority 至 9/1，每位代表 US$115；General 至 10/1，US$130；Late 至 11/1，US$210。"
     },
     {
       "title": "Sony 世界攝影獎—青年組",
@@ -1247,7 +1249,8 @@
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.theearthprize.org/",
       "description": "全球中學生環境永續競賽，2027 屆限 2007–2014 年出生，可單人或組隊、可跨校，參加免費。不限國家，台灣學生可直接在官網註冊。",
-      "details": "由 The Earth Foundation 主辦。FAQ 寫「open to teenage students (typically ages 13–19) worldwide」，2027 屆規則寫「Participants must have been born between 2007 and 2014 and be currently receiving education through a school, homeschool arrangement, or other educational programme」。\n隊伍最多 5 人，也可以跨班、跨年級。FAQ 寫「Educators are no longer required to participate or to create a team」，同一學校報隊數不限。\n官方規則寫「Participants are accepted from anywhere in the world. There are no geographic restrictions」，台灣學生沒有特殊管道。註冊在官網 onboarding 頁，支援中文。\n2027 屆報名「open until 10th of January 2027」，提交「Submissions close January 31st 2027」。之後 2 至 5 月是 Scholar 與 Regional Winner 階段，頒獎典禮在 2027 年 5 月 28 日。"
+      "details": "由瑞士的 The Earth Foundation 主辦，對象大約是 13 到 19 歲。2027 屆參加者要在 2007 到 2014 年間出生，而且目前在學，在家自學或參加其他教育計畫也可以。\n一人或最多 5 人一隊，可以跨班、跨年級，不用老師帶隊，同一所學校報幾隊都可以。\n不限國家，台灣學生沒有另外的管道，直接在官網註冊，註冊頁有中文。\n2027 屆報名到 2027-01-10，作品 1/31 截止。之後 2 至 5 月是 Scholar 與區域優勝的階段，頒獎典禮在 2027 年 5 月 28 日。",
+      "sourceNote": "FAQ：「open to teenage students (typically ages 13–19) worldwide」「Educators are no longer required to participate or to create a team」。2027 屆規則：「Participants must have been born between 2007 and 2014 and be currently receiving education through a school, homeschool arrangement, or other educational programme」「Participants are accepted from anywhere in the world. There are no geographic restrictions」。時程：「Registration for The Earth Prize 2027 is open until 10th of January 2027」「Submissions close January 31st 2027」。"
     },
     {
       "title": "永續生活信託論文與辯論競賽",
@@ -1263,8 +1266,9 @@
       "eventEndsAt": "2027-07-02",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://trustforsustainableliving.org/",
-      "description": "英國教育慈善機構主辦的國際學生永續議題競賽，7–18 歲分兩組，每人投一件，由 Teacher Champion 代為提交，學校不參加時家長也可擔任。",
-      "details": "主辦單位是 Trust for Sustainable Living，比賽現行名稱為 International Student Competition and Debates。FAQ 寫「The International Student Competition is open to all students worldwide, aged 7-18 across two age categories – 7-11 years and 12-18 years」。\n作品形式不限，文字 600 字以內、影音 3 分鐘以內。Teacher Champion 在官方投件平台代為註冊提交，家長擔任的規定是：「If your teacher or school doesn’t wish to participate, a parent or guardian can register as your Teacher Champion and submit your entry」。\n2027 屆主題 NAVIGATING EL NIÑO，2026 年 9 月 10 日開放、2027 年 3 月 1 日截止（「The deadline for entries is 1st March 2027」），時程表另標「1 March 2027 (midnight UTC)」。5 月 1 日公布決選與榮譽獎，各國前兩名受邀參加 7 月 1 至 2 日的線上辯論與頒獎（「The 2027 Debates on NAVIGATING EXTREME WEATHER will take place in July 1-2, 2027 (online)」）。\n2026 屆主題 Sustainability Culture，收到 2,710 件投稿。"
+      "description": "英國教育慈善機構辦的國際學生永續競賽，7–18 歲分兩組。由老師代為註冊投件，學校不參加的話家長也可以代為註冊，每人投一件。",
+      "details": "幫你註冊、提交作品的人叫 Teacher Champion，可以是老師，也可以是家長或監護人，都在官方投件平台操作。\n主辦單位是 Trust for Sustainable Living，比賽現名 International Student Competition and Debates，全世界的學生都能參加，分 7–11 歲和 12–18 歲兩組。作品形式不限，文字 600 字（words）以內、不含參考書目，影音 3 分鐘以內。\n2027 屆主題「因應聖嬰現象」（NAVIGATING EL NIÑO），談世界領袖該怎麼面對聖嬰現象這類越來越嚴重的極端天氣。2026 年 9 月 10 日開放，2027 年 3 月 1 日截止（時程表寫 1 March 2027 (midnight UTC)，在台灣時間 3/1 早上 8 點前送出比較保險）。\n5 月 1 日公布決選與榮譽獎，各國前兩名受邀參加 7 月 1 至 2 日的線上辯論與頒獎，辯論主題是極端天氣。2026 屆主題 Sustainability Culture，收到 2,710 件投稿。",
+      "sourceNote": "FAQ（https://trustforsustainableliving.org/take-part/international-schools-essay-competition-and-debate/faqs-essay-competition ）：「The International Student Competition is open to all students worldwide, aged 7-18 across two age categories – 7-11 years and 12-18 years」「If your teacher or school doesn’t wish to participate, a parent or guardian can register as your Teacher Champion and submit your entry」。the-brief 頁：「Written entries should be a maximum 600 words (not including the bibliography and optional 100 word maximum self-reflection)」「Video or audio pieces should be a maximum of 3 minutes long」。首頁：「tell us how they think world leaders should be responding to worsening extreme weather events like this year’s Super El Niño」。時程：「The deadline for entries is 1st March 2027」「1 March 2027 (midnight UTC) Final deadline for all entries」「The 2027 Debates on NAVIGATING EXTREME WEATHER will take place in July 1-2, 2027 (online)」。2026-11-05 查。"
     },
     {
       "title": "Bow Seat 海洋意識競賽",
@@ -1280,7 +1284,8 @@
       "sourceCheckedAt": "2026-10-23",
       "url": "https://bowseat.org/programs/blue-planet-awareness-contest/contest-overview/",
       "description": "Bow Seat 主辦的海洋與環境創作競賽，11–18 歲分兩組，可個人或團體參加，須提供成年 Adult Sponsor 聯絡資訊，已就讀大學者不符資格。",
-      "details": "主辦單位是美國的 Bow Seat: Creative Action for Conservation，2027 屆起官網改稱「Blue Planet Awareness (formerly Ocean Awareness) Contest」。\n資格的原文是「Students ages 11-18 from around the world are invited to participate in the Blue Planet Awareness Contest」。Junior 是 11–14 歲，Senior 是 15–18 歲。官網寫「Students can participate as an individual or as a club, class, or group of any size」。\n2027 屆主題 Nature of Truth: Environmentalism in an Age of Disinformation，官網寫「CONTEST DEADLINE: JUNE 7, 2027, 11:59 PM EDT」。2026 屆得獎名單將於 2026 年 11 月公布。"
+      "details": "主辦單位是美國的 Bow Seat: Creative Action for Conservation，2027 屆起比賽改名為 Blue Planet Awareness Contest（原 Ocean Awareness Contest）。\n全世界 11 到 18 歲的學生都能參加，Junior 是 11–14 歲，Senior 是 15–18 歲。可以個人參加，也可以用社團、班級或任何人數的小組參加。\n2027 屆主題「真相的本質：假訊息時代的環境保護」（Nature of Truth: Environmentalism in an Age of Disinformation），2027 年 6 月 7 日 23:59（美東夏令時間，台灣時間 6/8 11:59）截止。2026 屆得獎名單 2026 年 11 月公布。",
+      "sourceNote": "官網：「Blue Planet Awareness (formerly Ocean Awareness) Contest」「Students ages 11-18 from around the world are invited to participate in the Blue Planet Awareness Contest」「Students can participate as an individual or as a club, class, or group of any size」「CONTEST DEADLINE: JUNE 7, 2027, 11:59 PM EDT」。"
     },
     {
       "title": "Breakthrough Junior Challenge 科普影片競賽",
@@ -1670,8 +1675,9 @@
       },
       "sourceCheckedAt": "2026-10-25",
       "url": "https://www.earthsciweek.org/contests",
-      "description": "AGI 的四項競賽中，攝影組與影片組不限年齡與國家，台灣學生可投，另兩組限美國居民；未滿 18 歲須家長或監護人簽署 release form。",
-      "details": "AGI 是 American Geosciences Institute，四項競賽配合 2026 年 10 月 11 至 17 日的 Earth Science Week 舉辦，主題 Critical Minerals for a Thriving Society。四項截止日相同，都是 2026-10-16 20:00 ET。\n攝影組「open to individuals of any age from anywhere in the world」，影片組「open to individuals or teams of any age from anywhere in the world」。視覺藝術組限「students in grades K-5 who are residents of the United States」，論文組限「students in grades 6-9 who are residents of the United States」，台灣學生不符資格，年級也不是高中。\n各組獎金為 US$300 加一本 AGI 出版品。"
+      "description": "美國地球科學研究所（AGI）辦的四項競賽，攝影和影片組不限年齡和國家，台灣學生可投，另兩組限美國居民。未滿 18 歲要家長或監護人簽授權書。",
+      "details": "四項競賽配合 2026 年 10 月 11 至 17 日的地球科學週舉辦，主題「關鍵礦物與社會繁榮」（Critical Minerals for a Thriving Society）。四項截止時間相同，都是 2026-10-16 20:00（美東時間，台灣時間 10/17 08:00）。\n攝影組收任何年齡、任何國家的個人，影片組收任何年齡、任何國家的個人或團隊。視覺藝術組限美國居民的 K–5 年級學生，論文組限美國居民的 6–9 年級學生。\n各組獎金 US$300，加一本 AGI 出版品。",
+      "sourceNote": "攝影組「open to individuals of any age from anywhere in the world」，影片組「open to individuals or teams of any age from anywhere in the world」，視覺藝術組「students in grades K-5 who are residents of the United States」，論文組「students in grades 6-9 who are residents of the United States」。截止：「All eligible submissions must be received electronically by 8:00 PM ET, Friday, October 16, 2026.」未滿 18 歲要家長或監護人簽 release form。"
     },
     {
       "title": "THIMUN 新加坡模擬聯合國會議",
@@ -1688,8 +1694,9 @@
       "registrationNote": "僅受理學校團體報名",
       "sourceCheckedAt": "2026-11-01",
       "url": "https://singapore.thimun.org/",
-      "description": "新加坡模擬聯合國會議，僅受理學校團體報名，新學校須另行申請；個人只能申請 Student Officer 或 Press，且須附推薦函。",
-      "details": "由 THIMUN Foundation 主辦。既有學校自動收到邀請，新學校依 participation guidelines 申請。個人申請要附 MUN Director 的推薦函。\n2026 屆會議 10 月 26 至 30 日實體舉行，已結束；官網寫「THIMUN Singapore 2026 will be hosted at the International French School (IFS)」。報名時程是 4 月新學校提交申請，5 月繳交 Online Form I，6/12 預付款 €1,215 截止，9/14 繳交完整名單（Online Form II）並付清費用。學校團體費 €135，每人 €270。\n2027 屆時程尚未公布。"
+      "description": "新加坡模擬聯合國會議，只收學校團體報名，新學校要另外申請。個人只能申請擔任主席團（Student Officer）或記者（Press），要附推薦函。",
+      "details": "由 THIMUN Foundation 主辦。參加過的學校會自動收到邀請，新學校照參加辦法申請。個人申請要附學校模聯指導老師（MUN Director）的推薦函。\n2026 屆會議 10 月 26 至 30 日在新加坡的 International French School 舉行，已結束。報名時程是 4 月新學校提交申請，5 月繳交第一份線上表單，6/12 前付預付款 €1,215，9/14 繳交完整名單並付清費用。學校團體費 €135，每人 €270。\n2027 屆時程尚未公布。",
+      "sourceNote": "官網：「THIMUN Singapore 2026 will be hosted at the International French School (IFS)」。新學校依 participation guidelines 申請；5 月是 Online Form I，9/14 是 Online Form II。"
     },
     {
       "title": "美國高中生數學邀請賽 (AIME)",
@@ -1836,10 +1843,10 @@
       "eventEndsAt": "2026-08-18",
       "registrationNote": "2027 屆時程尚未公布",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "HMUN China 原本的專屬官網網域註冊已到期，2026-10-25 開啟只剩註冊商的停放頁，逐字「This domain has expired.」；主辦單位頁面上的 HMUN China 連結仍指向它，因此改連主辦單位的 HMUN 介紹頁。同一個網站 2026-10-25 仍可從 Squarespace 的內建網址 hyperboloid-dachshund-38sj.squarespace.com 開啟，內容停在 2026 屆：報名 3/5 開放，早鳥 5/1、一般 7/15、逾期 8/5 截止；2026 年條款寫 Chinese domestic 代表團由合作單位 High Leap Education 聯絡、以 WeChat 付款，國際代表團以信用卡付款，報名表單架在金數據。該站 sitemap 列出的 10 頁、首頁與 2026 年條款都沒有提到台灣。",
+      "sourceNote": "HMUN China 原本的專屬官網網域註冊已到期，2026-10-25 開啟只剩註冊商的停放頁，逐字「This domain has expired.」；主辦單位頁面上的 HMUN China 連結仍指向它，因此改連主辦單位的 HMUN 介紹頁。同一個網站 2026-10-25 仍可從 Squarespace 的內建網址 hyperboloid-dachshund-38sj.squarespace.com 開啟，內容停在 2026 屆：報名 3/5 開放，早鳥 5/1、一般 7/15、逾期 8/5 截止；2026 年條款寫 Chinese domestic 代表團由合作單位 High Leap Education 聯絡、以 WeChat 付款，國際代表團以信用卡付款，報名表單架在金數據。該站 sitemap 列出的 10 頁、首頁與 2026 年條款都沒有提到台灣。 主辦單位 HMUN 頁面：「HMUN China occurs each August in Guangzhou」；2026 屆代表費「3980 RMB (for Chinese domestic) or 580 USD (for all else)」，沒有說明 Chinese domestic 包含哪些人。",
       "url": "https://www.harvardirc.org/hmun",
       "description": "哈佛模擬聯合國在中國廣州的場次，年滿 13 歲、就讀 7 至 12 年級可參加，大學生不符資格。赴中參賽的身分、證件與付款方式要先向主辦確認。",
-      "details": "由 Harvard International Relations Council 主辦，該會 HMUN 頁面寫「HMUN China occurs each August in Guangzhou」。\n第 16 屆 2026 年 8 月 15 至 18 日舉行，已結束，2027 屆尚未公布。2026 屆報名 3/5 開放、8/5 截止，代表費：「3980 RMB (for Chinese domestic) or 580 USD (for all else)」。\n主辦單位的資料沒有提到台灣，也沒有說明「Chinese domestic」包含哪些人。赴中參賽要遵守兩岸往來的規定。"
+      "details": "由 Harvard International Relations Council 主辦，每年 8 月在廣州舉行。\n第 16 屆 2026 年 8 月 15 至 18 日舉行，已結束，2027 屆尚未公布。2026 屆報名 3/5 開放、8/5 截止；每位代表的費用，中國境內 3,980 人民幣，其他地區 US$580。\n台灣學生適用哪一種費用，主辦單位沒有說明，報名前要先問。赴中參賽要遵守兩岸往來的規定。"
     },
     {
       "title": "iBridge 橋梁設計與載重競賽",
@@ -2150,7 +2157,8 @@
       "sourceCheckedAt": "2026-10-25",
       "url": "https://www.samsung.com/tw/offer/2026-samsung-solve-for-tomorrow/",
       "description": "台灣三星電子主辦的永續科技提案競賽，全台公私立高中職與五專一至三年級學生組隊參加，免報名費；外僑學校與非以教育部課綱授課的國際學校師生不具資格。",
-      "details": "提案要以科技創意回應社會與環境挑戰。2020 年引進台灣，2026 年是第七屆。分永續社會、永續環境兩組，2026 年首度新增「運動科技」子題。\n每隊 2 至 4 名學生、1 至 2 位指導老師。\n2026 屆報名 2/23 至 5/18 23:59，決賽暨頒獎典禮訂在 11/13。2024 年起每屆都是 2 月開放報名、5 月截止收件，決賽在 11 月。\n進入複賽的隊伍可取得入圍與得獎證明，作為學習歷程附件。三星 2026-05-12 的新聞稿寫 2026 年將導入「學長姊交流計畫」，官網與簡章沒有這項計畫的內容。"
+      "details": "提案要用科技創意回應社會與環境的問題。2020 年引進台灣，2026 年是第七屆。分永續社會、永續環境兩組，2026 年首度新增「運動科技」子題。\n每隊 2 至 4 名學生、1 至 2 位指導老師。\n2026 屆報名 2/23 至 5/18 23:59，決賽暨頒獎典禮訂在 11/13。2024 年起每屆都是 2 月開放報名、5 月截止收件，決賽在 11 月。\n進入複賽的隊伍可以拿到入圍與得獎證明，當作學習歷程的附件。三星表示 2026 年起會導入「學長姊交流計畫」，讓不同屆的參賽者交流。",
+      "sourceNote": "學長姊交流計畫出自三星 2026-05-12 的新聞稿〈台灣三星電子 Solve for Tomorrow 榮獲2026年遠見ESG企業永續獎〉（三星台灣新聞中心）：「2026 年將導入『學長姊交流計畫』」；2026-11-05 查活動頁與簡章都沒有這項計畫的內容。"
     }
   ]
 }
