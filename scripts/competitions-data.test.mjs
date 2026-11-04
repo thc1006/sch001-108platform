@@ -952,7 +952,8 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // IJSO 官網逐字：「for students who are fifteen years or younger on 31st December of the
     // competition year」，且 2026 屆在保加利亞索菲亞（舊資料寫德國是錯的）
     const ijso = find('國際國中科學奧林匹亞');
-    assert.match(textOf(ijso), /fifteen years or younger on 31st December/);
+    assert.match(textOf(ijso), /12 月 31 日須為 15 歲以下/);
+    assert.match(ijso.sourceNote, /fifteen years or younger on 31st December/, '官網原文留在 sourceNote');
     assert.match(ijso.registrationNote, /15 歲以下/, '年齡上限必須出現在狀態列，不能只藏在描述裡');
     assert.match(textOf(ijso), /保加利亞/);
     assert.ok(!/德國/.test(textOf(ijso)), '2026 屆在索菲亞，德國是錯的');
@@ -985,7 +986,8 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.match(icho.organizer, /International Chemistry Olympiad Steering Committee/);
     assert.equal(icho.eventStartsAt, '2026-07-10');
     assert.equal(icho.eventEndsAt, '2026-07-19');
-    assert.match(textOf(icho), /2027 July 19-28, Chinese Taipei/, '請保留官網逐字原文');
+    assert.match(textOf(icho), /2027 年 7 月 19 至 28 日在(?:台灣|臺灣)/);
+    assert.match(icho.sourceNote, /2027 July 19-28, Chinese Taipei/, '官網原文留在 sourceNote');
     assert.match(icho.description, /2027 年由(?:台灣|臺灣|我國)主辦|由(?:台灣|臺灣|我國)主辦[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
     // IMO 官網：2026「Shanghai, People's Republic of China - July 10-21, 2026」、
