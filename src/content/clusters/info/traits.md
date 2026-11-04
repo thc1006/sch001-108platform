@@ -2,13 +2,17 @@
 cluster: 資訊學群
 topic: 特質與能力
 order: 2
-title: 資訊學群的特質與能力：ColleGo! 各學類看重的科目與能力
-description: ColleGo! 資訊學群看重的多元能力與性格特質、八個學類看重的高中科目與多元能力，以及清大資工對學習方法的說明和陳宜欣教授找研究題目的方式。
+title: 資訊學群的特質與能力：數學與英文、各學類看重的科目、怎麼在備審裡呈現
+description: 資訊學群看重的能力與特質，為什麼數學和英文跟程式一樣重要，ColleGo! 八個學類看重的高中科目與多元能力，以及興趣、技能、團隊合作、解決問題這些能力怎麼在備審裡寫出來。
 ---
 
 ## 學群看重的能力
 
 ColleGo! 資訊學群頁列的多元能力是數理科學、程式設計、邏輯推理、主動學習、問題解決、語文理解與表達、系統運作，性格特質是主動積極、堅毅負責、合作互助。
+
+## 數學和英文跟程式一樣重要
+
+念資工，數學和英文跟程式一樣重要。演算法、離散數學、線性代數、機率與統計都是數學，技術文件和新的研究多半用英文寫。ColleGo! 資訊工程學類頁把「不用讀數學」列為誤解。成大資工給高中生的建議包括數學和英文要認真學，「不要放棄任何一科，建立正確的學習態度」。只顧寫程式、數學和英文跟不上，進大學會很辛苦。
 
 ## 各學類看重的科目與能力
 
@@ -31,11 +35,18 @@ ColleGo! 資訊學群頁列的多元能力是數理科學、程式設計、邏�
 
 清大資工系在 ColleGo! 列了三種學習方法：課程範圍大，上課很難講完，要靠自我加強和預習；領域廣，遇到不熟悉的部分要自己學習與摸索；課堂常要和他人一起做專案，要能和隊友溝通討論。
 
-CASE 報科學 2023 年刊出謝達文採訪清大資工陳宜欣教授的專訪。陳宜欣說，她的實驗室找研究題目，經常是她先拋出幾個大方向，有學生有興趣，大家再一起討論題目是否有趣、是否可行，值不值得投資時間；她用自己的話稱這是「探尋」的邏輯。
+## 怎麼在備審裡讓人看到
+
+- 興趣：寫出你對哪個具體問題好奇、做了什麼去弄懂。只寫「我對人工智慧有興趣」看不出什麼；寫「想知道聊天機器人為什麼會答錯，自己設計了二十個問題去測，整理出它容易錯的題型」，讀的人就看得到。
+- 技能：不要只列「會 Python、C++」，寫你用這些語言做了什麼、解決了什麼問題。
+- 自學：寫一樣你自己學會的東西，用了哪些教材、花了多久、做出什麼。
+- 團隊合作：團隊作品寫清楚哪部分是你做的，例如「負責資料庫設計和登入功能」。只寫「參與開發」，讀的人分不出你做了多少。
+- 解決問題：挑一次卡關的經驗，寫你當時怎麼調整心態、怎麼查資料、最後怎麼解決。沒解決也可以寫，說清楚你從中學到什麼。
+- 呈現：格式一致、沒有錯字、每個檔案的段落清楚，讀的人才能專心看內容。
 
 ## 參考來源
 
 - [ColleGo!「資訊學群」](https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=1)
 - ColleGo! 學類頁：[資訊工程](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=1)、[資訊管理](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=7)、[數據統計](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=132)、[生物資訊](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=2)、[資訊傳播](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=3)、[媒體設計](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=4)、[圖書資訊](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=5)、[數位學習](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=6)
 - [ColleGo!「國立清華大學資訊工程學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)
-- [【人物專訪】探尋的邏輯——專訪陳宜欣教授（2023-06-21），CASE 報科學](https://case.ntu.edu.tw/blog/?p=42471)
+- [成功大學資工系招生專區「高中生專區」](https://www.csie.ncku.edu.tw/zh-hant/admission/senior)
