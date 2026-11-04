@@ -35,13 +35,6 @@
     },
     {
       "file": "src/content/clusters/engineering/application.md",
-      "text": "115 學年度的手冊寫，勾選超過件數",
-      "cycle": 116,
-      "reason": "引用 115 學年度審查資料上傳作業操作說明手冊：勾選超過件數系統就不能儲存，只寫在手冊，116 簡章總則沒有。116 版還沒公告；115 版的檔案日期是 2026-01-29，116 版預計 2027 年 1 月底公告。公告後改引 116 版。",
-      "recheckAfter": "2027-02-05"
-    },
-    {
-      "file": "src/content/clusters/engineering/application.md",
       "text": "清大工學院學士班 115 學年度的指引",
       "cycle": 116,
       "reason": "引用成大資工（含智慧系統實作組）與清大工學院學士班 115 學年度準備指引的內容。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後照新版重對，改成 116 學年度或改寫。重對時直接看各系自己的頁面。",
@@ -1166,17 +1159,38 @@
     },
     {
       "file": "src/content/clusters/engineering/application.md",
-      "text": "116 學年度的上傳系統操作手冊還沒公告。",
+      "text": "勾選超過件數，系統不能儲存。",
       "cycle": 116,
-      "reason": "116 學年度上傳操作說明手冊還沒公告（115 版 PDF 的 Last-Modified 是 2026-01-29）。116 版公告後改引新手冊，這句改寫或刪掉。",
+      "reason": "照 115 學年度審查資料上傳作業操作說明手冊寫，116 簡章總則沒有這句，行內沒有學年度，檢查看不到。116 版預計 2027 年 1 月底公告（115 版 PDF 的 Last-Modified 是 2026-01-29），公告後對照新手冊，參考來源換成 116 版。",
       "recheckAfter": "2027-02-05"
     },
     {
       "file": "src/content/clusters/engineering/application.md",
-      "text": "甄選會的準備指引頁寫，116 學年度的資料預計 116 年 3 月更新。",
+      "text": "116 學年度的準備指引預計 2027 年 3 月公布，公布後以新版為準。",
       "cycle": 116,
-      "reason": "寫的是甄選會準備指引頁「116 學年度資料預計 116 年 3 月更新」，頁面更新後這句就過時，改寫或刪掉。",
+      "reason": "甄選會準備指引頁寫 116 學年度資料預計 116 年 3 月更新。公布後這句就過時，同時照新版重對上表，改寫或刪掉這句。",
       "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "| 高三 3 月 | 申請入學 3 月 23、24 日報名，3 月 30 日公布第一階段篩選結果 |",
+      "cycle": 116,
+      "reason": "照甄選會 116 學年度申請入學重要時程寫，行內沒有學年度，檢查看不到。117 學年度簡章預計 2027 年 11 月初公告，公告後照新時程改日期。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "| 高三 4 到 5 月 | 審查資料 4 月 29 日起上傳，截止日看各系分則；筆試、面試在 5 月 13 日到 30 日之間，各系自訂 |",
+      "cycle": 116,
+      "reason": "照甄選會 116 學年度申請入學重要時程寫，行內沒有學年度，檢查看不到。117 學年度簡章預計 2027 年 11 月初公告，公告後照新時程改日期。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/engineering/application.md",
+      "text": "| 高三 6 月 | 錄取的人要在 6 月 3、4 日上網登記就讀志願序，沒登記就視同放棄錄取 |",
+      "cycle": 116,
+      "reason": "照甄選會 116 學年度申請入學重要時程寫，行內沒有學年度，檢查看不到。117 學年度簡章預計 2027 年 11 月初公告，公告後照新時程改日期。",
+      "recheckAfter": "2027-11-03"
     },
     {
       "file": "src/content/clusters/design/application.md",
