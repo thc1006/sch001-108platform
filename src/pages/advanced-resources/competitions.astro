@@ -453,7 +453,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         if (c.deadline) return { label: '報名截止', value: c.deadline };
         // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
         if (s.note) return { label: '報名', value: s.label };
-        // 什麼時程都沒有。徽章已經寫了「依官網公告」，截止欄不寫同一句。
+        // 沒有截止日、週期和 registrationNote。賽事日期只在對話框，報名截止確實未公布。
         return { label: '報名截止', value: '未公布' };
       }
 
