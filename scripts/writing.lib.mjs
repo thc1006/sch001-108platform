@@ -337,7 +337,7 @@ function longSentences(b) {
 export const RULES = [
     { id: 'W01-hen-duo', severity: 'block', skip: 'aqu', re: /很多(?![元樣])/gu },
     { id: 'W02-vague-quantity', severity: 'warn', skip: 'aqu', re: /許多|大量|眾多|諸多|無數|海量|各式各樣|各種各樣|各種|不少(?!於)/gu },
-    { id: 'W03-intensifier', severity: 'warn', skip: 'aqu', re: /非常|極其|極為|十分(?!鐘|之)|相當(?!於)|超級|無比|格外|高度(?=\p{Script=Han})/gu, normal: (m) => (m[0] === '高度' && /^(差|約|為|是|計|公尺|限制)/.test(after(m)) ? '物理高度' : null) },
+    { id: 'W03-intensifier', severity: 'warn', skip: 'aqu', re: /非常|極其|極為|極具|十分(?!鐘|之)|相當(?!於)|超級|無比|格外|高度(?=\p{Script=Han})/gu, normal: (m) => (m[0] === '高度' && /^(差|約|為|是|計|公尺|限制)/.test(after(m)) ? '物理高度' : null) },
     { id: 'W04-filler-signpost', severity: 'block', skip: 'aqu', re: /值得(?:注意|一提)的是|值得一提|綜上所述|總而言之|總之|毫無疑問|不言而喻|眾所周知|換句話說|簡而言之|說到底|歸根究[柢底]|歸根結[柢底]|總的來說|整體而言|整體來說|綜合來看|綜合而言|總結來說|總結而言|一言以蔽之|由此可見|不難看出|不難發現|顯而易見|不可否認|無可否認|毋庸置疑/gu },
     { id: 'W05-filler-addition', severity: 'warn', skip: 'aqu', re: /此外|除此之外|與此同時|事實上|本質上|顯然/gu, normal: (m) => (m[0] === '事實上' && before(m, 1) === '在' ? '建立在事實上' : null) },
     {
@@ -345,7 +345,7 @@ export const RULES = [
         re: /賦能|一站式|無縫|全方位|助力|解碼|精髓|潛規則|真心話|不可或缺|至關重要|不容忽視|舉足輕重|扮演(?:著)?(?:至關重要|很重要|重要|關鍵)的?角色|的藝術|秘訣|祕訣|神器|乾貨|革命性|顛覆(?:性|你)|量身(?:打造|訂做|定做)|一次(?:搞懂|看懂|掌握)|全攻略|大揭密|小撇步|超實用|事半功倍|如虎添翼|一臂之力|穩穩(?:地|的)|接住(?:你|您|情緒)/gu,
         normal: (m) => (m[0] === '助力' && before(m, 8).includes('阻力') ? '阻力還是助力' : m[0] === '解碼' && (/^(後|前|器|成|出)/.test(after(m)) || /[A-Za-z0-9-]\s*$/.test(before(m, 3))) ? '技術用語' : null),
     },
-    { id: 'W07-endorsement', severity: 'warn', skip: 'aqu', re: /旨在|致力於|深入探討|打造|強大|優雅|精彩|豐富|獨特|頂尖|卓越|關鍵在於|攻略/gu },
+    { id: 'W07-endorsement', severity: 'warn', skip: 'aqu', re: /旨在|致力於|深入探討|打造|強大|優雅|精彩|豐富|獨特|頂尖|卓越|關鍵在於|攻略|大有助益|(?<!具)體現/gu },
     { id: 'W08-superlative', severity: 'warn', skip: 'aqu', re: /最(?=\p{Script=Han})/gu, normal: superlativeNormal },
     { id: 'W09-pushy-directive', severity: 'warn', skip: 'aqu', re: /務必|一定要|千萬(?:要|別|不要)|絕對(?!值)/gu, normal: (m) => (m[0] === '一定要' && /(不|未必)$/.test(before(m, 2)) ? '否定' : null) },
     { id: 'W10-core', severity: 'warn', skip: 'aqu', re: /核心/gu, normal: (m) => (/^(素養|能力|課程|科目|期刊|知識|學科|必修|課|通識)/.test(after(m)) ? '課綱與系所用語' : null) },
@@ -385,7 +385,7 @@ export const RULES = [
     { id: 'S01-not-x-but-y', severity: 'warn', skip: 'q', re: /(?:不是|並非|並不是|不只是)[^，。！？；—─]{1,20}[，,]?\s*(?:而是|才是)[^。！？；」]{1,24}|(?:關鍵|重點|問題)[^，。！？]{0,8}不在(?:於)?[^，。！？]{1,16}[，,]\s*(?:而在於?|而是)|與其(?:說)?[^。！？；]{1,30}?不如/gu },
     { id: 'S02-not-only', severity: 'warn', skip: 'q', re: /(?:不僅|不只|不光)(?:是)?[^。！？；]{1,30}?(?:更|還|而且)(?:是)?/gu },
     { id: 'S03-not-x-is-y', severity: 'warn', skip: 'q', re: /(?:不是|並非)[^，。！？；「」]{1,20}[，,]\s*(?:是|就是)(?!否)[^。！？；]{1,20}/gu },
-    { id: 'S04-adverb-de', severity: 'warn', skip: 'aqu', re: /(?:清晰|有效|系統性|系統化|深入|全面|精準|充分|高效|靈活|完整)地(?=\p{Script=Han})|更(?:好|有效|深入|全面)地/gu },
+    { id: 'S04-adverb-de', severity: 'warn', skip: 'aqu', re: /(?:清晰|有效|系統性|系統化|深入|全面|精準|充分|高效|靈活|完整|扎實|紮實)地(?=\p{Script=Han})|更(?:好|有效|深入|全面)地/gu },
     { id: 'S05-weak-verb', severity: 'warn', skip: 'q', re: /進行(?![的中了多各一兩])(?=\p{Script=Han}{2})|作出|加以|予以/gu },
     { id: 'S06-rhetorical', severity: 'warn', skip: 'aqu', re: /你(?:是否|是不是)(?:也)?(?:曾|常|有|覺得|想過)|有沒有想過|你知道嗎|想像一下|試想|不是嗎？/gu },
     { id: 'S08-long-sentence', severity: 'warn', skip: '', custom: longSentences },
