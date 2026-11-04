@@ -259,6 +259,14 @@ export function validateSchedule(comp, label, errors) {
     if (!Number.isNaN(opensMs) && !Number.isNaN(closesMs) && opensMs >= closesMs) {
         errors.push(`「${label}」的 opensAt 不早於 deadlineAt`);
     }
+    // 只有 deadline（日期）時照台北日期比。競賽頁會寫成「預計 X 開放、Y 截止」，Y 不晚於 X 就自相矛盾。
+    if (!Number.isNaN(opensMs) && typeof comp.deadline === 'string' && DATE_ONLY_RE.test(comp.deadline)) {
+        const opensDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' })
+            .format(new Date(opensMs));
+        if (comp.deadline <= opensDay) {
+            errors.push(`「${label}」的 deadline（${comp.deadline}）不晚於 opensAt 的台北日期（${opensDay}）`);
+        }
+    }
 
     // deadlineAt 存在時必須同時有 deadline。頁面的狀態列用 deadlineAt（精確時刻），
     // 但卡片底部那一欄讀的是 deadline，只填 deadlineAt 會出現「報名中 · 剩 70 天」
