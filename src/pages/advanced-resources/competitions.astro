@@ -423,12 +423,19 @@ import data from '../../../public/advanced-resources/competitions.json';
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
       // registrationNote。本屆截止日和賽事日期在對話框裡，由 deadlineField 算。
       function cardDeadline(c, s) {
-        if (s.key === 'upcoming') return { label: '開放報名', value: '預計 ' + s.opens };
+        if (s.key === 'upcoming') return { label: '報名期間', value: '預計 ' + s.opens + (s.next ? ' · ' + s.next.slice(5) + ' 截止' : '') };
         if (s.key === 'cycle') {
           const p = s.closes.split('-');
           return { label: '報名截止', value: '每年約 ' + (p[1] ? Number(p[0]) + '/' + Number(p[1]) : Number(p[0]) + ' 月') };
         }
         return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
+      }
+
+      // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時 deadlineField 的內容從開放日寫起，
+      // 標籤寫「報名截止」的話，報讀軟體連著念聽起來是矛盾的。
+      function fullDeadline(c, s) {
+        const dField = deadlineField(c, s);
+        return s.key === 'upcoming' ? { label: '報名期間', value: dField.value } : dField;
       }
 
       // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField
@@ -485,7 +492,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         const s = c._status;
         const delay = Math.min(i, 14);
         // details 是選填。沒有的卡片打不開對話框，截止欄和徽章照對話框的寫法放完整時程與 registrationNote。
-        const dField = hasDetails(c) ? cardDeadline(c, s) : deadlineField(c, s);
+        const dField = hasDetails(c) ? cardDeadline(c, s) : fullDeadline(c, s);
         const badge = hasDetails(c) ? badgeText(s) : dialogBadge(s, dField);
         const more = hasDetails(c)
           ? '<button type="button" class="comp-more" aria-haspopup="dialog" data-idx="' + c._idx + '">' +
@@ -512,7 +519,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         // 一行一段，報讀軟體可以按段落跳。
         const details = c.details.split('\n').filter((line) => line.trim())
           .map((line) => '<p>' + markEnglishQuotes(escapeHtml(line)) + '</p>').join('');
-        const dField = deadlineField(c, s);
+        const dField = fullDeadline(c, s);
         // 整個對話框一起捲。開啟後焦點在 <dialog>，方向鍵和 PageDown 捲的是它；內層另外捲的話鍵盤捲不動，
         // 固定的標題列在放大文字時也會佔掉大半個視窗。
         dialog.innerHTML =

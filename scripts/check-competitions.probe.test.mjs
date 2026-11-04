@@ -820,8 +820,8 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-12-11' }), due('2099-12-11'));
     assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
     assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3/15'));
-    // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。
-    assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '開放報名', value: '預計 2099-12-15' });
+    // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。截止日也要看得到。
+    assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 · 12-31 截止' });
     assert.deepEqual(at({ registrationNote: '由學校報名' }), due('由學校報名'));
     assert.deepEqual(at({}), due('依官網公告'));
 });
@@ -877,7 +877,7 @@ async function cardRenderer() {
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'eventLabel',
         'deadlineField', 'deadlineLabel', 'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
-        'cardDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
+        'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
     const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
     return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
 }
@@ -902,6 +902,10 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     const cycle = { title: '測試', organizer: '主辦單位', category: '資訊', url: 'https://example.com/', description: '摘要', deadline: '2000-07-01', cycle: { closes: '07' } };
     assert.equal(value(render(cycle)), '本屆 2000-07-01 已截止 · 每年約 7 月');
     assert.equal(value(render({ ...cycle, details: '詳細內容' })), '每年約 7 月');
+    const label = (html) => html.match(/<span class="comp-deadline__label">([^<]*)<\/span>/)[1];
+    const upcoming = { ...cycle, cycle: undefined, deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' };
+    assert.equal(label(render(upcoming)), '報名期間');
+    assert.match(value(render(upcoming)), /^預計 2099-12-15 開放報名 · 2099-12-31 截止/);
     // 用 H 鍵跳到名稱的人，接著聽到的是這張卡片的類型與狀態。
     for (const c of [cycle, { ...cycle, details: '詳細內容' }]) {
         assert.match(render(c), /^<article[^>]*><div class="comp-card__body"><h2 class="comp-card__title">/);
