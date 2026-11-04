@@ -475,8 +475,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         return (
           '<article class="comp-card ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + ';--i:' + delay + '">' +
             '<div class="comp-card__body">' +
-              kickerHtml(c, badgeText(s)) +
               '<h2 class="comp-card__title">' + escapeHtml(c.title) + '</h2>' +
+              kickerHtml(c, badgeText(s)) +
               '<p class="comp-card__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
               '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
               '<p class="comp-card__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
@@ -802,6 +802,8 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
     /* 直向排列，「詳細資訊」用 margin-top: auto 靠到底，同一列卡片的按鈕對齊。 */
     .comp-card__body { display: flex; flex-direction: column; padding: 1.5rem; flex: 1; }
+    /* DOM 裡名稱在類型與狀態前面，用 H 鍵跳到名稱的人接著聽到這張卡片的狀態；畫面上用 order 排回名稱上面。 */
+    .comp-card .comp-kicker { order: -1; }
     /* 只放大文字時，「藝術設計」和「即將截止 · 剩 30 天」放不下一行，狀態換到下一行，不超出卡片。 */
     .comp-kicker { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
     .comp-cat {
