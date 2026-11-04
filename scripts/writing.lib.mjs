@@ -404,8 +404,12 @@ export const RULES = [
         re: /\[(?:填入|插入|你的|您的|請填|名稱|日期)[^\]]{0,20}\]|【(?:填入|插入|請填)[^】]{0,20}】|(?<![A-Za-z0-9])(?:XX+|xx+)(?![A-Za-z0-9]|\s?染色體)|20(?:XX|xx)年|ＸＸ|○○|(?<![一二三四五六七八九十〇零兩])〇〇(?![一二三四五六七八九十〇零兩])|\bTODO\b|\bTBD\b|FIXME|[Ll]orem ipsum|20\d\d-(?:XX|xx)-(?:XX|xx)/gu,
         normal: (m) => (/^(?:XX+|xx+|ＸＸ|○○|〇〇)$/.test(m[0]) && inQuote(m) ? '引號裡代替名稱的 XX' : null),
     },
-    // Markdown 連結的網址標成 'u'，所以不略過網址。
-    { id: 'K03-markdown-residue', severity: 'block', skip: '', re: /\*\*[^*\n]{1,40}\*\*|(?:^|\s)#{1,4}\s+\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot)/gu },
+    // Markdown 連結和 utm_source 都在網址裡，所以不用 skip 略過網址；網址裡的其他符號由 normal 放行。
+    {
+        id: 'K03-markdown-residue', severity: 'block', skip: '',
+        re: /\*\*[^*\n]{1,40}\*\*|(?:^|\s)#{1,4}\s+(?!\d)\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot|perplexity)/gu,
+        normal: (m, b) => (b.skip[m.index] === 'u' && !m[0].startsWith('utm_source') ? '網址裡的符號' : null),
+    },
     // 錯誤訊息和按鈕文字在腳本和屬性裡。內文的「抱歉」多半是訪談裡的話。
     {
         id: 'U01-ui-message', severity: 'warn', skip: 'aqu', re: /抱歉|不好意思|發生(?:未知|不明)?(?:的)?錯誤|出了(?:一)?點問題|出錯了|糟糕|哎呀|系統錯誤|操作失敗|檢查檔案路徑|網站管理員/gu,
