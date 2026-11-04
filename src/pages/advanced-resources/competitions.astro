@@ -835,7 +835,9 @@ import data from '../../../public/advanced-resources/competitions.json';
       outline: 2px solid var(--primary); outline-offset: 2px;
     }
 
-    .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    /* 左右內距最多 1.5rem，窄螢幕照視窗寬縮到 1rem：360 寬只放大文字到 200% 時，1.5rem 是 48px，
+       外層和卡片的內距吃掉之後，摘要每行只剩約 5 個字。卡片的 --pad 同理。 */
+    .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem clamp(1rem, 6.5vw, 1.5rem) 5rem; }
     /* 欄數照卡片的最小寬度決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，每欄只剩約
        6 個中文字。最小寬度用 19rem：64rem 以下 .comp-gridwrap 的內容寬最多 975px，放不下三欄（976px），
        到 64rem 內容寬又變窄，欄數才不會在 1024 寬掉回兩欄。一般字級時 688 寬起兩欄，1088 寬起三欄。 */
@@ -860,8 +862,9 @@ import data from '../../../public/advanced-resources/competitions.json';
       transform: translateY(-6px);
       box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
     }
-    .comp-card__body { display: flex; flex-direction: column; padding: 1.5rem 1.5rem .75rem; }
-    .comp-card__more { padding: 0 1.5rem 1.5rem; }
+    .comp-card { --pad: clamp(1rem, 6.5vw, 1.5rem); }
+    .comp-card__body { display: flex; flex-direction: column; padding: var(--pad) var(--pad) .75rem; }
+    .comp-card__more { padding: 0 var(--pad) var(--pad); }
     .comp-card__more:empty { padding: 0 0 .75rem; }
     /* DOM 裡名稱在類型與狀態前面，用 H 鍵跳到名稱的人接著聽到這張卡片的狀態；畫面上用 order 排回名稱上面。 */
     .comp-card .comp-kicker { order: -1; }
