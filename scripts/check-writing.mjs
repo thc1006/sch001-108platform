@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
 
-import { RULES, allowCovers, changedLines, pickAnnotations, scriptStrings, allowOccurrences, allowProblems, compareBaseline, findHits, freshBaselineProblems, jsonBlocks, locate, lowerBaseline, pageBlocks, sourceIndex, verifyPolicy } from './writing.lib.mjs';
+import { PH, RULES, allowCovers, changedLines, pickAnnotations, scriptStrings, allowOccurrences, allowProblems, compareBaseline, findHits, freshBaselineProblems, jsonBlocks, locate, lowerBaseline, pageBlocks, sourceIndex, verifyPolicy } from './writing.lib.mjs';
 
 const ROOT = path.dirname(fileURLToPath(new URL('.', import.meta.url)));
 const DIST = path.resolve(ROOT, process.env.SITE_DIST || 'dist');
@@ -186,7 +186,9 @@ const { over, under } = compareBaseline(policy, counts);
 
 // ---- 輸出 ----
 const severity = Object.fromEntries(RULES.map((r) => [r.id, r.severity]));
-const context = (h) => h.block.text.slice(Math.max(0, h.index - 20), h.index + h.len + 20);
+// 模板字串的 ${…} 在區塊裡是 PH，印出來看不見。
+const readable = (s) => String(s).replaceAll(PH, '${…}');
+const context = (h) => readable(h.block.text.slice(Math.max(0, h.index - 20), h.index + h.len + 20));
 const rows = RULES.map((r) => [r.id, r.severity, hits.filter((h) => h.rule === r.id).length]);
 console.log('規則  嚴重度  筆數');
 for (const [id, sev, n] of rows) console.log(`${id}  ${sev}  ${n}`);
@@ -208,7 +210,7 @@ if (over.length) {
 mkdirSync(path.dirname(REPORT), { recursive: true });
 writeFileSync(REPORT, JSON.stringify({
     pages: htmlPages.length, dataFiles: dataFiles.length, counts, skipped, over, under, allowErrors, allowWarnings,
-    hits: hits.map((h) => ({ rule: h.rule, severity: severity[h.rule], file: h.key, line: h.line, page: h.block.page, match: h.match, context: context(h) })),
+    hits: hits.map((h) => ({ rule: h.rule, severity: severity[h.rule], file: h.key, line: h.line, page: h.block.page, match: readable(h.match), context: context(h) })),
 }, null, 1));
 
 if (process.env.GITHUB_STEP_SUMMARY) {
