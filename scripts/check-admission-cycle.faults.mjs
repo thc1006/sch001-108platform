@@ -229,7 +229,7 @@ const cases = [
         name: '過了 watch 的 recheckAfter：只印警告',
         inject: editConfig((c) => { c.watch[0].recheckAfter = '2026-10-24'; }),
         code: 0,
-        expect: /警告：watch 有 1 筆過了 recheckAfter，新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延。\n {2}watch\[0\]（src\/content\/clusters\/b\/application\.md:5）recheckAfter 2026-10-24/,
+        expect: /警告：watch 有 1 筆過了 recheckAfter，新資料公告了就改那一行並更新或刪掉那一筆；還沒公告就把 recheckAfter 往後延。\n {2}watch\[0\]（src\/content\/clusters\/b\/application\.md:5）recheckAfter 2026-10-24/,
     },
     {
         name: '過了 watch 的 recheckAfter：Actions 上發 warning annotation',
@@ -543,7 +543,7 @@ const cliMutations = [
     ['recheckAfter 拿 remindAfter 比', 'dueKeeps(config, today)', 'dueKeeps(config, remindAfter)'],
     ['watch 的 recheckAfter 拿 remindAfter 比', 'dueWatches(config, today)', 'dueWatches(config, remindAfter)'],
     ['不看 watch', 'checkContent(files, config)', 'checkContent(files, { ...config, watch: [] })'],
-    ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延'],\n", ''],
+    ['過了 watch 的 recheckAfter 不警告也不寫報告', "    ['watch', dueWatches(config, today), '新資料公告了就改那一行並更新或刪掉那一筆；還沒公告就把 recheckAfter 往後延'],\n", ''],
     ['報告不截斷', 'writeFileSync(REPORT, text);', 'writeFileSync(REPORT, full);'],
     ['截斷說明不附網址', 'server && repo && run ?', 'false ?'],
     ['錯誤放在報告最後', "writeReport([['### 檢查的錯誤', '', ...list, ''], ...sections], true);", "writeReport([...sections, ['### 檢查的錯誤', '', ...list, '']], true);"],
