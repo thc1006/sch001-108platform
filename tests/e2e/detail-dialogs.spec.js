@@ -208,13 +208,16 @@ test.describe('國內外競賽的詳細資訊', () => {
         title, organizer: '主辦單位', category: '資訊', level: '全國', form: '個人', region: '台灣',
         eligibility: '公開報名', mode: '線上', url: 'https://example.com/', description: `${title}的摘要`, ...fields,
     });
-    const LONG = Array.from({ length: 12 }, (_, i) => `第 ${i + 1} 段寫報名方式、評分標準和獎項，字數多到對話框要捲動才看得完。`).join('\n');
+    const LONG = Array.from({ length: 20 }, (_, i) => `第 ${i + 1} 段寫報名方式、評分標準和獎項，字數多到對話框要捲動才看得完。`).join('\n');
+    // 真實資料的名稱中位數 16 字，最長 62 字。
+    const LONG_TITLE = 'Wharton Global High School Investment Competition 華頓商學院全球高中生投資競賽（線上）';
     const COMPETITIONS = [
         entry('沒有詳細資訊', {}),
         entry('有詳細資訊', { details: '第一段。\n第二段寫報名方式，只有這裡有甲乙丙。\n\n第三段。', sourceCheckedAt: '2026-11-01' }),
         entry('詳細資訊是空字串', { details: '' }),
         entry('詳細資訊只有空白', { details: '  \n ' }),
         entry('詳細資訊很長', { details: LONG }),
+        entry(LONG_TITLE, { details: LONG }),
     ];
     /** opener 回傳名稱是 title 的卡片上的「詳細資訊」按鈕。 */
     const opener = (page, title) =>
@@ -229,7 +232,7 @@ test.describe('國內外競賽的詳細資訊', () => {
     test('只有 details 不是空白的卡片有按鈕', async ({ page }) => {
         const titles = await page.locator('.comp-card').evaluateAll((cards) =>
             cards.filter((c) => c.querySelector('button')).map((c) => c.querySelector('h2').textContent));
-        expect(titles).toEqual(['有詳細資訊', '詳細資訊很長']);
+        expect(titles).toEqual(['有詳細資訊', '詳細資訊很長', LONG_TITLE]);
         // sr-only 的文字前後，Chromium 算名稱時會補空白。
         await expect(opener(page, '有詳細資訊')).toHaveAccessibleName(/^詳細資訊\s?：有詳細資訊$/);
         await expect(opener(page, '有詳細資訊')).toHaveAttribute('aria-haspopup', 'dialog');
@@ -322,16 +325,15 @@ test.describe('國內外競賽的詳細資訊', () => {
         expect(settled).toBe(y);
     });
 
-    test('320x256 也捲得到對話框最後的「前往官網」，一般尺寸不會多出捲軸', async ({ page }) => {
-        const button = opener(page, '詳細資訊很長');
-        await button.click();
+    test('320x256 也捲得到對話框最後的「前往官網」，內容短時不會多出捲軸', async ({ page }) => {
+        await opener(page, '有詳細資訊').click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
         expect(await dialog.evaluate((d) => d.scrollHeight - d.clientHeight)).toBe(0);
         await page.keyboard.press('Escape');
 
         await page.setViewportSize({ width: 320, height: 256 });
-        await button.click();
+        await opener(page, LONG_TITLE).click();
         const link = dialog.getByRole('link');
         await link.scrollIntoViewIfNeeded();
         const box = await link.boundingBox();
@@ -339,16 +341,25 @@ test.describe('國內外競賽的詳細資訊', () => {
         expect(box.y + box.height).toBeLessThanOrEqual(256);
     });
 
-    for (const { width, height, zoom } of [{ width: 320, height: 256 }, { width: 360, height: 640 }, { width: 1280, height: 720, zoom: true }]) {
+    test('Enter 開啟後按 PageDown，捲動的是對話框', async ({ page }) => {
+        await opener(page, '詳細資訊很長').focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeFocused();
+        await page.keyboard.press('PageDown');
+        await expect.poll(() => dialog.evaluate((d) => d.scrollTop)).toBeGreaterThan(0);
+    });
+
+    for (const { width, height, zoom } of [{ width: 320, height: 256 }, { width: 360, height: 640, zoom: true }, { width: 1280, height: 720, zoom: true }]) {
         test(`${width}x${height}${zoom ? ' 只放大文字到 200%' : ''}：能讀的區域至少有視窗高度的六成，捲到底看得到最後一段`, async ({ page }) => {
             await page.setViewportSize({ width, height });
-            await opener(page, '詳細資訊很長').click();
+            await opener(page, LONG_TITLE).click();
             const dialog = page.getByRole('dialog');
             await expect(dialog).toBeVisible();
             if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
             const m = await dialog.evaluate((d) => {
                 // 從內文區往上找真的在捲的那一層，量它的高度；捲到底之後內文最後一個元素要在它裡面。
-                const body = d.querySelector(':scope > .overflow-y-auto');
+                const body = d.querySelector('.comp-dialog__body');
                 let box = body;
                 while (box !== d && !(/auto|scroll/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight + 1)) box = box.parentElement;
                 box.scrollTop = box.scrollHeight;
