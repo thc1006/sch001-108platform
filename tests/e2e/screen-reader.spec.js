@@ -277,6 +277,12 @@ test('和旁邊文字重複的圖片 alt 是空字串', async ({ page }) => {
     }
 });
 
+test('藝廊焦點範例的圖庫照片和範例無關，alt 是空字串', async ({ page }) => {
+    await page.goto(P('learning-portfolio/portfolio-gallery.html'));
+    const featured = page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: '焦點範例', exact: true }) });
+    await expect(featured.locator('img')).toHaveAttribute('alt', '');
+});
+
 test.describe('核心素養對照表', () => {
     test('依學群篩選：相關的卡片名稱多出「（相關）」，status 念出筆數', async ({ page }) => {
         await page.goto(P('career-exploration/competency-map.html'));
