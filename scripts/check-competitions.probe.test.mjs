@@ -306,8 +306,17 @@ test('schedule：registrationNote 有長度上限', () => {
     const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
     assert.deepEqual(bad({ registrationNote: '報名開放中 · 依所在地活動時間' }), []);
     assert.ok(bad({ registrationNote: '' }).length > 0);
-    // 它會直接當狀態列文字，過長會撐破卡片版面
+    // 競賽頁把它原樣放進截止欄或狀態徽章，過長會撐高版面
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
+});
+
+test('schedule：deadline 要晚於 opensAt 的台北日期', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+    assert.deepEqual(bad({ opensAt: '2026-11-23T09:00:00+08:00', deadline: '2026-12-11' }), []);
+    assert.ok(bad({ opensAt: '2026-12-15T00:00:00+08:00', deadline: '2026-12-11' }).some((m) => m.includes('不晚於 opensAt')));
+    assert.ok(bad({ opensAt: '2026-12-11T09:00:00+08:00', deadline: '2026-12-11' }).some((m) => m.includes('不晚於 opensAt')));
+    // 2026-12-14 20:00 美東是台北 12-15 09:00，台北日期已經是截止日。
+    assert.ok(bad({ opensAt: '2026-12-14T20:00:00-05:00', deadline: '2026-12-15' }).some((m) => m.includes('（2026-12-15）')));
 });
 
 test('details 在欄位白名單裡，拿掉的話資料一有 details 就會被當成未知欄位', () => {
