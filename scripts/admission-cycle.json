@@ -1368,6 +1368,20 @@
       "recheckAfter": "2027-03-31"
     },
     {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "申請入學 3 月 23、24 日報名，3 月 30 日公告第一階段篩選結果",
+      "cycle": 116,
+      "reason": "照甄選會 116 學年度申請入學重要時程（apply116/schedule.php）寫，行內沒有學年度，檢查看不到。117 學年度的重要時程公告後重對日期。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/finance/application.md",
+      "text": "筆試、面試在 5 月 13 日到 30 日之間，各系自訂",
+      "cycle": 116,
+      "reason": "照甄選會 116 學年度申請入學重要時程的指定項目甄試日期（116.05.13 至 116.05.30，大學自訂）寫，行內沒有學年度，檢查看不到。117 學年度的重要時程公告後重對日期。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
       "file": "src/content/clusters/mass-comm/application.md",
       "text": "116 學年度的上傳操作說明手冊還沒公告。",
       "cycle": 116,
