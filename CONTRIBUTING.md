@@ -226,9 +226,9 @@ export function sameSite(aHost, bHost) {
 
 - 新增的命中：改寫那一句。
 - 照抄的外部原文、官方名稱或當反例引用的句子：在 `scripts/writing-allow.json` 寫明原文片段、出處和理由。
-- 比基準少：在同一個 PR 下修基準。先執行 `npm run build:deployable` 重建 dist，再執行 `npm run check:writing -- --update-baseline`，把 `scripts/writing-policy.json` 一起 commit。沒有本機環境的話，直接把那一行的數字改成錯誤訊息上的筆數。
+- 比基準少：重建後執行 `npm run check:writing -- --update-baseline`，把 `scripts/writing-policy.json` 一起 commit；沒有本機環境就把那一行的數字改成錯誤訊息上的筆數。
 
-改名或搬移有命中的檔案，要在同一個 PR 清掉命中，基準不收新的檔案。
+改名或搬移有命中的檔案，要在同一個 PR 清掉命中。
 
 這些地方不檢查：
 
@@ -237,7 +237,6 @@ export function sameSite(aHost, bHost) {
 - 書名
 - 用 `<q>` 標出，或寫明「逐字」「原文」的引文
 - 「」裡只有外文的原文，不查破折號和刪節號
-- `scripts/writing-allow.json` 列的片段
 - 在「」裡談某個詞、前後寫了「這類」「例如」的地方
 
-出處和有沒有新資訊，靠審查的人從頭讀一遍。讀的時候也看：換到別的學群或網站也成立的句子，沒有說到這裡的事；「一方面……另一方面」後面要有結論；兩段對調還讀得通，表示段落沒接上；「可能」「或許」「通常」一句留一個；同一件事用同一個稱呼；編號小節每節只有一兩句就併成一段；「X 的 Y：A、B 與 C」這種標題，改成說出這一節內容的短標題。commit 訊息和 PR 說明照同樣的寫法。
+出處和有沒有新資訊靠審查的人從頭讀，也看：換到別的學群也成立的句子、沒有結論的「一方面……另一方面」、對調後還讀得通的段落、疊用的「可能」「或許」、同一件事換了稱呼、只有一兩句的編號小節。commit 訊息和 PR 說明照同樣的寫法。
