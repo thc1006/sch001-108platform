@@ -825,3 +825,34 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ registrationNote: '由學校報名' }), due('由學校報名'));
     assert.deepEqual(at({}), due('依官網公告'));
 });
+
+// 對話框的截止欄是 deadlineField，沒有 deadline 又有賽事日期時寫的是賽事日期。registrationNote 這時只能在徽章裡。
+test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截止欄有 registrationNote 全文', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => {
+        const m = src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`));
+        assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
+        return m[0];
+    };
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
+        'eventLabel', 'deadlineField', 'deadlineLabel', 'dialogBadge'].map(grab).join('\n');
+    const f = new Function(`${bundle}; return { getStatus, deadlineField, dialogBadge };`)();
+    const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
+    const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
+    assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
+    let inBadge = 0;
+    for (const c of list) {
+        const s = f.getStatus(c);
+        const dField = f.deadlineField(c, s);
+        const badge = f.dialogBadge(s, dField);
+        const note = c.registrationNote.trim();
+        assert.ok(badge.includes(note) || dField.value.includes(note), `${c.title}：徽章「${badge}」、截止欄「${dField.value}」`);
+        if (badge.includes(note)) inBadge++;
+        // 徽章和截止欄不寫同一句。
+        assert.notEqual(badge, dField.value, c.title);
+    }
+    assert.ok(inBadge > 0, '前置：要有 registrationNote 只放得進徽章的競賽');
+    // 沒有 registrationNote 的「依官網」用短標籤。
+    assert.equal(f.dialogBadge(f.getStatus({}), f.deadlineField({}, f.getStatus({}))), '依官網公告');
+});

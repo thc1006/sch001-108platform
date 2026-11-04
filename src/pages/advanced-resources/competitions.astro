@@ -422,6 +422,13 @@ import data from '../../../public/advanced-resources/competitions.json';
         return { label: '報名截止', value: c.deadline || (s.note ? s.label : '依官網公告') };
       }
 
+      // dialogBadge 是對話框的徽章。截止欄 dField 寫的是賽事日期時，registrationNote 放在徽章；
+      // 週期型的徽章帶下次截止日。其餘用短標籤，同一件事不寫兩次。
+      function dialogBadge(s, dField) {
+        if ((s.note && dField.value !== s.label) || s.key === 'cycle') return statusText(s);
+        return badgeText(s);
+      }
+
       // footHtml 是截止欄與「前往官網」。dField 是 { label, value }。
       function footHtml(c, dField) {
         // 逐筆的官網查證日期。頂層 lastUpdated 只是「檔案何時被改」，把它顯示成
@@ -492,10 +499,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         // 一行一段，報讀軟體可以按段落跳。
         const details = c.details.split('\n').filter((line) => line.trim())
           .map((line) => '<p>' + markEnglishQuotes(escapeHtml(line)) + '</p>').join('');
-        // 對話框的徽章用完整的 statusText，registrationNote 和下次截止日只在這裡。截止欄沒有賽事日期時
-        // 寫的就是 registrationNote，這時徽章改用短標籤，不重複。
         const dField = deadlineField(c, s);
-        const status = statusText(s) === dField.value ? badgeText(s) : statusText(s);
         // 只有標題列固定，其餘跟著內文捲動，視窗矮或放大文字時讀得到的範圍才夠大。
         dialog.innerHTML =
           '<div class="comp-dialog__head">' +
@@ -503,7 +507,7 @@ import data from '../../../public/advanced-resources/competitions.json';
             '<button type="button" class="comp-dialog__close" aria-label="關閉"><span aria-hidden="true">&times;</span></button>' +
           '</div>' +
           '<div class="comp-dialog__body overflow-y-auto ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
-            kickerHtml(c, status) +
+            kickerHtml(c, dialogBadge(s, dField)) +
             '<p class="comp-dialog__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
             '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
             '<p class="comp-dialog__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
