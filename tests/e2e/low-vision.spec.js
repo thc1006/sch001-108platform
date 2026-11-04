@@ -358,6 +358,19 @@ test('競賽卡片的狀態說明在 320px 寬不會超出卡片', async ({ page
     expect(clipped).toEqual([]);
 });
 
+// 欄數照 rem 算。用 px 的媒體查詢時，只放大文字到 200% 的 1280 寬仍是三欄，每欄只剩約 6 個中文字。
+test('只放大文字到 200% 時，1280 寬的競賽卡片文字至少 15em 寬', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
+    await page.locator('.comp-card').first().waitFor();
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    const narrow = await page.locator('.comp-card__desc').evaluateAll((els) => els
+        .filter((el) => el.getBoundingClientRect().width < 15 * parseFloat(getComputedStyle(el).fontSize))
+        .map((el) => el.closest('.comp-card').querySelector('h2').textContent));
+    expect(narrow).toEqual([]);
+});
+
 test('已截止的競賽卡片，次要文字仍有 4.5:1', async ({ page }) => {
     // 卡片有淡入動畫，減少動態偏好下不播，量到的就是停下來的樣子。
     await page.emulateMedia({ reducedMotion: 'reduce' });
