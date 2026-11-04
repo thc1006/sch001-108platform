@@ -119,7 +119,7 @@ test('scriptStrings：模板、巢狀模板、屬性、正規式與 console', ()
         'img = `<img alt="《${b.title}》封面" data-alt="不收" title=說明>`;',
         'const y = a / b; z = "中文"; re = new RegExp("不是顯示");',
     ].join('\n');
-    const out = scriptStrings(code).map((s) => s.replaceAll(PH, '〇'));
+    const out = scriptStrings(code).map((s) => s.text.replaceAll(PH, '〇'));
     assert.deepEqual(out, ['顯示〇文字', '〇的能力', '前〇後', '《〇》封面', '說明', '中文']);
 });
 
@@ -304,8 +304,16 @@ test('allowCovers：片段旁邊新加的命中不放行', () => {
     assert.equal(allowCovers(okEntry, b, b.text.indexOf('我學到很多') + 3, 2), true);
 });
 
+test('scriptStrings：模板裡的 <b>、<strong> 和後面的冒號交給 F01', () => {
+    const code = 'el.innerHTML = `<li><b>結構完整：</b> 計畫涵蓋完整流程</li><li><strong class="x">Week 1</strong> ：讀文獻</li><li><b>重點</b>在後面</li>`;';
+    assert.deepEqual(scriptStrings(code)[0].bold, [{ own: '結構完整：', label: true }, { own: 'Week 1', label: true }, { own: '重點', label: false }]);
+    const $ = cheerio.load(`<html><body><main><p>內文</p></main><script>${code}</script></body></html>`);
+    const hits = findHits(pageBlocks($, 'a.html')).hits.filter((h) => h.rule === 'F01-bold-label').map((h) => h.match);
+    assert.deepEqual(hits, ['結構完整：', 'Week 1']);
+});
+
 test('scriptStrings：正規式字元類別裡的 / 不結束正規式', () => {
-    assert.deepEqual(scriptStrings('const r = /[/"]x/; a = "中文";'), ['中文']);
+    assert.deepEqual(scriptStrings('const r = /[/"]x/; a = "中文";').map((s) => s.text), ['中文']);
 });
 
 test('isMention：「例如」後面的引號算在談詞語', () => {

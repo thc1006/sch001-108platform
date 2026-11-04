@@ -146,10 +146,10 @@ export function pageBlocks($, page, { withChrome = false, seenScripts = new Set(
     for (const p of ['og:title', 'og:description']) attr(`attr:${p}`, $(`meta[property="${p}"]`).attr('content'));
     $(DISPLAY_ATTRS.map((a) => `body [${a}]`).join(', ')).each((_, el) => { for (const a of DISPLAY_ATTRS) attr(`attr:${a}`, $(el).attr(a)); });
     $('script:not([src])').each((_, el) => {
-        for (const t of scriptStrings($(el).html() || '')) {
-            if (seenScripts.has(t)) continue;
-            seenScripts.add(t);
-            blocks.push(plain(page, 'html', 'script', t));
+        for (const { text, bold } of scriptStrings($(el).html() || '')) {
+            if (seenScripts.has(text)) continue;
+            seenScripts.add(text);
+            blocks.push(plain(page, 'html', 'script', text, { bold }));
         }
     });
     return blocks;
@@ -179,10 +179,10 @@ export function jsonBlocks(data, page, load) {
 }
 
 /**
- * scriptStrings 取出程式碼裡會顯示的中文字串常值。逐字掃描：註解和正規式字面值跳過；模板字串的 ${…} 換成 PH，
- * 裡面的巢狀字串另外取出；console.*(…) 的引數與傳給 RegExp、match、replace 等的字串不算。模板裡的
- * alt、title、aria-label、placeholder 屬性另算一段，其餘標籤去掉。不加 parser 依賴，所以正規式只用前一個
- * 字元判斷。
+ * scriptStrings 取出程式碼裡會顯示的中文字串常值，回傳 { text, bold }，bold 和 blocksFrom 的一樣。逐字掃描：
+ * 註解和正規式字面值跳過；模板字串的 ${…} 換成 PH，裡面的巢狀字串另外取出；console.*(…) 的引數與傳給
+ * RegExp、match、replace 等的字串不算。模板裡的 alt、title、aria-label、placeholder 屬性另算一段，其餘標籤
+ * 去掉。不加 parser 依賴，所以正規式只用前一個字元判斷。
  */
 export function scriptStrings(code) {
     const out = [];
@@ -196,6 +196,7 @@ export function scriptStrings(code) {
         }
         skipRanges.push([m.index, i]);
     }
+    const clean = (s) => s.replace(/\\n/g, ' ').replace(/\\(.)/g, '$1').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const push = (raw, start) => {
         if (skipRanges.some(([a, b]) => start >= a && start <= b)) return;
         const line = code.slice(code.lastIndexOf('\n', start) + 1, start);
@@ -204,10 +205,15 @@ export function scriptStrings(code) {
         if (!/\p{Script=Han}/u.test(raw) && !curly) return;
         for (const am of raw.matchAll(/(?<![\w-])(?:alt|title|aria-label|placeholder)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>=`]+))/g)) {
             const v = (am[1] ?? am[2] ?? am[3]).replace(/\s+/g, ' ').trim();
-            if (/\p{Script=Han}/u.test(v)) out.push(v);
+            if (/\p{Script=Han}/u.test(v)) out.push({ text: v, bold: [] });
         }
-        const t = raw.replace(/\\n/g, ' ').replace(/\\(.)/g, '$1').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        if (/\p{Script=Han}/u.test(t) || curly) out.push(t);
+        const t = clean(raw);
+        // 計畫範本這類模板裡的「<b>標籤：</b>說明」清單，標籤去掉之後 F01 就看不到了。
+        const bold = [...raw.matchAll(/<(b|strong)\b[^>]*>([\s\S]*?)<\/\1>\s*/g)].map((m) => {
+            const own = clean(m[2]);
+            return { own, label: /[：:]$/.test(own) || /^[：:]/.test(raw.slice(m.index + m[0].length)) };
+        });
+        if (/\p{Script=Han}/u.test(t) || curly) out.push({ text: t, bold });
     };
     for (let i = 0; i < code.length; i++) {
         const c = code[i];

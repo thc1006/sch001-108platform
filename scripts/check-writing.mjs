@@ -86,7 +86,7 @@ const dataFiles = distFiles.filter((f) => (f.endsWith('.json') && !/(^|\/)(searc
 for (const f of dataFiles) {
     const content = readFileSync(path.join(DIST, f), 'utf8');
     if (f.endsWith('.js')) {
-        for (const t of scriptStrings(content)) blocks.push({ page: `public/${f}`, kind: 'json', tag: 'script', text: t, skip: ' '.repeat(t.length), bold: [] });
+        for (const { text, bold } of scriptStrings(content)) blocks.push({ page: `public/${f}`, kind: 'json', tag: 'script', text, skip: ' '.repeat(text.length), bold });
     } else blocks.push(...jsonBlocks(JSON.parse(content), `public/${f}`, cheerio.load));
 }
 // 每頁都要掃到文字。版面或抽取壞掉時，檢查不能因為沒東西可查而通過。
