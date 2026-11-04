@@ -948,7 +948,8 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     }
     assert.equal(aime.eventStartsAt, '2027-02-05');
     assert.equal(aime.eventEndsAt, '2027-02-06');
-    assert.match(aime.url, /maa-invitational-competitions/);
+    // 台灣考生向九九文教基金會報名，url 指向它的 AMC 頁（AIME 分頁）。
+    assert.equal(aime.url, 'https://www.99cef.org.tw/maa-amc/');
 
     // IJSO 官網逐字：「for students who are fifteen years or younger on 31st December of the
     // competition year」，且 2026 屆在保加利亞索菲亞（舊資料寫德國是錯的）
