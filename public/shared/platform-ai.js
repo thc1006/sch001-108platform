@@ -887,16 +887,15 @@
     // 看不懂的 phase（閘道日後新增的）回傳 null：畫面維持上一句，不要倒退回「正在連線」
     function phaseText(progress) {
         var p = progress || {};
-        var round = Number.isFinite(p.round) && p.round > 1 ? '（第 ' + p.round + ' 輪）' : '';
         switch (p.phase) {
             case 'accepted': return '已送出，等待 AI 開始…';
             case 'queued':
                 return p.position > 1 ? '排隊中，前面還有 ' + (p.position - 1) + ' 位…' : '排隊中，下一個就輪到你…';
             // 排過隊的任務輪到了；到第一個 token 之前，WinLab 忙的時候可能還要等一兩分鐘
             case 'started': return '輪到你了，等待 AI 開始回應…';
-            case 'thinking': return 'AI 正在思考' + round + '…';
-            case 'writing': return 'AI 正在撰寫回答' + round + '…';
-            case 'continuing': return '回答比較長，AI 正在接著寫' + round + '…';
+            case 'thinking': return 'AI 正在思考…';
+            case 'writing': return 'AI 正在撰寫回答…';
+            case 'continuing': return '回答比較長，AI 正在接著寫…';
             case 'retrying': return 'AI 服務有點忙，' + formatSeconds(retrySeconds(p)) + '後自動重試…';
             default: return null;
         }

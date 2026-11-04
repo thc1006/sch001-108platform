@@ -2082,8 +2082,8 @@ test.describe('PlatformAI 共用 module', () => {
                 [{ phase: 'started' }, '輪到你了，等待 AI 開始回應…'],
                 [{ phase: 'thinking', round: 1, thinkingTokens: 100 }, 'AI 正在思考…'],
                 [{ phase: 'writing', round: 1 }, 'AI 正在撰寫回答…'],
-                [{ phase: 'continuing', round: 2, reason: 'length' }, '回答比較長，AI 正在接著寫（第 2 輪）…'],
-                [{ phase: 'thinking', round: 2 }, 'AI 正在思考（第 2 輪）…'],
+                [{ phase: 'continuing', round: 2, reason: 'length' }, '回答比較長，AI 正在接著寫…'],
+                [{ phase: 'thinking', round: 2 }, 'AI 正在思考…'],
                 [{ phase: 'retrying', round: 2, attempt: 1, delayMs: 2500 }, 'AI 服務有點忙，3 秒後自動重試…'],
                 // 閘道日後新增的階段：維持上一句，不要倒退回「正在連線」
                 [{ phase: 'some-future-phase' }, 'AI 服務有點忙，3 秒後自動重試…'],
@@ -2120,7 +2120,7 @@ test.describe('PlatformAI 共用 module', () => {
             await expect(status).toHaveText('AI 服務有點忙，4 秒後自動重試…');
             await page.evaluate(() => window.__progress.update({ phase: 'thinking', round: 2 }));
             await page.clock.runFor(5_000);
-            await expect(status).toHaveText('AI 正在思考（第 2 輪）…');
+            await expect(status).toHaveText('AI 正在思考…');
         });
 
         // role=status 的內容一變就會被唸出來，秒數放在裡面就會每秒插話。

@@ -121,12 +121,12 @@ for (const p of PAGES) {
             await expect(result).toContainText('建議：1. 寫出負責的工作');
         });
 
-        test('收到 progress 事件 → 工作區的進度文字跟著換，例如「AI 正在思考（第 2 輪）…」', async ({ page }) => {
+        test('收到 progress 事件 → 工作區的進度文字跟著換，例如「AI 正在思考…」', async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await page.fill('#reflectionInput', '心得');
             await page.click('#analyzeBtn');
             await page.evaluate((chunk) => window.__stream.push(chunk), sse('progress', { phase: 'thinking', round: 2 }));
-            await expect(page.locator('#analysisWork').getByRole('status')).toHaveText('AI 正在思考（第 2 輪）…');
+            await expect(page.locator('#analysisWork').getByRole('status')).toHaveText('AI 正在思考…');
         });
 
         test('AI 回傳含 HTML 標籤的文字 → 每個欄位都當純文字原樣顯示，不產生 img／script 元素，也不執行', async ({ page }) => {
