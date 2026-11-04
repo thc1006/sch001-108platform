@@ -173,7 +173,16 @@ import data from '../../../public/advanced-resources/competitions.json';
       const resetBtn = document.getElementById('filter-reset');
       const dialog = document.getElementById('comp-dialog');
       const detail = DetailDialog.setup(dialog);
-      dialog.addEventListener('close', () => { dialog.innerHTML = ''; });
+      let lastOpener = null;
+      // 搜尋框停 160ms 才 render()。這段時間內開啟對話框，按鈕會被換掉，detail-dialog.js 還不了焦點，
+      // 就交給同一筆的新按鈕，篩掉了就交給搜尋框。
+      dialog.addEventListener('close', () => {
+        dialog.innerHTML = '';
+        if (lastOpener && !lastOpener.isConnected) {
+          (grid.querySelector('.comp-more[data-idx="' + lastOpener.dataset.idx + '"]') || searchInput).focus();
+        }
+        lastOpener = null;
+      });
 
       function escapeHtml(v) {
         return String(v).replace(/[&<>"']/g, (c) => (
@@ -516,6 +525,7 @@ import data from '../../../public/advanced-resources/competitions.json';
             footHtml(c, dField) +
           '</div>';
         dialog.querySelector('.comp-dialog__close').addEventListener('click', detail.close);
+        lastOpener = opener;
         detail.open(opener);
       }
 

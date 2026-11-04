@@ -395,6 +395,21 @@ test.describe('國內外競賽的詳細資訊', () => {
         });
     }
 
+    // 搜尋框停 160ms 才重新渲染卡片，這段時間內開啟對話框，按鈕會在對話框開著時被換掉。
+    for (const [term, where] of [['', '同一筆的新按鈕'], ['很長', '搜尋框']]) {
+        test(`開著時卡片被重新渲染，關閉後焦點交給${where}`, async ({ page }) => {
+            const button = opener(page, '有詳細資訊');
+            await button.click();
+            await expect(page.getByRole('dialog')).toBeVisible();
+            const old = await button.elementHandle();
+            await page.locator('#search-input').evaluate((el, t) => { el.value = t; el.dispatchEvent(new Event('input')); }, term);
+            await expect.poll(() => old.evaluate((el) => el.isConnected)).toBe(false);
+            await page.keyboard.press('Escape');
+            await expect(page.getByRole('dialog')).toBeHidden();
+            await expect(term ? page.locator('#search-input') : opener(page, '有詳細資訊')).toBeFocused();
+        });
+    }
+
     test('搜尋只出現在 details 的字也找得到那張卡片', async ({ page }) => {
         await page.locator('#search-input').fill('甲乙丙');
         await expect(page.locator('.comp-card h2')).toHaveText(['有詳細資訊']);
