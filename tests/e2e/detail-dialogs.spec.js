@@ -238,6 +238,13 @@ test.describe('國內外競賽的詳細資訊', () => {
         await expect(opener(page, '有詳細資訊')).toHaveAttribute('aria-haspopup', 'dialog');
     });
 
+    test('畫面上類型與狀態在名稱上面，DOM 裡名稱在前面', async ({ page }) => {
+        const card = page.locator('.comp-card').first();
+        const top = (sel) => card.locator(sel).evaluate((el) => el.getBoundingClientRect().top);
+        expect(await top('.comp-kicker')).toBeLessThan(await top('h2'));
+        expect(await card.locator('.comp-card__body > *').first().evaluate((el) => el.matches('h2.comp-card__title'))).toBe(true);
+    });
+
     test('Enter 開啟，焦點移進對話框，details 一行一段，Esc 關閉後回到按鈕', async ({ page }) => {
         const button = opener(page, '有詳細資訊');
         await button.focus();

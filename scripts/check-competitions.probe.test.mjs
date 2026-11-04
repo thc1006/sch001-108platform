@@ -886,3 +886,15 @@ test('card：沒有 details、沒有 deadline 的卡片看得到 registrationNot
     assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
     for (const c of list) assert.ok(cardText(render(c)).includes(c.registrationNote.trim()), c.title);
 });
+
+test('card：截止欄沒有 details 時放完整時程、有 details 時只放一項；DOM 裡名稱在最前面', async () => {
+    const render = await cardRenderer();
+    const value = (html) => html.match(/<span class="comp-deadline__value">([^<]*)<\/span>/)[1];
+    const cycle = { title: '測試', organizer: '主辦單位', category: '資訊', url: 'https://example.com/', description: '摘要', deadline: '2000-07-01', cycle: { closes: '07' } };
+    assert.equal(value(render(cycle)), '本屆 2000-07-01 已截止 · 每年約 7 月');
+    assert.equal(value(render({ ...cycle, details: '詳細內容' })), '每年約 7 月');
+    // 用 H 鍵跳到名稱的人，接著聽到的是這張卡片的類型與狀態。
+    for (const c of [cycle, { ...cycle, details: '詳細內容' }]) {
+        assert.match(render(c), /^<article[^>]*><div class="comp-card__body"><h2 class="comp-card__title">/);
+    }
+});
