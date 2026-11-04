@@ -176,7 +176,8 @@ list.forEach((comp, index) => {
     }
     validateCycle(comp.cycle, label, schemaErrors);
     // 報名時程與賽事日期（deadlineAt / opensAt / eventStartsAt / eventEndsAt /
-    // registrationNote / sourceCheckedAt）皆選填，但填了就必須合法且自洽。
+    // registrationNote / sourceCheckedAt），以及 recheckOn、recheckNote、sourceNote、details，皆選填，
+    // 但填了就必須合法且自洽。
     validateSchedule(comp, label, schemaErrors);
 
     // deadline：必須存在且為字串；空字串代表「依官網公告」

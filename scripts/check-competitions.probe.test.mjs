@@ -310,6 +310,27 @@ test('schedule：registrationNote 有長度上限', () => {
     assert.ok(bad({ registrationNote: '報'.repeat(31) }).some((m) => m.includes('過長')));
 });
 
+test('details 在欄位白名單裡，拿掉的話資料一有 details 就會被當成未知欄位', () => {
+    assert.ok(ALLOWED_COMPETITION_FIELDS.has('details'));
+});
+
+test('schedule：details 選填，填了不能是空的或前後有空白', () => {
+    const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
+    assert.deepEqual(bad({ details: '第 19 屆初選報名 2026-01-05 至 01-12。' }), []);
+    assert.ok(bad({ details: '' }).some((m) => m.includes('details')));
+    assert.ok(bad({ details: '內容 ' }).some((m) => m.includes('details')));
+    assert.ok(bad({ details: 3 }).some((m) => m.includes('details')));
+    assert.ok(bad({ details: '細'.repeat(1201) }).some((m) => m.includes('過長')));
+    assert.deepEqual(bad({ details: '細'.repeat(1200) }), []);
+    const summary = '國際青年科學家的研究競賽，個人或兩人一組。';
+    assert.ok(bad({ description: summary, details: `第一段。${summary}第三段。` }).some((m) => m.includes('重複')), '重複在中間那句也要擋');
+    assert.ok(bad({ description: `${summary}免費參加。`, details: '免費參加。其他的事。' }).every((m) => !m.includes('重複')), '短句重複不擋');
+    assert.ok(bad({ description: '摘'.repeat(81), details: '其他。' }).some((m) => m.includes('上限 80')));
+    assert.deepEqual(bad({ description: '摘'.repeat(80), details: '其他。' }), []);
+    // 字數照 code point 算：80 個 emoji 是 160 個 UTF-16 單位，仍算 80 字。
+    assert.deepEqual(bad({ description: '😀'.repeat(80), details: '其他。' }).filter((m) => m.includes('上限')), []);
+});
+
 test('schedule：sourceNote 選填，填了不能是空的或前後有空白', () => {
     const bad = (comp) => errsOf((e) => validateSchedule(comp, 'X', e));
     assert.deepEqual(bad({ sourceNote: '2026-10-25 查證時官網首頁沒有日期。' }), []);

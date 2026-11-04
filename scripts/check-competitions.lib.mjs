@@ -50,6 +50,8 @@ export const ALLOWED_COMPETITION_FIELDS = new Set([
     'recheckNote',
     // 給維護者的查證紀錄（選填，頁面不顯示）
     'sourceNote',
+    // 卡片「詳細資訊」對話框的內容（選填）；卡片上只放 description
+    'details',
 ]);
 
 // 連結健檢的實作在 link-health.lib.mjs。競賽看門狗與全站外部連結健檢都會在 runner 上、
@@ -175,9 +177,16 @@ export function validateInstant(value, field, label, errors) {
 }
 
 const SOURCE_NOTE_MAX = 1000;
+// 2026-11-05 量的：拆欄前最長的 description 是 1,144 個 code point。
+const DETAILS_MAX = 1200;
+// 有 details 時 description 是卡片上的摘要。卡片寬約 22 字，80 字約 4 行。
+const SUMMARY_MAX = 80;
+// 摘要裡 12 字以上的句子原樣出現在 details，對話框會念兩次。短句像「免費參加。」重複無妨。
+const REPEAT_MIN = 12;
 
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
+ * 也驗證同樣選填、填了就要合法的 recheckOn、recheckNote、sourceNote、registrationNote、details。
  *
  * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對：那需要假設一個
  * 時區，而假設時區正是這組欄位要消滅的東西。
@@ -201,11 +210,27 @@ export function validateSchedule(comp, label, errors) {
         }
     }
 
+    if (comp.details !== undefined) {
+        if (typeof comp.details !== 'string' || !comp.details || comp.details.trim() !== comp.details) {
+            errors.push(`「${label}」的 details 必須是非空字串，前後不能有空白`);
+        } else if ([...comp.details].length > DETAILS_MAX) {
+            errors.push(`「${label}」的 details 過長（上限 ${DETAILS_MAX} 字，目前 ${[...comp.details].length} 字）`);
+        } else if (typeof comp.description === 'string' && comp.description) {
+            if ([...comp.description].length > SUMMARY_MAX) {
+                errors.push(`「${label}」有 details，description 是卡片上的摘要，上限 ${SUMMARY_MAX} 字，目前 ${[...comp.description].length} 字`);
+            }
+            // 對話框先顯示 description 再接 details。
+            const repeated = comp.description.split(/(?<=[。！？])/).map((s) => s.trim())
+                .filter((s) => [...s].length >= REPEAT_MIN && comp.details.includes(s));
+            for (const s of repeated) errors.push(`「${label}」的 details 原樣重複了 description 的「${s}」`);
+        }
+    }
+
     if (comp.registrationNote !== undefined) {
         if (typeof comp.registrationNote !== 'string' || comp.registrationNote.trim() === '') {
             errors.push(`「${label}」的 registrationNote 必須是非空字串`);
         } else if ([...comp.registrationNote.trim()].length > 30) {
-            // 它會直接當成卡片的狀態列文字，過長會撐破版面。詳細說明請寫進 description。
+            // 它會直接當成卡片的狀態列文字，過長會撐破版面。詳細說明請寫進 details。
             errors.push(`「${label}」的 registrationNote 過長（上限 30 字，目前 ${[...comp.registrationNote.trim()].length} 字）`);
         }
     }
