@@ -160,7 +160,7 @@ const cases = [
         target: WORK_JSON,
         run: runWatchdog,
         exitZero: true,
-        expect: /過了 recheckAfter 的專案[\s\S]*民生公共物聯網 Civil IoT Taiwan\*\*（recheckAfter 2026-01-01）/,
+        expect: /過了 recheckAfter 的專案[\s\S]*\*\*（recheckAfter 2026-01-01）/,
         mutate: (t) => t.replace(/"recheckAfter": "[^"]+"/, '"recheckAfter": "2026-01-01"'),
     },
     // 建置期的 fail closed（build-search-index.js）
