@@ -810,7 +810,9 @@ import data from '../../../public/advanced-resources/competitions.json';
     }
 
     .comp-gridwrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
-    .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    /* 欄數照卡片的最小寬度 18rem 決定，不用 px 的媒體查詢：只放大文字時斷點不變，1280 寬仍是三欄，
+       每欄只剩約 6 個中文字。一般字級時 1280 寬三欄，1024、768 寬兩欄，360 寬一欄。 */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: 2rem; }
     .comp-loading { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 4rem 0; }
 
     /* 卡片用 subgrid 和同一列的卡片共用三列：內文、「詳細資訊」、截止欄。內文或截止欄的行數不同時，
@@ -924,14 +926,12 @@ import data from '../../../public/advanced-resources/competitions.json';
       .comp-gridwrap { max-width: min(80rem, 100% - 4rem); }
       .comp-hero__inner, .comp-controls__inner { max-width: min(77rem, 100% - 4rem); }
     }
-    @media (max-width: 1024px) { .comp-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 860px) { .comp-selects { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 620px) {
       .comp-hero { padding: 2.75rem 1.25rem 1.5rem; }
       .comp-stats { gap: 1.5rem; }
       .stat-num { font-size: 2rem; }
       .comp-updated { width: 100%; margin: .25rem 0 0; }
-      .comp-grid { grid-template-columns: 1fr; }
       /* 面板本身在手機上也太厚：收緊內距與各列間距，實測省下約 60px。
          向下捲動時整個讓開的部分在 shared/sticky-filters.js。
          .comp-chips 維持換行，做成單行橫向捲動的話實測反而變高（431→462px）：
