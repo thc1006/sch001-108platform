@@ -445,7 +445,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         if (c.deadline) return { label: '報名截止', value: c.deadline };
         // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
         if (s.note) return { label: '報名', value: s.label };
-        return { label: '報名截止', value: '依官網公告' };
+        // 什麼時程都沒有。徽章已經寫了「依官網公告」，截止欄不寫同一句。
+        return { label: '報名截止', value: '未公布' };
       }
 
       // fullDeadline 是對話框和沒有 details 的卡片的截止欄。尚未開放時不用 deadlineField：它的內容從開放日
@@ -453,7 +454,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       function fullDeadline(c, s) {
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: eventLabel(c) };
         const dField = deadlineField(c, s);
-        return s.note && dField.value === s.label ? { label: '報名', value: dField.value } : dField;
+        if (s.note && dField.value === s.label) return { label: '報名', value: dField.value };
+        return dField.value === '依官網公告' ? { label: dField.label, value: '未公布' } : dField;
       }
 
       // dialogBadge 是截止欄為 deadlineField 時的徽章，用在對話框和沒有 details 的卡片。截止欄 dField

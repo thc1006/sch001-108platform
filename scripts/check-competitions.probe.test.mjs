@@ -825,7 +825,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 開放、2100-03-01 截止' });
     assert.deepEqual(at({ opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 開放' });
     assert.deepEqual(at({ registrationNote: '由學校報名' }), { label: '報名', value: '由學校報名' });
-    assert.deepEqual(at({}), due('依官網公告'));
+    assert.deepEqual(at({}), due('未公布'));
 });
 
 // 對話框的截止欄是 deadlineField，沒有 deadline 又有賽事日期時寫的是賽事日期。registrationNote 這時只能在徽章裡。
@@ -870,8 +870,9 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     const yearly = f.getStatus({ cycle: { closes: '03-15' } });
     assert.equal(yearly.label, '每年固定辦理');
     assert.equal(f.dialogBadge(yearly, f.fullDeadline({ cycle: { closes: '03-15' } }, yearly)), `每年固定辦理，下次約 ${yearly.next} 截止`);
-    // 沒有 registrationNote 的「依官網」用短標籤。
-    assert.equal(f.dialogBadge(f.getStatus({}), f.fullDeadline({}, f.getStatus({}))), '依官網公告');
+    // 什麼時程都沒有時，徽章是「依官網公告」，截止欄是「未公布」，不寫同一句。
+    const none = f.fullDeadline({}, f.getStatus({}));
+    assert.deepEqual([f.dialogBadge(f.getStatus({}), none), none.value], ['依官網公告', '未公布']);
 });
 
 /** cardHtml 抽出競賽頁的 cardHtml 和它用到的函式，回傳畫一張卡片的 render(c)。 */
