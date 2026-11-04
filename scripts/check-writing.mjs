@@ -192,6 +192,7 @@ const context = (h) => readable(h.block.text.slice(Math.max(0, h.index - 20), h.
 const rows = RULES.map((r) => [r.id, r.severity, hits.filter((h) => h.rule === r.id).length]);
 console.log('規則  嚴重度  筆數');
 for (const [id, sev, n] of rows) console.log(`${id}  ${sev}  ${n}`);
+console.log('代號的字母：W 用詞、P 標點、S 句型、C 出處、F 粗體、K 沒刪乾淨的字、U 介面文字，說明見 CONTRIBUTING.md 的「網站內容」。');
 console.log(`\n掃了 ${htmlPages.length} 頁、${dataFiles.length} 個資料檔，${blocks.length} 個區塊。`);
 for (const w of allowWarnings) console.log(`警告：writing-allow.json ${w}`);
 if (under.length) {
