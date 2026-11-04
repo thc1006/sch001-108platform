@@ -455,11 +455,11 @@ import data from '../../../public/advanced-resources/competitions.json';
         return 'is-' + s.key + (s.key === 'soon' && s.days <= 7 ? ' is-urgent' : '');
       }
 
-      function kickerHtml(c, s) {
+      function kickerHtml(c, status) {
         return (
           '<div class="comp-kicker">' +
             '<span class="comp-cat">' + escapeHtml(c.category) + '</span>' +
-            '<span class="comp-status">' + escapeHtml(badgeText(s)) + '</span>' +
+            '<span class="comp-status">' + escapeHtml(status) + '</span>' +
           '</div>'
         );
       }
@@ -475,7 +475,7 @@ import data from '../../../public/advanced-resources/competitions.json';
         return (
           '<article class="comp-card ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + ';--i:' + delay + '">' +
             '<div class="comp-card__body">' +
-              kickerHtml(c, s) +
+              kickerHtml(c, badgeText(s)) +
               '<h2 class="comp-card__title">' + escapeHtml(c.title) + '</h2>' +
               '<p class="comp-card__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
               '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
@@ -492,6 +492,10 @@ import data from '../../../public/advanced-resources/competitions.json';
         // 一行一段，報讀軟體可以按段落跳。
         const details = c.details.split('\n').filter((line) => line.trim())
           .map((line) => '<p>' + markEnglishQuotes(escapeHtml(line)) + '</p>').join('');
+        // 對話框的徽章用完整的 statusText，registrationNote 和下次截止日只在這裡。截止欄沒有賽事日期時
+        // 寫的就是 registrationNote，這時徽章改用短標籤，不重複。
+        const dField = deadlineField(c, s);
+        const status = statusText(s) === dField.value ? badgeText(s) : statusText(s);
         // 只有標題列固定，其餘跟著內文捲動，視窗矮或放大文字時讀得到的範圍才夠大。
         dialog.innerHTML =
           '<div class="comp-dialog__head">' +
@@ -499,12 +503,12 @@ import data from '../../../public/advanced-resources/competitions.json';
             '<button type="button" class="comp-dialog__close" aria-label="關閉"><span aria-hidden="true">&times;</span></button>' +
           '</div>' +
           '<div class="comp-dialog__body overflow-y-auto ' + stateClass(s) + '" style="--accent:' + accentFor(c.category) + '">' +
-            kickerHtml(c, s) +
+            kickerHtml(c, status) +
             '<p class="comp-dialog__org">主辦單位：' + escapeHtml(c.organizer) + '</p>' +
             '<p class="comp-facts">' + escapeHtml(factsText(c)) + '</p>' +
             '<p class="comp-dialog__desc">' + markEnglishQuotes(escapeHtml(c.description)) + '</p>' +
             '<div class="comp-dialog__details">' + details + '</div>' +
-            footHtml(c, deadlineField(c, s)) +
+            footHtml(c, dField) +
           '</div>';
         dialog.querySelector('.comp-dialog__close').addEventListener('click', detail.close);
         detail.open(opener);
