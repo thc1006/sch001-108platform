@@ -1030,7 +1030,8 @@ test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => 
 
     // 條款 1.3 在 2026 年 9 月到 10 月之間從 13:00 改成 16:00 (GMT)
     const sony = textOf(find('Sony 世界攝影獎'));
-    assert.match(sony, /5 January 2027 at 16:00 \(GMT\)/);
+    assert.match(sony, /格林威治時間 1 月 5 日 16:00，也就是台灣時間 1 月 6 日 00:00/);
+    assert.match(find('Sony 世界攝影獎').sourceNote, /5 January 2027 at 16:00 \(GMT\)/);
     assert.ok(!/13:00/.test(sony), 'Sony 青年組現在只寫 16:00 (GMT)');
 
     assert.ok(!/沒有加註任何免責聲明/.test(textOf(find('哈佛克里姆森全球論文競賽'))), '要寫明查了哪些頁');
