@@ -325,6 +325,10 @@ test('schedule：details 選填，填了不能是空的或前後有空白', () =
     const summary = '國際青年科學家的研究競賽，個人或兩人一組。';
     assert.ok(bad({ description: summary, details: `第一段。${summary}第三段。` }).some((m) => m.includes('重複')), '重複在中間那句也要擋');
     assert.ok(bad({ description: `${summary}免費參加。`, details: '免費參加。其他的事。' }).every((m) => !m.includes('重複')), '短句重複不擋');
+    assert.ok(bad({ description: `${summary}免費參加。`, details: `第一段。${summary}` }).some((m) => m.includes('重複')), '摘要有兩句時，逐句比對');
+    assert.ok(bad({ description: `免費參加；${summary}`, details: `第一段。${summary}` }).some((m) => m.includes('重複')), '「；」後面的分句也要比對');
+    const both = bad({ description: '摘'.repeat(81), details: '細'.repeat(1201) });
+    assert.ok(both.some((m) => m.includes('過長')) && both.some((m) => m.includes('上限 80')), 'details 過長時，摘要的錯誤也要一起列出');
     assert.ok(bad({ description: '摘'.repeat(81), details: '其他。' }).some((m) => m.includes('上限 80')));
     assert.deepEqual(bad({ description: '摘'.repeat(80), details: '其他。' }), []);
     // 字數照 code point 算：80 個 emoji 是 160 個 UTF-16 單位，仍算 80 字。
