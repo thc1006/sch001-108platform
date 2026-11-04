@@ -174,7 +174,8 @@ test('地區篩選的選項與 ALLOWED_REGIONS 一致', async () => {
     const select = src.match(/<select id="filter-region"[^>]*>([\s\S]*?)<\/select>/);
     assert.ok(select, '在 competitions.astro 抽不到 #filter-region——若已改名請同步更新本測試');
     const options = [...select[1].matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map((m) => [m[1], m[2]]);
-    assert.deepEqual(options, [['all', '所有地區'], ...ALLOWED_REGIONS.map((r) => [r, r])]);
+    // 「其他」單獨念聽不懂，選項文字和卡片上那一行小字一樣寫「其他地區」，值不變。
+    assert.deepEqual(options, [['all', '所有地區'], ...ALLOWED_REGIONS.map((r) => [r, r === '其他' ? '其他地區' : r])]);
 });
 
 test('cycle：只知月份時取該月最後一天（保守，不會誤判成已截止）', () => {

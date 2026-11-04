@@ -92,7 +92,7 @@ import data from '../../../public/advanced-resources/competitions.json';
             <option value="歐洲">歐洲</option>
             <option value="東亞">東亞</option>
             <option value="全球線上">全球線上</option>
-            <option value="其他">其他</option>
+            <option value="其他">其他地區</option>
           </select>
           <select id="filter-level" aria-label="競賽級別">
             <option value="all">所有級別</option>
@@ -606,7 +606,8 @@ import data from '../../../public/advanced-resources/competitions.json';
           if (frm !== 'all' && (typeof c.form !== 'string' || !c.form.includes(frm))) return false;
           if (term) {
             const details = typeof c.details === 'string' ? c.details : '';
-            const corpus = (c.title + ' ' + c.organizer + ' ' + c.category + ' ' + c.region + ' ' + c.description + ' ' + details).toLowerCase();
+            // factsText 是畫面上那一行小字（「其他地區」「國際賽」），照看得到的字也找得到。
+            const corpus = (c.title + ' ' + c.organizer + ' ' + c.category + ' ' + c.region + ' ' + factsText(c) + ' ' + c.description + ' ' + details).toLowerCase();
             if (!corpus.includes(term)) return false;
           }
           return true;
