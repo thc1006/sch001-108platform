@@ -353,7 +353,10 @@ const blockCases = [
         '截止日 TBD。', '[填入參加人數]', '【請填日期】', '面試常問你為什麼想讀 XX 系。', '在20XX年舉辦', 'ＸＸ大學', '○○高中', '〇〇國中',
         'TODO 補上', 'FIXME', 'Lorem ipsum dolor', 'lorem ipsum', '日期 2026-XX-XX', '官網寫「截止日 TBD」', '「[填入人數]」',
     ], ['「你為什麼想讀 XX 系？」這類題目常被問。', '「○○高中」這類寫法', 'XXL 尺寸', '二〇〇八年', 'XX 染色體', '4xx 錯誤', 'RTX 40xx']],
-    ['K03-markdown-residue', ['**重點：** 先寫結論', '## 研究動機', '詳見[官網](https://example.org/)'], ['用 C# 寫程式', '第 1 名']],
+    ['K03-markdown-residue', [
+        '**重點：** 先寫結論', '## 研究動機', '```js', '詳見[官網](https://example.org/)', '見[說明](/about/)',
+        '網址 https://example.org/?utm_source=chatgpt.com', '網址 https://example.org/?utm_source=perplexity',
+    ], ['用 C# 寫程式', '第 1 名', 'Issue # 12', '網址 https://example.org/a**b**c']],
 ];
 const warnCases = [
     ['W17-weighty-verb', ['這次活動標誌著社團邁向新階段。', '這意味著你要多修一門課', '他見證了台灣的民主化'], ['這次活動有 30 人參加。']],
