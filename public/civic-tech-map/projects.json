@@ -164,7 +164,7 @@
       "topic": "離學校最近的空品測站，PM2.5 上下學時段和半夜差多少？",
       "steps": "在歷史資料下載的「空氣品質／環境部_國家空品測站」下載一個月的檔案，用 Google 試算表打開 CSV（Excel 要用 UTF-8 匯入，測站名稱才不會變亂碼），篩出離學校最近的測站，算出各時段的 PM2.5 平均，畫成折線圖。",
       "source": {
-        "text": "原平台公告的 Internet Archive 存檔（2026 年 7 月 13 日）",
+        "text": "原平台的公告",
         "url": "https://web.archive.org/web/20260713212740id_/https://ci.taiwan.gov.tw/dsp/"
       },
       "sourceCheckedAt": "2026-10-31",

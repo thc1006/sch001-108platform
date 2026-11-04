@@ -7,12 +7,6 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 const workshop = 'https://hackmd.io/MJw8iyS9TSaQ7Sfi83umJw';
 const portfolioRules = 'https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916';
 const link = 'text-blue-600 underline hover:text-blue-700';
-// 查證日期都一樣時只在列表下面寫一次，不一樣時寫在各張卡片上。
-const checkedDates = [...new Set(projects.map((p) => p.sourceCheckedAt))];
-const formatDate = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${y} 年 ${m} 月 ${d} 日`;
-};
 ---
 
 <BaseLayout
@@ -35,7 +29,6 @@ const formatDate = (iso: string) => {
       <p class="text-lg text-gray-600 max-w-3xl mx-auto">
         這 {projects.length} 個台灣的公民科技專案都公開了資料或工具，可以拿來做自主學習或探究與實作。
       </p>
-      <p class="text-sm text-gray-600 mt-2">其中六個出自零時小學校整理、在 SITCON 2025 共創工作坊上補充的<a href={workshop} class={link}>對照表</a>。</p>
     </section>
 
     <div class="max-w-4xl mx-auto">
@@ -130,13 +123,12 @@ const formatDate = (iso: string) => {
                 </div>
               </dl>
               {p.source && <p class="text-sm text-gray-500 mt-4">出處：<a href={p.source.url} class="underline hover:text-blue-600">{p.source.text}</a></p>}
-              {checkedDates.length > 1 && <p class="text-sm text-gray-500 mt-2">{formatDate(p.sourceCheckedAt)}查證</p>}
             </article>
           ))}
         </div>
         <div class="text-gray-600 mt-6 space-y-2">
-          {checkedDates.length === 1 && <p class="text-sm text-gray-600">以上資料於 {formatDate(checkedDates[0])}查證。</p>}
           <p>想看更多專案，可以到 g0v 揪松團維護的<a href="https://civictech.tw/" class={link}>台灣公民科技資料庫</a>，依你關心的議題找。</p>
+          <p class="text-sm">其中六個專案參考零時小學校整理的<a href={workshop} class={link}>公民科技對照表</a>。</p>
         </div>
       </section>
 
