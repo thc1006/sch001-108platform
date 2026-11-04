@@ -264,6 +264,7 @@ function readTemplate(code, i, onNested) {
 const after = (m, n = 4) => m.input.slice(m.index + m[0].length, m.index + m[0].length + n);
 const before = (m, n = 4) => m.input.slice(Math.max(0, m.index - n), m.index);
 const isHan = (c) => /\p{Script=Han}/u.test(c || '');
+const inQuote = (m) => m.input.lastIndexOf('「', m.index) > m.input.lastIndexOf('」', m.index);
 const PLACE = /(臺北|台北|新北|基隆|桃園|新竹|苗栗|臺中|台中|彰化|南投|雲林|嘉義|臺南|台南|高雄|屏東|宜蘭|花蓮|臺東|台東|澎湖|金門|馬祖|左營|南港)$/;
 const SENTENCE = /[^。！？!?；;]+[。！？!?；;」』）)]*/gu;
 
@@ -331,11 +332,11 @@ export const RULES = [
     { id: 'W01-hen-duo', severity: 'block', skip: 'aqu', re: /很多(?![元樣])/gu },
     { id: 'W02-vague-quantity', severity: 'warn', skip: 'aqu', re: /許多|大量|眾多|諸多|無數|海量|各式各樣|各種各樣|各種|不少(?!於)/gu },
     { id: 'W03-intensifier', severity: 'warn', skip: 'aqu', re: /非常|極其|極為|十分(?!鐘|之)|相當(?!於)|超級|無比|格外|高度(?=\p{Script=Han})/gu, normal: (m) => (m[0] === '高度' && /^(差|約|為|是|計|公尺|限制)/.test(after(m)) ? '物理高度' : null) },
-    { id: 'W04-filler-signpost', severity: 'block', skip: 'aqu', re: /值得(?:注意|一提)的是|值得一提|綜上所述|總而言之|總之|毫無疑問|不言而喻|眾所周知|換句話說|簡而言之|說到底|歸根究[柢底]|歸根結[柢底]/gu },
+    { id: 'W04-filler-signpost', severity: 'block', skip: 'aqu', re: /值得(?:注意|一提)的是|值得一提|綜上所述|總而言之|總之|毫無疑問|不言而喻|眾所周知|換句話說|簡而言之|說到底|歸根究[柢底]|歸根結[柢底]|總的來說|整體而言|整體來說|綜合來看|綜合而言|總結來說|總結而言|一言以蔽之|由此可見|不難看出|不難發現|顯而易見|不可否認|無可否認|毋庸置疑/gu },
     { id: 'W05-filler-addition', severity: 'warn', skip: 'aqu', re: /此外|除此之外|與此同時|事實上|本質上|顯然/gu, normal: (m) => (m[0] === '事實上' && before(m, 1) === '在' ? '建立在事實上' : null) },
     {
         id: 'W06-puffery', severity: 'block', skip: 'aqu',
-        re: /賦能|一站式|無縫|全方位|助力|解碼|精髓|潛規則|真心話|不可或缺|至關重要|不容忽視|舉足輕重|扮演(?:著)?(?:至關重要|很重要|重要|關鍵)的?角色|的藝術|秘訣|祕訣|神器|乾貨/gu,
+        re: /賦能|一站式|無縫|全方位|助力|解碼|精髓|潛規則|真心話|不可或缺|至關重要|不容忽視|舉足輕重|扮演(?:著)?(?:至關重要|很重要|重要|關鍵)的?角色|的藝術|秘訣|祕訣|神器|乾貨|革命性|顛覆(?:性|你)|量身(?:打造|訂做|定做)|一次(?:搞懂|看懂|掌握)|全攻略|大揭密|小撇步|超實用|事半功倍|如虎添翼|一臂之力|穩穩(?:地|的)|接住(?:你|您|情緒)/gu,
         normal: (m) => (m[0] === '助力' && before(m, 8).includes('阻力') ? '阻力還是助力' : m[0] === '解碼' && (/^(後|前|器|成|出)/.test(after(m)) || /[A-Za-z0-9-]\s*$/.test(before(m, 3))) ? '技術用語' : null),
     },
     { id: 'W07-endorsement', severity: 'warn', skip: 'aqu', re: /旨在|致力於|深入探討|打造|強大|優雅|精彩|豐富|獨特|頂尖|卓越|關鍵在於|攻略/gu },
@@ -344,6 +345,8 @@ export const RULES = [
     { id: 'W10-core', severity: 'warn', skip: 'aqu', re: /核心/gu, normal: (m) => (/^(素養|能力|課程|科目|期刊|知識|學科|必修|課|通識)/.test(after(m)) ? '課綱與系所用語' : null) },
     { id: 'W11-genuinely', severity: 'warn', skip: 'aqu', re: /真正(?:的)?/gu },
     { id: 'W12-mainland-register', severity: 'warn', skip: 'aqu', re: /信息(?!素)|視頻|軟件|硬件|數據庫|賦能|閉環|抓手|顆粒度|復盤|(?<!供應)鏈路/gu },
+    { id: 'W13-era-opener', severity: 'block', skip: 'aqu', re: /在(?:當今|現今|如今|今日|這個|這樣一個)[^。，！？]{0,14}(?:時代|社會|世界|浪潮)(?:中|下|裡)?|隨著[^。，！？]{1,18}(?:的)?(?:發展|普及|進步|興起|到來|演進|盛行|崛起)/gu },
+    { id: 'W14-significance', severity: 'block', skip: 'aqu', re: /具有(?:非常|十分|極為)?(?:重要|深遠|重大|積極)(?:的)?意義|意義(?:重大|深遠)|深遠(?:的)?影響|(?:開啟|翻開|寫下)(?:了)?(?:嶄新|全新|新)(?:的)?(?:篇章|一頁)|未來可期|無限(?:的)?可能|擁抱未來|迎接未來|標誌著|見證了|奠定(?:了)?(?:堅實|良好|穩固)?(?:的)?基礎|不可磨滅|根植於|這意味著/gu },
     { id: 'P01-double-dash', severity: 'block', skip: 'afqu', re: /—{2,}|─{2,}|―+/gu },
     { id: 'P02-single-dash', severity: 'block', skip: 'afqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal },
     {
@@ -372,6 +375,14 @@ export const RULES = [
     { id: 'F01-bold-label', severity: 'warn', skip: '', names: true, custom: (b) => b.bold.filter((x) => x.label).map((x) => ({ index: Math.max(0, b.text.indexOf(x.own)), len: x.own.length, note: x.own })) },
     { id: 'F02-bold-dense', severity: 'warn', skip: '', custom: (b) => (['p', 'li', 'dd', 'td', 'div'].includes(b.tag) && b.bold.length >= 2 ? [{ index: 0, len: 0, note: `${b.bold.length} 處粗體` }] : []) },
     { id: 'K01-chat-residue', severity: 'block', skip: 'q', re: /希望(?:這|以上|本文|這些|這篇)?[^。！？]{0,6}(?:對你|對您)?有(?:所)?幫助|讓我們(?=陪|為|一起|來|帶|的)|我們(?:來|一起)(?:看看|探討)|如果你(?:還)?有(?:任何)?(?:問題|疑問)|歡迎(?:隨時)?(?:提問|詢問)|作為(?:一個)?\s?AI|截至我的(?:知識|訓練)|^(?:好的|當然)[，！,!]/gu },
+    // 「你為什麼想讀 XX 系？」這類題目原本就用 XX 代替系名。
+    {
+        id: 'K02-placeholder', severity: 'block', skip: 'u',
+        re: /\[(?:填入|插入|你的|您的|請填|名稱|日期)[^\]]{0,20}\]|【(?:填入|插入|請填)[^】]{0,20}】|(?<![A-Za-z])(?:XX+|xx+)(?![A-Za-z])|ＸＸ|○○|〇〇|\bTODO\b|\bTBD\b|FIXME|lorem ipsum|20\d\d-(?:XX|xx)-(?:XX|xx)/gu,
+        normal: (m) => (inQuote(m) ? '引號裡的題目' : null),
+    },
+    // Markdown 連結的網址標成 'u'，所以不略過網址。
+    { id: 'K03-markdown-residue', severity: 'block', skip: '', re: /\*\*[^*\n]{1,40}\*\*|(?:^|\s)#{1,4}\s+\S|```|\[[^\]\n]{1,40}\]\((?:https?:|\/)[^)\s]+\)|utm_source=(?:chatgpt|openai|copilot)/gu },
 ];
 
 /**

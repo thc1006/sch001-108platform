@@ -17,6 +17,12 @@
     "src/pages/sitemap.astro": 1
    }
   },
+  "W13-era-opener": {
+   "baseline": {}
+  },
+  "W14-significance": {
+   "baseline": {}
+  },
   "P01-double-dash": {
    "baseline": {
     "public/career-exploration/senior-interviews.json": 62
@@ -51,6 +57,14 @@
    }
   },
   "K01-chat-residue": {
+   "baseline": {}
+  },
+  "K02-placeholder": {
+   "baseline": {
+    "public/advanced-resources/competitions.json": 2
+   }
+  },
+  "K03-markdown-residue": {
    "baseline": {}
   }
  }

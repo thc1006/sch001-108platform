@@ -318,6 +318,22 @@ test('C01：學類名稱「數據統計」不算「據統計」', () => {
     assert.equal(hitsOf('C01-vague-attribution', '主要學類有資訊工程、數據統計。'), 0);
 });
 
+// [規則, 要命中的句子, 不能命中的句子]。不能命中的多半是試跑時的誤判。
+const blockCases = [
+    ['W04-filler-signpost', ['總的來說，這是一份扎實的計畫。', '由此可見，選系要及早準備。'], ['這題不難。']],
+    ['W06-puffery', ['這堂課讓你一次搞懂備審，事半功倍。', '量身打造的學習計畫'], ['性格特質是主動積極、變通開創、合作互助。']],
+    ['W13-era-opener', ['在當今資訊爆炸的時代，自主學習變得愈來愈重要。', '隨著 AI 技術的快速發展，學習方式也在改變。'], ['隨著 108 課綱上路，學習歷程檔案從 111 學年度起採計。']],
+    ['W14-significance', ['這次活動標誌著社團邁向新階段。', '這項研究具有重要的意義。', '未來可期。'], ['這次活動有 30 人參加。']],
+    ['K02-placeholder', ['截止日 TBD。', '[填入參加人數]', '面試常問你為什麼想讀 XX 系。', '日期 2026-XX-XX'], ['「你為什麼想讀 XX 系？」這類題目常被問。', 'XXL 尺寸']],
+    ['K03-markdown-residue', ['**重點：** 先寫結論', '## 研究動機', '詳見[官網](https://example.org/)'], ['用 C# 寫程式', '第 1 名']],
+];
+for (const [id, yes, no] of blockCases) {
+    test(`${id}：命中與不命中`, () => {
+        for (const t of yes) assert.ok(hitsOf(id, t) > 0, t);
+        for (const t of no) assert.equal(hitsOf(id, t), 0, t);
+    });
+}
+
 test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
 });
