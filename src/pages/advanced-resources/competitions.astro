@@ -496,7 +496,8 @@ import data from '../../../public/advanced-resources/competitions.json';
           if (lvl !== 'all' && c.level !== lvl) return false;
           if (frm !== 'all' && (typeof c.form !== 'string' || !c.form.includes(frm))) return false;
           if (term) {
-            const corpus = (c.title + ' ' + c.organizer + ' ' + c.category + ' ' + c.region + ' ' + c.description).toLowerCase();
+            const details = typeof c.details === 'string' ? c.details : '';
+            const corpus = (c.title + ' ' + c.organizer + ' ' + c.category + ' ' + c.region + ' ' + c.description + ' ' + details).toLowerCase();
             if (!corpus.includes(term)) return false;
           }
           return true;
