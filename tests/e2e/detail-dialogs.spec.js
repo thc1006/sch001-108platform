@@ -511,6 +511,20 @@ test.describe('國內外競賽卡片同一列對齊', () => {
         ...([4, 6, 7].includes(i) ? {} : { details: '詳細內容。' }),
     }));
 
+    // 欄數只隨寬度增加。最小寬度 18rem 時 976 到 1023 寬是三欄，1024 寬又掉回兩欄。
+    test('欄數隨視窗寬度只增不減', async ({ page }) => {
+        await page.route('**/advanced-resources/competitions.json', (route) => route.fulfill({ json: { competitions: COMPETITIONS } }));
+        await page.goto(`${ROOT}/advanced-resources/competitions.html`);
+        await expect(page.locator('.comp-card')).toHaveCount(COMPETITIONS.length);
+        const widths = [360, 600, 760, 1000, 1023, 1024, 1060, 1280, 1440];
+        const columns = [];
+        for (const width of widths) {
+            await page.setViewportSize({ width, height: 900 });
+            columns.push(await page.locator('#competition-grid').evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(' ').length));
+        }
+        expect(columns).toEqual([1, 1, 2, 2, 2, 2, 2, 3, 3]);
+    });
+
     for (const width of [1280, 768]) {
         test(`${width}px：同一列卡片的「詳細資訊」與截止欄 top 相同，沒有按鈕的列不留空，卡片上下隔 2rem`, async ({ page }) => {
             await page.setViewportSize({ width, height: 900 });

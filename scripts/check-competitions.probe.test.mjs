@@ -863,7 +863,11 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         const badge = f.dialogBadge(s, dField);
         const note = c.registrationNote.trim();
         assert.ok(badge.includes(note) || dField.value.includes(note), `${c.title}：徽章「${badge}」、截止欄「${dField.value}」`);
-        if (badge.includes(note)) inBadge++;
+        if (badge.includes(note)) {
+            inBadge++;
+            // registrationNote 放進徽章，是因為截止欄寫的是賽事日期。
+            assert.equal(dField.label, '賽事日期', c.title);
+        }
         // 截止欄寫的是 registrationNote 時，標籤是「報名」。
         else assert.equal(dField.label, '報名', c.title);
         // 徽章和截止欄不寫同一句。
@@ -951,6 +955,11 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     const fields = { region: '其他', level: '國際', form: '個人/團體', eligibility: '公開報名', mode: '混合' };
     assert.equal(facts(render({ ...cycle, ...fields })), '其他地區、國際賽、個人或團體、公開報名、實體與線上');
     assert.equal(facts(render({ ...cycle, ...fields, region: '台灣', level: '校際/地區', form: '個人', mode: '線上' })), '台灣、校際或地區賽、個人、公開報名、線上');
+    // 沒有截止日和 registrationNote、只有賽事日期：有 details 的卡片寫「報名截止：未公布」，賽事日期在對話框；
+    // 沒有 details 的卡片把賽事日期放在截止欄。
+    const eventOnly = { ...cycle, cycle: undefined, deadline: undefined, eventStartsAt: '2099-08-01' };
+    assert.deepEqual([label(render({ ...eventOnly, details: '詳細內容' })), value(render({ ...eventOnly, details: '詳細內容' }))], ['報名截止', '未公布']);
+    assert.deepEqual([label(render(eventOnly)), value(render(eventOnly))], ['賽事日期', '2099-08-01']);
     // 用 H 鍵跳到名稱的人，接著聽到的是這張卡片的類型與狀態。
     for (const c of [cycle, { ...cycle, details: '詳細內容' }]) {
         assert.match(render(c), /^<article[^>]*><div class="comp-card__body"><h2 class="comp-card__title">/);
