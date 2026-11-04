@@ -874,8 +874,7 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-deadline__label { font-size: .875rem; color: var(--muted); }
     .comp-deadline__value { font-weight: 600; color: #374151; font-variant-numeric: tabular-nums; }
     .comp-checked { display: block; margin-top: .15rem; font-size: .875rem; color: var(--muted); }
-    /* position: relative 讓 sr-only 的文字跟著按鈕。沒有定位的祖先時它照 <dialog> 定位，不跟著內文捲動，
-       還會在對話框底下撐出一段捲軸。 */
+    /* position: relative 讓可讀名稱後半的 sr-only（absolute）以按鈕定位，不依卡片或對話框的位置。 */
     .comp-cta {
       position: relative; display: inline-flex; align-items: center; padding: .5rem 1rem; border-radius: .5rem;
       background: #0069a8; color: #fff; font-weight: 700; text-decoration: none; transition: background .3s;
