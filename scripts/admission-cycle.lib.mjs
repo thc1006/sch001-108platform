@@ -435,7 +435,7 @@ export function pendingForNext(files, config) {
 }
 
 /**
- * fitReport 讓報告不超過 limit 個字，字數照 JavaScript 字串的長度算，和 GitHub issue 內文的上限一樣。
+ * fitReport 讓報告不超過 limit 個字。字數照 JavaScript 字串的長度算，不會比 GitHub 算 issue 內文的字數少。
  * 超過時在 limit 之前最後一個換行截斷，接上 note，結果連 note 也不超過 limit。
  * @param {string} text @param {number} limit @param {string} note @returns {string}
  */

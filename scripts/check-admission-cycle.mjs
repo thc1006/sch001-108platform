@@ -148,7 +148,7 @@ if (isPast(remindAfter, today)) {
 }
 const dueLists = [
     ['keep', dueKeeps(config, today), '請重新確認還需不需要'],
-    ['watch', dueWatches(config, today), '新資料公告了就改這一行並更新或刪掉這筆；還沒公告就把 recheckAfter 往後延'],
+    ['watch', dueWatches(config, today), '新資料公告了就改那一行並更新或刪掉那一筆；還沒公告就把 recheckAfter 往後延'],
 ];
 // 網址 keep 寫網址，其他寫檔名和行號。
 const where = (entry) => entry.url ?? `${entry.file}:${entryLine(files, entry) ?? '?'}`;
