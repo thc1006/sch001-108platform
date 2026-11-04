@@ -327,12 +327,26 @@ const blockCases = [
     ['K02-placeholder', ['截止日 TBD。', '[填入參加人數]', '面試常問你為什麼想讀 XX 系。', '日期 2026-XX-XX'], ['「你為什麼想讀 XX 系？」這類題目常被問。', 'XXL 尺寸']],
     ['K03-markdown-residue', ['**重點：** 先寫結論', '## 研究動機', '詳見[官網](https://example.org/)'], ['用 C# 寫程式', '第 1 名']],
 ];
-for (const [id, yes, no] of blockCases) {
+const warnCases = [
+    ['W15-grand-promise', ['陪你走完 108 課綱的每一步。', '把世界級的課程帶到每個孩子面前。'], ['平台列了 20 位學長姐的訪談。']],
+    ['W16-card-verdict', ['是培養國際觀的入門磚。', '以高品質動畫聞名。', '這是絕佳的機會。'], ['耶魯新聞稱那門課是耶魯史上最受歡迎的課。', '提供數學與科學的教學影片。']],
+    ['S03-not-x-is-y', ['教授要的不是完美答案，是看你會不會反思。'], ['教授要的不是完美答案，而是看你會不會反思。', '不是每個人都適合，是否報名要自己決定。']],
+    ['S04-adverb-de', ['透過系統性地查找資料，更好地理解主題。'], ['系統性的整理']],
+    ['S06-rhetorical', ['你是否也曾覺得迷惘？', '想像一下，你站在台上。'], ['你是否符合資格，看簡章第 3 條。']],
+    ['P11-ellipsis', ['主辦單位⋯'], ['主辦單位……']],
+];
+for (const [id, yes, no] of [...blockCases, ...warnCases]) {
     test(`${id}：命中與不命中`, () => {
         for (const t of yes) assert.ok(hitsOf(id, t) > 0, t);
         for (const t of no) assert.equal(hitsOf(id, t), 0, t);
     });
 }
+
+test('U01：只看腳本和屬性裡的介面文字', () => {
+    assert.equal(hitsOf('U01-ui-message', '抱歉，發生未知的錯誤。', { tag: 'script' }), 2);
+    assert.equal(hitsOf('U01-ui-message', '有問題請回報網站管理員', { tag: 'attr:title' }), 1);
+    assert.equal(hitsOf('U01-ui-message', '我很抱歉當時沒有準備。'), 0);
+});
 
 test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
