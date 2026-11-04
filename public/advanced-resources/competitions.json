@@ -779,7 +779,7 @@
       "sourceNote": "官方入口 ctf.hitcon.org 目前轉址至 2026 屆頁面。2026 屆官網「競賽為 48 小時的線上 Jeopardy 形式 CTF」，競賽時間「10/23(五) 22:00 ~ 10/25(日) 22:00 (UTC+8, 48 小時)」，結束後顯示「Contest is over」。規則「每個隊伍沒有人數限制」。第一名「Pre-qualification for DEF CON 35 CTF Final」。臺灣之星：「欲爭取台灣之星特殊獎之隊伍，需於註冊時將國家設成 Taiwan」。台灣駭客協會英文名稱是 Hacks in Taiwan Association。",
       "url": "https://ctf.hitcon.org/",
       "description": "台灣駭客協會與工研院主辦的國際線上 CTF，參賽的多是國際頂尖隊伍，題目很難。不限年齡、學籍和人數，高中生可以組隊；剛入門先從 My First CTF 練起。",
-      "details": "48 小時的線上 Jeopardy 形式 CTF。第一名獎金 8,000 美元，並取得 DEF CON 35 CTF 決賽的預先資格。另設 1,000 美元的臺灣之星特殊獎，想爭取的隊伍註冊時要把國家設成 Taiwan。\n剛入門的話，可以先打 My First CTF、AIS3 Junior 或 picoCTF，有基礎再來挑戰。\n2026 屆 10/23（五）22:00 至 10/25（日）22:00（UTC+8）舉行，已結束，沒有另列報名截止日。2027 屆未公布。\n2025 屆另有邀請台灣前 4 名隊伍到台北參加的實體交流賽，出席者須具中華民國國籍或永久居留證。2026 屆沒有公告實體賽。"
+      "details": "48 小時的線上 Jeopardy 形式 CTF。第一名獎金 8,000 美元，並取得 DEF CON 35 CTF 決賽的預先資格。另設 1,000 美元的臺灣之星特殊獎，想爭取的隊伍註冊時要把國家設成 Taiwan。\n剛入門的話，可以先打 My First CTF 或 picoCTF、先上 AIS3 Junior，有基礎再來挑戰。\n2026 屆 10/23（五）22:00 至 10/25（日）22:00（UTC+8）舉行，已結束，沒有另列報名截止日。2027 屆未公布。\n2025 屆另有邀請台灣前 4 名隊伍到台北參加的實體交流賽，出席者須具中華民國國籍或永久居留證。"
     },
     {
       "title": "Kaggle Competitions",
