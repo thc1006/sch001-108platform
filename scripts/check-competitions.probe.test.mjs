@@ -891,7 +891,8 @@ const cardText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').r
 test('card：沒有 details、沒有 deadline 的卡片看得到 registrationNote 全文', async () => {
     const render = await cardRenderer();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
-    const list = data.competitions.filter((c) => !(typeof c.details === 'string' && c.details.trim()) && !c.deadline && c.registrationNote);
+    // 先拿掉 details 再畫：資料拆分逐領域合併，篩「沒有 details」的話筆數會一路減到 0。
+    const list = data.competitions.filter((c) => !c.deadline && c.registrationNote).map(({ details, ...c }) => c);
     assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
     for (const c of list) assert.ok(cardText(render(c)).includes(c.registrationNote.trim()), c.title);
 });
