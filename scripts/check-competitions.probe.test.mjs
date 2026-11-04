@@ -841,7 +841,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({}), due('未公布'));
 });
 
-// 對話框的截止欄是 deadlineField，沒有 deadline 又有賽事日期時寫的是賽事日期。registrationNote 這時只能在徽章裡。
+// 對話框的截止欄是 fullDeadline，沒有 deadline 又有賽事日期時寫的是賽事日期。registrationNote 這時只能在徽章裡。
 test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截止欄有 registrationNote 全文', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
@@ -851,7 +851,7 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         return m[0];
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
-        'eventLabel', 'deadlineField', 'deadlineLabel', 'upcomingText', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+        'upcomingText', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, fullDeadline, dialogBadge };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
@@ -908,8 +908,8 @@ async function cardRenderer() {
         assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
         return m[0];
     };
-    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'eventLabel',
-        'deadlineField', 'deadlineLabel', 'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText',
+        'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
         'upcomingText', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
     const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
     return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
