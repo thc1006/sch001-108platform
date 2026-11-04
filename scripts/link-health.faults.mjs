@@ -363,6 +363,14 @@ const policyCases = [
         }),
     },
     {
+        name: '盤點的網址帶著 AI 工具加上的 utm_source',
+        expect: /utm_source=chatgpt\.com/,
+        inventory: () => ({
+            ...baselineInventory,
+            urls: [...baselineInventory.urls, { url: 'https://example.org/page?utm_source=chatgpt.com', occurrences: [{ file: 'data.json', location: '/0/url' }] }],
+        }),
+    },
+    {
         name: '盤點來自故障注入用的副本，不是要部署的 dist/',
         expect: /不是實際要部署的 dist/,
         inventory: () => ({ ...baselineInventory, generatedFrom: 'dist-faultcheck' }),
