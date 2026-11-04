@@ -14,7 +14,7 @@
 //
 // commit 訊息與 PR 說明還沒有檢查。
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
@@ -83,14 +83,6 @@ function walk(dir, out = []) {
 if (!existsSync(DIST)) usage(`找不到 ${path.relative(ROOT, DIST)}/，請先執行 npm run build:deployable。`);
 const distFiles = walk(DIST).map((f) => path.relative(DIST, f).split(path.sep).join('/')).sort();
 const htmlPages = distFiles.filter((f) => f.endsWith('.html') && !/^google[0-9a-f]+\.html$/.test(f));
-// dist 是舊的時候，筆數和 --update-baseline 都照舊內容算，--update-baseline 會下修 0 個並以 0 結束。
-try {
-    const built = JSON.parse(readFileSync(path.join(DIST, 'build-info.json'), 'utf8')).commit;
-    const head = git('rev-parse', 'HEAD').trim();
-    if (built && built !== 'unknown' && built !== head) console.warn(`警告：dist 是 ${built.slice(0, 12)} 建的，HEAD 是 ${head.slice(0, 12)}。改過內容請先執行 npm run build:deployable。`);
-} catch {
-    // 沒有 build-info.json 或不在 git 裡時不比。
-}
 
 // ---- 取文字 ----
 const blocks = [];
@@ -112,6 +104,10 @@ if (htmlPages.length === 0 || pagesWithText < htmlPages.length) {
 
 // ---- 回推原始檔 ----
 const sources = git('ls-files', '-z', 'src', 'public').split('\0').filter((f) => /\.(md|astro|ts|js|mjs|json)$/.test(f) && !f.includes('/vendor/'));
+// 改了原始檔沒有重建時，筆數和 --update-baseline 都照舊的 dist 算，--update-baseline 會下修 0 個並以 0 結束。
+const builtAt = existsSync(path.join(DIST, 'build-info.json')) ? statSync(path.join(DIST, 'build-info.json')).mtimeMs : Infinity;
+const newer = sources.filter((f) => existsSync(path.join(ROOT, f)) && statSync(path.join(ROOT, f)).mtimeMs > builtAt);
+if (newer.length) console.warn(`警告：${newer[0]} 等 ${newer.length} 個原始檔比 dist 新，結果是舊內容的。先執行 npm run build:deployable 再跑。`);
 const index = sourceIndex(sources.map((p) => ({ path: p, content: readFileSync(path.join(ROOT, p), 'utf8') })));
 const jsonCache = new Map();
 function preferred(page) {
