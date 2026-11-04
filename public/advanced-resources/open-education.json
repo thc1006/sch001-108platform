@@ -8,7 +8,7 @@
       "name": "Anthropic 互動式提示工程教學",
       "org": "Anthropic",
       "url": "https://github.com/anthropics/prompt-eng-interactive-tutorial",
-      "description": "Anthropic 在 GitHub 公開的互動式教材，教怎麼寫給 Claude 等 AI 的提示詞。寫報告、做專題要用 AI 時，可以先從這裡學怎麼把問題問清楚。",
+      "description": "Anthropic 在 GitHub 公開的互動式教材，教怎麼寫給 Claude 等 AI 的提示詞。寫報告、做專題要用 AI 時，可以先從這裡學怎麼把問題問清楚。要實際跑範例需要 API 金鑰，只讀內容也可以。",
       "tags": [
         "提示工程",
         "官方教材",
