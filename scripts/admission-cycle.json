@@ -394,6 +394,13 @@
       "recheckAfter": "2027-03-31"
     },
     {
+      "file": "src/content/clusters/life-science/highlights.md",
+      "text": "國立臺灣大學「生命科學系」115 學年度大學申請入學第二階段甄試書面資料準備指引",
+      "cycle": 116,
+      "reason": "台大生科系 115 學年度準備指引的標題，不能改字。116 學年度的指引還沒公布，甄選會準備指引頁（apply116/guide.php）寫 116 學年度資料預計 116 年 3 月更新。新版公布後換成新版的標題與連結。台大的指引 PDF 網址每年不變，新版會直接蓋掉舊檔，重對時要打開 PDF 看標題寫的學年度。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
       "file": "src/content/clusters/life-science/inquiry.md",
       "text": "台大生命科學系 115 學年度的準備指引寫",
       "cycle": 116,
