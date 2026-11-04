@@ -738,10 +738,10 @@
       "deadline": "",
       "registrationNote": "2027 賽季時程尚未公布",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "原 picoctf.org 已成 1,685 bytes 的搬遷公告頁（逐字「picoCTF.org is now CyLab Security Academy」「Coming Soon: picoCTF.com」），不再有競賽內容。獎項條件：「resident in the US」且「enrolled in an accredited United States middle school or high school」。",
+      "sourceNote": "原 picoctf.org 已成 1,685 bytes 的搬遷公告頁（逐字「picoCTF.org is now CyLab Security Academy」「Coming Soon: picoCTF.com」），不再有競賽內容。獎項條件：「resident in the US」且「enrolled in an accredited United States middle school or high school」。CyLab Security Academy 使用條款（2026-11-05 查）「the Services are available only to users who are at least 13 years old」，13 至 17 歲「a parent or legal guardian must provide their email address as part of your account registration」，老師批次註冊的學生免。Competitors 頁：「create or join a team of up to 5 players」。",
       "url": "https://cylabacademy.org/",
-      "description": "卡內基美隆大學 CyLab 主辦的線上資安 CTF，題目從入門開始，適合初學者。個人或組隊都可以，台灣學生可正式參賽，但獎項只給美國中學生。",
-      "details": "主辦單位全名是 CyLab Security and Privacy Institute，2026 年 5 月 8 日起品牌改為 CyLab Security Academy。\n台灣學生可以上計分板。獎項限住在美國、就讀美國立案國高中的學生。\n練習平台常年開放。picoCTF 2026 已在 3/9 至 3/19 舉行完畢，2027 賽季未公布。"
+      "description": "卡內基美隆大學 CyLab 辦的資安 CTF，適合初學者。限 13 歲以上，未滿 18 歲要家長同意，個人或 5 人內組隊。台灣學生能參賽，獎項只給美國中學生。",
+      "details": "主辦單位全名是 CyLab Security and Privacy Institute，2026 年 5 月 8 日起品牌改為 CyLab Security Academy。\n台灣學生可以上計分板。13 至 17 歲註冊時要填家長或法定監護人的 email；由老師批次註冊的學生不用這一步。獎項限住在美國、就讀美國立案國高中的學生。\n練習平台常年開放。picoCTF 2026 已在 3/9 至 3/19 舉行完畢，2027 賽季未公布。"
     },
     {
       "title": "My First CTF",
