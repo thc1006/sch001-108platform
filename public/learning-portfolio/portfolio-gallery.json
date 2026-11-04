@@ -1,6 +1,6 @@
 {
   "_readme": "學習歷程作品集範例資料來源檔。portfolio-gallery.html 會在載入時 fetch() 此檔並渲染。新增或修改範例請直接編輯下方 portfolio 陣列，不需要動 HTML。",
-  "lastUpdated": "2026-11-01",
+  "lastUpdated": "2026-11-05",
   "portfolio": [
     {
       "id": "science-01",
@@ -12,7 +12,7 @@
         "數據分析"
       ],
       "thumbnail_url": "https://images.pexels.com/photos/3735747/pexels-photo-3735747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>報告開頭寫為什麼想研究校園植物的含菌量，連到疫情和校園環境。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>把實驗步驟畫成流程圖，附操作照片和培養皿的對照圖。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>數據畫成長條圖，圖下用文字說明哪一區含菌量最高、可能的原因。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>除了「學到團隊合作」，也寫了組員怎麼討論實驗變因、怎麼分工，並提出下一步可以研究不同季節對含菌量的影響。</div>\n                    </div>"
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>報告開頭先寫為什麼想研究校園植物的含菌量，並連到疫情和每天待的校園。動機跟生活經驗連在一起，讀的人一開始就知道這個題目為什麼值得做。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>把實驗步驟畫成流程圖，附操作照片和培養皿的對照圖，比整段文字好讀。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>數據畫成長條圖，圖下再用文字說明哪一區含菌量最高、可能的原因。只放數字，讀的人不知道代表什麼，要補一兩句解讀。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>「學到團隊合作」是人人都會寫的話，這份還寫出組員怎麼討論實驗變因、怎麼分工，也提出下一步可以研究不同季節對含菌量的影響。寫出具體經過和下一步，讀的人才看得出你想過。</div>\n                    </div>"
     },
     {
       "id": "social-02",
@@ -24,7 +24,7 @@
         "訪談"
       ],
       "thumbnail_url": "https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>從剩食議題縮小到一個社區。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>除了文獻探討，也走訪 5 家便當店、2 間超市，並訪談里長。可參考本站<a href='../autonomous-learning/methodology.html' class='text-blue-600 hover:underline'>研究方法工具箱</a>。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>提出「社區剩食共享地圖」的提案，附初步的宣傳文案。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>寫了執行時的困難，例如店家不願受訪，也討論剩食背後的社會結構。</div>\n                    </div>"
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>把剩食這麼大的議題縮小到一個社區，範圍小到自己走得到、訪得到，後面的調查才做得下去。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>除了文獻探討，也走訪 5 家便當店、2 間超市，並訪談里長。書面資料、實地觀察、訪談三種來源可以互相對照，比只查網路資料有說服力。可參考本站<a href='../autonomous-learning/methodology.html' class='text-blue-600 hover:underline'>研究方法工具箱</a>。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>指出問題之後，再提出「社區剩食共享地圖」的提案，附初步的宣傳文案，報告就有了解決辦法，不會停在描述現象。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>寫了執行時遇到的困難，例如店家不願受訪，也往下討論剩食背後的社會結構。寫出實際碰到的困難，比只寫順利完成可信。</div>\n                    </div>"
     },
     {
       "id": "art-01",
@@ -36,7 +36,7 @@
         "觀察力"
       ],
       "thumbnail_url": "https://images.pexels.com/photos/164543/pexels-photo-164543.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>說明為什麼選「城市速寫」當主題，想用畫記錄城市的變化。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>作品集放了草稿、不同媒材的嘗試和完成的作品。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>每張畫附一段短文，寫地點和作畫時的心情。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>總結寫速寫怎麼改變作者看城市的方式，並連到都市更新的議題。</div>\n                    </div>"
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>說明為什麼選「城市速寫」當主題，想用畫記錄城市的變化。先講清楚創作動機，看作品的人才知道整本要看什麼。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>作品集放了草稿、不同媒材的嘗試和完成的作品，看得到怎麼一步步改，不是只放成品。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>整本作品集風格一致，排版本身也看得出設計能力；每張畫附一段短文，寫地點和作畫時的心情。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>總結寫速寫怎麼改變作者看城市的方式，並連到都市更新的議題。從自己的改變寫到社會議題，比只寫「畫得很開心」有內容。</div>\n                    </div>"
     },
     {
       "id": "cross-domain-01",
@@ -49,7 +49,7 @@
         "數位創作"
       ],
       "thumbnail_url": "https://images.pexels.com/photos/5775854/pexels-photo-5775854.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>題目結合語文和資訊，用 Python 統計唐詩裡的顏色詞。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>說明怎麼取得唐詩資料，怎麼寫 Python 程式斷詞、統計顏色詞出現的次數。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>統計結果做成圓餅圖和詞頻表。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>討論數位人文的可能性與限制，並提出下一步可以比較李白、杜甫等詩人用色的差異。</div>\n                    </div>"
+      "analysis_html": "\n                    <div class=\"space-y-4\">\n                        <div><strong class=\"text-green-700\">問題意識：</strong>題目結合語文和資訊，用 Python 統計唐詩裡的顏色詞。一句話就講得出要做什麼，兩個領域各做哪一部分也很清楚。</div>\n                        <div><strong class=\"text-green-700\">研究過程：</strong>說明怎麼取得唐詩資料，怎麼寫 Python 程式斷詞、統計顏色詞出現的次數。步驟寫清楚，別人照著做也能得到一樣的結果。</div>\n                        <div><strong class=\"text-green-700\">成果展現：</strong>統計結果做成圓餅圖和詞頻表，讀詩的感受有了數字可以對照，不會只剩主觀印象。</div>\n                        <div><strong class=\"text-green-700\">反思：</strong>討論數位人文的可能性與限制，並提出下一步可以比較李白、杜甫等詩人用色的差異。寫出方法的限制和下一步，讀的人知道這份研究做到哪裡。</div>\n                    </div>"
     }
   ]
 }
