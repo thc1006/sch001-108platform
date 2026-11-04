@@ -302,6 +302,28 @@ const cases = [
         report: /### 該重新確認的 watch\n\n2 筆[^\n]*\n\n- recheckAfter 2026-10-24：故障注入的測資，保留理由至少十個字。\n {2}- watch\[0\] `src\/content\/clusters\/b\/application\.md:5`\n {2}- watch\[1\] `src\/content\/clusters\/a\/overview\.md:10`\n/,
     },
     {
+        name: '--remind 到期的項目照日期排，不照設定檔的順序',
+        args: ['--remind'],
+        inject: editConfig((c) => {
+            c.watch[0].recheckAfter = '2026-10-24';
+            c.watch.push({ file: PAGE_A, text: '本頁不引用', cycle: 115, reason, recheckAfter: '2026-10-20' });
+        }),
+        code: 0,
+        attention: true,
+        report: /- recheckAfter 2026-10-20：[^\n]*\n {2}- watch\[1\][^\n]*\n- recheckAfter 2026-10-24：[^\n]*\n {2}- watch\[0\]/,
+    },
+    {
+        name: '--remind 同一天到期、理由不同：照設定檔的順序，不照理由排',
+        args: ['--remind'],
+        inject: editConfig((c) => {
+            c.watch[0].recheckAfter = '2026-10-24';
+            c.watch.push({ file: PAGE_A, text: '本頁不引用', cycle: 115, reason: '乙組的理由，故障注入用，至少十個字。', recheckAfter: '2026-10-24' });
+        }),
+        code: 0,
+        attention: true,
+        report: /- recheckAfter 2026-10-24：故障注入的測資[^\n]*\n {2}- watch\[0\][^\n]*\n- recheckAfter 2026-10-24：乙組/,
+    },
+    {
         name: '--remind 報告超過上限：截斷並寫明，完整的印在 log',
         args: ['--remind'],
         env: { ADMISSION_CYCLE_TODAY: '2026-12-16', ADMISSION_CYCLE_REPORT_LIMIT: '300' },
@@ -514,6 +536,8 @@ const cliMutations = [
     ['watch 錯誤不印 watch 的提示', "if (watchErrors.length) hints.push('watch", "if (false) hints.push('watch"],
     ['警告不列逐筆的位置', '    for (const d of details) console.log(`  ${d}`);\n', ''],
     ['逐筆各發一則 annotation', '    if (!due.length) continue;\n', '    if (!due.length) continue;\n    for (const d of due) warn(`${name} 該重新確認`, String(d.index));\n'],
+    ['到期的群組不照日期排', 'const sorted = [...groups].sort(', 'const sorted = [...groups].filter(Boolean, '],
+    ['同一天的群組照理由排', 'const date = ([key]) => key.slice(0, 10);', 'const date = ([key]) => key;'],
     ['到期的項目不依理由分組', 'const key = `${entry.recheckAfter}：${entry.reason}`;', 'const key = `${entry.recheckAfter}：${entry.reason}${index}`;'],
     ['報告不寫行號', '`${entry.file}:${entryLine(files, entry) ?? \'?\'}`', '`${entry.file}`'],
     ['報告不列到期的項目', 'sections.push([`### 該重新確認的 ${name}`', '[].push([`### 該重新確認的 ${name}`'],

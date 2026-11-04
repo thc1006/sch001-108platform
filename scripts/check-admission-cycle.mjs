@@ -164,7 +164,10 @@ for (const [name, due, todo] of dueLists) {
         const key = `${entry.recheckAfter}：${entry.reason}`;
         groups.set(key, [...(groups.get(key) ?? []), `  - ${name}[${index}] \`${where(entry)}\``]);
     }
-    sections.push([`### 該重新確認的 ${name}`, '', `${due.length} 筆的 recheckAfter 已經過了，${todo}。`, '', ...[...groups].flatMap(([key, items]) => [`- recheckAfter ${key}`, ...items]), '']);
+    // key 的前 10 個字是日期。只比日期，sort 是穩定排序，同一天的照設定檔的順序。
+    const date = ([key]) => key.slice(0, 10);
+    const sorted = [...groups].sort((a, b) => (date(a) < date(b) ? -1 : date(a) > date(b) ? 1 : 0));
+    sections.push([`### 該重新確認的 ${name}`, '', `${due.length} 筆的 recheckAfter 已經過了，${todo}。`, '', ...sorted.flatMap(([key, items]) => [`- recheckAfter ${key}`, ...items]), '']);
 }
 
 if (errors.length) {
