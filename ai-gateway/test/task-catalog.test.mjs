@@ -109,6 +109,7 @@ const KEEP_ROLE = {
 };
 
 test('任務指令不另外指定角色（KEEP_ROLE 除外），不用「專業的」「創新且可執行」這類字', () => {
+    for (const id of Object.keys(KEEP_ROLE)) assert.ok(catalog.has(id), `KEEP_ROLE 的 ${id} 不在任務清單裡`);
     for (const task of catalog.values()) {
         const [first] = task.instructions.split('\n');
         if (KEEP_ROLE[task.id]) {
