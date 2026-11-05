@@ -7,6 +7,81 @@ const link = 'text-blue-600 underline hover:text-blue-700';
 const progressColumns = ['週次', '要做的事', '做完拿得出什麼', '實際做到哪裡'];
 // 中間那週標出回頭看一次，對應上面「在計畫中間排一週回頭看」。
 const progressWeeks = (n: number) => Array.from({ length: n }, (_, i) => (i + 1 === n / 2 ? `${i + 1}（回頭看）` : String(i + 1)));
+
+// 公開在網路上的計畫與分享。站上不寫學生姓名與校名，原始頁面上有沒關係。pdf 為真時連結文字後面標（PDF）。
+const realPlans = [
+    {
+        title: '閱讀《傀儡花》的成果摘要',
+        group: '文史哲',
+        kind: '學校給學生參考的範例',
+        did: '讀小說《傀儡花》，邊讀邊對照地圖，把書裡的古今地名和族群整理成一張對照表。',
+        learn: '動機寫到具體的缺口，課本講這段歷史「連標題只是短短的四行（共56 字）」。摘要分成為什麼做、打算學什麼、怎麼進行、學到什麼幾段，每段開頭是一個問題。',
+        href: 'https://www.hhsh.chc.edu.tw/resource/openfid.php?id=2873',
+        text: '閱讀《傀儡花》的成果摘要',
+        pdf: true,
+    },
+    {
+        title: '巴拉刈該不該禁',
+        group: '醫藥衛生、法政',
+        kind: '學校給學生參考的計畫書範例',
+        did: '21 週的計畫：查巴拉刈的用途和危害，訪談醫界、社福團體和公務人員，最後依自己的判斷選擇禁不禁，擬一份政策和配套措施。',
+        learn: '每週後面的括號寫要查哪裡的資料，例如防檢局網站、食藥署網站。段考那週照實排進去，訪談的對象和時間提前一週確定。原檔的計畫名稱把「巴拉刈」打成「巴拉圭」。',
+        href: 'https://www.essh.kl.edu.tw/wp-content/uploads/2023/09/二信高中自主學習計畫書撰寫範例彈性學習.pdf',
+        text: '巴拉刈計畫書範例',
+        pdf: true,
+        where: '在第 6、7 頁',
+    },
+    {
+        title: '《你的名字》電影分析',
+        group: '大眾傳播、文史哲',
+        kind: '學校手冊收的範例',
+        did: '18 週、每週 1 節，蒐集影評和網路文章，寫成小論文。每週在自我檢核表寫進度有沒有達成，和原因。',
+        learn: '落後的那週寫出少算了什麼，像是「我們少想到了查詢小論文規格的時間」。第 8 週和指導老師討論後換了主題，檢核表上也寫出來。',
+        href: 'https://www.sphs.hc.edu.tw/ischool/rfile/5eb46aa12a3e7fd44cc16bb5861795b4',
+        text: '《你的名字》電影分析的計畫與檢核表',
+        pdf: true,
+        where: '在第 13、17、18 頁',
+    },
+    {
+        title: '校內地標的建築模型',
+        group: '建築與設計',
+        kind: '學生的計畫與每週心得',
+        did: '19 週，挑學校裡的地標建築，先畫正面、背面、側面的簡圖，再用雪弗板切割、組裝。',
+        learn: '每週的心得寫那週卡在哪裡，例如「切割時才發現所花的時間比原訂計畫多了好多倍」，下一週接著寫切歪了怎麼補救。選材料前先問過做過模型的大學生。',
+        href: 'https://www.kmsh.km.edu.tw/ischool/news/attached/10979/自主學習手冊.pdf',
+        text: '建築模型的計畫與心得',
+        pdf: true,
+        where: '在第 38 到 40 頁',
+    },
+    {
+        title: '每週時事研討',
+        group: '法政、大眾傳播、社會與心理',
+        kind: '學生在 ColleGo! 寫的分享',
+        did: '兩個人一起做：讀書、看電影後寫摘要和評論，每週準備一則時事在討論會分享，每個月把最有興趣的主題做成影音或文字。',
+        learn: '目標寫成次數和時間。作者的說法是，與其說要看更多新聞，「直接列出每周看幾則、每次時間多久、看過就好？還是需要反思？」事先排好每次的進度、地點和時間，遇到疫情也照樣進行。',
+        href: 'https://collego.edu.tw/Media/Article/242',
+        text: '每週時事研討的分享',
+    },
+    {
+        title: '自學德文到 A1',
+        group: '外語',
+        kind: '大學生在 ColleGo! 回顧高中的自主學習',
+        did: '家裡開始出現德國產品，為了看懂包裝，用 YouTube、Podcast 和網路上的筆記自學德文，目標是暑假考過 A1 檢定。',
+        learn: '目標有檢定可以驗收，每週也有固定要做的事，作者寫「我規定自己每一周都要固定做至少一份模擬試題」。段考讓進度中斷時，回頭調整計畫。',
+        href: 'https://collego.edu.tw/Media/Article/1632',
+        text: '自學德文的分享',
+    },
+    {
+        title: '電腦繪圖與雷射雕刻',
+        group: '資訊、工程、建築與設計',
+        kind: '學校給學生參考的計畫書範例',
+        did: '18 週分三段：前 6 週學 2D 繪圖軟體，接著學雷射雕刻機，最後學 miniCNC，每一段寫出要用到的設備。',
+        learn: '每週有一個練習作品，例如杯子、名牌、手機架，做完就知道這週有沒有學會。學習目標寫成看得出來的事，例如比較雷雕機和 miniCNC 的運作方式。',
+        href: 'https://www.hhsh.chc.edu.tw/resource/openfid.php?id=2883',
+        text: '電腦繪圖與雕刻的計畫書範例',
+        pdf: true,
+    },
+];
 ---
 
 <BaseLayout
@@ -108,6 +183,23 @@ const progressWeeks = (n: number) => Array.from({ length: n }, (_, i) => (i + 1 
             <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 範本卡片由 renderTemplates() 填入 -->
             </div>
+        </section>
+
+        <!-- 真實的計畫 -->
+        <section class="mt-16">
+            <h2 class="text-2xl font-bold text-center mb-2">真實的計畫</h2>
+            <p class="text-gray-600 text-center max-w-3xl mx-auto mb-8">高中生寫的計畫和分享，以及學校給學生參考的範例，都公開在網路上。每份寫它做了什麼、可以學的地方，再連到原文。</p>
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {realPlans.map((p) => (
+                    <li class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-1">{p.title}</h3>
+                        <p class="text-sm font-bold text-teal-700 mb-3">{p.group}｜{p.kind}</p>
+                        <p class="text-gray-700 mb-2">{p.did}</p>
+                        <p class="text-gray-700 mb-2">可以學的地方：{p.learn}</p>
+                        <p class="text-gray-700">原文：<a href={p.href} class={link}>{p.pdf ? <>{p.text.slice(0, -1)}<span class="whitespace-nowrap">{p.text.slice(-1)}（PDF）</span></> : p.text}</a>{p.where && `，${p.where}`}</p>
+                    </li>
+                ))}
+            </ul>
         </section>
 
         <!-- 參考來源 -->
