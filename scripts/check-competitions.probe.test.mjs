@@ -346,6 +346,9 @@ test('schedule：details 選填，填了不能是空的或前後有空白', () =
     assert.deepEqual(bad({ description: '摘'.repeat(80), details: '其他。' }), []);
     // 字數照 code point 算：80 個 emoji 是 160 個 UTF-16 單位，仍算 80 字。
     assert.deepEqual(bad({ description: '😀'.repeat(80), details: '其他。' }).filter((m) => m.includes('上限')), []);
+    // 沒有 details 也一樣，摘要寫不下就要拆出 details。
+    assert.ok(bad({ description: '摘'.repeat(81) }).some((m) => m.includes('上限 80')));
+    assert.deepEqual(bad({ description: '摘'.repeat(80) }), []);
 });
 
 test('schedule：sourceNote 選填，填了不能是空的或前後有空白', () => {

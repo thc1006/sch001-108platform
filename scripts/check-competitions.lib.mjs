@@ -179,14 +179,14 @@ export function validateInstant(value, field, label, errors) {
 const SOURCE_NOTE_MAX = 1000;
 // 2026-11-05 量的：拆欄前最長的 description 是 1,144 個 code point。
 const DETAILS_MAX = 1200;
-// 有 details 時 description 是卡片上的摘要。卡片內文一行約 18 字，80 字約 5 行。
+// description 是卡片上的摘要，寫不下的放 details。卡片內文一行約 18 字，80 字約 5 行。
 const SUMMARY_MAX = 80;
 // 摘要裡 12 字以上的句子或分句原樣出現在 details，對話框會念兩次。短句像「免費參加。」重複無妨。
 const REPEAT_MIN = 12;
 
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
- * 也驗證同樣選填、填了就要合法的 recheckOn、recheckNote、sourceNote、registrationNote、details。
+ * 也驗證 description 的字數，以及同樣選填、填了就要合法的 recheckOn、recheckNote、sourceNote、registrationNote、details。
  *
  * 只驗證「同一種精度之間」的順序。跨精度（日期 vs 時刻）不比對：那需要假設一個
  * 時區，而假設時區正是這組欄位要消滅的東西。唯一的例外是有 opensAt、只有 deadline
@@ -211,6 +211,10 @@ export function validateSchedule(comp, label, errors) {
         }
     }
 
+    if (typeof comp.description === 'string' && [...comp.description].length > SUMMARY_MAX) {
+        errors.push(`「${label}」的 description 是卡片上的摘要，上限 ${SUMMARY_MAX} 字，目前 ${[...comp.description].length} 字，其餘寫進 details`);
+    }
+
     if (comp.details !== undefined) {
         if (typeof comp.details !== 'string' || !comp.details || comp.details.trim() !== comp.details) {
             errors.push(`「${label}」的 details 必須是非空字串，前後不能有空白`);
@@ -219,9 +223,6 @@ export function validateSchedule(comp, label, errors) {
                 errors.push(`「${label}」的 details 過長（上限 ${DETAILS_MAX} 字，目前 ${[...comp.details].length} 字）`);
             }
             if (typeof comp.description === 'string' && comp.description) {
-                if ([...comp.description].length > SUMMARY_MAX) {
-                    errors.push(`「${label}」有 details，description 是卡片上的摘要，上限 ${SUMMARY_MAX} 字，目前 ${[...comp.description].length} 字`);
-                }
                 // 對話框先顯示 description 再接 details。
                 const repeated = comp.description.split(/(?<=[。！？；])/).map((s) => s.trim())
                     .filter((s) => [...s].length >= REPEAT_MIN && comp.details.includes(s));
