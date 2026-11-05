@@ -87,6 +87,16 @@ test('每個任務的 system 訊息都要求不編造學校、課程、統計數
     }
 });
 
+// 角色寫在共用規則（「AI 學習顧問」），任務指令直接寫要做什麼。「專業的…顧問」「創新且可執行」這類字
+// 可能讓回答跟著寫得像顧問報告。角色字眼只查第一行，後面的學群與專案資料照頁面抄，不在這裡管。
+test('任務指令不另外指定角色，不用「專業的」「創新且可執行」這類字', () => {
+    for (const task of catalog.values()) {
+        const [first] = task.instructions.split('\n');
+        assert.doesNotMatch(first, /^(?:你是|身為|作為一位)|專業的|顧問|助手/, task.id);
+        assert.doesNotMatch(task.instructions, /你是一位|創新且可執行/, task.id);
+    }
+});
+
 // 依據見 task-catalog.mjs 的 TASK_DEFINITIONS。
 test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
     for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
