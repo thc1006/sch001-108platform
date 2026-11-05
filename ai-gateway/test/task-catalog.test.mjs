@@ -84,7 +84,7 @@ test('文字任務的 system 訊息要求直接回答，結尾不總結也不打
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
         assert.equal(system.content.includes('直接回答，結尾不總結也不打氣。'), task.output.type === 'markdown', task.id);
-        if (task.output.type === 'json') assert.doesNotMatch(system.content, /結尾/, task.id);
+        if (task.output.type === 'json') assert.doesNotMatch(system.content, /結尾|總結|直接回答|打氣/, task.id);
     }
 });
 
