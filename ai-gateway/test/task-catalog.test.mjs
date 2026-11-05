@@ -72,21 +72,18 @@ test('每個任務的 system 訊息都要求不用破折號、「不是…而是
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        for (const rule of [/不用破折號/, /「不是…而是」/, /「不只…更」/, /粗體小標加冒號的條列/]) assert.match(system.content, rule, task.id);
+        assert.ok(system.content.includes('不用破折號、「不是…而是」「不只…更」和粗體小標加冒號的條列。'), task.id);
         assert.doesNotMatch(system.content, /[—―─]/, task.id);
     }
 });
 
 // JSON 任務沒有開場和結尾；star-analysis 的修改範例是學生口吻的心得，照慣例用學到什麼收尾，不能被砍掉。
 test('文字任務的 system 訊息要求直接回答，結尾不總結也不打氣；JSON 任務沒有這句', () => {
-    const rules = [/直接回答/, /結尾不總結也不打氣/];
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        for (const rule of rules) {
-            if (task.output.type === 'markdown') assert.match(system.content, rule, task.id);
-            else assert.doesNotMatch(system.content, rule, task.id);
-        }
+        assert.equal(system.content.includes('直接回答，結尾不總結也不打氣。'), task.output.type === 'markdown', task.id);
+        if (task.output.type === 'json') assert.doesNotMatch(system.content, /結尾/, task.id);
     }
 });
 
@@ -95,8 +92,7 @@ test('每個任務的 system 訊息都要求不編造學校、校系規定、課
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        assert.match(system.content, /不編造學校、校系規定、課程、統計數字、人名、他人說法和網址/, task.id);
-        assert.match(system.content, /不知道就說不知道/, task.id);
+        assert.ok(system.content.includes('不編造學校、校系規定、課程、統計數字、人名、他人說法和網址，不知道就說不知道。'), task.id);
     }
 });
 
