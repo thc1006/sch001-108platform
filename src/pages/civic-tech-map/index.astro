@@ -179,8 +179,8 @@ const pill = 'text-sm px-2.5 py-0.5 rounded-full border';
         statusEl.textContent = '';
         if (text) announceTimer = setTimeout(function() { statusEl.textContent = text; }, 100);
       }
-      // PlatformAI 沒載入成功時連 describeError 都沒有，改用這句，與它對未知錯誤的說法相同。
-      var FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
+      // platform-ai.js 沒載入成功時沒有 describeError 可用，改顯示這句。
+      var FALLBACK_ERROR_TEXT = 'AI 功能沒有載入，請重新整理頁面再試一次。';
 
       input.addEventListener('input', function() {
         charCount.textContent = input.value.length + ' / 300';

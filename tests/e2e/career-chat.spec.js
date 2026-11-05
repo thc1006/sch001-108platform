@@ -693,7 +693,7 @@ test.describe('生涯探索首頁：共用腳本 platform-ai.js 沒載入成功'
 
             await ask(page, '我喜歡畫畫');
             const notice = aiText(page, 2);
-            await expect(notice).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(notice).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             await expect(notice).toHaveClass(/text-red-700/);
             const button = page.locator('#chat-submit');
             await expect(button).toBeEnabled();

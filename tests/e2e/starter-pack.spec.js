@@ -293,7 +293,7 @@ test.describe('自主學習頁：共用腳本 platform-ai.js 沒載入成功', (
             await page.fill('#coachInput', '貓咪');
             await page.click('#generateCoachBtn');
 
-            await expect(page.locator('#coachResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#coachResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             const button = page.locator('#generateCoachBtn');
             await expect(button).toBeEnabled();
             await expect(button).toHaveText('產生啟動包');

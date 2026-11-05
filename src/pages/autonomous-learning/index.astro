@@ -124,9 +124,8 @@ import civic from '../../../public/civic-tech-map/projects.json';
             if (text) announceTimer = setTimeout(() => { coachStatus.textContent = text; }, 100);
         }
         const coachBtnLabel = generateCoachBtn.querySelector('span');
-        // platform-ai.js 沒載入成功（404、被擋）時，PlatformAI 不存在，連 describeError 都沒有，
-        // 就退回這一句；字句與 describeError 對未知錯誤的說法相同
-        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
+        // platform-ai.js 沒載入成功時沒有 describeError 可用，改顯示這句。
+        const FALLBACK_ERROR_TEXT = 'AI 功能沒有載入，請重新整理頁面再試一次。';
 
         function showMessage(text, tone = 'error') {
             coachResult.textContent = '';
