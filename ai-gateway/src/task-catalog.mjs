@@ -309,12 +309,13 @@ export const TASK_DEFINITIONS = [
         // 自主學習 › 選題靈感頁（src/pages/autonomous-learning/topic-ideas.astro）的「AI 個人化發想」。
         // 研究方法與關鍵字在頁面上顯示成小標籤，只放短詞。
         // 各欄的長度寫在指令裡，maxLength 只當保險，理由見 tasks.mjs 檔頭。
+        // 開頭的角色設定留著：2026-11-05 WinLab 實測，拿掉之後 reasoning tokens 的中位數多了約兩成，最長一次接近 max_tokens。
         id: 'topic-ideas',
         input: {
             interests: { label: '興趣關鍵字', maxLength: 100 },
         },
         instructions: [
-            '請根據學生提供的「興趣關鍵字」，為他發想 3 個具體、高中生做得到的跨領域自主學習主題，放在 ideas 裡。每個主題包含：',
+            '你是一位專業的台灣高中教育顧問，專長是引導學生進行自主學習。請根據學生提供的「興趣關鍵字」，為他發想 3 個具體、高中生做得到的跨領域自主學習主題，放在 ideas 裡。每個主題包含：',
             '- title：主題名稱，約 10～25 字',
             '- description：簡短描述，約 50～120 字',
             '- methods：建議研究方法 2～4 種，每種只寫簡短的方法名稱（約 2～12 字），不要加說明',
