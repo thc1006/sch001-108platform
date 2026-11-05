@@ -98,7 +98,7 @@ description: 管理學群個人申請第二階段：審查資料的項目與件�
 
 ## 使用 AI
 
-用 AI 幫忙要節制，讓審查教授懷疑是抄襲或代寫，對你不利。政大企管要另交 AI 使用聲明，到系網下載；中興企管 116 學年度的分則寫，學習歷程自述檔案的首頁要放學校提供的 AI 使用聲明，檔案到系網下載；陽明交大 115 學年度的說明寫，放在自述第一頁的個人資料表上，要勾選 AI 使用情形並本人簽名，用電子簽名或手寫後掃描，不能打字。其他學校看各系的校系分則和準備指引；用了 AI 就保留草稿和提示紀錄。
+用 AI 幫忙要節制，讓審查教授懷疑是抄襲或代寫，對你不利。政大企管要另交 AI 使用聲明，到系網下載；中興企管 116 學年度的分則寫，學習歷程自述檔案的首頁要放學校提供的 AI 使用聲明，檔案到中興大學招生資訊網下載，甄試須知 3 月 2 日上午 10 點起公告；陽明交大 115 學年度的說明寫，放在自述第一頁的個人資料表上，要勾選 AI 使用情形並本人簽名，用電子簽名或手寫後掃描，不能打字。其他學校看各系的校系分則和準備指引；用了 AI 就保留草稿和提示紀錄。
 
 ## 時程
 
@@ -125,6 +125,7 @@ description: 管理學群個人申請第二階段：審查資料的項目與件�
 - [政大企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006202.htm)
 - [成大企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_004332.htm)
 - [中興企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_003062.htm)
+- [中興大學招生資訊網：大學申請入學](https://recruit.nchu.edu.tw/college-exam/CAAC/index-CAAC.aspx?examc=L)
 - [東吳企業管理學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_005182.htm)
 - [陽明交大管理科學系 116 學年度大學申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013262.htm)
 - [國立臺灣大學「工商管理學系-企業管理組」115 學年度大學申請入學第二階段甄試書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/7010_工管系_企管組.pdf)
