@@ -915,6 +915,32 @@ test('data：#138 補上的週期與新截止日', () => {
     assert.equal(find('Earth Science Week').cycle.closes, '10');
 });
 
+/** TAIWAN_HOSTS_2027 比對「2027 年由台灣主辦」的各種寫法。台灣和主辦之間不能隔太多字，否則「台灣學生參加 2027 年舉辦的比賽」也會通過。 */
+const TAIWAN_HOSTS_2027 = new RegExp([
+    /2027\s*年[^。]{0,20}(?:台灣|臺灣|我國)[^。]{0,4}(?:主辦|舉辦)/.source,
+    /(?:台灣|臺灣|我國)(?:將|會)?(?:於|在)?\s*2027\s*年[^。，]{0,2}(?:主辦|舉辦)/.source,
+    /(?:台灣|臺灣|我國)是\s*2027\s*年的?主辦國/.source,
+    /(?:台灣|臺灣|我國)[^。]{0,4}(?:主辦|舉辦)[^。，]*2027/.source,
+].join('|'));
+
+test('data：IChO 摘要斷言的正規式，台灣主辦 2027 的寫法要過，只是提到台灣和 2027 的要擋', () => {
+    for (const ok of [
+        '各國中學生化學競賽裡層級最高的國際賽，2027 年由台灣主辦。',
+        '2027 年 7 月在臺灣舉辦。',
+        '台灣將於 2027 年主辦。',
+        '臺灣會在 2027 年舉辦。',
+        '我國是 2027 年的主辦國。',
+        '由台灣主辦的 2027 年賽事。',
+    ]) assert.match(ok, TAIWAN_HOSTS_2027, ok);
+    for (const bad of [
+        '台灣學生經選拔參加 2027 年舉辦的國際賽。',
+        '台灣隊 2026 年拿兩金，2027 年舉辦地是匈牙利。',
+        '2027 年在烏茲別克舉行，台灣隊參加。',
+        '台灣將於 2026 年主辦。',
+        '2026 年由台灣主辦，2027 年在匈牙利。',
+    ]) assert.doesNotMatch(bad, TAIWAN_HOSTS_2027, bad);
+});
+
 test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     // 官網頁尾逐字：「Cambridge Centre for International Research, Ltd is not affiliated to
     // the University of Cambridge or its constituent colleges.」標題不得再暗示是劍橋大學主辦。
@@ -991,7 +1017,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     assert.equal(icho.eventEndsAt, '2026-07-19');
     assert.match(textOf(icho), /2027 年 7 月 19 至 28 日在(?:台灣|臺灣)/);
     assert.match(icho.sourceNote, /2027 July 19-28, Chinese Taipei/, '官網原文留在 sourceNote');
-    assert.match(icho.description, /2027\s*年[^。]{0,20}(?:台灣|臺灣|我國)[^。]{0,4}(?:主辦|舉辦)|(?:台灣|臺灣|我國)[^。]{0,20}2027\s*年[^。]{0,4}(?:主辦|舉辦)|(?:台灣|臺灣|我國)[^。]{0,4}(?:主辦|舉辦)[^。]*2027/, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
+    assert.match(icho.description, TAIWAN_HOSTS_2027, '2027 由我國主辦，是對台灣學生最重要的資訊，要寫在卡片的摘要');
 
     // IMO 官網首頁：「Upcoming IMO 2027 Budapest, Hungary - July 16-26, 2027」。2026 屆在上海，已結束。
     const imo = find('國際數學奧林匹亞');
