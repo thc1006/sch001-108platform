@@ -973,8 +973,15 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     // 名稱下面那一行用「、」分隔，「其他」「個人/團體」「混合」顯示成念得懂的寫法。
     const facts = (html) => html.match(/<p class="comp-facts">([^<]*)<\/p>/)[1];
     const fields = { region: '其他', level: '國際', form: '個人/團體', eligibility: '公開報名', mode: '混合' };
-    assert.equal(facts(render({ ...cycle, ...fields })), '其他地區、國際賽、個人或團體、公開報名、實體與線上');
-    assert.equal(facts(render({ ...cycle, ...fields, region: '台灣', level: '校際/地區', form: '個人', mode: '線上' })), '台灣、校際或地區賽、個人、公開報名、線上');
+    assert.equal(facts(render({ ...cycle, ...fields })), '其他地區、國際性、個人或團體、公開報名、實體與線上');
+    assert.equal(facts(render({ ...cycle, ...fields, region: '台灣', level: '校際/地區', form: '個人', mode: '線上' })), '台灣、校際或地區性、個人、公開報名、線上');
+    // 篩選選單的級別和卡片上的寫法一樣。
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const select = src.match(/<select id="filter-level"[\s\S]*?<\/select>/)[0];
+    const options = [...select.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)].filter(([, v]) => v !== 'all');
+    assert.equal(options.length, 3);
+    for (const [, v, text] of options) assert.equal(facts(render({ ...cycle, ...fields, level: v })).split('、')[1], text, v);
     // 沒有截止日和 registrationNote、只有賽事日期：有 details 的卡片寫「報名截止：未公布」，賽事日期在對話框；
     // 沒有 details 的卡片把賽事日期放在截止欄。
     const eventOnly = { ...cycle, cycle: undefined, deadline: undefined, eventStartsAt: '2099-08-01' };

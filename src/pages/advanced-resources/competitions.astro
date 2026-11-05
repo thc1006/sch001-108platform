@@ -99,9 +99,9 @@ import data from '../../../public/advanced-resources/competitions.json';
           </select>
           <select id="filter-level" aria-label="競賽級別">
             <option value="all">所有級別</option>
-            <option value="校際/地區">校際/地區</option>
-            <option value="全國">全國</option>
-            <option value="國際">國際</option>
+            <option value="校際/地區">校際或地區性</option>
+            <option value="全國">全國性</option>
+            <option value="國際">國際性</option>
           </select>
           <select id="filter-form" aria-label="參賽形式">
             <option value="all">所有形式</option>
@@ -374,8 +374,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       // 幾個資料裡的值單獨念聽不懂，顯示時改寫，資料不改。
       function factsText(c) {
         const region = { '其他': '其他地區' }[c.region] || c.region;
-        // 「台灣、國際」聽起來像矛盾，級別寫成「國際賽」。
-        const level = { '國際': '國際賽', '全國': '全國賽', '校際/地區': '校際或地區賽' }[c.level] || c.level;
+        // 「台灣、國際」聽起來像矛盾，級別加「性」。不寫「國際賽」：APCS 是檢測、AIS3 是課程。篩選選單用同一套寫法。
+        const level = { '國際': '國際性', '全國': '全國性', '校際/地區': '校際或地區性' }[c.level] || c.level;
         const form = { '個人/團體': '個人或團體' }[c.form] || c.form;
         const mode = { '混合': '實體與線上' }[c.mode] || c.mode;
         return [region, level, form, c.eligibility, mode]
