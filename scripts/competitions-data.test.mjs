@@ -53,7 +53,7 @@ function pageAt(iso) {
         return m[0];
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
-        'upcomingText', 'deadlineText', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+        'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
     const fixed = new Date(iso).getTime();
     class FixedDate extends Date {
         constructor(...a) { super(...(a.length ? a : [fixed])); }
