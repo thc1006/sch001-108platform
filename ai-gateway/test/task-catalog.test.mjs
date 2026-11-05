@@ -99,13 +99,18 @@ test('每個任務的 system 訊息都要求不編造學校、校系規定、課
 
 // 角色寫在共用規則（「AI 學習顧問」），任務指令直接寫要做什麼。「專業的…顧問」「創新且可執行」這類字
 // 可能讓回答跟著寫得像顧問報告。「專業的」「顧問」只查第一行，後面的學群與專案資料照頁面抄；
-// 以「你是」「身為」「作為」開頭的行，整份都查。star-analysis 例外，理由見它的註解。
-test('任務指令不另外指定角色（star-analysis 除外），不用「專業的」「創新且可執行」這類字', () => {
+// 以「你是」「身為」「作為」開頭的行，整份都查。KEEP_ROLE 的任務第一行是原本的角色設定，理由見各任務的註解。
+const KEEP_ROLE = {
+    'star-analysis': '你是一位專業的學習歷程檔案顧問。請根據 STAR 原則',
+    'civic-tech-suggestion': '你是「台灣教育處方籤」平台的 AI 探索助手，正在協助一位台灣高中生找到適合的公民科技專案作為自主學習主題。',
+};
+
+test('任務指令不另外指定角色（KEEP_ROLE 除外），不用「專業的」「創新且可執行」這類字', () => {
     for (const task of catalog.values()) {
         const [first] = task.instructions.split('\n');
-        if (task.id === 'star-analysis') {
-            assert.match(first, /^你是一位專業的學習歷程檔案顧問。請根據 STAR 原則/);
-            assert.doesNotMatch(task.instructions.slice(first.length), /^(?:你是|身為|作為)|創新且可執行/m);
+        if (KEEP_ROLE[task.id]) {
+            assert.ok(first.startsWith(KEEP_ROLE[task.id]), task.id);
+            assert.doesNotMatch(task.instructions.slice(first.length), /^(?:你是|身為|作為)|創新且可執行/m, task.id);
             continue;
         }
         assert.doesNotMatch(first, /^(?:你是|身為|作為一位)|專業的|顧問|助手/, task.id);
