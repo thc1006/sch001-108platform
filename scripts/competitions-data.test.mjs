@@ -771,12 +771,12 @@ test('data：官網明講「尚未公布」的競賽不得被補上猜測日期'
     }
 });
 
-// Sony WPA 青年組逐字「5 January 2027 at 16:00 (GMT)」，正好是台灣 1/6 00:00。卡片用截止時刻的台北日曆日
-// 倒數，補上 deadlineAt 的話 1/5 當天會顯示「即將截止 · 剩 1 天」，所以只填日期。卡片狀態用頁面自己的函式算。
-test('data：Sony 青年組的截止時刻落在台北午夜，只填日期，1/5 當天卡片顯示今日截止', () => {
+// Sony WPA 青年組逐字「5 January 2027 at 16:00 (GMT)」，正好是台灣 1/6 00:00。頁面把台北 00:00 截止的算在前一天，
+// 1/5 整天是「今日截止」，截止欄寫「1/5 24:00」。卡片狀態用頁面自己的函式算。
+test('data：Sony 青年組的截止時刻落在台北午夜，1/5 當天卡片顯示今日截止', () => {
     const sony = find('Sony 世界攝影獎');
     assert.equal(sony.deadline, '2027-01-05');
-    assert.equal(sony.deadlineAt, undefined);
+    assert.equal(sony.deadlineAt, '2027-01-05T16:00:00Z');
     // 總覽頁逐字「1 June 0:00 BST」
     assert.equal(sony.opensAt, '2026-06-01T00:00:00+01:00');
 
@@ -786,8 +786,9 @@ test('data：Sony 青年組的截止時刻落在台北午夜，只填日期，1/
         assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
         return m[0];
     };
-    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText']
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'deadlineText']
         .map(grab).join('\n');
+    assert.equal(new Function(`${bundle}; return deadlineText;`)()(sony), '台灣時間 2027-01-05 24:00');
     const statusAt = (c, iso) => {
         const fixed = Date.parse(iso);
         class FixedDate extends Date {
@@ -800,8 +801,6 @@ test('data：Sony 青年組的截止時刻落在台北午夜，只填日期，1/
     assert.equal(statusAt(sony, '2027-01-05T09:00:00+08:00'), '今日截止');
     assert.equal(statusAt(sony, '2027-01-05T23:59:59+08:00'), '今日截止');
     assert.equal(statusAt(sony, '2027-01-06T00:00:01+08:00'), '已截止');
-    // 台北 00:00 截止的算在前一天，補上 deadlineAt 也不會多算一天。
-    assert.equal(statusAt({ ...sony, deadlineAt: '2027-01-05T16:00:00Z' }, '2027-01-05T09:00:00+08:00'), '今日截止');
 });
 
 // 2026-10-23 重查時，這幾筆的官網已經公布下一屆時程，日期照官網填，官網寫明時刻的也一併填上。
@@ -1054,7 +1053,7 @@ test('data：#70 在 2026-10-25 更正的描述不得被改回舊說法', () => 
 
     // 條款 1.3 在 2026 年 9 月到 10 月之間從 13:00 改成 16:00 (GMT)
     const sony = textOf(find('Sony 世界攝影獎'));
-    assert.match(sony, /格林威治時間 1 月 5 日 16:00，也就是台灣時間 1 月 6 日 00:00/);
+    assert.match(sony, /格林威治時間 1 月 5 日 16:00，也就是台灣時間 1 月 5 日 24:00/);
     assert.match(find('Sony 世界攝影獎').sourceNote, /5 January 2027 at 16:00 \(GMT\)/);
     assert.ok(!/13:00/.test(sony), 'Sony 青年組現在只寫 16:00 (GMT)');
 
