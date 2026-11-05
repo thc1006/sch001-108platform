@@ -212,7 +212,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const templateGrid = document.getElementById('template-grid');
         const modal = document.getElementById('templateModal');
         const detail = DetailDialog.setup(modal);
-        const filters = document.querySelector('.flex.flex-wrap.justify-center');
+        const filters = document.querySelector('[aria-label="依分類篩選"]');
         const resultStatus = document.getElementById('result-status');
         // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
         let shownCount = 0;
