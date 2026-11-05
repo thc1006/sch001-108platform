@@ -1251,7 +1251,7 @@
     },
     {
       "file": "src/content/clusters/social-psychology/application.md",
-      "text": "116 學年度上傳起始日是 2027 年 4 月 29 日，截止日依各大學規定。",
+      "text": "上傳起始日是 2027 年 4 月 29 日，截止日依各大學規定。",
       "cycle": 116,
       "reason": "照甄選會 116 學年度申請入學重要日程（apply116/schedule.php）寫：第二階段審查資料上傳 116.04.29 起，截止日大學自訂。換屆時對照 117 學年度的日程改日期和學年度。",
       "recheckAfter": "2027-11-03"
