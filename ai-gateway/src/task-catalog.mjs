@@ -83,13 +83,14 @@ export const TASK_DEFINITIONS = [
         // 生涯探索 › 核心素養對照表的「AI 對照核心素養」（src/pages/career-exploration/competency-map.astro）。
         // 指令列出九項素養的代號與名稱：只給代號的話，名稱得靠模型自己記，記錯就誤導學生。
         // 名稱抄自 scripts/taxonomy.json，因為閘道的映像檔裡沒有那個檔案；test/task-catalog.test.mjs 比對兩邊。
+        // 開頭的角色設定留著：2026-11-05 WinLab 實測，拿掉之後 reasoning tokens 平均多了約四成。
         id: 'competency-analysis',
         input: {
             experience: { label: '活動經驗', maxLength: 1000 },
         },
         temperature: 0.5,
         instructions: [
-            '請根據學生描述的「活動經驗」，找出這段經驗最看得出來的 2～3 項核心素養，',
+            '你是一位專業的 108 課綱學習歷程顧問。請根據學生描述的「活動經驗」，分析其中最能體現的 2～3 項核心素養，',
             '並針對每項素養提供一句精簡的寫作建議，說明在學習歷程檔案裡怎麼呈現這項素養。',
             '用「- 」開頭的清單回傳，每項素養一項：先寫代號與名稱，接著寫建議，不用粗體。',
             '核心素養只能從這九項中選擇：A1 身心素質與自我精進、A2 系統思考與解決問題、',
