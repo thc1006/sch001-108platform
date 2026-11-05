@@ -396,7 +396,11 @@ export const RULES = [
         re: new RegExp(`(?<=${HAN})[,;:!?]|[,;:!?](?=${HAN})|(?<=${HAN})\\.(?=\\s|$|${HAN})`, 'gu'),
         normal: (m) => (/[A-Za-z]$/.test(before(m, 1)) && /[!?]/.test(m[0]) ? '英文名稱' : m[0] === '.' && /^\s+[A-Z]/.test(after(m, 3)) ? '英文句子' : null),
     },
-    { id: 'P05-halfwidth-paren', severity: 'block', skip: 'aqu', re: new RegExp(`\\([^()（）]*${HAN}[^()（）]*\\)|(?<=${HAN}\\s?)\\([^()（）]*\\)`, 'gu') },
+    // 「計算 (3+5)×2」「座標 (2, 3)」「求 (a+b)²」是數學式：括號裡只有數字、單一字母和運算符號，至少一個運算符號或逗號。
+    {
+        id: 'P05-halfwidth-paren', severity: 'block', skip: 'aqu', re: new RegExp(`\\([^()（）]*${HAN}[^()（）]*\\)|(?<=${HAN}\\s?)\\([^()（）]*\\)`, 'gu'),
+        normal: (m) => (/^\([\w\s.]*(?:[+\-−×÷*/=^,<>≤≥][\w\s.]*)+\)$/.test(m[0]) && !/[A-Za-z]{2}|_/.test(m[0]) ? '數學式' : null),
+    },
     { id: 'P06-exclamation', severity: 'warn', skip: 'aqu', re: /！|(?<=\p{Script=Han})!/gu },
     { id: 'P07-emoji', severity: 'block', skip: 'u', names: true, re: /(?![©®™])(?:\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F)/gu },
     { id: 'P09-quote-nesting', severity: 'block', skip: '', custom: quoteNesting },
