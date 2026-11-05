@@ -336,6 +336,7 @@ test('schedule：details 選填，填了不能是空的或前後有空白', () =
     for (const zw of ['\u200B', '\u200C', '\u200D', '\u2060']) {
         assert.ok(bad({ details: zw }).some((m) => m.includes('零寬')), `只有 U+${zw.codePointAt(0).toString(16)} 也要擋`);
         assert.ok(bad({ details: `第一段${zw}。` }).some((m) => m.includes('零寬')), `句中的 U+${zw.codePointAt(0).toString(16)} 也要擋`);
+        assert.ok(bad({ description: `摘要${zw}。` }).some((m) => m.includes('description 有零寬')), `摘要裡的 U+${zw.codePointAt(0).toString(16)} 也要擋`);
     }
     assert.ok(bad({ details: '細'.repeat(1201) }).some((m) => m.includes('過長')));
     assert.deepEqual(bad({ details: '細'.repeat(1200) }), []);
