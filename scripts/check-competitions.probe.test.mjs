@@ -342,6 +342,9 @@ test('schedule：details 選填，填了不能是空的或前後有空白', () =
     const summary = '國際青年科學家的研究競賽，個人或兩人一組。';
     assert.ok(bad({ description: summary, details: `第一段。${summary}第三段。` }).some((m) => m.includes('重複')), '重複在中間那句也要擋');
     assert.ok(bad({ description: `${summary}免費參加。`, details: '免費參加。其他的事。' }).every((m) => !m.includes('重複')), '短句重複不擋');
+    // 門檻含句尾標點是 12 字：「一二三四五六七八九十甲。」要擋，少一個字不擋。
+    assert.ok(bad({ description: '一二三四五六七八九十甲。', details: '一二三四五六七八九十甲，其他。' }).some((m) => m.includes('重複')), '含句號 12 字要擋');
+    assert.ok(bad({ description: '一二三四五六七八九十。', details: '一二三四五六七八九十，其他。' }).every((m) => !m.includes('重複')), '含句號 11 字不擋');
     assert.ok(bad({ description: `${summary}免費參加。`, details: `第一段。${summary}` }).some((m) => m.includes('重複')), '摘要有兩句時，逐句比對');
     assert.ok(bad({ description: `免費參加；${summary}`, details: `第一段。${summary}` }).some((m) => m.includes('重複')), '「；」後面的分句也要比對');
     assert.ok(bad({ description: `免費參加！${summary}`, details: `第一段。${summary}` }).some((m) => m.includes('重複')), '「！」後面的分句也要比對');
