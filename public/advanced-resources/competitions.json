@@ -404,9 +404,6 @@
       "deadline": "",
       "eventStartsAt": "2027-03-09",
       "registrationNote": "每年 3 月舉行 · 無公開報名",
-      "cycle": {
-        "note": "每年 3 月第二個週二上午於亞太地區同步舉行"
-      },
       "sourceCheckedAt": "2026-10-23",
       "url": "https://apmo-official.org/",
       "description": "亞太地區的國際數學競賽，也是台灣 IMO 國手選拔的第一關。限未上大學、當年 7 月 1 日未滿 20 歲的本國籍學生，須由學校或主管機關推薦報名。",
@@ -426,9 +423,6 @@
       "eventStartsAt": "2027-05-16",
       "eventEndsAt": "2027-05-24",
       "registrationNote": "每年 5 月舉行 · 由國家代表隊參賽",
-      "cycle": {
-        "note": "每年 5 月舉行，由國家代表隊參賽"
-      },
       "sourceCheckedAt": "2026-10-23",
       "url": "https://tpmso.k12ea.gov.tw/ipho/",
       "description": "亞洲各國派隊參加的中學生物理競賽，台灣代表隊和 IPhO 國手走同一套選訓。當年 6/30 不超過 20 歲、未上大學的本國籍學生，向就讀學校報名初選。",
@@ -448,9 +442,6 @@
       "eventStartsAt": "2026-05-09",
       "eventEndsAt": "2026-05-10",
       "registrationNote": "每年 5 月舉行 · 無公開報名",
-      "cycle": {
-        "note": "每年 5 月舉行，由 TOI 選訓隊代表參加"
-      },
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "APIO 2026 官網：「Official Participants must compete onsite at one of the proctored sites of APIO 2026」「If you are a student wishing to compete, please contact your national Informatics Olympiad Organization」。國際資訊奧林匹亞競賽國家代表隊遴選作業要點（2025-04-02 修正）第八點把參加「Asia-Pacific Informatics Olympiad(亞太資奧，佔10%)」計入第二階段成績。資奧辦公室首頁的行事曆列 5 月 9 日。原 tpmso.org 已轉址至 tpmso.k12ea.gov.tw。",
       "url": "https://tpmso.k12ea.gov.tw/toi/",
@@ -2155,16 +2146,13 @@
       "eventStartsAt": "2026-11-14",
       "eventEndsAt": "2026-11-15",
       "registrationNote": "2026 屆可報名至 11/15 活動結束",
-      "cycle": {
-        "note": "每年 10–11 月舉行全球黑客松"
-      },
       "sourceCheckedAt": "2026-10-23",
       "recheckOn": "2026-11-16",
       "recheckNote": "2026 屆 11/14–15 舉行、報名到活動結束，結束後改成 2027 屆的資訊。",
       "url": "https://www.spaceappschallenge.org/",
       "description": "全球規模最大的年度黑客松，兩天內用 NASA 開放資料解題，不限科系與經驗，免費，可組隊。未滿 18 歲要由家長或監護人代為報名並全程陪同。",
-      "details": "隊伍最多 6 人。參加在地活動（Local Event）可以一人一隊，線上的 Universal Event 隊伍至少 2 人才能進全球評選。\n2026 年在 11 月 14–15 日舉行，可報名到 11/15 活動結束。全球有 450 個以上實體會場，台灣有臺北、臺中、高雄三個在地活動，都在線上（Virtual）舉行。",
-      "sourceNote": "「最大」是主辦方的說法：2026-11-05 查 https://www.spaceappschallenge.org/ 首頁寫「Be a part of the largest annual global hackathon on November 14-15, 2026.」。FAQ：「If under the age of 18, participants must be registered for the event by a parent or legal guardian and must be accompanied by a parent or legal guardian at all times during the event」。"
+      "details": "隊伍最多 6 人。參加在地活動（Local Event）可以一人一隊，線上的 Universal Event 隊伍至少 2 人才能進全球評選。\n每年 10 或 11 月舉行，2025 年是 10 月 4–5 日。2026 年在 11 月 14–15 日舉行，可報名到 11/15 活動結束。全球有 450 個以上實體會場，台灣有臺北、臺中、高雄三個在地活動，都在線上（Virtual）舉行。",
+      "sourceNote": "「最大」是主辦方的說法：2026-11-05 查 https://www.spaceappschallenge.org/ 首頁寫「Be a part of the largest annual global hackathon on November 14-15, 2026.」。FAQ：「If under the age of 18, participants must be registered for the event by a parent or legal guardian and must be accompanied by a parent or legal guardian at all times during the event」。2025 屆頁面（2026-11-05 開網頁存檔，官網連線逾時）：「On October 4-5, 2025」。"
     },
     {
       "title": "國際科學奧林匹亞—臺灣代表隊選訓",
