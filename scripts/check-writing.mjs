@@ -191,6 +191,7 @@ const { over, under } = compareBaseline(policy, counts);
 
 // ---- 輸出 ----
 const severity = Object.fromEntries(RULES.map((r) => [r.id, r.severity]));
+const hint = Object.fromEntries(RULES.map((r) => [r.id, r.hint ? `改法：${r.hint}` : '']));
 // 模板字串的 ${…} 在區塊裡是 PH，印出來看不見。
 const readable = (s) => String(s).replaceAll(PH, '${…}');
 const context = (h) => readable(h.block.text.slice(Math.max(0, h.index - 20), h.index + h.len + 20));
@@ -210,6 +211,7 @@ if (over.length) {
     console.error(`\n${over.length} 處超過基準：`);
     for (const o of over) {
         console.error(`  ${o.rule}  ${o.key}  ${o.count} 筆，基準 ${o.baseline}`);
+        if (hint[o.rule]) console.error(`    ${hint[o.rule]}`);
         for (const h of hits.filter((x) => x.rule === o.rule && x.key === o.key)) console.error(`    ${h.line ? `第 ${h.line} 行` : h.block.page}「${readable(h.match)}」：${context(h)}`);
     }
     console.error('改寫這些句子，寫法見 CONTRIBUTING.md 的「網站內容」。照抄的外部原文、官方名稱或當反例引用的句子，在 scripts/writing-allow.json 加一條。'
@@ -237,7 +239,7 @@ const annotateRef = argAfter('--annotate');
 if (annotateRef) {
     const { annotations, rest } = pickAnnotations(hits, changedLines(git('diff', '-U0', annotateRef, '--', 'src', 'public')), new Set(over.map((o) => `${o.rule}|${o.key}`)), ANNOTATION_LIMIT);
     const esc = (s) => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
-    for (const { level, hit } of annotations) console.log(`::${level} file=${hit.key},line=${hit.line},title=${hit.rule}::${esc(context(hit))}`);
+    for (const { level, hit } of annotations) console.log(`::${level} file=${hit.key},line=${hit.line},title=${hit.rule}::${esc([context(hit), hint[hit.rule]].filter(Boolean).join('\n'))}`);
     if (rest) console.log(`改到的行還有 ${rest} 筆命中沒有標，見 step summary 和 artifact 的 writing.json。`);
 }
 
