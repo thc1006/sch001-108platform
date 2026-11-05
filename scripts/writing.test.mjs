@@ -503,6 +503,11 @@ test('P02：數字之間的「—」是範圍', () => {
     assert.equal(hitsOf('P02-single-dash', '第八十一—九十三頁'), 1);
 });
 
+test('P02：範圍寫成「—」照擋，規則帶著改法', () => {
+    for (const t of ['比賽開放國小—高中學生報名。', '報名期間 4 月—6 月，逾期不受理。', '上午 9:00—下午 5:00 開放現場報到。']) assert.equal(hitsOf('P02-single-dash', t), 1, t);
+    assert.match(RULES.find((r) => r.id === 'P02-single-dash').hint, /國小到高中/);
+});
+
 test('changedLines 與 pickAnnotations：只標改到的行，每級最多 limit 個', () => {
     const diff = ['+++ b/src/a.md', '@@ -3 +3,2 @@', '+x', '+y', '+++ b/src/b.md', '@@ -0,0 +7 @@'].join('\n');
     assert.deepEqual([...changedLines(diff)], ['src/a.md:3', 'src/a.md:4', 'src/b.md:7']);

@@ -347,7 +347,7 @@ function longSentences(b) {
 
 /**
  * RULES 是全部的自動規則。skip 是要略過的 skip 代號；names 為真時連專有名稱欄位也查；normal 回傳字串表示
- * 本站的正常用法；custom 用在不靠正規式的規則。規則的說明與例句在 CONTRIBUTING.md。外文引文 'f' 只有在純英文裡
+ * 本站的正常用法；custom 用在不靠正規式的規則；hint 是被擋時印出的改法。規則的說明與例句在 CONTRIBUTING.md。外文引文 'f' 只有在純英文裡
  * 也會命中的規則（P01、P02、P11）略過，其他規則照查，句型規則才抓得到跨過引號的句子。
  */
 export const RULES = [
@@ -387,7 +387,10 @@ export const RULES = [
     // 也是平常的寫法，只報不擋。
     { id: 'W17-weighty-phrase', severity: 'warn', skip: 'aqu', re: /這意味著|見證了|標誌著(?!色)|深遠(?:的)?影響|影響深遠|根植於|無限(?:的)?可能|擁抱未來|迎接未來|(?:開啟|翻開|寫下)(?:了)?(?:嶄新|全新|新)(?:的)?一頁/gu },
     { id: 'P01-double-dash', severity: 'block', skip: 'afqu', re: /—{2,}|─{2,}|―+/gu },
-    { id: 'P02-single-dash', severity: 'block', skip: 'afqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal },
+    {
+        id: 'P02-single-dash', severity: 'block', skip: 'afqu', re: /(?<![—─])—(?![—─])/gu, normal: dashNormal,
+        hint: '範圍寫成「到」，數字範圍可以用「–」，例如「國小到高中」「4–6 月」「9:00 到下午 5:00」；接句子的「—」改成冒號、逗號，或拆成兩句。',
+    },
     {
         id: 'P04-halfwidth-punct', severity: 'block', skip: 'aqu',
         re: new RegExp(`(?<=${HAN})[,;:!?]|[,;:!?](?=${HAN})|(?<=${HAN})\\.(?=\\s|$|${HAN})`, 'gu'),

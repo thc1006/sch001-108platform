@@ -48,7 +48,7 @@ const mutations = [
     ['外文引文照查', "else if (isForeignQuote(text.slice(open + 1, i))) mark(open, i + 1, 'f');", ''],
     ['外文引文對每條規則都略過', "mark(open, i + 1, 'f');", "mark(open, i + 1, 'q');"],
     ['P01 不略過外文引文', "{ id: 'P01-double-dash', severity: 'block', skip: 'afqu',", "{ id: 'P01-double-dash', severity: 'block', skip: 'aqu',"],
-    ['P02 不略過外文引文', "{ id: 'P02-single-dash', severity: 'block', skip: 'afqu',", "{ id: 'P02-single-dash', severity: 'block', skip: 'aqu',"],
+    ['P02 不略過外文引文', "id: 'P02-single-dash', severity: 'block', skip: 'afqu',", "id: 'P02-single-dash', severity: 'block', skip: 'aqu',"],
     ['P11 不略過外文引文', "id: 'P11-ellipsis', severity: 'warn', skip: 'fqu',", "id: 'P11-ellipsis', severity: 'warn', skip: 'qu',"],
     ['有中文的引文也當外文', " && !/[\\u3001-\\u9fff\\uff00-\\uffef]/u.test(q)", ''],
     ['沒有英文字母的引文也當外文', "/[A-Za-z]/.test(q) && ", ''],
