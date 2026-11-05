@@ -77,6 +77,16 @@ test('每個任務的 system 訊息都要求不用破折號、「不是…而是
     }
 });
 
+// 學生會照著 AI 寫的校名、課程和網址去找，編出來的會讓他白跑一趟。star-analysis 另外要求用括號標出待補的地方。
+test('每個任務的 system 訊息都要求不編造學校、課程、統計數字、人名和網址，不知道就說不知道', () => {
+    for (const task of catalog.values()) {
+        const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
+        const [system] = buildMessages(task, validateInput(task, input));
+        assert.match(system.content, /不要編造學校、課程、統計數字、人名和網址/, task.id);
+        assert.match(system.content, /不知道就說不知道/, task.id);
+    }
+});
+
 // 依據見 task-catalog.mjs 的 TASK_DEFINITIONS。
 test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
     for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
