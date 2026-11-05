@@ -330,6 +330,26 @@ test.describe('國內外競賽的詳細資訊', () => {
         await expect(button).toBeFocused();
     });
 
+    test('關閉後馬上又開啟，晚到的 close 事件不會清掉內容或解開捲動鎖', async ({ page }) => {
+        const button = opener(page, '有詳細資訊');
+        await button.click();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        // close 事件不會在 close() 裡同步送出，在同一段程式裡關閉再開啟，它一定在開啟之後才到。
+        await button.evaluate((b) => new Promise((resolve) => {
+            const d = document.getElementById('comp-dialog');
+            d.addEventListener('close', resolve, { once: true });
+            d.close();
+            b.click();
+        }));
+        await expect(dialog.getByRole('heading', { name: '有詳細資訊', exact: true })).toBeVisible();
+        await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+        await dialog.getByRole('button', { name: '關閉', exact: true }).last().click();
+        await expect(dialog).toBeHidden();
+        await expect(button).toBeFocused();
+        await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
+    });
+
     test('點對話框外面關閉，從對話框裡拖曳到外面放開不算', async ({ page }) => {
         const button = opener(page, '有詳細資訊');
         await button.click();

@@ -178,6 +178,8 @@ import data from '../../../public/advanced-resources/competitions.json';
       // 搜尋框停 160ms 才 render()。這段時間內開啟對話框，按鈕會被換掉，detail-dialog.js 還不了焦點，
       // 就交給同一筆的新按鈕，篩掉了就交給搜尋框。
       dialog.addEventListener('close', () => {
+        // 關閉後馬上又開啟時，close 事件在 openDetail() 之後才到，清掉的會是新的內容。
+        if (dialog.open) return;
         dialog.innerHTML = '';
         let toSearch = false;
         if (lastOpener && !lastOpener.isConnected) {
