@@ -184,6 +184,8 @@ const SUMMARY_MAX = 80;
 // 摘要裡 12 字以上（含句尾標點）的句子或分句原樣出現在 details，對話框會念兩次。短句像「免費參加。」重複無妨。
 // 比對時去掉句尾標點，所以門檻是 11。
 const REPEAT_MIN = 11;
+// 零寬字元看不見，trim() 也不會去掉。夾在句子裡時，摘要和 details 的重複比對就比不到。
+const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060]/;
 
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
@@ -215,13 +217,15 @@ export function validateSchedule(comp, label, errors) {
     if (typeof comp.description === 'string' && [...comp.description].length > SUMMARY_MAX) {
         errors.push(`「${label}」的 description 是卡片上的摘要，上限 ${SUMMARY_MAX} 字，目前 ${[...comp.description].length} 字，其餘寫進 details`);
     }
+    if (typeof comp.description === 'string' && ZERO_WIDTH_RE.test(comp.description)) {
+        errors.push(`「${label}」的 description 有零寬字元（U+200B–U+200D 或 U+2060）`);
+    }
 
     if (comp.details !== undefined) {
         if (typeof comp.details !== 'string' || !comp.details || comp.details.trim() !== comp.details) {
             errors.push(`「${label}」的 details 必須是非空字串，前後不能有空白`);
         } else {
-            // 零寬字元看不見，trim() 也不會去掉。夾在句子裡時，下面的重複比對就比不到。
-            if (/[\u200B-\u200D\u2060]/.test(comp.details)) {
+            if (ZERO_WIDTH_RE.test(comp.details)) {
                 errors.push(`「${label}」的 details 有零寬字元（U+200B–U+200D 或 U+2060）`);
             }
             if ([...comp.details].length > DETAILS_MAX) {
