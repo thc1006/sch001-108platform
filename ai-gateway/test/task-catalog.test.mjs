@@ -235,7 +235,7 @@ test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一�
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
-    assert.match(instructions, /提到校系規定時，請學生查該校系網頁，或大學甄選入學委員會（繁星推薦、申請入學）、大學考試入學分發委員會（分科測驗）的校系分則/);
+    assert.match(instructions, /^學生問到某個校系的規定時，請他查那個校系的網頁，或大學甄選入學委員會（繁星推薦、申請入學）、大學考試入學分發委員會（分發入學）的校系分則。$/m);
 });
 
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
