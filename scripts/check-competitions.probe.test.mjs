@@ -834,7 +834,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
         assert.ok(m, `在 competitions.astro 抽不到 ${name}`);
         return m[0];
     };
-    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'upcomingText', 'deadlineText', 'cycleWhen', 'cardDeadline']
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'cardDeadline']
         .map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, badgeText, cardDeadline };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
@@ -860,6 +860,13 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-03-01', deadlineAt: '2099-03-01T23:59:00-05:00', opensAt: '2098-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2098-12-15 起、2099-03-02 截止' });
     assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
     assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3 月 15 日'));
+    // 本屆截止後的同一個月寫下次的年份，其他月份寫「每年約」。
+    const g = new Function(`${grab('cycleWhen')}\n${grab('cycleValue')}; return cycleValue;`)();
+    const nov5 = Date.UTC(2026, 10, 5);
+    assert.equal(g({ closes: '11', next: '2027-11-30' }, nov5), '下次約 2027 年 11 月');
+    assert.equal(g({ closes: '11-04', next: '2027-11-04' }, nov5), '下次約 2027 年 11 月 4 日');
+    assert.equal(g({ closes: '11', next: '2026-11-30' }, nov5), '每年約 11 月');
+    assert.equal(g({ closes: '07', next: '2027-07-31' }, nov5), '每年約 7 月');
     // 報讀軟體把標籤和內容連著念，「報名截止 預計 2099-12-15 開放」聽起來是矛盾的。兩個日期都寫完整，跨年也看得出年份。
     assert.deepEqual(at({ deadline: '2099-12-31', opensAt: '2099-12-15T00:00:00+08:00' }), { label: '報名期間', value: '預計 2099-12-15 起、2099-12-31 截止' });
     assert.deepEqual(at({ deadline: '2100-03-01', opensAt: '2099-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2099-12-15 起、2100-03-01 截止' });
@@ -878,7 +885,7 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         return m[0];
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
-        'upcomingText', 'deadlineText', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
+        'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
     const f = new Function(`${bundle}; return { getStatus, fullDeadline, dialogBadge };`)();
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
@@ -937,7 +944,7 @@ async function cardRenderer() {
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText',
         'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
-        'upcomingText', 'deadlineText', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
+        'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
     const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
     return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
 }
