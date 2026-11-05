@@ -824,6 +824,16 @@ test('recheck：90 天內查證過的不列出，門檻放到 0 天時全部列�
     assert.deepEqual(selectNeedsRecheck([...recent, ...others], TODAY, 0).map((r) => r.label).sort(), recent.map((c) => c.title).sort());
 });
 
+/**
+ * PageDate 是固定在 2026-11-05 的 Date，傳給從競賽頁抽出來的函式。頁面照今天算狀態，用真正的今天的話，
+ * 固定寫的預期值會隨日期變：3/16 到 3/31 之間「每年約 3 月 15 日」會變成「下次約 2028 年 3 月 15 日」。
+ */
+const PAGE_NOW = Date.parse('2026-11-05T12:00:00+08:00');
+class PageDate extends Date {
+    constructor(...a) { super(...(a.length ? a : [PAGE_NOW])); }
+    static now() { return PAGE_NOW; }
+}
+
 // 卡片的徽章只放短標籤。registrationNote 同時放進徽章的話，和截止欄一字不差（2026-11-05 對 117 筆
 // 算，35 筆）。有 details 的卡片截止欄也只放一項，完整時程在對話框。
 test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽事日期', async () => {
@@ -836,7 +846,7 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText', 'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'cardDeadline']
         .map(grab).join('\n');
-    const f = new Function(`${bundle}; return { getStatus, badgeText, cardDeadline };`)();
+    const f = new Function('Date', `${bundle}; return { getStatus, badgeText, cardDeadline };`)(PageDate);
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const badge = /^(報名中 · 剩 \d+ 天|即將截止 · 剩 \d+ 天|今日截止|尚未開放|本屆已截止，每年舉辦|每年固定辦理|依官網公告|已截止)$/;
     for (const c of data.competitions) {
@@ -886,7 +896,7 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     };
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText', 'badgeText',
         'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'eventText', 'fullDeadline', 'dialogBadge'].map(grab).join('\n');
-    const f = new Function(`${bundle}; return { getStatus, fullDeadline, dialogBadge };`)();
+    const f = new Function('Date', `${bundle}; return { getStatus, fullDeadline, dialogBadge };`)(PageDate);
     const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
     const list = data.competitions.filter((c) => !c.deadline && c.registrationNote);
     assert.ok(list.length > 30, `前置：這類競賽應該有三十筆以上，實際 ${list.length}`);
@@ -945,7 +955,7 @@ async function cardRenderer() {
     const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText',
         'escapeHtml', 'markEnglishQuotes', 'safeUrl', 'accentFor', 'factsText', 'badgeText',
         'upcomingText', 'deadlineText', 'cycleValue', 'cycleWhen', 'eventText', 'cardDeadline', 'fullDeadline', 'dialogBadge', 'footHtml', 'hasDetails', 'stateClass', 'kickerHtml', 'cardHtml'].map(grab).join('\n');
-    const f = new Function(`const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)();
+    const f = new Function('Date', `const CATEGORY_ACCENT = {}; const DEFAULT_ACCENT = '#475569';\n${bundle}; return { getStatus, cardHtml };`)(PageDate);
     return (c) => f.cardHtml({ ...c, _idx: 0, _status: f.getStatus(c) }, 0);
 }
 
