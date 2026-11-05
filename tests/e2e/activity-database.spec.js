@@ -141,3 +141,14 @@ test('搜尋也找得到摘要和詳細資訊裡的字', async ({ page }) => {
     await page.fill('#search-input', '報名方式');
     await expect(page.locator('#activity-grid .activity-card h3')).toHaveText(['還沒公布']);
 });
+
+test('列表上方有競賽入口，筆數和競賽資料相同', async ({ page, request }) => {
+    await open(page, ACTIVITIES);
+    const { competitions } = await (await request.get(`${BASE}/sch001-108platform/advanced-resources/competitions.json`)).json();
+    const entry = page.locator('#competitions-entry');
+    await expect(entry).toContainText(`國內外競賽資訊有 ${competitions.length} 項`);
+    const link = entry.getByRole('link', { name: '國內外競賽資訊', exact: true });
+    await expect(link).toHaveAttribute('href', '../advanced-resources/competitions.html');
+    await link.click();
+    await expect(page).toHaveURL(/\/advanced-resources\/competitions\.html$/);
+});

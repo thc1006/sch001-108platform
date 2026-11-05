@@ -26,6 +26,9 @@ import data from '../../../public/advanced-resources/competitions.json';
         <p class="comp-tagline">
           標出開放報名中和即將截止的競賽，可以依領域、地區、級別和參賽形式篩選。
         </p>
+        <p class="comp-tagline comp-tagline--sub">
+          競賽以外的志工服務、研討會、博覽會等活動，放在<a href="../learning-portfolio/activity-database.html">多元表現資料庫</a>。
+        </p>
 
         <div class="comp-stats" role="group" aria-label="競賽資料概況">
           <div class="stat">
@@ -723,6 +726,10 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-tagline {
       margin: 1.15rem 0 0; max-width: 42rem; font-size: 1.075rem; line-height: 1.75; color: #475569;
     }
+    .comp-tagline--sub { margin-top: .5rem; font-size: 1rem; }
+    .comp-tagline a { color: #0069a8; font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
+    .comp-tagline a:hover { color: #00598a; }
+    .comp-tagline a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
     .comp-stats {
       display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2.25rem;
