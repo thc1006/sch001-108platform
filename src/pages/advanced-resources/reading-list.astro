@@ -212,7 +212,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 container.innerHTML = '';
                 noResultsDiv.classList.remove('hidden');
                 noResultsDiv.querySelector('h3').textContent = '書單資料載入失敗';
-                noResultsDiv.querySelector('p').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+                const report = document.createElement('a');
+                report.href = '../about.html#feedback';
+                report.className = 'text-blue-600 underline hover:text-blue-700';
+                report.textContent = '問題回報';
+                noResultsDiv.querySelector('p').replaceChildren('請重新整理頁面再試一次。一直載入不了的話，可以到', report, '告訴我們。');
             }
         }
 
