@@ -1582,10 +1582,10 @@
         "closes": "11"
       },
       "sourceCheckedAt": "2026-10-25",
-      "sourceNote": "台灣的區域負責人查自 firstinspires.org/find-local-support 這一頁呼叫的 first-search API，region「Chinese Taipei」下 FRC 的 Regional Director 與 FTC 的 Partner 都是 Rene Cheng。官網對象「Grades 9-12 | Ages 14-18」；官方 2026-06-17 貼文「The season registration due date is November 17, 2026」；行事曆寫賽事報名 November 17, 2026 at 12:00 PM (Eastern Time) 截止，同日 05:00 PM 是初始賽事的付款期限。",
+      "sourceNote": "台灣的區域負責人查自 firstinspires.org/find-local-support 這一頁呼叫的 first-search API，region「Chinese Taipei」下 FRC 的 Regional Director 與 FTC 的 Partner 都是 Rene Cheng。官網對象「Grades 9-12 | Ages 14-18」；官方 2026-06-17 貼文「The season registration due date is November 17, 2026」；行事曆寫賽事報名 November 17, 2026 at 12:00 PM (Eastern Time) 截止，同日 05:00 PM 是初始賽事的付款期限。 2026-11-05 查：programs/frc 頁「design, program, and build industrial-sized robots」；robotics/frc/start-a-team 頁「Each team needs two adult lead coaches」「Required: Two (2) lead coaches who facilitate the season and manage the team」；FRC Events 的 2027 CTTC 頁「Thursday, March 11 to Sunday, March 14, 2027」「Team Capacity 33」，場地 Taipei Heping Basketball Gymnasium。2025 年有 New Taipei City Regional，2026 年台灣沒有區域賽。",
       "url": "https://www.firstinspires.org/programs/frc/",
-      "description": "FIRST 主辦的高中生機器人競賽，對象為 9–12 年級、14–18 歲，隊伍設計、編寫並製造工業級機器人，每隊要繳賽季報名費。",
-      "details": "FIRST 全名 For Inspiration and Recognition of Science and Technology。隊伍從官方零件包（Kit of Parts）開始製作機器人，2024-2025 賽季有 35 國參與。\n2027 賽季主題 BIOCORE presented by Haas。隊伍報名 2026-06-17 12:00（美東時間）開放，11/17 中午 12:00（美東時間，台灣時間 11/18 01:00）截止，初始賽事費要在同日下午 5:00 前付清。每隊賽季報名費 US$6,500。\n2027-01-09 Kickoff，FIRST Championship 在 2027-04-28 至 05-01。\n台灣（Chinese Taipei）的 FRC 區域負責人是 Rene Cheng（rcheng@firstpartners.org），他也負責 FTC。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
+      "description": "FIRST 辦的高中生機器人賽，14–18 歲，以學校或社團隊伍參加，由兩位成人主教練報名。每隊賽季報名費 US$6,500，2027 年台北有一場區域賽。",
+      "details": "FIRST 全名 For Inspiration and Recognition of Science and Technology。隊伍從官方零件包（Kit of Parts）開始，設計、寫程式並製造工業尺寸的機器人，2024-2025 賽季有 35 國參與。\n2027 賽季主題 BIOCORE presented by Haas。隊伍報名 2026-06-17 12:00（美東時間）開放，11/17 中午 12:00（美東時間，台灣時間 11/18 01:00）截止，初始賽事費要在同日下午 5:00 前付清。報名費以外，另外要準備零件、工具和出賽的交通費。\n2027-01-09 Kickoff。台灣的區域賽是 Taipei City Regional，2027 年 3 月 11 至 14 日在臺北和平籃球館，上限 33 隊；FIRST Championship 在 2027-04-28 至 05-01。\n台灣（Chinese Taipei）的 FRC 區域負責人是 Rene Cheng（rcheng@firstpartners.org），他也負責 FTC。台灣玉山機器人協會（www.era.org.tw）站上設有 FRC／FTC／FLL 專區，該會主辦的 2026-2027 年 FIRST 台灣賽事是 FTC、FLL Challenge 與 FLL Explore。"
     },
     {
       "title": "VEX 機器人世界錦標賽",
