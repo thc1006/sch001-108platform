@@ -823,9 +823,12 @@
         return minutes + ' 分' + (rest ? ' ' + rest + ' 秒' : '鐘');
     }
 
+    // describeError 認不得的錯誤（程式錯誤等）用這句，細節不給學生看
+    var UNKNOWN_ERROR_TEXT = '這次沒有拿到 AI 的回答，請重新整理頁面再試一次。';
+
     // 給畫面顯示用的一句話。runTask 丟出的任何錯誤都可以丟進來
     function describeError(err) {
-        if (!err) return '發生未知的錯誤，請稍後再試。';
+        if (!err) return UNKNOWN_ERROR_TEXT;
         if (err.name === 'AbortError') return '已取消。';
         if (err.name === 'TimeoutError') return '等待 AI 回應的時間太長了，請稍後再試。';
         if (err.name === 'AIError') {
@@ -834,7 +837,7 @@
             }
             return err.message;
         }
-        return '抱歉，AI 服務發生錯誤，請稍後再試。';
+        return UNKNOWN_ERROR_TEXT;
     }
 
     // mountProgress 在任務進行中顯示進度，用法：

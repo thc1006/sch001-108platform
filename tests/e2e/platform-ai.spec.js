@@ -1784,8 +1784,8 @@ test.describe('PlatformAI 共用 module', () => {
             expect(r.minute).toBe('你的請求有點頻繁，請稍後再試（大約 1 分鐘後可以再試）。');
             expect(r.mixed).toBe('你的請求有點頻繁，請稍後再試（大約 1 分 30 秒後可以再試）。');
             // 程式錯誤的細節（英文、變數名）不給學生看
-            expect(r.other).toBe('抱歉，AI 服務發生錯誤，請稍後再試。');
-            expect(r.nothing).toBe('發生未知的錯誤，請稍後再試。');
+            expect(r.other).toBe('這次沒有拿到 AI 的回答，請重新整理頁面再試一次。');
+            expect(r.nothing).toBe('這次沒有拿到 AI 的回答，請重新整理頁面再試一次。');
         });
     });
 
