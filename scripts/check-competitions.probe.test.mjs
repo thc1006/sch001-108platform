@@ -806,15 +806,16 @@ test('recheck：壞掉的輸入不得讓看門狗爆掉', () => {
     assert.equal(out[0].label, '（未命名）', '沒有標題時要有可讀的替代字');
 });
 
-// 2026-10-23 重查 90 筆，其中 89 筆打開了官網；其餘條目的查證日期都在 2026-08-27 到 08-29 之間，距那天不到 90 天。
-test('recheck：重查當天的真實資料一筆都不該列出', async () => {
-    const data = JSON.parse(await readFile(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'));
-    const out = selectNeedsRecheck(data.competitions, Date.UTC(2026, 9, 23), 90);
-    assert.deepEqual(out, [], `不該有陳舊條目，實際：${JSON.stringify(out.slice(0, 3))}`);
-    // 但這一桶本身必須是有東西的，否則上面那條會空洞地通過。
-    const wouldCover = selectNeedsRecheck(data.competitions, Date.UTC(2026, 9, 23), 0);
-    assert.ok(wouldCover.length >= 60,
-        `門檻放到 0 天時應涵蓋大量條目（實際 ${wouldCover.length}），否則這組測試在空集合上跑`);
+// 用固定的資料，不綁 competitions.json：綁真實資料的話，重查過的條目不能把 sourceCheckedAt 改成新的日期。
+test('recheck：90 天內查證過的不列出，門檻放到 0 天時全部列出', () => {
+    const recent = [0, 1, 45, 89].map((n) => ({ title: `${n} 天前查證`, sourceCheckedAt: ago(n) }));
+    const others = [
+        { title: '有截止日', sourceCheckedAt: ago(200), deadline: ago(-30) },
+        { title: '有週期', sourceCheckedAt: ago(200), cycle: { closes: '07' } },
+    ];
+    assert.deepEqual(selectNeedsRecheck([...recent, ...others], TODAY, 90), []);
+    // 門檻 0 天時列出全部，上面那條才不是在空集合上通過。有截止日或週期的照舊不在這一桶。
+    assert.deepEqual(selectNeedsRecheck([...recent, ...others], TODAY, 0).map((r) => r.label).sort(), recent.map((c) => c.title).sort());
 });
 
 // 卡片的徽章只放短標籤。registrationNote 同時放進徽章的話，和截止欄一字不差（2026-11-05 對 117 筆
