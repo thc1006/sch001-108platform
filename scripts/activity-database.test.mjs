@@ -82,6 +82,22 @@ test('欄位：照 _readme 的規定填', () => {
     assert.ok(featured.length <= 1, `featured 有 ${featured.length} 筆，頁面只顯示第一筆`);
 });
 
+test('網址：不能和競賽頁的條目相同，換了 category 也一樣', () => {
+    // 去掉 www. 和結尾的斜線再比，https://www.x.org/a/ 和 https://x.org/a 算同一個。
+    const key = (u) => {
+        const url = new URL(u);
+        return (url.host.replace(/^www\./, '') + url.pathname.replace(/\/+$/, '') + url.search).toLowerCase();
+    };
+    const { competitions } = JSON.parse(
+        readFileSync(new URL('../public/advanced-resources/competitions.json', import.meta.url), 'utf8'),
+    );
+    const taken = new Map(competitions.map((c) => [key(c.url), c.title]));
+    for (const a of DATA.activities) {
+        const same = taken.get(key(a.url));
+        assert.equal(same, undefined, `「${a.title}」的網址和競賽頁的「${same}」相同，競賽放在 competitions.json`);
+    }
+});
+
 test('預定重查日：附上依據，晚於上次查證，但不晚於它一年後', () => {
     for (const a of DATA.activities) {
         const why = recheckProblem(a);

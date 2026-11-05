@@ -3,7 +3,7 @@
 //   A. 資料：精選的截止日、查證日期和預定重查日放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
 //   B. 判斷：改壞 activity-watchdog.lib.mjs，activity-watchdog.test.mjs 必須失敗
 //   C. 串接：改壞 check-competitions.mjs 算今天的方式和接上判斷的地方，A 段至少要有一項失敗
-//   D. 欄位：sourceCheckedAt 或 recheckOn 缺漏、不可信，或 category 是競賽時，activity-database.test.mjs 必須失敗
+//   D. 欄位：sourceCheckedAt 或 recheckOn 缺漏、不可信，或 category 是競賽、網址和競賽相同時，activity-database.test.mjs 必須失敗
 //   E. 競賽：預定重查日放到門檻兩側，看門狗要跟著變；recheckOn 不可信時 --strict 必須失敗；
 //      改壞 check-competitions.lib.mjs 的判斷，E 段至少要有一項失敗
 // 子行程一律用固定的時鐘，見 NOW。scripts/ 和資料複製到 .activity-faultcheck/ 再動手，
@@ -38,7 +38,7 @@ const entry = (title, fields) => ({
     deadline: null,
     featured: false,
     sourceCheckedAt: day(0),
-    url: 'https://example.com/',
+    url: 'https://example.org/activity',
     ...fields,
 });
 // 每種狀態各一筆。不用真實資料：哪天真實資料裡沒有已截止或全年招募的活動，這裡照樣測得到。
@@ -319,6 +319,7 @@ const checkedCases = [
     ['有 recheckNote 沒有 recheckOn', set('預定重查', 'recheckOn', undefined)],
     ['recheckOn 晚於上次查證一年後', set('預定重查', 'recheckOn', day(400))],
     ['category 是競賽', set('沒有截止日', 'category', '競賽')],
+    ['網址和競賽頁的條目相同', set('沒有截止日', 'url', 'https://www.example.com')],
 ];
 
 let pass = 0;
