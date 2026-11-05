@@ -302,6 +302,27 @@ test('藝廊焦點範例的圖庫照片和範例無關，alt 是空字串', asyn
     await expect(featured.locator('img')).toHaveAttribute('alt', '');
 });
 
+// 每份作品用標題當 article 的名稱；連結看得到的字只寫出處，報讀軟體念的名稱前面要有作品的標題。
+test('藝廊的真實作品：每份是以標題命名的 article，連結名稱寫出是哪一份', async ({ page, request }) => {
+    const data = await (await request.get(P('learning-portfolio/portfolio-works.json'))).json();
+    await page.goto(P('learning-portfolio/portfolio-gallery.html'));
+    for (const [heading, items] of [['高中生的真實作品', data.works]]) {
+        const section = page.getByRole('region', { name: heading, exact: true });
+        await expect(section.getByRole('heading', { level: 2 })).toHaveText(heading);
+        const articles = section.getByRole('article');
+        await expect(articles).toHaveCount(items.length);
+        for (const [i, item] of items.entries()) {
+            const article = articles.nth(i);
+            await expect(article).toHaveAccessibleName(item.title);
+            await expect(article.getByRole('heading', { level: 3 })).toHaveText(item.title);
+            await expect(article.getByRole('link')).toHaveAccessibleName(loose(`${item.title}：${item.linkLabel}`));
+            await expect(article.getByRole('link')).toHaveAttribute('href', item.url);
+        }
+    }
+    // 卡片格線的範例接在自己的 h2 底下，不會被念成真實作品的一部分。
+    await expect(page.getByRole('heading', { level: 2, name: '範例分析', exact: true })).toBeVisible();
+});
+
 test.describe('核心素養對照表', () => {
     test('依學群篩選：相關的卡片名稱多出「（相關）」，status 念出筆數', async ({ page }) => {
         await page.goto(P('career-exploration/competency-map.html'));
