@@ -333,7 +333,7 @@ import data from '../../../public/advanced-resources/competitions.json';
           }
           // 本屆已截止：有週期就換算下屆，沒有才算真的過時
           if (nextUTC !== null) {
-            return { key: 'cycle', label: '本屆已截止', days: null, next: fmtUTC(nextUTC), closes: closes };
+            return { key: 'cycle', label: '本屆已截止', days: null, next: fmtUTC(nextUTC), closes: closes, last: fmtUTC(dlUTC) };
           }
           return { key: 'closed', label: '已截止', days: days };
         }
@@ -468,7 +468,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         const event = eventText(c);
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(c, s), event: event };
         if (s.key === 'cycle') {
-          const value = (c.deadline ? '本屆 ' + c.deadline + ' 已截止、' : '') + cycleValue(s, todayTaipeiUTC());
+          // 本屆截止日和卡片一樣寫台北的日期。
+          const value = (s.last ? '本屆 ' + s.last + ' 已截止、' : '') + cycleValue(s, todayTaipeiUTC());
           return { label: '報名截止', value: value, event: event };
         }
         if (c.deadline) return { label: '報名截止', value: deadlineText(c), event: event };
