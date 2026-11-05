@@ -2,6 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const link = 'text-blue-600 underline hover:text-blue-700';
+
+// 空白進度表的欄位。public/autonomous-learning/ 的三個 CSV 用同樣的表頭，改這裡要一起改。
+const progressColumns = ['週次', '要做的事', '做完拿得出什麼', '實際做到哪裡'];
+// 中間那週標出回頭看一次，對應上面「在計畫中間排一週回頭看」。
+const progressWeeks = (n: number) => Array.from({ length: n }, (_, i) => (i + 1 === n / 2 ? `${i + 1}（回頭看）` : String(i + 1)));
 ---
 
 <BaseLayout
@@ -23,7 +28,8 @@ const link = 'text-blue-600 underline hover:text-blue-700';
         </section>
 
         <!-- 計畫要寫哪些項目 -->
-        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+        {/* 手機上照其他區塊留 2rem 內距的話，空白進度表四欄各剩不到三個字寬。 */}
+        <section class="bg-white p-5 sm:p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-6">計畫要寫哪些項目</h2>
             <h3 class="text-xl font-bold mb-2">學校規定的項目</h3>
             <p class="text-gray-700 mb-6">自主學習計畫要寫學習主題、內容、進度、方式和需要的設備，經老師指導、家長同意後開始。普通型、綜合型和單科型高中，在學期間合計至少要排 18 節。</p>
@@ -36,6 +42,34 @@ const link = 'text-blue-600 underline hover:text-blue-700';
                 <li>成果和反思兩樣都要交：成果本身要附上，反思寫遇到什麼事、下次怎麼做。</li>
                 <li>用了 AI 就寫怎麼用的：哪一段用了、怎麼查證、自己改了哪些。</li>
             </ul>
+            <h3 class="text-xl font-bold mt-6 mb-2">空白進度表</h3>
+            <p class="text-gray-700 mb-4">節數照你學校的自主學習實施規範，常見是一學期 18 節。下面有 6、12、18 週三種，選一種複製到文件或試算表，或下載 CSV 檔。</p>
+            <div class="space-y-3">
+                {[6, 12, 18].map((n) => (
+                    <details class="border border-gray-300 rounded-lg">
+                        <summary class="cursor-pointer px-4 py-3 font-semibold">{n} 週空白進度表</summary>
+                        <div class="px-3 sm:px-4 pb-4">
+                            <p class="text-gray-700 mb-2"><span aria-hidden="true">每週＿節，合計＿節</span><span class="sr-only">每週幾節、合計幾節，自己填</span></p>
+                            <table id={`progress-${n}`} data-head="每週＿節，合計＿節" class="w-full table-fixed border-collapse text-sm">
+                                <caption class="sr-only">{n} 週空白進度表</caption>
+                                <thead>
+                                    <tr>{progressColumns.map((c, i) => <th scope="col" class={`border border-gray-400 bg-gray-50 p-2 text-left${i === 0 ? ' w-16 sm:w-24' : ''}`}>{c}</th>)}</tr>
+                                </thead>
+                                <tbody>
+                                    {progressWeeks(n).map((w) => (
+                                        <tr><th scope="row" class="border border-gray-400 p-2 text-left font-normal">{w}</th><td class="border border-gray-400 h-10"></td><td class="border border-gray-400"></td><td class="border border-gray-400"></td></tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 mt-3">
+                                <button type="button" data-copy-table={`progress-${n}`} class="bg-teal-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-800 self-start">複製 {n} 週空白進度表</button>
+                                <a href={`plan-progress-${n}-weeks.csv`} download class={link}>下載 {n} 週空白進度表（CSV）</a>
+                            </div>
+                            <p role="status" class="text-sm text-gray-600 mt-2"></p>
+                        </div>
+                    </details>
+                ))}
+            </div>
         </section>
 
         <!-- AI 草擬學習計畫 -->
@@ -336,6 +370,33 @@ const link = 'text-blue-600 underline hover:text-blue-700';
                 renderTemplates(category);
                 announceCount();
             }
+        });
+
+        // 複製空白進度表。text/html 貼到文件是表格，text/plain 用 tab 分欄，貼到試算表時一格一格分開。
+        document.querySelectorAll('[data-copy-table]').forEach((button) => {
+            const table = document.getElementById(button.dataset.copyTable);
+            const status = button.parentElement.nextElementSibling;
+            button.addEventListener('click', async () => {
+                const rows = [...table.rows].map((row) => [...row.cells].map((cell) => cell.textContent.trim()));
+                const head = table.dataset.head;
+                const text = [head, ...rows.map((row) => row.join('\t'))].join('\n');
+                const html = `<p>${escapeHtml(head)}</p><table border="1">${rows.map((row, i) => `<tr>${row.map((cell) => (i === 0 ? `<th>${escapeHtml(cell)}</th>` : `<td>${escapeHtml(cell)}</td>`)).join('')}</tr>`).join('')}</table>`;
+                // 先清空再寫入，連按兩次也會再念一次。
+                status.textContent = '';
+                try {
+                    if (window.ClipboardItem && navigator.clipboard.write) {
+                        await navigator.clipboard.write([new ClipboardItem({
+                            'text/html': new Blob([html], { type: 'text/html' }),
+                            'text/plain': new Blob([text], { type: 'text/plain' }),
+                        })]);
+                    } else {
+                        await navigator.clipboard.writeText(text);
+                    }
+                    setTimeout(() => { status.textContent = `已複製 ${table.caption.textContent}，可以貼到文件或試算表。`; }, 100);
+                } catch {
+                    setTimeout(() => { status.textContent = '沒有複製成功，可以改用下載 CSV 檔。'; }, 100);
+                }
+            });
         });
 
         // 計畫草案由 AI 閘道的 study-plan 任務產生，prompt 與輸出格式在 ai-gateway/src/task-catalog.mjs。
