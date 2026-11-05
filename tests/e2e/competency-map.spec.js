@@ -487,7 +487,7 @@ test.describe('核心素養對照表：共用腳本 platform-ai.js 沒載入成�
             await page.fill('#ai-input', '科展');
             await page.click('#ai-generate-btn');
 
-            await expect(page.locator('#ai-result')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#ai-result')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             const button = page.locator('#ai-generate-btn');
             await expect(button).toBeEnabled();
             await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);

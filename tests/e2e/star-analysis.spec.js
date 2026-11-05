@@ -337,7 +337,7 @@ for (const p of PAGES) {
                 await page.fill('#reflectionInput', '心得');
                 await page.click('#analyzeBtn');
 
-                await expect(page.locator('#analysisResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+                await expect(page.locator('#analysisResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
                 const button = page.locator('#analyzeBtn');
                 await expect(button).toBeEnabled();
                 await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);

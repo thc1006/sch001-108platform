@@ -323,7 +323,7 @@ test.describe('選題靈感頁：共用腳本 platform-ai.js 沒載入成功', (
             await page.fill('#ideaInput', '旅行');
             await page.click('#generateIdeaBtn');
 
-            await expect(page.locator('#ideaResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#ideaResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             await expect(page.locator('#ideaResult p')).toHaveClass(/text-red-700/);
             const button = page.locator('#generateIdeaBtn');
             await expect(button).toBeEnabled();

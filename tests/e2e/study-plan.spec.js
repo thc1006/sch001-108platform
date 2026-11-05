@@ -312,7 +312,7 @@ test.describe('計畫範本庫：共用腳本 platform-ai.js 沒載入成功', (
             await page.fill('#planInput', '手搖飲');
             await page.click('#generatePlanBtn');
 
-            await expect(page.locator('#planResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#planResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             const button = page.locator('#generatePlanBtn');
             await expect(button).toBeEnabled();
             await expect(button).toHaveText('產生計畫草案');

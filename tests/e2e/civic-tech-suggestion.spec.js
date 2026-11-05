@@ -488,7 +488,7 @@ test.describe('公民科技專案頁：共用腳本 platform-ai.js 沒載入成�
             await page.fill('#ai-interest-input', '假訊息');
             await page.click('#ai-submit-btn');
 
-            await expect(page.locator('#ai-results')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#ai-results')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             const button = page.locator('#ai-submit-btn');
             await expect(button).toBeEnabled();
             await expect(button).toHaveText('推薦專案');

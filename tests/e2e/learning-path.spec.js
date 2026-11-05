@@ -336,7 +336,7 @@ test.describe('學習資源地圖頁：共用腳本 platform-ai.js 沒載入成�
             await page.fill('#pathInput', 'Python');
             await page.click('#generatePathBtn');
 
-            await expect(page.locator('#pathResult')).toHaveText('抱歉，AI 服務發生錯誤，請稍後再試。');
+            await expect(page.locator('#pathResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             await expectButtonRestored(page.locator('#generatePathBtn'));
         });
     }

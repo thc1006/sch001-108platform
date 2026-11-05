@@ -155,8 +155,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             aiStatus.textContent = '';
             if (text) announceTimer = setTimeout(() => { aiStatus.textContent = text; }, 100);
         }
-        // platform-ai.js 沒載入時沒有 describeError 可用，改顯示這句，與它對未知錯誤的說法相同。
-        const FALLBACK_ERROR_TEXT = '抱歉，AI 服務發生錯誤，請稍後再試。';
+        // platform-ai.js 沒載入成功時沒有 describeError 可用，改顯示這句。
+        const FALLBACK_ERROR_TEXT = 'AI 功能沒有載入，請重新整理頁面再試一次。';
 
         // partial：沒寫完的答案已經收到的部分，標明沒有寫完，放在訊息上面
         function showMessage(text, tone = 'error', partial = '') {
