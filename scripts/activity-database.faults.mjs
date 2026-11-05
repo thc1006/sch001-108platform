@@ -3,7 +3,7 @@
 //   A. 資料：精選的截止日、查證日期和預定重查日放到門檻兩側，看門狗的 needs_attention 與報告要跟著變
 //   B. 判斷：改壞 activity-watchdog.lib.mjs，activity-watchdog.test.mjs 必須失敗
 //   C. 串接：改壞 check-competitions.mjs 算今天的方式和接上判斷的地方，A 段至少要有一項失敗
-//   D. 查證日期：sourceCheckedAt 或 recheckOn 缺漏、不可信時，activity-database.test.mjs 必須失敗
+//   D. 欄位：sourceCheckedAt 或 recheckOn 缺漏、不可信，或 category 是競賽時，activity-database.test.mjs 必須失敗
 //   E. 競賽：預定重查日放到門檻兩側，看門狗要跟著變；recheckOn 不可信時 --strict 必須失敗；
 //      改壞 check-competitions.lib.mjs 的判斷，E 段至少要有一項失敗
 // 子行程一律用固定的時鐘，見 NOW。scripts/ 和資料複製到 .activity-faultcheck/ 再動手，
@@ -32,7 +32,7 @@ const day = (n) => new Date(Date.parse(TODAY) + n * 86_400_000).toISOString().sl
 const entry = (title, fields) => ({
     title,
     organizer: '主辦單位',
-    category: '競賽',
+    category: '研討會',
     form: '個人',
     description: '說明',
     deadline: null,
@@ -318,6 +318,7 @@ const checkedCases = [
     ['有 recheckOn 沒有 recheckNote', set('預定重查', 'recheckNote', undefined)],
     ['有 recheckNote 沒有 recheckOn', set('預定重查', 'recheckOn', undefined)],
     ['recheckOn 晚於上次查證一年後', set('預定重查', 'recheckOn', day(400))],
+    ['category 是競賽', set('沒有截止日', 'category', '競賽')],
 ];
 
 let pass = 0;
@@ -377,7 +378,7 @@ for (const m of scriptMutations) {
     mutate('check-competitions.mjs', m, () => dataCases.every((c) => dataProblem(c) === null), 'A 段全部照樣通過');
 }
 
-console.log('\nD. 查證日期或預定重查日不可信（activity-database.test.mjs 必須紅）：');
+console.log('\nD. 欄位不合規定（activity-database.test.mjs 必須紅）：');
 for (const [name, change] of checkedCases) {
     const data = baseline();
     change(data);

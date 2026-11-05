@@ -8,7 +8,7 @@ const PAGE = `${BASE}/sch001-108platform/learning-portfolio/activity-database.ht
 const entry = (title, fields) => ({
     title,
     organizer: '主辦單位',
-    category: '競賽',
+    category: '研討會',
     form: '個人',
     description: '說明',
     deadline: null,

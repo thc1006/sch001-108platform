@@ -50,6 +50,8 @@ test('欄位：照 _readme 的規定填', () => {
             assert.ok(typeof v === 'string' && v && v.trim() === v, `「${a.title}」的 ${key} 是空的或前後有空白`);
         }
         assert.ok(['個人', '團體', '個人／團體'].includes(a.form), `「${a.title}」的 form 是 ${a.form}`);
+        // 競賽放在競賽頁，兩邊各寫一份會對不上。
+        assert.notEqual(a.category, '競賽', `「${a.title}」是競賽，請放進 public/advanced-resources/competitions.json`);
         // 頁面只看真假，字串 "false" 也會被當成精選。
         assert.equal(typeof a.featured, 'boolean', `「${a.title}」的 featured 不是 true 或 false`);
         // url 直接放進 href，javascript: 這類網址點了會執行。
