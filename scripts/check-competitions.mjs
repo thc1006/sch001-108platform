@@ -51,8 +51,8 @@ const DATA_PATH = new URL('../public/advanced-resources/competitions.json', impo
 const REPORT_PATH = 'competition-report.md';
 const SOON_DAYS = 30;
 
-// 多元表現資料庫沒有自己的看門狗。TRML、TISDC 兩份資料都有，放進同一份報告，
-// 同一件事才不會開成兩個 issue。欄位格式由 activity-database.test.mjs 在 CI 檢查。
+// 多元表現資料庫沒有自己的看門狗，提醒寫進競賽的同一份報告，不另開 issue。
+// 欄位格式由 activity-database.test.mjs 在 CI 檢查。
 const ACTIVITY_PATH = new URL('../public/learning-portfolio/activity-database.json', import.meta.url);
 // 和頁面顯示「即將截止」的天數相同。
 const FEATURED_SOON_DAYS = 14;
