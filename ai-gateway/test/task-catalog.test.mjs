@@ -66,6 +66,17 @@ test('每個任務的 system 訊息都要求語氣平實、可以具體指出優
     }
 });
 
+// 站上寫作檢查（scripts/writing.lib.mjs）擋破折號（P01、P02），也報「不是…而是」「不只…更」與粗體小標（S01、S02、F01）。
+// 指令本身也不用破折號，模型可能跟著指令的寫法寫。
+test('每個任務的 system 訊息都要求不用破折號、「不是…而是」「不只…更」與粗體小標的條列，指令裡沒有破折號', () => {
+    for (const task of catalog.values()) {
+        const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
+        const [system] = buildMessages(task, validateInput(task, input));
+        for (const rule of [/不用破折號/, /「不是…而是」/, /「不只…更」/, /「\*\*小標\*\*：說明」的條列/]) assert.match(system.content, rule, task.id);
+        assert.doesNotMatch(system.content, /[—―─]/, task.id);
+    }
+});
+
 // 依據見 task-catalog.mjs 的 TASK_DEFINITIONS。
 test('任務都不設 timeoutMs，沿用 LLM_TASK_TIMEOUT_MS', () => {
     for (const task of catalog.values()) assert.equal(task.timeoutMs, undefined, task.id);
