@@ -466,6 +466,13 @@ test('U01：只看腳本和屬性裡的介面文字', () => {
     assert.equal(hitsOf('U01-ui-message', '糟糕，出錯了', { tag: 'script' }), 2);
 });
 
+test('W01：「很」加上「多X」形容詞不算「很多」', () => {
+    for (const t of ['評語很多餘，刪掉也不影響意思。', '山區的天氣很多變', '這位作家很多產，一年出版三本小說。', '學長很多才多藝', '葡萄柚很多汁', '他個性很多疑', '很多變的天氣']) {
+        assert.equal(hitsOf('W01-hen-duo', t), 0, t);
+    }
+    for (const t of ['他有很多疑問。', '這幾年有很多變化', '很多產品', '學了很多才藝', '我學到很多。', '很多人以為選系只看分數。']) assert.equal(hitsOf('W01-hen-duo', t), 1, t);
+});
+
 test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
 });
