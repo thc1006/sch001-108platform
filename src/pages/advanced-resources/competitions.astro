@@ -398,12 +398,26 @@ import data from '../../../public/advanced-resources/competitions.json';
         return '預計 ' + s.opens + ' 起' + (s.next ? '、' + s.next + ' 截止' : '');
       }
 
+      // deadlineText 是截止欄的日期。剩幾天和尚未開放時的「X 截止」都照台北時間算，這裡也寫台北的日期，
+      // 美東 3/1 23:59 截止的寫成 3/2，前後才對得起來。不是台北 23:59 的寫出時刻（TISF 下午 5 時）；
+      // deadlineAt 不是 +08:00 的前面加「台灣時間」，學生才不會照官網的日期算。
+      function deadlineText(c) {
+        const ms = typeof c.deadlineAt === 'string' ? Date.parse(c.deadlineAt) : NaN;
+        if (Number.isNaN(ms)) return c.deadline;
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+        }).formatToParts(new Date(ms));
+        const v = (type) => parts.find((x) => x.type === type).value;
+        const time = v('hour') + ':' + v('minute');
+        return (c.deadlineAt.endsWith('+08:00') ? '' : '台灣時間 ') + v('year') + '-' + v('month') + '-' + v('day') + (time === '23:59' ? '' : ' ' + time);
+      }
+
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
       // registrationNote。本屆截止日和賽事日期在對話框裡，由 fullDeadline 算。
       function cardDeadline(c, s) {
         if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s) };
         if (s.key === 'cycle') return { label: '報名截止', value: '每年約 ' + cycleWhen(s) };
-        if (c.deadline) return { label: '報名截止', value: c.deadline };
+        if (c.deadline) return { label: '報名截止', value: deadlineText(c) };
         // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
         if (s.note) return { label: '報名', value: s.label };
         // 沒有截止日、週期和 registrationNote。賽事日期只在對話框，報名截止確實未公布。
@@ -436,7 +450,7 @@ import data from '../../../public/advanced-resources/competitions.json';
           const value = (c.deadline ? '本屆 ' + c.deadline + ' 已截止、' : '') + '每年約 ' + cycleWhen(s);
           return { label: '報名截止', value: value, event: event };
         }
-        if (c.deadline) return { label: '報名截止', value: c.deadline, event: event };
+        if (c.deadline) return { label: '報名截止', value: deadlineText(c), event: event };
         // 沒有截止日時，有賽事日期就放賽事日期，registrationNote 由 dialogBadge 放進徽章。
         if (event) return { label: '賽事日期', value: event };
         if (s.note) return { label: '報名', value: s.label };
