@@ -890,6 +890,8 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     // 00:00 到 05:59 加「凌晨」，06:00 起不加。
     // 台北 00:00 寫成前一天的 24:00，不加「凌晨」。
     assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' }), due('台灣時間 2099-10-14 24:00'));
+    // 帶秒數的 00:00:30 不是整點，截止日還在 15 日，寫「凌晨 00:00」。
+    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:30Z' }), due('台灣時間 2099-10-15 凌晨 00:00'));
     assert.deepEqual(at({ deadline: '2099-10-15', deadlineAt: '2099-10-15T00:00:00+08:00' }), due('2099-10-14 24:00'));
     assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:01:00Z' }), due('台灣時間 2099-10-15 凌晨 00:01'));
     assert.deepEqual(at({ deadline: '2099-11-17', deadlineAt: '2099-11-17T12:00:00-05:00' }), due('台灣時間 2099-11-18 凌晨 01:00'));

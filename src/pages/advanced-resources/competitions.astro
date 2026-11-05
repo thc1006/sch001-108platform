@@ -414,7 +414,8 @@ import data from '../../../public/advanced-resources/competitions.json';
         let parts = fmt.formatToParts(new Date(ms));
         const v = (type) => parts.find((x) => x.type === type).value;
         let time = v('hour') + ':' + v('minute');
-        if (time === '00:00') {
+        // 只有剛好 00:00:00 才算前一天；00:00:30 的截止日還在當天，和 getStatus 的 exactMs - 1 一致。
+        if (time === '00:00' && ms % 60000 === 0) {
           parts = fmt.formatToParts(new Date(ms - 1));
           time = '24:00';
         }
