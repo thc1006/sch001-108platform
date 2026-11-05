@@ -1006,6 +1006,13 @@ test('card：截止欄沒有 details 時放完整時程、有 details 時只放�
     const options = [...select.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)].filter(([, v]) => v !== 'all');
     assert.equal(options.length, 3);
     for (const [, v, text] of options) assert.equal(facts(render({ ...cycle, ...fields, level: v })).split('、')[1], text, v);
+    // 搜尋照新的寫法找得到，以前的「國際賽」「全國賽」「地區賽」也找得到。
+    const grab = (name) => src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`))[0];
+    const searchText = new Function(`${grab('factsText')}\n${grab('searchText')}; return searchText;`)();
+    for (const [level, words] of [['國際', ['國際性', '國際賽']], ['全國', ['全國性', '全國賽']], ['校際/地區', ['校際或地區性', '地區賽']]]) {
+        for (const w of words) assert.ok(searchText({ ...cycle, ...fields, level }).includes(w), `${level}：${w}`);
+    }
+    assert.ok(!searchText({ ...cycle, ...fields, level: '全國' }).includes('國際賽'));
     // 沒有截止日和 registrationNote、只有賽事日期：有 details 的卡片寫「報名截止：未公布」，賽事日期在對話框；
     // 沒有 details 的卡片把賽事日期放在截止欄。
     const eventOnly = { ...cycle, cycle: undefined, deadline: undefined, eventStartsAt: '2099-08-01' };
