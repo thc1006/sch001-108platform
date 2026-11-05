@@ -865,7 +865,11 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-11-06', deadlineAt: '2099-11-06T17:00:00+08:00' }), due('2099-11-06 17:00'));
     assert.deepEqual(at({ deadline: '2099-07-15', deadlineAt: '2099-07-15T23:59:00+08:00' }), due('2099-07-15'));
     assert.deepEqual(at({ deadline: '2099-03-01', deadlineAt: '2099-03-01T23:59:00-05:00' }), due('台灣時間 2099-03-02 12:59'));
-    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' }), due('台灣時間 2099-10-15 00:00'));
+    // 00:00 到 05:59 加「凌晨」，06:00 起不加。
+    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' }), due('台灣時間 2099-10-15 凌晨 00:00'));
+    assert.deepEqual(at({ deadline: '2099-11-17', deadlineAt: '2099-11-17T12:00:00-05:00' }), due('台灣時間 2099-11-18 凌晨 01:00'));
+    assert.deepEqual(at({ deadline: '2099-09-11', deadlineAt: '2099-09-11T17:59:00-04:00' }), due('台灣時間 2099-09-12 凌晨 05:59'));
+    assert.deepEqual(at({ deadline: '2099-01-14', deadlineAt: '2099-01-14T17:00:00-05:00' }), due('台灣時間 2099-01-15 06:00'));
     // 尚未開放時的截止日和開放後寫法相同，也有時刻和「台灣時間」。
     assert.deepEqual(at({ deadline: '2099-03-01', deadlineAt: '2099-03-01T23:59:00-05:00', opensAt: '2098-12-15T00:00:00-05:00' }), { label: '報名期間', value: '預計 2098-12-15 起、台灣時間 2099-03-02 12:59 截止' });
     assert.deepEqual(at({ deadline: '2099-12-11', deadlineAt: '2099-12-11T18:00:00+08:00', opensAt: '2099-11-23T09:00:00+08:00' }), { label: '報名期間', value: '預計 2099-11-23 起、2099-12-11 18:00 截止' });
