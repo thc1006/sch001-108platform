@@ -77,11 +77,16 @@ test('每個任務的 system 訊息都要求不用破折號、「不是…而是
     }
 });
 
-test('每個任務的 system 訊息都要求直接回答，不重述問題、不用時代開場，結尾不總結也不打氣', () => {
+// JSON 任務沒有開場和結尾；star-analysis 的修改範例是學生口吻的心得，照慣例用學到什麼收尾，不能被砍掉。
+test('文字任務的 system 訊息要求直接回答，不重述問題、不用時代開場，結尾不總結也不打氣；JSON 任務沒有這句', () => {
+    const rules = [/直接回答/, /不重述問題/, /「在當今…時代」/, /結尾不總結也不打氣/];
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        for (const rule of [/直接回答/, /不重述問題/, /「在當今…時代」/, /結尾不總結也不打氣/]) assert.match(system.content, rule, task.id);
+        for (const rule of rules) {
+            if (task.output.type === 'markdown') assert.match(system.content, rule, task.id);
+            else assert.doesNotMatch(system.content, rule, task.id);
+        }
     }
 });
 
