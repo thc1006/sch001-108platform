@@ -1,4 +1,4 @@
-// 多元表現資料庫用固定的資料和時間渲染，檢查卡片的狀態與截止欄，以及精選卡。
+// 多元表現資料庫用固定的資料和時間渲染，檢查卡片的狀態與截止欄、精選卡和詳細資訊對話框。
 // 真實資料由 site-smoke.spec.js 檢查，getActivityStatus 的邊界由 scripts/activity-database.test.mjs 檢查。
 const { test, expect } = require('@playwright/test');
 
@@ -18,10 +18,10 @@ const entry = (title, fields) => ({
 });
 const ACTIVITIES = [
     entry('隨時可以報名', { rolling: true }),
-    entry('還沒公布', {}),
+    entry('還沒公布', { details: '第一段。\n\n第二段寫報名方式。\n<b>x</b>' }),
     entry('昨天截止', { deadline: '2026-10-24' }),
     entry('今天截止', { deadline: '2026-10-25' }),
-    entry('十五天後截止', { deadline: '2026-11-09', featured: true }),
+    entry('十五天後截止', { deadline: '2026-11-09', featured: true, details: '精選的詳細資訊。' }),
 ];
 
 /** open 在台灣時間 2026-10-25 00:30 開頁面，資料換成 activities，等卡片渲染完。 */
@@ -87,3 +87,57 @@ for (const [title, badge] of [['隨時可以報名', '全年招募'], ['還沒�
         await expect(featured.locator('.rounded-full').first()).toHaveText(badge);
     });
 }
+
+/** card 回傳名稱是 title 的那張卡片。 */
+const card = (page, title) =>
+    page.locator('#activity-grid .activity-card', { has: page.getByRole('heading', { name: title, exact: true }) });
+
+test('只有填了 details 的卡片有「詳細資訊」，連結和競賽頁一樣寫「前往官網」', async ({ page }) => {
+    await open(page, ACTIVITIES);
+    const titles = await page.locator('#activity-grid .activity-card').evaluateAll((cards) =>
+        cards.filter((c) => c.querySelector('button')).map((c) => c.querySelector('h3').textContent));
+    expect(titles).toEqual(['還沒公布', '十五天後截止']);
+    const button = card(page, '還沒公布').getByRole('button');
+    // sr-only 的文字前後，Chromium 算名稱時會補空白。
+    await expect(button).toHaveAccessibleName(/^詳細資訊\s?：還沒公布$/);
+    await expect(button).toHaveAttribute('aria-haspopup', 'dialog');
+    await expect(card(page, '還沒公布').getByRole('link')).toHaveAccessibleName(/^前往官網\s?：還沒公布（另開新分頁）$/);
+});
+
+test('Enter 開啟對話框，details 一行一段，Esc 關閉後焦點回到按鈕', async ({ page }) => {
+    await open(page, ACTIVITIES);
+    const button = card(page, '還沒公布').getByRole('button');
+    await button.focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: '還沒公布', exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeFocused();
+    await expect(dialog.locator('.activity-dialog__text')).toHaveText('說明');
+    await expect(dialog.locator('.activity-dialog__details p')).toHaveText(['第一段。', '第二段寫報名方式。', '<b>x</b>']);
+    // details 是純文字，標籤照原樣顯示，不產生元素。
+    await expect(dialog.locator('b')).toHaveCount(0);
+    await expect(dialog.getByRole('link')).toHaveAccessibleName(/^前往官網\s?：還沒公布（另開新分頁）$/);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(button).toBeFocused();
+    await expect(page.locator('#activity-dialog')).toBeEmpty();
+});
+
+test('按「關閉」關掉對話框，焦點回到精選區的按鈕', async ({ page }) => {
+    await open(page, ACTIVITIES);
+    const button = page.locator('#featured-section').getByRole('button');
+    await expect(button).toHaveAccessibleName(/^詳細資訊\s?：十五天後截止$/);
+    await button.click();
+    const dialog = page.getByRole('dialog', { name: '十五天後截止', exact: true });
+    await expect(dialog.locator('.activity-dialog__details p')).toHaveText(['精選的詳細資訊。']);
+    await expect(dialog.getByRole('button', { name: '關閉', exact: true })).toHaveCount(2);
+    await dialog.getByRole('button', { name: '關閉', exact: true }).last().click();
+    await expect(dialog).toBeHidden();
+    await expect(button).toBeFocused();
+});
+
+test('搜尋也找得到摘要和詳細資訊裡的字', async ({ page }) => {
+    await open(page, ACTIVITIES);
+    await page.fill('#search-input', '報名方式');
+    await expect(page.locator('#activity-grid .activity-card h3')).toHaveText(['還沒公布']);
+});

@@ -9,9 +9,12 @@ const DATA = JSON.parse(
     readFileSync(new URL('../public/learning-portfolio/activity-database.json', import.meta.url), 'utf8'),
 );
 const FIELDS = [
-    'title', 'organizer', 'category', 'form', 'description', 'deadline', 'rolling', 'featured',
+    'title', 'organizer', 'category', 'form', 'description', 'details', 'deadline', 'rolling', 'featured',
     'sourceCheckedAt', 'recheckOn', 'recheckNote', 'url',
 ];
+// 有 details 時 description 是卡片上的摘要，上限和競賽頁相同，見 check-competitions.lib.mjs。
+const SUMMARY_MAX = 80;
+const REPEAT_MIN = 12;
 // #184 在這天逐筆開過官網，查證日期不能早於這天。
 const CHECKED_NOT_BEFORE = '2026-10-24';
 /** isDate 判斷 v 是不是存在的 YYYY-MM-DD 日期。 */
@@ -50,6 +53,14 @@ test('欄位：照 _readme 的規定填', () => {
             assert.ok(typeof v === 'string' && v && v.trim() === v, `「${a.title}」的 ${key} 是空的或前後有空白`);
         }
         assert.ok(['個人', '團體', '個人／團體'].includes(a.form), `「${a.title}」的 form 是 ${a.form}`);
+        if ('details' in a) {
+            assert.ok(typeof a.details === 'string' && a.details && a.details.trim() === a.details, `「${a.title}」的 details 是空的或前後有空白`);
+            assert.ok([...a.description].length <= SUMMARY_MAX, `「${a.title}」有 details，description 是卡片上的摘要，上限 ${SUMMARY_MAX} 字`);
+            // 對話框先顯示 description 再接 details，原樣重複的句子會念兩次。
+            const repeated = a.description.split(/(?<=[。！？；])/).map((x) => x.trim())
+                .filter((x) => [...x].length >= REPEAT_MIN && a.details.includes(x));
+            assert.deepEqual(repeated, [], `「${a.title}」的 details 原樣重複了 description 的句子`);
+        }
         // 競賽放在競賽頁，兩邊各寫一份會對不上。
         assert.notEqual(a.category, '競賽', `「${a.title}」是競賽，請放進 public/advanced-resources/competitions.json`);
         // 頁面只看真假，字串 "false" 也會被當成精選。
