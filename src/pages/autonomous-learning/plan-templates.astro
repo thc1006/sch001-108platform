@@ -82,6 +82,49 @@ const realPlans = [
         pdf: true,
     },
 ];
+
+// 中途改計畫、沒做完、寫得太薄的例子，不寫校名。吉他那份的網址含學生姓名，不放連結。
+const contrastPlans = [
+    {
+        title: '中途改計畫：零基礎學鋼琴自彈自唱',
+        group: '藝術',
+        happened: '原本要同時練唱歌和鋼琴。學校給的 600 分鐘不夠，又用早修和放學補了 7 小時，最後和老師討論，改成只練鋼琴，趕上了班級音樂會。',
+        advice: '只交最後的演出，讀的人不知道計畫改過。作者寫出改了什麼、為什麼改，也用折線圖記下每次練習的失誤次數，從 11 次以上降到 0 次。',
+        href: 'https://collego.edu.tw/Media/Article/2978',
+        text: '自學鋼琴彈唱的分享',
+    },
+    {
+        title: '中途改計畫：化學小論文換了兩次題目',
+        group: '數理化',
+        happened: '第一個題目因為設備不夠放棄，第二個做到一半，發現有人做過類似的科展，學期過一半才重新開始。',
+        advice: '只寫最後的題目，讀的人看不出前半學期做了什麼。作者把兩次放棄的原因都寫出來。訂計畫時先確認學校有沒有需要的設備、先查過去的得獎作品，可以少走這兩段路。',
+        href: 'https://collego.edu.tw/Media/Article/1629',
+        text: '化學小論文換題的分享',
+    },
+    {
+        title: '沒做完：費氏弧菌生物燈',
+        group: '生命科學、工程',
+        happened: '在大學實驗室、由教授協助培養會發光的細菌。很久都看不到光，後來從恆溫箱被別人調高溫度的意外查出菌被汙染，改成每次從冷凍菌株重新培養，才看到藍綠色的光。供氧裝置沒做出來，科展也沒過初選。',
+        advice: '作者把交出去的三項成果和沒做完的部分分開寫：「那個版本的生物燈，最後停在設計階段。」讀的人知道做到哪裡、卡在哪裡。',
+        href: 'https://collego.edu.tw/Media/Article/2979',
+        text: '費氏弧菌生物燈的分享',
+    },
+    {
+        title: '寫得太薄：吉他自學的成果簡報',
+        group: '藝術',
+        happened: '7 頁的簡報，有動機、過程和心得，沒有進度表，「學習成果」那頁只放一張演出照片，沒有說明。',
+        advice: '讀的人不知道練了幾週、每週練什麼、從會什麼進步到會什麼。可以列出練了哪幾首歌、每週練多久，照片下寫是哪一場演出、彈了哪一首，再附第一週和最後一週的錄音對照。',
+    },
+    {
+        title: '寫得太薄：自主學習做了小論文，卻沒附上',
+        group: '不限學群',
+        happened: '作伙學的手冊記下一位審查教授的經驗：檔案說明了自主學習的規劃和檢討，「卻沒有附上完整的小論文成果，審查教授想瞭解成果卻不可得」。',
+        advice: '成果本身要放進去。小論文、影片、作品照片附在同一份檔案裡，或寫上打得開的網址。',
+        href: 'https://www.108epo.com/results-detail.php?Key=38',
+        text: '作伙學《第二階段準備指南》',
+        where: '在第 26 頁',
+    },
+];
 ---
 
 <BaseLayout
@@ -197,6 +240,23 @@ const realPlans = [
                         <p class="text-gray-700 mb-2">{p.did}</p>
                         <p class="text-gray-700 mb-2">可以學的地方：{p.learn}</p>
                         <p class="text-gray-700">原文：<a href={p.href} class={link}>{p.pdf ? <>{p.text.slice(0, -1)}<span class="whitespace-nowrap">{p.text.slice(-1)}（PDF）</span></> : p.text}</a>{p.where && `，${p.where}`}</p>
+                    </li>
+                ))}
+            </ul>
+        </section>
+
+        <!-- 改過、沒做完、寫得太薄的例子 -->
+        <section class="mt-16">
+            <h2 class="text-2xl font-bold text-center mb-2">改過、沒做完、寫得太薄的例子</h2>
+            <p class="text-gray-600 text-center max-w-3xl mx-auto mb-8">計畫中途改了、最後沒做完，都可以寫進成果，寫清楚改了什麼、做到哪裡就好。寫得太薄的話，讀的人看不出你做了什麼。下面幾份不寫學校名稱。</p>
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {contrastPlans.map((p) => (
+                    <li class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold mb-1">{p.title}</h3>
+                        <p class="text-sm font-bold text-teal-700 mb-3">{p.group}</p>
+                        <p class="text-gray-700 mb-2">{p.happened}</p>
+                        <p class="text-gray-700">{p.advice}</p>
+                        {p.href && <p class="text-gray-700 mt-2">原文：<a href={p.href} class={link}>{p.text}</a>{p.where && `，${p.where}`}</p>}
                     </li>
                 ))}
             </ul>
