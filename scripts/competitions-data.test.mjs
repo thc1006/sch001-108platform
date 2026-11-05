@@ -957,7 +957,7 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     const ijso = find('國際國中科學奧林匹亞');
     assert.match(textOf(ijso), /12 月 31 日須為 15 歲以下/);
     assert.match(ijso.sourceNote, /fifteen years or younger on 31st December/, '官網原文留在 sourceNote');
-    assert.match(ijso.registrationNote, /15 歲以下/, '年齡上限必須出現在狀態列，不能只藏在描述裡');
+    assert.match(ijso.registrationNote, /15 歲以下/, '年齡上限要寫在 registrationNote，卡片的「報名」欄和對話框的徽章都看得到');
     assert.match(textOf(ijso), /保加利亞/);
     assert.ok(!/德國/.test(textOf(ijso)), '2026 屆在索菲亞，德國是錯的');
 
