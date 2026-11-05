@@ -56,7 +56,9 @@
             if (pressedOutside && e.target === dialog && outside(dialog, e)) dialog.close();
         });
         // 瀏覽器會把焦點還給開啟前有焦點的元素，用滑鼠點卡片時那是 <body>。
+        // close 事件是非同步送出的。關閉後馬上又開啟時，它會在開啟之後才到，這時不能解鎖或清掉 opener。
         dialog.addEventListener('close', function () {
+            if (dialog.open) return;
             lockScroll(false);
             if (opener && opener.isConnected) opener.focus();
             opener = null;
