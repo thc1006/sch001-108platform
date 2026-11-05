@@ -181,8 +181,9 @@ const SOURCE_NOTE_MAX = 1000;
 const DETAILS_MAX = 1200;
 // description 是卡片上的摘要，寫不下的放 details。卡片內文一行約 18 字，80 字約 5 行。
 const SUMMARY_MAX = 80;
-// 摘要裡 12 字以上的句子或分句原樣出現在 details，對話框會念兩次。短句像「免費參加。」重複無妨。
-const REPEAT_MIN = 12;
+// 摘要裡 12 字以上（含句尾標點）的句子或分句原樣出現在 details，對話框會念兩次。短句像「免費參加。」重複無妨。
+// 比對時去掉句尾標點，所以門檻是 11。
+const REPEAT_MIN = 11;
 
 /**
  * 驗證整組報名／賽事時程欄位，並檢查彼此的先後關係。
