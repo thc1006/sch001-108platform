@@ -102,7 +102,9 @@ const cases = [
       const json = `${DIST}/advanced-resources/competitions.json`;
       writeFileSync(json, readFileSync(json, 'utf8').replace(/"description":\s*"/, '"details": "故障注入的詳細資訊。",\n      "description": "'));
       const html = `${DIST}/advanced-resources/competitions.html`;
-      writeFileSync(html, readFileSync(html, 'utf8').replaceAll('comp-dialog__details', 'comp-dialog__gone'));
+      // 只拿掉 class 屬性，CSS 裡的類別名稱還在：檢查要比對屬性，不能只看類別名稱。
+      writeFileSync(html, readFileSync(html, 'utf8').replaceAll('class="comp-dialog__details"', 'class="comp-dialog__gone"')
+        .replace('</head>', '<style>.comp-dialog__details{}</style></head>'));
     },
     undo: () => { for (const f of DETAILS_FILES) renameSync(`${f}.bak`, f); },
   },
