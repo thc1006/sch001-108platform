@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { works, contrasts } from '../../../public/learning-portfolio/portfolio-works.json';
+import { portfolio as examples } from '../../../public/learning-portfolio/portfolio-gallery.json';
 
 const link = 'inline-block self-start mt-auto pt-4 text-blue-700 underline hover:text-blue-800';
 const term = 'font-semibold text-gray-800';
@@ -95,7 +96,7 @@ const term = 'font-semibold text-gray-800';
             </div>
         </section>
 
-        <h2 id="examples-heading" class="text-3xl font-bold mb-6 text-center">範例分析</h2>
+        <h2 id="examples-heading" class="text-3xl font-bold mb-6 text-center">{examples.length} 份範例的寫法分析</h2>
 
         <!-- 篩選器 -->
         <section class="mb-12 sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-4" data-autohide-filters>
