@@ -287,6 +287,9 @@ jobs:
       - name: Check online-course platform filter options against the data
         run: npm run test:online-courses-data
 
+      - name: Check portfolio-gallery works for required fields, unique ids and https links
+        run: npm run test:portfolio-works-data
+
       - name: Check activity-database fields and status badges
         run: npm run test:activity-database
 
