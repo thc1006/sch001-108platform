@@ -477,6 +477,13 @@ test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
 });
 
+test('W06：字面上常用的詞只報不擋，放在 W07', () => {
+    for (const t of ['通訊系大二學編碼與解碼', '密碼學課會教加密與解碼的數學原理', '文藝復興時期的藝術', '電動輔助自行車的助力系統', '量測無縫鋼管的抗拉強度', '迪化街的乾貨批發', '日本的三種神器', '職場的潛規則如何影響升遷']) {
+        assert.equal(hitsOf('W06-puffery', t), 0, t);
+        assert.equal(hitsOf('W07-endorsement', t), 1, t);
+    }
+});
+
 test('P02：數字之間的「—」是範圍', () => {
     assert.equal(hitsOf('P02-single-dash', '第 81—93 頁'), 0);
     assert.equal(hitsOf('P02-single-dash', '第 81 — 93 頁'), 0);
