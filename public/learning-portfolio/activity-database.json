@@ -1,20 +1,7 @@
 {
-  "_readme": "多元表現活動資料來源檔。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生）；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，以台灣時間計算，當天結束才算截止，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆，截止後區塊會收起來；url=官方網站連結，用 https；sourceCheckedAt=最後一次開官網逐項查證這一筆的日期，用 YYYY-MM-DD，每一筆都要填，重查之後改成當天的日期；recheckOn=預定回來查證的日期，用 YYYY-MM-DD，選填，填法見下；recheckNote=recheckOn 的依據。deadline 的填法：本屆還能報名的，填本屆的截止日。同一屆有好幾個報名管道的，填一般報名管道的截止日，其他管道的期限寫進 description。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。recheckOn 的填法：官網寫了時間或有上一屆的日期可參考才填，填要回來看的日子，不是猜的活動日期，依據寫進 recheckNote；要晚於 sourceCheckedAt，不能晚於它一年後。重查時下一屆還沒公告，照上一屆的日期設近一點的 recheckOn；已經公告、還沒開放報名，照 deadline 的填法先不填截止日，只設 recheckOn；填上下一屆的截止日後才拿掉這兩個欄位。沒有截止日的活動，查到下一屆的日期後照它設下一個 recheckOn。所有純文字欄位在頁面上都會先經過 escapeHtml。",
+  "_readme": "多元表現活動資料來源檔。競賽放在 advanced-resources/competitions.json，這裡放競賽以外的活動。activity-database.astro 會在載入時 fetch() 此檔並渲染篩選器選項與活動卡片。新增或修改活動請直接編輯下方 activities 陣列，不需要動頁面。欄位說明：title=活動名稱；organizer=主辦單位；category=活動類型（篩選器選項由此欄位動態產生），不能是「競賽」；form=參與形式，限「個人」「團體」「個人／團體」；description=1–2 句繁體中文簡介；deadline=報名截止日，用 YYYY-MM-DD 格式，以台灣時間計算，當天結束才算截止，填法見下；rolling=true 代表隨時可以報名，只和 deadline=null 一起用；featured=true 代表此活動會顯示於頁面上方的精選區塊，頁面只顯示第一筆，最多設 1 筆，截止後區塊會收起來；url=官方網站連結，用 https；sourceCheckedAt=最後一次開官網逐項查證這一筆的日期，用 YYYY-MM-DD，每一筆都要填，重查之後改成當天的日期；recheckOn=預定回來查證的日期，用 YYYY-MM-DD，選填，填法見下；recheckNote=recheckOn 的依據。deadline 的填法：本屆還能報名的，填本屆的截止日。同一屆有好幾個報名管道的，填一般報名管道的截止日，其他管道的期限寫進 description。本屆已截止、下一屆還沒公布的，留著本屆的截止日，頁面顯示「已截止」。不要先填下一屆的截止日，頁面沒有「尚未開放」的狀態，會顯示成「報名中」。沒有固定截止日的填 null，標了 rolling 的顯示「全年招募」，其他顯示「依官網公告」。recheckOn 的填法：官網寫了時間或有上一屆的日期可參考才填，填要回來看的日子，不是猜的活動日期，依據寫進 recheckNote；要晚於 sourceCheckedAt，不能晚於它一年後。重查時下一屆還沒公告，照上一屆的日期設近一點的 recheckOn；已經公告、還沒開放報名，照 deadline 的填法先不填截止日，只設 recheckOn；填上下一屆的截止日後才拿掉這兩個欄位。沒有截止日的活動，查到下一屆的日期後照它設下一個 recheckOn。所有純文字欄位在頁面上都會先經過 escapeHtml。",
   "lastUpdated": "2026-11-05",
   "activities": [
-    {
-      "title": "TRML 台灣區高中數學競賽",
-      "organizer": "財團法人九九文教基金會、國立政治大學、國立臺灣師範大學理學院",
-      "category": "競賽",
-      "form": "團體",
-      "description": "高中數學團體賽，每隊 9 位學生，另外要有 1 位指導老師，和 1 位比賽當天負責監考、閱卷的試務人員，主辦單位不代聘；試務人員可以由指導老師兼任，也可以請隊員年滿 20 歲的家長或其他科老師擔任。每人活動費 1,000 元。比賽分團體、思考、個人、接力四項，每年 8 月第三個週末在台北、台中、高雄舉行；每年 5 月開放報名，2026 年的報名期是 5 月 20 日至 27 日，各區額滿就不再受理。",
-      "deadline": "2026-05-27",
-      "featured": false,
-      "sourceCheckedAt": "2026-10-24",
-      "recheckOn": "2027-05-01",
-      "recheckNote": "官網賽事頁寫「每年五月開放報名」。",
-      "url": "https://www.99cef.org.tw/trml-s/"
-    },
     {
       "title": "臺大杜鵑花節學系博覽會",
       "organizer": "國立臺灣大學",
@@ -49,32 +36,6 @@
       "featured": true,
       "sourceCheckedAt": "2026-10-24",
       "url": "https://sitcon.org/2027/"
-    },
-    {
-      "title": "臺灣國際學生創意設計大賽",
-      "organizer": "教育部高等教育司",
-      "category": "競賽",
-      "form": "個人／團體",
-      "description": "分產品設計、視覺設計、數位動畫、建築與景觀設計、時尚設計五類，國內外高級中等以上學校的在校學生可以個人報名，也可以跨校組隊，免報名費。2026 年的報名期是 4 月 27 日到 7 月 15 日。",
-      "deadline": "2026-07-15",
-      "featured": false,
-      "sourceCheckedAt": "2026-10-24",
-      "recheckOn": "2027-04-01",
-      "recheckNote": "2026 年時程頁寫「開放報名 2026年4月27日」。只有一屆的日期，提前到 4 月初回來看。",
-      "url": "https://www.tisdc.org/"
-    },
-    {
-      "title": "物理奧林匹亞競賽國手選拔",
-      "organizer": "國立臺灣師範大學物理學系",
-      "category": "競賽",
-      "form": "個人",
-      "description": "亞洲與國際物理奧林匹亞國家代表隊的選拔從初選開始，具中華民國國籍的國中、高中職學生向就讀學校報名，初選錄取約 400 名，參賽者都有參賽證明。2027 年選拔的初選已在 2026 年 9 月 30 日截止報名，11 月 7 日考試。",
-      "deadline": "2026-09-30",
-      "featured": false,
-      "sourceCheckedAt": "2026-10-24",
-      "recheckOn": "2027-09-01",
-      "recheckNote": "2027 年選拔的初選公告日期是 2026-09-07（物奧網站 /ipho/index.php/2026/09/07/7988/），報名到 9/30。",
-      "url": "https://tpmso.k12ea.gov.tw/ipho/"
     },
     {
       "title": "臺北市動物之家學生短期志工",
