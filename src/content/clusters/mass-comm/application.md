@@ -105,7 +105,7 @@ ColleGo! 的大眾傳播學群小福袋提到，課程學習成果有些大傳�
 
 ## 用 AI 工具寫審查資料要注意的事
 
-教育部大學多元入學升學網的常見問題寫，考生不宜過度依賴 AI 工具，如果讓審查教授對審查資料產生抄襲或代寫的疑慮，可能對考生不利。招聯會訂的參考注意事項提醒校系，可以透過面試或實作等甄試項目確認資料的真實性。116 學年度政大傳播學院不分系（社會組）的分則，把「AI使用聲明」列為審查資料的一項，聲明的檔案到系網下載。
+教育部大學多元入學升學網的常見問題寫，考生不宜過度依賴 AI 工具，如果讓審查教授對審查資料產生抄襲或代寫的疑慮，可能對考生不利。招聯會訂的參考注意事項提醒校系，可以透過面試或實作等甄試項目確認資料的真實性。116 學年度政大傳播學院不分系的社會組、自然組，分則都把「AI使用聲明」列為審查資料的一項，聲明的檔案到系網下載。
 
 ## 送件前的檢核表
 
@@ -123,6 +123,7 @@ ColleGo! 的大眾傳播學群小福袋提到，課程學習成果有些大傳�
 - [116 學年度大學申請入學招生簡章總則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [116 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（社會組）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006252.htm)
+- [116 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（自然組）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006262.htm)
 - [116 學年度大學申請入學校系分則：陽明交通大學傳播與科技學系](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013312.htm)
 - [116 學年度大學申請入學校系分則：中正大學傳播學系](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_041142.htm)
 - [116 學年度大學申請入學校系分則：輔仁大學影像傳播學系](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_020072.htm)
