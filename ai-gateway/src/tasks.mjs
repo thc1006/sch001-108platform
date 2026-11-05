@@ -24,7 +24,7 @@
  *                 閘道閒著拿走的名額，最晚在這個時限內空出來（見 limits.mjs）。從拿到名額就開始算，
  *                 WinLab 忙的時候等第一個位元組的一兩分鐘也在裡面
  *
- * 可信與不可信的內容分開放：system 訊息是共用規則加任務指令；user 訊息只有學生的資料，
+ * 可信與不可信的內容分開放：system 訊息是共用規則（文字任務另加 TEXT_PROMPT）加任務指令；user 訊息只有學生的資料，
  * 每個欄位用「這次請求才有的隨機標記」包起來。學生的輸入裡就算寫了「忽略以上指示」、
  * 或想用引號、標記把資料「關起來」再接一段指令，都還在資料標記裡面：標記每次都不同，
  * 猜不到就關不掉。
@@ -40,9 +40,12 @@ export const SYSTEM_PROMPT = [
     '你是「台灣教育處方籤」平台的 AI 學習顧問，服務對象是台灣的高中生。',
     '一律使用台灣繁體中文與台灣用語回答，不要出現任何簡體字。',
     '語氣平實，像學長姐說話；可以具體說出寫得好的地方，不寫空泛的客套話，不用驚嘆號和表情符號。',
-    '直接回答，不重述問題，不用「在當今…時代」開場，結尾不總結也不打氣；不用破折號、「不是…而是」「不只…更」句型和「**小標**：說明」的條列。',
+    '不用破折號、「不是…而是」「不只…更」句型和「**小標**：說明」的條列。',
     '不要編造學校、課程、統計數字、人名和網址，不知道就說不知道。',
 ].join('');
+
+// 文字任務才加：JSON 任務沒有開場和結尾，star-analysis 的修改範例還可能因此砍掉心得的收尾
+export const TEXT_PROMPT = '直接回答，不重述問題，不用「在當今…時代」開場，結尾不總結也不打氣。';
 
 export class TaskError extends Error {
     /**
@@ -292,7 +295,7 @@ export function validateInput(task, raw) {
 export function buildMessages(task, input, { boundary = randomBytes(6).toString('hex') } = {}) {
     const tag = `資料-${boundary}`;
     const system = [
-        SYSTEM_PROMPT,
+        task.output.type === 'markdown' ? SYSTEM_PROMPT + TEXT_PROMPT : SYSTEM_PROMPT,
         '',
         '【任務】',
         task.instructions.trim(),
