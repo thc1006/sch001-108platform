@@ -349,7 +349,7 @@ const cases = [
     ['基準少一筆', editPolicy((r) => { r['W01-hen-duo'].baseline[firstKey(r, 'W01-hen-duo')] -= 1; }), [], 1],
     ['規則鍵不見', editPolicy((r) => { delete r['P01-double-dash']; }), [], 1],
     ['基準多一筆也擋', editPolicy((r) => { r['W01-hen-duo'].baseline[firstKey(r, 'W01-hen-duo')] += 1; }), [], 1],
-    ['CLI 新規則基準比現值多', editPolicy((r) => { r['K02-placeholder'].baseline[firstKey(r, 'K02-placeholder')] += 48; }), [], 1],
+    ['CLI 新規則基準比現值多', editPolicy((r) => { r['K02-placeholder'].baseline['public/advanced-resources/competitions.json'] = 48; }), [], 1],
     ['CLI 基準掛在沒有命中的檔案', editPolicy((r) => { r['W04-filler-signpost'].baseline['src/pages/about.astro'] = 999; }), [], 1],
     ['--update-baseline 下修', editPolicy((r) => { r['W01-hen-duo'].baseline[firstKey(r, 'W01-hen-duo')] += 1; }), ['--update-baseline'], 0,
         (r, p) => p === JSON.stringify(JSON.parse(policyText), null, 1) + '\n'],
