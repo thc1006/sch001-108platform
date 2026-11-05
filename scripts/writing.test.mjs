@@ -495,6 +495,10 @@ test('W06：「至關重要」單獨就會命中', () => {
     assert.equal(hitsOf('W06-puffery', '這件事至關重要。'), 1);
 });
 
+test('K04 和 W07 只報不擋', () => {
+    for (const id of ['K04-chat-phrase', 'W07-endorsement']) assert.equal(RULES.find((r) => r.id === id).severity, 'warn', id);
+});
+
 test('W06：「真心話大冒險」是遊戲名稱', () => {
     assert.equal(hitsOf('W06-puffery', '真心話大冒險是營隊晚會的遊戲。'), 0);
 });

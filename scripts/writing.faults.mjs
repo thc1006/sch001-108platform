@@ -262,6 +262,8 @@ const cliMutations = [
     ['內文也去重', "if (w.line && h.block.tag.startsWith('attr') && seen.has(dupKey)) continue;", 'if (w.line && seen.has(dupKey)) continue;', '內文重複一次'],
     ['資料 JSON 找不到行也記成檔案', 'if (i >= 0) return { key: b.page, line: i + 1 };', 'return { key: b.page, line: i + 1 };', '資料 JSON 多一個原始檔沒有的欄位'],
     ['annotation 一律 warning', 'new Set(over.map((o) => `${o.rule}|${o.key}`))', 'new Set()', '--annotate 超過基準的檔案是 error'],
+    ['超過基準的清單不印改法', 'if (hint[o.rule]) console.error(`    ${hint[o.rule]}`);', '', 'P02 被擋時印出改法'],
+    ['annotation 不印改法', "esc([context(hit), hint[hit.rule]].filter(Boolean).join('\\n'))", 'esc(context(hit))', 'P02 被擋時印出改法'],
     ['--update-baseline 不寫檔', 'writeFileSync(POLICY, `${JSON.stringify(lowerBaseline(policy, counts), null, 1)}\\n`);', '', '--update-baseline 下修'],
     ['--update-baseline 超過基準也是 0', 'process.exit(over.length ? 1 : 0);\n}', 'process.exit(0);\n}', '--update-baseline 遇到超過基準'],
     ['--verify 一律通過', 'process.exit(problems.length ? 1 : 0);', 'process.exit(0);', '--verify 基準調高'],
@@ -330,7 +332,7 @@ const clearMains = (count) => (b) => { for (const f of b.html.slice(0, count)) b
 const hitWith = (r, text) => r?.hits.find((h) => h.context.includes(text));
 const FINANCE_APPLICATION = 'src/content/clusters/finance/application.md';
 
-// [說明, 改動, 參數, 預期結束碼, 另外的檢查 (報表, 跑完的基準, 輸出) => boolean]
+// [說明, 改動, 參數, 預期結束碼, 另外的檢查 (報表, 跑完的基準, stdout, stderr) => boolean]
 const cases = [
     ['乾淨的副本', () => {}, [], 0],
     ['內文加「很多」', inPage('<p>這裡有很多事。</p>'), [], 1],
@@ -389,6 +391,9 @@ const cases = [
     // 只改 public/ 的資料檔時也要標到那一行。
     ['--annotate 標到 public 的資料檔', (b) => b.edit('career-exploration/senior-interviews.json', (t) => t.replace('"content_html": "', '"content_html": "<p>注入的很多</p>')), ['--annotate', BASE], 1,
         (r, p, out) => /^::error file=public\/career-exploration\/senior-interviews\.json,line=\d+/m.test(out)],
+    // 拿掉 P02 的放行條目，那一行變成超過基準；清單和 annotation 都要印出改法。
+    ['P02 被擋時印出改法', editAllow((e) => e.splice(e.findIndex((x) => x.text.includes('科學探究競賽')), 1)), ['--annotate', BASE], 1,
+        (r, p, out, err) => /^::error file=src\/content\/clusters\/life-science\/highlights\.md,.*改法：/m.test(out) && err.includes('    改法：')],
 ];
 
 /** runCase 在 box 裡用 cli 跑一個案例，回傳不符的原因，符合時回傳 null。 */
@@ -397,11 +402,11 @@ function runCase(box, cli, [, change, args, want, check]) {
         box.reset();
         change(box);
         const env = { ...process.env, SITE_DIST: box.dist, WRITING_POLICY: box.policy, WRITING_ALLOW: box.allow, WRITING_REPORT: box.report, GITHUB_STEP_SUMMARY: '' };
-        execFile(process.execPath, [cli, ...args], { cwd: ROOT, env, maxBuffer: 1 << 26 }, (err, stdout) => {
+        execFile(process.execPath, [cli, ...args], { cwd: ROOT, env, maxBuffer: 1 << 26 }, (err, stdout, stderr) => {
             const code = err ? err.code ?? 1 : 0;
             if (code !== want) return resolve(`結束碼 ${code}，預期 ${want}`);
             const report = existsSync(box.report) ? JSON.parse(readFileSync(box.report, 'utf8')) : null;
-            resolve(check && !check(report, readFileSync(box.policy, 'utf8'), stdout) ? '報表、基準或輸出不符' : null);
+            resolve(check && !check(report, readFileSync(box.policy, 'utf8'), stdout, stderr) ? '報表、基準或輸出不符' : null);
         });
     });
 }
