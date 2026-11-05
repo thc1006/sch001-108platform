@@ -336,6 +336,20 @@ if (distFiles.includes(searchIndexRel)) {
     addError('dist/', searchIndexRel, '找不到 search-index.json——請確認建置有跑 build-search-index.js');
 }
 
+// 競賽的 details 只在對話框裡。索引漏掉它的話，只寫在 details 的字站內搜尋找不到，其他檢查照樣過。
+if (searchIndex) {
+    const { competitions } = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8'));
+    const contents = searchIndex
+        .filter((it) => it && typeof it.url === 'string' && it.url.includes('advanced-resources/competitions.html'))
+        .map((it) => String(it.content ?? ''));
+    // build-search-index.js 把空白壓成一個空格。
+    const missing = competitions.filter((c) => typeof c.details === 'string' && c.details
+        && !contents.some((t) => t.includes(c.details.replace(/\s+/g, ' ').trim())));
+    if (missing.length) {
+        addError(searchIndexRel, 'details', `${missing.length} 筆競賽的 details 不在搜尋索引裡（例：${missing[0].title}）`);
+    }
+}
+
 // 資料驅動頁面的 runtime reference：相對路徑要相對「消費它的頁面」解析，
 // 不是 JSON 自己的位置。
 for (const [page, cfg] of Object.entries(dataPages.pages)) {
