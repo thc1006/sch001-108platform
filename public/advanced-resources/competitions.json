@@ -323,7 +323,7 @@
       "recheckNote": "TOL 預計 12 月初公布初賽報名資訊，屆時補上 opensAt 與 deadline",
       "sourceNote": "章程：參賽者須「less than 20 years old on the first day of the competition」且為大學前學生。TOL 官網 2026-08-12 預告 2027 年時程。IOL 2027 報名時程官網標示 TBA。",
       "url": "https://ioling.org/",
-      "description": "中學生語言學競賽裡層級最高的國際賽，靠邏輯推理破解陌生語言，不用先學過語言學，有年齡上限。台灣國手由臺大語言所辦的 TOL 選拔，國高中生都能報名初賽。",
+      "description": "中學生語言學競賽裡層級最高的國際賽，靠邏輯推理破解陌生語言，不用先學過語言學，須未滿 20 歲。台灣國手由臺大語言所辦的 TOL 選拔，國高中生都能報名初賽。",
       "details": "參賽者要在比賽第一天未滿 20 歲，而且還沒上大學，各國一隊最多 4 人。\n第 23 屆 2026 年 7 月 26 日至 8 月 2 日在羅馬尼亞布加勒斯特舉行，已結束。第 24 屆 2027 年 7 月 21 至 28 日在泰國曼谷舉行，報名時程還沒公布。\n臺灣語言學奧林匹亞（TOL）2027 年的時程：高中生推薦管道 2026-10-01 至 12-15 開放，受推薦的高中生直接參加複賽；初賽 1/30 上午，1/8 報名截止。\n複賽 2/20 下午，參加者是初賽前 25%、2026 語言學科展前 8 名與受推薦的高中生。複賽前 25%（取前 25 至 50 名）進入第一階段國手培訓（3/13–14，暫定），再參加 3 至 4 月的決賽，決賽前 8 名成為正式國手。\n初賽報名資訊預計 12 月初公布。"
     },
     {
@@ -342,7 +342,7 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "參賽規則在官網 ?page_id=1706，章程在 ?page_id=2。資格「open to high school students from any country」；年齡「The maximum age of a pupil is 20 by the end of the calendar year in which IPO takes place」；新代表團「Admission of any new delegation is subject to approval by the hosts and the National Organising Committee of that year’s International Philosophy Olympiad」。How to participate 頁沒有各國管道清單，寫的是沒有代表團的國家該怎麼辦：「What to do if your country does not have an existing national IPO delegation? Contact IPO Executive Board for assistance : board.ipo@gmail.com . IPO Executive Board can assist in the creation of a new delegation if needed.」。首頁 Countries 清單的 57 個國家頁沒有台灣或 Chinese Taipei（首頁新聞寫 2026 年「A record 57 national delegations participated」）。正式選拔管道要求經「a national philosophical society affiliated with the Fédération Internationale des Sociétés de Philosophie (FISP)」辦理，FISP 官網的國家學會名單（www.fisp.org/members/national-societies）沒有 TAIWAN 標題，唯一提到台灣的是 CHINA 標題下的「Chinese Association of Philosophy (CAP) in Taiwan, China」，未附網址。",
       "url": "https://www.philosophy-olympiad.org/",
-      "description": "中學生用英、法、德、西其中一種非母語寫哲學論文的國際競賽，有年齡上限，只收國家代表團，不收個別學生。台灣目前沒有代表團。",
+      "description": "中學生用英、法、德、西其中一種非母語寫哲學論文的國際競賽，比賽當年年底最多 20 歲，只收國家代表團，不收個別學生。台灣目前沒有代表團。",
       "details": "各國高中生都能參加，比賽當年年底時最多 20 歲。個人、隊伍或學校都不能自己報名（IPO only accepts national delegations, not independent students, teams or schools），各國最多 2 人、主辦國最多 10 人。\n第 34 屆 2026 年 5 月 14 至 17 日在波蘭華沙舉行，已結束，2027 屆主辦國還沒公布。\n沒有代表團的國家，可以寫信請 IPO 執行委員會（board.ipo@gmail.com）協助成立，條件是有合格的哲學老師、對全國學生開放的選拔，以及和 FISP 或全國性哲學學會的連結。新代表團要經當年主辦方與籌備委員會同意，也要看主辦方能接待多少人。"
     },
     {
@@ -1149,7 +1149,7 @@
       "sourceCheckedAt": "2026-10-23",
       "sourceNote": "官網 WSDC Rules（2026 年 8 月版）的年齡條款：「have reached their 14th birthday by the first day of debates at the Championships」且「not have reached their 20th birthday by the day of the grand final at the Championships」。National Organisations 頁列出 86 個國家／地區組織。",
       "url": "https://wsdcdebating.org/",
-      "description": "世界中學生英語辯論錦標賽，由各國辯論組織選派國家隊，有年齡限制。台灣的國家組織是 Taiwan Debate Union，要經過它選拔。",
+      "description": "世界中學生英語辯論錦標賽，各國辯論組織選派國家隊，比賽時須滿 14 歲、未滿 20 歲。台灣要經 Taiwan Debate Union 選拔。",
       "details": "主辦單位是 WSDC Ltd.，每隊 3 至 5 人。86 個國家／地區有國家組織，台灣以 Taiwan 的名稱列在名單上。\n選手要在比賽第一天滿 14 歲、決賽當天未滿 20 歲。大學或其他高等教育的第一學期如果在比賽第一天或之前就開始，就不能參加。\n2026 年 7 月 14 至 24 日在肯亞舉行，已結束；2027 屆主辦國與日期還沒公布。"
     },
     {
