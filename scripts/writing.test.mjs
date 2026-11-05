@@ -508,6 +508,11 @@ test('P02：範圍寫成「—」照擋，規則帶著改法', () => {
     assert.match(RULES.find((r) => r.id === 'P02-single-dash').hint, /國小到高中/);
 });
 
+test('P05：數學式的半形括號不算', () => {
+    for (const t of ['計算 (3+5)×2 的結果，答案是 16。', '座標 (2, 3) 在第一象限。', '求 (a+b)² 的展開式。', '化簡 (x - 1) / 2']) assert.equal(hitsOf('P05-halfwidth-paren', t), 0, t);
+    for (const t of ['目標 (SDGs) 中', '社團名稱是 IEEE (台大學生分會)。', '電腦輔助製圖(CAD)的課', '疫情 (COVID-19) 期間', '選項 (A) 是對的', '第 (3) 題']) assert.equal(hitsOf('P05-halfwidth-paren', t), 1, t);
+});
+
 test('changedLines 與 pickAnnotations：只標改到的行，每級最多 limit 個', () => {
     const diff = ['+++ b/src/a.md', '@@ -3 +3,2 @@', '+x', '+y', '+++ b/src/b.md', '@@ -0,0 +7 @@'].join('\n');
     assert.deepEqual([...changedLines(diff)], ['src/a.md:3', 'src/a.md:4', 'src/b.md:7']);
