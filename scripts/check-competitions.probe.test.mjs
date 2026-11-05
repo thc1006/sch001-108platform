@@ -957,6 +957,13 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
         assert.ok(badge.includes(`下次約 ${s.next} 截止`), `${c.title}：${badge}`);
         if (dField.value.includes('本屆')) assert.ok(!badge.includes('本屆已截止'), `${c.title}：${badge}`);
     }
+    // 對話框的截止欄：本屆截止日寫台北的日期，和卡片一致；截止當月寫「下次約」，其他月份寫「每年約」。今天是 2026-11-05。
+    const himcm = { deadline: '2026-11-04', deadlineAt: '2026-11-04T14:00:00-05:00', cycle: { closes: '11' } };
+    assert.equal(f.fullDeadline(himcm, f.getStatus(himcm)).value, '本屆 2026-11-05 已截止、下次約 2027 年 11 月');
+    const july = { deadline: '2026-07-15', deadlineAt: '2026-07-15T23:59:00-04:00', cycle: { closes: '07' } };
+    assert.equal(f.fullDeadline(july, f.getStatus(july)).value, '本屆 2026-07-16 已截止、每年約 7 月');
+    const dateOnly = { deadline: '2026-07-15', cycle: { closes: '07-15' } };
+    assert.equal(f.fullDeadline(dateOnly, f.getStatus(dateOnly)).value, '本屆 2026-07-15 已截止、每年約 7 月 15 日');
     // 沒有本屆截止日的週期型，徽章留著「每年固定辦理」。
     const yearly = f.getStatus({ cycle: { closes: '03-15' } });
     assert.equal(yearly.label, '每年固定辦理');
