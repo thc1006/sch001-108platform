@@ -1,5 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { works } from '../../../public/learning-portfolio/portfolio-works.json';
+
+const link = 'inline-block self-start mt-auto pt-4 text-blue-700 underline hover:text-blue-800';
+const term = 'font-semibold text-gray-800';
 ---
 
 <BaseLayout
@@ -37,6 +41,38 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </div>
         </section>
+
+        <section aria-labelledby="works-heading" class="mb-16">
+            <h2 id="works-heading" class="text-3xl font-bold mb-4 text-center">高中生的真實作品</h2>
+            <p class="text-gray-700 max-w-3xl mx-auto mb-8">下面 {works.length} 份是高中生交出去的作品，原文由科展、小論文比賽的主辦單位和教育部委託的作伙學計畫公開。每份寫出做了什麼、可以學的寫法，原文在連結裡。</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {works.map((w) => (
+                    <article aria-labelledby={`${w.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
+                        <h3 id={`${w.id}-title`} class="text-xl font-bold">{w.title}</h3>
+                        <p class="text-sm text-gray-600 mt-1">{w.group}｜{w.kind}</p>
+                        <dl class="mt-4 space-y-3 text-gray-700 leading-relaxed">
+                            <div>
+                                <dt class={term}>做了什麼</dt>
+                                <dd>{w.did}</dd>
+                            </div>
+                            <div>
+                                <dt class={term}>可以學的寫法</dt>
+                                <dd>{w.learn}</dd>
+                            </div>
+                            {w.quote && (
+                                <div>
+                                    <dt class={term}>{w.quote.by}</dt>
+                                    <dd>「{w.quote.text}」</dd>
+                                </div>
+                            )}
+                        </dl>
+                        <a href={w.url} class={link}><span class="sr-only">{w.title}：</span>{w.linkLabel}</a>
+                    </article>
+                ))}
+            </div>
+        </section>
+
+        <h2 id="examples-heading" class="text-3xl font-bold mb-6 text-center">範例分析</h2>
 
         <!-- 篩選器 -->
         <section class="mb-12 sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-4" data-autohide-filters>
