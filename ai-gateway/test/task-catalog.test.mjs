@@ -66,13 +66,14 @@ test('每個任務的 system 訊息都要求語氣平實、可以具體指出優
     }
 });
 
-// 站上寫作檢查（scripts/writing.lib.mjs）擋破折號（P01、P02），也報「不是…而是」「不只…更」與粗體小標（S01、S02、F01）。
-// 指令本身也不用破折號，模型可能跟著指令的寫法寫。
-test('每個任務的 system 訊息都要求不用破折號、「不是…而是」「不只…更」與粗體小標的條列，指令裡沒有破折號', () => {
+// 共用規則不列禁用的句型。2026-11-05 直接打 WinLab 量 civic-tech-suggestion（不相關的興趣），reasoning tokens
+// 平均：沒有這類規則 1470（4 次）；加「不用破折號、「不是…而是」「不只…更」和粗體小標加冒號的條列」2630（7 次）；
+// 同一句再加「很多」2100（7 次）。要加回來先照同樣的方法量。指令本身也不用破折號，模型可能跟著指令的寫法寫。
+test('system 訊息不列禁用的句型，裡面也沒有破折號', () => {
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        assert.ok(system.content.includes('不用破折號、「不是…而是」「不只…更」和粗體小標加冒號的條列。'), task.id);
+        assert.doesNotMatch(system.content, /不用破折號|「不是…而是」|「不只…更」|「很多」/, task.id);
         assert.doesNotMatch(system.content, /[—―─]/, task.id);
     }
 });
