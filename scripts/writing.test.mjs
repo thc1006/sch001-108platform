@@ -23,7 +23,8 @@ const examples = [
     ['P05-halfwidth-paren', '從聯合國永續發展目標 (SDGs) 中尋找靈感', '從聯合國永續發展目標（SDGs）中尋找靈感'],
     ['P07-emoji', '🤔 我該用哪種方法？', '我該用哪種方法？'],
     ['P09-quote-nesting', '我只知道『怎麼做』', '我只知道「怎麼做」'],
-    ['K01-chat-residue', '讓我們陪你走完這趟探索之旅。', '下面的四張卡片連到四個步驟。'],
+    ['K01-chat-residue', '希望以上整理對你有幫助。', '下面的四張卡片連到四個步驟。'],
+    ['K04-chat-phrase', '讓我們陪你走完這趟探索之旅。', '下面的四張卡片連到四個步驟。'],
     ['W02-vague-quantity', '提供大量演算法題目', '提供演算法題目'],
     ['C01-vague-attribution', '教授普遍認為這個動機太小。', '北醫醫學系教授說，這個動機太小。'],
 ];
@@ -92,7 +93,7 @@ test('引號：有英文字母、沒有中文的「」是外文原文，不寫�
 test('引號：跨過外文引文的句型照查', () => {
     assert.equal(hitsOf('S01-not-x-but-y', '不是「Python」而是「C++」'), 1);
     assert.equal(hitsOf('S02-not-only', '不僅「Python」更要會「C++」'), 1);
-    assert.equal(hitsOf('K01-chat-residue', '希望「GPT」對你有幫助'), 1);
+    assert.equal(hitsOf('K01-chat-residue', '希望這篇「GPT」對你有幫助'), 1);
 });
 
 test('P09：依層次輪流用「」『』，開合不同種也算', () => {
@@ -471,6 +472,17 @@ test('W01：「很」加上「多X」形容詞不算「很多」', () => {
         assert.equal(hitsOf('W01-hen-duo', t), 0, t);
     }
     for (const t of ['他有很多疑問。', '這幾年有很多變化', '很多產品', '學了很多才藝', '我學到很多。', '很多人以為選系只看分數。']) assert.equal(hitsOf('W01-hen-duo', t), 1, t);
+});
+
+test('K01：只擋提到這篇文章本身或自稱 AI 的句子，其他聊天口吻放在 K04 只報不擋', () => {
+    for (const t of ['希望以上整理對你有幫助！', '希望這篇文章對你有所幫助。', '希望這些經驗對你有幫助', '作為一個 AI，我無法查證。', '作為 AI 語言模型，我不能回答。', '截至我的知識截止日', '我們一起看看']) {
+        assert.equal(hitsOf('K01-chat-residue', t), 1, t);
+    }
+    const warned = ['如果你有疑問，可以寄信給承辦人。', '說明會結束後歡迎提問，現場有招生組老師。', '當然，分數不是唯一的標準。', '好的，我們進入下一題。', '教授會讓我們來回答上週的問題。'];
+    const plain = ['老師讓我們的專題報名科展。', '我修這門課，是希望對備審有幫助。', '這本書適合作為 AI 入門的第一本書。', '講者分享自己如何作為 AI 工程師進入業界。'];
+    for (const t of [...warned, ...plain]) assert.equal(hitsOf('K01-chat-residue', t), 0, t);
+    for (const t of warned) assert.equal(hitsOf('K04-chat-phrase', t), 1, t);
+    for (const t of plain) assert.equal(hitsOf('K04-chat-phrase', t), 0, t);
 });
 
 test('W06：「至關重要」單獨就會命中', () => {
