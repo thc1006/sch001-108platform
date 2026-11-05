@@ -222,7 +222,7 @@ test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相�
     assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
 });
 
-test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一個下一步建議，說不出興趣時幫忙找線索，200 字內，不約學生下次再談，不確定的校系規定請學生去查', () => {
+test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一個下一步建議，說不出興趣時幫忙找線索，200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
     assert.match(instructions, /說明為什麼推薦/);
@@ -231,7 +231,7 @@ test('career-chat：指令要求推薦 1～2 個學群、說明原因、給一�
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
-    assert.match(instructions, /不確定的校系規定[^\n]*校系的網頁或大學甄選委員會的校系分則/);
+    assert.match(instructions, /提到校系規定時，請學生查該校系網頁，或大學甄選入學委員會（繁星推薦、申請入學）、大學考試入學分發委員會（分科測驗）的校系分則/);
 });
 
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
