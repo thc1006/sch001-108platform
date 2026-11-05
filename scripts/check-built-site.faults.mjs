@@ -30,6 +30,7 @@ import { staticImportSpecifiers } from './site-contract.lib.mjs';
 const SOURCE = process.env.SITE_DIST_SOURCE || 'dist';
 const DIST = process.env.SITE_DIST_WORK || 'dist-faultcheck';
 const DETAILS_FILES = [`${DIST}/advanced-resources/competitions.json`, `${DIST}/advanced-resources/competitions.html`];
+const ACTIVITY_FILES = [`${DIST}/learning-portfolio/activity-database.json`, `${DIST}/learning-portfolio/activity-database.html`];
 if (!existsSync(SOURCE)) {
   console.error(`找不到建置產物 ${SOURCE}/，請先執行 npm run build:deployable`);
   process.exit(1);
@@ -104,6 +105,18 @@ const cases = [
       writeFileSync(html, readFileSync(html, 'utf8').replaceAll('comp-dialog__details', 'comp-dialog__gone'));
     },
     undo: () => { for (const f of DETAILS_FILES) renameSync(`${f}.bak`, f); },
+  },
+  {
+    name: '活動資料有 details，頁面卻沒有顯示它的對話框',
+    expect: /activity-database\.json 有 \d+ 筆 details，頁面沒有顯示它的對話框/,
+    apply: () => {
+      for (const f of ACTIVITY_FILES) copyFileSync(f, `${f}.bak`);
+      const json = `${DIST}/learning-portfolio/activity-database.json`;
+      writeFileSync(json, readFileSync(json, 'utf8').replace(/"description":\s*"/, '"details": "故障注入的詳細資訊。",\n      "description": "'));
+      const html = `${DIST}/learning-portfolio/activity-database.html`;
+      writeFileSync(html, readFileSync(html, 'utf8').replaceAll('activity-dialog__details', 'activity-dialog__gone'));
+    },
+    undo: () => { for (const f of ACTIVITY_FILES) renameSync(`${f}.bak`, f); },
   },
   {
     name: 'fragment 目標 id 被改名',

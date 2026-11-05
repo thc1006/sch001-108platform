@@ -14,7 +14,7 @@
  *   6. 每頁自我一致性：canonical 指向自己、恰好一個 main#main-content、id 不重複
  *   7. 競賽頁的 meta description 寫的筆數和 competitions.json 相同
  *   8. 頁面文字沒有原樣露出 Markdown 的 **，也沒有 ** 配錯對產生的巢狀 strong、em
- *   9. competitions.json 有 details 時，競賽頁要有顯示它的對話框
+ *   9. competitions.json、activity-database.json 有 details 時，頁面要有顯示它的對話框
  *
  * 外部網址只輸出 inventory，不在此處連線：外部站台的可用性屬於非確定性，
  * 不該讓無關的 PR 因為某間大學今天連不上而變紅。
@@ -262,6 +262,17 @@ for (const rel of htmlFiles) {
     const withDetails = competitions.filter((c) => typeof c.details === 'string' && c.details).length;
     if (withDetails && !html.includes('class="comp-dialog__details"')) {
         addError(rel, 'details', `competitions.json 有 ${withDetails} 筆 details，頁面沒有顯示它的對話框（comp-dialog__details）`);
+    }
+}
+
+// 多元表現資料庫也一樣。
+{
+    const rel = 'learning-portfolio/activity-database.html';
+    const { activities } = JSON.parse(await readFile(path.join(DIST, 'learning-portfolio/activity-database.json'), 'utf8'));
+    const html = await readFile(path.join(DIST, rel), 'utf8');
+    const withDetails = activities.filter((a) => typeof a.details === 'string' && a.details).length;
+    if (withDetails && !html.includes('class="activity-dialog__details"')) {
+        addError(rel, 'details', `activity-database.json 有 ${withDetails} 筆 details，頁面沒有顯示它的對話框（activity-dialog__details）`);
     }
 }
 

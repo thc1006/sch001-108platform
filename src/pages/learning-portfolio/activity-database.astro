@@ -8,9 +8,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   currentSection="learning-portfolio"
   bodyClass="bg-gray-100 text-gray-800"
 >
-    <!-- Main Content -->
     <main id="main-content" class="container mx-auto px-6 py-12">
-        <!-- Page Hero Section -->
         <section class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
                 多元表現<span class="gradient-text">資料庫</span>
@@ -20,23 +18,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </p>
         </section>
 
-        <!-- Featured Activity -->
         <section id="featured-section" class="mb-16 hidden">
             <h2 class="text-3xl font-bold mb-6 text-center">焦點活動</h2>
             <div id="featured-card" class="bg-white rounded-xl shadow-lg overflow-hidden md:flex">
-                <!-- Featured activity will be injected here -->
             </div>
         </section>
 
         <h2 class="text-3xl font-bold mb-6 text-center">活動列表</h2>
 
-        <!-- Filters and Search -->
         <section class="mb-12 sticky top-16 z-40 bg-gray-100/80 backdrop-blur-sm py-4" data-autohide-filters>
             <div class="bg-white p-4 rounded-xl shadow-md">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="lg:col-span-2">
                         <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
-                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位⋯" class="w-full mt-1 p-2 border border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-sky-700">
+                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位、關鍵字⋯" class="w-full mt-1 p-2 border border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-sky-700">
                     </div>
                     <div>
                         <label for="category-filter" class="font-bold text-gray-700 text-sm">活動類型</label>
@@ -54,11 +49,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </div>
         </section>
 
-        <!-- Activity Grid -->
         <section>
             <p id="result-status" role="status" class="sr-only"></p>
-            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Activity cards will be injected here -->
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8">
             </div>
             <div id="no-results" class="hidden text-center py-16">
                 <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -70,6 +63,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
     </main>
 
+    {/* 活動的完整說明，內容由 openDetail() 填入。做法和競賽頁的 comp-dialog 相同。 */}
+    <dialog id="activity-dialog" aria-labelledby="activity-dialog-title" class="modal-content activity-dialog bg-white text-inherit w-11/12 max-w-none md:max-w-3xl m-auto rounded-lg shadow-lg overflow-y-auto outline outline-transparent"></dialog>
+
+    <script is:inline src="../shared/detail-dialog.js"></script>
     <script is:inline>
         // 資料改由同目錄的 activity-database.json 載入（見下方 loadData）。
         // 要新增或修改活動，請編輯 activity-database.json，不需要動這支頁面。
@@ -83,6 +80,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         const featuredSection = document.getElementById('featured-section');
         const featuredCard = document.getElementById('featured-card');
         const resultStatus = document.getElementById('result-status');
+        const dialog = document.getElementById('activity-dialog');
+        const detail = DetailDialog.setup(dialog);
+        dialog.addEventListener('close', () => { dialog.innerHTML = ''; });
         // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
         let shownCount = 0;
         let announceTimer;
@@ -120,6 +120,62 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         function deadlineText(activity) {
             if (activity.deadline) return activity.deadline;
             return activity.rolling ? '全年招募' : '依官網公告';
+        }
+
+        function hasDetails(activity) {
+            return typeof activity.details === 'string' && activity.details.trim() !== '';
+        }
+
+        function moreButton(activity) {
+            if (!hasDetails(activity)) return '';
+            return `<button type="button" class="activity-more" aria-haspopup="dialog" data-idx="${activity._idx}">詳細資訊<span class="sr-only">：${escapeHtml(activity.title)}</span></button>`;
+        }
+
+        // 和競賽頁的「前往官網」相同，可讀名稱寫出活動名稱和另開新分頁。
+        function siteLink(activity, cls) {
+            return `<a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="${cls}">前往官網<span class="sr-only">：${escapeHtml(activity.title)}（另開新分頁）</span></a>`;
+        }
+
+        // kicker 是類型與狀態。卡片的 DOM 裡名稱在前面，用 H 鍵跳到名稱的人接著聽到狀態；畫面上用 order 排到名稱上面。
+        function kicker(activity, status) {
+            return `
+                <div class="activity-kicker flex flex-wrap justify-between items-start gap-2 mb-2">
+                    <span class="text-sm font-bold text-sky-700">${escapeHtml(activity.category)}</span>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
+                </div>`;
+        }
+
+        function foot(activity) {
+            return `
+                <div class="activity-foot p-4 bg-gray-50 rounded-b-lg flex flex-wrap justify-between items-center gap-3">
+                    <div class="activity-foot__deadline">
+                        <p class="text-xs text-gray-500">報名截止</p>
+                        <p class="font-semibold text-gray-700">${escapeHtml(deadlineText(activity))}</p>
+                    </div>
+                    ${siteLink(activity, 'activity-cta bg-sky-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-800 transition duration-300')}
+                </div>`;
+        }
+
+        function openDetail(activity, opener) {
+            // 一行一段，報讀軟體可以按段落跳。
+            const details = activity.details.split('\n').filter((line) => line.trim())
+                .map((line) => `<p>${escapeHtml(line)}</p>`).join('');
+            dialog.innerHTML = `
+                <div class="activity-dialog__head">
+                    <h2 id="activity-dialog-title" class="activity-dialog__title">${escapeHtml(activity.title)}</h2>
+                    <button type="button" class="activity-dialog__close" aria-label="關閉"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="activity-dialog__body">
+                    ${kicker(activity, getActivityStatus(activity))}
+                    <p class="text-sm text-gray-500 mb-1">主辦單位：${escapeHtml(activity.organizer)}</p>
+                    <p class="text-sm text-gray-500 mb-4">參與形式：${escapeHtml(activity.form)}</p>
+                    <p class="activity-dialog__text">${escapeHtml(activity.description)}</p>
+                    <div class="activity-dialog__details">${details}</div>
+                    ${foot(activity)}
+                    <button type="button" class="activity-dialog__close-end">關閉</button>
+                </div>`;
+            dialog.querySelectorAll('.activity-dialog__close, .activity-dialog__close-end').forEach((b) => b.addEventListener('click', detail.close));
+            detail.open(opener);
         }
 
         // 由實際資料動態產生篩選器選項，避免選項與資料不符。
@@ -170,9 +226,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">${escapeHtml(featured.form)}</span>
                         <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200">報名截止：${escapeHtml(deadlineText(featured))}</span>
                     </div>
-                    <a href="${encodeURI(featured.url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block bg-sky-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-800 transition duration-300 self-start">
-                        查看活動詳情<span class="sr-only">：${escapeHtml(featured.title)}（另開新分頁）</span> <span aria-hidden="true">&rarr;</span>
-                    </a>
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mt-2">
+                        ${moreButton(featured)}
+                        ${siteLink(featured, 'activity-cta inline-block bg-sky-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-800 transition duration-300')}
+                    </div>
                 </div>
             `;
             featuredSection.classList.remove('hidden');
@@ -184,7 +241,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const selectedForm = formFilter.value;
 
             const filteredActivities = activities.filter(activity => {
-                const searchCorpus = `${activity.title} ${activity.organizer}`.toLowerCase();
+                // 和競賽頁一樣，詳細資訊收在對話框裡的字也找得到。
+                const details = typeof activity.details === 'string' ? activity.details : '';
+                const searchCorpus = `${activity.title} ${activity.organizer} ${activity.category} ${activity.description} ${details}`.toLowerCase();
                 const matchesSearch = searchCorpus.includes(searchTerm);
                 const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
                 const matchesForm = selectedForm === 'all' || String(activity.form || '').includes(selectedForm);
@@ -197,30 +256,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             if (filteredActivities.length > 0) {
                 noResultsDiv.classList.add('hidden');
                 filteredActivities.forEach(activity => {
-                    const card = document.createElement('div');
-                    card.className = 'activity-card bg-white rounded-lg shadow-md flex flex-col';
-
-                    const status = getActivityStatus(activity);
-
+                    const card = document.createElement('article');
+                    card.className = 'activity-card bg-white rounded-lg shadow-md';
                     card.innerHTML = `
-                        <div class="p-6 flex-grow">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-sm font-bold text-sky-700">${escapeHtml(activity.category)}</span>
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${status.color}">${status.text}</span>
-                            </div>
+                        <div class="activity-card__body">
                             <h3 class="text-xl font-bold text-gray-900 mb-2">${escapeHtml(activity.title)}</h3>
-                            <p class="text-sm text-gray-500 mb-4">主辦單位：${escapeHtml(activity.organizer)}</p>
+                            ${kicker(activity, getActivityStatus(activity))}
+                            <p class="text-sm text-gray-500 mb-1">主辦單位：${escapeHtml(activity.organizer)}</p>
+                            <p class="text-sm text-gray-500 mb-4">參與形式：${escapeHtml(activity.form)}</p>
                             <p class="text-gray-700">${escapeHtml(activity.description)}</p>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
-                            <div>
-                                <p class="text-xs text-gray-500">報名截止</p>
-                                <p class="font-semibold text-gray-700">${escapeHtml(deadlineText(activity))}</p>
-                            </div>
-                            <a href="${encodeURI(activity.url)}" target="_blank" rel="noopener noreferrer" class="bg-sky-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-800 transition duration-300">
-                                查看詳情<span class="sr-only">：${escapeHtml(activity.title)}（另開新分頁）</span>
-                            </a>
-                        </div>
+                        <div class="activity-card__more">${moreButton(activity)}</div>
+                        ${foot(activity)}
                     `;
                     activityGrid.appendChild(card);
                 });
@@ -232,6 +279,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         searchInput.addEventListener('input', () => { renderActivities(); announceCount(400); });
         categoryFilter.addEventListener('change', () => { renderActivities(); announceCount(); });
         formFilter.addEventListener('change', () => { renderActivities(); announceCount(); });
+        [activityGrid, featuredCard].forEach((el) => el.addEventListener('click', (e) => {
+            const btn = e.target.closest('.activity-more');
+            if (btn) openDetail(activities[Number(btn.dataset.idx)], btn);
+        }));
 
         // 從 activity-database.json 載入資料後再渲染
         async function loadData() {
@@ -241,7 +292,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                     throw new Error(`HTTP ${response.status}`);
                 }
                 const data = await response.json();
-                activities = Array.isArray(data.activities) ? data.activities : [];
+                activities = (Array.isArray(data.activities) ? data.activities : []).map((a, idx) => ({ ...a, _idx: idx }));
                 populateFilters();
                 renderFeatured();
                 renderActivities();
@@ -257,12 +308,62 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
         }
+        /* 卡片用 subgrid 和同一列的卡片共用三列：內文、「詳細資訊」、截止欄，做法和競賽頁的 .comp-card 相同。
+           列間距是 0，空的「詳細資訊」列才不會被撐開，卡片之間的上下距離用 margin-bottom。 */
         .activity-card {
+            --pad: clamp(1rem, 6.5vw, 1.5rem);
+            display: grid; grid-template-rows: subgrid; grid-row: span 3; margin-bottom: 2rem;
+            overflow-wrap: anywhere; border: 1px solid transparent;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        .activity-card__body { display: flex; flex-direction: column; padding: var(--pad) var(--pad) .75rem; }
+        .activity-card .activity-kicker { order: -1; }
+        .activity-card__more { padding: 0 var(--pad) var(--pad); }
+        .activity-card__more:empty { padding: 0 0 .75rem; }
+        .activity-foot__deadline { flex: 1 1 8rem; }
+        .activity-cta { position: relative; }
+        .activity-more {
+            padding: .25rem 0; border: 0; background: none; cursor: pointer;
+            font-size: .875rem; font-weight: 700; color: #0069a8; text-decoration: underline; text-underline-offset: .2em;
+        }
+        .activity-more:hover { color: #00598a; }
+        .activity-more:focus-visible, .activity-cta:focus-visible,
+        .activity-dialog__close:focus-visible, .activity-dialog__close-end:focus-visible {
+            outline: 2px solid #0369a1; outline-offset: 2px;
+        }
+        @supports not (grid-template-rows: subgrid) {
+            .activity-card { display: flex; flex-direction: column; }
+            .activity-card__body { flex: 1; }
+        }
+
+        .modal-content::backdrop { background-color: rgba(0, 0, 0, .6); }
+        .modal-content { max-height: 90vh; }
+        .activity-dialog { overflow-wrap: anywhere; }
+        .activity-dialog__head {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+            padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;
+        }
+        .activity-dialog__title { font-size: 1.5rem; font-weight: 700; line-height: 1.35; margin: 0; }
+        .activity-dialog__close {
+            flex-shrink: 0; margin: -.25rem -.5rem 0 0; min-width: 2rem; min-height: 2rem; padding: 0 .5rem;
+            border: 0; border-radius: .25rem; background: none; cursor: pointer;
+            font-size: 1.875rem; line-height: 1; color: #6b7280;
+        }
+        .activity-dialog__close:hover { color: #1f2937; }
+        .activity-dialog__body { padding: 1.5rem; }
+        .activity-dialog__text, .activity-dialog__details p { line-height: 1.5; color: #374151; margin: 0 0 .75rem; }
+        .activity-dialog__body .activity-foot { margin-top: 1.5rem; border-radius: .5rem; }
+        .activity-dialog__close-end {
+            display: block; margin: 1rem 0 0 auto; padding: .5rem 1rem; border: 1px solid #6b7280; border-radius: .5rem;
+            background: #fff; color: #374151; font-weight: 600; cursor: pointer;
+        }
+        .activity-dialog__close-end:hover { background: #f3f4f6; }
         .activity-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .activity-card:hover { transform: none; }
         }
     </style>
 </BaseLayout>
