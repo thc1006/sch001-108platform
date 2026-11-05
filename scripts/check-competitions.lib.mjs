@@ -315,7 +315,7 @@ export function validateCycle(cycle, label, errors) {
         return;
     }
     for (const key of Object.keys(cycle)) {
-        // 頁面只讀 opens 和 closes。寫在 note 的字不會顯示，要寫進 details 或 registrationNote。
+        // 頁面只讀 closes，opens 只是記錄。寫在其他欄位的字不會顯示，要寫進 details 或 registrationNote。
         if (!['opens', 'closes'].includes(key)) {
             errors.push(`「${label}」的 cycle 含未知欄位「${key}」`);
         }
@@ -338,8 +338,9 @@ export function validateCycle(cycle, label, errors) {
             }
         }
     }
-    if (cycle.opens === undefined && cycle.closes === undefined) {
-        errors.push(`「${label}」的 cycle 至少須含 opens 或 closes 其一`);
+    // 只有 opens 的 cycle 頁面算不出下次截止日，等於沒填。
+    if (cycle.closes === undefined) {
+        errors.push(`「${label}」的 cycle 必須有 closes`);
     }
 }
 
