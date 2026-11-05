@@ -393,9 +393,10 @@ import data from '../../../public/advanced-resources/competitions.json';
         return s.label;
       }
 
-      // 日期寫完整，跨年也看得出年份。徽章已經寫「尚未開放」，這裡用「起」。
-      function upcomingText(s) {
-        return '預計 ' + s.opens + ' 起' + (s.next ? '、' + s.next + ' 截止' : '');
+      // 日期寫完整，跨年也看得出年份。徽章已經寫「尚未開放」，這裡用「起」。截止日和開放後的截止欄一樣用
+      // deadlineText，還沒開放也看得到截止時刻和「台灣時間」。
+      function upcomingText(c, s) {
+        return '預計 ' + s.opens + ' 起' + (s.next ? '、' + deadlineText(c) + ' 截止' : '');
       }
 
       // deadlineText 是截止欄的日期。剩幾天和尚未開放時的「X 截止」都照台北時間算，這裡也寫台北的日期，
@@ -415,7 +416,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       // cardDeadline 是有「詳細資訊」的卡片的截止欄 { label, value }，只放一項：日期、週期、開放日或
       // registrationNote。本屆截止日和賽事日期在對話框裡，由 fullDeadline 算。
       function cardDeadline(c, s) {
-        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s) };
+        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(c, s) };
         if (s.key === 'cycle') return { label: '報名截止', value: cycleValue(s, todayTaipeiUTC()) };
         if (c.deadline) return { label: '報名截止', value: deadlineText(c) };
         // registrationNote 是報名方式（「常年開放題庫 · 無報名截止」），不是截止日。
@@ -456,7 +457,7 @@ import data from '../../../public/advanced-resources/competitions.json';
       // 哪個日期是報名）。沒有截止日時賽事日期放在截止欄，標題寫「賽事日期」，不說成報名截止。
       function fullDeadline(c, s) {
         const event = eventText(c);
-        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(s), event: event };
+        if (s.key === 'upcoming') return { label: '報名期間', value: upcomingText(c, s), event: event };
         if (s.key === 'cycle') {
           const value = (c.deadline ? '本屆 ' + c.deadline + ' 已截止、' : '') + cycleValue(s, todayTaipeiUTC());
           return { label: '報名截止', value: value, event: event };
