@@ -161,6 +161,19 @@ test('competency-analysis：指令列出的核心素養與 scripts/taxonomy.json
     assert.deepEqual(instructions.match(/[A-Z]\d+ [^、。\n]+/g), expected);
 });
 
+// 2026-10-23 照「星號列表」寫的回答是「* **A3 …**：…」這種粗體小標的條列。清單記號要寫明，
+// 沒有記號的話頁面不會包成清單，報讀軟體聽不到「清單，3 項」。
+test('competency-analysis：指令要求「- 」開頭的清單、每項素養一項，不用粗體', () => {
+    const { instructions } = catalog.get('competency-analysis');
+    assert.match(instructions, /用「- 」開頭的清單回傳，每項素養一項[^\n]*不用粗體/);
+    assert.doesNotMatch(instructions, /星號/);
+});
+
+// 指令裡不放粗體記號，免得模型照著寫成粗體小標。
+test('任務指令裡沒有粗體記號', () => {
+    for (const task of catalog.values()) assert.doesNotMatch(task.instructions, /\*\*/, task.id);
+});
+
 const CAREER_PAGE = readFileSync(new URL('../../src/pages/career-exploration/index.astro', import.meta.url), 'utf8');
 
 test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相同；文字任務、不設溫度（頁面原本沒設）', () => {
@@ -346,16 +359,20 @@ test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的
     assert.equal(task.output.type, 'markdown');
     assert.equal(task.temperature, undefined);
     // 文字任務沒有 schema：答案去掉前後空白就交給頁面，沒有看得見的字才算失敗。
-    assert.equal(finalizeOutput(task, '\n**Cofacts 真的假的**：適合你。\n'), '**Cofacts 真的假的**：適合你。');
+    assert.equal(finalizeOutput(task, '\n### Cofacts 真的假的\n適合你。\n'), '### Cofacts 真的假的\n適合你。');
     assert.throws(() => finalizeOutput(task, ' \n '), { code: 'empty' });
 });
 
 // 文字任務沒有 schema 的 maxLength，長度靠指令；maxOutputChars 只擋遠超過指令的回答。
-test('civic-tech-suggestion：指令要求推薦 1 至 3 個、原因 2～3 句、建議 1～2 句、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦，不指定語氣', () => {
+// 專案名稱寫成標題，頁面轉成 h4，報讀軟體可以按標題跳著聽。「推薦原因：」這類欄位名稱會引出粗體小標的條列。
+test('civic-tech-suggestion：指令要求推薦 1 至 3 個、專案名稱當標題、原因 2～3 句、方向 1～2 句、不加欄位標籤、不超過 400 字（推薦 3 個時寫得更精簡），不相關時誠實說明、寧可少推薦，不指定語氣', () => {
     const { instructions } = catalog.get('civic-tech-suggestion');
     assert.match(instructions, /推薦 1 至 3 個/);
-    assert.match(instructions, /推薦原因（2～3 句）/);
-    assert.match(instructions, /探索建議（1～2 句/);
+    assert.match(instructions, /每個推薦以「### 專案名稱」開頭/);
+    assert.match(instructions, /2～3 句說明為什麼適合/);
+    assert.match(instructions, /1～2 句寫具體的自主學習方向/);
+    assert.match(instructions, /不要加「推薦原因」「探索建議」這類標籤/);
+    assert.doesNotMatch(instructions, /推薦原因（|探索建議（/);
     assert.match(instructions, /不要超過 400 字/);
     assert.match(instructions, /推薦 3 個專案時，每個推薦都要寫得更精簡/);
     assert.match(instructions, /不太相關，也請誠實說明/);
