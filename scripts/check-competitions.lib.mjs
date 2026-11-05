@@ -223,8 +223,8 @@ export function validateSchedule(comp, label, errors) {
                 errors.push(`「${label}」的 details 過長（上限 ${DETAILS_MAX} 字，目前 ${[...comp.details].length} 字）`);
             }
             if (typeof comp.description === 'string' && comp.description) {
-                // 對話框先顯示 description 再接 details。
-                const repeated = comp.description.split(/(?<=[。！？；])/).map((s) => s.trim())
+                // 對話框先顯示 description 再接 details。句尾標點不比，details 裡同一句可能接「，」或在段尾。
+                const repeated = comp.description.split(/(?<=[。！？；])/).map((s) => s.trim().replace(/[。！？；]+$/, ''))
                     .filter((s) => [...s].length >= REPEAT_MIN && comp.details.includes(s));
                 for (const s of repeated) errors.push(`「${label}」的 details 原樣重複了 description 的「${s}」`);
             }
