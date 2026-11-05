@@ -303,10 +303,10 @@ test('藝廊焦點範例的圖庫照片和範例無關，alt 是空字串', asyn
 });
 
 // 每份作品用標題當 article 的名稱；連結看得到的字只寫出處，報讀軟體念的名稱前面要有作品的標題。
-test('藝廊的真實作品：每份是以標題命名的 article，連結名稱寫出是哪一份', async ({ page, request }) => {
+test('藝廊的真實作品與對照例子：每份是以標題命名的 article，連結名稱寫出是哪一份', async ({ page, request }) => {
     const data = await (await request.get(P('learning-portfolio/portfolio-works.json'))).json();
     await page.goto(P('learning-portfolio/portfolio-gallery.html'));
-    for (const [heading, items] of [['高中生的真實作品', data.works]]) {
+    for (const [heading, items] of [['高中生的真實作品', data.works], ['讀的人會卡住的寫法', data.contrasts]]) {
         const section = page.getByRole('region', { name: heading, exact: true });
         await expect(section.getByRole('heading', { level: 2 })).toHaveText(heading);
         const articles = section.getByRole('article');
@@ -319,7 +319,7 @@ test('藝廊的真實作品：每份是以標題命名的 article，連結名稱
             await expect(article.getByRole('link')).toHaveAttribute('href', item.url);
         }
     }
-    // 卡片格線的範例接在自己的 h2 底下，不會被念成真實作品的一部分。
+    // 卡片格線的範例接在自己的 h2 底下，不會被念成對照例子的一部分。
     await expect(page.getByRole('heading', { level: 2, name: '範例分析', exact: true })).toBeVisible();
 });
 

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { works } from '../../../public/learning-portfolio/portfolio-works.json';
+import { works, contrasts } from '../../../public/learning-portfolio/portfolio-works.json';
 
 const link = 'inline-block self-start mt-auto pt-4 text-blue-700 underline hover:text-blue-800';
 const term = 'font-semibold text-gray-800';
@@ -67,6 +67,29 @@ const term = 'font-semibold text-gray-800';
                             )}
                         </dl>
                         <a href={w.url} class={link}><span class="sr-only">{w.title}：</span>{w.linkLabel}</a>
+                    </article>
+                ))}
+            </div>
+        </section>
+
+        <section aria-labelledby="contrasts-heading" class="mb-16">
+            <h2 id="contrasts-heading" class="text-3xl font-bold mb-4 text-center">讀的人會卡住的寫法</h2>
+            <p class="text-gray-700 max-w-3xl mx-auto mb-8">作伙學在課程學習成果的呈現建議裡舉了這兩份作品。每份寫出讀的人卡在哪裡，以及怎麼改比較好。</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {contrasts.map((c) => (
+                    <article aria-labelledby={`${c.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
+                        <h3 id={`${c.id}-title`} class="text-xl font-bold">{c.title}</h3>
+                        <dl class="mt-4 space-y-3 text-gray-700 leading-relaxed">
+                            <div>
+                                <dt class={term}>讀的人卡在哪裡</dt>
+                                <dd>{c.problem}</dd>
+                            </div>
+                            <div>
+                                <dt class={term}>怎麼改比較好</dt>
+                                <dd>{c.better}</dd>
+                            </div>
+                        </dl>
+                        <a href={c.url} class={link}><span class="sr-only">{c.title}：</span>{c.linkLabel}</a>
                     </article>
                 ))}
             </div>
