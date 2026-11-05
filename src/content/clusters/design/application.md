@@ -150,7 +150,7 @@ description: 設計學群的升學：學測申請入學的規定、大學術科�
 - [臺藝大視覺傳達設計學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_056142.htm)
 - [中原商業設計學系產品設計組甲類 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_008442.htm)
 - [實踐大學工業產品設計學系 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_050162.htm)
-- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」，本站引用教育部的轉述版本），教育部大學多元入學升學網「常見問題」第 34 題](https://nsdua.moe.edu.tw/#/qa)
+- [「三重二不」審查參考原則（招聯會「大學針對申請入學備審資料審查參考原則」），教育部大學多元入學升學網「常見問題」第 34 題](https://nsdua.moe.edu.tw/#/qa)
 - [備審資料審查重點及準備指引，技專校院招生策略委員會](https://www.techadmi.edu.tw/portfolio.php?nid=564)
 - [115 學年度四技二專統一入學測驗簡章（第 III 頁、第 1 頁），技專校院入學測驗中心](https://www.tcte.edu.tw/index.php?mod=TVETest/down_exam4y/fn/115Reg_4y.pdf)
 - [116 學年度四技二專統一入學測驗考試大綱，技專校院入學測驗中心](https://www.tcte.edu.tw/doc/116Range_4y/)
