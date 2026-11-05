@@ -669,7 +669,10 @@ import data from '../../../public/advanced-resources/competitions.json';
           grid.setAttribute('aria-busy', 'false');
           empty.hidden = false;
           empty.querySelector('.comp-empty__title').textContent = '競賽資料載入失敗';
-          empty.querySelector('.comp-empty__text').textContent = '請稍後重新整理頁面，或回報網站管理員。';
+          const report = document.createElement('a');
+          report.href = '../about.html#feedback';
+          report.textContent = '問題回報';
+          empty.querySelector('.comp-empty__text').replaceChildren('請重新整理頁面再試一次。一直載入不了的話，可以到', report, '告訴我們。');
         });
     })();
   </script>
@@ -924,6 +927,8 @@ import data from '../../../public/advanced-resources/competitions.json';
     .comp-empty svg { width: 3rem; height: 3rem; color: var(--faint); margin: 0 auto 1rem; }
     .comp-empty__title { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin: 0 0 .35rem; }
     .comp-empty__text { font-size: .9rem; margin: 0; }
+    .comp-empty__text a { color: #0069a8; text-decoration: underline; text-underline-offset: .2em; }
+    .comp-empty__text a:hover { color: #00598a; }
 
     /* lg 起和 container 一樣兩側至少留 2rem，內文左緣對齊頁首的站名。.comp-gridwrap 自帶 1.5rem 內距，
        另外兩個在 1.5rem 內距的外框裡，所以上限少 3rem。 */
