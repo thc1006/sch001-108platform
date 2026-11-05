@@ -944,7 +944,8 @@ test('data：本輪更正的名稱與制度變動不得被改回舊值', () => {
     const aime = find('美國高中生數學邀請賽');
     // 對話框先顯示摘要，所以已取消寫在摘要就好，details 可以照引 FAQ 原文。
     if (/AIME I\b|AIME II/.test(textOf(aime))) {
-        assert.match(aime.description, /已取消/, 'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
+        // 「已取消」要和 AIME I 在同一句，摘要別處寫了「已取消」不算。
+        assert.match(aime.description, /AIME I[^。]*已取消|已取消[^。]*AIME I/, 'AIME I／AIME II 已取消，描述不得再把它們當成現行制度');
     }
     assert.equal(aime.eventStartsAt, '2027-02-05');
     assert.equal(aime.eventEndsAt, '2027-02-06');
