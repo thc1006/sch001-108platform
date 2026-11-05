@@ -1209,6 +1209,7 @@ test('開始串流之前就出錯（不該發生）：回 JSON 500 並帶 CORS�
         assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
         const body = await res.json();
         assert.equal(body.error.code, 'internal');
+        assert.equal(body.error.message, '這次沒有拿到 AI 的回答，請再試一次。');
         assert.equal(body.error.requestId, res.headers.get('x-request-id'));
         await waitFor(() => gw.logs.some((l) => l.tag === 'TASK'));
         assert.equal(gw.logs.find((l) => l.tag === 'TASK').fields.outcome, 'internal');

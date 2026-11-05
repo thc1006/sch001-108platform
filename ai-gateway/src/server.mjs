@@ -127,7 +127,8 @@ const MESSAGES = {
     unavailable: 'AI 服務暫時無法使用，請稍後再試。',
     restarting: 'AI 服務正在更新，請稍後再試一次。',
     not_ready: 'AI 服務正在啟動或維護中，請稍後再試。',
-    internal: 'AI 服務發生錯誤，請稍後再試。',
+    // 不叫人重新整理頁面：重新整理可能清掉學生已經打好的內容，再按一次送出就好
+    internal: '這次沒有拿到 AI 的回答，請再試一次。',
 };
 
 const LEVELS = ['error', 'warn', 'info', 'debug'];
