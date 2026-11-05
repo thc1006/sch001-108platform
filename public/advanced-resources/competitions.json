@@ -781,9 +781,9 @@
       "registrationNote": "平台型 · 各賽事各自截止",
       "sourceCheckedAt": "2026-10-23",
       "url": "https://www.drivendata.org/competitions/",
-      "description": "以社會公益與科學議題為主的資料科學競賽平台，各場各自截止。有些場次限 18 歲以上，報名前先看該場規則的年齡條件。",
-      "details": "賽事由各贊助單位與 DrivenData 合辦，平台沒有統一的截止日，各場規則不同。\n有一場的規則要求報名時年滿 18 歲，而且已達居住地的成年年齡，未滿 18 歲的高中生不能參加那一場。",
-      "sourceNote": "查閱的那一場賽事規則要求參賽者「at the date of entry, are at least eighteen years of age and the age of majority in their jurisdiction of residence」。"
+      "description": "以社會公益與科學議題為主的資料科學競賽平台。大部分場次規定報名時要滿 18 歲，未滿 18 歲的高中生通常不能參加，報名前先看該場規則。",
+      "details": "賽事由各贊助單位與 DrivenData 合辦，平台沒有統一的截止日，各場規則不同。年齡條件通常是報名時年滿 18 歲，而且已達居住地的成年年齡。",
+      "sourceNote": "2026-11-05 查 competitions 311（dat-parkinsons-challenge）、298（literacy-screening）、297（whats-up-docs）三場的 rules 頁，都寫參賽者「at the date of entry, are at least eighteen years of age and the age of majority in their jurisdiction of residence」。"
     },
     {
       "title": "Zindi 資料科學競賽",
