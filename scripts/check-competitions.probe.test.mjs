@@ -211,7 +211,7 @@ test('cycle：schema 驗證攔下非法值', () => {
         [{ foo: 1 }, '未知欄位'],
         [{}, '全空'],
         ['not-object', '非物件'],
-        [{ note: '  ' }, 'note 空白'],
+        [{ note: '不定期' }, '頁面不顯示的 note'],
     ];
     for (const [val, why] of cases) {
         const errs = [];
@@ -221,7 +221,7 @@ test('cycle：schema 驗證攔下非法值', () => {
 });
 
 test('cycle：合法值與未提供都不報錯', () => {
-    for (const ok of [undefined, { closes: '07-31' }, { opens: '01', closes: '07-31' }, { note: '不定期' }]) {
+    for (const ok of [undefined, { closes: '07-31' }, { opens: '01', closes: '07-31' }, { opens: '05' }]) {
         const errs = [];
         validateCycle(ok, '測試', errs);
         assert.equal(errs.length, 0, `${JSON.stringify(ok)} 不應報錯`);

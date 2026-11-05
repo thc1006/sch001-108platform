@@ -310,7 +310,8 @@ export function validateCycle(cycle, label, errors) {
         return;
     }
     for (const key of Object.keys(cycle)) {
-        if (!['opens', 'closes', 'note'].includes(key)) {
+        // 頁面只讀 opens 和 closes。寫在 note 的字不會顯示，要寫進 details 或 registrationNote。
+        if (!['opens', 'closes'].includes(key)) {
             errors.push(`「${label}」的 cycle 含未知欄位「${key}」`);
         }
     }
@@ -332,11 +333,8 @@ export function validateCycle(cycle, label, errors) {
             }
         }
     }
-    if (cycle.note !== undefined && (typeof cycle.note !== 'string' || !cycle.note.trim())) {
-        errors.push(`「${label}」的 cycle.note 必須是非空字串`);
-    }
-    if (cycle.opens === undefined && cycle.closes === undefined && cycle.note === undefined) {
-        errors.push(`「${label}」的 cycle 至少須含 opens、closes 或 note 其一`);
+    if (cycle.opens === undefined && cycle.closes === undefined) {
+        errors.push(`「${label}」的 cycle 至少須含 opens 或 closes 其一`);
     }
 }
 
