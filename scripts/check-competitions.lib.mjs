@@ -219,7 +219,7 @@ export function validateSchedule(comp, label, errors) {
         if (typeof comp.details !== 'string' || !comp.details || comp.details.trim() !== comp.details) {
             errors.push(`「${label}」的 details 必須是非空字串，前後不能有空白`);
         } else {
-            // 零寬字元看不見，trim() 也不會去掉。夾在句子裡時，上面的重複比對就比不到。
+            // 零寬字元看不見，trim() 也不會去掉。夾在句子裡時，下面的重複比對就比不到。
             if (/[\u200B-\u200D\u2060]/.test(comp.details)) {
                 errors.push(`「${label}」的 details 有零寬字元（U+200B–U+200D 或 U+2060）`);
             }
