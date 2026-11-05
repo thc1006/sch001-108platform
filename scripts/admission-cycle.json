@@ -1983,6 +1983,41 @@
       "cycle": 116,
       "reason": "引用 IOH 2017 年那篇文章裡學長那一屆的術科考題，是往年的例子，不是 116 學年度的規定；換屆時確認文章還在、這個例子還值得留。",
       "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/medicine/application.md",
+      "text": "高醫牙醫系第二階段另考美工術科",
+      "cycle": 116,
+      "reason": "照高醫牙醫系的術科規定和李惠娥教授 2016 年的受訪內容寫，行內沒有學年度，檢查看不到。換屆時對照新的高醫牙醫系分則，確認還考美工術科。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/info/application.md",
+      "text": "上傳學習歷程檔案時，每件有一欄簡述，限 100 字",
+      "cycle": 116,
+      "reason": "學習歷程檔案每件簡述限 100 字，照各校轉載的國教署學習歷程資料格式規定寫，不是招生簡章的規定；換屆時順便對照格式規定有沒有改。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/management/application.md",
+      "text": "每一項的標題和 100 字簡述",
+      "cycle": 116,
+      "reason": "學習歷程檔案每件簡述限 100 字，照各校轉載的國教署學習歷程資料格式規定寫，不是招生簡章的規定；換屆時順便對照格式規定有沒有改。",
+      "recheckAfter": "2027-11-03"
+    },
+    {
+      "file": "src/content/clusters/life-science/application.md",
+      "text": "200 字很短。",
+      "cycle": 116,
+      "reason": "照台大生科系 115 學年度準備指引「就讀動機與未來學習計畫各 200 字內」寫，行內沒有學年度，檢查看不到。116 學年度指引預計 2027 年 3 月公布，公布後照新版重對字數。",
+      "recheckAfter": "2027-03-31"
+    },
+    {
+      "file": "src/content/clusters/design/application.md",
+      "text": "申請入學採用的學測科目至多 4 科，學測成績占甄選總成績的比例不得超過 50%。",
+      "cycle": 116,
+      "reason": "照招聯會大學申請入學招生規定第七點寫，不是每年都改的簡章內容，行內沒有學年度；招生規定修正時再對照。",
+      "recheckAfter": "2028-11-03"
     }
   ]
 }
