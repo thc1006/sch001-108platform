@@ -236,6 +236,16 @@ const cases = [
     mutate: (t) => t.replace('"civic-tech-map/index.html#disfactory"', '"civic-tech-map/index.html#cofacts"'),
   },
   {
+    name: '搜尋索引漏掉競賽的 details',
+    expect: /筆競賽的 details 不在搜尋索引裡/,
+    file: `${DIST}/search-index.json`,
+    mutate: (t) => {
+      const { competitions } = JSON.parse(readFileSync(`${DIST}/advanced-resources/competitions.json`, 'utf8'));
+      const details = competitions.find((c) => c.details).details.replace(/\s+/g, ' ').trim();
+      return JSON.stringify(JSON.parse(t).map((it) => ({ ...it, content: String(it.content ?? '').replace(details, '') })));
+    },
+  },
+  {
     // 逐項錨點的契約：頁面上的 id 改名，索引裡的 fragment 就成了空頭支票。
     // #78 修掉的 17 筆壞錨點正是這個失效模式，這裡確保它不會再悄悄回來。
     name: '公民科技專案的頁內錨點被改名',
