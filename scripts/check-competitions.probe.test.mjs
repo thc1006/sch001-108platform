@@ -902,6 +902,8 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-12-11', deadlineAt: '2099-12-11T18:00:00+08:00', opensAt: '2099-11-23T09:00:00+08:00' }), { label: '報名期間', value: '預計 2099-11-23 起、2099-12-11 18:00 截止' });
     assert.deepEqual(at({ deadline: '2000-07-01', cycle: { closes: '07' } }), due('每年約 7 月'));
     assert.deepEqual(at({ cycle: { closes: '03-15' } }), due('每年約 3 月 15 日'));
+    // 卡片也走 cycleValue：今天 2026-11-05，HiMCM 本屆已截止，寫下次的年份。
+    assert.deepEqual(at({ deadline: '2026-11-04', deadlineAt: '2026-11-04T14:00:00-05:00', cycle: { closes: '11' } }), due('下次約 2027 年 11 月'));
     // 本屆截止後的同一個月寫下次的年份，其他月份寫「每年約」。
     const g = new Function(`${grab('cycleWhen')}\n${grab('cycleValue')}; return cycleValue;`)();
     const nov5 = Date.UTC(2026, 10, 5);
