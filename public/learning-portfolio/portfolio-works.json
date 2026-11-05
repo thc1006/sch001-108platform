@@ -1,5 +1,5 @@
 {
-  "_readme": "優質範例藝廊的「高中生的真實作品」。portfolio-gallery.astro 建置時讀這個檔，產生靜態的 HTML。每份只放一句做了什麼、可以學的寫法、最多一句原文，不寫學生姓名和校名。linkLabel 是看得到的連結文字，報讀軟體會在前面加上 title。",
+  "_readme": "優質範例藝廊的「高中生的真實作品」和「讀的人會卡住的寫法」兩區。portfolio-gallery.astro 建置時讀這個檔，產生靜態的 HTML。每份只放一句做了什麼、可以學的寫法、最多一句原文，不寫學生姓名和校名。linkLabel 是看得到的連結文字，報讀軟體會在前面加上 title。",
   "works": [
     {
       "id": "work-taiwanese",
@@ -84,6 +84,24 @@
       "learn": "計畫改了就照實寫，也寫出為什麼改：能力還不夠，班上剛好需要行事曆。評審寫到過程和原本的計畫有落差，但有達到學習效果。",
       "url": "https://drive.google.com/file/d/1hpnsIa_AUyd6YSWaVNbfglChivzTueeC/view",
       "linkLabel": "宜蘭區 113 學年度優質示例成果手冊（Google 雲端硬碟，在 PDF 第 41 到 42 頁）"
+    }
+  ],
+  "contrasts": [
+    {
+      "id": "contrast-chromatography",
+      "title": "層析實驗的結論只寫了三色高度不同",
+      "problem": "實驗原理和步驟都寫了，結論只寫藍、黃、橘三色析出的高度不同，沒寫各是多少，也沒討論為什麼不同。讀的人看不出寫的人懂不懂這個實驗在做什麼。",
+      "better": "結論放上數據表，寫出每一色的高度，再用一兩句說明可能的原因。作伙學同一篇舉了陀螺實驗當例子：三個變因各量十次轉動時間，表格附平均，最後寫出重心是陀螺保持平衡的關鍵。",
+      "url": "https://www.108epo.com/results-detail.php?Key=31",
+      "linkLabel": "作伙學課程學習成果呈現建議（五），陀螺實驗在圖 24"
+    },
+    {
+      "id": "contrast-bangkok",
+      "title": "「曼谷遊」只放了四張課堂簡報",
+      "problem": "課堂上報告時，簡報旁邊有口頭說明，上傳到學習歷程就少了這一段。這份作品只放四張簡報，沒有其他說明，讀的人不知道最後的成品是一本旅遊小書。",
+      "better": "開頭先寫這堂課最後要交什麼，例如一本介紹曼谷景點和美食、規劃一條旅遊路線的手冊，再放簡報或內頁。",
+      "url": "https://www.108epo.com/results-detail.php?Key=35",
+      "linkLabel": "作伙學課程學習成果呈現建議（七），在圖 7"
     }
   ]
 }
