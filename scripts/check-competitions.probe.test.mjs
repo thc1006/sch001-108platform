@@ -968,6 +968,9 @@ test('dialog：沒有 deadline、有 registrationNote 的競賽，徽章或截�
     assert.equal(f.fullDeadline(july, f.getStatus(july)).value, '本屆 2026-07-16 已截止、每年約 7 月');
     const dateOnly = { deadline: '2026-07-15', cycle: { closes: '07-15' } };
     assert.equal(f.fullDeadline(dateOnly, f.getStatus(dateOnly)).value, '本屆 2026-07-15 已截止、每年約 7 月 15 日');
+    // 台北 11-01 00:00 截止的算在 10-31，下次截止在 2027 年 10 月，今天 11 月不是截止月份。
+    const midnight = { deadline: '2026-10-31', deadlineAt: '2026-10-31T16:00:00Z', cycle: { closes: '10' } };
+    assert.equal(f.fullDeadline(midnight, f.getStatus(midnight)).value, '本屆 2026-10-31 已截止、每年約 10 月');
     // 沒有本屆截止日的週期型，徽章留著「每年固定辦理」。
     const yearly = f.getStatus({ cycle: { closes: '03-15' } });
     assert.equal(yearly.label, '每年固定辦理');
