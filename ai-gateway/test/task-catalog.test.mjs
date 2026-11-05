@@ -72,7 +72,7 @@ test('每個任務的 system 訊息都要求不用破折號、「不是…而是
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        for (const rule of [/不用破折號/, /「不是…而是」/, /「不只…更」/, /「\*\*小標\*\*：說明」的條列/]) assert.match(system.content, rule, task.id);
+        for (const rule of [/不用破折號/, /「不是…而是」/, /「不只…更」/, /粗體小標加冒號的條列/]) assert.match(system.content, rule, task.id);
         assert.doesNotMatch(system.content, /[—―─]/, task.id);
     }
 });
@@ -192,9 +192,13 @@ test('competency-analysis：指令要求「- 」開頭的清單、每項素養�
     assert.doesNotMatch(instructions, /星號/);
 });
 
-// 指令裡不放粗體記號，免得模型照著寫成粗體小標。
-test('任務指令裡沒有粗體記號', () => {
-    for (const task of catalog.values()) assert.doesNotMatch(task.instructions, /\*\*/, task.id);
+// 指令和共用規則都不放粗體記號，免得模型照著寫成粗體小標。
+test('system 訊息裡沒有粗體記號', () => {
+    for (const task of catalog.values()) {
+        const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
+        const [system] = buildMessages(task, validateInput(task, input));
+        assert.doesNotMatch(system.content, /\*\*/, task.id);
+    }
 });
 
 const CAREER_PAGE = readFileSync(new URL('../../src/pages/career-exploration/index.astro', import.meta.url), 'utf8');
