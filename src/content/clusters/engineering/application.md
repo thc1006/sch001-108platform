@@ -121,4 +121,5 @@ description: 工程學群個人申請第二階段：審查資料的項目與件�
 - [國立陽明交通大學資訊工程學系甲組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013062.htm)
 - [116 學年度大學申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [113 資工系特選心得（HackMD）](https://hackmd.io/@Viecon-342524/ryZRVU8zT)

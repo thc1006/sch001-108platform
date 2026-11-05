@@ -117,6 +117,7 @@ description: 台大社會、社工、心理系與政大社會、心理系的審�
 - [116 學年度大學「申請入學」招生簡章總則（第 11、12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [116 學年度大學申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [115 學年度大學申請入學招生第二階段審查資料上傳作業操作說明手冊，大學甄選入學委員會](https://www.cac.edu.tw/apply115/document/115apply_dupload_opflow_addf_115.pdf)
 - [國立臺灣大學社會學系 115 學年度書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/3050_社會系.pdf)
 - [國立臺灣大學社會工作學系 115 學年度書面資料準備指引](https://www.aca.ntu.edu.tw/WebUPD/aca/A02/3100_社工系.pdf)

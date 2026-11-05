@@ -122,6 +122,7 @@ ColleGo! 的財經學群小福袋提到，修課紀錄裡語文、數學、資�
 - [國立中興大學財務金融學系 115 學年度大學申請入學第二階段甄試書面資料審查重點項目及準備指引](https://www.fin.nchu.edu.tw/uploads/ckeditor/files/1141118%E6%9B%B4%E6%96%B0--115%20%20%20%E8%B2%A1%E9%87%91%E7%B3%BB-%E6%BA%96%E5%82%99%E6%8C%87%E5%BC%95.pdf)
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [ColleGo!〈【112申請入學】財經學群小福袋〉](https://collego.edu.tw/Media/Article/349)
 - [ColleGo!「財務金融學類」](https://collego.edu.tw/Highschool/MajorIntro?current_major_id=113)
 - [Yory 優歷〈適當呈現學習歷程，每一個人的學習與成長都是閃閃發亮！｜臺大財金系 陳彥行教授〉（2022-02-16）](https://www.yory.school/contents/620c56ee54391b00116fd9f9)

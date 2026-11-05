@@ -139,6 +139,7 @@ ColleGo! 的大眾傳播學群小福袋提到，課程學習成果有些大傳�
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [116 學年度申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [116 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（社會組）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006252.htm)
 - [116 學年度大學申請入學校系分則：政治大學傳播學院大一大二不分系（自然組）](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_006262.htm)
 - [116 學年度大學申請入學校系分則：陽明交通大學傳播與科技學系](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_013312.htm)

@@ -108,6 +108,7 @@ ColleGo! 請兩位其他學群的大一學生分享申請入學的面試經驗�
 - [116 學年度大學申請入學招生簡章（第 11、12、21 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [116 學年度申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [〈看這篇搞懂教授怎麼問！成大生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-06-09）](https://blog.luckertw.com/interview-archaeology/)
 - [〈看這篇搞懂教授怎麼問！中山生科特殊選才面試考古題分享〉，拉課力 Luckerly（2022-07-16）](https://blog.luckertw.com/interview-archaeology-nsysu/)
 - [〈學長姐經驗談！申請入學面試常見問題大揭密（一）〉，ColleGo! 焦點話題（2023-04-14）](https://collego.edu.tw/Media/Article/754)

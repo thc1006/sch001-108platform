@@ -139,5 +139,6 @@ description: 管理學群個人申請第二階段：審查資料的項目與件�
 - [各大學「審查資料準備指引」（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [116 學年度申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [國立陽明交通大學【申請入學】115學年度各學系書面審查資料準備指引（個人資料表說明及檔案下載）](https://aa.nycu.edu.tw/aa/ch/app/data/view?module=nycu0073&id=4476&serno=300f531d-fa52-4dae-8a39-b263ab64be48)
 - [國立陽明交通大學 115 學年度大學部個人申請入學個人資料表範例](https://aa.nycu.edu.tw/userfiles/aach/files/20260105165125487.pdf)
