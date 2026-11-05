@@ -441,6 +441,28 @@ test('status：帶時區的截止時刻在跨日邊界上不得算錯', async ()
     assert.match(at('2026-09-16T07:30:00Z'), /^本屆已截止/, '台灣 9/16 15:30：確實已過');
 });
 
+// 台北 00:00 截止的算在前一天。照截止時刻的台北日期算的話，前一天整天是「剩 1 天」，到了 00:00 直接「已截止」。
+test('status：台北 00:00 截止，前一天整天是今日截止', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
+    const grab = (name) => src.match(new RegExp(`function ${name}\\((?:[^)]*)\\) \\{[\\s\\S]*?\\n      \\}`))[0];
+    const bundle = ['todayTaipeiUTC', 'taipeiDayUTC', 'nextOccurrenceUTC', 'fmtUTC', 'getStatus', 'statusText'].map(grab).join('\n');
+    const comp = { deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' };
+    const at = (iso) => {
+        const fixed = Date.parse(iso);
+        class FixedDate extends Date {
+            constructor(...a) { super(...(a.length ? a : [fixed])); }
+            static now() { return fixed; }
+        }
+        const f = new Function('Date', `${bundle}; return { getStatus, statusText };`)(FixedDate);
+        return f.statusText(f.getStatus(comp));
+    };
+    assert.equal(at('2099-10-13T12:00:00+08:00'), '即將截止 · 剩 1 天');
+    assert.equal(at('2099-10-14T00:00:00+08:00'), '今日截止');
+    assert.equal(at('2099-10-14T23:59:00+08:00'), '今日截止');
+    assert.equal(at('2099-10-15T00:00:01+08:00'), '已截止');
+});
+
 test('status：報名尚未開放時不得顯示「報名中」', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/pages/advanced-resources/competitions.astro', import.meta.url), 'utf8');
@@ -866,7 +888,10 @@ test('card：徽章只用短標籤，有 details 時截止欄不放本屆與賽�
     assert.deepEqual(at({ deadline: '2099-07-15', deadlineAt: '2099-07-15T23:59:00+08:00' }), due('2099-07-15'));
     assert.deepEqual(at({ deadline: '2099-03-01', deadlineAt: '2099-03-01T23:59:00-05:00' }), due('台灣時間 2099-03-02 12:59'));
     // 00:00 到 05:59 加「凌晨」，06:00 起不加。
-    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' }), due('台灣時間 2099-10-15 凌晨 00:00'));
+    // 台北 00:00 寫成前一天的 24:00，不加「凌晨」。
+    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:00:00Z' }), due('台灣時間 2099-10-14 24:00'));
+    assert.deepEqual(at({ deadline: '2099-10-15', deadlineAt: '2099-10-15T00:00:00+08:00' }), due('2099-10-14 24:00'));
+    assert.deepEqual(at({ deadline: '2099-10-14', deadlineAt: '2099-10-14T16:01:00Z' }), due('台灣時間 2099-10-15 凌晨 00:01'));
     assert.deepEqual(at({ deadline: '2099-11-17', deadlineAt: '2099-11-17T12:00:00-05:00' }), due('台灣時間 2099-11-18 凌晨 01:00'));
     assert.deepEqual(at({ deadline: '2099-09-11', deadlineAt: '2099-09-11T17:59:00-04:00' }), due('台灣時間 2099-09-12 凌晨 05:59'));
     assert.deepEqual(at({ deadline: '2099-01-14', deadlineAt: '2099-01-14T17:00:00-05:00' }), due('台灣時間 2099-01-15 06:00'));
