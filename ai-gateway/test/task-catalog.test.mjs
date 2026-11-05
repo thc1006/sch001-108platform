@@ -90,12 +90,12 @@ test('文字任務的 system 訊息要求直接回答，結尾不總結也不打
     }
 });
 
-// 學生會照著 AI 寫的校名、課程和網址去找，編出來的會讓他白跑一趟。star-analysis 另外要求用括號標出待補的地方。
-test('每個任務的 system 訊息都要求不編造學校、課程、統計數字、人名和網址，不知道就說不知道', () => {
+// 學生會照著 AI 寫的校名、校系規定、課程和網址去找或去準備，編出來的會讓他白跑一趟。star-analysis 另外要求用括號標出待補的地方。
+test('每個任務的 system 訊息都要求不編造學校、校系規定、課程、統計數字、人名、他人說法和網址，不知道就說不知道', () => {
     for (const task of catalog.values()) {
         const input = Object.fromEntries(Object.keys(task.input).map((name) => [name, '測試內容']));
         const [system] = buildMessages(task, validateInput(task, input));
-        assert.match(system.content, /不編造學校、課程、統計數字、人名和網址/, task.id);
+        assert.match(system.content, /不編造學校、校系規定、課程、統計數字、人名、他人說法和網址/, task.id);
         assert.match(system.content, /不知道就說不知道/, task.id);
     }
 });
