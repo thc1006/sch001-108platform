@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const link = 'text-blue-600 underline hover:text-blue-700';
 ---
 
 <BaseLayout
@@ -18,6 +20,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
                 請 AI 草擬 8 週的計畫，或參考 4 份計畫範本，照範本的格式換成自己的主題。
             </p>
+        </section>
+
+        <!-- 計畫要寫哪些項目 -->
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+            <h2 class="text-2xl font-bold mb-6">計畫要寫哪些項目</h2>
+            <h3 class="text-xl font-bold mb-2">學校規定的項目</h3>
+            <p class="text-gray-700 mb-6">自主學習計畫要寫學習主題、內容、進度、方式和需要的設備，經老師指導、家長同意後開始。普通型、綜合型和單科型高中，在學期間合計至少要排 18 節。</p>
+            <h3 class="text-xl font-bold mb-2">另外寫清楚這幾件事</h3>
+            <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                <li>目標寫成做完拿得出什麼，例如一張 30 個地名的古今對照表、一段彈完整首歌的影片，比「了解」「掌握」容易檢查。</li>
+                <li>方式和資源：用什麼方法、看哪些書或課程、要借哪些設備、需要誰幫忙。</li>
+                <li>進度表每週一列，寫那週要做完什麼，段考週先空下來。</li>
+                <li>在計畫中間排一週回頭看，寫下改了什麼、為什麼改。</li>
+                <li>成果和反思兩樣都要交：成果本身要附上，反思寫遇到什麼事、下次怎麼做。</li>
+                <li>用了 AI 就寫怎麼用的：哪一段用了、怎麼查證、自己改了哪些。</li>
+            </ul>
         </section>
 
         <!-- AI 草擬學習計畫 -->
@@ -56,6 +74,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <div id="template-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- 範本卡片由 renderTemplates() 填入 -->
             </div>
+        </section>
+
+        <!-- 參考來源 -->
+        <section class="mt-16 text-gray-700">
+            <h2 class="text-2xl font-bold mb-4">參考來源</h2>
+            <ul class="list-disc pl-6 space-y-2">
+                <li>教育部<a href="https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001729" class={link}>《高級中等學校課程規劃及實施要點》</a>第七點第一款，學生自主學習，112 年 6 月修正。</li>
+                <li>國立中山大學<a href="https://www.hs.ntnu.edu.tw/static/webroot/G162269158722735/application/NN166201813678758.pdf" class={link}>〈自主學習計畫規劃書自我檢核表〉<span class="whitespace-nowrap">，111 年（PDF）</span></a>，師大附中網站轉載。</li>
+                <li>AQA，<a href="https://filestore.aqa.org.uk/sample-papers-and-mark-schemes/2023/june/AQA-7993-WRE-JUN23.PDF" class={link}><span lang="en">Extended Project Qualification Report on the Examination, June 2023</span><span class="whitespace-nowrap">（英文，PDF）</span></a>，英國專題課程的審查報告。</li>
+                <li>作伙學<a href="https://www.108epo.com/results-detail.php?Key=36" class={link}>《學習歷程：課程學習成果呈現指南》</a>第 121 頁，生成式 AI 的使用建議。</li>
+            </ul>
         </section>
     </main>
 
