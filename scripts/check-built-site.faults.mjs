@@ -107,6 +107,12 @@ const cases = [
     undo: () => { for (const f of DETAILS_FILES) renameSync(`${f}.bak`, f); },
   },
   {
+    name: '多元表現資料庫的競賽入口寫死筆數',
+    expect: /競賽入口應寫 competitions\.json 的 \d+ 項/,
+    file: `${DIST}/learning-portfolio/activity-database.html`,
+    mutate: (t) => t.replace(/(國內外競賽資訊<\/a>有 )\d+ 項/, (_, head) => `${head}100 項`),
+  },
+  {
     name: '活動資料有 details，頁面卻沒有顯示它的對話框',
     expect: /activity-database\.json 有 \d+ 筆 details，頁面沒有顯示它的對話框/,
     apply: () => {

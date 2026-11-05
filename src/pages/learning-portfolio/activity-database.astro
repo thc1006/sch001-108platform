@@ -1,10 +1,13 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+// 競賽入口寫的筆數在建置時讀，跟著競賽資料走。
+import competitionData from '../../../public/advanced-resources/competitions.json';
+const competitionCount = competitionData.competitions.length;
 ---
 
 <BaseLayout
   title="多元表現資料庫 - 台灣教育處方籤"
-  description="課堂外可以參加的活動與報名狀態。"
+  description="競賽以外的志工服務、研討會、博覽會等活動與報名狀態。"
   currentSection="learning-portfolio"
   bodyClass="bg-gray-100 text-gray-800"
 >
@@ -14,7 +17,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 多元表現<span class="gradient-text">資料庫</span>
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                課堂外可以參加的活動，每一筆都附報名狀態和官方連結。
+                競賽以外的志工服務、研討會、博覽會等活動，每一筆都附報名狀態和官方連結。
             </p>
         </section>
 
@@ -31,7 +34,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="lg:col-span-2">
                         <label for="search-input" class="font-bold text-gray-700 text-sm">關鍵字搜尋</label>
-                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位、關鍵字⋯" class="w-full mt-1 p-2 border border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-sky-700">
+                        <input type="text" id="search-input" placeholder="活動名稱、主辦單位、關鍵字…" class="w-full mt-1 p-2 border border-gray-500 rounded-md focus:outline-hidden focus:ring-2 focus:ring-sky-700">
                     </div>
                     <div>
                         <label for="category-filter" class="font-bold text-gray-700 text-sm">活動類型</label>
@@ -48,6 +51,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
             </div>
         </section>
+
+        <div id="competitions-entry" class="mb-8 bg-white rounded-lg shadow-md p-6">
+            <p class="text-gray-700">找競賽的話，<a href="../advanced-resources/competitions.html" class="font-bold text-sky-700 underline underline-offset-2 hover:text-sky-800">國內外競賽資訊</a>有 {competitionCount} 項，可以依領域、地區、級別篩選。</p>
+        </div>
 
         <section>
             <p id="result-status" role="status" class="sr-only"></p>

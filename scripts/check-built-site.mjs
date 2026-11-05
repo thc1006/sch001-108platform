@@ -12,7 +12,7 @@
  *      相對「消費它的頁面」解析，而不是 JSON 自己的位置
  *   5. search-index.json 產生的 url 與 anchor
  *   6. 每頁自我一致性：canonical 指向自己、恰好一個 main#main-content、id 不重複
- *   7. 競賽頁的 meta description 寫的筆數和 competitions.json 相同
+ *   7. 競賽頁的 meta description、多元表現資料庫的競賽入口寫的筆數和 competitions.json 相同
  *   8. 頁面文字沒有原樣露出 Markdown 的 **，也沒有 ** 配錯對產生的巢狀 strong、em
  *   9. competitions.json、activity-database.json 有 details 時，頁面要有顯示它的對話框
  *
@@ -265,11 +265,16 @@ for (const rel of htmlFiles) {
     }
 }
 
-// 多元表現資料庫也一樣。
+// 多元表現資料庫的 details 也一樣。競賽入口的筆數和競賽頁的描述一樣在建置時算。
 {
     const rel = 'learning-portfolio/activity-database.html';
     const { activities } = JSON.parse(await readFile(path.join(DIST, 'learning-portfolio/activity-database.json'), 'utf8'));
+    const { competitions } = JSON.parse(await readFile(path.join(DIST, 'advanced-resources/competitions.json'), 'utf8'));
     const html = await readFile(path.join(DIST, rel), 'utf8');
+    const entry = cheerio.load(html)('#competitions-entry').text();
+    if (!entry.includes(`有 ${competitions.length} 項`)) {
+        addError(rel, '#competitions-entry', `競賽入口應寫 competitions.json 的 ${competitions.length} 項，實際：${entry.trim()}`);
+    }
     const withDetails = activities.filter((a) => typeof a.details === 'string' && a.details).length;
     if (withDetails && !html.includes('class="activity-dialog__details"')) {
         addError(rel, 'details', `activity-database.json 有 ${withDetails} 筆 details，頁面沒有顯示它的對話框（activity-dialog__details）`);
