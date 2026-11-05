@@ -126,6 +126,7 @@ description: 台大、清大、陽明交大、成大資工與政大資管 116 �
 - [審查資料準備指引（申請入學），大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
 - [116 學年度申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [APCS 官網「檢測內容與時程」](https://apcs.csie.ntnu.edu.tw/index.php/info-v2/)
 - [116 學年度申請入學辦理第一階段檢定、篩選納入 APCS 校系一覽表（2026-09-08 更正），大學甄選入學委員會](https://www.cac.edu.tw/apply116/document/116APCS_asdf_20260908.pdf)
 - [ColleGo!「國立清華大學資訊工程學系」](https://collego.edu.tw/Highschool/DepartmentIntro?dept_id=011045)

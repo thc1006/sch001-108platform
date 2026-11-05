@@ -123,6 +123,7 @@ description: 設計學群的升學：學測申請入學的規定、大學術科�
 - [116 學年度大學申請入學招生規定（招聯會訂定，第七點），大學甄選入學委員會](https://www.cac.edu.tw/apply116/regulation.php)
 - [116 學年度申請入學重要時程，大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點，教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限），大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [116 學年度大學申請入學招生簡章（總則第 10–12 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [116 學年度大學術科考試簡章，大學術科考試委員會聯合會](https://www.cape.edu.tw/wp-content/uploads/2026/08/116學年度大學術科考試簡章_公告版.pdf)
 - [臺師大設計學系視覺設計組 116 學年度申請入學校系分則，大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/html/116_002552.htm)

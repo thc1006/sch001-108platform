@@ -135,6 +135,7 @@ description: 醫藥衛生學群個人申請第二階段，以醫學系為例：1
 
 - [116 學年度申請入學重要時程｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/schedule.php)
 - [高級中等學校學生學習歷程檔案作業要點｜教育部主管法規查詢系統](https://edu.law.moe.gov.tw/LawContent.aspx?id=GL001916)
+- [臺北市立大同高級中學學生學習歷程檔案作業實施細則（學習歷程資料格式規定：簡述每件 100 個中文字為限）｜大同高中](https://www.ttsh.tp.edu.tw/wp-content/uploads/doc/g111/臺北市立大同高級中學學生學習歷程檔案作業實施細則.pdf)
 - [116 學年度大學申請入學校系分則查詢：查詢所有校系（11 所醫學系的甄選總成績比重、面試說明與甄試日期）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/system/ColQry_116ApplyxForStudent_F75reOza/TotalGsdShow.htm)
 - [116 學年度大學申請入學招生簡章總則（第 10–12、17、21 頁），大學甄選入學委員會](https://www.cac.edu.tw/apply116/appform_1.php)
 - [申請入學審查資料準備指引（「116學年度資料預計於116年3月更新」）｜大學甄選入學委員會](https://www.cac.edu.tw/apply116/guide.php)
