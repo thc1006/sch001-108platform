@@ -1599,10 +1599,10 @@
       "deadline": "",
       "registrationNote": "各賽事各自報名 · 依在地公告",
       "sourceCheckedAt": "2026-10-23",
-      "sourceNote": "2026-10-25 查證時，vexrobotics.com/competition 是 VEX 商店網站裡的競賽介紹頁，頁上找在地賽事的「VEX Events >」連到 events.vex.com；roboticseducation.org 已轉址至 recf.org。RobotEvents（robotevents.com）首頁：「RECF is not authorized to organize, promote, approve, or manage VEX Robotics competitions. Any competition organized, promoted, or managed by RECF that involves VEX products is not sanctioned by VEX Robotics, Inc. and will not qualify teams for the 2026–2027 VEX Robotics World Championship.」",
+      "sourceNote": "2026-10-25 查證時，vexrobotics.com/competition 是 VEX 商店網站裡的競賽介紹頁，頁上找在地賽事的「VEX Events >」連到 events.vex.com；roboticseducation.org 已轉址至 recf.org。RobotEvents（robotevents.com）首頁：「RECF is not authorized to organize, promote, approve, or manage VEX Robotics competitions. Any competition organized, promoted, or managed by RECF that involves VEX products is not sanctioned by VEX Robotics, Inc. and will not qualify teams for the 2026–2027 VEX Robotics World Championship.」 2026-11-05 查 events.vex.com 的 2027 香港 V5 高中冠軍賽頁（RE-V5RC-27-4476）：「The winning teams (e.g. Excellence Award/ Tournament Champions) will qualify to the 2027 VEX Robotics World Championship」。",
       "url": "https://events.vex.com/",
-      "description": "VEX Robotics, Inc. 與 REC Foundation 已分家，各辦互不承認的機器人世界賽，兩邊都有高中生適用的組別，各賽事各自報名。",
-      "details": "VEX Robotics, Inc. 是 Innovation First 旗下的公司。RECF 不能主辦或認可 VEX Robotics 的比賽，RECF 辦的賽事就算用 VEX 的器材，也拿不到 2026–2027 VEX 世界錦標賽的資格。\nVEX 路線 2026-27 的 V5 Robotics Competition 主題是「Override」，給國中和高中生。賽事與報名在 VEX 官方賽事網站 events.vex.com。\nRECF 路線改成 Engage、Achieve（19 歲以下）、Inspire 三級，高中生適用 Achieve。RECF 世界賽 2027-04-25 至 05-07 在美國聖路易舉行。"
+      "description": "國際機器人隊伍賽，以學校或社團組隊，先打在地資格賽才能進世界賽。高中生適用 V5 組，各賽事各自報名。",
+      "details": "VEX Robotics, Inc.（Innovation First 旗下的公司）與 REC Foundation 已經分家，各辦互不承認的世界賽。RECF 不能主辦或認可 VEX Robotics 的比賽，RECF 辦的賽事就算用 VEX 的器材，也拿不到 2026–2027 VEX 世界錦標賽的資格。\nVEX 路線 2026-27 的 V5 Robotics Competition 主題是「Override」，給國中和高中生。在地資格賽和報名都在 VEX 官方賽事網站 events.vex.com，各地冠軍賽的優勝隊伍取得世界賽資格。\nRECF 路線改成 Engage、Achieve（19 歲以下）、Inspire 三級，高中生適用 Achieve。RECF 世界賽 2027-04-25 至 05-07 在美國聖路易舉行。"
     },
     {
       "title": "WRO 世界機器人奧林匹亞",
