@@ -334,8 +334,9 @@ test('schedule：details 選填，填了不能是空的或前後有空白', () =
     assert.ok(bad({ details: '' }).some((m) => m.includes('details')));
     assert.ok(bad({ details: '內容 ' }).some((m) => m.includes('details')));
     assert.ok(bad({ details: 3 }).some((m) => m.includes('details')));
-    for (const zw of ['\u200B', '\u200C', '\u200D', '\u2060']) {
-        assert.ok(bad({ details: zw }).some((m) => m.includes('零寬')), `只有 U+${zw.codePointAt(0).toString(16)} 也要擋`);
+    for (const zw of ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF', '\u00AD']) {
+        // 只有 U+FEFF 時 trim() 會去掉它，擋下的是「前後不能有空白」。
+        assert.ok(bad({ details: zw }).some((m) => m.includes('零寬') || m.includes('前後不能有空白')), `只有 U+${zw.codePointAt(0).toString(16)} 也要擋`);
         assert.ok(bad({ details: `第一段${zw}。` }).some((m) => m.includes('零寬')), `句中的 U+${zw.codePointAt(0).toString(16)} 也要擋`);
         assert.ok(bad({ description: `摘要${zw}。` }).some((m) => m.includes('description 有零寬')), `摘要裡的 U+${zw.codePointAt(0).toString(16)} 也要擋`);
     }
