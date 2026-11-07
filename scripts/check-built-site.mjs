@@ -352,7 +352,10 @@ if (searchIndex) {
 
 // 資料驅動頁面的 runtime reference：相對路徑要相對「消費它的頁面」解析，
 // 不是 JSON 自己的位置。
-for (const [page, cfg] of Object.entries(dataPages.pages)) {
+// 一頁有多個資料來源時，data-pages.json 的值是陣列。同一頁的同一個 JSON 只走訪一次。
+const dataSources = Object.entries(dataPages.pages).flatMap(([page, cfg]) => [cfg].flat().map((c) => [page, c]));
+const walkedJson = new Set();
+for (const [page, cfg] of dataSources) {
     const jsonRel = cfg.json;
     if (!distFiles.includes(jsonRel)) {
         addError(jsonRel, '', `資料頁 ${page} 需要的 JSON 不在建置產物中`);
@@ -405,6 +408,9 @@ for (const [page, cfg] of Object.entries(dataPages.pages)) {
             }
         }
     }
+
+    if (walkedJson.has(`${page} ${jsonRel}`)) continue;
+    walkedJson.add(`${page} ${jsonRel}`);
 
     // 說明文字裡的網址和裸網域，都不從下面兩種欄位擷取，兩種都是實測出來的誤判來源：
     //   localAssetFields  存的是檔案路徑而不是說明文字

@@ -154,12 +154,12 @@ function processHtmlFile(filePath, fileUrl) {
     // data-pages.json 列出的頁面沒有 const ...Data 陣列可抓，項目從對應的 JSON 讀。
     const jsonPageCfg = JSON_DATA_PAGES[fileUrl];
     if (jsonPageCfg) {
-        indexJsonDataPage(pageTitle, fileUrl, jsonPageCfg, pageAnchorIds);
+        [jsonPageCfg].flat().forEach(cfg => indexJsonDataPage(pageTitle, fileUrl, cfg, pageAnchorIds));
     }
 }
 
 // 資料驅動頁面的設定：HTML 路徑 → 該頁索引設定。新增資料驅動頁面時，在
-// scripts/data-pages.json 加一筆。
+// scripts/data-pages.json 加一筆。一頁有多個資料來源時，值寫成陣列，每個元素是一份設定。
 // 鍵（HTML 頁面相對路徑）與 json 路徑皆相對於掃描起點 projectRoot，也就是 dist/；
 // 資產 JSON 由 astro build 從 public/ 複製進 dist/，相對路徑相同。
 //   json      ：資料 JSON 路徑（相對 dist/）
