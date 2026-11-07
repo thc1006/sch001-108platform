@@ -2034,6 +2034,17 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await render('-1 度\n3.14\n甲 - 乙\n---\n**', { headingLevel: 4 })).toBe('-1 度<br>3.14<br>甲 - 乙<br>---<br>**');
         });
 
+        test('拿掉只有井號或清單記號的行之後，前後的空行收成一個段落間距；開頭不留空行；原本連著的空行不動', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            for (const options of [{ headingLevel: 4 }, { headingLevel: 4, partial: true }, undefined, { inline: true }]) {
+                for (const text of ['甲\n\n### \n\n乙', '甲\n\n- \n\n\n乙', '甲\n\n#\n1.\n\n乙', '甲\n\n### \n乙', '甲\n### \n\n乙']) {
+                    expect(await render(text, options)).toBe('甲<br><br>乙');
+                }
+                expect(await render('### \n\n乙', options)).toBe('乙');
+                expect(await render('甲\n\n\n乙', options)).toBe('甲<br><br><br>乙');
+            }
+        });
+
         test('沒給 headingLevel、或給的不是 1 到 6 的整數：# 開頭的行照舊輸出 <strong>，不產生標題', async ({ page }) => {
             for (const options of [undefined, {}, { headingLevel: 0 }, { headingLevel: 7 }, { headingLevel: 2.5 }, { headingLevel: '3' }]) {
                 expect(await page.evaluate((options) => PlatformAI.renderMarkdown('# 重點\n內容', options), options))

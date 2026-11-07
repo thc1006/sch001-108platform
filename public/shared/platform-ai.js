@@ -1250,8 +1250,18 @@
 
         if (options && options.partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
         // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號。
-        // 只有井號或清單記號的行沒有文字，拿掉；草稿停在這一行時，等文字到了才成為標題或項目
-        var lines = escapeHtml(text).split('\n').filter(function (line) { return !MARKER_ONLY.test(line); });
+        // 只有井號或清單記號的行沒有文字，拿掉；草稿停在這一行時，等文字到了才成為標題或項目。
+        // 拿掉的行前面是空行或開頭時，後面的空行也拿掉，前後的空行不會疊成兩行空白
+        var lines = [];
+        var dropped = false;
+        escapeHtml(text).split('\n').forEach(function (line) {
+            if (MARKER_ONLY.test(line)) dropped = true;
+            else if (dropped && !line.trim() && !(lines.length && lines[lines.length - 1].trim())) return;
+            else {
+                lines.push(line);
+                dropped = false;
+            }
+        });
         var minHashes = 6;
         lines.forEach(function (line) {
             var m = line.match(HEADING_LINE);
