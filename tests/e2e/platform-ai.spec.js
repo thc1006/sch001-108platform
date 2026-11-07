@@ -350,6 +350,15 @@ test.describe('PlatformAI 共用 module', () => {
             expect(ids).toBe('hint limit');
         });
 
+        // 頁面上已經有 v17 時，版號沒升的話這一份會提早返回，草稿停在「### 」時畫出空的標題。
+        test('v17 已經在頁面上時，這一份照樣載入，只有井號的行不輸出標題', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 17 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => PlatformAI.renderMarkdown('甲\n### ', { headingLevel: 4, partial: true }))).toBe('甲');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({
@@ -1984,6 +1993,26 @@ test.describe('PlatformAI 共用 module', () => {
                 return { weight: s.fontWeight, size: s.fontSize === getComputedStyle(box).fontSize };
             });
             expect(look).toEqual({ weight: '700', size: true });
+        });
+
+        // 草稿停在「### 」時，或回答在這裡斷掉留下來時，報讀軟體按標題鍵會跳到空的標題
+        test('只有井號（可以接空白）的行不輸出：沒有空的標題或 <strong>，不顯示字面的井號，層級不跳號', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            const h4 = '<h4 style="margin:0;font-size:inherit;font-weight:700">';
+            for (const hashes of ['#', '###', '### ', '###\u3000', '  ##  ']) {
+                for (const options of [{ headingLevel: 4 }, { headingLevel: 4, partial: true }, undefined, { inline: true }]) {
+                    expect(await render('甲\n' + hashes, options)).toBe('甲');
+                    expect(await render('甲\n' + hashes + '\n乙', options)).toBe('甲<br>乙');
+                }
+            }
+            expect(await render('###', { headingLevel: 4 })).toBe('');
+            // 文字到了才成為標題
+            expect(await render('甲\n\n### 乙', { headingLevel: 4, partial: true })).toBe('甲<br><br>' + h4 + '乙</h4>');
+            expect(await render('###\u3000乙', { headingLevel: 4 })).toBe(h4 + '乙</h4>');
+            // 只有井號的行不算進井號最少的標題，### 乙 仍是 h4，不會從 h4 跳到 h6
+            expect(await render('# \n### 乙', { headingLevel: 4 })).toBe(h4 + '乙</h4>');
+            // 行中的井號、井號後面沒有空白、七個井號都照原樣
+            expect(await render('C# 與 #3\n#標籤\n#######', { headingLevel: 4 })).toBe('C# 與 #3<br>#標籤<br>#######');
         });
 
         test('沒給 headingLevel、或給的不是 1 到 6 的整數：# 開頭的行照舊輸出 <strong>，不產生標題', async ({ page }) => {

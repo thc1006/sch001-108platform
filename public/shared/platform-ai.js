@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 17;
+    var VERSION = 18;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1214,6 +1214,7 @@
     }
 
     var HEADING_LINE = /^\s*(#{1,6})\s+(.*)$/;
+    var EMPTY_HEADING = /^\s*#{1,6}\s*$/;
     var BULLET_LINE = /^\s*[-*]\s+(.*)$/;
     var NUMBERED_LINE = /^\s*(\d{1,9})[.)]\s+(.*)$/;
     // Tailwind 的 preflight 把清單的項目符號、標題的字級與粗細都歸零了，頁面上的 CSS 不一定
@@ -1231,6 +1232,7 @@
      *     每多一個井號往下一級，最多到 h6。螢幕閱讀器可以用標題跳著讀，層級要接在
      *     頁面上一個標題底下，所以由呼叫的人決定。
      *   沒給：`#` 開頭的行輸出 <strong>，清單照樣包進 <ul>、<ol>。
+     *   只有井號（可以接空白）的行不輸出，也不算進井號最少的標題。
      * options.inline 為 true 時不產生任何區塊元素，給 <h4>、<span>、<b>，或本身就是清單
      * 項目的欄位用：`#` 開頭的行輸出 <strong>，`- `、`* ` 換成「• 」，數字開頭的行照原樣，
      * headingLevel 不看。陣列裡的一項以「1. 」開頭時，不會變成只有一項的 <ol>。
@@ -1246,8 +1248,9 @@
         if (inline || !(top >= 1 && top <= 6 && Math.floor(top) === top)) top = 0;
 
         if (options && options.partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
-        // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號
-        var lines = escapeHtml(text).split('\n');
+        // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號。
+        // 只有井號的行沒有標題文字，拿掉；草稿停在這一行時，等文字到了才成為標題
+        var lines = escapeHtml(text).split('\n').filter(function (line) { return !EMPTY_HEADING.test(line); });
         var minHashes = 6;
         lines.forEach(function (line) {
             var m = line.match(HEADING_LINE);
