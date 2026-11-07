@@ -132,7 +132,7 @@ export function testConfig(origin, overrides = {}) {
     return {
         upstream: origin,
         apiKey: 'sk-test-key-123',
-        model: 'qwen3.8-27b-fp8',
+        model: 'qwen3.8-flash-next',
         reasoningEffort: 'xhigh',
         continuationEffort: 'none',
         maxTokens: 8192,

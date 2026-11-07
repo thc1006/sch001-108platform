@@ -1,7 +1,7 @@
 # ai-gateway
 
 網站的 AI 功能由這個服務提供。它是不用任何 npm 套件的 Node 程式，跑在實驗室主機的 k3s 上，
-代替學生的瀏覽器呼叫 WinLab 的自架模型（預設 `qwen3.8-27b-fp8`）。
+代替學生的瀏覽器呼叫 WinLab 的自架模型（預設 `qwen3.8-flash-next`）。
 
 ```
 學生的瀏覽器 → Tailscale Funnel（主機上）→ ai-gateway（k3s）→ WinLab

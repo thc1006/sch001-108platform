@@ -103,7 +103,7 @@ test('送出的請求：固定路徑不帶 query、只有白名單欄位、帶 k
         assert.deepEqual(Object.keys(req.body).sort(), [
             'max_tokens', 'messages', 'model', 'reasoning_effort', 'stream', 'stream_options',
         ]);
-        assert.equal(req.body.model, 'qwen3.8-27b-fp8');
+        assert.equal(req.body.model, 'qwen3.8-flash-next');
         assert.equal(req.body.max_tokens, 8192);
         assert.equal(req.body.reasoning_effort, 'xhigh');
         assert.equal(req.body.stream, true);

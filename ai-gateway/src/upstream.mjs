@@ -343,7 +343,8 @@ export function classifyStatus(status) {
 const MAX_LINE_CHARS = 1024 * 1024;
 const MAX_EVENT_CHARS = 1024 * 1024;
 // 上游沒照 max_tokens 停時用的上限：一個 token 最多算這麼多字元。2026-10-26 數過 Qwen3.8-27B-FP8
-// 的詞表，最長的 token 是 128 個空白（id 55036）。換 LLM_MODEL 要重量
+// 的詞表，最長的 token 是 128 個空白（id 55036）。換 LLM_MODEL 要重量；2026-11-08 換成 qwen3.8-flash-next
+// 時沒有重量
 export const MAX_CHARS_PER_TOKEN = 128;
 // 一個回應另外多給的字元，max_tokens 很小的請求（探測只要 1 個 token）才不會被零頭卡住
 const RESPONSE_SLACK_CHARS = 4096;
