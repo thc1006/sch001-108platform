@@ -20,6 +20,7 @@
 const { test, expect } = require('@playwright/test');
 const { readdirSync } = require('node:fs');
 const path = require('node:path');
+const { settleFilters } = require('./settle-filters');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const DIST = path.resolve(__dirname, '../../.link-root/sch001-108platform');
@@ -331,40 +332,6 @@ test.describe('結構：釘在 header 下方的面板都必須可讓開', () => 
         ).toBeGreaterThanOrEqual(7);
     });
 });
-
-/**
- * settleFilters 等篩選面板的狀態定下來：捲動位置連續 3 個 frame 不變，面板也沒有進行中的動畫。
- * 前提是 sticky-filters.js 在捲動後的下一個 frame 就改 transform，目前是在 rAF 裡改；反應晚了
- * 幾個 frame 的話，例如用 setTimeout 延後 100ms，這裡可能在面板開始動之前就回傳。
- * 面板動畫設定的時間連同 delay 超過 300ms 也算失敗。比的是設定值，不受 CPU 忙碌影響。
- * @param {import('@playwright/test').Page} page
- */
-async function settleFilters(page) {
-    await page.evaluate(() => {
-        window.__settle = { y: NaN, still: 0, running: 0, longest: 0 };
-    });
-    const settled = await page
-        .waitForFunction(
-            () => {
-                const s = window.__settle;
-                const panels = [...document.querySelectorAll('[data-autohide-filters]')];
-                const anims = panels.flatMap((el) => el.getAnimations());
-                for (const a of anims) s.longest = Math.max(s.longest, a.effect.getComputedTiming().endTime);
-                s.running = anims.length;
-                s.still = window.scrollY === s.y && !anims.length ? s.still + 1 : 0;
-                s.y = window.scrollY;
-                return s.still >= 3 && s;
-            },
-            null,
-            { polling: 'raf', timeout: 5000 },
-        )
-        .catch(async (e) => {
-            const s = await page.evaluate(() => window.__settle).catch(() => '讀不到');
-            throw new Error(`${e.message}\n面板沒有定下來：${JSON.stringify(s)}`);
-        });
-    const { longest } = await settled.jsonValue();
-    expect(longest, '面板的位移動畫連同 delay 要在 300ms 內跑完').toBeLessThanOrEqual(300);
-}
 
 // 面板釘在 header 底下，top 必須剛好等於 header 的實際高度 64px，寫錯就會留縫（例如
 // 68px、76px）或重疊。兩層都是半透明的（背景色帶 /80 透明度 ＋ backdrop-blur），縫裡的
