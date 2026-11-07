@@ -202,7 +202,8 @@ export function loadLlmConfig(env = process.env, { warn = (msg) => console.warn(
         // （ahp-match 實際踩過）
         maxTokens: toInt(env, 'LLM_MAX_TOKENS', DEFAULT_MAX_TOKENS, 1, MAX_TOKENS_LIMIT, warn),
         // qwen3.8-27b-fp8 2026-10-31 實測：輸入 60016 tokens 收，65529 加上輸出 8 回 400；GET /v1/models 的 max_input_tokens
-        // 是 65536。qwen3.8-flash-next 的 /v1/models 沒有這一欄，先沿用；實際較短時 vLLM 回 400，generate.mjs 會探測後校正
+        // 是 65536。qwen3.8-flash-next 的 /v1/models 沒有這一欄，先沿用。實際較短時，400 的錯誤要寫著
+        // 「maximum context length is N」，generate.mjs 才會探測後校正，而且只在同一個任務內有效
         contextTokens: toInt(env, 'LLM_CONTEXT_TOKENS', 65_536, 4_096, 1_048_576, warn),
         maxRounds: toInt(env, 'LLM_MAX_ROUNDS', 3, 1, 8, warn),
         // setTimeout 最多 2^31-1 毫秒，超過會變成馬上觸發
