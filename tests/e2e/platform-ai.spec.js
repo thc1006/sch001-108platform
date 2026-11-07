@@ -2027,6 +2027,8 @@ test.describe('PlatformAI 共用 module', () => {
                 }
             }
             expect(await render('- 一\n- \n- 二')).toBe(ul + '<li>一</li><li>二</li></ul>');
+            // 第一項拿掉時，編號從下一項的數字開始
+            expect(await render('1. \n2. 二\n3. 三')).toBe('<ol style="margin:0;padding-left:1.5em;list-style:decimal" start="2"><li>二</li><li>三</li></ol>');
             expect(await render('1. 一\n2. ', { partial: true })).toBe(ol + '<li>一</li></ol>');
             // 文字到了才成為項目
             expect(await render('1. 一\n2. 二', { partial: true })).toBe(ol + '<li>一</li><li>二</li></ol>');
