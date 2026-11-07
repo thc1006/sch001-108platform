@@ -352,7 +352,7 @@ if (searchIndex) {
 
 // 資料驅動頁面的 runtime reference：相對路徑要相對「消費它的頁面」解析，
 // 不是 JSON 自己的位置。
-// 一頁有多個資料來源時，data-pages.json 的值是陣列。同一頁的同一個 JSON 只走訪一次。
+// 一頁有多個資料來源時，data-pages.json 的值是陣列。
 const dataSources = Object.entries(dataPages.pages).flatMap(([page, cfg]) => [cfg].flat().map((c) => [page, c]));
 const walkedJson = new Set();
 for (const [page, cfg] of dataSources) {
@@ -409,6 +409,7 @@ for (const [page, cfg] of dataSources) {
         }
     }
 
+    // 同一頁的同一個 JSON 只走訪一次網址和裸網域。上面的 anchorField 檢查每份設定都要跑，這裡不能往前移。
     if (walkedJson.has(`${page} ${jsonRel}`)) continue;
     walkedJson.add(`${page} ${jsonRel}`);
 
