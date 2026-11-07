@@ -815,6 +815,37 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
         });
     }
 
+    // 手機上點一下時 mousedown、mouseup、click 在同一個 task。Android Chrome 的按鈕在 mousedown 取得焦點，
+    // iOS Safari 不取得，焦點從 body 直接進搜尋框。兩種都沒有不帶動畫放回面板的機會。
+    for (const [how, focusButton] of [['Android Chrome', true], ['iOS Safari', false]]) {
+        test(`competitions：面板開始滑回來時點搜尋框的 ×（${how}），整頁不跳`, async ({ page }) => {
+            await conceal(page, PAGES.competitions);
+            await page.evaluate(() => document.activeElement.blur());
+            const at = await page.locator('[data-autohide-filters]').evaluate(
+                (el, focusButton) =>
+                    new Promise((resolve) => {
+                        el.addEventListener('transitionrun', () => {
+                            const b = document.getElementById('search-clear');
+                            b.hidden = false;
+                            const at = { y: window.scrollY, shift: new DOMMatrixReadOnly(getComputedStyle(el).transform).m42 };
+                            const send = (type) => b.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+                            send('mousedown');
+                            if (focusButton) b.focus({ preventScroll: true });
+                            send('mouseup');
+                            b.click();
+                            resolve(at);
+                        }, { once: true });
+                        window.scrollBy({ top: -100, behavior: 'instant' });
+                    }),
+                focusButton,
+            );
+            expect(at.shift, '前置：點的時候面板還在畫面外').toBeLessThan(-100);
+            await settleFilters(page);
+            await expectPinned(page, at, `點 ×（${how}）`);
+            expect(await page.evaluate(() => document.activeElement.id)).toBe('search-input');
+        });
+    }
+
     // 點擊造成的焦點移動不放回面板，只限那一次點擊。
     test('competitions：用滑鼠點過卡片文字之後，Shift+Tab 回到面板', async ({ page }) => {
         await conceal(page, PAGES.competitions);
