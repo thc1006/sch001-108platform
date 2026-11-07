@@ -416,7 +416,7 @@ test('遮蔽的代價必須是 0：本站語料不得有網域落在被遮蔽的
     const dataPages = JSON.parse(await readFile(path.join(ROOT, 'scripts/data-pages.json'), 'utf8'));
     const accept = makeSkipFieldFilter([...dataPages.localAssetFields, '_readme']);
     const lost = new Map();
-    for (const cfg of Object.values(dataPages.pages)) {
+    for (const cfg of Object.values(dataPages.pages).flat()) {
         const data = JSON.parse(await readFile(path.join(ROOT, 'public', cfg.json), 'utf8'));
         const withShadow = new Set(collectBareDomains(data, accept).keys());
         for (const [host, at] of collectBareDomains(data, accept, { keepShadowedTlds: true })) {
