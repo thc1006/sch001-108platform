@@ -37,7 +37,7 @@ test('預設值：xhigh、8192、65536 context、3 輪、15 分鐘', () => {
     assert.deepEqual(config, {
         upstream: 'https://llm.winlab.tw',
         apiKey: '',
-        model: 'qwen3.8-27b-fp8',
+        model: 'qwen3.8-flash-next',
         reasoningEffort: 'xhigh',
         continuationEffort: 'none',
         maxTokens: 8192,
@@ -85,7 +85,7 @@ test('空字串視同沒設，不警告', () => {
     assert.equal(config.maxRounds, 3);
     assert.equal(config.reasoningEffort, 'xhigh');
     assert.equal(config.upstream, 'https://llm.winlab.tw');
-    assert.equal(config.model, 'qwen3.8-27b-fp8');
+    assert.equal(config.model, 'qwen3.8-flash-next');
 });
 
 test('WinLab 只收 none／low／medium／xhigh；不分大小寫；其他值退回預設並警告', () => {

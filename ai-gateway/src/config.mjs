@@ -14,18 +14,18 @@
  *                           http 只接受本機（key 不能走明文）
  *   LLM_API_KEY_FILE        從檔案讀 key，有設就優先（k3s 把 Secret 掛成檔案）
  *   LLM_API_KEY             直接給 key（只建議本機開發用）
- *   LLM_MODEL               模型（預設 qwen3.8-27b-fp8）
+ *   LLM_MODEL               模型（預設 qwen3.8-flash-next）
  *   LLM_REASONING_EFFORT    思考強度，WinLab 只收 none／low／medium／xhigh（預設 xhigh；不分大小寫）
  *   LLM_CONTINUATION_EFFORT 接續輪的思考強度（預設 none，理由見 generate.mjs）
  *   LLM_MAX_TOKENS          每一輪的 max_tokens 上限，含思考（預設 8192，上限 16384）
- *   LLM_CONTEXT_TOKENS      模型的 context 長度（預設 65536，2026-10-31 實測）
+ *   LLM_CONTEXT_TOKENS      模型的 context 長度（預設 65536，qwen3.8-27b-fp8 2026-10-31 實測）
  *   LLM_MAX_ROUNDS          被截斷時連同第一輪最多跑幾輪（預設 3）
  *   LLM_TASK_TIMEOUT_MS     一個任務所有輪合計的時限（預設 900000 = 15 分鐘）
  *   LLM_IDLE_TIMEOUT_MS     上游多久沒有進展就當成卡死（預設 180000，上限 300000）。收到標頭之前看有沒有
  *                           回應，之後看有沒有送來思考、正文或 usage
  *
  * 預設的輪數與時限是一起選的：被截斷的那一輪一定用滿 LLM_MAX_TOKENS（預設 8192 tokens），以實測約 46 tokens/s
- * 計一輪約 3 分鐘；WinLab 忙碌時每一輪的第一個位元組還要再等一兩分鐘（2026-10-22 實測
+ * （qwen3.8-27b-fp8）計一輪約 3 分鐘；WinLab 忙碌時每一輪的第一個位元組還要再等一兩分鐘（2026-10-22 實測
  * 82.6 秒），3 輪都寫滿、沒有額外請求（探測、重試）時約 13 分鐘，所以預設 15 分鐘。
  * 輪數或 LLM_MAX_TOKENS 調高時，任務時限與 SHUTDOWN_GRACE_MS 要跟著調。
  */
@@ -195,13 +195,14 @@ export function loadLlmConfig(env = process.env, { warn = (msg) => console.warn(
     return {
         upstream: toUpstream(env, warn),
         apiKey: readApiKey(env, warn),
-        model: (env.LLM_MODEL || '').trim() || 'qwen3.8-27b-fp8',
+        model: (env.LLM_MODEL || '').trim() || 'qwen3.8-flash-next',
         reasoningEffort: toEffort(env, 'LLM_REASONING_EFFORT', 'xhigh', warn),
         continuationEffort: toEffort(env, 'LLM_CONTINUATION_EFFORT', 'none', warn),
         // 一定要送 max_tokens：不送的話 WinLab 閘道預設只給 2048，思考完答案就被截斷
         // （ahp-match 實際踩過）
         maxTokens: toInt(env, 'LLM_MAX_TOKENS', DEFAULT_MAX_TOKENS, 1, MAX_TOKENS_LIMIT, warn),
-        // 2026-10-31 實測：輸入 60016 tokens 收，65529 加上輸出 8 回 400；GET /v1/models 的 max_input_tokens 是 65536
+        // qwen3.8-27b-fp8 2026-10-31 實測：輸入 60016 tokens 收，65529 加上輸出 8 回 400；GET /v1/models 的 max_input_tokens
+        // 是 65536。qwen3.8-flash-next 的 /v1/models 沒有這一欄，先沿用；實際較短時 vLLM 回 400，generate.mjs 會探測後校正
         contextTokens: toInt(env, 'LLM_CONTEXT_TOKENS', 65_536, 4_096, 1_048_576, warn),
         maxRounds: toInt(env, 'LLM_MAX_ROUNDS', 3, 1, 8, warn),
         // setTimeout 最多 2^31-1 毫秒，超過會變成馬上觸發
