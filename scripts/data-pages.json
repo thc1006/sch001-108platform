@@ -40,13 +40,29 @@
       "tag": "學長姐訪談",
       "anchor": "interview-grid"
     },
-    "learning-portfolio/portfolio-gallery.html": {
-      "json": "learning-portfolio/portfolio-gallery.json",
-      "arrayKey": "portfolio",
-      "idPrefix": "portfolio",
-      "tag": "作品集",
-      "anchor": "portfolio-grid"
-    },
+    "learning-portfolio/portfolio-gallery.html": [
+      {
+        "json": "learning-portfolio/portfolio-gallery.json",
+        "arrayKey": "portfolio",
+        "idPrefix": "portfolio",
+        "tag": "作品集",
+        "anchor": "portfolio-grid"
+      },
+      {
+        "json": "learning-portfolio/portfolio-works.json",
+        "arrayKey": "works",
+        "idPrefix": "work",
+        "tag": "高中生的真實作品",
+        "anchorField": "id"
+      },
+      {
+        "json": "learning-portfolio/portfolio-works.json",
+        "arrayKey": "contrasts",
+        "idPrefix": "contrast",
+        "tag": "讀的人會卡住的寫法",
+        "anchorField": "id"
+      }
+    ],
     "autonomous-learning/methodology.html": {
       "json": "autonomous-learning/methodology.json",
       "arrayKey": "methods",
