@@ -816,7 +816,7 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
     }
 
     // 手機上點一下時 mousedown、mouseup、click 在同一個 task。Android Chrome 的按鈕在 mousedown 取得焦點，
-    // iOS Safari 不取得，焦點從 body 直接進搜尋框。兩種都沒有不帶動畫放回面板的機會。
+    // iOS Safari 不取得，焦點從 body 直接進搜尋框。兩種都在 Chromium 裡照事件順序模擬，WebKit 沒有測到。
     for (const [how, focusButton] of [['Android Chrome', true], ['iOS Safari', false]]) {
         test(`competitions：面板開始滑回來時點搜尋框的 ×（${how}），整頁不跳`, async ({ page }) => {
             await conceal(page, PAGES.competitions);
@@ -835,10 +835,12 @@ test.describe('焦點移回讓開的面板時整頁不跳', () => {
                             b.click();
                             resolve(at);
                         }, { once: true });
+                        setTimeout(() => resolve(null), 2000);
                         window.scrollBy({ top: -100, behavior: 'instant' });
                     }),
                 focusButton,
             );
+            expect(at, '前置：往上捲時面板要用轉場滑回來').not.toBeNull();
             expect(at.shift, '前置：點的時候面板還在畫面外').toBeLessThan(-100);
             await settleFilters(page);
             await expectPinned(page, at, `點 ×（${how}）`);
