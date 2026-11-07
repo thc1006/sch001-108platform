@@ -48,7 +48,7 @@ const term = 'font-semibold text-gray-800';
             <p class="text-gray-700 max-w-3xl mx-auto mb-8">下面 {works.length} 份是高中生交出去的作品，原文由科展、小論文比賽的主辦單位、宜蘭區的高中和教育部委託的作伙學計畫公開。每份寫出做了什麼、可以學的寫法，原文在連結裡。</p>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {works.map((w) => (
-                    <article aria-labelledby={`${w.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
+                    <article id={w.id} aria-labelledby={`${w.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
                         <h3 id={`${w.id}-title`} class="text-xl font-bold">{w.title}</h3>
                         <p class="text-sm text-gray-600 mt-1">{w.group}｜{w.kind}</p>
                         <dl class="mt-4 space-y-3 text-gray-700 leading-relaxed">
@@ -78,7 +78,7 @@ const term = 'font-semibold text-gray-800';
             <p class="text-gray-700 max-w-3xl mx-auto mb-8">作伙學在課程學習成果的呈現建議裡舉了這兩個例子。每份寫出讀的人卡在哪裡，以及怎麼改比較好。</p>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {contrasts.map((c) => (
-                    <article aria-labelledby={`${c.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
+                    <article id={c.id} aria-labelledby={`${c.id}-title`} class="bg-white p-6 rounded-xl shadow-md flex flex-col min-w-0">
                         <h3 id={`${c.id}-title`} class="text-xl font-bold">{c.title}</h3>
                         <dl class="mt-4 space-y-3 text-gray-700 leading-relaxed">
                             <div>
