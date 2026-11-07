@@ -375,6 +375,41 @@ test.describe('站內搜尋的素養／SDGs 分類（#14 驗收）', () => {
     });
 });
 
+// 藝廊的真實作品和對照例子（#368）。報讀軟體念的是結果的文字，標題要有作品題目，標籤要有所在分區。
+test.describe('站內搜尋找得到藝廊的作品卡片（#368）', () => {
+    async function searchFor(page, query) {
+        await page.goto(P('/'), { waitUntil: 'networkidle' });
+        const input = page.locator('#search-input');
+        await expect(input).toBeEnabled({ timeout: 15_000 });
+        await input.fill(query);
+        const results = page.locator('#search-results-container a[role="option"]');
+        await expect(results.first()).toBeVisible({ timeout: 10_000 });
+        return results;
+    }
+
+    for (const { query, id, title, section } of [
+        { query: '描圖紙', id: 'work-tracing-paper', title: '描圖紙的捲曲行為變因探討', section: '高中生的真實作品' },
+        { query: '強制投票', id: 'work-compulsory-voting', title: '投票是職責還是權利？初探我國強制投票的可能性', section: '高中生的真實作品' },
+        { query: '層析', id: 'contrast-chromatography', title: '層析實驗的結論只寫了三色高度不同', section: '讀的人會卡住的寫法' },
+    ]) {
+        test(`搜尋「${query}」第一筆是 ${id}`, async ({ page }) => {
+            const first = (await searchFor(page, query)).first();
+            expect(await first.getAttribute('href')).toBe(`learning-portfolio/portfolio-gallery.html#${id}`);
+            await expect(first.locator('h3')).toHaveText(`優質範例藝廊 - ${title}`);
+            await expect(first.locator('span', { hasText: section })).toHaveCount(1);
+        });
+    }
+
+    test('點作品的搜尋結果會跳到那張卡片', async ({ page }) => {
+        const errors = watchForErrors(page);
+        const results = await searchFor(page, '描圖紙');
+        await results.first().click();
+        await page.waitForURL(/#work-tracing-paper$/, { timeout: 10_000 });
+        await expect(page.locator('#work-tracing-paper')).toBeInViewport();
+        expect(errors(), errors().join('\n')).toEqual([]);
+    });
+});
+
 /**
  * 自架的第三方函式庫（#72 後續）。
  * fuse.js（搜尋引擎，載不到就整個搜尋失效）、feather-icons、ionicons 若從 CDN 載入，
