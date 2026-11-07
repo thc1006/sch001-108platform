@@ -2015,6 +2015,25 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await render('C# 與 #3\n#標籤\n#######', { headingLevel: 4 })).toBe('C# 與 #3<br>#標籤<br>#######');
         });
 
+        // 草稿停在「- 」「1. 」時，報讀軟體會唸到空的清單項目
+        test('只有清單記號（可以接空白）的行不輸出：沒有空的 <li> 或「• 」，同一個清單不會斷開', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            const ul = '<ul style="margin:0;padding-left:1.5em;list-style:disc">';
+            const ol = '<ol style="margin:0;padding-left:1.5em;list-style:decimal">';
+            for (const marker of ['-', '- ', '*', '* ', '1.', '1. ', '2) ', '-\u3000', '  10.  ']) {
+                for (const options of [{ headingLevel: 4 }, { headingLevel: 4, partial: true }, undefined, { inline: true }]) {
+                    expect(await render('甲\n' + marker, options)).toBe('甲');
+                    expect(await render('甲\n' + marker + '\n乙', options)).toBe('甲<br>乙');
+                }
+            }
+            expect(await render('- 一\n- \n- 二')).toBe(ul + '<li>一</li><li>二</li></ul>');
+            expect(await render('1. 一\n2. ', { partial: true })).toBe(ol + '<li>一</li></ol>');
+            // 文字到了才成為項目
+            expect(await render('1. 一\n2. 二', { partial: true })).toBe(ol + '<li>一</li><li>二</li></ol>');
+            // 記號後面接著文字、記號不在行首、- 與 * 連著好幾個，都照原樣
+            expect(await render('-1 度\n3.14\n甲 - 乙\n---\n**', { headingLevel: 4 })).toBe('-1 度<br>3.14<br>甲 - 乙<br>---<br>**');
+        });
+
         test('沒給 headingLevel、或給的不是 1 到 6 的整數：# 開頭的行照舊輸出 <strong>，不產生標題', async ({ page }) => {
             for (const options of [undefined, {}, { headingLevel: 0 }, { headingLevel: 7 }, { headingLevel: 2.5 }, { headingLevel: '3' }]) {
                 expect(await page.evaluate((options) => PlatformAI.renderMarkdown('# 重點\n內容', options), options))

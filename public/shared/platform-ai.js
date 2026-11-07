@@ -1187,7 +1187,7 @@
     // （例如「3 * 4」），留著。行首的清單記號與井號不看。
     function dropUnclosedMarkers(text) {
         var start = text.lastIndexOf('\n') + 1;
-        var lead = text.slice(start).match(/^\s*(?:#{1,6}|[-*]|\d{1,9}[.)])\s+/);
+        var lead = text.slice(start).match(/^\s*(?:#{1,6}|[-*]|\d{1,9}[.)])(?:\s+|$)/);
         var head = text.slice(0, start + (lead ? lead[0].length : 0));
         var body = text.slice(head.length);
         function opener(i, len) {
@@ -1214,7 +1214,7 @@
     }
 
     var HEADING_LINE = /^\s*(#{1,6})\s+(.*)$/;
-    var EMPTY_HEADING = /^\s*#{1,6}\s*$/;
+    var MARKER_ONLY = /^\s*(?:#{1,6}|[-*]|\d{1,9}[.)])\s*$/;
     var BULLET_LINE = /^\s*[-*]\s+(.*)$/;
     var NUMBERED_LINE = /^\s*(\d{1,9})[.)]\s+(.*)$/;
     // Tailwind 的 preflight 把清單的項目符號、標題的字級與粗細都歸零了，頁面上的 CSS 不一定
@@ -1227,12 +1227,13 @@
      *
      * 連續的 `- `、`* ` 行包進 <ul>，`1. `、`1) ` 行包進 <ol>，中間隔著空行的仍是同一個清單；
      * 其他的換行轉成 <br>。輸出裡有區塊元素，要放進 <div>、<li> 這類放得下區塊的容器。
+     * 只有井號或清單記號（可以接空白）的行不輸出，不會有空的標題或 <li>。
      * options.headingLevel 決定標題的輸出：
      *   給了 1 到 6 的整數：`#` 開頭的行輸出成真的標題。文字裡井號最少的標題用這一級，
      *     每多一個井號往下一級，最多到 h6。螢幕閱讀器可以用標題跳著讀，層級要接在
      *     頁面上一個標題底下，所以由呼叫的人決定。
      *   沒給：`#` 開頭的行輸出 <strong>，清單照樣包進 <ul>、<ol>。
-     *   只有井號（可以接空白）的行不輸出，也不算進井號最少的標題。
+     *   只有井號的行不算進井號最少的標題。
      * options.inline 為 true 時不產生任何區塊元素，給 <h4>、<span>、<b>，或本身就是清單
      * 項目的欄位用：`#` 開頭的行輸出 <strong>，`- `、`* ` 換成「• 」，數字開頭的行照原樣，
      * headingLevel 不看。陣列裡的一項以「1. 」開頭時，不會變成只有一項的 <ol>。
@@ -1249,8 +1250,8 @@
 
         if (options && options.partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
         // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號。
-        // 只有井號的行沒有標題文字，拿掉；草稿停在這一行時，等文字到了才成為標題
-        var lines = escapeHtml(text).split('\n').filter(function (line) { return !EMPTY_HEADING.test(line); });
+        // 只有井號或清單記號的行沒有文字，拿掉；草稿停在這一行時，等文字到了才成為標題或項目
+        var lines = escapeHtml(text).split('\n').filter(function (line) { return !MARKER_ONLY.test(line); });
         var minHashes = 6;
         lines.forEach(function (line) {
             var m = line.match(HEADING_LINE);
