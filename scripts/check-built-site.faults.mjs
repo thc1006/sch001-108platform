@@ -238,11 +238,11 @@ const cases = [
     mutate: (t) => t.replace('"civic-tech-map/index.html#disfactory"', '"civic-tech-map/index.html#cofacts"'),
   },
   {
-    // 藝廊頁的設定是陣列，這一項確認陣列裡的來源也有檢查
-    name: '藝廊的真實作品不在 search-index 裡',
-    expect: /portfolio-gallery\.html#work-dna.*搜尋索引卻沒有對應的 url/,
+    // 藝廊頁的設定是陣列，動最後一份（對照例子），確認每一份都有檢查
+    name: '藝廊的對照例子不在 search-index 裡',
+    expect: /portfolio-gallery\.html#contrast-chromatography.*搜尋索引卻沒有對應的 url/,
     file: `${DIST}/search-index.json`,
-    mutate: (t) => t.replace('"learning-portfolio/portfolio-gallery.html#work-dna"', '"learning-portfolio/portfolio-gallery.html#work-python"'),
+    mutate: (t) => t.replace('"learning-portfolio/portfolio-gallery.html#contrast-chromatography"', '"learning-portfolio/portfolio-gallery.html#contrast-bangkok"'),
   },
   {
     name: '搜尋索引漏掉競賽的 details',
