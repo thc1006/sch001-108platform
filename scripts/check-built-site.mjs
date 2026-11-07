@@ -355,14 +355,21 @@ if (searchIndex) {
 // 一頁有多個資料來源時，data-pages.json 的值是陣列。
 const dataSources = Object.entries(dataPages.pages).flatMap(([page, cfg]) => [cfg].flat().map((c) => [page, c]));
 const walkedJson = new Set();
+// 兩份設定讀同一頁、同一個 JSON 時，缺檔和解析失敗只報一次
+const reportedOnce = new Set();
+const addErrorOnce = (file, message) => {
+    if (reportedOnce.has(`${file} ${message}`)) return;
+    reportedOnce.add(`${file} ${message}`);
+    addError(file, '', message);
+};
 for (const [page, cfg] of dataSources) {
     const jsonRel = cfg.json;
     if (!distFiles.includes(jsonRel)) {
-        addError(jsonRel, '', `資料頁 ${page} 需要的 JSON 不在建置產物中`);
+        addErrorOnce(jsonRel, `資料頁 ${page} 需要的 JSON 不在建置產物中`);
         continue;
     }
     if (!distFiles.includes(page)) {
-        addError(page, '', `data-pages.json 設定的頁面不在建置產物中`);
+        addErrorOnce(page, `data-pages.json 設定的頁面不在建置產物中`);
         continue;
     }
     const consumerUrl = urlOf(page);
@@ -370,7 +377,7 @@ for (const [page, cfg] of dataSources) {
     try {
         data = JSON.parse(await readFile(path.join(DIST, jsonRel), 'utf8'));
     } catch (e) {
-        addError(jsonRel, '', `JSON 無法解析：${e.message}`);
+        addErrorOnce(jsonRel, `JSON 無法解析：${e.message}`);
         continue;
     }
     // 來源 JSON 的分類欄位是否真的進了 search-index.json。
