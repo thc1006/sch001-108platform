@@ -149,6 +149,28 @@ test.describe('矮視窗的篩選面板', () => {
         await expect.poll(async () => (await panel(page)).position).toBe('sticky');
     });
 
+    // 面板沒釘住時搜尋框跟著頁面捲走。停在 × 上往下捲再按 Enter，要捲回搜尋框才看得到焦點。
+    test('320x256 面板沒釘住時，按 × 會捲到搜尋框', async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 256 });
+        await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
+        await page.locator('.comp-card').first().waitFor();
+        expect((await panel(page)).position).toBe('static');
+        await page.evaluate(() => { document.getElementById('search-clear').hidden = false; });
+        await page.locator('#search-clear').focus();
+        await page.evaluate(() => window.scrollTo({ top: 1500, behavior: 'instant' }));
+        const box = () => page.locator('#search-input').evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom };
+        });
+        expect((await box()).bottom, '前置：搜尋框在畫面外').toBeLessThan(0);
+        await page.keyboard.press('Enter');
+        await settleFilters(page);
+        await expect(page.locator('#search-input')).toBeFocused();
+        const after = await box();
+        expect(after.top).toBeGreaterThanOrEqual(0);
+        expect(after.bottom).toBeLessThanOrEqual(256);
+    });
+
     // 手機網址列收起、螢幕鍵盤彈出都只改視窗高度，面板不能跟著切換釘住，搜尋框也不能跳走。
     test('360x740 只把視窗變矮時，面板維持釘住，搜尋框不動', async ({ page }) => {
         await page.setViewportSize({ width: 360, height: 740 });
