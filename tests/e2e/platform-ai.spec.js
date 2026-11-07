@@ -2016,11 +2016,11 @@ test.describe('PlatformAI 共用 module', () => {
         });
 
         // 草稿停在「- 」「1. 」時，報讀軟體會唸到空的清單項目
-        test('只有清單記號（可以接空白）的行不輸出：沒有空的 <li> 或「• 」，同一個清單不會斷開', async ({ page }) => {
+        test('清單記號接著空白、沒有文字的行不輸出：沒有空的 <li> 或「• 」，同一個清單不會斷開', async ({ page }) => {
             const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
             const ul = '<ul style="margin:0;padding-left:1.5em;list-style:disc">';
             const ol = '<ol style="margin:0;padding-left:1.5em;list-style:decimal">';
-            for (const marker of ['-', '- ', '*', '* ', '1.', '1. ', '2) ', '-\u3000', '  10.  ']) {
+            for (const marker of ['- ', '* ', '1. ', '2) ', '-\u3000', '  10.  ']) {
                 for (const options of [{ headingLevel: 4 }, { headingLevel: 4, partial: true }, undefined, { inline: true }]) {
                     expect(await render('甲\n' + marker, options)).toBe('甲');
                     expect(await render('甲\n' + marker + '\n乙', options)).toBe('甲<br>乙');
@@ -2034,10 +2034,27 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await render('-1 度\n3.14\n甲 - 乙\n---\n**', { headingLevel: 4 })).toBe('-1 度<br>3.14<br>甲 - 乙<br>---<br>**');
         });
 
+        // 完整的回答裡「42.」「-」是文字；草稿的最後一行停在這裡時，可能是還沒寫完的記號
+        test('記號後面沒有空白的 -、*、42.：完整的回答照原樣，partial 只在最後一行時先不輸出', async ({ page }) => {
+            const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
+            const ol = '<ol style="margin:0;padding-left:1.5em;list-style:decimal">';
+            expect(await render('答案：\n42.', { headingLevel: 4 })).toBe('答案：<br>42.');
+            expect(await render('優點：\n-\n缺點：\n-')).toBe('優點：<br>-<br>缺點：<br>-');
+            for (const marker of ['-', '*', '2.', '3)']) {
+                for (const options of [{ headingLevel: 4 }, undefined, { inline: true }]) {
+                    expect(await render('甲\n' + marker, options)).toBe('甲<br>' + marker);
+                    expect(await render('甲\n' + marker, { ...options, partial: true })).toBe('甲');
+                    expect(await render('甲\n' + marker + '\n乙', { ...options, partial: true })).toBe('甲<br>' + marker + '<br>乙');
+                }
+            }
+            expect(await render('優點：\n-', { partial: true })).toBe('優點：');
+            expect(await render('1. 一\n2.', { partial: true })).toBe(ol + '<li>一</li></ol>');
+        });
+
         test('拿掉只有井號或清單記號的行之後，前後的空行收成一個段落間距；開頭不留空行；原本連著的空行不動', async ({ page }) => {
             const render = (text, options) => page.evaluate(({ text, options }) => PlatformAI.renderMarkdown(text, options), { text, options });
             for (const options of [{ headingLevel: 4 }, { headingLevel: 4, partial: true }, undefined, { inline: true }]) {
-                for (const text of ['甲\n\n### \n\n乙', '甲\n\n- \n\n\n乙', '甲\n\n#\n1.\n\n乙', '甲\n\n### \n乙', '甲\n### \n\n乙']) {
+                for (const text of ['甲\n\n### \n\n乙', '甲\n\n- \n\n\n乙', '甲\n\n#\n1. \n\n乙', '甲\n\n### \n乙', '甲\n### \n\n乙']) {
                     expect(await render(text, options)).toBe('甲<br><br>乙');
                 }
                 expect(await render('### \n\n乙', options)).toBe('乙');

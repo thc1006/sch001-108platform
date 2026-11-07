@@ -1214,7 +1214,8 @@
     }
 
     var HEADING_LINE = /^\s*(#{1,6})\s+(.*)$/;
-    var MARKER_ONLY = /^\s*(?:#{1,6}|[-*]|\d{1,9}[.)])\s*$/;
+    var MARKER_ONLY = /^\s*(?:#{1,6}\s*|(?:[-*]|\d{1,9}[.)])\s+)$/;
+    var BARE_MARKER = /^\s*(?:[-*]|\d{1,9}[.)])$/;
     var BULLET_LINE = /^\s*[-*]\s+(.*)$/;
     var NUMBERED_LINE = /^\s*(\d{1,9})[.)]\s+(.*)$/;
     // Tailwind 的 preflight 把清單的項目符號、標題的字級與粗細都歸零了，頁面上的 CSS 不一定
@@ -1227,7 +1228,7 @@
      *
      * 連續的 `- `、`* ` 行包進 <ul>，`1. `、`1) ` 行包進 <ol>，中間隔著空行的仍是同一個清單；
      * 其他的換行轉成 <br>。輸出裡有區塊元素，要放進 <div>、<li> 這類放得下區塊的容器。
-     * 只有井號或清單記號（可以接空白）的行不輸出，不會有空的標題或 <li>。
+     * 只有井號（可以接空白）、或清單記號接著空白的行不輸出，不會有空的標題或 <li>。
      * options.headingLevel 決定標題的輸出：
      *   給了 1 到 6 的整數：`#` 開頭的行輸出成真的標題。文字裡井號最少的標題用這一級，
      *     每多一個井號往下一級，最多到 h6。螢幕閱讀器可以用標題跳著讀，層級要接在
@@ -1238,24 +1239,26 @@
      * 項目的欄位用：`#` 開頭的行輸出 <strong>，`- `、`* ` 換成「• 」，數字開頭的行照原樣，
      * headingLevel 不看。陣列裡的一項以「1. 」開頭時，不會變成只有一項的 <ol>。
      * options.partial 為 true 表示文字沒寫完（邊收邊顯示的草稿、錯誤帶著的 partial），
-     * 最後一行落單的 `、**、* 拿掉，見 dropUnclosedMarkers。
+     * 最後一行落單的 `、**、* 拿掉，見 dropUnclosedMarkers；最後一行只有 -、*、1. 時也先不輸出。
      * @param {string} text
      * @param {{headingLevel?: number, inline?: boolean, partial?: boolean}} [options]
      * @returns {string}
      */
     function renderMarkdown(text, options) {
         var inline = Boolean(options && options.inline);
+        var partial = Boolean(options && options.partial);
         var top = options && options.headingLevel;
         if (inline || !(top >= 1 && top <= 6 && Math.floor(top) === top)) top = 0;
 
-        if (options && options.partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
+        if (partial) text = dropUnclosedMarkers(String(text == null ? '' : text));
         // 先 escape，之後所有 <...> 都是這裡寫死的白名單標籤；escape 不動 #、-、*、數字與反引號。
         // 只有井號或清單記號的行沒有文字，拿掉；草稿停在這一行時，等文字到了才成為標題或項目。
+        // 記號後面沒有空白的 -、*、42. 在完整的回答裡是文字，照原樣
         // 拿掉的行前面是空行或開頭時，後面的空行也拿掉，前後的空行不會疊成兩行空白
         var lines = [];
         var dropped = false;
-        escapeHtml(text).split('\n').forEach(function (line) {
-            if (MARKER_ONLY.test(line)) dropped = true;
+        escapeHtml(text).split('\n').forEach(function (line, i, all) {
+            if (MARKER_ONLY.test(line) || (partial && i === all.length - 1 && BARE_MARKER.test(line))) dropped = true;
             else if (dropped && !line.trim() && !(lines.length && lines[lines.length - 1].trim())) return;
             else {
                 lines.push(line);
