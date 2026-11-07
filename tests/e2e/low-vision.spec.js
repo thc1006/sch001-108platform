@@ -3,6 +3,7 @@
 const { test, expect } = require('@playwright/test');
 const { readdirSync, readFileSync } = require('node:fs');
 const path = require('node:path');
+const { settleFilters } = require('./settle-filters');
 
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const P = (p) => `${BASE}/sch001-108platform/${p}`;
@@ -154,10 +155,12 @@ test.describe('矮視窗的篩選面板', () => {
         await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
         await page.locator('.comp-card').first().waitFor();
         await page.evaluate(() => window.scrollTo({ top: 2000, behavior: 'instant' }));
+        // 捲動後面板可能已經讓開，focus() 時滑回來，頁面也可能平滑捲動，都停了才量。
         await page.locator('#search-input').focus();
+        await settleFilters(page);
         const before = await page.locator('#search-input').evaluate((el) => el.getBoundingClientRect().top);
         await page.setViewportSize({ width: 360, height: 400 });
-        await frames(page);
+        await settleFilters(page);
         expect((await panel(page)).position).toBe('sticky');
         expect(await page.locator('#search-input').evaluate((el) => el.getBoundingClientRect().top)).toBeCloseTo(before, 0);
         await page.locator('#search-input').blur();
