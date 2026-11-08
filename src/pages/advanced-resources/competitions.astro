@@ -664,10 +664,11 @@ import data from '../../../public/advanced-resources/competitions.json';
       searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { searchInput.value = ''; searchClear.hidden = true; render(); }
       });
-      // 點 × 時面板可能還在滑回來，focus() 會照它在畫面外的位置把整頁往上捲，所以不捲。× 疊在搜尋框裡，
-      // 點得到 × 時搜尋框就在畫面上；鍵盤停在 × 上捲走再按 Enter 時，sticky-filters.js 的 focusout 會先捲回來。
+      // 點 × 時面板可能還在滑回來，focus() 會照它在畫面外的位置把整頁往上捲，所以釘住時不捲。
+      // 沒釘住時面板跟著頁面捲走，鍵盤停在 × 上捲走再按 Enter，搜尋框在畫面外，要照常捲過去。
       searchClear.addEventListener('click', () => {
-        searchInput.value = ''; searchClear.hidden = true; searchInput.focus({ preventScroll: true }); render();
+        searchInput.value = ''; searchClear.hidden = true;
+        searchInput.focus({ preventScroll: !searchInput.closest('[data-unpinned]') }); render();
       });
       grid.addEventListener('click', (e) => {
         const btn = e.target.closest('.comp-more');
