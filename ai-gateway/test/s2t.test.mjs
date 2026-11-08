@@ -67,6 +67,10 @@ test('台灣的寫法：台灣、計畫、發布 不照 OpenCC 換成 臺灣、�
 
 test('擋詞：皇后来了 的后 不跟後面的字湊成 后来', () => {
     assert.equal(toTraditional('皇后来了'), '皇后來了');
+    // 同一句有簡體字時，繁體的稱號也不跟後面湊成 后来、后面
+    assert.equal(toTraditional('視后來台宣传'), '視后來台宣傳');
+    assert.equal(toTraditional('視后面對记者'), '視后面對記者');
+    assert.equal(toTraditional('棋后來訪，拳后面對记者'), '棋后來訪，拳后面對記者');
     assert.equal(toTraditional('若干部分要发表'), '若干部分要發表');
 });
 
