@@ -1,6 +1,6 @@
 /**
  * 簡轉繁保險：活體測試看到的簡體字都要轉到；正確的繁體文字（含一對多、台灣標準字）
- * 一個字都不能被改動；串流逐段轉換與整段轉換逐字相同。
+ * 一個字都不能被改動；串流逐段轉換與整段轉換逐字相同。整個 repo 的繁體文字見 s2t-corpus.test.mjs。
  *
  * 執行：npm run test:ai-gateway
  */
@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 
 import { toTraditional, createTraditionalStream, S2T_SIZE } from '../src/s2t.mjs';
 import { S2T_PAIRS } from '../src/s2t-table.mjs';
+import { S2T_CURATED, S2T_DEFAULTS, S2T_GUARDS, S2T_PHRASES, S2T_SIMPLIFIED, S2T_TABLE_TRADITIONAL } from '../src/s2t-phrases.mjs';
 
 test('活體測試中出現過的簡體字都會被轉成台灣繁體', () => {
     assert.equal(toTraditional('每兩週產出阶段性報告'), '每兩週產出階段性報告');
@@ -35,6 +36,70 @@ test('正確的繁體文字原樣保留：一對多的字、台灣標準字、�
         '人云亦云、拮据、峰會、起床、群組、爐灶、祕密、秘密、白痴、苧麻、菜肴、倒霉、粽子。',
     ].join('');
     assert.equal(toTraditional(traditional), traditional);
+});
+
+test('一對多的字照詞組轉：干部、发表、团队、当天、并且、头发、后来', () => {
+    const cases = [
+        ['社团干部', '社團幹部'],
+        ['成果发表会', '成果發表會'],
+        ['团队合作', '團隊合作'],
+        ['当天下午', '當天下午'],
+        ['并且要', '並且要'],
+        ['头发很长', '頭髮很長'],
+        ['后来呢', '後來呢'],
+        ['理发店', '理髮店'],
+        ['饭团', '飯糰'],
+        ['叮当响', '叮噹響'],
+        ['合并两家', '合併兩家'],
+        ['很干净', '很乾淨'],
+        ['复习功课', '複習功課'],
+        ['恢复正常', '恢復正常'],
+        ['尽管如此', '儘管如此'],
+        ['一分钟', '一分鐘'],
+        ['台风来了', '颱風來了'],
+    ];
+    for (const [input, expected] of cases) assert.equal(toTraditional(input), expected, input);
+});
+
+test('台灣的寫法：台灣、計畫、發布 不照 OpenCC 換成 臺灣、計劃、發佈', () => {
+    assert.equal(toTraditional('台湾的计划，新版发布'), '台灣的計畫，新版發布');
+});
+
+test('擋詞：皇后来了 的后 不跟後面的字湊成 后来', () => {
+    assert.equal(toTraditional('皇后来了'), '皇后來了');
+    assert.equal(toTraditional('若干部分要发表'), '若干部分要發表');
+});
+
+test('沒有詞組命中的一對多字：S2T_DEFAULTS 的字照預設轉，其他的不動', () => {
+    assert.equal(toTraditional('只有三团报名，并请同学参加'), '只有三團報名，並請同學參加');
+    // 复（復／複／覆）、干、后 沒有預設轉法
+    assert.equal(toTraditional('复，干，后'), '复，干，后');
+});
+
+test('模型簡繁混寫：一對一的字寫成繁體也對得上詞組（团隊、发表會）', () => {
+    assert.equal(toTraditional('補上你在干部团隊中的主要職責，以及当時最大的困難'), '補上你在幹部團隊中的主要職責，以及當時最大的困難');
+    assert.equal(toTraditional('高二我擔任熱音社干部，負責期末成果发表會。'), '高二我擔任熱音社幹部，負責期末成果發表會。');
+    assert.equal(toTraditional('檢查線路并請負責同學處理，隨后調整彩排順序'), '檢查線路並請負責同學處理，隨後調整彩排順序');
+});
+
+test('CURATED（干部、最后、准備）只在整句有簡體專用字時轉，句號、問號、換行隔開的句子各算各的', () => {
+    assert.equal(toTraditional('熱音社干部與成果发表會'), '熱音社幹部與成果發表會');
+    assert.equal(toTraditional('熱音社干部。成果发表會'), '熱音社干部。成果發表會');
+    assert.equal(toTraditional('最后一天？提早准备\n最后一天'), '最后一天？提早準備\n最后一天');
+    assert.equal(toTraditional('最后提早准備，并'), '最後提早準備，並');
+});
+
+test('詞組只改原文和鍵同一個字的位置：原文已經是繁體的字照原樣', () => {
+    // 「頭发」對得上「头发」，頭 原樣，发 照詞組轉成 髮
+    assert.equal(toTraditional('頭发'), '頭髮');
+    assert.equal(toTraditional('成果發表会'), '成果發表會');
+});
+
+test('正確的繁體文字裡和詞組長得像的詞不動，旁邊有簡體字也一樣', () => {
+    const traditional = '若干部分、不相干部門、皇后來了、皇后面前、天后宮、茶几、五公里、范仲淹、干擾、台風穩健、家具、計劃、一隻、只是、關聯系統、聯繫、准考證、批准備案、後來、頭髮、發表、隨後';
+    assert.equal(toTraditional(traditional), traditional);
+    // 同一句有簡體字時，詞組與 CURATED 也只碰得到寫成簡體的字
+    assert.equal(toTraditional(`${traditional}，发表`), `${traditional}，發表`);
 });
 
 test('「拮据」的据不轉，其他的据照轉', () => {
@@ -92,9 +157,25 @@ test('串流逐段轉換＝整段轉換：任意切法（含拮据、么跨段�
     }
 });
 
+test('串流逐段轉換＝整段轉換：詞組、擋詞、CURATED 被切開也一樣', () => {
+    const text = '熱音社干部與成果发表會。皇后来了，头发很长！最后一天\n提早准备，社团干部团隊？若干部分、饭团、并且';
+    const chars = [...text];
+    for (let cut = 0; cut <= chars.length; cut++) {
+        const convert = createTraditionalStream();
+        const streamed = convert(chars.slice(0, cut).join('')) + convert(chars.slice(cut).join('')) + convert.flush();
+        assert.equal(streamed, toTraditional(text), `切在第 ${cut} 個字`);
+    }
+    // 一個字一個字送：CURATED 要等到這句的簡體字或句尾才送出，前面已確定的部分照常送出
+    const convert = createTraditionalStream();
+    assert.equal(chars.map((ch) => convert(ch)).join('') + convert.flush(), toTraditional(text));
+    const pending = createTraditionalStream();
+    assert.equal(pending('你好。熱音社干部'), '你好。熱音社');
+    assert.equal(pending('與成果发表會。') + pending.flush(), '幹部與成果發表會。');
+});
+
 test('串流：拮 與 据 分在兩段時仍保留', () => {
     const convert = createTraditionalStream();
-    assert.equal(convert('手頭拮') + convert('据'), '手頭拮据');
+    assert.equal(convert('手頭拮') + convert('据') + convert.flush(), '手頭拮据');
 });
 
 test('串流：么 與前一個字分在兩段時，判斷與整段轉換相同（什|么 轉成麼、老|么 不轉）', () => {
@@ -131,4 +212,33 @@ test('對照表的完整性：一對一、沒有對到自己、沒有串連（�
     for (const excluded of '峰床群灶痴秘粽肴霉苧发后台里干系只面庄晒坏么') {
         assert.ok(!keys.has(excluded), `${excluded} 不該在表裡`);
     }
+});
+
+test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用字、預設轉法的字不在逐字對照裡', () => {
+    const table = new Map();
+    const chars = [...S2T_PAIRS];
+    for (let i = 0; i < chars.length; i += 2) table.set(chars[i], chars[i + 1]);
+    const simplified = new Set([...[...table.keys()].filter((ch) => !S2T_TABLE_TRADITIONAL.includes(ch)), ...S2T_SIMPLIFIED]);
+    const entries = (text) => text.split(' ').map((entry) => {
+        const c = [...entry];
+        assert.equal(c.length % 2, 0, entry);
+        return [c.slice(0, c.length / 2), c.slice(c.length / 2)];
+    });
+    const defaults = [...S2T_DEFAULTS];
+    const fallback = new Map();
+    for (let i = 0; i < defaults.length; i += 2) fallback.set(defaults[i], defaults[i + 1]);
+    // 轉法要跟逐字對照加預設轉法不同，不然不必收
+    const baseline = (key) => key.map((ch) => table.get(ch) ?? fallback.get(ch) ?? ch);
+    for (const [key, value] of entries(S2T_PHRASES)) {
+        assert.ok(key.some((ch) => simplified.has(ch)), `${key.join('')} 沒有簡體專用字`);
+        assert.notDeepEqual(baseline(key), value, key.join(''));
+    }
+    for (const [key, value] of entries(S2T_CURATED)) assert.notDeepEqual(baseline(key), value, key.join(''));
+    assert.ok(S2T_GUARDS.split(' ').length > 0);
+    for (let i = 0; i < defaults.length; i += 2) {
+        assert.ok(!table.has(defaults[i]) && S2T_SIMPLIFIED.includes(defaults[i]), `${defaults[i]} 不是一對多的簡體專用字`);
+    }
+    // 繁體也用的字不能算簡體專用字
+    for (const ch of '干后台里系只面髮後裡庄晒坏么') assert.ok(!simplified.has(ch), `${ch} 被當成簡體專用字`);
+    for (const ch of '发团当并来') assert.ok(simplified.has(ch), `${ch} 應該是簡體專用字`);
 });

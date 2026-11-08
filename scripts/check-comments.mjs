@@ -27,6 +27,7 @@ const EXCLUDED = [
     [/^public\/vendor\//, 'vendor-assets.mjs 從 node_modules 複製的檔案'],
     [/\.min\.js$/, '壓縮過的程式'],
     [/^ai-gateway\/src\/s2t-table\.mjs$/, '由 ai-gateway/scripts/build-s2t-table.mjs 產生'],
+    [/^ai-gateway\/src\/s2t-phrases\.mjs$/, '由 ai-gateway/scripts/build-s2t-phrases.mjs 產生'],
 ];
 const COMPARED_LANGS = new Set(['js', 'css', 'astro']);
 
