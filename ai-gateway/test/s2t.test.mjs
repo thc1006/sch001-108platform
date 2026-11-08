@@ -6,6 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { toTraditional, createTraditionalStream, S2T_SIZE } from '../src/s2t.mjs';
 import { S2T_PAIRS } from '../src/s2t-table.mjs';
@@ -280,4 +281,20 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
     for (const ch of '干后台里系只面髮後裡庄晒坏么') assert.ok(!simplified.has(ch), `${ch} 被當成簡體專用字`);
     for (const ch of '发团当并来确种适') assert.ok(simplified.has(ch), `${ch} 應該是簡體專用字`);
     assert.ok(!simplified.has('据'), '据 在「拮据」裡是繁體');
+});
+
+// s2t-phrases.mjs 依 s2t-table.mjs 產生（簡體專用字、擋詞都看逐字對照）。只重產其中一個時這裡會失敗
+test('兩張表出自同一版 OpenCC：commit 與 STCharacters、TWVariants 的 sha256 相同', () => {
+    const header = (file) => readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8').split('*/')[0];
+    const source = (text) => ({
+        commit: text.match(/commit ([0-9a-f]{40})/)?.[1],
+        st: text.match(/STCharacters\.txt（sha256 ([0-9a-f]{64})）/)?.[1],
+        tw: text.match(/TWVariants\.txt（sha256 ([0-9a-f]{64})）/)?.[1],
+    });
+    const table = source(header('s2t-table.mjs'));
+    assert.ok(table.commit && table.st && table.tw, '讀不到 s2t-table.mjs 的來源');
+    assert.deepEqual(source(header('s2t-phrases.mjs')), table);
+    const keys = new Set([...S2T_PAIRS].filter((_, i) => i % 2 === 0));
+    for (const ch of S2T_TABLE_TRADITIONAL) assert.ok(keys.has(ch), `${ch} 不在逐字對照裡`);
+    for (const ch of S2T_SIMPLIFIED) assert.ok(!keys.has(ch), `${ch} 已經在逐字對照裡`);
 });
