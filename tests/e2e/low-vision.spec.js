@@ -149,8 +149,8 @@ test.describe('矮視窗的篩選面板', () => {
         await expect.poll(async () => (await panel(page)).position).toBe('sticky');
     });
 
-    // 面板沒釘住時搜尋框跟著頁面捲走。停在 × 上往下捲再按 Enter，× 的 click 不捲動，
-    // 要靠 sticky-filters.js 的 focusout 把搜尋框捲回來，焦點才看得到。
+    // 面板沒釘住時搜尋框跟著頁面捲走。停在 × 上往下捲再按 Enter，要捲回搜尋框才看得到焦點。
+    // 一律 preventScroll 時搜尋框停在畫面外約 950px（CI run 42435045045）。
     test('320x256 面板沒釘住時，按 × 會捲到搜尋框', async ({ page }) => {
         await page.setViewportSize({ width: 320, height: 256 });
         await page.goto(P('advanced-resources/competitions.html'), { waitUntil: 'networkidle' });
