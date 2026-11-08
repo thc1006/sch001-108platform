@@ -128,7 +128,8 @@ for (const [key, values] of parse(phraseFile)) {
 }
 for (const key of CURATED) if (!curated.has(key)) fail(`CURATED 的 ${key} 不在 STPhrases 裡`);
 
-const norm = (s) => [...s].map((ch) => table.get(ch) ?? ch);
+// 跟 s2t-core.mjs 的 norm 相同
+const norm = (s) => [...s].map((ch) => table.get(ch) ?? DEFAULTS.get(ch) ?? ch);
 const converter = (phrases, guards = []) => createConverter({
     pairs,
     defaults: [...DEFAULTS],

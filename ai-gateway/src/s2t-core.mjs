@@ -14,9 +14,9 @@ const TERMINATORS = new Set([...'。！？!?\n']);
 export function createConverter({ pairs, defaults, phrases, curated, guards, simplified }) {
     const table = new Map(pairs);
     const fallback = new Map(defaults);
-    const norm = (ch) => table.get(ch) ?? ch;
+    const norm = (ch) => table.get(ch) ?? fallback.get(ch) ?? ch;
 
-    // 鍵以 norm 後的字存，一對一的字簡繁都對得上。不同的鍵 norm 後可能相同（六须鲇、六须鲶），
+    // 鍵以 norm 後的字存，逐字對照與預設轉法的字簡繁都對得上（繁體的「獲准」也對得上擋詞「获准」）。不同的鍵 norm 後可能相同（六须鲇、六须鲶），
     // 都留著，後加的優先。prefixes 是所有鍵的前綴（不含整個鍵），用來判斷還能不能接得更長
     const words = new Map();
     const prefixes = new Set();
