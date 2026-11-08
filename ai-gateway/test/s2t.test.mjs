@@ -63,6 +63,8 @@ test('一對多的字照詞組轉：干部、发表、团队、当天、并且�
 
 test('台灣的寫法：台灣、計畫、發布 不照 OpenCC 換成 臺灣、計劃、發佈', () => {
     assert.equal(toTraditional('台湾的计划，新版发布'), '台灣的計畫，新版發布');
+    assert.equal(toTraditional('參考書目；注释用'), '參考書目；注釋用');
+    assert.equal(toTraditional('不收脚注'), '不收腳注');
 });
 
 test('擋詞：皇后来了 的后 不跟後面的字湊成 后来', () => {
