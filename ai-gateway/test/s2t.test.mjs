@@ -57,6 +57,10 @@ test('一對多的字照詞組轉：干部、发表、团队、当天、并且�
         ['尽管如此', '儘管如此'],
         ['一分钟', '一分鐘'],
         ['台风来了', '颱風來了'],
+        // 确、种、适 逐字對照一律轉掉，也算簡體專用字，含它們的詞組才會套用
+        ['准确度', '準確度'],
+        ['用几种方法', '用幾種方法'],
+        ['适用于艺术', '適用於藝術'],
     ];
     for (const [input, expected] of cases) assert.equal(toTraditional(input), expected, input);
 });
@@ -274,5 +278,6 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
     }
     // 繁體也用的字不能算簡體專用字
     for (const ch of '干后台里系只面髮後裡庄晒坏么') assert.ok(!simplified.has(ch), `${ch} 被當成簡體專用字`);
-    for (const ch of '发团当并来') assert.ok(simplified.has(ch), `${ch} 應該是簡體專用字`);
+    for (const ch of '发团当并来确种适') assert.ok(simplified.has(ch), `${ch} 應該是簡體專用字`);
+    assert.ok(!simplified.has('据'), '据 在「拮据」裡是繁體');
 });

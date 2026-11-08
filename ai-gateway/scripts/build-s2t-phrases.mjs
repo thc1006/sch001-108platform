@@ -106,6 +106,9 @@ const traditional = new Set();
 for (const [, values] of [...characters, ...variants]) for (const value of values) for (const ch of value) traditional.add(ch);
 for (const [key, values] of characters) if (values.length === 1 && !table.has(key)) traditional.add(key);
 const simplifiedOnly = new Set(characters.map(([key]) => key).filter((key) => !traditional.has(key)));
+// 确、种、适 在 OpenCC 的繁體那一側也有，但逐字對照一律轉掉（build-s2t-table.mjs 的 CURATED），正確的
+// 繁體文字留不下這幾個字，算簡體專用字，「准确」這類詞才轉得到。据 在「拮据」裡不轉，不算
+for (const ch of '确种适') simplifiedOnly.add(ch);
 const readings = new Map(characters);
 for (const [ch, value] of DEFAULTS) {
     if (!simplifiedOnly.has(ch) || table.has(ch) || !readings.get(ch).includes(value)) fail(`DEFAULTS 的 ${ch}→${value} 不是一對多的簡體專用字`);
