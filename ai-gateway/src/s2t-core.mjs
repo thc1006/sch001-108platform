@@ -5,6 +5,8 @@
 
 // 句子的結尾。詞組的鍵只有漢字，不會跨過這些字
 const TERMINATORS = new Set([...'。！？!?\n']);
+// 一句最多算幾個字，超過就當作下一句。CURATED 要看整句有沒有簡體字，串流最多為此留這麼多字
+const MAX_SENTENCE = 50;
 
 /**
  * pairs、defaults：[簡, 繁] 的陣列，逐字對照與一對多字的預設轉法
@@ -68,41 +70,36 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
         return { ...found, open: true, waiting };
     };
 
-    // 逐段轉換。final 為 true 時把留著的全部轉完
+    // 逐段轉換。final 為 true 時把留著的全部轉完。收到的字先分句：句尾或滿 MAX_SENTENCE 個字就換下一句，
+    // 記下每句有沒有簡體專用字（還沒收完、也還沒看到簡體字的句子是 undefined）。整段和串流分句的結果相同
     const createRun = () => {
-        let pending = [];
+        let pending = []; // 還沒轉出去的字，和每個字屬於第幾句
+        let sentenceOf = [];
         let previous = '';
-        let tainted = false; // 這一句已經轉出去的部分有沒有簡體專用字
+        const taint = new Map();
+        let sentence = 0;
+        let length = 0;
+        const close = () => {
+            if (taint.get(sentence) === undefined) taint.set(sentence, false);
+            sentence++;
+            length = 0;
+        };
         return (input, final) => {
             const chars = [...pending, ...input];
+            const sentences = sentenceOf;
+            for (const ch of input) {
+                sentences.push(sentence);
+                if (simplified.has(ch)) taint.set(sentence, true);
+                length++;
+                if (TERMINATORS.has(ch) || length === MAX_SENTENCE) close();
+            }
+            if (final && length > 0) close();
             let out = '';
             let i = 0;
-            let known = -1; // chars[i, known) 屬於同一句，且整句是否有簡體專用字已經查過
-            let knownTaint = false;
             while (i < chars.length) {
-                let sentence = tainted;
-                if (!sentence) {
-                    if (i >= known) {
-                        knownTaint = undefined;
-                        let k = i;
-                        for (; k < chars.length; k++) {
-                            if (TERMINATORS.has(chars[k])) {
-                                knownTaint = false;
-                                break;
-                            }
-                            if (simplified.has(chars[k])) {
-                                knownTaint = true;
-                                break;
-                            }
-                        }
-                        if (knownTaint === undefined && final) knownTaint = false;
-                        known = k;
-                    }
-                    sentence = knownTaint;
-                }
-                const { length, entry, open, waiting } = longest(chars, i, sentence);
+                const { length: matched, entry, open, waiting } = longest(chars, i, taint.get(sentences[i]));
                 if (!final && (open || waiting)) break;
-                const step = Math.max(length, 1);
+                const step = Math.max(matched, 1);
                 const key = entry?.value && [...entry.key];
                 const value = entry?.value && [...entry.value];
                 for (let k = i; k < i + step; k++) {
@@ -110,12 +107,12 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
                     // 原文和鍵同一個字的位置照詞組轉；原文寫成繁體（或另一個簡體寫法）的字照逐字對照
                     out += key && ch === key[k - i] ? value[k - i] : convertChar(ch, previous);
                     previous = ch;
-                    if (TERMINATORS.has(ch)) tainted = false;
-                    else if (simplified.has(ch)) tainted = true;
                 }
                 i += step;
             }
             pending = chars.slice(i);
+            sentenceOf = sentences.slice(i);
+            for (const id of taint.keys()) if (id < (sentenceOf[0] ?? sentence)) taint.delete(id);
             return out;
         };
     };
