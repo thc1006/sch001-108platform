@@ -951,6 +951,8 @@ export function createGateway({
         let tokensSeen = false;
         // 斷路器斷開之後去試的任務才有（breaker.enter() 的回傳值）
         let breakerTrial = null;
+        // 文字任務：簡轉繁先留著、還沒送出的字。失敗時也要送出，片段才是已寫的全部
+        let flushDelta = () => {};
         // 回應結束前連線就斷了：使用者關分頁或按停止。立刻中止上游，不讓 GPU 白做工
         res.on('close', () => {
             if (!res.writableFinished) abort.abort();
@@ -1024,6 +1026,7 @@ export function createGateway({
                 firsts.delta ??= Date.now();
                 send('delta', { text });
             };
+            flushDelta = () => sendDelta(traditional.flush());
             generationStarted = true;
             // 任務自己的時限比較短時用它（tasks.mjs 的 timeoutMs）
             const taskLlm = task.timeoutMs < llm.taskTimeoutMs ? { ...llm, taskTimeoutMs: task.timeoutMs } : llm;
@@ -1083,6 +1086,7 @@ export function createGateway({
                     retryAfter: failure.retryAfter,
                 };
                 if (res.headersSent) {
+                    flushDelta();
                     send('error', payload);
                 } else if (!res.writableEnded) {
                     // 還沒開始串流就出錯（不該發生，但發生時不能讓請求永遠等不到回應）
