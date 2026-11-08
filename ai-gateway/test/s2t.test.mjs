@@ -222,6 +222,29 @@ test('串流逐段轉換＝整段轉換：詞組、擋詞、CURATED 被切開也
     assert.equal(pending('與成果发表會。') + pending.flush(), '幹部與成果發表會。');
 });
 
+// 前兩個字本身不是詞、三個字以上才是詞的鍵（一干二净、一去不复返）：可能接成更長的詞時，結尾的字
+// 都要留著，只留一個字就會轉錯
+test('串流逐段轉換＝整段轉換：三個字以上的詞組被隨機切開也一樣', () => {
+    const text = '他一干二净地走了，一去不复返。等一分钟，一干二净😀一去不复返吧；万事俱备只欠东风，一发不可收拾';
+    const units = text.split('');
+    for (let seed = 1; seed <= 300; seed++) {
+        let s = seed;
+        const rand = () => {
+            s = (s * 1103515245 + 12345) % 2 ** 31;
+            return s / 2 ** 31;
+        };
+        const convert = createTraditionalStream();
+        let streamed = '';
+        for (let i = 0; i < units.length;) {
+            const size = 1 + Math.floor(rand() * 5);
+            streamed += convert(units.slice(i, i + size).join(''));
+            i += size;
+        }
+        assert.equal(streamed + convert.flush(), toTraditional(text), `seed ${seed}`);
+    }
+    assert.equal(toTraditional('他一干二净，一去不复返'), '他一乾二淨，一去不復返');
+});
+
 test('串流：拮 與 据 分在兩段時仍保留', () => {
     const convert = createTraditionalStream();
     assert.equal(convert('手頭拮') + convert('据') + convert.flush(), '手頭拮据');
