@@ -3654,6 +3654,23 @@ test('maxOutputChars 交給 generate（maxContentChars）；generate 沒擋下�
     }
 });
 
+test('文字任務失敗時，清字元與簡轉繁留著的字也送出：結尾的 \\r 照樣換成換行', async () => {
+    const gw = await startGateway({
+        generate: async (request, hooks) => {
+            hooks.onContent('答案：最后\r');
+            throw new GenerationError('incomplete', '用完輪數');
+        },
+    });
+    try {
+        const events = await readEvents(await post(gw.base, 'demo-md', { question: 'q' }));
+        assert.equal(deltaText(events), '答案：最后\n');
+        assert.equal(events.at(-1).event, 'error');
+        assert.equal(events.at(-1).data.code, 'incomplete');
+    } finally {
+        await gw.stop();
+    }
+});
+
 /** 送出任務請求之後完全不讀回應的用戶端：沒有 data 的監聽，緩衝滿了 TCP 視窗就是零 */
 async function silentClient(port, task, input) {
     const socket = net.connect(port, '127.0.0.1');
