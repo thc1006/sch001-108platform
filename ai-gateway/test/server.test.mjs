@@ -3641,7 +3641,7 @@ test('maxOutputChars 交給 generate（maxContentChars）；generate 沒擋下�
     try {
         const events = await readEvents(await post(gw.base, 'demo-capped', { question: 'q' }));
         assert.equal(gw.calls[0].request.maxContentChars, 20);
-        // 最後一個字可能是詞的開頭，簡轉繁先留著，失敗時才送出，所以可能分成兩個片段
+        // 最後一個字可能是詞的開頭，簡轉繁留到 generate 結束時才送出，所以可能分成兩個片段
         assert.equal(deltaText(events), long);
         assert.equal(events.at(-1).data.code, 'incomplete');
         assert.equal(events.at(-1).data.message, 'AI 的回答太長，沒有寫完。請把範圍縮小一點再試。');
