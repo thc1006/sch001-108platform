@@ -6,7 +6,7 @@
 // 句子的結尾。詞組的鍵只有漢字，不會跨過這些字
 const TERMINATORS = new Set([...'。！？!?\n']);
 // 一句最多算幾個字，超過就當作下一句。CURATED 要看整句有沒有簡體字，串流最多為此留這麼多字
-const MAX_SENTENCE = 50;
+const MAX_SENTENCE = 100;
 
 /**
  * pairs、defaults：[簡, 繁] 的陣列，逐字對照與一對多字的預設轉法
