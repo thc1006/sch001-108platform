@@ -128,6 +128,16 @@ test('預設轉法的字寫成繁體也對得上擋詞：繁體的「獲准」�
     assert.equal(toTraditional('獲准備案这样'), '獲准備案這樣');
 });
 
+test('一句最多算 50 個字：CURATED 只看同一段裡有沒有簡體字，串流最多為此留 50 個字', () => {
+    const long = '大'.repeat(60);
+    assert.equal(toTraditional(`最后${'大'.repeat(40)}这`), `最後${'大'.repeat(40)}這`);
+    assert.equal(toTraditional(`最后${long}这`), `最后${long}這`);
+    const convert = createTraditionalStream();
+    const first = convert(`最后${long}`);
+    assert.ok([...first].length >= 50, `只送出 ${[...first].length} 個字`);
+    assert.equal(first + convert('这') + convert.flush(), `最后${long}這`);
+});
+
 test('詞組只改原文和鍵同一個字的位置：原文已經是繁體的字照原樣', () => {
     // 「頭发」對得上「头发」，頭 原樣，发 照詞組轉成 髮
     assert.equal(toTraditional('頭发'), '頭髮');
