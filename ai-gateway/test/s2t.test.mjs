@@ -74,6 +74,14 @@ test('擋詞：皇后来了 的后 不跟後面的字湊成 后来', () => {
     assert.equal(toTraditional('若干部分要发表'), '若干部分要發表');
 });
 
+test('系所、系統、系列 的 系 不跟前面的 关 湊成 关系；相关系数 照樣轉成 係數', () => {
+    assert.equal(toTraditional('相关系所的课程'), '相關系所的課程');
+    assert.equal(toTraditional('相关系统、有关系统'), '相關系統、有關系統');
+    assert.equal(toTraditional('读相关系列书籍'), '讀相關系列書籍');
+    assert.equal(toTraditional('相关系数'), '相關係數');
+    assert.equal(toTraditional('没有关系，有关系吗'), '沒有關係，有關係嗎');
+});
+
 test('沒有詞組命中的一對多字：S2T_DEFAULTS 的字照預設轉，其他的不動', () => {
     assert.equal(toTraditional('只有三团报名，并请同学参加'), '只有三團報名，並請同學參加');
     // 复（復／複／覆）、干、后 沒有預設轉法
