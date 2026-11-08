@@ -304,9 +304,9 @@ test('star-analysis：指令寫明總評、各項評論與建議、修改範例�
     assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
 });
 
-test('star-analysis：修改範例不自己編心得裡沒有的細節，用「（填入…）」標出要補的地方', () => {
+test('star-analysis：修改範例不把「我們」改成「我」、不自己編心得裡沒有的細節，「（填入…）」最多兩處', () => {
     const { instructions } = catalog.get('star-analysis');
-    assert.match(instructions, /revised_example：[^\n]*心得裡沒有的人數、時間、名次與成果不要自己編，用「（填入[^」]+）」/);
+    assert.match(instructions, /revised_example：[^\n]*。心得寫「我們」或沒寫是誰做的，不要改成「我」，也不要加上心得裡沒有的人。心得裡沒有的做法、人數、時間、名次與成果不要自己編，最多用兩處「（填入參加人數）」這樣的括號標出要補的地方，其他沒寫的就不寫$/m);
 });
 
 test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
