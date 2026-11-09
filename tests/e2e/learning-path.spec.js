@@ -35,7 +35,7 @@ const RESULT = {
         {
             title: '完成小專題',
             description: '選一個你關心的主題，把抓到的資料整理成表格或圖表。',
-            resource_type: '實作專案',
+            resource_type: 'pandas 官方文件',
             actionable_suggestion: '把結果存成 CSV，再用 pandas 畫出一張趨勢圖。',
         },
     ],

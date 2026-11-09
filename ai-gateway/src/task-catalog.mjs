@@ -271,6 +271,7 @@ export const TASK_DEFINITIONS = [
     {
         // 自主學習 › 學習資源地圖的「AI 規劃學習路徑」（src/pages/autonomous-learning/resource-map.astro）。
         // 步驟編號由頁面依陣列順序給，不讓模型寫：schema 管不住編號是否連續。
+        // resource_type 先列出頁面「資源類型」篩選的類型，名稱和頁面一致，test/task-catalog.test.mjs 比對。
         id: 'learning-path',
         input: {
             topic: { label: '學習主題', maxLength: 100 },
@@ -279,7 +280,7 @@ export const TASK_DEFINITIONS = [
             '請為一位想自主學習的台灣高中生，依他的「學習主題」規劃一份剛好 4 個步驟的學習路徑（learning_path），步驟依學習的先後順序排列。每個步驟包含：',
             '- title：步驟標題，約 4～15 字',
             '- description：步驟描述，說明這一步要學什麼，一到兩句，約 30～80 字',
-            '- resource_type：建議的資源類型，只寫簡短的類型名稱（約 2～10 字），不要加說明，例如：線上課程、知識型影片、閱讀材料、互動模擬實驗',
+            '- resource_type：建議的資源類型，只寫簡短的類型名稱（約 2～10 字），不要加說明。寫學生可以找來用的資源：線上課程、知識型影片、知識型 Podcast、閱讀材料、互動模擬實驗、數位博物館與典藏，或更具體的名稱，例如圖鑑、工具書；不要寫練習或活動',
             '- actionable_suggestion：一個具體的行動建議，並附上相關的搜尋關鍵字，一到兩句，約 30～100 字',
         ].join('\n'),
         output: {
