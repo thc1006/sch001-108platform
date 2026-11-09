@@ -219,6 +219,13 @@ test('system 訊息裡沒有粗體記號', () => {
 });
 
 const CAREER_PAGE = readFileSync(new URL('../../src/pages/career-exploration/index.astro', import.meta.url), 'utf8');
+const CLUSTERS_TS = readFileSync(new URL('../../src/data/clusters.ts', import.meta.url), 'utf8');
+// 本站學群名稱對 ColleGo! 學群名稱、本站學群名稱對簡介，都取自 src/data/clusters.ts
+const COLLEGO_NAME = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bcollegoName: '([^']+)'/g)].map((m) => [m[1], m[2]]));
+const CLUSTER_DESCRIPTION = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bdescription: '([^']+)'/g)].map((m) => [m[1], m[2]]));
+// ColleGo! 認識學群的 18 個學群（2026-11-10 查 CollegeIntro?current_college_id=1～18 的標題）
+const COLLEGO_CLUSTERS = ['資訊學群', '工程學群', '數理化學群', '醫藥衛生學群', '生命科學學群', '生物資源學群', '地球環境學群', '建築設計學群', '藝術學群',
+    '社會心理學群', '大眾傳播學群', '外語學群', '文史哲學群', '教育學群', '法政學群', '管理學群', '財經學群', '遊憩運動學群'];
 
 test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相同；文字任務、不設溫度（頁面原本沒設）', () => {
     const task = catalog.get('career-chat');
@@ -238,10 +245,10 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /具體的下一步探索建議/);
     assert.match(instructions, /學生說不出興趣時，從日常喜歡做的事或擅長的科目幫他找線索，先不推薦學群。/);
     assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不用推薦學群。$/m);
-    // 資料以外的學群列出 ColleGo! 的名稱，和資料裡的學群加起來是 18 個
-    const count = instructions.split('\n---\n')[1].split('\n\n').length;
-    const others = instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的是(.+)學群。$/m)?.[1].split('、') ?? [];
-    assert.equal(count + others.length, 18);
+    // 資料裡的學群換成 ColleGo! 的名稱（clusters.ts 的 collegoName），加上列出的其他學群，要剛好是 ColleGo! 的 18 個
+    const names = [...instructions.split('\n---\n')[1].matchAll(/^學群：(.+)$/gm)].map((m) => COLLEGO_NAME.get(m[1]));
+    const others = instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的是(.+)學群。$/m)?.[1].split('、').map((n) => `${n}學群`) ?? [];
+    assert.deepEqual([...names, ...others].sort(), [...COLLEGO_CLUSTERS].sort());
     assert.match(instructions, /^學生的興趣對到這些學群時，照實說這裡沒有它的資料，請他到 ColleGo! 看那個學群。$/m);
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
@@ -266,8 +273,14 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
         `常見出路（舉例）：${c.careers.join('、')}`,
     ].join('\n'));
     // 學群資料夾在兩行 --- 之間，逐塊比對：多一個、少一個、順序不同或欄位多了字都會不一樣。
-    const section = instructions.split('\n---\n')[1] ?? '';
-    assert.deepEqual(section.split('\n\n'), blocks);
+    // 法政學群科系羅盤還沒有，排在最後，簡介和 clusters.ts 比對；羅盤補上後這個例外就要拿掉。
+    const section = (instructions.split('\n---\n')[1] ?? '').split('\n\n');
+    assert.deepEqual(section.slice(0, blocks.length), blocks);
+    assert.deepEqual(section.slice(blocks.length).map((b) => b.match(/^學群：(.+)$/m)?.[1]), ['法政學群']);
+    for (const block of section) {
+        const name = block.match(/^學群：(.+)$/m)[1];
+        assert.equal(block.match(/^簡介：(.+)$/m)?.[1], CLUSTER_DESCRIPTION.get(name), name);
+    }
 });
 
 test('科系羅盤的學群簡介與 src/data/clusters.ts 一字不差', () => {
