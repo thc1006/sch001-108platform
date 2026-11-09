@@ -238,9 +238,11 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /具體的下一步探索建議/);
     assert.match(instructions, /學生說不出興趣時，從日常喜歡做的事或擅長的科目幫他找線索，先不推薦學群。/);
     assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不用推薦學群。$/m);
-    // 學群數跟著資料走；ColleGo! 列了 18 個學群（2026-11-09 查）
+    // 資料以外的學群列出 ColleGo! 的名稱，和資料裡的學群加起來是 18 個
     const count = instructions.split('\n---\n')[1].split('\n\n').length;
-    assert.match(instructions, new RegExp(`^學生的興趣對不到上面的學群時，照實說這裡只有這 ${count} 個學群的資料，再請他到 ColleGo! 看全部 18 個學群。$`, 'm'));
+    const others = instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的是(.+)學群。$/m)?.[1].split('、') ?? [];
+    assert.equal(count + others.length, 18);
+    assert.match(instructions, /^學生的興趣對到這些學群時，照實說這裡沒有它的資料，請他到 ColleGo! 看那個學群。$/m);
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
