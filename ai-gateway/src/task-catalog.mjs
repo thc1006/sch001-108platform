@@ -176,6 +176,9 @@ export const TASK_DEFINITIONS = [
         // 自主學習 › 計畫範本庫的「AI 草擬學習計畫」（src/pages/autonomous-learning/plan-templates.astro）。
         // 頁面只送主題，計畫固定 8 週，和頁面上的範本相同。week 只能是四個標籤之一，模型寫不出
         // Week 3-5 這種週次；items 只能是單一 schema，表達不了標籤的順序，由 output.check 檢查。
+        // 頁面不知道學生住哪裡、手邊有什麼，所以有最後一行。2026-11-09、11-10 在 qwen3.8-flash-next 上實測：
+        // 寫「住家附近」「每週」會被照抄；要每份都寫網路替代時，水溝沒有了試紙和現場觀察；只寫不用花錢時，
+        // 水彩改在報紙上練。方法不寫頻率，就不會有方法寫每週、週次只排一段的情形。
         id: 'study-plan',
         input: {
             topic: { label: '自主學習主題', maxLength: 100 },
@@ -186,6 +189,7 @@ export const TASK_DEFINITIONS = [
             '- execution_methods：2～3 個執行方法，每個方法一句話，寫出具體要做什麼，約 15～50 字',
             '- weekly_plan：把 8 週分成 4 個階段，每個階段兩週，week 依序寫 Week 1-2、Week 3-4、Week 5-6、Week 7-8；tasks 寫這兩週要完成的具體任務，一到兩句，約 20～60 字',
             '- expected_outcome：2～3 個預期產出，每個寫出具體的成品或成果，約 10～40 字',
+            '做法要讓手邊資源少的學生也做得到：主題本身少不了的用品照常寫，其他用家裡或學校借得到的東西，學生不用另外花錢；只有特定店家、機構才看得到的，寫出改用網路資料的做法。用高中生看得懂的白話，用到專業名詞時順便用幾個字說明。execution_methods 不寫頻率，要重複做的事和次數寫在 weekly_plan 裡。',
         ].join('\n'),
         output: {
             type: 'json',
