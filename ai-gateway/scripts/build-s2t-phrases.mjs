@@ -221,6 +221,7 @@ for (let start = 0; start < byLength.length;) {
 }
 
 // 擋詞：有收進來的詞從它中間開始（或從同一個位置開始但比它短），而且會把它範圍內的字轉得跟它不同
+const bridges = new Map();
 function findGuards() {
     const byPrefix = new Map();
     for (const [key, value] of [...kept, ...curated]) {
@@ -252,30 +253,41 @@ function findGuards() {
         return false;
     };
     const found = [...others].filter(([key, value]) => value === baseline(key) && guarded(key, value)).map(([key]) => key);
+    // 「詞組＋常用詞的其餘的字」：轉法是詞組的轉法、最後一個字改回原字。和逐字對照相同就當擋詞，
+    // 不同（个钟表现 的 钟 要轉成 鐘）就收成詞組，不然擋詞會連詞組前面該轉的字一起擋掉
     const continued = [];
+    bridges.clear();
     for (const [key, value] of [...kept, ...curated]) {
         const last = [...key].at(-1);
         if (simplifiedOnly.has(last) || [...value].at(-1) === last || key === '杂志') continue;
-        for (const word of continueWords) if ([...word][0] === last) continued.push(key + [...word].slice(1).join(''));
+        for (const word of continueWords) {
+            if ([...word][0] !== last) continue;
+            const rest = [...word].slice(1).join('');
+            const bridged = [...value].slice(0, -1).join('') + last + rest;
+            if (curated.has(key) || bridged === baseline(key + rest)) continued.push(key + rest);
+            else bridges.set(key + rest, bridged);
+        }
     }
     // CURATED 的繁體寫法也佔住位置：繁體的 後 對不上 后面，「後面团队」的 面 才不會被 面团 拿走
     const traditional = [...curated.values(), '計劃'];
     // 已經是詞組的鍵不必再當擋詞：同一個鍵時詞組先試，擋詞輪不到（尽头 本身就是 盡頭）
-    return [...new Set([...found, ...GUARD_WORDS, ...continued, ...traditional])].filter((key) => !kept.has(key) && !curated.has(key));
+    return [...new Set([...found, ...GUARD_WORDS, ...continued, ...traditional])]
+        .filter((key) => !kept.has(key) && !curated.has(key) && !bridges.has(key));
 }
+const withBridges = () => new Map([...kept, ...bridges]);
 
 // 加上擋詞後再驗一次：轉錯的詞收回來，直到全部轉對
 let guards = findGuards();
 for (;;) {
-    const { toTraditional } = converter(kept, guards);
+    const { toTraditional } = converter(withBridges(), guards);
     const wrong = [...candidates].filter(([key, value]) => !kept.has(key) && toTraditional(key) !== value);
     if (wrong.length === 0) break;
     for (const [key, value] of wrong) kept.set(key, value);
     guards = findGuards();
 }
 {
-    const { toTraditional } = converter(kept, guards);
-    const wrong = [...kept].filter(([key, value]) => toTraditional(key) !== value);
+    const { toTraditional } = converter(withBridges(), guards);
+    const wrong = [...withBridges()].filter(([key, value]) => toTraditional(key) !== value);
     if (wrong.length) fail(`收進來的詞轉不對：${wrong.slice(0, 10).join('、')}`);
 }
 
@@ -284,7 +296,7 @@ const list = (map) => [...map].sort(([a], [b]) => byCode(a, b)).map(([k, v]) => 
 const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
 
 process.stdout.write(`/**
- * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size} 條、CURATED ${curated.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
+ * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${curated.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
  * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
  *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 ${sha(fileURLToPath(import.meta.url))}）
  *   ai-gateway/src/s2t-table.mjs（sha256 ${sha(fileURLToPath(new URL('../src/s2t-table.mjs', import.meta.url)))}）
@@ -302,7 +314,7 @@ process.stdout.write(`/**
  * 指定 ${[...CURATED].join('、')} 在整句有簡體字時轉換；
  * 一對多字的預設轉法 ${[...DEFAULTS].map(([k, v]) => k + '→' + v).join('、')}。
  */
-export const S2T_PHRASES = '${list(kept)}';
+export const S2T_PHRASES = '${list(withBridges())}';
 export const S2T_CURATED = '${list(curated)}';
 export const S2T_GUARDS = '${guards.sort(byCode).join(' ')}';
 export const S2T_DEFAULTS = '${[...DEFAULTS].map(([k, v]) => k + v).join('')}';
