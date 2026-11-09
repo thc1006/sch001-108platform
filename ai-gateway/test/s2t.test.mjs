@@ -182,11 +182,17 @@ test('一句最多算 100 個字：CURATED 只看同一段裡有沒有簡體字�
     const first = convert(`最后${long}`);
     assert.ok([...first].length >= 100, `只送出 ${[...first].length} 個字`);
     assert.equal(first + convert('这') + convert.flush(), `最后${long}這`);
+    // 前面已經有一句時，下一句也從 0 算起
+    const later = createTraditionalStream();
+    const head = later(`你好。${'大'.repeat(200)}最后${long}`);
+    assert.ok([...head].length >= 3 + 200 + 100, `只送出 ${[...head].length} 個字`);
 });
 
 test('詞組只改原文和鍵同一個字的位置：原文已經是繁體的字照原樣', () => {
     // 「頭发」對得上「头发」，頭 原樣，发 照詞組轉成 髮
     assert.equal(toTraditional('頭发'), '頭髮');
+    // 原文已經寫成繁體、而且和詞組的轉法不同的字（抬头 是擋詞，头发 的 发 這裡寫成 發）照原樣
+    assert.equal(toTraditional('抬头發现问题'), '抬頭發現問題');
     assert.equal(toTraditional('成果發表会'), '成果發表會');
 });
 
@@ -255,10 +261,14 @@ test('串流逐段轉換＝整段轉換：任意切法（含拮据、么跨段�
 test('串流逐段轉換＝整段轉換：詞組、擋詞、CURATED 被切開也一樣', () => {
     const text = '熱音社干部與成果发表會。皇后来了，头发很长！最后一天\n提早准备，社团干部团隊？若干部分、饭团、并且';
     const chars = [...text];
-    for (let cut = 0; cut <= chars.length; cut++) {
-        const convert = createTraditionalStream();
-        const streamed = convert(chars.slice(0, cut).join('')) + convert(chars.slice(cut).join('')) + convert.flush();
-        assert.equal(streamed, toTraditional(text), `切在第 ${cut} 個字`);
+    // 第二句：簡體字先出現，CURATED 的詞在段尾、還可能接成更長的詞，前一句的 taint 不能被提早清掉
+    for (const sample of [text, '这是最后一天。我们以后一定会更好']) {
+        const c = [...sample];
+        for (let cut = 0; cut <= c.length; cut++) {
+            const convert = createTraditionalStream();
+            const streamed = convert(c.slice(0, cut).join('')) + convert(c.slice(cut).join('')) + convert.flush();
+            assert.equal(streamed, toTraditional(sample), `${sample} 切在第 ${cut} 個字`);
+        }
     }
     // 一個字一個字送：CURATED 要等到這句的簡體字或句尾才送出，前面已確定的部分照常送出
     const convert = createTraditionalStream();

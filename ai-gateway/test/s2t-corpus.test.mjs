@@ -75,12 +75,13 @@ test('repo 裡的繁體文字跑過簡轉繁，一個字都不變', () => {
 test('每句結尾加一個簡體字：只有那個字被轉，句子原本的字不變', () => {
     const changed = [];
     for (const sentence of SENTENCES) {
-        const out = toTraditional(`${sentence}这`);
-        if (out !== `${sentence}這`) {
-            const chars = [...sentence];
-            const o = [...out];
-            const at = chars.findIndex((ch, i) => ch !== o[i]);
-            changed.push(`「${around(chars, at)}」→「${around(o, at)}」`);
+        // 一句最多算 100 個字（s2t-core.mjs 的 MAX_SENTENCE），長句切成 99 字一段，每段都測到
+        const chars = [...sentence];
+        for (let start = 0; start < chars.length; start += 99) {
+            const piece = chars.slice(start, start + 99);
+            const out = [...toTraditional(`${piece.join('')}这`)];
+            const at = piece.findIndex((ch, i) => ch !== out[i]);
+            if (at >= 0) changed.push(`「${around(piece, at)}」→「${around(out, at)}」`);
         }
     }
     assert.ok(SENTENCES.length >= 10000, `只有 ${SENTENCES.length} 句`);
