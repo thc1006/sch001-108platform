@@ -174,12 +174,14 @@ test('starter-pack 與 career-chat：只有零寬空白的答案不收', () => {
 
 // schema 的 maxLength 是 guided decoding 的硬截斷（見 tasks.mjs 檔頭）：指令沒說長度時，模型把
 // 資源類型寫成長篇說明、被切在 50 字，學生看到半句話。長度要求才是真正的防線，maxLength 只當保險。
-// 資源類型的例子會被照抄，例子和要求都是高中生不用花錢就找得到的資源
+// 資源類型的例子會被照抄，所以要求和例子都是高中生不用花錢就找得到的資源，例子要換就連這裡一起改
 test('starter-pack：指令要求探索問題每個一句話、資源類型只寫簡短的名稱，而且不用花錢就找得到', () => {
     const { instructions } = catalog.get('starter-pack');
     assert.match(instructions, /research_questions：[^\n]*每個問題一句話/);
-    assert.match(instructions, /resource_types：[^\n]*不用花錢就找得到[^\n]*簡短[^\n]*不要加說明/);
-    assert.doesNotMatch(instructions, /學術論文/);
+    const line = instructions.split('\n').find((l) => l.startsWith('- resource_types：'));
+    assert.match(line, /簡短[^\n]*不要加說明/);
+    assert.match(line, /不用花錢就找得到/);
+    assert.deepEqual(line.match(/例如：(.+)等$/)?.[1].split('、'), ['圖書館的書', '知識型影片', '政府開放資料', '訪談身邊的人']);
 });
 
 test('competency-analysis：活動經驗最多 1000 字（頁面的輸入框同樣限制 1000）；文字任務、溫度 0.5', () => {
