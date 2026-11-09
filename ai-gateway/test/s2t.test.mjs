@@ -6,6 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { toTraditional, createTraditionalStream, S2T_SIZE } from '../src/s2t.mjs';
@@ -395,4 +396,14 @@ test('兩張表出自同一版 OpenCC：commit 與 STCharacters、TWVariants 的
     const keys = new Set([...S2T_PAIRS].filter((_, i) => i % 2 === 0));
     for (const ch of S2T_TABLE_TRADITIONAL) assert.ok(keys.has(ch), `${ch} 不在逐字對照裡`);
     for (const ch of S2T_SIMPLIFIED) assert.ok(!keys.has(ch), `${ch} 已經在逐字對照裡`);
+});
+
+// 改了產生腳本的清單（CONTINUE、REJECT…）或逐字對照，卻忘了重產 s2t-phrases.mjs 時這裡會失敗
+test('s2t-phrases.mjs 是用現在的產生腳本與逐字對照產生的', () => {
+    const text = readFileSync(new URL('../src/s2t-phrases.mjs', import.meta.url), 'utf8').split('*/')[0];
+    for (const file of ['scripts/build-s2t-phrases.mjs', 'src/s2t-table.mjs']) {
+        const recorded = text.match(new RegExp(`ai-gateway/${file.replace('.', '\\.')}（sha256 ([0-9a-f]{64})）`))?.[1];
+        const actual = createHash('sha256').update(readFileSync(new URL(`../${file}`, import.meta.url))).digest('hex');
+        assert.equal(recorded, actual, `${file} 改過，要重新產生 s2t-phrases.mjs（指令見產生腳本開頭）`);
+    }
 });

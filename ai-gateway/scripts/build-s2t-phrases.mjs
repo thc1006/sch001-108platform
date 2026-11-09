@@ -27,6 +27,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 import { createConverter } from '../src/s2t-core.mjs';
 import { S2T_PAIRS } from '../src/s2t-table.mjs';
@@ -275,7 +276,9 @@ const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('he
 
 process.stdout.write(`/**
  * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size} 條、CURATED ${curated.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
- * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。
+ * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
+ *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 ${sha(fileURLToPath(import.meta.url))}）
+ *   ai-gateway/src/s2t-table.mjs（sha256 ${sha(fileURLToPath(new URL('../src/s2t-table.mjs', import.meta.url)))}）
  *
  * 衍生自 OpenCC（${SOURCE.repo}）commit ${SOURCE.commit}：
  *   ${SOURCE.files[0]}（sha256 ${sha(stFile)}）
