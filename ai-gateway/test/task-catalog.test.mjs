@@ -517,6 +517,24 @@ test('learning-path：指令要求剛好 4 個步驟、依先後排列（頁面�
     }
 });
 
+// resource_type 先列出學習資源地圖「資源類型」篩選的選項，指令列出的名稱和頁面篩選的選項一樣。閘道的映像檔裡
+// 沒有頁面，只能自己抄一份，靠這個測試防止和頁面漂移。例子會被照抄，清單、例子和「不要寫練習或活動」整串比對，
+// 例子要換就連這裡一起改
+test('learning-path：resource_type 列出學習資源地圖篩選的類型，不要練習或活動', () => {
+    const { instructions } = catalog.get('learning-path');
+    const page = readFileSync(new URL('../../src/pages/autonomous-learning/resource-map.astro', import.meta.url), 'utf8');
+    const select = page.match(/<select id="type-filter"[^>]*>([\s\S]*?)<\/select>/)?.[1] ?? '';
+    const tags = select.match(/<option\b/g) ?? [];
+    const all = [...select.matchAll(/<option value="([^"]+)">([^<]*)<\/option>/g)];
+    assert.equal(all.length, tags.length, '有選項不是 <option value="X">X</option> 的寫法，測試讀不到');
+    const options = all.filter(([, value]) => value !== 'all');
+    assert.ok(options.length > 0, '頁面上找不到資源類型的選項');
+    for (const [, value, label] of options) assert.equal(label, value, '篩選的 value 和學生看到的字不同');
+    const line = instructions.split('\n').find((l) => l.startsWith('- resource_type：'));
+    assert.ok(line, '找不到 resource_type 那一行');
+    assert.ok(line.includes(`：${options.map(([, value]) => value).join('、')}，或更具體的名稱，例如圖鑑、工具書；不要寫練習或活動`), line);
+});
+
 test('topic-ideas：興趣關鍵字最多 100 字（頁面的輸入框同樣限制 100）', () => {
     const task = catalog.get('topic-ideas');
     assert.equal(validateInput(task, { interests: '旅'.repeat(100) }).interests.length, 100);
