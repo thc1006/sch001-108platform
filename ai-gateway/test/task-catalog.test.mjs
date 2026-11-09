@@ -445,6 +445,11 @@ test('star-analysis：修改範例不把「我們」改成「我」、不自己�
     assert.doesNotMatch(instructions, /參加人數/);
 });
 
+test('star-analysis：suggestion 不提括號和修改範例的寫法', () => {
+    const { instructions } = catalog.get('star-analysis');
+    assert.match(instructions, /^- analysis：[^\n]*。suggestion 直接寫要補什麼、怎麼改，不提括號和修改範例的寫法$/m);
+});
+
 test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
     const task = catalog.get('study-plan');
     assert.equal(validateInput(task, { topic: '飲'.repeat(100) }).topic.length, 100);
