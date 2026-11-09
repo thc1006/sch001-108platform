@@ -352,6 +352,9 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
         assert.notDeepEqual(baseline(key), value, key.join(''));
     }
     for (const [key, value] of entries(S2T_CURATED)) assert.notDeepEqual(baseline(key), value, key.join(''));
+    // 擋詞和詞組同一個鍵時詞組先試，那條擋詞沒有作用
+    const keys = new Set([...entries(S2T_PHRASES), ...entries(S2T_CURATED)].map(([key]) => key.join('')));
+    for (const guard of S2T_GUARDS.split(' ')) assert.ok(!keys.has(guard), `擋詞 ${guard} 也是詞組`);
     assert.ok(S2T_GUARDS.split(' ').length > 0);
     for (let i = 0; i < defaults.length; i += 2) {
         assert.ok(!table.has(defaults[i]) && S2T_SIMPLIFIED.includes(defaults[i]), `${defaults[i]} 不是一對多的簡體專用字`);
