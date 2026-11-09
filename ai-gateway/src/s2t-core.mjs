@@ -46,7 +46,8 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
 
     /**
      * chars[start] 開始最長、可以套用的詞：擋詞一律可以；PHRASES 要比對到的那段原文有簡體專用字；
-     * CURATED 要整句有簡體專用字（tainted 是 undefined 表示這句還沒收完，不知道）。
+     * CURATED 要整句有簡體專用字（tainted 是 undefined 表示這句還沒收完，不知道；final 時不再等，
+     * 當作沒有）。
      * open：走到 chars 結尾時還可能接成更長的詞；waiting：有 CURATED 的詞要等整句收完才知道能不能用。
      */
     const longest = (chars, start, tainted) => {
@@ -93,7 +94,6 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
                 length++;
                 if (TERMINATORS.has(ch) || length === MAX_SENTENCE) close();
             }
-            if (final && length > 0) close();
             let out = '';
             let i = 0;
             while (i < chars.length) {
