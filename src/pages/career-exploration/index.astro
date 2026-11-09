@@ -61,6 +61,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 <p id="chat-status" role="status" class="sr-only"></p>
                 {/* career-chat 每次只送這一題，不帶先前的對話（ai-gateway/src/task-catalog.mjs）。 */}
                 <p id="chat-input-hint" class="mt-2 text-sm text-gray-500">每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 200 字。</p>
+                {/* 回答裡的 ColleGo! 不會是連結（platform-ai.js 不轉連結），在這裡固定放一個。 */}
+                <p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 <a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">ColleGo! 認識學群<span class="sr-only">（另開新分頁）</span></a>看全部 18 個學群。</p>
                 <div id="chat-progress"></div>
             </div>
         </section>
