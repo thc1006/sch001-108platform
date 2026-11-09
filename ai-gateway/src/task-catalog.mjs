@@ -314,7 +314,7 @@ export const TASK_DEFINITIONS = [
         // 自主學習 › 選題靈感頁（src/pages/autonomous-learning/topic-ideas.astro）的「AI 個人化發想」。
         // 研究方法與關鍵字在頁面上顯示成小標籤，只放短詞。
         // 各欄的長度寫在指令裡，maxLength 只當保險，理由見 tasks.mjs 檔頭。
-        // 開頭的角色設定留著：2026-11-05 WinLab 實測，拿掉之後 reasoning tokens 的中位數多了約兩成、平均多了約一成；
+        // 開頭的角色設定留著：2026-11-05 在 qwen3.8-27b-fp8 上實測，拿掉之後 reasoning tokens 的中位數多了約兩成、平均多了約一成；
         // 換回之後中位數和 main 差不多，平均比 main 少。兩種寫法最長的一次 completion tokens 約 7400 和 7900，都接近 max_tokens。
         // challenges 要寫怎麼處理：2026-11-09 在 qwen3.8-flash-next 上 6 組興趣各跑 5 次，completion tokens 中位數
         // 1577 → 1623，最多 1737。
