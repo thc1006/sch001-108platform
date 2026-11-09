@@ -1,7 +1,7 @@
 /**
  * 簡體詞組 → 台灣繁體的對照：詞組 11116 條（其中接常用詞的 647 條）、CURATED 11 條、擋詞 11872 條、預設轉法 24 個字。
  * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
- *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 830bcf872d55998cffbead15e2577c5f763b52e2f765b9254828b101b5caf314）
+ *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 2e2e6cd8eee0dc9300d78070702f6a73eeddf8ea9a0052cabf0611c2827387e2）
  *   ai-gateway/src/s2t-table.mjs（sha256 9428cda556a1f3fdad8acce5c25da957eff1f0c28ac7315480f0266dc5466dfc）
  *
  * 衍生自 OpenCC（https://github.com/BYVoid/OpenCC）commit 178f05dbc5dbcedd09d4ab39d501094f4d9d8820：
