@@ -399,6 +399,11 @@ test('study-plan：指令寫明每一項的數量與長度，和 schema 一致�
     assert.ok(instructions.includes(properties.weekly_plan.items.properties.week.enum.join('、')));
 });
 
+test('study-plan：最後一行寫明做法的條件', () => {
+    const { instructions } = catalog.get('study-plan');
+    assert.equal(instructions.split('\n').at(-1), '做法要讓手邊資源少的學生也做得到：主題本身少不了的用品照常寫，其他用家裡或學校借得到的東西，學生不用另外花錢；只有特定店家、機構才看得到的，寫出改用網路資料的做法。用高中生看得懂的白話，用到專業名詞時順便用幾個字說明。execution_methods 不寫頻率，要重複做的事和次數寫在 weekly_plan 裡。');
+});
+
 test('civic-tech-suggestion：興趣或關心的議題最多 300 字（頁面的輸入框同樣限制 300）；文字任務、不設溫度', () => {
     const task = catalog.get('civic-tech-suggestion');
     assert.equal(validateInput(task, { interest: '海'.repeat(300) }).interest.length, 300);
