@@ -316,6 +316,8 @@ export const TASK_DEFINITIONS = [
         // 各欄的長度寫在指令裡，maxLength 只當保險，理由見 tasks.mjs 檔頭。
         // 開頭的角色設定留著：2026-11-05 WinLab 實測，拿掉之後 reasoning tokens 的中位數多了約兩成、平均多了約一成；
         // 換回之後中位數和 main 差不多，平均比 main 少。兩種寫法最長的一次 completion tokens 約 7400 和 7900，都接近 max_tokens。
+        // challenges 要寫怎麼處理：2026-11-09 在 qwen3.8-flash-next 上 6 組興趣各跑 5 次，completion tokens 中位數
+        // 1577 → 1623，最多 1737。
         id: 'topic-ideas',
         input: {
             interests: { label: '興趣關鍵字', maxLength: 100 },
@@ -325,7 +327,7 @@ export const TASK_DEFINITIONS = [
             '- title：主題名稱，約 10～25 字',
             '- description：簡短描述，約 50～120 字',
             '- methods：建議研究方法 2～4 種，每種只寫簡短的方法名稱（約 2～12 字），不要加說明',
-            '- challenges：潛在挑戰 2～3 個，每個一句話（約 15～50 字）',
+            '- challenges：潛在挑戰 2～3 個，每個一句話，寫出挑戰和可以怎麼處理（約 15～60 字）',
             '- keywords：相關關鍵字 3～5 個，每個只寫一個簡短的詞（約 2～10 字）',
         ].join('\n'),
         output: {

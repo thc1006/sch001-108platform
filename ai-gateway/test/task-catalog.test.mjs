@@ -579,7 +579,7 @@ test('topic-ideas：剛好 3 個主題，每個主題的五個欄位都要有，
 });
 
 // 照指令寫的輸出要過得了 schema：個數一致，字數上限不超過 maxLength 的一半，因為 maxLength 是硬截斷。
-test('topic-ideas：指令寫明每個欄位的字數，個數與 schema 一致', () => {
+test('topic-ideas：指令寫明每個欄位的字數，個數與 schema 一致；挑戰要附上可以怎麼處理', () => {
     const { instructions, output } = catalog.get('topic-ideas');
     const { ideas } = output.schema.properties;
     assert.match(instructions, new RegExp(`發想 ${ideas.minItems} 個`));
@@ -593,5 +593,5 @@ test('topic-ideas：指令寫明每個欄位的字數，個數與 schema 一致'
         if (spec.type === 'array') assert.match(line, new RegExp(`${spec.minItems}～${spec.maxItems} [種個]`), name);
     }
     assert.match(instructions, /methods：[^\n]*不要加說明/);
-    assert.match(instructions, /challenges：[^\n]*每個一句話/);
+    assert.match(instructions, /challenges：[^\n]*每個一句話，寫出挑戰和可以怎麼處理/);
 });
