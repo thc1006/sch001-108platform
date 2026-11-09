@@ -438,9 +438,11 @@ test('star-analysis：指令寫明總評、各項評論與建議、修改範例�
     assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
 });
 
-test('star-analysis：修改範例不把「我們」改成「我」、不自己編心得裡沒有的細節，「（填入…）」最多兩處', () => {
+test('star-analysis：修改範例只用心得裡寫到的事，「我」和「我們」照寫，「（填入…）」最多兩處', () => {
     const { instructions } = catalog.get('star-analysis');
-    assert.match(instructions, /revised_example：[^\n]*。心得寫「我們」或沒寫是誰做的，不要改成「我」，也不要加上心得裡沒有的人。心得裡沒有的做法、人數、時間、名次與成果不要自己編，最多用兩處「（填入實際的做法）」這樣的括號標出要補的地方，其他沒寫的就不寫$/m);
+    assert.match(instructions, /revised_example：[^\n]*。心得寫「我」就寫「我」，寫「我們」或沒寫是誰做的，不要改成「我」，也不要加上心得裡沒有的人。心得裡沒有的做法、人數、時間、名次與成果不要自己編，最多用兩處「（填入實際的做法）」這樣的括號標出要補的地方，其他沒寫的就不寫$/m);
+    assert.match(instructions, /revised_example：[^\n]*只用心得裡寫到的事重新組織/);
+    assert.doesNotMatch(instructions, /根據你的建議/);
     // 例子會被照抄，寫成參加人數的話，跟人數無關的心得也會要學生填參加人數。
     assert.doesNotMatch(instructions, /參加人數/);
 });
