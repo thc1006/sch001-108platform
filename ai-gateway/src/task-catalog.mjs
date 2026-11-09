@@ -44,7 +44,8 @@ export const TASK_DEFINITIONS = [
         // 自主學習首頁的「AI 學習啟動包」（src/pages/autonomous-learning/index.astro）。
         // 指令寫明長度（探索問題一句話、資源類型只寫簡短名稱）：schema 的 maxLength 是硬截斷，
         // 沒說長度時模型把資源類型寫成長篇說明，被切在 50 字（WinLab 實測），學生看到半句話；
-        // maxLength 只當保險。
+        // maxLength 只當保險。資源類型的例子會被照抄（2026-11-09 WinLab 實測 25 次有 11 次寫了原本例子裡的
+        // 學術論文），例子要選學生不用花錢就找得到的。
         id: 'starter-pack',
         input: {
             topic: { label: '初步想法', maxLength: 200 },
@@ -53,7 +54,7 @@ export const TASK_DEFINITIONS = [
             '請為一位想自主學習的學生，依他的「初步想法」寫一份「學習啟動包」：',
             '- suggested_topic：將學生的模糊想法，聚焦為一個更具體的研究主題',
             '- research_questions：提供 3 個可以引導初步探索的開放式問題，每個問題一句話',
-            '- resource_types：建議 3 種適合這個主題的學習資源類型，每種只寫簡短的資源類型名稱（約 2～12 字），不要加說明，例如：知識型影片、線上課程、學術論文、訪談專家等',
+            '- resource_types：建議 3 種適合這個主題、高中生不用花錢就找得到的學習資源類型，每種只寫簡短的資源類型名稱（約 2～12 字），不要加說明，例如：圖書館的書、知識型影片、政府開放資料、訪談身邊的人等',
         ].join('\n'),
         output: {
             type: 'json',
