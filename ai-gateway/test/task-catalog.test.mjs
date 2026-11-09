@@ -237,19 +237,23 @@ test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相�
     assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
 });
 
-test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，其他問題先回答再給下一步；說不出興趣時先不推薦，資料以外的學群請學生到 ColleGo! 看；200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
+test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，不擅長某科或選組時先回答再舉學群當起點，其他問題先回答再給下一步；說不出興趣時先找線索，可以用條件句舉學群；學群介紹先指到本站，本站沒有的學群說出常見科系再請學生到 ColleGo! 看；200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /^學生問的是興趣、科系或學群時，你的回答應該包含：$/m);
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
     assert.match(instructions, /說明為什麼推薦/);
     assert.match(instructions, /具體的下一步探索建議/);
-    assert.match(instructions, /學生說不出興趣時，從日常喜歡做的事或擅長的科目幫他找線索，先不推薦學群。/);
-    assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不用推薦學群。$/m);
+    assert.match(instructions, /^學生問不擅長某一科可以讀什麼、或要選自然組還是社會組時，先回答他問的事，再從上面的學群舉 1～2 個當起點並說明理由。$/m);
+    assert.match(instructions, /^學生說不出興趣時，從日常喜歡做的事或擅長的科目幫他找線索，可以用「如果你常…，可以先看…學群」舉最多 2 個學群當起點，或請他把找到的線索寫進問題框再送一次。$/m);
+    assert.match(instructions, /^推薦或舉出上面的學群時，可以請他到本站的「十大學群探索」看那個學群的介紹。$/m);
+    // 生涯探索首頁就有這個名稱的連結，學生照回答找得到
+    assert.match(CAREER_PAGE, /<a href="clusters\/index\.html"[^>]*>\s*十大學群探索\s*</);
+    assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不提學群。$/m);
     // 資料裡的學群換成 ColleGo! 的名稱（clusters.ts 的 collegoName），加上列出的其他學群，要剛好是 ColleGo! 的 18 個
     const names = [...instructions.split('\n---\n')[1].matchAll(/^學群：(.+)$/gm)].map((m) => COLLEGO_NAME.get(m[1]));
     const others = instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的是(.+)學群。$/m)?.[1].split('、').map((n) => `${n}學群`) ?? [];
     assert.deepEqual([...names, ...others].sort(), [...COLLEGO_CLUSTERS].sort());
-    assert.match(instructions, /^學生的興趣對到這些學群時，照實說這裡沒有它的資料，請他到 ColleGo! 看那個學群。$/m);
+    assert.match(instructions, /^學生的興趣對到這些學群時，照實說本站沒有它的資料，可以說出常見的科系，再請他到 ColleGo! 看那個學群。$/m);
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
