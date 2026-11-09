@@ -443,3 +443,10 @@ test('s2t-phrases.mjs 是用現在的產生腳本與逐字對照產生的', () =
         assert.equal(recorded, actual, `${file} 改過，要重新產生 s2t-phrases.mjs（指令見產生腳本開頭）`);
     }
 });
+
+test('s2t-phrases.mjs 沒有被手改：表頭記的內容 sha256 和現在的內容相同', () => {
+    const text = readFileSync(new URL('../src/s2t-phrases.mjs', import.meta.url), 'utf8');
+    const at = text.indexOf(' */\n') + ' */\n'.length;
+    const recorded = text.slice(0, at).match(/這段說明以下的內容 sha256 ([0-9a-f]{64})/)?.[1];
+    assert.equal(recorded, createHash('sha256').update(text.slice(at)).digest('hex'), '表被手改過，要用產生腳本重產');
+});

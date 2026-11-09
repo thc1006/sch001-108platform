@@ -302,11 +302,20 @@ const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const list = (map) => [...map].sort(([a], [b]) => byCode(a, b)).map(([k, v]) => k + v).join(' ');
 const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
 
+// 表的內容先算好，表頭記它的 sha256
+const body = `export const S2T_PHRASES = '${list(withBridges())}';
+export const S2T_CURATED = '${list(curated)}';
+export const S2T_GUARDS = '${guards.sort(byCode).join(' ')}';
+export const S2T_DEFAULTS = '${[...DEFAULTS].map(([k, v]) => k + v).join('')}';
+export const S2T_SIMPLIFIED = '${[...simplifiedOnly].filter((ch) => !table.has(ch)).sort(byCode).join('')}';
+export const S2T_TABLE_TRADITIONAL = '${[...table.keys()].filter((ch) => !simplifiedOnly.has(ch)).sort(byCode).join('')}';
+`;
 process.stdout.write(`/**
  * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${curated.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
  * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
  *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 ${sha(fileURLToPath(import.meta.url))}）
  *   ai-gateway/src/s2t-table.mjs（sha256 ${sha(fileURLToPath(new URL('../src/s2t-table.mjs', import.meta.url)))}）
+ * 這段說明以下的內容 sha256 ${createHash('sha256').update(body).digest('hex')}，手改了表測試會失敗
  *
  * 衍生自 OpenCC（${SOURCE.repo}）commit ${SOURCE.commit}：
  *   ${SOURCE.files[0]}（sha256 ${sha(stFile)}）
@@ -321,10 +330,4 @@ process.stdout.write(`/**
  * 指定 ${[...CURATED].join('、')} 在整句有簡體字時轉換；
  * 一對多字的預設轉法 ${[...DEFAULTS].map(([k, v]) => k + '→' + v).join('、')}。
  */
-export const S2T_PHRASES = '${list(withBridges())}';
-export const S2T_CURATED = '${list(curated)}';
-export const S2T_GUARDS = '${guards.sort(byCode).join(' ')}';
-export const S2T_DEFAULTS = '${[...DEFAULTS].map(([k, v]) => k + v).join('')}';
-export const S2T_SIMPLIFIED = '${[...simplifiedOnly].filter((ch) => !table.has(ch)).sort(byCode).join('')}';
-export const S2T_TABLE_TRADITIONAL = '${[...table.keys()].filter((ch) => !simplifiedOnly.has(ch)).sort(byCode).join('')}';
-`);
+${body}`);
