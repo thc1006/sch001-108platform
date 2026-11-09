@@ -65,7 +65,7 @@ const GUARD_WORDS = ['口头', '带头', '回头', '开头', '镜头', '码头',
     '里头', '外头', '上头', '起头', '苗头', '势头', '年头', '风头', '舌头', '额头', '眉头', '骨头', '拳头',
     '视后', '棋后', '拳后', '相关', '有关系统', '强调', '年制', '转换', '开车'];
 // 台灣的用法跟 OpenCC 不同的詞
-const OVERRIDE = new Map([['申复', '申復']]);
+const OVERRIDE = new Map([['申复', '申復'], ['虱目鱼', '虱目魚']]);
 
 function parse(file) {
     const entries = [];
@@ -128,6 +128,8 @@ const others = new Map();
 for (const [key, values] of parse(phraseFile)) {
     if ([...key].length !== [...values[0]].length || REJECT.has(key) || candidates.has(key) || others.has(key) || curated.has(key)) continue;
     const value = OVERRIDE.get(key) ?? target(key, values[0]);
+    // 轉法還留著逐字對照會轉掉的字（种放、恒大、洪适 保留姓氏、古字）：收了反而在輸出留下簡體字
+    if (!OVERRIDE.has(key) && [...value].some((ch) => table.has(ch) && simplifiedOnly.has(ch))) continue;
     if (CURATED.has(key)) curated.set(key, value);
     else if (value !== baseline(key) && hasSimplified(key)) candidates.set(key, value);
     else others.set(key, value);
