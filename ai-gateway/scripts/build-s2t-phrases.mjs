@@ -69,11 +69,12 @@ const GUARD_WORDS = ['口头', '带头', '回头', '开头', '镜头', '码头',
     '里面', '裡面', '檯面', '盡頭', '裡頭'];
 // 繁體也用的字開頭的常用詞。詞組的最後一個字改了這種字（中国制→中國製、细面→細麵、关系→關係）時，
 // 原文的那個字可能其實是下一個詞的開頭：中国制度、仔细面对、机关系统。對每個這樣的詞組，把「詞組＋
-// 常用詞的其餘的字」加成擋詞。逐字對照轉不到的簡體寫法（志愿 的 愿）另外列。系上、系所、系網、里長、
+// 常用詞的其餘的字」加成擋詞。逐字對照與預設轉法轉不到的簡體寫法（志愿 的 愿），產生時從 STCharacters
+// 自動補上（continueWords）。系上、系所、系網、里長、
 // 制服、划算 不收：人際關係上、關係所帶來、關係網、這裡長出、繪製服裝、計畫算是 會反過來轉錯。
 // 杂志 不接：杂志工作 的 志 屬於前面
 const CONTINUE = [
-    '制度', '制定', '制約', '制訂', '制止', '系統', '系列', '系主任', '志願', '志愿', '志工', '志向', '志趣',
+    '制度', '制定', '制約', '制訂', '制止', '系統', '系列', '系主任', '志願', '志工', '志向', '志趣',
     '注意', '注重', '注入', '注音', '注射', '注定', '面試', '面對', '面臨', '面向', '面談', '面貌', '面積', '面板', '面前',
     '面子', '面孔', '面具', '台灣', '台北', '台中', '台南', '台東', '台大', '表現', '表達', '表示', '表格', '表演', '表單',
     '表情', '表明', '表揚', '里程', '扣分', '扣除', '扣減', '只有', '只要', '只是', '只能', '只會', '只好', '只在', '只看',
@@ -131,6 +132,24 @@ const readings = new Map(characters);
 for (const [ch, value] of DEFAULTS) {
     if (!simplifiedOnly.has(ch) || table.has(ch) || !readings.get(ch).includes(value)) fail(`DEFAULTS 的 ${ch}→${value} 不是一對多的簡體專用字`);
 }
+
+// CONTINUE 的詞連同簡體寫法：第 2 個字以後的字，如果是某個不在逐字對照、也沒有預設轉法的簡體字的讀法之一
+// （願 是 愿 的讀法），norm 不會把那個簡體字換成它，簡體寫法另外列
+const simplifiedForms = new Map();
+for (const [key, values] of characters) {
+    if (table.has(key) || DEFAULTS.has(key)) continue;
+    for (const value of values) {
+        const tw = twVariant.get(value) ?? value;
+        if ([...tw].length === 1 && tw !== key) simplifiedForms.set(tw, [...(simplifiedForms.get(tw) ?? []), key]);
+    }
+}
+const continueWords = CONTINUE.flatMap((word) => {
+    let forms = [[...word]];
+    for (let i = 1; i < [...word].length; i++) {
+        forms = forms.flatMap((f) => [f, ...(simplifiedForms.get(f[i]) ?? []).map((s) => f.with(i, s))]);
+    }
+    return forms.map((f) => f.join(''));
+});
 
 const baseline = (key) => [...key].map((ch) => table.get(ch) ?? DEFAULTS.get(ch) ?? ch).join('');
 const target = (key, value) => {
@@ -227,7 +246,7 @@ function findGuards() {
     for (const [key, value] of [...kept, ...curated]) {
         const last = [...key].at(-1);
         if (simplifiedOnly.has(last) || [...value].at(-1) === last || key === '杂志') continue;
-        for (const word of CONTINUE) if ([...word][0] === last) continued.push(key + [...word].slice(1).join(''));
+        for (const word of continueWords) if ([...word][0] === last) continued.push(key + [...word].slice(1).join(''));
     }
     // CURATED 的繁體寫法也佔住位置：繁體的 後 對不上 后面，「後面团队」的 面 才不會被 面团 拿走
     const traditional = [...curated.values(), '計劃'];
