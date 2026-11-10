@@ -255,14 +255,15 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /說明為什麼推薦/);
     assert.match(instructions, /具體的下一步探索建議/);
     assert.match(instructions, /^其他問題（包括某一科怎麼讀書）先回答他問的事，再給一個具體的下一步，不提學群。$/m);
-    // 只在學生說累、壓力大、低落時加，不寫專線號碼這類具體資源（擁有者 2026-11-11 決定）
+    // 只在學生說累、壓力大、低落時加（擁有者 2026-11-11 決定）
     assert.match(instructions, /^學生說很累、壓力大或心情低落時，回答最後加一句「如果一直這樣，可以找導師或輔導室聊聊」。$/m);
 });
 
 test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或住得遠時怎麼給學群起點', () => {
     const { instructions } = catalog.get('career-chat');
-    assert.match(instructions, /^學生問不擅長某一科、想知道可以念哪些科系，或要選自然組還是社會組時，先回答他問的事，再從上面的學群舉 2 個當起點（選組時兩個方向各 1 個）。選組的差別在高二、高三的加深加廣選修，分科測驗會考到這些選修，所以會影響準備得了哪幾科；報名時考科仍由學生自己選，請他查有興趣的科系採計哪些科目。$/m);
-    assert.match(instructions, /^學生問某個學群重視哪些核心素養時，照上面的「重視的核心素養」回答，也可以請他到本頁大學科系羅盤的「核心素養」分頁看。$/m);
+    assert.match(instructions, /^學生問不擅長某一科、想知道可以念哪些科系時，先回答他問的事，再從上面的學群舉 2 個當起點。$/m);
+    assert.match(instructions, /^學生問要選自然組還是社會組時，先回答他問的事，再從上面的學群兩個方向各舉 1 個。選組的差別在高二、高三的加深加廣選修，分科測驗會考到這些選修，所以會影響準備得了哪幾科；報名時考科由自己選，可以查有興趣的科系採計哪些科目。$/m);
+    assert.match(instructions, /^學生問某個學群重視哪些核心素養時，照上面的「重視的核心素養」回答，各用一句話說明在這個學群會用在哪裡，也可以請他到本頁大學科系羅盤的「核心素養」分頁看。$/m);
     assert.match(instructions, /^某一科重不重要看上面的「重要學科」；會不會影響入學，請學生查校系分則。$/m);
     assert.match(instructions, /^學生說不出興趣時，用「如果你常…，可以先看…學群」舉 2 個方向不同（例如動手做、和人或文字打交道）的學群當起點，或請他把線索寫進問題框再送一次。$/m);
     assert.match(instructions, /^問題提到沒錢、住得遠這類限制時，第一句先回應，下一步要不用花錢；其餘照上面的規則，學群最多 2 個。$/m);
@@ -287,7 +288,7 @@ test('career-chat：學群介紹先指到本站的十大學群探索；本站沒
     }
     assert.match(instructions, /^學生的興趣只對到這 8 個學群、上面的學群沒有相關科系時，說本站沒有它的資料，可以說出它的學類，再請他到 ColleGo! 看那個學群。$/m);
     // 師資培育法第 11 條
-    assert.match(instructions, /^學生想當中小學或幼兒園老師時，說明讀想教科目的學系或師資培育學系都可以，要修教育學程（師資職前教育課程）、通過教師資格考試、完成教育實習，才拿得到教師證書。$/m);
+    assert.match(instructions, /^學生想當中小學或幼兒園老師時，說明讀想教科目的學系或師資培育學系（ColleGo! 的教育學群）都可以，要修教育學程（師資職前教育課程）、通過教師資格考試、完成教育實習，才拿得到教師證書。$/m);
 });
 
 test('career-chat：200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
@@ -303,7 +304,7 @@ test('career-chat：200 字內，不約學生下次再談，校系規定請學�
 // 沒錢那一行寫「其餘照上面的規則」，「其他問題」要在各種起點的規則之後，所以要檢查先後
 test('career-chat：規則的先後', () => {
     const { instructions } = catalog.get('career-chat');
-    const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '某一科重不重要', '學生說不出興趣時', '問題提到沒錢、住得遠',
+    const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '學生問要選自然組還是社會組時', '某一科重不重要', '學生說不出興趣時', '問題提到沒錢、住得遠',
         '推薦或舉出上面的學群時', 'ColleGo! 列了 18 個學群', '學生的興趣只對到這 8 個學群', '學生想當中小學或幼兒園老師時', '學生說很累、壓力大或心情低落時', '其他問題（包括某一科怎麼讀書）']
         .map((head) => instructions.split('\n').findIndex((line) => line.startsWith(head)));
     assert.ok(order.every((at) => at >= 0), String(order));
@@ -350,7 +351,7 @@ test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興�
     const count = instructions.split('\n---\n')[1].split('\n\n').length;
     assert.match(CAREER_PAGE, new RegExp(`>回答參考本站 ${count} 個學群的資料。<`));
     assert.match(CAREER_PAGE, /例如：「[^」]+」說不出興趣也可以問，AI 會先幫你找線索。<\/p>/);
-    // 整段比對：說明句、網址、另開新分頁、圖示、連結後的空格，以及沒有 hidden
+    // 整段比對：說明句、網址、另開新分頁、圖示、連結後的空格，以及 <p> 本身沒有 hidden
     const line = '<p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 '
         + '<a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">'
         + 'ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a> 看全部 18 個學群。</p>';
@@ -361,6 +362,23 @@ test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興�
 });
 
 // 科系羅盤的重要學科照 ColleGo! 各學群頁（2026-11-10 查），順序就是重要程度，指令也這樣寫。
+// 科系羅盤的核心素養前兩名照 ColleGo! 各學群頁的重視程度（2026-11-10 查）
+test('科系羅盤的核心素養前兩名和 ColleGo! 各學群頁相同', () => {
+    const COLLEGO_COMPETENCIES = {
+        資訊學群: ['科技資訊與媒體素養', '系統思考與解決問題'],
+        工程學群: ['系統思考與解決問題', '規劃執行與創新應變'],
+        醫藥衛生學群: ['系統思考與解決問題', '人際關係與團隊合作'],
+        生命科學學群: ['系統思考與解決問題', '規劃執行與創新應變'],
+        建築設計學群: ['藝術涵養與美感素養', '系統思考與解決問題'],
+        社會心理學群: ['人際關係與團隊合作', '系統思考與解決問題'],
+        大眾傳播學群: ['科技資訊與媒體素養', '人際關係與團隊合作'],
+        管理學群: ['系統思考與解決問題', '人際關係與團隊合作'],
+        財經學群: ['系統思考與解決問題', '規劃執行與創新應變'],
+    };
+    const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
+    for (const c of majorData) assert.deepEqual(c.competencies, COLLEGO_COMPETENCIES[COLLEGO_NAME.get(c.name)], c.name);
+});
+
 test('科系羅盤的重要學科和 ColleGo! 各學群頁相同', () => {
     const COLLEGO_SUBJECTS = {
         資訊學群: ['數學', '資訊科技', '英語文', '國語文', '物理', '生活科技'],
