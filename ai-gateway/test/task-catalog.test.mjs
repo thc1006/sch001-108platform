@@ -254,12 +254,13 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
     assert.match(instructions, /說明為什麼推薦/);
     assert.match(instructions, /具體的下一步探索建議/);
-    assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不提學群。$/m);
+    assert.match(instructions, /^其他問題（包括某一科怎麼讀書）先回答他問的事，再給一個具體的下一步，不提學群。$/m);
 });
 
 test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或住得遠時怎麼給學群起點', () => {
     const { instructions } = catalog.get('career-chat');
-    assert.match(instructions, /^學生問不擅長某一科可以讀什麼，或要選自然組還是社會組時，先回答他問的事，再從上面的學群舉 1～2 個當起點。選組的差別在高二、高三的選修；學測和分科測驗的考科由學生自己選，請他查有興趣的科系採計哪些科目。$/m);
+    assert.match(instructions, /^學生問不擅長某一科、想知道可以念哪些科系，或要選自然組還是社會組時，先回答他問的事，再從上面的學群舉 2 個當起點（選組時兩個方向各 1 個）。選組的差別在高二、高三的加深加廣選修，分科測驗會考到這些選修，所以會影響準備得了哪幾科；報名時考科仍由學生自己選，請他查有興趣的科系採計哪些科目。$/m);
+    assert.match(instructions, /^學生問某個學群重視哪些核心素養時，請他看本頁大學科系羅盤的「核心素養」分頁或本站的核心素養對照表。$/m);
     assert.match(instructions, /^某一科重不重要看上面的「重要學科」；會不會影響入學，請學生查校系分則。$/m);
     assert.match(instructions, /^學生說不出興趣時，用「如果你常…，可以先看…學群」舉 2 個方向不同（例如動手做、和人或文字打交道）的學群當起點，或請他把線索寫進問題框再送一次。$/m);
     assert.match(instructions, /^問題提到沒錢、住得遠這類限制時，第一句先回應，下一步要不用花錢；其餘照上面的規則，學群最多 2 個。$/m);
@@ -272,11 +273,16 @@ test('career-chat：學群介紹先指到本站的十大學群探索；本站沒
     assert.match(CAREER_PAGE, /<a href="clusters\/index\.html"[^>]*>\s*十大學群探索\s*</);
     // 資料裡的學群換成 ColleGo! 的名稱（clusters.ts 的 collegoName），加上列出的其他學群，要剛好是 ColleGo! 的 18 個
     const names = [...instructions.split('\n---\n')[1].matchAll(/^學群：(.+)$/gm)].map((m) => COLLEGO_NAME.get(m[1]));
-    const lines = (instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的 8 個學群和它們的學類是：\n((?:.+學群：.+\n)+)/m)?.[1] ?? '').trim().split('\n');
+    const lines = (instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的 8 個學群和它們不在上面的學類是：\n((?:.+學群：.+\n)+)/m)?.[1] ?? '').trim().split('\n');
     const others = Object.fromEntries(lines.map((line) => line.split('：')).map(([name, majors]) => [name, majors.split('、')]));
     assert.equal(lines.length, Object.keys(others).length, '8 個學群有重複的行');
     assert.deepEqual([...names, ...Object.keys(others)].sort(), Object.keys(COLLEGO_CLUSTERS).sort());
-    for (const [name, majors] of Object.entries(others)) assert.deepEqual(majors, COLLEGO_CLUSTERS[name], name);
+    // 8 個學群的學類扣掉資料裡已有的科系（例如服裝設計在設計學群），兩邊不能重疊
+    const siteMajors = new Set([...instructions.split('\n---\n')[1].matchAll(/^科系：(.+)$/gm)].flatMap((m) => m[1].split('、')));
+    for (const [name, majors] of Object.entries(others)) {
+        assert.deepEqual(majors, COLLEGO_CLUSTERS[name].filter((m) => !siteMajors.has(m)), name);
+        assert.deepEqual(majors.filter((m) => siteMajors.has(m)), [], name);
+    }
     assert.match(instructions, /^學生的興趣只對到這 8 個學群、上面的學群沒有相關科系時，說本站沒有它的資料，可以說出它的學類，再請他到 ColleGo! 看那個學群。$/m);
     // 師資培育法第 11 條
     assert.match(instructions, /^學生想當中小學或幼兒園老師時，說明讀想教科目的學系或師資培育學系都可以，要修教育學程（師資職前教育課程）、通過教師資格考試、完成教育實習，才拿得到教師證書。$/m);
@@ -292,6 +298,16 @@ test('career-chat：200 字內，不約學生下次再談，校系規定請學�
     assert.doesNotMatch(instructions, /不確定|有把握|直接回答|直接告訴|你確定|你知道/);
 });
 
+// 沒錢那一行寫「其餘照上面的規則」，「其他問題」要在各種起點的規則之後，所以要檢查先後
+test('career-chat：規則的先後', () => {
+    const { instructions } = catalog.get('career-chat');
+    const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '某一科重不重要', '學生說不出興趣時', '問題提到沒錢、住得遠',
+        '推薦或舉出上面的學群時', 'ColleGo! 列了 18 個學群', '學生的興趣只對到這 8 個學群', '學生想當中小學或幼兒園老師時', '其他問題（包括某一科怎麼讀書）']
+        .map((head) => instructions.split('\n').findIndex((line) => line.startsWith(head)));
+    assert.ok(order.every((at) => at >= 0), String(order));
+    assert.deepEqual(order, [...order].sort((a, b) => a - b));
+});
+
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
 // 自己抄一份，靠這個測試防止兩邊漂移。majorData 是 JS 物件字面值而不是 JSON，所以交給 vm 求值。
 test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、重要學科、科系、出路）', () => {
@@ -302,7 +318,7 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     const blocks = majorData.map((c) => [
         `學群：${c.name}`,
         `簡介：${c.description}`,
-        `重要學科：${c.subjects.join('、')}`,
+        `重要學科（依重要程度）：${c.subjects.join('、')}`,
         `科系：${c.majors.join('、')}`,
         `出路：${c.careers.join('、')}`,
     ].join('\n'));
@@ -313,7 +329,7 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     assert.deepEqual(section.slice(blocks.length).map((b) => b.match(/^學群：(.+)$/m)?.[1]), ['法政學群']);
     // 法政學群沒有 majorData 可比，照 ColleGo! 法政學群頁（2026-11-10 查）和 law/myths.md 的出路
     assert.equal(section.at(-1).split('\n').slice(2).join('\n'), [
-        '重要學科：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
+        '重要學科（依重要程度）：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
         '科系：法律、財經法律、政治、行政管理、犯罪防治、土地資產',
         '出路：律師、司法官、企業法務或法令遵循人員、公務人員',
     ].join('\n'));
