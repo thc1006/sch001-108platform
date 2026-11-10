@@ -259,12 +259,13 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
     assert.match(instructions, /^學生問到某個校系的規定時，請他查那個校系的網頁，或大學甄選入學委員會（繁星推薦、申請入學）、大學考試入學分發委員會（分發入學）的校系分則。$/m);
     // 另起一行讓模型自己判斷有沒有把握、確定的就直接講，等於把這句改回原本的意思
+    assert.match(instructions, /^核心素養不是學科，不要用它推論某一科重不重要；某一科會不會影響入學，請學生查校系分則的採計科目和門檻。$/m);
     assert.doesNotMatch(instructions, /不確定|有把握|直接回答|直接告訴|你確定|你知道/);
 });
 
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
 // 自己抄一份，靠這個測試防止兩邊漂移。majorData 是 JS 物件字面值而不是 JSON，所以交給 vm 求值。
-test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、核心素養、相關科系、常見出路）', () => {
+test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、核心素養、重要學科、相關科系、常見出路）', () => {
     const { instructions } = catalog.get('career-chat');
     const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
     assert.ok(literal, '頁面裡找不到 const majorData = [...];');
@@ -273,6 +274,7 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
         `學群：${c.name}`,
         `簡介：${c.description}`,
         `重視程度前兩名的核心素養：${c.competencies.join('、')}`,
+        `重要學科：${c.subjects.join('、')}`,
         `相關科系：${c.majors.join('、')}`,
         `常見出路（舉例）：${c.careers.join('、')}`,
     ].join('\n'));
@@ -281,6 +283,13 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     const section = (instructions.split('\n---\n')[1] ?? '').split('\n\n');
     assert.deepEqual(section.slice(0, blocks.length), blocks);
     assert.deepEqual(section.slice(blocks.length).map((b) => b.match(/^學群：(.+)$/m)?.[1]), ['法政學群']);
+    // 法政學群沒有 majorData 可比，照 ColleGo! 法政學群頁（2026-11-10 查，核心素養 21.37％、16.99％）和 law/myths.md 的出路
+    assert.equal(section.at(-1).split('\n').slice(2).join('\n'), [
+        '重視程度前兩名的核心素養：系統思考與解決問題、道德實踐與公民意識',
+        '重要學科：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
+        '相關科系：法律、財經法律、政治、行政管理、犯罪防治、土地資產',
+        '常見出路（舉例）：律師、司法官、企業法務或法令遵循人員、公務人員',
+    ].join('\n'));
     for (const block of section) {
         const name = block.match(/^學群：(.+)$/m)[1];
         assert.equal(block.match(/^簡介：(.+)$/m)?.[1], CLUSTER_DESCRIPTION.get(name), name);
