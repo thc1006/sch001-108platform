@@ -220,9 +220,8 @@ test('system 訊息裡沒有粗體記號', () => {
 
 const CAREER_PAGE = readFileSync(new URL('../../src/pages/career-exploration/index.astro', import.meta.url), 'utf8');
 const CLUSTERS_TS = readFileSync(new URL('../../src/data/clusters.ts', import.meta.url), 'utf8');
-// 本站學群名稱對 ColleGo! 學群名稱、本站學群名稱對簡介，都取自 src/data/clusters.ts
+// 本站學群名稱對 ColleGo! 學群名稱，取自 src/data/clusters.ts
 const COLLEGO_NAME = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bcollegoName: '([^']+)'/g)].map((m) => [m[1], m[2]]));
-const CLUSTER_DESCRIPTION = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bdescription: '([^']+)'/g)].map((m) => [m[1], m[2]]));
 // ColleGo! 認識學群的 18 個學群（2026-11-10 查 CollegeIntro?current_college_id=1～18 的標題）。本站沒有的 8 個另外列出
 // 主要學類（不含「跨學類」），指令裡的要和這裡一字不差。
 const COLLEGO_CLUSTERS = {
@@ -330,21 +329,8 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
         `出路：${c.careers.join('、')}`,
     ].join('\n'));
     // 學群資料夾在兩行 --- 之間，逐塊比對：多一個、少一個、順序不同或欄位多了字都會不一樣。
-    // 法政學群科系羅盤還沒有，排在最後，簡介和 clusters.ts 比對；羅盤補上後這個例外就要拿掉。
-    const section = (instructions.split('\n---\n')[1] ?? '').split('\n\n');
-    assert.deepEqual(section.slice(0, blocks.length), blocks);
-    assert.deepEqual(section.slice(blocks.length).map((b) => b.match(/^學群：(.+)$/m)?.[1]), ['法政學群']);
-    // 法政學群沒有 majorData 可比，照 ColleGo! 法政學群頁（2026-11-10 查，核心素養 21.37％、16.99％）和 law/myths.md 的出路
-    assert.equal(section.at(-1).split('\n').slice(2).join('\n'), [
-        '重視的核心素養（前兩名）：系統思考與解決問題、道德實踐與公民意識',
-        '重要學科（高中科目，依重要程度）：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
-        '科系：法律、財經法律、政治、行政管理、犯罪防治、土地資產',
-        '出路：律師、司法官、企業法務或法令遵循人員、公務人員',
-    ].join('\n'));
-    for (const block of section) {
-        const name = block.match(/^學群：(.+)$/m)[1];
-        assert.equal(block.match(/^簡介：(.+)$/m)?.[1], CLUSTER_DESCRIPTION.get(name), name);
-    }
+    const section = instructions.split('\n---\n')[1] ?? '';
+    assert.deepEqual(section.split('\n\n'), blocks);
 });
 
 // 頁面上和 career-chat 有關的三處：參考的學群數跟著指令的資料走；開場訊息說說不出興趣也可以問；
@@ -377,6 +363,7 @@ test('科系羅盤的核心素養前兩名和 ColleGo! 各學群頁相同', () =
         大眾傳播學群: ['科技資訊與媒體素養', '人際關係與團隊合作'],
         管理學群: ['系統思考與解決問題', '人際關係與團隊合作'],
         財經學群: ['系統思考與解決問題', '規劃執行與創新應變'],
+        法政學群: ['系統思考與解決問題', '道德實踐與公民意識'],
     };
     const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
     for (const c of majorData) assert.deepEqual(c.competencies, COLLEGO_COMPETENCIES[COLLEGO_NAME.get(c.name)], c.name);
@@ -393,6 +380,7 @@ test('科系羅盤的重要學科和 ColleGo! 各學群頁相同', () => {
         大眾傳播學群: ['國語文', '英語文', '公民與社會', '資訊科技', '藝術生活', '美術'],
         管理學群: ['英語文', '國語文', '數學', '資訊科技', '公民與社會', '生涯規劃'],
         財經學群: ['英語文', '數學', '國語文', '公民與社會', '資訊科技', '生涯規劃'],
+        法政學群: ['公民與社會', '國語文', '英語文', '歷史', '數學', '生涯規劃'],
     };
     const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
     assert.deepEqual(majorData.map((c) => COLLEGO_NAME.get(c.name)).sort(), Object.keys(COLLEGO_SUBJECTS).sort());

@@ -188,7 +188,7 @@ test.describe('部署產物 smoke test', () => {
         expect(items.length).toBeGreaterThan(0);
     });
 
-    // ColleGo! 只認 current_college_id，寫成別的參數名稱會被轉到學群列表。代碼是 2026-10-29 逐一開
+    // ColleGo! 只認 current_college_id，寫成別的參數名稱會被轉到學群列表。代碼是 2026-10-29（法政 10-30）逐一開
     // CollegeIntro?current_college_id=N 讀頁面標題對出來的，鍵是卡片升學指南連結裡的學群資料夾，後面是卡片標題和
     // ColleGo! 上的學群名稱。
     const CLUSTER_CARDS = {
@@ -201,6 +201,7 @@ test.describe('部署產物 smoke test', () => {
         design: [8, '設計學群', '建築設計學群'],
         'life-science': [5, '生命科學學群', '生命科學學群'],
         medicine: [4, '醫藥衛生學群', '醫藥衛生學群'],
+        law: [15, '法政學群', '法政學群'],
     };
 
     test('科系羅盤每張學群卡片的 ColleGo! 連結都指到同一個學群', async ({ page }) => {
@@ -230,14 +231,12 @@ test.describe('部署產物 smoke test', () => {
 
     test('學群簡介下的「想看更多」連到同一個學群的 ColleGo! 介紹', async ({ page }) => {
         const errors = watchForErrors(page);
-        // 法政學群不在科系羅盤上，代碼是 2026-10-30 開 current_college_id=15 讀頁面標題對出來的。
-        const clusters = { ...CLUSTER_CARDS, law: [15, '法政學群', '法政學群'] };
         await page.goto(P('/career-exploration/clusters/index.html'));
         await expect(page.locator('a[href="https://collego.edu.tw/Highschool/CollegeList"]')).toHaveCount(1);
         const cards = await page.locator('main a[href*="/career-exploration/clusters/"]').evaluateAll((as) =>
             as.map((a) => a.getAttribute('href').match(/clusters\/([^/]+)\/index\.html$/)?.[1]));
-        expect(cards.sort()).toEqual(Object.keys(clusters).sort());
-        for (const [slug, [id, , collegoName]] of Object.entries(clusters)) {
+        expect(cards.sort()).toEqual(Object.keys(CLUSTER_CARDS).sort());
+        for (const [slug, [id, , collegoName]] of Object.entries(CLUSTER_CARDS)) {
             await page.goto(P(`/career-exploration/clusters/${slug}/index.html`));
             const link = page.locator('a', { hasText: 'ColleGo!「' });
             await expect(link, slug).toHaveAttribute('href', `https://collego.edu.tw/Highschool/CollegeIntro?current_college_id=${id}`);
