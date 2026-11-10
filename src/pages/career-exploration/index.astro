@@ -154,7 +154,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
     document.addEventListener('DOMContentLoaded', () => {
 
         // description 抄自 src/data/clusters.ts（is:inline 腳本不能 import）。competencies、subjects 照 url 指的
-        // ColleGo! 學群頁（2026-10-29 查閱），majors 從那一頁的主要學類挑常見的。careers 與 portfolio_tips 是本站寫的。
+        // ColleGo! 學群頁（2026-10-29 查閱，法政 2026-11-10），majors 從那一頁的主要學類挑常見的。careers 與 portfolio_tips 是本站寫的。
         // name、description、competencies、subjects、majors、careers 另外抄在 AI 閘道 career-chat 任務的指令裡
         // （ai-gateway/src/task-catalog.mjs），ai-gateway/test/task-catalog.test.mjs 會比對。
         const majorData = [
