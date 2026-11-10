@@ -248,13 +248,15 @@ test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相�
     assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
 });
 
-test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，其他問題先回答再給下一步、不提學群', () => {
+test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，其他問題先回答再給下一步、不提學群，說累或低落時提導師或輔導室', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /^學生問的是興趣、科系或學群時，你的回答應該包含：$/m);
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
     assert.match(instructions, /說明為什麼推薦/);
     assert.match(instructions, /具體的下一步探索建議/);
     assert.match(instructions, /^其他問題（包括某一科怎麼讀書）先回答他問的事，再給一個具體的下一步，不提學群。$/m);
+    // 只在學生說累、壓力大、低落時加，不寫專線號碼這類具體資源（擁有者 2026-11-11 決定）
+    assert.match(instructions, /^學生說很累、壓力大或心情低落時，回答最後加一句「如果一直這樣，可以找導師或輔導室聊聊」。$/m);
 });
 
 test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或住得遠時怎麼給學群起點', () => {
@@ -302,7 +304,7 @@ test('career-chat：200 字內，不約學生下次再談，校系規定請學�
 test('career-chat：規則的先後', () => {
     const { instructions } = catalog.get('career-chat');
     const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '某一科重不重要', '學生說不出興趣時', '問題提到沒錢、住得遠',
-        '推薦或舉出上面的學群時', 'ColleGo! 列了 18 個學群', '學生的興趣只對到這 8 個學群', '學生想當中小學或幼兒園老師時', '其他問題（包括某一科怎麼讀書）']
+        '推薦或舉出上面的學群時', 'ColleGo! 列了 18 個學群', '學生的興趣只對到這 8 個學群', '學生想當中小學或幼兒園老師時', '學生說很累、壓力大或心情低落時', '其他問題（包括某一科怎麼讀書）']
         .map((head) => instructions.split('\n').findIndex((line) => line.startsWith(head)));
     assert.ok(order.every((at) => at >= 0), String(order));
     assert.deepEqual(order, [...order].sort((a, b) => a - b));
