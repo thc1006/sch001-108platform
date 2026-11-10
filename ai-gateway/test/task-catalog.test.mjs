@@ -260,7 +260,7 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
 test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或住得遠時怎麼給學群起點', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /^學生問不擅長某一科、想知道可以念哪些科系，或要選自然組還是社會組時，先回答他問的事，再從上面的學群舉 2 個當起點（選組時兩個方向各 1 個）。選組的差別在高二、高三的加深加廣選修，分科測驗會考到這些選修，所以會影響準備得了哪幾科；報名時考科仍由學生自己選，請他查有興趣的科系採計哪些科目。$/m);
-    assert.match(instructions, /^學生問某個學群重視哪些核心素養時，請他看本頁大學科系羅盤的「核心素養」分頁或本站的核心素養對照表。$/m);
+    assert.match(instructions, /^學生問某個學群重視哪些核心素養時，照上面的「重視的核心素養」回答，也可以請他到本頁大學科系羅盤的「核心素養」分頁看。$/m);
     assert.match(instructions, /^某一科重不重要看上面的「重要學科」；會不會影響入學，請學生查校系分則。$/m);
     assert.match(instructions, /^學生說不出興趣時，用「如果你常…，可以先看…學群」舉 2 個方向不同（例如動手做、和人或文字打交道）的學群當起點，或請他把線索寫進問題框再送一次。$/m);
     assert.match(instructions, /^問題提到沒錢、住得遠這類限制時，第一句先回應，下一步要不用花錢；其餘照上面的規則，學群最多 2 個。$/m);
@@ -310,7 +310,7 @@ test('career-chat：規則的先後', () => {
 
 // 學群資料以頁面的 majorData 為準，科系羅盤顯示的就是它。閘道的映像檔裡沒有頁面，指令只能
 // 自己抄一份，靠這個測試防止兩邊漂移。majorData 是 JS 物件字面值而不是 JSON，所以交給 vm 求值。
-test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、重要學科、科系、出路）', () => {
+test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名稱、簡介、核心素養、重要學科、科系、出路）', () => {
     const { instructions } = catalog.get('career-chat');
     const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
     assert.ok(literal, '頁面裡找不到 const majorData = [...];');
@@ -318,7 +318,8 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     const blocks = majorData.map((c) => [
         `學群：${c.name}`,
         `簡介：${c.description}`,
-        `重要學科（依重要程度）：${c.subjects.join('、')}`,
+        `重視的核心素養（前兩名）：${c.competencies.join('、')}`,
+        `重要學科（高中科目，依重要程度）：${c.subjects.join('、')}`,
         `科系：${c.majors.join('、')}`,
         `出路：${c.careers.join('、')}`,
     ].join('\n'));
@@ -327,9 +328,10 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     const section = (instructions.split('\n---\n')[1] ?? '').split('\n\n');
     assert.deepEqual(section.slice(0, blocks.length), blocks);
     assert.deepEqual(section.slice(blocks.length).map((b) => b.match(/^學群：(.+)$/m)?.[1]), ['法政學群']);
-    // 法政學群沒有 majorData 可比，照 ColleGo! 法政學群頁（2026-11-10 查）和 law/myths.md 的出路
+    // 法政學群沒有 majorData 可比，照 ColleGo! 法政學群頁（2026-11-10 查，核心素養 21.37％、16.99％）和 law/myths.md 的出路
     assert.equal(section.at(-1).split('\n').slice(2).join('\n'), [
-        '重要學科（依重要程度）：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
+        '重視的核心素養（前兩名）：系統思考與解決問題、道德實踐與公民意識',
+        '重要學科（高中科目，依重要程度）：公民與社會、國語文、英語文、歷史、數學、生涯規劃',
         '科系：法律、財經法律、政治、行政管理、犯罪防治、土地資產',
         '出路：律師、司法官、企業法務或法令遵循人員、公務人員',
     ].join('\n'));
