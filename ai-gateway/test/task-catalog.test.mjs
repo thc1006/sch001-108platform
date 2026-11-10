@@ -356,8 +356,7 @@ test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興�
     assert.ok(at < CAREER_PAGE.indexOf('</section>', progress), '連結要在 AI 推薦學群這一區');
 });
 
-// 科系羅盤的重要學科照 ColleGo! 各學群頁（2026-11-10 查）。醫藥衛生的「化學、健康與護理」順序和 ColleGo! 相反，
-// 是原本就這樣寫的，所以只比對有哪些科目。
+// 科系羅盤的重要學科照 ColleGo! 各學群頁（2026-11-10 查），順序就是重要程度，指令也這樣寫。
 test('科系羅盤的重要學科和 ColleGo! 各學群頁相同', () => {
     const COLLEGO_SUBJECTS = {
         資訊學群: ['數學', '資訊科技', '英語文', '國語文', '物理', '生活科技'],
@@ -372,7 +371,7 @@ test('科系羅盤的重要學科和 ColleGo! 各學群頁相同', () => {
     };
     const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
     assert.deepEqual(majorData.map((c) => COLLEGO_NAME.get(c.name)).sort(), Object.keys(COLLEGO_SUBJECTS).sort());
-    for (const c of majorData) assert.deepEqual([...c.subjects].sort(), [...COLLEGO_SUBJECTS[COLLEGO_NAME.get(c.name)]].sort(), c.name);
+    for (const c of majorData) assert.deepEqual(c.subjects, COLLEGO_SUBJECTS[COLLEGO_NAME.get(c.name)], c.name);
 });
 
 test('科系羅盤的學群簡介與 src/data/clusters.ts 一字不差', () => {
