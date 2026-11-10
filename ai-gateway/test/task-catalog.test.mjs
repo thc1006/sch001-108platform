@@ -312,6 +312,20 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     }
 });
 
+// 頁面上和 career-chat 有關的三處：參考的學群數跟著指令的資料走；開場訊息說說不出興趣也可以問；
+// ColleGo! 認識學群的連結另開新分頁，放在進度區塊後面，讓「發送」和「取消」相鄰。
+test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興趣也可以問，ColleGo! 認識學群的連結在進度區塊後面', () => {
+    const { instructions } = catalog.get('career-chat');
+    const count = instructions.split('\n---\n')[1].split('\n\n').length;
+    assert.match(CAREER_PAGE, new RegExp(`>回答參考本站 ${count} 個學群的資料。<`));
+    assert.match(CAREER_PAGE, /例如：「[^」]+」說不出興趣也可以問，AI 會先幫你找線索。<\/p>/);
+    const link = '<a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">'
+        + 'ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a>';
+    const at = CAREER_PAGE.indexOf(link);
+    assert.ok(at > CAREER_PAGE.indexOf('<div id="chat-progress"></div>'), '連結要在 #chat-progress 後面');
+    assert.ok(at < CAREER_PAGE.indexOf('<section id="explorer"'), '連結要在 AI 推薦學群這一區');
+});
+
 test('科系羅盤的學群簡介與 src/data/clusters.ts 一字不差', () => {
     const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
     const majorData = vm.runInThisContext(literal);

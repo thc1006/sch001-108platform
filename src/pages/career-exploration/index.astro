@@ -42,7 +42,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                                 <ion-icon name="sparkles" aria-hidden="true" class="text-indigo-600"></ion-icon>
                             </div>
                             <div class="chat-bubble-ai p-3 max-w-lg">
-                                <p class="text-sm sm:text-base">寫下你喜歡的科目、興趣，或對科系的疑問，AI 會推薦 1 到 2 個學群並說明原因，再給一件下一步可以做的事。說不出興趣也可以問，AI 會先幫你找線索。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」</p>
+                                <p class="text-sm sm:text-base">寫下你喜歡的科目、興趣，或對科系的疑問，AI 會推薦 1 到 2 個學群並說明原因，再給一件下一步可以做的事。例如：「我喜歡動手做東西，也對電腦有興趣，適合讀什麼？」說不出興趣也可以問，AI 會先幫你找線索。</p>
                             </div>
                         </div>
                     </div>
@@ -61,9 +61,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 <p id="chat-status" role="status" class="sr-only"></p>
                 {/* career-chat 每次只送這一題，不帶先前的對話（ai-gateway/src/task-catalog.mjs）。 */}
                 <p id="chat-input-hint" class="mt-2 text-sm text-gray-500">每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 200 字。</p>
-                {/* 回答裡的 ColleGo! 不會是連結（platform-ai.js 不轉連結），在這裡固定放一個。 */}
-                <p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 <a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">ColleGo! 認識學群<span class="sr-only">（另開新分頁）</span></a>看全部 18 個學群。</p>
                 <div id="chat-progress"></div>
+                {/* 回答裡的 ColleGo! 不會是連結（platform-ai.js 不轉連結），在這裡固定放一個。放在進度區塊後面，「發送」和「取消」才會相鄰。 */}
+                <p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 <a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a>看全部 18 個學群。</p>
             </div>
         </section>
 
