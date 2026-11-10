@@ -330,11 +330,33 @@ test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興�
     const count = instructions.split('\n---\n')[1].split('\n\n').length;
     assert.match(CAREER_PAGE, new RegExp(`>回答參考本站 ${count} 個學群的資料。<`));
     assert.match(CAREER_PAGE, /例如：「[^」]+」說不出興趣也可以問，AI 會先幫你找線索。<\/p>/);
-    const link = '<a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">'
-        + 'ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a>';
-    const at = CAREER_PAGE.indexOf(link);
-    assert.ok(at > CAREER_PAGE.indexOf('<div id="chat-progress"></div>'), '連結要在 #chat-progress 後面');
-    assert.ok(at < CAREER_PAGE.indexOf('<section id="explorer"'), '連結要在 AI 推薦學群這一區');
+    // 整段比對：說明句、網址、另開新分頁、圖示、連結後的空格，以及沒有 hidden
+    const line = '<p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 '
+        + '<a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">'
+        + 'ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a> 看全部 18 個學群。</p>';
+    const at = CAREER_PAGE.indexOf(line);
+    const progress = CAREER_PAGE.indexOf('<div id="chat-progress"></div>');
+    assert.ok(at > progress, '連結要在 #chat-progress 後面');
+    assert.ok(at < CAREER_PAGE.indexOf('</section>', progress), '連結要在 AI 推薦學群這一區');
+});
+
+// 科系羅盤的重要學科照 ColleGo! 各學群頁（2026-11-10 查）。醫藥衛生的「化學、健康與護理」順序和 ColleGo! 相反，
+// 是原本就這樣寫的，所以只比對有哪些科目。
+test('科系羅盤的重要學科和 ColleGo! 各學群頁相同', () => {
+    const COLLEGO_SUBJECTS = {
+        資訊學群: ['數學', '資訊科技', '英語文', '國語文', '物理', '生活科技'],
+        工程學群: ['數學', '英語文', '物理', '資訊科技', '國語文', '化學'],
+        醫藥衛生學群: ['生物', '英語文', '國語文', '健康與護理', '化學', '數學'],
+        生命科學學群: ['生物', '化學', '英語文', '數學', '國語文', '物理'],
+        建築設計學群: ['美術', '藝術生活', '國語文', '英語文', '資訊科技', '歷史'],
+        社會心理學群: ['國語文', '公民與社會', '英語文', '生命教育', '數學', '生涯規劃'],
+        大眾傳播學群: ['國語文', '英語文', '公民與社會', '資訊科技', '藝術生活', '美術'],
+        管理學群: ['英語文', '國語文', '數學', '資訊科技', '公民與社會', '生涯規劃'],
+        財經學群: ['英語文', '數學', '國語文', '公民與社會', '資訊科技', '生涯規劃'],
+    };
+    const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
+    assert.deepEqual(majorData.map((c) => COLLEGO_NAME.get(c.name)).sort(), Object.keys(COLLEGO_SUBJECTS).sort());
+    for (const c of majorData) assert.deepEqual([...c.subjects].sort(), [...COLLEGO_SUBJECTS[COLLEGO_NAME.get(c.name)]].sort(), c.name);
 });
 
 test('科系羅盤的學群簡介與 src/data/clusters.ts 一字不差', () => {
