@@ -223,9 +223,20 @@ const CLUSTERS_TS = readFileSync(new URL('../../src/data/clusters.ts', import.me
 // 本站學群名稱對 ColleGo! 學群名稱、本站學群名稱對簡介，都取自 src/data/clusters.ts
 const COLLEGO_NAME = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bcollegoName: '([^']+)'/g)].map((m) => [m[1], m[2]]));
 const CLUSTER_DESCRIPTION = new Map([...CLUSTERS_TS.matchAll(/\bname: '([^']+)'.*\bdescription: '([^']+)'/g)].map((m) => [m[1], m[2]]));
-// ColleGo! 認識學群的 18 個學群（2026-11-10 查 CollegeIntro?current_college_id=1～18 的標題）
-const COLLEGO_CLUSTERS = ['資訊學群', '工程學群', '數理化學群', '醫藥衛生學群', '生命科學學群', '生物資源學群', '地球環境學群', '建築設計學群', '藝術學群',
-    '社會心理學群', '大眾傳播學群', '外語學群', '文史哲學群', '教育學群', '法政學群', '管理學群', '財經學群', '遊憩運動學群'];
+// ColleGo! 認識學群的 18 個學群（2026-11-10 查 CollegeIntro?current_college_id=1～18 的標題）。本站沒有的 8 個另外列出
+// 主要學類（不含「跨學類」），指令裡的要和這裡一字不差。
+const COLLEGO_CLUSTERS = {
+    資訊學群: null, 工程學群: null, 醫藥衛生學群: null, 生命科學學群: null, 建築設計學群: null, 社會心理學群: null,
+    大眾傳播學群: null, 法政學群: null, 管理學群: null, 財經學群: null,
+    數理化學群: ['數學', '化學', '物理', '自然科學', '生化', '數學教育', '數據統計'],
+    地球環境學群: ['工程科學', '水利工程', '環境工程', '地球科學', '地理', '海洋科學', '大氣科學', '營建安全', '史地'],
+    生物資源學群: ['獸醫', '植物保護', '生態', '農藝', '動物科學', '園藝', '森林', '海洋資源', '食品生技'],
+    藝術學群: ['工業設計', '工藝', '商業設計', '服裝設計', '美術', '音樂', '表演藝術', '藝術設計', '舞蹈'],
+    外語學群: ['英語文', '歐語文', '日語文', '東方語文', '英語教育'],
+    文史哲學群: ['圖書資訊', '宗教', '文化產業', '中國語文', '歷史', '哲學', '台灣語文', '史地', '華語文教育'],
+    教育學群: ['數位學習', '科技教育', '數學教育', '英語教育', '華語文教育', '教育', '特殊教育', '幼兒教育', '成人教育', '社科教育'],
+    遊憩運動學群: ['運動保健', '體育', '舞蹈', '觀光事業', '運動管理', '餐旅管理', '休閒管理'],
+};
 
 test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相同；文字任務、不設溫度（頁面原本沒設）', () => {
     const task = catalog.get('career-chat');
@@ -237,7 +248,7 @@ test('career-chat：問題最多 200 字，與頁面輸入框的 maxlength 相�
     assert.match(input, new RegExp(`\\bmaxlength="${task.input.question.maxLength}"`));
 });
 
-test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，不擅長某科或選組時先回答再舉學群當起點，其他問題先回答再給下一步；說不出興趣時先找線索，可以用條件句舉學群；學群介紹先指到本站，本站沒有的學群說出常見科系再請學生到 ColleGo! 看；200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
+test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並說明原因，不擅長某科或選組時先回答再舉學群當起點，其他問題先回答再給下一步；說不出興趣時先找線索，可以用條件句舉學群；學群介紹先指到本站，本站沒有的學群說出 ColleGo! 的學類再請學生到 ColleGo! 看，想當老師說明取得教師證書的步驟；200 字內，不約學生下次再談，校系規定請學生到校系網頁和甄選會、考分會的校系分則查', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /^學生問的是興趣、科系或學群時，你的回答應該包含：$/m);
     assert.match(instructions, /推薦 1～2 個最相關的學群/);
@@ -251,9 +262,12 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     assert.match(instructions, /^其他問題先回答他問的事，再給一個具體的下一步，不提學群。$/m);
     // 資料裡的學群換成 ColleGo! 的名稱（clusters.ts 的 collegoName），加上列出的其他學群，要剛好是 ColleGo! 的 18 個
     const names = [...instructions.split('\n---\n')[1].matchAll(/^學群：(.+)$/gm)].map((m) => COLLEGO_NAME.get(m[1]));
-    const others = instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的是(.+)學群。$/m)?.[1].split('、').map((n) => `${n}學群`) ?? [];
-    assert.deepEqual([...names, ...others].sort(), [...COLLEGO_CLUSTERS].sort());
-    assert.match(instructions, /^學生的興趣對到這些學群時，照實說本站沒有它的資料，可以說出常見的科系，再請他到 ColleGo! 看那個學群。$/m);
+    const others = Object.fromEntries((instructions.match(/^ColleGo! 列了 18 個學群，上面沒有的 8 個學群和它們的學類是：\n((?:.+學群：.+\n)+)/m)?.[1] ?? '')
+        .trim().split('\n').map((line) => line.split('：')).map(([name, majors]) => [name, majors.split('、')]));
+    assert.deepEqual([...names, ...Object.keys(others)].sort(), Object.keys(COLLEGO_CLUSTERS).sort());
+    for (const [name, majors] of Object.entries(others)) assert.deepEqual(majors, COLLEGO_CLUSTERS[name], name);
+    assert.match(instructions, /^學生的興趣對到這 8 個學群時，說本站沒有它的資料，可以說出它的學類，再請他到 ColleGo! 看那個學群。$/m);
+    assert.match(instructions, /^學生想當中小學或幼兒園老師時，說明要修師資職前教育課程、通過教師資格考試、完成教育實習，才拿得到教師證書。$/m);
     assert.match(instructions, /總長度不要超過 200 字/);
     assert.match(instructions, /你看不到之前的對話，之後也看不到這次的回答/);
     assert.match(instructions, /不要用「下次」「再跟我說」這類需要接續對話的說法/);
