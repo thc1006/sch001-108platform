@@ -10,10 +10,10 @@ const MAX_SENTENCE = 100;
 
 /**
  * pairs、defaults：[簡, 繁] 的陣列，逐字對照與一對多字的預設轉法
- * phrases、curated：[鍵, 轉法] 的陣列；guards：鍵的陣列
+ * phrases、curated、always：[鍵, 轉法] 的陣列；guards：鍵的陣列
  * simplified：簡體專用字（正確的繁體文字不會有的字）的 Set
  */
-export function createConverter({ pairs, defaults, phrases, curated, guards, simplified }) {
+export function createConverter({ pairs, defaults, phrases, curated, always = [], guards, simplified }) {
     const table = new Map(pairs);
     const fallback = new Map(defaults);
     const norm = (ch) => table.get(ch) ?? fallback.get(ch) ?? ch;
@@ -35,6 +35,7 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
     for (const key of guards) add(key, GUARD);
     for (const [key, value] of phrases) add(key, { kind: 'phrase', key, value });
     for (const [key, value] of curated) add(key, { kind: 'curated', key, value });
+    for (const [key, value] of always) add(key, { kind: 'always', key, value });
 
     // 這些字後面的「么」是簡體的「麼」（什么、怎么、這么、那么、多么、要么、甚么）
     const moPrefixes = new Set([...'什怎這这那多要甚']);
@@ -45,7 +46,7 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
     };
 
     /**
-     * chars[start] 開始最長、可以套用的詞：擋詞一律可以；PHRASES 要比對到的那段原文有簡體專用字；
+     * chars[start] 開始最長、可以套用的詞：擋詞與 ALWAYS 一律可以；PHRASES 要比對到的那段原文有簡體專用字；
      * CURATED 要整句有簡體專用字（tainted 是 undefined 表示這句還沒收完，不知道；final 時不再等，
      * 當作沒有）。
      * open：走到 chars 結尾時還可能接成更長的詞；waiting：有 CURATED 的詞要等整句收完才知道能不能用。
@@ -59,7 +60,7 @@ export function createConverter({ pairs, defaults, phrases, curated, guards, sim
             n += norm(chars[i]);
             if (simplified.has(chars[i])) simplifiedSeen = true;
             for (const entry of words.get(n) ?? []) {
-                const usable = entry.kind === 'guard' || (entry.kind === 'phrase' && simplifiedSeen) || (entry.kind === 'curated' && tainted === true);
+                const usable = entry.kind === 'guard' || entry.kind === 'always' || (entry.kind === 'phrase' && simplifiedSeen) || (entry.kind === 'curated' && tainted === true);
                 if (usable) {
                     found = { length: i - start + 1, entry };
                     break;

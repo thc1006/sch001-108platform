@@ -10,13 +10,13 @@
  *
  * 一對多的字靠詞組（s2t-phrases.mjs）：從左到右取最長的詞（头发 → 頭髮、后来 → 後來），比對時
  * 一對一的字簡繁都算（团隊 對得上 团队）。PHRASES 只在比對到的那段原文有簡體專用字時套用；
- * CURATED 是寫成繁體也不成詞的（干部、最后），整句（到句尾，最多 100 個字）有簡體專用字時才套用。都只改原文和鍵同一個字
- * 的位置。擋詞（皇后、若干）只佔位置不改字。沒有詞組命中的一對多字，只有 S2T_DEFAULTS 的字
- * 有預設轉法。
+ * CURATED 是寫成繁體也不成詞的（干部、最后），整句（到句尾，最多 100 個字）有簡體專用字時才套用。
+ * ALWAYS 是台灣一定寫成 劃 的詞（企划、策划），整句沒有簡體字也套用。都只改原文和鍵同一個字的位置。
+ * 擋詞（皇后、若干）只佔位置不改字。沒有詞組命中的一對多字，只有 S2T_DEFAULTS 的字有預設轉法。
  */
 import { createConverter } from './s2t-core.mjs';
 import { S2T_PAIRS } from './s2t-table.mjs';
-import { S2T_CURATED, S2T_DEFAULTS, S2T_GUARDS, S2T_PHRASES, S2T_SIMPLIFIED, S2T_TABLE_TRADITIONAL } from './s2t-phrases.mjs';
+import { S2T_ALWAYS, S2T_CURATED, S2T_DEFAULTS, S2T_GUARDS, S2T_PHRASES, S2T_SIMPLIFIED, S2T_TABLE_TRADITIONAL } from './s2t-phrases.mjs';
 
 const pairs = (text) => {
     const chars = [...text];
@@ -39,6 +39,7 @@ export const { toTraditional, createTraditionalStream } = createConverter({
     defaults: pairs(S2T_DEFAULTS),
     phrases: entries(S2T_PHRASES),
     curated: entries(S2T_CURATED),
+    always: entries(S2T_ALWAYS),
     guards: S2T_GUARDS.split(' ').filter(Boolean),
     simplified: SIMPLIFIED,
 });
