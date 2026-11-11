@@ -11,6 +11,8 @@
  *   - CURATED：寫成繁體也不成詞、跟前後的字也湊不成繁體詞的 STPhrases 詞（干部、規划、最后），整句有
  *     簡體專用字時套用。例如回答寫「熱音社干部與成果发表會」，干部 兩個字本身都是繁體也用的字。
  *     联系 不收：「關聯系統」裡就有 聯系
+ *   - ALWAYS：台灣一定寫成 劃 的 STPhrases 詞（企划、策划），整句沒有簡體專用字也套用。划 在台灣也是正字
+ *     （划船、划算），回答可能整句只有 划 寫錯（企划或公關）
  *   - DEFAULTS：一對多的簡體專用字沒有詞組命中時的轉法。只挑另一種寫法只出現在固定詞裡的字（髮：头发；
  *     糰：饭团；噹：叮当；併：合并），那些詞由 PHRASES 處理。簡體專用字不會出現在繁體文字裡，預設轉法
  *     改不到繁體文字
@@ -45,6 +47,8 @@ const DEFAULTS = new Map(Object.entries({
 }));
 // 回答裡看過的（2026-11-05、11-08 的量測）
 const CURATED = new Set(['干部', '规划', '计划', '准备', '随后', '最后', '之后', '以后', '然后', '后来', '后面']);
+// 2026-11-11 的回答寫出 企划；其餘是同類的詞。刻划、比划 不收：立刻划过去、相比划算
+const ALWAYS = new Set(['企划', '策划', '筹划', '谋划', '笔划', '划分']);
 // OpenCC 換成另一個字、但原字在台灣也是正確寫法的（台灣、櫃台、發布、念書、占領、弦樂），維持原字
 const KEEP = new Map(Object.entries({
     台: '臺檯', 布: '佈', 念: '唸', 占: '佔', 弦: '絃', 折: '摺', 升: '昇', 背: '揹', 夫: '伕',
@@ -66,13 +70,15 @@ const REJECT = new Set([
 // 转换只用、开车里程 不切成 调制、制药、换只、车里；校系马上、後台风格、公关系统、步调表现 不切成 系马、
 // 台风、关系、调表。里、尽 是一對多的字，繁體寫的 裡面、檯面、盡頭、裡頭 對不上 里面、尽头 這些鍵，
 // 另外列（社團裡面团员、走到盡頭发现）。家伙计划、万里实现 不切成 伙计、里实；经过松山、会吊车尾、
-// 这台风扇、我们系马上 不切成 过松、会吊、台风、系马；这笔划算、这笔划不来 不切成 笔划。介詞 向 後面接
-// 导 開頭的詞（可以向导师求助、这会向导致）時，不讓 向导 改成 嚮導
+// 这台风扇、我们系马上 不切成 过松、会吊、台风、系马；这笔划算、一笔划不来、外企划不划算、这个决策划算吗
+// 不切成 笔划、企划、策划，行政策划 不切成 政策。介詞 向 後面接 导 開頭的詞（可以向导师求助、这会向导致）
+// 時，不讓 向导 改成 嚮導
 const GUARD_WORDS = ['口头', '带头', '回头', '开头', '镜头', '码头', '念头', '源头', '街头', '心头', '关头',
     '里头', '外头', '上头', '起头', '苗头', '势头', '年头', '风头', '舌头', '额头', '眉头', '骨头', '拳头',
     '视后', '棋后', '拳后', '相关', '有关系统', '强调', '年制', '转换', '开车', '校系', '科系', '后台', '後台', '公关', '步调',
     '里面', '裡面', '檯面', '盡頭', '裡頭', '家伙', '傢伙', '万里', '萬里', '过松山', '会吊车', '台风扇', '系马上',
-    '笔划算', '笔划不来', '笔划得来',
+    '笔划算', '笔划不来', '笔划得来', '笔划不划', '一笔划算', '一笔划不来', '一笔划得来', '一笔划不划',
+    '国企', '外企', '央企', '民企', '私企', '名企', '决策', '政策', '对策', '行政',
     ...['导师', '导致', '导弹', '导演', '导航', '导向', '导出', '导入', '导体', '导电', '导管', '导线', '导引', '导数', '导读', '导览']
         .map((word) => `向${word}`)];
 // 繁體也用的字開頭的常用詞。詞組的最後一個字改了這種字（中国制→中國製、细面→細麵、关系→關係）時，
@@ -177,6 +183,7 @@ const target = (key, value) => {
 };
 const hasSimplified = (key) => [...key].some((ch) => simplifiedOnly.has(ch));
 
+// CURATED 與 ALWAYS 的詞。兩種只差在套用的條件，擋詞與接常用詞的處理相同
 const curated = new Map();
 const candidates = new Map();
 const others = new Map();
@@ -185,11 +192,13 @@ for (const [key, values] of [...parse(phraseFile), ...[...EXTRA].map(([k, v]) =>
     const value = OVERRIDE.get(key) ?? target(key, values[0]);
     // 轉法還留著逐字對照會轉掉的字（种放、恒大、洪适 保留姓氏、古字）：收了反而在輸出留下簡體字
     if (!OVERRIDE.has(key) && [...value].some((ch) => table.has(ch) && simplifiedOnly.has(ch))) continue;
-    if (CURATED.has(key)) curated.set(key, value);
+    if (CURATED.has(key) || ALWAYS.has(key)) curated.set(key, value);
     else if (value !== baseline(key) && hasSimplified(key)) candidates.set(key, value);
     else others.set(key, value);
 }
-for (const key of CURATED) if (!curated.has(key)) fail(`CURATED 的 ${key} 不在 STPhrases 裡`);
+for (const key of [...CURATED, ...ALWAYS]) if (!curated.has(key)) fail(`CURATED、ALWAYS 的 ${key} 不在 STPhrases 裡`);
+const onlyCurated = () => [...curated].filter(([key]) => !ALWAYS.has(key));
+const onlyAlways = () => [...curated].filter(([key]) => ALWAYS.has(key));
 
 // 跟 s2t-core.mjs 的 norm 相同
 const norm = (s) => [...s].map((ch) => table.get(ch) ?? DEFAULTS.get(ch) ?? ch);
@@ -197,7 +206,8 @@ const converter = (phrases, guards = []) => createConverter({
     pairs,
     defaults: [...DEFAULTS],
     phrases: [...phrases],
-    curated: [...curated],
+    curated: onlyCurated(),
+    always: onlyAlways(),
     guards,
     simplified: simplifiedOnly,
 });
@@ -306,14 +316,15 @@ const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('he
 
 // 表的內容先算好，表頭記它的 sha256
 const body = `export const S2T_PHRASES = '${list(withBridges())}';
-export const S2T_CURATED = '${list(curated)}';
+export const S2T_CURATED = '${list(onlyCurated())}';
+export const S2T_ALWAYS = '${list(onlyAlways())}';
 export const S2T_GUARDS = '${guards.sort(byCode).join(' ')}';
 export const S2T_DEFAULTS = '${[...DEFAULTS].map(([k, v]) => k + v).join('')}';
 export const S2T_SIMPLIFIED = '${[...simplifiedOnly].filter((ch) => !table.has(ch)).sort(byCode).join('')}';
 export const S2T_TABLE_TRADITIONAL = '${[...table.keys()].filter((ch) => !simplifiedOnly.has(ch)).sort(byCode).join('')}';
 `;
 process.stdout.write(`/**
- * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${curated.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
+ * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${onlyCurated().length} 條、ALWAYS ${ALWAYS.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
  * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
  *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 ${sha(fileURLToPath(import.meta.url))}）
  *   ai-gateway/src/s2t-table.mjs（sha256 ${sha(fileURLToPath(new URL('../src/s2t-table.mjs', import.meta.url)))}）
@@ -328,8 +339,8 @@ process.stdout.write(`/**
  * 換過的字套用 TWVariants；${[...KEEP].map(([k, v]) => k + '（' + v + '）').join('')}維持原字，計劃 改成 計畫；
  * ${[...OVERRIDE].map(([k, v]) => k + ' 轉成 ' + v).join('、')}；不收 ${[...REJECT].join('、')}；
  * 補上 ${[...EXTRA].map(([k, v]) => k + '→' + v).join('、')}；另加擋詞 ${GUARD_WORDS.join('、')}，
- * 以及「詞組＋常用詞（${CONTINUE.join('、')}）的其餘的字」與 CURATED 的繁體寫法；
- * 指定 ${[...CURATED].join('、')} 在整句有簡體字時轉換；
+ * 以及「詞組＋常用詞（${CONTINUE.join('、')}）的其餘的字」與 CURATED、ALWAYS 的繁體寫法；
+ * 指定 ${[...CURATED].join('、')} 在整句有簡體字時轉換，${[...ALWAYS].join('、')} 一律轉換；
  * 一對多字的預設轉法 ${[...DEFAULTS].map(([k, v]) => k + '→' + v).join('、')}。
  */
 ${body}`);

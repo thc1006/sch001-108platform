@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 
 import { toTraditional, createTraditionalStream, S2T_SIZE } from '../src/s2t.mjs';
 import { S2T_PAIRS } from '../src/s2t-table.mjs';
-import { S2T_CURATED, S2T_DEFAULTS, S2T_GUARDS, S2T_PHRASES, S2T_SIMPLIFIED, S2T_TABLE_TRADITIONAL } from '../src/s2t-phrases.mjs';
+import { S2T_ALWAYS, S2T_CURATED, S2T_DEFAULTS, S2T_GUARDS, S2T_PHRASES, S2T_SIMPLIFIED, S2T_TABLE_TRADITIONAL } from '../src/s2t-phrases.mjs';
 
 test('活體測試中出現過的簡體字都會被轉成台灣繁體', () => {
     assert.equal(toTraditional('每兩週產出阶段性報告'), '每兩週產出階段性報告');
@@ -224,6 +224,63 @@ test('CURATED（干部、最后、准備）只在整句有簡體專用字時轉�
     assert.equal(toTraditional('最后提早准備，并'), '最後提早準備，並');
 });
 
+// 划 在台灣也是正字（划船、划算）。企划、策划 這類詞台灣一定寫成 劃，整句都是繁體也轉
+test('ALWAYS 的 企划、策划、筹划、谋划、笔划、划分 一律轉成 劃，划船、划算 的 划 不動', () => {
+    const cases = [
+        // 第 3 輪 #388 審查的回答，整句只有 划 不是繁體
+        ['讀法律常見出路包括律師、法官或檢察官、企業法務、公務員、企划或公關、觀護人或獄政人員', '讀法律常見出路包括律師、法官或檢察官、企業法務、公務員、企劃或公關、觀護人或獄政人員'],
+        ['行銷企划', '行銷企劃'],
+        ['活動策划', '活動策劃'],
+        ['籌划', '籌劃'],
+        ['謀划', '謀劃'],
+        ['筆划很多', '筆劃很多'],
+        ['學群的划分', '學群的劃分'],
+        ['行政策划', '行政策劃'],
+        ['活动策划', '活動策劃'],
+        ['筹划活动', '籌劃活動'],
+        ['这次企划由我负责', '這次企劃由我負責'],
+        // 前面的 國企、外企、決策、政策 佔住位置，後面的 划算、划不來 不切成 企划、策划；笔划算 這類是擋詞
+        ['國企划算嗎', '國企划算嗎'],
+        ['進外企划不划算', '進外企划不划算'],
+        ['央企划得來嗎', '央企划得來嗎'],
+        ['民企划算', '民企划算'],
+        ['私企划不來', '私企划不來'],
+        ['進名企划不划算', '進名企划不划算'],
+        ['這個決策划算嗎', '這個決策划算嗎'],
+        ['這項政策划不來', '這項政策划不來'],
+        ['對策划算', '對策划算'],
+        ['這筆划算嗎', '這筆划算嗎'],
+        ['這筆划不來', '這筆划不來'],
+        ['這筆划不划算', '這筆划不划算'],
+        ['一筆划算', '一筆划算'],
+        ['一筆划不划算', '一筆划不划算'],
+        ['国企划算吗', '國企划算嗎'],
+        ['这个决策划算吗', '這個決策划算嗎'],
+        ['一笔划算', '一筆划算'],
+        ['一笔划不来', '一筆划不來'],
+        ['一笔划得来', '一筆划得來'],
+        ['一笔划不划算', '一筆划不划算'],
+        ['企划船', '企划船'],
+        ['下午去划船，這樣比較划算', '下午去划船，這樣比較划算'],
+        ['下午去划船，这样比较划算', '下午去划船，這樣比較划算'],
+    ];
+    for (const [input, expected] of cases) assert.equal(toTraditional(input), expected, input);
+    const traditional = '企劃、策劃、筆劃、籌劃、謀劃、劃分、劃撥、划船、划算、划得來、划不來、划槳、皮划艇、一筆劃';
+    assert.equal(toTraditional(traditional), traditional);
+    assert.equal(toTraditional(`${traditional}，这`), `${traditional}，這`);
+    for (const sample of ['進外企划不划算？我想做企划或公關', '這筆划算嗎？行銷企划與政策划不來']) {
+        const chars = [...sample];
+        const whole = toTraditional(sample);
+        for (let cut = 0; cut <= chars.length; cut++) {
+            const convert = createTraditionalStream();
+            const streamed = convert(chars.slice(0, cut).join('')) + convert(chars.slice(cut).join('')) + convert.flush();
+            assert.equal(streamed, whole, `${sample} 切在第 ${cut} 個字`);
+        }
+    }
+    assert.equal(toTraditional('進外企划不划算？我想做企划或公關'), '進外企划不划算？我想做企劃或公關');
+    assert.equal(toTraditional('這筆划算嗎？行銷企划與政策划不來'), '這筆划算嗎？行銷企劃與政策划不來');
+});
+
 test('預設轉法的字寫成繁體也對得上擋詞：繁體的「獲准」對得上「获准」，准 不跟後面湊成 准备', () => {
     assert.equal(toTraditional('獲准備案这样'), '獲准備案這樣');
 });
@@ -416,8 +473,13 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
         assert.notDeepEqual(baseline(key), value, key.join(''));
     }
     for (const [key, value] of entries(S2T_CURATED)) assert.notDeepEqual(baseline(key), value, key.join(''));
+    // ALWAYS 不看整句就轉，只能把 划 改成 劃
+    for (const [key, value] of entries(S2T_ALWAYS)) {
+        assert.deepEqual(baseline(key).map((ch) => (ch === '划' ? '劃' : ch)), value, key.join(''));
+        assert.notDeepEqual(baseline(key), value, key.join(''));
+    }
     // 產生腳本拿掉了和詞組同鍵的擋詞（同鍵時詞組先試，原文有簡體字時擋詞輪不到）
-    const keys = new Set([...entries(S2T_PHRASES), ...entries(S2T_CURATED)].map(([key]) => key.join('')));
+    const keys = new Set([...entries(S2T_PHRASES), ...entries(S2T_CURATED), ...entries(S2T_ALWAYS)].map(([key]) => key.join('')));
     for (const guard of S2T_GUARDS.split(' ')) assert.ok(!keys.has(guard), `擋詞 ${guard} 也是詞組`);
     assert.ok(S2T_GUARDS.split(' ').length > 0);
     for (let i = 0; i < defaults.length; i += 2) {
