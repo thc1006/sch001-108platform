@@ -240,8 +240,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
             // 修改範例標題
             const exampleTitle = document.createElement('h3');
-            exampleTitle.className = 'text-lg font-semibold mb-4 text-cyan-900';
+            exampleTitle.className = 'text-lg font-semibold mb-2 text-cyan-900';
             exampleTitle.textContent = '修改範例';
+
+            // 範例裡的括號要學生自己換掉，說明放在標題和範例之間，報讀軟體照這個順序唸。
+            const exampleNote = document.createElement('p');
+            exampleNote.className = 'text-sm text-gray-600 mb-3';
+            exampleNote.textContent = '範例只用你心得裡寫到的事。括號裡寫「填入」的地方，換成你自己實際做過的事；想不起來就刪掉，不要留括號。';
 
             // 修改範例內容
             const exampleBox = document.createElement('div');
@@ -258,6 +263,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             container.appendChild(starTitle);
             container.appendChild(analysisContainer);
             container.appendChild(exampleTitle);
+            container.appendChild(exampleNote);
             container.appendChild(exampleBox);
 
             analysisResult.appendChild(container);

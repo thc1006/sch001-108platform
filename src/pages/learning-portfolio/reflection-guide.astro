@@ -310,6 +310,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             exampleTitle.className = 'text-base';
             exampleTitle.textContent = '修改範例';
 
+            // 範例裡的括號要學生自己換掉，說明放在標題和範例之間，報讀軟體照這個順序唸。
+            const exampleNote = document.createElement('p');
+            exampleNote.className = 'text-gray-600';
+            exampleNote.textContent = '範例只用你心得裡寫到的事。括號裡寫「填入」的地方，換成你自己實際做過的事；想不起來就刪掉，不要留括號。';
+
             // 修改範例引用框
             const exampleBox = document.createElement('blockquote');
             exampleBox.className = 'border-l-4 border-cyan-500 bg-cyan-50 p-3 text-sm';
@@ -325,6 +330,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             container.appendChild(starTitle);
             container.appendChild(analysisContainer);
             container.appendChild(exampleTitle);
+            container.appendChild(exampleNote);
             container.appendChild(exampleBox);
 
             analysisResult.appendChild(container);
