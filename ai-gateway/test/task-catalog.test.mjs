@@ -261,13 +261,14 @@ test('career-chat：問到興趣、科系或學群才推薦 1～2 個學群並�
     const lines = instructions.split('\n');
     assert.equal(lines.indexOf(abuse), lines.findIndex((line) => line.startsWith('學生提到想傷害自己')) + 1, '家暴那一行寫「也照上面回答」，要緊接在自傷那一行後面');
     assert.match(instructions, /^學生說很累、壓力大或心情低落，但沒有提到上面這些時，回答最後加一句「如果一直這樣，可以找導師或輔導室聊聊」。$/m);
-    // 擁有者決定：同學之間的排擠、罵、打或搶錢照一般做法回答
-    assert.match(instructions, /^學生說被同學排擠、罵、打或搶錢時，先回應他的感受，再建議他截圖或記下時間、地點，找導師或輔導室處理。$/m);
-    // 指令裡的電話號碼只有這四支。0 或 1 開頭、三位數以上的數字都算，後面接單位的（108 課綱、116 學年度）不算。
+    // 擁有者決定：同學之間的排擠、罵、打或搶錢照一般做法回答，有立即危險時撥 110
+    const peers = '學生說被同學排擠、罵、打或搶錢時，先回應他的感受，再建議他截圖或記下時間、地點，找導師或輔導室處理；有立即危險時先撥 110 報警。';
+    assert.ok(lines.includes(peers));
+    // 指令裡的電話號碼只有這四支，110 寫在兩行。0 或 1 開頭、三位數以上的數字都算，後面接單位的（108 課綱、116 學年度）不算。
     // 全形數字先轉半形，(02) 這種區碼轉成 02-
     const phones = instructions.normalize('NFKC').replace(/\((0\d{1,3})\)\s*/g, '$1-').match(/(?<![\d-])[01](?:-?\d){2,}(?![\d-])(?!\s*(?:課綱|學年|年|字|個|人|分))/g);
-    assert.deepEqual(phones, ['1925', '119', '113', '110'], '電話號碼只能是查證過的這幾支；不是電話的數字，後面要接課綱、學年度這類單位');
-    assert.deepEqual(instructions.split('\n').filter((line) => /(?<![\d-])110(?![\d-])/.test(line.normalize('NFKC'))), [abuse], '110 只寫在家暴那一行');
+    assert.deepEqual(phones, ['1925', '119', '113', '110', '110'], '電話號碼只能是查證過的這幾支；不是電話的數字，後面要接課綱、學年度這類單位');
+    assert.deepEqual(instructions.split('\n').filter((line) => /(?<![\d-])110(?![\d-])/.test(line.normalize('NFKC'))), [abuse, peers], '110 只寫在家暴那一行和同學那一行');
 });
 
 test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或住得遠時怎麼給學群起點', () => {
