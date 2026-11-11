@@ -333,6 +333,12 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     assert.deepEqual(section.split('\n\n'), blocks);
 });
 
+// 指令把出路用頓號串成一行，一項裡有頓號就像兩項。
+test('科系羅盤的出路每一項都不含頓號', () => {
+    const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
+    for (const c of majorData) for (const career of c.careers) assert.doesNotMatch(career, /、/, `${c.name}：${career}`);
+});
+
 // 頁面上和 career-chat 有關的三處：參考的學群數跟著指令的資料走；開場訊息說說不出興趣也可以問；
 // ColleGo! 認識學群的連結另開新分頁，放在進度區塊後面，讓「發送」和「取消」相鄰。
 test('生涯探索首頁：AI 推薦學群寫參考的學群數、說不出興趣也可以問，ColleGo! 認識學群的連結在進度區塊後面', () => {
