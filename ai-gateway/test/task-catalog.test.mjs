@@ -438,18 +438,16 @@ test('star-analysis：指令寫明總評、各項評論與建議、修改範例�
     assert.match(instructions, /revised_example：[^\n]*約 100～300 字/);
 });
 
-test('star-analysis：修改範例只用心得裡寫到的事，「我」和「我們」照寫，「（填入…）」最多兩處', () => {
+test('star-analysis：修改範例只用心得裡寫到的事，「我」和「我們」照寫，括號只放在沒說怎麼做的地方', () => {
     const { instructions } = catalog.get('star-analysis');
-    assert.match(instructions, /revised_example：[^\n]*。心得寫「我」就寫「我」，寫「我們」或沒寫是誰做的，不要改成「我」，也不要加上心得裡沒有的人。心得裡沒有的做法、人數、時間、名次與成果不要自己編，最多用兩處「（填入實際的做法）」這樣的括號標出要補的地方，其他沒寫的就不寫$/m);
-    assert.match(instructions, /revised_example：[^\n]*只用心得裡寫到的事重新組織/);
-    assert.doesNotMatch(instructions, /根據你的建議/);
-    // 例子會被照抄，寫成參加人數的話，跟人數無關的心得也會要學生填參加人數。
-    assert.doesNotMatch(instructions, /參加人數/);
+    assert.match(instructions, /^- revised_example：一小段修改後的文字範例，約 100～300 字，只用心得裡寫到的事重新組織，讓情境、任務、行動、結果讀起來清楚。心得寫「我」就寫「我」，寫「我們」或沒寫是誰做的，不要改成「我」，也不要加上心得裡沒有的人。心得裡沒有的做法、人數、時間、名次與成果不要自己編。心得只說做了某件事、沒說怎麼做的地方，可以在那一句裡用括號標出要補的內容，括號裡先寫「填入」，再寫要補的是哪件事；最多兩處，不放在同一句，沒有這種地方就不用括號。其他沒寫的就不寫$/m);
+    // 括號的例子會被照抄到每一份心得，例如寫成參加人數時，跟人數無關的心得也要學生填參加人數。
+    assert.doesNotMatch(instructions, /「（填入/);
 });
 
 test('star-analysis：suggestion 不提括號和修改範例的寫法', () => {
     const { instructions } = catalog.get('star-analysis');
-    assert.match(instructions, /^- analysis：[^\n]*。suggestion 直接寫要補什麼、怎麼改，不提括號和修改範例的寫法$/m);
+    assert.match(instructions, /^- analysis：S、T、A、R 四個項目各寫一則 comment（針對該項目的評論，點出優點或缺失）與 suggestion（具體的修改建議），各一到兩句。suggestion 直接寫要補什麼、怎麼改，不提括號和修改範例的寫法$/m);
 });
 
 test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
