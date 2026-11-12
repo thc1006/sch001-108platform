@@ -277,7 +277,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             renderClusterDetails(activeId);
         }
 
-        // 學生常打的簡稱、系名和口語說法，對到 majors 或 careers 裡的一項；有兩種意思的寫成陣列（心理醫生）。
+        // 學生常打的簡稱、系名和口語說法，對到 majors 或 careers 裡的一項；有兩種意思的寫成陣列（心理醫生、心理醫師）。
         // 鍵要寫成 norm 之後的樣子（小寫、半形、沒有空白）。scripts/career-search.test.mjs 會檢查。
         const ALIASES = {
             資工: '資訊工程', 資管: '資訊管理', 資傳: '資訊傳播', 生資: '生物資訊', 電機: '電機工程', 電子: '電子工程',
@@ -298,7 +298,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             ui設計師: 'UI/UX 設計師', 資訊科學: '資訊工程', 國際貿易: '國際企業', 輔導: '輔導諮商', 心理輔導: '輔導諮商',
             動畫: '媒體設計', 旅遊管理: '觀光事業', 觀光管理: '觀光事業', 精神科醫師: '醫師', 藥劑: '藥師', 理財: '理財專員',
             化工工程: '化學工程', 電腦科學: '資訊工程', 心理與諮商: '輔導諮商', 數位媒體: '媒體設計', 數位媒體設計: '媒體設計',
-            旅遊: '觀光事業',
+            旅遊: '觀光事業', 心理醫師: ['臨床或諮商心理師（要讀研究所再考證照）', '醫師'], 精神科醫生: '醫師',
         };
         // ColleGo! 的學群名稱和這裡不同的。
         const NAME_ALIASES = { 建築設計: '設計學群', 建築與設計: '設計學群', 社會心理: '社會與心理學群', 社心: '社會與心理學群' };
@@ -308,10 +308,10 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         // 去掉以後要和學類、出路或學群名稱整個相同才算（「人類學、民族學」拆開比），「物理系」才不會找到物理治療。
         function searchClusters(data, input) {
             const norm = (text) => text.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
-            // 打「constructor」時查到的是 Object 的東西，只查自己的鍵。
-            const own = (table, key) => (Object.hasOwn(table, key) ? table[key] : undefined);
+            // 打「constructor」時查到的是 Object 的東西，只查自己的鍵。Object.hasOwn 要 Safari 15.4，這裡不用。
+            const own = (table, key) => (Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined);
             let term = norm(input);
-            term = term.replace(/^我?(以後|未來|將來|長大(以?後)?)?很?(想要|想|要|希望)?去?(當|讀|念|唸|成為|考)(一個|一位|個)?/, '') || term;
+            term = term.replace(/[。.？?！!～~…]+$/, '').replace(/^我?(以後|未來|將來|長大(以?後)?)?(也|好|真的)?很?(想要|想|要|希望(能|可以)?)?去?(當|讀|念|唸|成為|考上?)(一個|一位|一名|個)?/, '') || term;
             if (!term) return data.map((cluster) => ({ cluster, byName: true, majors: [], careers: [] }));
             const stems = [term, ...['系', '學系', '學類', '師', '技師'].filter((end) => term.endsWith(end)).map((end) => term.slice(0, -end.length))];
             for (const [i, stem] of stems.entries()) {
