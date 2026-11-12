@@ -330,6 +330,9 @@ jobs:
       - name: Run comment-checker unit tests
         run: npm run test:comments
 
+      - name: Test which help-line numbers in AI answers become tel links
+        run: npm run test:phone-links
+
       - name: Check comment length
         run: npm run check:comments
 

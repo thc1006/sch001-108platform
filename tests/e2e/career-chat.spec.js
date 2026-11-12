@@ -630,6 +630,39 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(links).toHaveCount(4);
     });
 
+    test('回答裡的求助專線換成 tel: 連結，加進紀錄之前就換好；「110 學年度」「第 113 頁」照原樣，草稿不換', async ({ page }) => {
+        const answer = '這聽起來很難受。可以打衛福部保護專線 **113**（24 小時），正在被打時撥 110 報警。110 學年度的資料在第 113 頁。';
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta(answer)], hang: true });
+        await ask(page, '我爸會打我');
+        await expect(draft(page)).toContainText('110 報警');
+        await expect(draft(page).locator('a')).toHaveCount(0);
+
+        // 紀錄裡只有「加進一則訊息」這一次變動，加進去之後不再改裡面的節點。
+        await page.evaluate(() => {
+            const log = document.getElementById('chat-log');
+            window.__logChanges = [];
+            new MutationObserver((records) => records.forEach((r) => window.__logChanges.push(r.target === log ? 'log' : 'inside')))
+                .observe(log, { childList: true, subtree: true, characterData: true });
+        });
+        await push(page, done(answer));
+        const bubble = aiText(page, 2);
+        await expect(bubble).toHaveText('這聽起來很難受。可以打衛福部保護專線 113（24 小時），正在被打時撥 110 報警。110 學年度的資料在第 113 頁。');
+        const links = bubble.getByRole('link');
+        await expect(links).toHaveText(['113', '110']);
+        expect(await links.evaluateAll((els) => els.map((a) => a.getAttribute('href')))).toEqual(['tel:113', 'tel:110']);
+        await expect(bubble.locator('strong a')).toHaveText('113');
+        expect(await page.evaluate(() => window.__logChanges)).toEqual(['log']);
+    });
+
+    test('沒有寫完的回答裡的求助專線也換成 tel: 連結', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED, delta('想傷害自己時打安心專線 1925')], hang: true });
+        await ask(page, '我想傷害自己');
+        await expect(draft(page)).toContainText('1925');
+        await push(page, sse('error', { code: 'incomplete', message: '沒寫完' }));
+        await expect(aiText(page, 2).getByRole('link')).toHaveText(['1925']);
+        await expect(aiText(page, 2).getByRole('link')).toHaveAttribute('href', 'tel:1925');
+    });
+
     // 草稿每收到一段就重畫，放進 live region 會一路重唸。Safari 連 aria-live="off" 子樹裡的變化都算進
     // 外層的 live region，所以草稿與進度區塊（含計時器、取消鈕）不能有身為 live region 的祖先。
     test('對話紀錄是 role="log"；草稿與進度區塊不在任何 live region 裡，完成的回答加進紀錄，頭像不給螢幕閱讀器', async ({ page }) => {

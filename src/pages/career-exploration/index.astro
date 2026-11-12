@@ -368,6 +368,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         const ANSWER_MARKDOWN = { headingLevel: 3 };
         // 沒寫完的文字（草稿、斷掉的回答）：最後一行落單的 ** 等記號拿掉
         const PARTIAL_MARKDOWN = { headingLevel: 3, partial: true };
+        // 回答裡的求助專線換成可以直接撥的連結，和輸入列下方那一行一樣。加進紀錄之前換，紀錄只唸一次。
+        const HELP_NUMBERS = ['1925', '113', '119', '110'];
+        function linkHelpNumbers(el) {
+            // 快取裡的舊版 platform-ai.js 沒有 linkPhoneNumbers。
+            if (PlatformAI.linkPhoneNumbers) PlatformAI.linkPhoneNumbers(el, HELP_NUMBERS, 'text-indigo-700 underline hover:text-indigo-900');
+        }
         // 與 platform-ai.js 的 COOLDOWN_CODES 相同：帶著 retryAfter 時，等完才能再送出
         const WAIT_CODES = ['busy', 'rate_limited', 'too_many_inflight', 'not_ready'];
 
@@ -488,6 +494,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 // 以 done 的結果為準，片段接起來的只是草稿。
                 const answer = createMessage('ai');
                 answer.text.innerHTML = PlatformAI.renderMarkdown(result, ANSWER_MARKDOWN);
+                linkHelpNumbers(answer.text);
                 settle(answer);
             } catch (error) {
                 if (progress) progress.finish();
@@ -499,6 +506,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                     label.textContent = 'AI 的回答（沒有寫完）';
                     partial.text.before(label);
                     partial.text.innerHTML = PlatformAI.renderMarkdown(error.partial, PARTIAL_MARKDOWN);
+                    linkHelpNumbers(partial.text);
                     settle(partial);
                 }
                 const notice = createMessage('ai');
