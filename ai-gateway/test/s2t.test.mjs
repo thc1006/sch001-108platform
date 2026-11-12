@@ -217,11 +217,11 @@ test('模型簡繁混寫：一對一的字寫成繁體也對得上詞組（团�
     assert.equal(toTraditional('檢查線路并請負責同學處理，隨后調整彩排順序'), '檢查線路並請負責同學處理，隨後調整彩排順序');
 });
 
-test('CURATED（干部、最后、准備）只在整句有簡體專用字時轉，句號、問號、換行隔開的句子各算各的', () => {
+test('CURATED（干部、准備）只在整句有簡體專用字時轉，句號、問號、換行隔開的句子各算各的', () => {
     assert.equal(toTraditional('熱音社干部與成果发表會'), '熱音社幹部與成果發表會');
     assert.equal(toTraditional('熱音社干部。成果发表會'), '熱音社干部。成果發表會');
-    assert.equal(toTraditional('最后一天？提早准备\n最后一天'), '最后一天？提早準備\n最后一天');
-    assert.equal(toTraditional('最后提早准備，并'), '最後提早準備，並');
+    assert.equal(toTraditional('社團干部？提早准备\n社團干部'), '社團干部？提早準備\n社團干部');
+    assert.equal(toTraditional('社團干部提早准備，并'), '社團幹部提早準備，並');
 });
 
 // 划 在台灣也是正字（划船、划算）。企划、策划 這類詞台灣一定寫成 劃，整句都是繁體也轉
@@ -318,21 +318,99 @@ test('ALWAYS 的 企划、策划、筹划、谋划、笔划、划分 一律轉�
     assert.equal(toTraditional('這筆划算嗎？行銷企划與政策划不來'), '這筆划算嗎？行銷企劃與政策划不來');
 });
 
+// 于、里、几、后、着、愿 在台灣也是正字（于美人、里長、茶几、皇后、一着、鄉愿），逐字對照不轉。
+// 在于、這里、這几、之后、看着、愿意 這類詞台灣不會這樣寫，整句都是繁體也轉
+test('ALWAYS 的 在于、這里、這几、之后、看着、愿意 這類詞整句都是繁體也轉；公里、里長、于美人、茶几、皇后、一着 不動', () => {
+    const cases = [
+        // 2026-11-12 #390、#391 審查看到的模型回答
+        ['問題在于行動細節較少', '問題在於行動細節較少'],
+        ['可以在情境里再多點出', '可以在情境裡再多點出'],
+        ['計畫里要面對', '計畫裡要面對'],
+        ['致辭這几件事寫成', '致辭這幾件事寫成'],
+        ['要提前規划；', '要提前規劃；'],
+        ['計划在（填入期限）', '計畫在（填入期限）'],
+        ['屬于內在成長', '屬於內在成長'],
+        ['個人敢于站在大家面前', '個人敢於站在大家面前'],
+        ['人很多，于是只好', '人很多，於是只好'],
+        ['還好最后有解決', '還好最後有解決'],
+        ['后來我們', '後來我們'],
+        ['事情的先后順序', '事情的先後順序'],
+        ['實際卡在哪里，', '實際卡在哪裡，'],
+        ['店里很忙碌', '店裡很忙碌'],
+        ['也念了我几次', '也念了我幾次'],
+        ['大家才比較愿意繼續練', '大家才比較願意繼續練'],
+        ['投入志愿服務', '投入志願服務'],
+        ['每天回家都對着鏡子練習', '每天回家都對著鏡子練習'],
+        ['先不急着定組', '先不急著定組'],
+        // 前一個字寫成簡體或繁體都對得上
+        ['对于、對于、关于、關于、属于、屬于', '對於、對於、關於、關於、屬於、屬於'],
+        ['这里、這里、这几、這几', '這裡、這裡、這幾、這幾'],
+        // 兩個詞接在一起時，後一個詞其餘的字照它的轉法
+        ['十几万人', '十幾萬人'],
+        ['好几万元', '好幾萬元'],
+        ['着急于完成', '著急於完成'],
+        // 里 結尾的詞接 面、头 時，面、头 不跟後面湊成 面条、头发
+        ['這里面条件很多', '這裡面條件很多'],
+        ['在家里头发现', '在家裡頭發現'],
+        // 里長 不當擋詞：家里長輩 要轉
+        ['家里長輩', '家裡長輩'],
+    ];
+    for (const [input, expected] of cases) {
+        assert.equal(toTraditional(input), expected, input);
+        assert.equal(toTraditional(`${input}，这`), `${expected}，這`, input);
+    }
+    // 每個詞寫成繁體、只有 于 這些字寫錯時都轉（划 的詞見上一個測試）
+    const words = `
+        之後 以後 然後 最後 隨後 後來 後面 後續 先後 前後 背後 規劃 劃定 劃掉
+        在於 由於 對於 關於 至於 屬於 等於 於是 敢於 善於 用於 位於 處於 基於 終於 過於 易於 高於 低於 多於 少於
+        源於 便於 急於 勇於 樂於 歸於 限於 免於 出於 鑑於 助於 利於 似於
+        這裡 那裡 哪裡 心裡 家裡 店裡 眼裡 夜裡 夢裡 手裡 情境裡 計畫裡 報告裡 句子裡 過程裡 生活裡 活動裡 社團裡 學校裡
+        課堂裡 文章裡
+        幾乎 幾個 幾次 幾天 幾年 幾位 幾種 幾件 幾點 幾十 幾百 幾千 幾萬 幾分 幾期 幾人 幾首 幾周 好幾 這幾 那幾 哪幾
+        十幾 第幾
+        看著 跟著 接著 對著 急著 順著 隨著 帶著 拉著 學著 等著 想著 拿著 試著 靠著 朝著 沿著 忙著 抱著 穿著 寫著 聽著
+        說著 笑著 有著 著急 著重 著手 著眼 著迷 著想
+        願意 心願 願望 志願 意願 情願 不願 自願 但願 如願 寧願 甘願 祝願 許願`.split(/\s+/).filter(Boolean);
+    const wrong = { 於: '于', 裡: '里', 幾: '几', 後: '后', 著: '着', 願: '愿', 劃: '划' };
+    for (const word of [...words, '計畫']) {
+        const input = word === '計畫' ? '計划' : [...word].map((ch) => wrong[ch] ?? ch).join('');
+        assert.equal(toTraditional(input), word, input);
+        assert.equal(toTraditional(`${input}。`), `${word}。`, input);
+    }
+    const traditional = '公里、五公里、里長、訪談里長、替里辦公室、鄰里、鄉里、故里、千里、萬里、里程、新里程、這里程碑、'
+        + '國家里程碑、后里、目前后里區、首先后里區、于美人、單于、淳于、茶几、茶几上、案几、皇后、皇后來了、天后宮、'
+        + '球后來台、影后續約、一着、下一着棋、鄉愿、常規划船';
+    assert.equal(toTraditional(traditional), traditional);
+    assert.equal(toTraditional(`${traditional}，这`), `${traditional}，這`);
+    // 串流：切在每一個位置、一個字一個字送，都和整段相同
+    for (const sample of [...cases.map(([input]) => input), traditional, '問題在于。這里面条件，這里程碑！好几万人？家里头发现']) {
+        const chars = [...sample];
+        const whole = toTraditional(sample);
+        for (let cut = 0; cut <= chars.length; cut++) {
+            const convert = createTraditionalStream();
+            const streamed = convert(chars.slice(0, cut).join('')) + convert(chars.slice(cut).join('')) + convert.flush();
+            assert.equal(streamed, whole, `${sample} 切在第 ${cut} 個字`);
+        }
+        const convert = createTraditionalStream();
+        assert.equal(chars.map((ch) => convert(ch)).join('') + convert.flush(), whole, sample);
+    }
+});
+
 test('預設轉法的字寫成繁體也對得上擋詞：繁體的「獲准」對得上「获准」，准 不跟後面湊成 准备', () => {
     assert.equal(toTraditional('獲准備案这样'), '獲准備案這樣');
 });
 
 test('一句最多算 100 個字：CURATED 只看同一段裡有沒有簡體字，串流最多為此留 100 個字', () => {
     const long = '大'.repeat(120);
-    assert.equal(toTraditional(`最后${'大'.repeat(90)}这`), `最後${'大'.repeat(90)}這`);
-    assert.equal(toTraditional(`最后${long}这`), `最后${long}這`);
+    assert.equal(toTraditional(`干部${'大'.repeat(90)}这`), `幹部${'大'.repeat(90)}這`);
+    assert.equal(toTraditional(`干部${long}这`), `干部${long}這`);
     const convert = createTraditionalStream();
-    const first = convert(`最后${long}`);
+    const first = convert(`干部${long}`);
     assert.ok([...first].length >= 100, `只送出 ${[...first].length} 個字`);
-    assert.equal(first + convert('这') + convert.flush(), `最后${long}這`);
+    assert.equal(first + convert('这') + convert.flush(), `干部${long}這`);
     // 前面已經有一句時，下一句也從 0 算起
     const later = createTraditionalStream();
-    const head = later(`你好。${'大'.repeat(200)}最后${long}`);
+    const head = later(`你好。${'大'.repeat(200)}干部${long}`);
     assert.ok([...head].length >= 3 + 200 + 100, `只送出 ${[...head].length} 個字`);
 });
 
@@ -510,9 +588,10 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
         assert.notDeepEqual(baseline(key), value, key.join(''));
     }
     for (const [key, value] of entries(S2T_CURATED)) assert.notDeepEqual(baseline(key), value, key.join(''));
-    // ALWAYS 不看整句就轉，只能把 划 改成 劃
+    // ALWAYS 不看整句就轉，繁體也用的字只能改這幾個（计划 的 划 轉成 畫）
+    const always = { 划: '劃畫', 于: '於', 里: '裡', 几: '幾', 后: '後', 着: '著', 愿: '願', 万: '萬' };
     for (const [key, value] of entries(S2T_ALWAYS)) {
-        assert.deepEqual(baseline(key).map((ch) => (ch === '划' ? '劃' : ch)), value, key.join(''));
+        baseline(key).forEach((ch, i) => assert.ok(ch === value[i] || simplified.has(ch) || always[ch]?.includes(value[i]), `${key.join('')} 的 ${ch} 改成 ${value[i]}`));
         assert.notDeepEqual(baseline(key), value, key.join(''));
     }
     // 產生腳本拿掉了和詞組同鍵的擋詞（同鍵時詞組先試，原文有簡體字時擋詞輪不到）
