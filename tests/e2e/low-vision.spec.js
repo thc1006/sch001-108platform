@@ -364,6 +364,45 @@ for (const viewport of [{ width: 320, height: 256 }, { width: 1280, height: 720 
     });
 }
 
+// 清單不再內層捲動以後，窄螢幕上卡片離清單上面的學群更遠，點了之後要捲到卡片。
+test.describe('科系羅盤：點了學群，卡片頂端看不到時捲過去，焦點留在按鈕上', () => {
+    const h3Top = (page) => page.locator('#cluster-details h3').evaluate((h) => h.getBoundingClientRect().top);
+    for (const reducedMotion of ['reduce', 'no-preference']) {
+        test(`360x640 ${reducedMotion}`, async ({ page }) => {
+            await page.setViewportSize({ width: 360, height: 640 });
+            await page.emulateMedia({ reducedMotion });
+            await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+            await page.locator('#search-bar').evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+            const button = page.getByRole('group', { name: '學群清單' }).getByRole('button', { name: '資訊學群' });
+            expect(await h3Top(page)).toBeGreaterThan(640);
+            await button.click();
+            await expect(page.locator('#cluster-details h3')).toHaveText('資訊學群');
+            if (reducedMotion === 'reduce') {
+                // 減少動態時直接跳過去，點完就該在最後的位置。
+                const top = await h3Top(page);
+                expect(top).toBeGreaterThanOrEqual(64);
+                expect(top).toBeLessThan(640 - 40);
+            } else {
+                await expect.poll(() => h3Top(page)).toBeGreaterThanOrEqual(64);
+                await expect.poll(() => h3Top(page)).toBeLessThan(640 - 40);
+            }
+            await expect(button).toBeFocused();
+            await expect(button).toHaveAttribute('aria-pressed', 'true');
+        });
+    }
+
+    test('1280x900 卡片已經在畫面裡時不捲', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+        await page.locator('#search-bar').evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        const before = await page.evaluate(() => scrollY);
+        await page.getByRole('group', { name: '學群清單' }).getByRole('button', { name: '資訊學群' }).click();
+        await expect(page.locator('#cluster-details h3')).toHaveText('資訊學群');
+        expect(await page.evaluate(() => scrollY)).toBe(before);
+    });
+});
+
 test.describe('手機選單（320x256）', () => {
     test.use({ viewport: { width: 320, height: 256 } });
 
