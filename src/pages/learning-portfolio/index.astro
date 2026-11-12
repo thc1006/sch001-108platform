@@ -243,10 +243,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             exampleTitle.className = 'text-lg font-semibold mb-2 text-cyan-900';
             exampleTitle.textContent = '修改範例';
 
-            // 範例裡的括號要學生自己換掉，說明放在標題和範例之間，報讀軟體照這個順序唸。
+            // 範例可能有編的內容和要學生填的地方，說明放在標題和範例之間，報讀軟體照這個順序唸。
             const exampleNote = document.createElement('p');
             exampleNote.className = 'text-sm text-gray-600 mb-3';
-            exampleNote.textContent = '範例只用你心得裡寫到的事。括號裡寫「填入」的地方，換成你自己實際做過的事；想不起來就刪掉，不要留括號。';
+            exampleNote.textContent = '範例可能寫進你沒做過的事，看到就刪掉。寫「填入」的地方，換成你實際做過的事；想不起來就刪掉，再把句子改通順。';
 
             // 修改範例內容
             const exampleBox = document.createElement('div');
