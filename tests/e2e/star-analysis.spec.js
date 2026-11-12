@@ -39,7 +39,7 @@ const XSS_RESULT = {
     revised_example: `${XSS_SCRIPT}${XSS_IMG} 範例`,
 };
 
-const EXAMPLE_NOTE = '範例可能寫進你沒做過的事，看到就刪掉。寫「填入」的地方，換成你實際做過的事；想不起來就刪掉，再把句子改通順。';
+const EXAMPLE_NOTE = '範例可能寫進你沒做過的事或沒有過的想法，看到就刪掉。寫「填入」的地方，換成你實際做過的事；想不起來就刪掉，再把句子改通順。';
 
 // 結果與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
