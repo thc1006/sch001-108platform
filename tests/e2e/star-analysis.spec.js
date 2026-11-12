@@ -92,7 +92,7 @@ for (const p of PAGES) {
             await expect(button.locator('svg')).toHaveCount(p.icon ? 1 : 0);
         });
 
-        // 頁面外框、區塊、結果容器各有 padding，320px 寬時總評原本只剩 160～176px 寬，一行八、九個字。
+        // 頁面外框、區塊、結果容器各有 padding，320px 寬時總評原本只剩 160～176px 寬，首頁的修改範例只剩 126px，一行八、九個字。
         test('320px 寬時，總評至少 236px 寬，修改範例至少 200px 寬，整頁不橫向捲動', async ({ page }) => {
             await page.setViewportSize({ width: 320, height: 800 });
             await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
