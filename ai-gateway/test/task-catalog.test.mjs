@@ -344,10 +344,13 @@ test('career-chat：指令裡的學群資料與頁面的 majorData 一致（名�
     assert.deepEqual(section.split('\n\n'), blocks);
 });
 
-// 指令把出路用頓號串成一行，一項裡有頓號就像兩項。
-test('科系羅盤的出路每一項都不含頓號', () => {
+// 指令把核心素養、重要學科、科系、出路各用頓號串成一行，一項裡有頓號就像兩項。
+// 「人類學、民族學」是已知的例外，ColleGo! 寫「人類民族」，頁面維持原文。
+test('科系羅盤的核心素養、重要學科、科系、出路每一項都不含頓號', () => {
     const majorData = vm.runInThisContext(CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1]);
-    for (const c of majorData) for (const career of c.careers) assert.doesNotMatch(career, /、/, `${c.name}：${career}`);
+    const found = majorData.flatMap((c) => [...c.competencies, ...c.subjects, ...c.majors, ...c.careers]
+        .filter((item) => /[、､]/.test(item)).map((item) => `${c.name}：${item}`));
+    assert.deepEqual(found, ['社會與心理學群：人類學、民族學']);
 });
 
 // 頁面上和 career-chat 有關的三處：參考的學群數跟著指令的資料走；開場訊息說說不出興趣也可以問；
