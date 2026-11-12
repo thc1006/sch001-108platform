@@ -470,9 +470,9 @@ test('star-analysis：修改範例列出可以做的改動，收穫照學生的�
     assert.doesNotMatch(instructions, /對照原文|比對原文|用心得[中裡]?看得出來的事|他的心得/);
     // 下面三項查整份指令，另起一行加回舊寫法也抓得到。括號的例子會被照抄到每一份心得，
     // 例如寫成參加人數時，跟人數無關的心得也要學生填參加人數；照建議修改時會補上建議要的做法。
-    assert.doesNotMatch(instructions, /[（(［[]填入[^）)］\]]*[）)］\]]|「填入[^」]+」/);
+    assert.doesNotMatch(instructions, /[（(［[【〔]\s*請?填入(?![：:]?[…⋯]+[）)］\]】〕])[^）)］\]】〕]*[）)］\]】〕]|「填入(?![：:]?[…⋯]*」)[^」]+」/);
     assert.doesNotMatch(instructions, /參加人數/);
-    assert.doesNotMatch(instructions, /根據[^\n]{0,4}建議|使其更符合/);
+    assert.doesNotMatch(instructions, /(根據|依據|依照|依|照|參考)\s*(你|上面|前面|以上|上述|前述|這些|各項|所有)?的?\s*(建議|suggestion)|使其更符合/);
 });
 
 test('star-analysis：suggestion 不提括號和修改範例的寫法', () => {
