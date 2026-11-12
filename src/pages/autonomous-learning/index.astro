@@ -152,7 +152,7 @@ import civic from '../../../public/civic-tech-map/projects.json';
             // 只換按鈕裡的文字，圖示留著。
             const originalLabel = coachBtnLabel.textContent;
             generateCoachBtn.setAttribute('aria-disabled', 'true');
-            generateCoachBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            generateCoachBtn.classList.add('ai-busy');
             coachBtnLabel.textContent = '產生中…';
             coachResult.textContent = '';
             announce('');
@@ -181,7 +181,7 @@ import civic from '../../../public/civic-tech-map/projects.json';
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 generateCoachBtn.removeAttribute('aria-disabled');
-                generateCoachBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                generateCoachBtn.classList.remove('ai-busy');
                 coachBtnLabel.textContent = originalLabel;
             }
         });

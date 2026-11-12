@@ -142,12 +142,15 @@ test.describe('自主學習頁：學習啟動包（starter-pack 任務）', () =
         await page.fill('#coachInput', '貓咪');
         await page.click('#generateCoachBtn');
         await expect(page.locator('#generateCoachBtn')).toBeDisabled();
+        await expect(page.locator('#generateCoachBtn')).toContainClass('ai-busy');
+        await expect(page.locator('#generateCoachBtn')).toHaveCSS('opacity', '1');
         await page.locator('#coachProgress').getByRole('button', { name: '取消' }).focus();
         await page.keyboard.press('Enter');
         await expect(page.locator('#coachResult')).toHaveText('已取消。');
         await expect(page.locator('#coachResult p')).toHaveClass(/\btext-gray-600\b/);
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(page.locator('#generateCoachBtn')).toBeEnabled();
+        await expect(page.locator('#generateCoachBtn')).not.toHaveClass(/\bai-busy\b/);
         // 空的 #coachProgress 看不到焦點框。焦點移進 #coachResult 的話，螢幕閱讀器會唸一次訊息，
         // #coachStatus 又唸一次。
         await expect(page.locator('#generateCoachBtn')).toBeFocused();

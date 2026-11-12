@@ -65,7 +65,7 @@ async function expectButtonRestored(button) {
     await expect(button).toBeEnabled();
     await expect(button).toHaveText('規劃路徑');
     await expect(button.locator('svg')).toHaveCount(1);
-    await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+    await expect(button).not.toHaveClass(/\bai-busy\b/);
 }
 
 test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任務）', () => {
@@ -177,8 +177,8 @@ test.describe('學習資源地圖頁：AI 規劃學習路徑（learning-path 任
         const button = page.locator('#generatePathBtn');
         await expect(button).toHaveAttribute('aria-disabled', 'true');
         await expect(button).toHaveText('規劃中…');
-        await expect(button).toHaveClass(/opacity-50/);
-        await expect(button).toHaveClass(/cursor-not-allowed/);
+        await expect(button).toHaveClass(/\bai-busy\b/);
+        await expect(button).toHaveCSS('opacity', '1');
         await expect(button.locator('svg')).toHaveCount(1);
 
         await page.locator('#pathWork').getByRole('button', { name: '取消' }).focus();

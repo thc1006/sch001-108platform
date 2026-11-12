@@ -236,7 +236,7 @@ const pill = 'text-sm px-2.5 py-0.5 rounded-full border';
         // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
         var originalLabel = submitLabel.textContent;
         submitBtn.setAttribute('aria-disabled', 'true');
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitBtn.classList.add('ai-busy');
         submitLabel.textContent = '分析中…';
         resultsArea.textContent = '';
         announce('');
@@ -286,7 +286,7 @@ const pill = 'text-sm px-2.5 py-0.5 rounded-full border';
         } finally {
           if (drawDraft) drawDraft.cancel();
           submitBtn.removeAttribute('aria-disabled');
-          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          submitBtn.classList.remove('ai-busy');
           submitLabel.textContent = originalLabel;
         }
       });

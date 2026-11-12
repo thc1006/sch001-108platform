@@ -87,7 +87,7 @@ for (const p of PAGES) {
 
             const button = page.locator('#analyzeBtn');
             await expect(button).toBeEnabled();
-            await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+            await expect(button).not.toHaveClass(/\bai-busy\b/);
             await expect(button).toHaveText('開始健檢');
             await expect(button.locator('svg')).toHaveCount(p.icon ? 1 : 0);
         });
@@ -247,7 +247,8 @@ for (const p of PAGES) {
             await page.keyboard.press('Enter');
             await expect(button).toHaveAttribute('aria-disabled', 'true');
             await expect(button).not.toHaveAttribute('disabled');
-            await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+            await expect(button).toContainClass('ai-busy');
+            await expect(button).toHaveCSS('opacity', '1');
             // 等過一次畫面更新再看焦點。
             await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             await page.keyboard.press('Enter');
@@ -359,7 +360,7 @@ for (const p of PAGES) {
                 await expect(page.locator('#analysisResult')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
                 const button = page.locator('#analyzeBtn');
                 await expect(button).toBeEnabled();
-                await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+                await expect(button).not.toHaveClass(/\bai-busy\b/);
                 await expect(button).toHaveText('開始健檢');
                 await expect(button.locator('svg')).toHaveCount(p.icon ? 1 : 0);
             });

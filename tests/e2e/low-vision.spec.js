@@ -617,6 +617,40 @@ test('外框藏起來的輸入框，焦點時的 ring 在白底至少 3:1', asyn
     }
 });
 
+// 進行中原本是 opacity-50，瀏覽器預設的焦點框也跟著半透明，Firefox 的在白底只剩 2.3:1（WCAG 1.4.11）。
+test('AI 功能進行中的送出鈕換成灰底、不透明；hover 時白字對底色仍有 4.5:1，底色對白底至少 3:1', async ({ page }) => {
+    for (const [rel, id] of [
+        ['learning-portfolio/index.html', 'analyzeBtn'],
+        ['learning-portfolio/reflection-guide.html', 'analyzeBtn'],
+        ['autonomous-learning/index.html', 'generateCoachBtn'],
+        ['autonomous-learning/topic-ideas.html', 'generateIdeaBtn'],
+        ['autonomous-learning/plan-templates.html', 'generatePlanBtn'],
+        ['autonomous-learning/resource-map.html', 'generatePathBtn'],
+        ['career-exploration/index.html', 'chat-submit'],
+        ['career-exploration/competency-map.html', 'ai-generate-btn'],
+        ['civic-tech-map/index.html', 'ai-submit-btn'],
+    ]) {
+        await page.goto(P(rel));
+        await page.addScriptTag({ content: CONTRAST });
+        await page.addStyleTag({ content: '* { transition: none !important; }' });
+        const button = page.locator(`#${id}`);
+        await button.hover();
+        const idle = await button.evaluate((el) => getComputedStyle(el).backgroundColor);
+        // 各功能的 spec 已經確認進行中會加上 ai-busy，這裡只看它的樣子。
+        await button.evaluate((el) => { el.setAttribute('aria-disabled', 'true'); el.classList.add('ai-busy'); });
+        const s = await button.evaluate((el) => {
+            let opacity = 1;
+            for (let n = el; n; n = n.parentElement) opacity *= Number(getComputedStyle(n).opacity);
+            const cs = getComputedStyle(el);
+            return { bg: cs.backgroundColor, opacity, text: window.__ratio(cs.color, cs.backgroundColor), edge: window.__ratio(cs.backgroundColor, '#ffffff') };
+        });
+        expect(s.bg, `${rel} #${id}：進行中要看得出來`).not.toBe(idle);
+        expect(s.opacity, `${rel} #${id}`).toBe(1);
+        expect(s.text, `${rel} #${id}`).toBeGreaterThanOrEqual(4.5);
+        expect(s.edge, `${rel} #${id}`).toBeGreaterThanOrEqual(3);
+    }
+});
+
 // 選單在自己裡面捲動。<html> 的 scroll-padding 被頁首裡的負 scroll-margin 抵掉了，選單自己要再加回來。
 for (const viewport of [{ width: 390, height: 260 }, { width: 320, height: 256 }]) {
     test(`手機選單 ${viewport.width}x${viewport.height}：Tab 往下、Shift+Tab 往回，每個選項都整個看得到，整頁不捲`, async ({ page }) => {

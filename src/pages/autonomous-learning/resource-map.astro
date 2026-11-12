@@ -244,7 +244,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 停用靠 aria-disabled：disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = pathBtnLabel.textContent;
             generatePathBtn.setAttribute('aria-disabled', 'true');
-            generatePathBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            generatePathBtn.classList.add('ai-busy');
             pathBtnLabel.textContent = '規劃中…';
             pathResult.textContent = '';
             announce('');
@@ -274,7 +274,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 generatePathBtn.removeAttribute('aria-disabled');
-                generatePathBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                generatePathBtn.classList.remove('ai-busy');
                 pathBtnLabel.textContent = originalLabel;
             }
         });
