@@ -8,8 +8,8 @@ const { test, expect } = require('@playwright/test');
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const P = (p) => `${BASE}/sch001-108platform/${p}`;
 
-// 大學科系羅盤的搜尋框是 #search-bar，其他頁是 #search-input，一頁只有其中一個。
-const SEARCH = '#search-input, #search-bar';
+// 大學科系羅盤的搜尋框是 #search-bar，學長姐訪談是 #search-box，其他頁是 #search-input，一頁只有其中一個。
+const SEARCH = '#search-input, #search-bar, #search-box';
 
 /** composing 在搜尋框裡放 value，送 compositionstart（第一次）和 isComposing 的 input。 */
 const composing = (page, value) =>
@@ -48,6 +48,8 @@ const PAGES = [
     ['advanced-resources/open-education.html', '.resource-card', '#result-status', 'h2, h3'],
     ['advanced-resources/competitions.html', '.comp-card', '#result-count', 'h2, h3'],
     ['career-exploration/index.html', '.cluster-btn', '#result-status', 'span'],
+    ['career-exploration/senior-interviews.html', '.interview-card', '#result-status', 'h2'],
+    ['autonomous-learning/resource-map.html', '.resource-card', '#result-status', 'h3'],
 ];
 
 for (const [p, card, live, heading] of PAGES) {
