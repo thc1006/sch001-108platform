@@ -141,6 +141,18 @@ test.describe('切換按鈕用 aria-pressed 標出選中的那一個', () => {
         await expect(page.locator('#tab-careers')).toBeVisible();
         await expect(page.locator('#tab-competencies')).toBeHidden();
     });
+
+    test('科系羅盤：搜尋時選中的學群不在清單裡，清空搜尋後它的按鈕還是 pressed', async ({ page }) => {
+        await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+        const list = page.getByRole('group', { name: '學群清單' });
+        await list.getByRole('button', { name: '管理學群' }).click();
+        await page.fill('#search-bar', '法政');
+        await expect(list.getByRole('button')).toHaveText(['法政學群']);
+        await expect(list.getByRole('button', { pressed: true })).toHaveCount(0);
+        await page.fill('#search-bar', '');
+        await expect(list.getByRole('button', { pressed: true })).toHaveText(['管理學群']);
+        await expect(page.locator('#cluster-details h3')).toHaveText('管理學群');
+    });
 });
 
 test.describe('按了按鈕才出現的結果', () => {
