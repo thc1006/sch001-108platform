@@ -72,7 +72,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         <section id="explorer" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
             <div class="text-center mb-10">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900">大學科系羅盤</h2>
-                <p class="text-gray-600 mt-2">從學群清單選一個學群，或輸入名稱搜尋。</p>
+                <p class="text-gray-600 mt-2">從學群清單選一個學群，或輸入學群、科系、職業名稱搜尋。</p>
                 <div class="mt-4 flex flex-wrap justify-center gap-x-8 gap-y-2">
                     <a href="clusters/index.html" class="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:underline">
                         十大學群探索
@@ -88,7 +88,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
                 <div class="md:w-1/3 lg:w-1/4 flex flex-col gap-4">
                     <div class="relative">
-                        <input type="text" id="search-bar" aria-label="搜尋學群" class="placeholder:text-gray-600 w-full bg-gray-100 border-2 border-gray-500 rounded-full py-3 pl-10 pr-4 focus:outline-hidden focus:border-indigo-500 transition-colors" placeholder="搜尋學群...">
+                        <input type="text" id="search-bar" aria-label="搜尋學群、科系或職業" class="placeholder:text-gray-600 w-full bg-gray-100 border-2 border-gray-500 rounded-full py-3 pl-10 pr-4 focus:outline-hidden focus:border-indigo-500 transition-colors" placeholder="學群、科系或職業...">
                         <ion-icon aria-hidden="true" name="search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
                     </div>
                     <p id="result-status" role="status" class="sr-only"></p>
@@ -277,20 +277,80 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             renderClusterDetails(activeId);
         }
 
-        function filterClusters() {
-            const searchTerm = searchBar.value.toLowerCase();
-            const filteredData = majorData.filter(cluster => cluster.name.toLowerCase().includes(searchTerm));
-            renderClusterList(filteredData);
-            shownCount = filteredData.length;
+        // 學生常打的簡稱、系名和口語說法，對到 majors 或 careers 裡的一項；有兩種意思的寫成陣列（心理醫生）。
+        // 鍵要寫成 norm 之後的樣子（小寫、半形、沒有空白）。scripts/career-search.test.mjs 會檢查。
+        const ALIASES = {
+            資工: '資訊工程', 資管: '資訊管理', 資傳: '資訊傳播', 生資: '生物資訊', 電機: '電機工程', 電子: '電子工程',
+            通訊: '通訊工程', 機械: '機械工程', 土木: '土木工程', 材料: '材料工程', 化工: '化學工程', 企管: '企業管理',
+            商管: '企業管理', 國企: '國際企業', 國貿: '國際企業', 工管: '工業管理', 醫管: '醫務管理', 財金: '財務金融',
+            社會: '社會學', 社工: '社會工作', 心輔: '輔導諮商', 犯防: '犯罪防治', 大傳: '大眾傳播', 工設: '工業設計',
+            商設: '商業設計', 服設: '服裝設計', 室設: '空間設計', 都計: '都市計畫', 生物: '生命科學', 生科: '生命科學',
+            生技: '生物科技', 醫科: '醫學', 醫檢: '醫學檢驗', 物治: '物理治療', 職治: '職能治療', 公衛: '公共衛生',
+            財法: '財經法律', 公行: '行政管理', 公共行政: '行政管理', 外交: '政治', 外交官: '政治', 地政: '土地資產',
+            廣告: '廣告公關', 行銷: '行銷經營', 金融: '財務金融', 統計: '數據統計', 觀光: '觀光事業', 餐旅: '餐旅管理',
+            餐飲: '餐旅管理', 餐飲管理: '餐旅管理', 廣電: '廣電電影', 電影: '廣電電影', 傳播: '大眾傳播', 生醫: '生醫工程',
+            醫工: '生醫工程', 醫學工程: '生醫工程', 食品: '食品生技', 食品科學: '食品生技', 室內設計: '空間設計',
+            人類民族: '人類學、民族學', 兒童家庭: '兒童與家庭', 中醫: '醫學', 電腦: '資訊工程', 人工智慧: 'AI 工程師',
+            資料科學: '數據統計', 大數據: '數據統計', 醫生: '醫師', 護士: '護理師', 程式: '軟體工程師', 寫程式: '軟體工程師',
+            程式設計: '軟體工程師', 公務員: '公務人員', 銀行員: '銀行行員', 人資: '人力資源',
+            臨床心理: '臨床或諮商心理師（要讀研究所再考證照）', 心理醫生: ['臨床或諮商心理師（要讀研究所再考證照）', '醫師'],
+            諮商師: '臨床或諮商心理師（要讀研究所再考證照）', 心理諮商: '輔導諮商', 數據分析師: '資料分析師',
+            ui設計師: 'UI/UX 設計師', 資訊科學: '資訊工程', 國際貿易: '國際企業', 輔導: '輔導諮商', 心理輔導: '輔導諮商',
+            動畫: '媒體設計', 旅遊管理: '觀光事業', 觀光管理: '觀光事業', 精神科醫師: '醫師', 藥劑: '藥師', 理財: '理財專員',
+            化工工程: '化學工程', 電腦科學: '資訊工程', 心理與諮商: '輔導諮商', 數位媒體: '媒體設計', 數位媒體設計: '媒體設計',
+            旅遊: '觀光事業',
+        };
+        // ColleGo! 的學群名稱和這裡不同的。
+        const NAME_ALIASES = { 建築設計: '設計學群', 建築與設計: '設計學群', 社會心理: '社會與心理學群', 社心: '社會與心理學群' };
+
+        // 比對學群名稱、majors 和 careers，回傳符合的學群和符合的那幾項，名稱符合的排前面。
+        // 打「護理系」「資訊工程學系」「職能治療師」找不到時，去掉「系」「學系」「學類」「師」「技師」再找。
+        // 去掉以後要和學類、出路或學群名稱整個相同才算（「人類學、民族學」拆開比），「物理系」才不會找到物理治療。
+        function searchClusters(data, input) {
+            const norm = (text) => text.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+            // 打「constructor」時查到的是 Object 的東西，只查自己的鍵。
+            const own = (table, key) => (Object.hasOwn(table, key) ? table[key] : undefined);
+            let term = norm(input);
+            term = term.replace(/^我?(以後|未來|將來|長大(以?後)?)?很?(想要|想|要|希望)?去?(當|讀|念|唸|成為|考)(一個|一位|個)?/, '') || term;
+            if (!term) return data.map((cluster) => ({ cluster, byName: true, majors: [], careers: [] }));
+            const stems = [term, ...['系', '學系', '學類', '師', '技師'].filter((end) => term.endsWith(end)).map((end) => term.slice(0, -end.length))];
+            for (const [i, stem] of stems.entries()) {
+                const words = [stem, own(ALIASES, stem), own(NAME_ALIASES, stem.replace(/學群$/, ''))].flat().filter(Boolean).map(norm);
+                const bare = (text) => norm(text).replace(/學群$/, '');
+                const hit = i
+                    ? (text) => [text, ...text.split('、')].some((part) => words.map(bare).includes(bare(part)))
+                    : (text) => words.some((w) => norm(text).includes(w));
+                const results = data
+                    .map((cluster) => ({ cluster, byName: hit(cluster.name), majors: cluster.majors.filter(hit), careers: cluster.careers.filter(hit) }))
+                    .filter((r) => r.byName || r.majors.length || r.careers.length)
+                    .sort((a, b) => b.byName - a.byName);
+                if (results.length) return results;
+            }
+            return [];
         }
 
-        function renderClusterList(data) {
+        function filterClusters() {
+            const results = searchClusters(majorData, searchBar.value);
+            renderClusterList(results);
+            shownCount = results.length;
+        }
+
+        function renderClusterList(results) {
             clusterListContainer.innerHTML = '';
-            data.forEach((cluster) => {
+            if (!results.length) {
+                clusterListContainer.innerHTML = `<p class="px-4 py-3 text-gray-700">找不到符合的學群。換個說法再找，或到 <a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">ColleGo! 認識學群，看全部 18 個學群<span class="sr-only">（另開新分頁）</span></a>。</p>`;
+                return;
+            }
+            results.forEach(({ cluster, byName, majors, careers }) => {
+                // 名稱沒有符合時，寫出符合的科系和出路，學生才知道為什麼列出這個學群。每行前面的空白讓報讀軟體念到這裡會斷開。
+                const reasons = byName ? [] : [
+                    majors.length ? `相關科系：${majors.join('、')}` : '',
+                    careers.length ? `常見出路：${careers.join('、')}` : '',
+                ].filter(Boolean);
                 const button = document.createElement('button');
                 button.className = 'cluster-btn w-full text-left px-4 py-3 rounded-lg font-semibold flex items-center gap-3';
                 button.dataset.id = cluster.id;
-                button.innerHTML = `<ion-icon aria-hidden="true" name="${escapeHtml(cluster.icon)}" class="text-xl"></ion-icon> <span>${escapeHtml(cluster.name)}</span>`;
+                button.innerHTML = `<ion-icon aria-hidden="true" name="${escapeHtml(cluster.icon)}" class="text-xl"></ion-icon> <span><span class="block">${escapeHtml(cluster.name)}</span>${reasons.map((r) => ` <span class="block text-sm font-normal">${escapeHtml(r)}</span>`).join('')}</span>`;
                 const isActive = cluster.id === activeId;
                 button.classList.toggle('active', isActive);
                 button.setAttribute('aria-pressed', String(isActive));
@@ -299,7 +359,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
 
         function initializeExplorer() {
-            renderClusterList(majorData);
+            renderClusterList(searchClusters(majorData, ''));
             renderClusterDetails(activeId);
 
             // showDetails 先量：handleClusterClick 加上 fade-in 之後，卡片會往下位移 10px。

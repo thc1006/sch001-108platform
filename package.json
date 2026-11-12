@@ -15,6 +15,7 @@
     "test:portfolio-works-data": "node --test scripts/portfolio-works-data.test.mjs",
     "test:activity-database": "node --test scripts/activity-database.test.mjs",
     "test:activity-faults": "node scripts/activity-database.faults.mjs",
+    "test:career-search": "node --test scripts/career-search.test.mjs",
     "check:competitions": "node scripts/check-competitions.mjs --no-link-check --strict",
     "check:civic-tech": "node scripts/check-civic-tech.mjs",
     "test:taxonomy-faults": "node scripts/check-data-taxonomy.faults.mjs",
