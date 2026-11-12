@@ -311,6 +311,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 }
             }
 
+            // showDetails 先量：handleClusterClick 加上 fade-in 之後，卡片會往下位移 10px。
+            clusterListContainer.addEventListener('click', showDetails);
             clusterListContainer.addEventListener('click', handleClusterClick);
             searchBar.addEventListener('input', () => { filterClusters(); announceCount(400); });
         }
@@ -332,6 +334,15 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 const tabId = button.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.remove('hidden');
             });
+        }
+
+        // 窄螢幕上卡片在清單下面，視窗矮時在旁邊也可能捲出畫面。點了學群、卡片頂端看不到時捲過去，
+        // 焦點留在按鈕上。上緣要扣掉 <html> 的 scroll-padding；要不要平滑捲動照 <html> 的 motion-safe:scroll-smooth。
+        function showDetails(e) {
+            if (!e.target.closest('.cluster-btn')) return;
+            const top = clusterDetailsContainer.getBoundingClientRect().top;
+            const covered = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+            if (top < covered || top > innerHeight - 80) clusterDetailsContainer.scrollIntoView({ block: 'start' });
         }
 
         // prompt 與學群資料都在閘道的 career-chat 任務（ai-gateway/src/task-catalog.mjs），
