@@ -8,9 +8,12 @@ const { test, expect } = require('@playwright/test');
 const BASE = process.env.SITE_BASE_URL || 'http://localhost:8001';
 const P = (p) => `${BASE}/sch001-108platform/${p}`;
 
+// 大學科系羅盤的搜尋框是 #search-bar，其他頁是 #search-input，一頁只有其中一個。
+const SEARCH = '#search-input, #search-bar';
+
 /** composing 在搜尋框裡放 value，送 compositionstart（第一次）和 isComposing 的 input。 */
 const composing = (page, value) =>
-    page.locator('#search-input').evaluate((el, value) => {
+    page.locator(SEARCH).evaluate((el, value) => {
         el.focus();
         if (!el.dataset.composing) el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '' }));
         el.dataset.composing = '1';
@@ -20,7 +23,7 @@ const composing = (page, value) =>
 
 /** end 送 compositionend；firefox 為 true 時再送一次 isComposing 是 false 的 input。 */
 const end = (page, firefox) =>
-    page.locator('#search-input').evaluate((el, firefox) => {
+    page.locator(SEARCH).evaluate((el, firefox) => {
         delete el.dataset.composing;
         el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: el.value }));
         if (firefox) el.dispatchEvent(new InputEvent('input', { bubbles: true, data: el.value, inputType: 'insertCompositionText', isComposing: false }));
@@ -37,16 +40,17 @@ const writes = (page) => page.evaluate(() => window.__writes);
 // 比 announceCount(400) 和各頁的 debounce（最長 200 毫秒）都久。
 const SETTLE = 800;
 
-// [頁面, 卡片, 筆數的 live region]。競賽頁的筆數在 #result-count，render 時更新。
+// [頁面, 卡片, 筆數的 live region, 卡片裡的標題]。競賽頁的筆數在 #result-count，render 時更新。
 const PAGES = [
-    ['learning-portfolio/activity-database.html', '.activity-card', '#result-status'],
-    ['advanced-resources/reading-list.html', '.book-card', '#result-status'],
-    ['advanced-resources/online-courses.html', '.course-card', '#result-status'],
-    ['advanced-resources/open-education.html', '.resource-card', '#result-status'],
-    ['advanced-resources/competitions.html', '.comp-card', '#result-count'],
+    ['learning-portfolio/activity-database.html', '.activity-card', '#result-status', 'h2, h3'],
+    ['advanced-resources/reading-list.html', '.book-card', '#result-status', 'h2, h3'],
+    ['advanced-resources/online-courses.html', '.course-card', '#result-status', 'h2, h3'],
+    ['advanced-resources/open-education.html', '.resource-card', '#result-status', 'h2, h3'],
+    ['advanced-resources/competitions.html', '.comp-card', '#result-count', 'h2, h3'],
+    ['career-exploration/index.html', '.cluster-btn', '#result-status', 'span'],
 ];
 
-for (const [p, card, live] of PAGES) {
+for (const [p, card, live, heading] of PAGES) {
     test.describe(`${p}：選字時的搜尋`, () => {
         let before;
         let liveText;
@@ -76,7 +80,7 @@ for (const [p, card, live] of PAGES) {
         });
 
         test('選字途中沒有注音符號（Gboard 打英文、注音組字區的字）時照常搜、照常念', async ({ page }) => {
-            const title = (await page.locator(card).first().locator('h2, h3').first().textContent()).trim().slice(0, 2);
+            const title = (await page.locator(card).first().locator(heading).first().textContent()).trim().slice(0, 2);
             await watchWrites(page, live);
             await composing(page, title);
             await expect.poll(() => writes(page)).toBeGreaterThan(0);
@@ -92,7 +96,7 @@ for (const [p, card, live] of PAGES) {
         });
 
         test('組字途中點卡片（Chrome 先送 compositionend）：沒有跳過搜尋時不重畫，卡片還在', async ({ page }) => {
-            const title = (await page.locator(card).first().locator('h2, h3').first().textContent()).trim().slice(0, 2);
+            const title = (await page.locator(card).first().locator(heading).first().textContent()).trim().slice(0, 2);
             await composing(page, title);
             await page.waitForTimeout(SETTLE);
             const first = await page.locator(card).first().elementHandle();
