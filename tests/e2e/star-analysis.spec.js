@@ -39,7 +39,7 @@ const XSS_RESULT = {
     revised_example: `${XSS_SCRIPT}${XSS_IMG} 範例`,
 };
 
-const EXAMPLE_NOTE = '範例只用你心得裡寫到的事。括號裡寫「填入」的地方，換成你自己實際做過的事；想不起來就刪掉，不要留括號。';
+const EXAMPLE_NOTE = '範例可能寫進你沒做過的事，看到就刪掉。寫「填入」的地方，換成你實際做過的事；想不起來就刪掉，再把句子改通順。';
 
 // 結果與錯誤送達時，進度區塊都會跟著移除：[情況, 要送的 SSE 片段, 檢查畫面的函式]。
 const FORMAT_ERROR = 'AI 回覆的格式不正確，請再試一次。';
@@ -75,7 +75,7 @@ for (const p of PAGES) {
                 await expect(item).toContainText(`建議：${suggestion}`);
             }
             await expect(result).toContainText(RESULT.revised_example);
-            // 括號的說明緊接在「修改範例」標題後、範例前，報讀軟體照這個順序唸
+            // 說明緊接在「修改範例」標題後、範例前，報讀軟體照這個順序唸
             const exampleTitle = result.getByRole('heading', { level: 3, name: '修改範例' });
             await expect(exampleTitle.locator('xpath=following-sibling::*[1]')).toHaveText(EXAMPLE_NOTE);
             await expect(exampleTitle.locator('xpath=following-sibling::*[2]')).toContainText(RESULT.revised_example);
