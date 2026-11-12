@@ -108,6 +108,28 @@ test.describe('篩選之後念出顯示幾筆', () => {
         await expect(status).toBeEmpty();
         await expect(status).toHaveText(`顯示 ${await page.locator('.book-card').count()} 筆`);
     });
+
+    test('科系羅盤：打科系名稱找得到學群，按鈕寫出符合的科系；找不到時清單裡有說明', async ({ page }) => {
+        await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+        const list = page.getByRole('group', { name: '學群清單' });
+        const status = page.locator('#result-status');
+        await expect(page.locator('#search-bar')).toHaveAccessibleName('搜尋學群、科系或職業');
+        await page.fill('#search-bar', '護理');
+        await expect(list.getByRole('button')).toHaveCount(1);
+        await expect(list.getByRole('button')).toContainText('醫藥衛生學群');
+        await expect(list.getByRole('button')).toContainText('相關科系：護理');
+        await expect(list.getByRole('button')).toContainText('常見出路：護理師');
+        await expect(status).toHaveText('顯示 1 筆');
+        // 名稱符合的排第一個，按鈕名稱只有學群名稱。
+        await page.fill('#search-bar', '工程');
+        await expect(list.getByRole('button').first()).toHaveAccessibleName('工程學群');
+        await expect(list.getByRole('button', { name: '資訊學群' })).toContainText('相關科系：資訊工程');
+        await page.fill('#search-bar', '歷史系');
+        await expect(list.getByRole('button')).toHaveCount(0);
+        await expect(list).toContainText('找不到符合的學群。換個說法再找');
+        await expect(list.getByRole('link', { name: 'ColleGo! 認識學群，看全部 18 個學群' })).toBeVisible();
+        await expect(status).toHaveText('顯示 0 筆');
+    });
 });
 
 // [頁面, 按鈕所在的容器, 要按的按鈕]
