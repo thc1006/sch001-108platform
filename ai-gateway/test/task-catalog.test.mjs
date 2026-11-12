@@ -281,6 +281,22 @@ test('career-chat：不擅長某科、選組、說不出興趣、提到沒錢或
     assert.match(instructions, /^問題提到沒錢、住得遠這類限制時，第一句先回應，下一步要不用花錢；其餘照上面的規則，學群最多 2 個。$/m);
 });
 
+// 照科系羅盤醫藥衛生學群歷程建議的第一句，只寫在有條件的那一行
+test('career-chat：學生自己問醫學系、牙醫系怎麼準備、難不難考時，先回答再說學測門檻很高，和科系羅盤的歷程建議同一句', () => {
+    const { instructions } = catalog.get('career-chat');
+    const literal = CAREER_PAGE.match(/const majorData = (\[[\s\S]*?\n\s*\]);/)?.[1];
+    assert.ok(literal, '頁面裡找不到 const majorData = [...];，頁面改了寫法時這裡的 match 也要改');
+    const medicine = vm.runInThisContext(literal).find((c) => c.name === '醫藥衛生學群');
+    assert.ok(medicine, '科系羅盤找不到醫藥衛生學群');
+    const tip = medicine.portfolio_tips.split('。')[0];
+    assert.equal(tip, '醫學系、牙醫系的學測門檻很高，成績要先顧好', '頁面歷程建議的第一句改了：task-catalog.mjs 那一行和這裡要一起改');
+    const line = `學生自己問醫學系、牙醫系怎麼準備、難不難考或成績夠不夠時，先用兩三句回答他問的事，再說${tip}；`
+        + '入學管道有繁星推薦、申請入學、分發入學，分發入學看分科測驗成績，部分校系也採計學測；最後給一個具體的下一步，例如查目標校系的校系分則。'
+        + '學生提到身心障礙時，管道那一句加上身心障礙學生甄試。學測已經考完、說出學測成績，或問分發入學、特殊選才、身心障礙學生甄試時，不說門檻那一句。'
+        + '只說是家人要他念時，先回應這件事，請他想想自己想不想念，再給一個他自己做得到的下一步，門檻和管道這兩句都不說；說很累、壓力大、心情低落、睡不著、想放棄，或提到下面自傷、家暴那兩行的事時，也都不說。';
+    assert.deepEqual(instructions.split('\n').filter((l) => l.includes(tip)), [line], '門檻句只能出現在這一行，全文和 test 相同');
+});
+
 test('career-chat：學群介紹先指到本站的十大學群探索；本站沒有的 8 個學群列出 ColleGo! 的學類；想當老師說明取得教師證書的步驟', () => {
     const { instructions } = catalog.get('career-chat');
     assert.match(instructions, /^推薦或舉出上面的學群時，可以請他到本站的「十大學群探索」看那個學群的介紹。$/m);
@@ -313,10 +329,11 @@ test('career-chat：200 字內，不約學生下次再談，校系規定請學�
     assert.doesNotMatch(instructions, /不確定|有把握|直接回答|直接告訴|你確定|你知道/);
 });
 
-// 沒錢那一行寫「其餘照上面的規則」，說很累那一行寫「沒有提到上面這些時」，「其他問題」要在各種起點的規則之後，所以要檢查先後
+// 沒錢那一行寫「其餘照上面的規則」，說很累那一行寫「沒有提到上面這些時」，醫學系那一行寫「下面自傷、家暴那兩行」，
+// 「其他問題」要在各種起點的規則之後，所以要檢查先後
 test('career-chat：規則的先後', () => {
     const { instructions } = catalog.get('career-chat');
-    const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '學生問要選自然組還是社會組時', '某一科重不重要', '學生說不出興趣時', '問題提到沒錢、住得遠',
+    const order = ['學生問的是興趣、科系或學群時', '學生問不擅長某一科', '學生問要選自然組還是社會組時', '某一科重不重要', '學生自己問醫學系', '學生說不出興趣時', '問題提到沒錢、住得遠',
         '推薦或舉出上面的學群時', 'ColleGo! 列了 18 個學群', '學生的興趣只對到這 8 個學群', '學生想當中小學或幼兒園老師時', '學生提到想傷害自己', '學生提到自己或別人被家暴', '學生說很累、壓力大或心情低落，但沒有提到上面這些時', '學生說一直被同學排擠', '其他問題（包括某一科怎麼讀書）']
         .map((head) => instructions.split('\n').findIndex((line) => line.startsWith(head)));
     assert.ok(order.every((at) => at >= 0), String(order));
