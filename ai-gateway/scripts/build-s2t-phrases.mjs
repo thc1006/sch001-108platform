@@ -331,9 +331,9 @@ function findGuards() {
             else bridges.set(key + rest, bridged);
         }
     }
-    // CURATED 的繁體寫法也佔住位置：繁體的 後 對不上 后面，「後面团队」的 面 才不會被 面团 拿走。
-    // ALWAYS 的 劃分 有作用（劃分合并）；規劃 到 後面 原本是 CURATED，照樣留著
-    const curatedTraditional = [...onlyCurated().map(([, value]) => value), '劃分', '計劃', '規劃', '計畫', '隨後', '最後', '之後', '以後', '然後', '後來', '後面'];
+    // CURATED 的繁體寫法也佔住位置。ALWAYS 的只有 後面（後面团队 的 面 不被 面团 拿走）與 劃分（劃分合并）
+    // 有作用，之後、計畫 這些留著反而讓 以後面团体、計畫面条件 的 面 被 面团、面条 拿走
+    const curatedTraditional = [...onlyCurated().map(([, value]) => value), '劃分', '計劃', '後面'];
     // 跟詞組同鍵的擋詞拿掉。同鍵時詞組先試：原文有簡體字就套用詞組，擋詞只在原文全寫成繁體、又 norm 得上時
     // 才佔位置。尽头 的 尽 norm 換不掉，寫成繁體也對不上，同鍵的擋詞完全沒作用
     return [...new Set([...found, ...GUARD_WORDS, ...continued, ...curatedTraditional])]
