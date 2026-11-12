@@ -388,8 +388,13 @@ test('ALWAYS 的 在于、這里、這几、之后、看着、愿意 這類詞�
         + '球后來台、影后續約、一着、下一着棋、鄉愿、常規划船、讀設計划不划算、讀會計划得來嗎、我估計划不來、走正規划算嗎';
     assert.equal(toTraditional(traditional), traditional);
     assert.equal(toTraditional(`${traditional}，这`), `${traditional}，這`);
+    // 心里、店里、家里 結尾的里名，與 心里長
+    const villages = '北投區中心里里長、一心里、正心里、民心里、平心里、田心里的里民、同心里、向心里、文心里辦公處、埔心里、溪心里、'
+        + '歸心里、新店里的里民、頂店里、車店里、林家里、胡家里、德家里、興家里、頭家里、劉家里、林芷心里長表示';
+    assert.equal(toTraditional(villages), villages);
+    assert.equal(toTraditional(`${villages}，这`), `${villages}，這`);
     // 串流：切在每一個位置、一個字一個字送，都和整段相同
-    for (const sample of [...cases.map(([input]) => input), traditional, '問題在于。這里面条件，這里程碑！好几万人？家里头发现']) {
+    for (const sample of [...cases.map(([input]) => input), traditional, villages, '問題在于。這里面条件，這里程碑！好几万人？家里头发现']) {
         const chars = [...sample];
         const whole = toTraditional(sample);
         for (let cut = 0; cut <= chars.length; cut++) {
