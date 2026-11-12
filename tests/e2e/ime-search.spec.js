@@ -95,8 +95,10 @@ for (const [p, card, live, heading] of PAGES) {
             await expect(page.locator(live)).toHaveText(live === '#result-status' ? '顯示 0 筆' : '0 項結果');
         });
 
-        test('組字途中點卡片（Chrome 先送 compositionend）：沒有跳過搜尋時不重畫，卡片還在', async ({ page }) => {
+        test('組字途中點卡片（Chrome 先送 compositionend）：最後一次 input 沒有跳過時不重畫，卡片還在', async ({ page }) => {
             const title = (await page.locator(card).first().locator(heading).first().textContent()).trim().slice(0, 2);
+            // 先打一個會跳過的注音：之後沒跳過的 input 要把旗標設回 false。
+            await composing(page, 'ㄎ');
             await composing(page, title);
             await page.waitForTimeout(SETTLE);
             const first = await page.locator(card).first().elementHandle();
@@ -184,7 +186,9 @@ test.describe('首頁的全站搜尋', () => {
         await expect(page.locator('#search-clear-btn')).toBeVisible();
     });
 
-    test('組字途中點結果（Chrome 先送 compositionend）：沒有跳過搜尋時不重畫，連結還在', async ({ page }) => {
+    test('組字途中點結果（Chrome 先送 compositionend）：最後一次 input 沒有跳過時不重畫，連結還在', async ({ page }) => {
+        // 先打一個會跳過的注音：之後沒跳過的 input 要把旗標設回 false。
+        await composing(page, 'ㄎ');
         await composing(page, 'python');
         await expect(results(page).locator('a').first()).toBeVisible();
         const first = await results(page).locator('a').first().elementHandle();
