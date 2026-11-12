@@ -351,6 +351,19 @@ test('強制色彩模式下，輸入框與下拉選單取得焦點時有外框',
     }
 });
 
+// 清單在自己裡面捲動時，320x256 只看得到兩個多學群，1280x720 看不到最後一個，觸控裝置上也看不到捲軸。
+for (const viewport of [{ width: 320, height: 256 }, { width: 1280, height: 720 }]) {
+    test(`科系羅盤 ${viewport.width}x${viewport.height}：學群清單跟著整頁捲動，不在自己裡面捲`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+        const list = page.getByRole('group', { name: '學群清單' });
+        await list.getByRole('button').first().waitFor();
+        const { overflowY, hidden } = await list.evaluate((el) => ({ overflowY: getComputedStyle(el).overflowY, hidden: el.scrollHeight - el.clientHeight }));
+        expect(overflowY).toBe('visible');
+        expect(hidden).toBeLessThanOrEqual(1);
+    });
+}
+
 test.describe('手機選單（320x256）', () => {
     test.use({ viewport: { width: 320, height: 256 } });
 
