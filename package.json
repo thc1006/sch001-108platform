@@ -13,6 +13,7 @@
     "test:competitions-data": "node --test scripts/competitions-data.test.mjs",
     "test:online-courses-data": "node --test scripts/online-courses-data.test.mjs",
     "test:portfolio-works-data": "node --test scripts/portfolio-works-data.test.mjs",
+    "test:collego-majors": "node --test scripts/collego-majors.test.mjs",
     "test:activity-database": "node --test scripts/activity-database.test.mjs",
     "test:activity-faults": "node scripts/activity-database.faults.mjs",
     "test:career-search": "node --test scripts/career-search.test.mjs",
