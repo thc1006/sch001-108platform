@@ -290,6 +290,9 @@ jobs:
       - name: Check portfolio-gallery works for required fields, unique ids and https links
         run: npm run test:portfolio-works-data
 
+      - name: Check career-compass majors against the ColleGo! major lists
+        run: npm run test:collego-majors
+
       - name: Check activity-database fields and status badges
         run: npm run test:activity-database
 
