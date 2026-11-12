@@ -101,12 +101,24 @@ test('開頭的「當」「想讀」「以後想當」「想成為」去掉再�
     assert.deepEqual(ids('我以後想去念法律系'), ['law']);
     assert.deepEqual(ids('想當一位律師'), ['law']);
     assert.deepEqual(ids('想當個律師'), ['law']);
+    assert.deepEqual(ids('我想當一名律師'), ['law']);
+    assert.deepEqual(ids('我想成為一名工程師'), ['engineering', 'info']);
+    assert.deepEqual(ids('我也想當醫生'), ['medicine']);
+    assert.deepEqual(ids('我好想當醫生'), ['medicine']);
+    assert.deepEqual(ids('我真的很想讀資工'), ['engineering', 'info']);
+    assert.deepEqual(ids('希望考上醫學系'), ['medicine']);
+    assert.deepEqual(ids('想考上資工'), ['engineering', 'info']);
+    assert.deepEqual(ids('希望能讀心理系'), ['social_psychology']);
+    assert.deepEqual(ids('希望可以讀心理系'), ['social_psychology']);
+    assert.deepEqual(ids('我以後想當醫生。'), ['medicine']);
+    assert.deepEqual(ids('想當醫生？'), ['medicine']);
+    assert.deepEqual(ids('想當醫生!!'), ['medicine']);
     assert.deepEqual(ids('想當一個醫生'), ['medicine']);
     assert.deepEqual(ids('想考醫學系'), ['medicine']);
     assert.deepEqual(ids('當'), []);
     // 只去開頭，中間的「當」不去。
     assert.deepEqual(ids('社工當'), []);
-    for (const input of ['想讀書', '當兵', '想念家人', '考古', '考試', '我想考', '當個', '去當兵', '很想讀書', '去考試']) assert.deepEqual(ids(input), [], input);
+    for (const input of ['想讀書', '當兵', '想念家人', '考古', '考試', '我想考', '當個', '去當兵', '很想讀書', '去考試', '也當兵', '好讀書', '個人', '希望工程']) assert.deepEqual(ids(input), [], input);
 });
 
 test('打「系」「學系」「學類」結尾的系名和「師」「技師」結尾的職稱也找得到；去掉以後要整個相同', () => {
@@ -278,6 +290,8 @@ const ALIAS_CASES = [
     ['數位媒體', '數位媒體', [['design', ['媒體設計']]]],
     ['數位媒體設計', '數位媒體設計學系', [['design', ['媒體設計']]]],
     ['旅遊', '旅遊', [['management', ['觀光事業']]]],
+    ['心理醫師', '心理醫師', [['social_psychology', ['臨床或諮商心理師（要讀研究所再考證照）']], ['medicine', ['醫師', '牙醫師']]]],
+    ['精神科醫生', '精神科醫生', [['medicine', ['醫師', '牙醫師']]]],
     ['建築設計', '建築設計', [['design', []]]],
     ['建築與設計', '建築與設計', [['design', []]]],
     ['社會心理', '社會心理', [['social_psychology', []]]],
