@@ -176,6 +176,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         const clusterDetailsContainer = document.getElementById('cluster-details');
         const searchBar = document.getElementById('search-bar');
         const resultStatus = document.getElementById('result-status');
+        // 右邊顯示的學群。搜尋時它的按鈕可能不在清單裡，所以記在這裡，不從 DOM 讀。
+        let activeId = majorData[0]?.id;
         // 筆數只在使用者改了條件之後念，第一次載入不念；打字時停 400 毫秒再念。
         let shownCount = 0;
         let announceTimer;
@@ -267,16 +269,12 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             const button = e.target.closest('.cluster-btn');
             if (!button) return;
 
-            const currentActive = clusterListContainer.querySelector('.active');
-            if (currentActive) {
-                currentActive.classList.remove('active');
-                currentActive.setAttribute('aria-pressed', 'false');
-            }
-            button.classList.add('active');
-            button.setAttribute('aria-pressed', 'true');
-
-            const clusterId = button.dataset.id;
-            renderClusterDetails(clusterId);
+            activeId = button.dataset.id;
+            clusterListContainer.querySelectorAll('.cluster-btn').forEach((btn) => {
+                btn.classList.toggle('active', btn === button);
+                btn.setAttribute('aria-pressed', String(btn === button));
+            });
+            renderClusterDetails(activeId);
         }
 
         function filterClusters() {
@@ -287,14 +285,13 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         }
 
         function renderClusterList(data) {
-            const currentActiveId = clusterListContainer.querySelector('.active')?.dataset.id;
             clusterListContainer.innerHTML = '';
             data.forEach((cluster) => {
                 const button = document.createElement('button');
                 button.className = 'cluster-btn w-full text-left px-4 py-3 rounded-lg font-semibold flex items-center gap-3';
                 button.dataset.id = cluster.id;
                 button.innerHTML = `<ion-icon aria-hidden="true" name="${escapeHtml(cluster.icon)}" class="text-xl"></ion-icon> <span>${escapeHtml(cluster.name)}</span>`;
-                const isActive = cluster.id === currentActiveId;
+                const isActive = cluster.id === activeId;
                 button.classList.toggle('active', isActive);
                 button.setAttribute('aria-pressed', String(isActive));
                 clusterListContainer.appendChild(button);
@@ -303,15 +300,7 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
         function initializeExplorer() {
             renderClusterList(majorData);
-
-            if (majorData.length > 0) {
-                const firstButton = clusterListContainer.querySelector('.cluster-btn');
-                if (firstButton) {
-                    firstButton.classList.add('active');
-                    firstButton.setAttribute('aria-pressed', 'true');
-                    renderClusterDetails(majorData[0].id);
-                }
-            }
+            renderClusterDetails(activeId);
 
             // showDetails 先量：handleClusterClick 加上 fade-in 之後，卡片會往下位移 10px。
             clusterListContainer.addEventListener('click', showDetails);
