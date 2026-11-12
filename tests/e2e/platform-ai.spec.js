@@ -359,6 +359,15 @@ test.describe('PlatformAI 共用 module', () => {
             expect(await page.evaluate(() => PlatformAI.renderMarkdown('甲\n### ', { headingLevel: 4, partial: true }))).toBe('甲');
         });
 
+        // 頁面上已經有 v18 時，版號沒升的話這一份會提早返回，career-chat 的回答裡號碼不會換成連結。
+        test('v18 已經在頁面上時，這一份照樣載入，linkPhoneNumbers 可用', async ({ page }) => {
+            await page.addInitScript(() => {
+                window.PlatformAI = { __version: 18 };
+            });
+            await gotoFixture(page);
+            expect(await page.evaluate(() => typeof PlatformAI.linkPhoneNumbers)).toBe('function');
+        });
+
         test('PlatformAI 已定義，且完整暴露出 API 介面與版號', async ({ page }) => {
             await gotoFixture(page);
             const info = await page.evaluate(() => ({

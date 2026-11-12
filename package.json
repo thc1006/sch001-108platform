@@ -48,6 +48,7 @@
     "test:admission-cycle-faults": "node scripts/check-admission-cycle.faults.mjs",
     "check:comments": "node scripts/check-comments.mjs",
     "test:comments": "node --test scripts/check-comments.test.mjs",
+    "test:phone-links": "node --test scripts/phone-links.test.mjs",
     "check:writing": "node scripts/check-writing.mjs",
     "test:writing": "node --test scripts/writing.test.mjs",
     "test:writing-faults": "node scripts/writing.faults.mjs",

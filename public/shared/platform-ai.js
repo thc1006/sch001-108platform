@@ -3,7 +3,7 @@
  *
  * 暴露為 window.PlatformAI = {
  *   runTask, describeError, mountProgress, getGatewayUrl,
- *   formatError, renderMarkdown, perFrame, markInvalid,
+ *   formatError, renderMarkdown, linkPhoneNumbers, perFrame, markInvalid,
  *   log, getLogs, clearLogs, mountDebugPanel
  * }
  *
@@ -21,7 +21,7 @@
 
     // 版號只寫這一個地方。守衛與匯出各寫一次的話，守衛的數字一旦比匯出的大，
     // 這支腳本就再也不會提早返回，每載入一次覆寫一次全域物件，而那正是它想避免的事。
-    var VERSION = 18;
+    var VERSION = 19;
 
     // 比較是 >=，不是 ===。用 === 的話，同一頁若先載到新版、後又載到一份舊的
     // （快取、第三方嵌入、頁面自己多寫了一行 script），舊的那份會看到版號不等於
@@ -1138,6 +1138,87 @@
         return schedule;
     }
 
+    // 號碼前面是「撥」「打」「專線」這類字，或後面是「報警」「專線」這類字，才算電話。
+    // 「110 學年度」「第 113 頁」因此不算；前後接著數字的（1100 元、02-2311-0110）也不算。
+    // 前後文不跨行：[^\S\n] 是換行以外的空白。每段空白都接在一個必要的字後面，一串空白只有一種
+    // 分法，號碼後面接著一長串空白時才不會一直回溯。
+    var PHONE_BEFORE = /(?:撥|打|專線|電話|致電)給?[^\S\n]*(?:[:：][^\S\n]*)?(?:[（(「][^\S\n]*)?$/;
+    var PHONE_AFTER = /^」?[^\S\n]*(?:[（(][^\S\n]*)?(?:報警|求助|求救|(?:安心|保護|家庭暴力保護|家暴)?專線)/;
+    // 後面接著單位或「年」的不算（打 110 分、打 113 頁的報告、打 113 年的比賽），「分享」「分別」「分機」不是單位
+    var PHONE_UNIT = /^[^\S\n]*(?:分(?![享別機])|個|頁|字|名|次|學年度|年)/;
+    // 前一支號碼換成了連結，和這一支之間只有「報警」、括號說明、「、」「或」這類字、引號、括號或空白時，
+    // 這一支也算（撥 110 報警或 119、撥「110」或「119」）。逗號後面要接「或」才算，「撥 110，113 也可以」的 113 不算。
+    var PHONE_JOIN = /^[」）)]?[^\S\n]*(?:(?:報警|求助|求救|[（(][^）)\n]{0,8}[）)])[^\S\n]*)?(?:[、/／][^\S\n]*|[，,][^\S\n]*(?=或))?(?:(?:或[是者]?|以?及|和|與|跟)[^\S\n]*)?(?:[（(「][^\S\n]*)?$/;
+    var PHONE_DIGIT_BEFORE = /[\d０-９][-.．－–]$/;
+
+    /**
+     * findPhoneNumbers 找出 text 裡 numbers 這幾支號碼當成電話的位置。
+     * @param {string} text @param {string[]} numbers 只有數字的號碼
+     * @returns {{index: number, number: string}[]} 照位置排序
+     */
+    function findPhoneNumbers(text, numbers) {
+        if (!numbers.length) return [];
+        var found = [];
+        var pattern = new RegExp('(^|[^\\d０-９])(' + numbers.join('|') + ')(?![\\d０-９]|[-.．－–][\\d０-９])', 'g');
+        var lastEnd = -1;
+        var m;
+        while ((m = pattern.exec(text))) {
+            var index = m.index + m[1].length;
+            var end = index + m[2].length;
+            if (PHONE_DIGIT_BEFORE.test(text.slice(0, index)) || PHONE_UNIT.test(text.slice(end))) continue;
+            if (PHONE_BEFORE.test(text.slice(0, index)) || PHONE_AFTER.test(text.slice(end)) ||
+                (lastEnd >= 0 && PHONE_JOIN.test(text.slice(lastEnd, index)))) {
+                found.push({ index: index, number: m[2] });
+                lastEnd = end;
+            }
+        }
+        return found;
+    }
+
+    var PHONE_BLOCK_TAGS = /^(?:BR|P|DIV|LI|UL|OL|H[1-6])$/;
+
+    /**
+     * linkPhoneNumbers 把 root 裡 findPhoneNumbers 找到的號碼換成 tel: 連結。用 DOM 節點換，
+     * 不經過 innerHTML。判斷前後文時看整個 root 的文字，<br> 與 PHONE_BLOCK_TAGS 的元素的邊界算
+     * 換行；號碼本身要在同一個文字節點裡。已經是連結的部分不看，呼叫兩次也只包一層。
+     * @param {Element} root @param {string[]} numbers @param {string} [className] 連結的 class
+     */
+    function linkPhoneNumbers(root, numbers, className) {
+        var doc = root.ownerDocument;
+        var nodes = [];   // [文字節點, 在 text 裡的起點]
+        var text = '';
+        (function walk(el) {
+            for (var child = el.firstChild; child; child = child.nextSibling) {
+                if (child.nodeType === 3) {
+                    nodes.push([child, text.length]);
+                    text += child.data;
+                } else if (child.nodeType === 1 && child.tagName !== 'A') {
+                    var block = PHONE_BLOCK_TAGS.test(child.tagName);
+                    if (block) text += '\n';
+                    walk(child);
+                    if (block) text += '\n';
+                }
+            }
+        })(root);
+        var hits = findPhoneNumbers(text, numbers);
+        // 從後面換起，換過的地方不影響前面的位置
+        var i = nodes.length - 1;
+        for (var h = hits.length - 1; h >= 0; h--) {
+            while (i > 0 && nodes[i][1] > hits[h].index) i--;
+            var node = nodes[i][0];
+            var start = hits[h].index - nodes[i][1];
+            var length = hits[h].number.length;
+            if (start + length > node.data.length) continue;
+            var digits = node.splitText(start);
+            digits.splitText(length);
+            var link = doc.createElement('a');
+            link.href = 'tel:' + hits[h].number;
+            if (className) link.className = className;
+            link.textContent = hits[h].number;
+            digits.parentNode.replaceChild(link, digits);
+        }
+    }
+
     // renderMarkdown 把 AI 回應的 markdown 子集安全地轉成 HTML。
     //
     // 安全模型（順序不可顛倒）：
@@ -1343,13 +1424,15 @@
         describeError: describeError,
         mountProgress: mountProgress,
         renderMarkdown: renderMarkdown,
+        linkPhoneNumbers: linkPhoneNumbers,
         perFrame: perFrame,
         markInvalid: markInvalid,
         log: log,
         getLogs: getLogs,
         clearLogs: clearLogs,
         mountDebugPanel: mountDebugPanel,
-        _safeStringify: safeStringify
+        _safeStringify: safeStringify,
+        _findPhoneNumbers: findPhoneNumbers
     };
 
     // 依條件自動掛載 panel
