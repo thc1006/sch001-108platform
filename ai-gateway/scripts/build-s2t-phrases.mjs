@@ -8,11 +8,12 @@
  *     刻意不轉的台灣正字（庄、晒）。正確的繁體文字不會有這種字
  *   - PHRASES：取自 OpenCC 的 STPhrases，只收含簡體專用字、轉法和逐字對照不同的詞。s2t.mjs 只在
  *     比對到的那段原文真的有簡體專用字時才套用
- *   - CURATED：寫成繁體也不成詞、跟前後的字也湊不成繁體詞的 STPhrases 詞（干部、規划、最后），整句有
+ *   - CURATED：寫成繁體也不成詞、跟前後的字也湊不成繁體詞的 STPhrases 詞（干部、准备），整句有
  *     簡體專用字時套用。例如回答寫「熱音社干部與成果发表會」，干部 兩個字本身都是繁體也用的字。
  *     联系 不收：「關聯系統」裡就有 聯系
- *   - ALWAYS：台灣一定寫成 劃 的 STPhrases 詞（企划、策划），整句沒有簡體專用字也套用。划 在台灣也是正字
- *     （划船、划算），回答可能整句只有 划 寫錯（企划或公關）
+ *   - ALWAYS：台灣不會這樣寫的詞（企划、在于、這里、這几、之后、看着、愿意），整句沒有簡體專用字也套用。
+ *     划、于、里、几、后、着、愿 在台灣也是正字（划船、于美人、里長、茶几、皇后、一着、鄉愿），逐字對照
+ *     不轉，回答可能整句只有這個字寫錯（企划或公關、問題在于行動細節較少）
  *   - DEFAULTS：一對多的簡體專用字沒有詞組命中時的轉法。只挑另一種寫法只出現在固定詞裡的字（髮：头发；
  *     糰：饭团；噹：叮当；併：合并），那些詞由 PHRASES 處理。簡體專用字不會出現在繁體文字裡，預設轉法
  *     改不到繁體文字
@@ -46,9 +47,25 @@ const DEFAULTS = new Map(Object.entries({
     历: '歷', 须: '須', 坛: '壇', 纤: '纖', 针: '針', 弥: '彌', 枪: '槍', 苏: '蘇', 链: '鏈', 闲: '閒', 鉴: '鑑', 夹: '夾',
 }));
 // 回答裡看過的（2026-11-05、11-08 的量測）
-const CURATED = new Set(['干部', '规划', '计划', '准备', '随后', '最后', '之后', '以后', '然后', '后来', '后面']);
-// 2026-11-11 的回答寫出 企划；其餘是同類的詞。刻划、比划 不收：立刻划过去、相比划算
-const ALWAYS = new Set(['企划', '策划', '筹划', '谋划', '笔划', '划分']);
+const CURATED = new Set(['干部', '准备']);
+// 2026-11-11 的回答寫出 企划；其餘是同類的詞。刻划、比划 不收：立刻划过去、相比划算。
+// 规划 以後的詞：2026-11-12 調研資料夾的模型回答在全繁體的句子寫出 規划、計划、最后、后來、在于、屬于、
+// 哪里、店里、情境里、這几、好几、看着、急着、愿意 這類詞，連同同類的常用詞一起收（原本 CURATED 的 规划
+// 到 后面 也移過來）。不收 里面（中正里面臨）、小于、大于（人名）、往后（前往后里）。里长 不擋：
+// 家里長輩 要轉，代價是 這里長、那里長（這位里長）會轉成 裡
+const ALWAYS = new Set(['企划', '策划', '筹划', '谋划', '笔划', '划分',
+    '规划', '计划', '划定', '划掉',
+    '之后', '以后', '然后', '最后', '随后', '后来', '后面', '后续', '先后', '前后', '背后',
+    '在于', '由于', '对于', '关于', '至于', '属于', '等于', '于是', '敢于', '善于', '用于', '位于', '处于', '基于', '终于',
+    '过于', '易于', '高于', '低于', '多于', '少于', '源于', '便于', '急于', '勇于', '乐于', '归于', '限于', '免于', '出于',
+    '鉴于', '助于', '利于', '似于',
+    '这里', '那里', '哪里', '心里', '家里', '店里', '眼里', '夜里', '梦里', '手里', '情境里', '计画里', '报告里', '句子里',
+    '过程里', '生活里', '活动里', '社团里', '学校里', '课堂里', '文章里',
+    '几乎', '几个', '几次', '几天', '几年', '几位', '几种', '几件', '几点', '几十', '几百', '几千', '几万', '几分', '几期',
+    '几人', '几首', '几周', '几萬', '好几', '这几', '那几', '哪几', '十几', '第几',
+    '看着', '跟着', '接着', '对着', '急着', '顺着', '随着', '带着', '拉着', '学着', '等着', '想着', '拿着', '试着', '靠着',
+    '朝着', '沿着', '忙着', '抱着', '穿着', '写着', '听着', '说着', '笑着', '有着', '着急', '着重', '着手', '着眼', '着迷', '着想',
+    '愿意', '心愿', '愿望', '志愿', '意愿', '情愿', '不愿', '自愿', '但愿', '如愿', '寧愿', '甘愿', '祝愿', '许愿']);
 // OpenCC 換成另一個字、但原字在台灣也是正確寫法的（台灣、櫃台、發布、念書、占領、弦樂），維持原字
 const KEEP = new Map(Object.entries({
     台: '臺檯', 布: '佈', 念: '唸', 占: '佔', 弦: '絃', 折: '摺', 升: '昇', 背: '揹', 夫: '伕',
@@ -72,11 +89,11 @@ const REJECT = new Set([
 // 另外列（社團裡面团员、走到盡頭发现）。家伙计划、万里实现 不切成 伙计、里实；经过松山、会吊车尾、
 // 这台风扇、我们系马上 不切成 过松、会吊、台风、系马；这笔划算、陆企划不来、上策划算吗、这笔划不太来 不切成
 // 笔划、企划、策划（一笔划 是詞組，另外列；企划不太来、企划的来 不擋，企劃的來源 要轉）。介詞 向 後面接
-// 导 開頭的詞（可以向导师求助、这会向导致）時，不讓 向导 改成 嚮導
+// 导 開頭的詞（可以向导师求助、这会向导致）時，不讓 向导 改成 嚮導。目前后里區、首先后里區 不切成 前后、先后
 const GUARD_WORDS = ['口头', '带头', '回头', '开头', '镜头', '码头', '念头', '源头', '街头', '心头', '关头',
     '里头', '外头', '上头', '起头', '苗头', '势头', '年头', '风头', '舌头', '额头', '眉头', '骨头', '拳头',
     '视后', '棋后', '拳后', '相关', '有关系统', '强调', '年制', '转换', '开车', '校系', '科系', '后台', '後台', '公关', '步调',
-    '里面', '裡面', '檯面', '盡頭', '裡頭', '家伙', '傢伙', '万里', '萬里', '过松山', '会吊车', '台风扇', '系马上',
+    '里面', '裡面', '檯面', '盡頭', '裡頭', '家伙', '傢伙', '万里', '萬里', '过松山', '会吊车', '台风扇', '系马上', '前后里', '先后里',
     ...['企划', '策划', '筹划', '谋划', '笔划', '一笔划'].flatMap((word) => ['算', '不来', '得来', '不划'].map((rest) => word + rest)),
     ...['笔划', '一笔划'].flatMap((word) => ['不太来', '的来'].map((rest) => word + rest)),
     ...['导师', '导致', '导弹', '导演', '导航', '导向', '导出', '导入', '导体', '导电', '导管', '导线', '导引', '导数', '导读', '导览']
@@ -107,8 +124,13 @@ const CONTINUE = [
 const CONTINUE_SKIP = new Set(['杂志', '应征']);
 // 台灣的用法跟 OpenCC 不同的詞
 const OVERRIDE = new Map([['申复', '申復'], ['虱目鱼', '虱目魚']]);
-// STPhrases 沒有、要補的詞：标注重点 比擋詞 标注重（目标注重）長，照 標註重點 轉；向导游 是 向＋导游
-const EXTRA = new Map([['标注重点', '標註重點'], ['向导游', '向導遊']]);
+// STPhrases 沒有、要補的詞：标注重点 比擋詞 标注重（目标注重）長，照 標註重點 轉；向导游 是 向＋导游。
+// 其餘是 ALWAYS 的詞：OpenCC 的 着 不轉；万、宁 norm 換不掉，几萬、寧愿 另外列
+const EXTRA = new Map([['标注重点', '標註重點'], ['向导游', '向導遊'], ['这几', '這幾'], ['几萬', '幾萬'], ['寧愿', '寧願'],
+    ...['情境', '计画', '报告', '句子', '过程', '生活', '活动', '社团', '学校', '课堂', '文章']
+        .map((word, i) => [`${word}里`, `${['情境', '計畫', '報告', '句子', '過程', '生活', '活動', '社團', '學校', '課堂', '文章'][i]}裡`]),
+    ...[...'看跟接对急顺随带拉学等想拿试靠朝沿忙抱穿写听说笑有'].map((ch, i) => [`${ch}着`, `${'看跟接對急順隨帶拉學等想拿試靠朝沿忙抱穿寫聽說笑有'[i]}著`]),
+    ...[...'急重手眼迷想'].map((ch) => [`着${ch}`, `著${ch}`])]);
 
 function parse(file) {
     const entries = [];
@@ -197,11 +219,33 @@ for (const [key, values] of [...parse(phraseFile), ...[...EXTRA].map(([k, v]) =>
     else others.set(key, value);
 }
 for (const key of [...CURATED, ...ALWAYS]) if (!curated.has(key)) fail(`CURATED、ALWAYS 的 ${key} 不在 STPhrases 裡`);
-const onlyCurated = () => [...curated].filter(([key]) => !ALWAYS.has(key));
-const onlyAlways = () => [...curated].filter(([key]) => ALWAYS.has(key));
 
 // 跟 s2t-core.mjs 的 norm 相同
 const norm = (s) => [...s].map((ch) => table.get(ch) ?? DEFAULTS.get(ch) ?? ch);
+
+// 兩個 ALWAYS 的詞接在一起時，前一個詞佔走重疊的字，後一個詞其餘的字要照它的轉法：十几万 → 十幾萬。
+// 里 結尾的詞接 面、头 時，面、头 屬於 裡面、裡頭，不跟後面湊成 面条、头发：这里面条件、家里头发现
+const alwaysKeys = new Set(ALWAYS);
+{
+    const always = [...curated].filter(([key]) => ALWAYS.has(key));
+    for (const [a, av] of always) {
+        const ak = norm(a);
+        for (const [b, bv, inside] of [...always, ['里面', '裡面', true], ['里头', '裡頭', true]]) {
+            const bk = norm(b);
+            for (let j = 1; j < ak.length; j++) {
+                const overlap = ak.length - j;
+                if (bk.length <= overlap || ak.slice(j).some((ch, i) => bk[i] !== ch) || [...av].slice(j).some((ch, i) => ch !== [...bv][i])) continue;
+                const rest = [...b].slice(overlap);
+                if (inside || rest.some((ch, i) => [...bv][overlap + i] !== baseline(ch))) {
+                    curated.set(a + rest.join(''), av + [...bv].slice(overlap).join(''));
+                    alwaysKeys.add(a + rest.join(''));
+                }
+            }
+        }
+    }
+}
+const onlyCurated = () => [...curated].filter(([key]) => !alwaysKeys.has(key));
+const onlyAlways = () => [...curated].filter(([key]) => alwaysKeys.has(key));
 const converter = (phrases, guards = []) => createConverter({
     pairs,
     defaults: [...DEFAULTS],
@@ -287,8 +331,8 @@ function findGuards() {
         }
     }
     // CURATED 的繁體寫法也佔住位置：繁體的 後 對不上 后面，「後面团队」的 面 才不會被 面团 拿走。
-    // ALWAYS 的只有 劃分 有作用（劃分合并），企劃 這類從中間開始的詞組都沒有
-    const curatedTraditional = [...onlyCurated().map(([, value]) => value), '劃分', '計劃'];
+    // ALWAYS 的 劃分 有作用（劃分合并）；規劃 到 後面 原本是 CURATED，照樣留著
+    const curatedTraditional = [...onlyCurated().map(([, value]) => value), '劃分', '計劃', '規劃', '計畫', '隨後', '最後', '之後', '以後', '然後', '後來', '後面'];
     // 跟詞組同鍵的擋詞拿掉。同鍵時詞組先試：原文有簡體字就套用詞組，擋詞只在原文全寫成繁體、又 norm 得上時
     // 才佔位置。尽头 的 尽 norm 換不掉，寫成繁體也對不上，同鍵的擋詞完全沒作用
     return [...new Set([...found, ...GUARD_WORDS, ...continued, ...curatedTraditional])]
@@ -325,7 +369,7 @@ export const S2T_SIMPLIFIED = '${[...simplifiedOnly].filter((ch) => !table.has(c
 export const S2T_TABLE_TRADITIONAL = '${[...table.keys()].filter((ch) => !simplifiedOnly.has(ch)).sort(byCode).join('')}';
 `;
 process.stdout.write(`/**
- * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${onlyCurated().length} 條、ALWAYS ${ALWAYS.size} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
+ * 簡體詞組 → 台灣繁體的對照：詞組 ${kept.size + bridges.size} 條（其中接常用詞的 ${bridges.size} 條）、CURATED ${onlyCurated().length} 條、ALWAYS ${onlyAlways().length} 條、擋詞 ${guards.length} 條、預設轉法 ${DEFAULTS.size} 個字。
  * 由 ai-gateway/scripts/build-s2t-phrases.mjs 產生，不要手動修改。產生時的腳本與逐字對照：
  *   ai-gateway/scripts/build-s2t-phrases.mjs（sha256 ${sha(fileURLToPath(import.meta.url))}）
  *   ai-gateway/src/s2t-table.mjs（sha256 ${sha(fileURLToPath(new URL('../src/s2t-table.mjs', import.meta.url)))}）
