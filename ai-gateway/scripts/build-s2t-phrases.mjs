@@ -76,7 +76,9 @@ const KEEP = new Map(Object.entries({
 }));
 // 把繁體文字轉成簡體再轉回來（站上內容與 2026 年 10–11 月的調研資料，約 1800 萬字）時，切錯詞的次數
 // 不比轉對少的：这只是、别只看、一个中文字、核对准考证、考试制度、校系数、学生发表、成长历程、
-// 并发布、互相冲突。扎实、回归 台灣通常照原字寫；注释、脚注 台灣兩種都寫，站上寫 注釋、腳注
+// 并发布、互相冲突。扎实、回归 台灣通常照原字寫；注释、脚注 台灣兩種都寫，站上寫 注釋、腳注。
+// 厂里、广里、柜里 接 面、头 時，面、头 會被 面团、头发 拿走（推广里面团体、衣柜里面条纹）；
+// 挂面 會把 墙上挂面镜子 的 面 轉成 麵
 const REJECT = new Set([
     '这只', '别只', '单只', '个中', '个旧', '对表', '喜欢表', '旧表', '码表', '马表', '科学面', '凭准', '长胡',
     '试制', '制为', '改制为', '轮回', '回銮', '云阳', '系数', '系为', '系个', '系怀', '系条', '系带', '系结', '系获',
@@ -84,6 +86,7 @@ const REJECT = new Set([
     '生发', '理发', '养发', '括发', '金发', '长发', '落发', '换发', '发结', '发卡', '长历', '年历', '国历', '国历年',
     '大历', '商历', '长须', '拔须', '并发', '并为', '并产', '并兼', '并合', '并叠', '交并', '购并', '并购买',
     '行复', '不复', '开复', '明复', '相冲', '对冲', '根烟', '上签', '先尝', '断发', '发长', '认准', '注释', '脚注', '下面条', '补扣', '这么干', '那么干', '怎么干', '过水面', '换只', '合儿', '向应',
+    '厂里', '广里', '柜里', '挂面',
 ]);
 // 一定當擋詞的詞：头发 前面常接的詞（口头发表、回头发现、开头发言）；后 結尾、STPhrases 沒收的稱號
 // （視后來台、棋后面對）；网后卫冕、球后卫冕 不切成 后卫、球后卫；相关系所、有关系统 的 系 不跟前面
@@ -187,9 +190,9 @@ const traditional = new Set();
 for (const [, values] of [...characters, ...variants]) for (const value of values) for (const ch of value) traditional.add(ch);
 for (const [key, values] of characters) if (values.length === 1 && !table.has(key)) traditional.add(key);
 const simplifiedOnly = new Set(characters.map(([key]) => key).filter((key) => !traditional.has(key)));
-// 确、种、适 在 OpenCC 的繁體那一側也有，但逐字對照一律轉掉（build-s2t-table.mjs 的 CURATED），正確的
-// 繁體文字留不下這幾個字，算簡體專用字，「准确」這類詞才轉得到。据 在「拮据」裡不轉，不算
-for (const ch of '确种适') simplifiedOnly.add(ch);
+// 确、种、适、广 這類 STCharacters 一對多、逐字對照一律轉掉的字（build-s2t-table.mjs 的 CURATED），
+// 正確的繁體文字留不下，算簡體專用字，「准确」這類詞才轉得到。据 在「拮据」裡不轉，不算
+for (const [key, values] of characters) if (values.length > 1 && table.has(key) && key !== '据') simplifiedOnly.add(key);
 const readings = new Map(characters);
 for (const [ch, value] of DEFAULTS) {
     if (!simplifiedOnly.has(ch) || table.has(ch) || !readings.get(ch).includes(value)) fail(`DEFAULTS 的 ${ch}→${value} 不是一對多的簡體專用字`);
