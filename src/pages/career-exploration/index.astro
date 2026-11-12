@@ -62,6 +62,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 {/* career-chat 每次只送這一題，不帶先前的對話（ai-gateway/src/task-catalog.mjs）。 */}
                 <p id="chat-input-hint" class="mt-2 text-sm text-gray-500">每一題都分開回答，AI 看不到前面的問答。想接著問，請把需要的背景寫進同一題，最多 200 字。</p>
                 <div id="chat-progress"></div>
+                {/* 不經過 AI，閘道忙線或失敗時也看得到。不在 live region 裡，回答進來時不會重唸。號碼與用途照閘道 career-chat 的指令。 */}
+                <p id="chat-help" class="mt-2 text-sm text-gray-600">想傷害自己時，打<a href="tel:1925" class="text-indigo-700 underline hover:text-indigo-900">衛福部安心專線 1925</a>，<a href="tel:119" class="text-indigo-700 underline hover:text-indigo-900">有立即危險撥 119</a>；被家暴、被大人虐待、性侵害或性騷擾時，打<a href="tel:113" class="text-indigo-700 underline hover:text-indigo-900">衛福部保護專線 113</a>，<a href="tel:110" class="text-indigo-700 underline hover:text-indigo-900">正在被打或被侵害撥 110</a>。兩支專線都是 24 小時。</p>
                 {/* 回答裡的 ColleGo! 不會是連結（platform-ai.js 不轉連結），在這裡固定放一個。放在進度區塊後面，「發送」和「取消」才會相鄰。 */}
                 <p class="mt-2 text-sm text-gray-600">AI 提到本站沒有介紹的學群時，可以到 <a href="https://collego.edu.tw/Highschool/CollegeList" target="_blank" rel="noopener noreferrer" class="text-indigo-700 underline hover:text-indigo-900">ColleGo! 認識學群 <ion-icon aria-hidden="true" name="open-outline"></ion-icon><span class="sr-only">（另開新分頁）</span></a> 看全部 18 個學群。</p>
             </div>
