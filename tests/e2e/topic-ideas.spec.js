@@ -101,7 +101,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await expect(button).toBeEnabled();
         await expect(button).toHaveText('產生靈感');
         await expect(button.locator('svg')).toHaveCount(1);
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
     });
 
     // 結果在功能的 h2 底下。標題跳級的話，用標題跳著讀的人會以為漏了一層
@@ -173,7 +173,8 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         const button = page.locator('#generateIdeaBtn');
         await expect(button).toHaveAttribute('aria-disabled', 'true');
         await expect(button).toHaveText('產生中…');
-        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+        await expect(button).toContainClass('ai-busy');
+        await expect(button).toHaveCSS('opacity', '1');
 
         await page.locator('#ideaWorkspace').getByRole('button', { name: '取消' }).focus();
         await page.keyboard.press('Enter');
@@ -184,7 +185,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await expect(page.locator('#ideaWorkspace > *')).toHaveCount(0);
         await expect(button).toBeEnabled();
         await expect(button).toHaveText('產生靈感');
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         // 取消鈕隨進度區塊移除。空的工作區看不到焦點框；焦點移進結果區的話，螢幕閱讀器會唸一次
         // 訊息，#ideaStatus 又唸一次。
         await expect(button).toBeFocused();
@@ -222,7 +223,7 @@ test.describe('選題靈感頁：AI 個人化發想（topic-ideas 任務）', ()
         await page.evaluate((chunk) => window.__stream.push(chunk), done(RESULT));
         await expectIdeas(page, RESULT.ideas);
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toBeFocused();
     });
 
@@ -329,7 +330,7 @@ test.describe('選題靈感頁：共用腳本 platform-ai.js 沒載入成功', (
             await expect(button).toBeEnabled();
             await expect(button).toHaveText('產生靈感');
             await expect(button.locator('svg')).toHaveCount(1);
-            await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+            await expect(button).not.toHaveClass(/\bai-busy\b/);
         });
     }
 });

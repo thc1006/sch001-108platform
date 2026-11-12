@@ -80,7 +80,8 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
         await expect(workspace.getByRole('button', { name: '取消' })).toBeVisible();
         await expect(results.locator('*')).toHaveCount(0);
         await expect(button).toHaveAttribute('aria-disabled', 'true');
-        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+        await expect(button).toContainClass('ai-busy');
+        await expect(button).toHaveCSS('opacity', '1');
         await expect(button).toHaveText('分析中…');
 
         await push(page, delta('\n探索建議：當查核志工。'));
@@ -103,7 +104,7 @@ test.describe('公民科技專案頁：讓 AI 幫你挑（civic-tech-suggestion 
 
         // 按鈕恢復可按，文字與圖示都還在。
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toHaveText('推薦專案');
         await expect(button.locator('svg')).toHaveCount(1);
     });

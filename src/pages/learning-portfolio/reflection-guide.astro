@@ -195,7 +195,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = analyzeBtnLabel.textContent;
             analyzeBtn.setAttribute('aria-disabled', 'true');
-            analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            analyzeBtn.classList.add('ai-busy');
             analyzeBtnLabel.textContent = '健檢中…';
             analysisResult.textContent = '';
             announce('');
@@ -225,7 +225,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 analyzeBtn.removeAttribute('aria-disabled');
-                analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                analyzeBtn.classList.remove('ai-busy');
                 analyzeBtnLabel.textContent = originalLabel;
             }
         });

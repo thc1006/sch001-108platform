@@ -158,7 +158,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             // 只換 <span> 的文字，按鈕的圖示才不會被清掉。
             const originalLabel = ideaBtnLabel.textContent;
             generateIdeaBtn.setAttribute('aria-disabled', 'true');
-            generateIdeaBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            generateIdeaBtn.classList.add('ai-busy');
             ideaBtnLabel.textContent = '產生中…';
 
             ideaResult.textContent = '';
@@ -188,7 +188,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 generateIdeaBtn.removeAttribute('aria-disabled');
-                generateIdeaBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                generateIdeaBtn.classList.remove('ai-busy');
                 ideaBtnLabel.textContent = originalLabel;
             }
         });

@@ -594,7 +594,7 @@ const contrastPlans = [
             // disabled 的按鈕會失去焦點，鍵盤使用者的焦點就掉回 <body>。
             const originalLabel = planBtnLabel.textContent;
             generatePlanBtn.setAttribute('aria-disabled', 'true');
-            generatePlanBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            generatePlanBtn.classList.add('ai-busy');
             planBtnLabel.textContent = '產生中…';
             planResult.textContent = '';
             announce('');
@@ -622,7 +622,7 @@ const contrastPlans = [
                 showMessage(text, error && error.name === 'AbortError' ? 'info' : 'error');
             } finally {
                 generatePlanBtn.removeAttribute('aria-disabled');
-                generatePlanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                generatePlanBtn.classList.remove('ai-busy');
                 planBtnLabel.textContent = originalLabel;
             }
         });

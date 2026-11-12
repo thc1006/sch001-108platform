@@ -62,13 +62,14 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(input).toHaveValue('');
         await expect(input).toBeFocused();
 
-        // 草稿出現時進度區塊還在（可以取消）；按鈕停用但仍可取得焦點，外觀也變淡。
+        // 草稿出現時進度區塊還在（可以取消）；按鈕停用但仍可取得焦點，底色變灰。
         await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
         await expect(progress(page).getByRole('status')).toHaveText('AI 正在撰寫回答…');
         await expect(progress(page).getByRole('button', { name: '取消' })).toBeVisible();
         await expect(button).toHaveAttribute('aria-disabled', 'true');
         await expect(button).not.toHaveAttribute('disabled');
-        await expect(button).toHaveClass(/opacity-50/);
+        await expect(button).toHaveClass(/\bai-busy\b/);
+        await expect(button).toHaveCSS('opacity', '1');
         await expect(button).toHaveText('思考中...');
         await expect(input).toBeEditable();
 
@@ -92,7 +93,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         // 按鈕恢復，文字與圖示都還在。
         await expect(button).toBeEnabled();
         await expect(button).not.toHaveAttribute('aria-disabled');
-        await expect(button).not.toHaveClass(/opacity-50/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toHaveText('發送');
         await expect(button.locator('ion-icon')).toHaveCount(1);
         await expect(input).toBeFocused();

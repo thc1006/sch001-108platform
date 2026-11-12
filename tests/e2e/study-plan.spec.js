@@ -78,7 +78,7 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
 
         const button = page.locator('#generatePlanBtn');
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toHaveText('產生計畫草案');
         await expect(button.locator('svg')).toHaveCount(1);
     });
@@ -160,7 +160,8 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
         // 進行中只換按鈕的文字，圖示留著。
         const button = page.locator('#generatePlanBtn');
         await expect(button).toHaveAttribute('aria-disabled', 'true');
-        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+        await expect(button).toContainClass('ai-busy');
+        await expect(button).toHaveCSS('opacity', '1');
         await expect(button).toHaveText('產生中…');
         await expect(button.locator('svg')).toHaveCount(1);
 
@@ -172,7 +173,7 @@ test.describe('計畫範本庫：AI 草擬學習計畫（study-plan 任務）', 
         await expect(message).not.toHaveClass(/text-red-700/);
         await expect(page.locator('.platform-ai-progress')).toHaveCount(0);
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toHaveText('產生計畫草案');
         // 取消鈕跟著進度區塊移除了，焦點不能停在清空的工作區，也不能移進結果區：螢幕閱讀器會唸一次
         // 訊息，#planStatus 又唸一次。

@@ -70,7 +70,8 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(work.getByRole('button', { name: '取消' })).toBeVisible();
         await expect(result).toBeEmpty();
         await expect(button).toBeDisabled();
-        await expect(button).toContainClass('opacity-50 cursor-not-allowed');
+        await expect(button).toContainClass('ai-busy');
+        await expect(button).toHaveCSS('opacity', '1');
         await expect(button).toHaveText('分析中…');
 
         await push(page, delta('* **A3 規劃執行與創新應變**：描述你如何調整實驗設計'));
@@ -95,7 +96,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         expect(JSON.parse(calls[0].body)).toEqual({ input: { experience: '我參加了科展' } });
 
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         await expect(button).toHaveText('開始對照');
         await expect(button.locator('svg')).toHaveCount(1);
     });
@@ -193,7 +194,7 @@ test.describe('核心素養對照表：AI 對照核心素養（competency-analys
         await expect(result.locator('p')).not.toHaveClass(/text-red-700/);
         await expect(work).toBeEmpty();
         await expect(button).toBeEnabled();
-        await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+        await expect(button).not.toHaveClass(/\bai-busy\b/);
         // 取消鈕跟著進度區塊移除了。空的 #ai-work 看不到焦點框；焦點移進 #ai-result 的話，螢幕閱讀器
         // 會唸一次訊息，#ai-status 又唸一次。
         await expect(button).toBeFocused();
@@ -490,7 +491,7 @@ test.describe('核心素養對照表：共用腳本 platform-ai.js 沒載入成�
             await expect(page.locator('#ai-result')).toHaveText('AI 功能沒有載入，請重新整理頁面再試一次。');
             const button = page.locator('#ai-generate-btn');
             await expect(button).toBeEnabled();
-            await expect(button).not.toHaveClass(/opacity-50|cursor-not-allowed/);
+            await expect(button).not.toHaveClass(/\bai-busy\b/);
             await expect(button).toHaveText('開始對照');
             await expect(button.locator('svg')).toHaveCount(1);
         });
