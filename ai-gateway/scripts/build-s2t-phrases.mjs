@@ -194,7 +194,7 @@ const continueWords = CONTINUE.flatMap((word) => {
     for (let i = 1; i < [...word].length; i++) {
         forms = forms.flatMap((f) => [f, ...(simplifiedForms.get(f[i]) ?? []).map((s) => f.with(i, s))]);
     }
-    return forms.map((f) => f.join(''));
+    return forms.map((f) => [f.join(''), word]);
 });
 
 const baseline = (key) => [...key].map((ch) => table.get(ch) ?? DEFAULTS.get(ch) ?? ch).join('');
@@ -322,10 +322,11 @@ function findGuards() {
     for (const [key, value] of [...kept, ...curated]) {
         const last = [...key].at(-1);
         if (simplifiedOnly.has(last) || [...value].at(-1) === last || CONTINUE_SKIP.has(key)) continue;
-        for (const word of continueWords) {
+        for (const [word, traditional] of continueWords) {
             if ([...word][0] !== last) continue;
             const rest = [...word].slice(1).join('');
-            const bridged = [...value].slice(0, -1).join('') + last + rest;
+            // 其餘的字照常用詞的繁體寫法：目标志愿 → 目標志願
+            const bridged = [...value].slice(0, -1).join('') + last + [...traditional].slice(1).join('');
             if (curated.has(key) || bridged === baseline(key + rest)) continued.push(key + rest);
             else bridges.set(key + rest, bridged);
         }
