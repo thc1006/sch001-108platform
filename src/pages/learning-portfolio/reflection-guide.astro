@@ -21,7 +21,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
 
         <!-- STAR 敘事法說明 -->
-        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+        <section class="bg-white p-4 sm:p-8 rounded-xl shadow-lg mb-16">
             <h2 class="text-2xl font-bold mb-2">反思第一步：學習 STAR 敘事法</h2>
             <p class="text-gray-600 mb-6">心得常見的問題是只寫「學到很多」。照這四步寫，讀的人才看得到你遇到什麼、做了什麼、學到什麼。</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
@@ -51,19 +51,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <!-- 反思工具 -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- 左欄：情境式提問 -->
-            <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
+            <div class="bg-white p-4 sm:p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">工具一：情境式提問</h2>
                 <p class="text-gray-600 mb-6">選擇你參與的活動情境，這裡會隨機出一題反思問題，再按一次會換一題。</p>
                 <div id="reflection-category-btns" role="group" aria-label="活動情境" class="flex flex-wrap gap-3 mb-6">
                     <!-- 情境按鈕由 renderCategoryButtons() 填入 -->
                 </div>
-                <div id="reflection-question-output" role="status" class="bg-gray-50 p-6 rounded-lg flex-grow flex items-center justify-center transition-all duration-300 min-h-[120px]">
+                <div id="reflection-question-output" role="status" class="bg-gray-50 p-4 sm:p-6 rounded-lg flex-grow flex items-center justify-center transition-all duration-300 min-h-[120px]">
                     <p class="text-gray-500 text-center">選一個情境，問題會出現在這裡。</p>
                 </div>
             </div>
 
             <!-- 右欄：AI 學習歷程健檢 -->
-            <div class="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col">
+            <div class="bg-white p-4 sm:p-8 rounded-xl shadow-lg h-full flex flex-col">
                 <h2 class="text-2xl font-bold mb-2">工具二：AI 學習歷程健檢</h2>
                 <p class="text-gray-600 mb-6">貼上寫好的心得反思，AI 會依 STAR 四項給評語和建議，附一段修改範例。</p>
                 <textarea id="reflectionInput" maxlength="2000" aria-label="你的心得反思" aria-describedby="reflectionLimit" class="w-full h-32 p-3 border border-gray-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-cyan-700" placeholder="在這裡貼上你的心得反思文字..."></textarea>
@@ -235,7 +235,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             analysisResult.textContent = '';
 
             const container = document.createElement('div');
-            container.className = 'prose max-w-none bg-gray-50 p-4 rounded-lg mt-4 text-sm';
+            // 窄螢幕上外面已經有兩層 padding，不再加底色和 padding，文字欄才不會太窄
+            container.className = 'prose max-w-none sm:bg-gray-50 sm:p-4 sm:rounded-lg mt-4 text-sm';
 
             // 總評標題
             const overallTitle = document.createElement('h3');
