@@ -419,8 +419,6 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             chatLog.appendChild(asked.row);
             scrollToBottom();
             chatInput.value = '';
-            // 現在就交回輸入框：等回答到了才搬，VoiceOver 可能漏唸回答（WebKit bug 222190）。
-            chatInput.focus();
 
             // 進行中不停用輸入框，按鈕用 aria-disabled 而不是 disabled：有焦點的元素一停用，焦點就
             // 掉到 <body>。學生可以先打下一題，但要等這一題結束才送得出去。
@@ -429,6 +427,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             chatSubmit.setAttribute('aria-disabled', 'true');
             chatSubmit.classList.add('opacity-50', 'cursor-not-allowed');
             chatSubmitLabel.textContent = '思考中...';
+            // 焦點放在按鈕上：留在輸入框的話，學生一打字報讀軟體就停止唸回答。現在就搬，等回答到了
+            // 才搬，VoiceOver 可能漏唸回答（WebKit bug 222190）。
+            chatSubmit.focus();
 
             const controller = new AbortController();
             // mountProgress 也要放在 try 裡：PlatformAI 不存在時它會丟 ReferenceError。
@@ -445,10 +446,9 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             };
             try {
                 // 進度放在輸入列下方。聊天視窗只有 h-64，放進去會擠掉對話，往上捲時取消鈕也會跟著捲走。
-                // 焦點交給輸入框而不是按鈕：送出時已經清空輸入框、把焦點交回去，接下來要打的是下一題。
                 progress = PlatformAI.mountProgress(chatProgress, {
                     onCancel: () => controller.abort(),
-                    focusTarget: chatInput,
+                    focusTarget: chatSubmit,
                     // 焦點在這一區（輸入框、按鈕、對話紀錄）時按 Esc 等於按取消
                     escapeScope: document.getElementById('ai-advisor'),
                 });
@@ -507,8 +507,8 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
                 } else {
                     enableChat(originalLabel);
                 }
-                // Safari 點按鈕不給焦點，滑鼠按了取消時焦點不在進度區塊裡，finish() 不會把它交給輸入框。
-                if (controller.signal.aborted) chatInput.focus();
+                // Safari 點按鈕不給焦點，滑鼠按了取消時焦點掉在 <body>，finish() 不會把它交給按鈕。
+                if (controller.signal.aborted && (!document.activeElement || document.activeElement === document.body)) chatSubmit.focus();
             }
         }
 

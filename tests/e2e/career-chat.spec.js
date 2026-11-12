@@ -56,11 +56,11 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
 
         const button = page.locator('#chat-submit');
         const input = page.locator('#chat-input');
-        // 學生的問題（去掉前後空白）進了紀錄，輸入框清空，焦點交回輸入框。
+        // 學生的問題（去掉前後空白）進了紀錄，輸入框清空，焦點在按鈕上。
         await expect(messages(page)).toHaveCount(2);
         await expect(messages(page).nth(1).locator('.chat-bubble-user')).toHaveText('我喜歡動手做東西，也對電腦有興趣');
         await expect(input).toHaveValue('');
-        await expect(input).toBeFocused();
+        await expect(button).toBeFocused();
 
         // 草稿出現時進度區塊還在（可以取消）；按鈕停用但仍可取得焦點，外觀也變淡。
         await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
@@ -95,7 +95,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(button).not.toHaveClass(/opacity-50/);
         await expect(button).toHaveText('發送');
         await expect(button.locator('ion-icon')).toHaveCount(1);
-        await expect(input).toBeFocused();
+        await expect(button).toBeFocused();
     });
 
     test('在輸入框按 Enter 送出；進行中可以先打下一題，但 Enter 與按鈕都不會再送出', async ({ page }) => {
@@ -105,7 +105,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await input.press('Enter');
         await expect(messages(page).nth(1)).toHaveText('我喜歡畫畫');
         await expect(progress(page)).toHaveCount(1);
-        await expect(input).toBeFocused();
+        await expect(page.locator('#chat-submit')).toBeFocused();
 
         await input.fill('那數學呢？');
         await input.press('Enter');
@@ -251,7 +251,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(page.locator('#chat-status')).toHaveText('');
     });
 
-    test('草稿出現後按「取消」→ 草稿移除，紀錄裡出現「已取消。」（不是錯誤的紅字），焦點回到輸入框；之後還能再問', async ({ page }) => {
+    test('草稿出現後按「取消」→ 草稿移除，紀錄裡出現「已取消。」（不是錯誤的紅字），焦點回到「發送」；之後還能再問', async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**')], hang: true });
         await ask(page, '我喜歡電腦');
         await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
@@ -264,9 +264,9 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(draft(page)).toHaveCount(0);
         await expect(progress(page)).toHaveCount(0);
         await expect(page.locator('#chat-submit')).toBeEnabled();
-        await expect(page.locator('#chat-input')).toBeFocused();
-        // finish() 直接交給輸入框，不先交給 #chat-progress（得補上 tabindex）再搬一次。
-        for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
+        await expect(page.locator('#chat-submit')).toBeFocused();
+        // finish() 直接交給按鈕，不先交給 #chat-progress（得補上 tabindex）再搬一次。
+        for (const el of ['#chat-submit', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
 
         await ask(page, '那數學呢？');
         await expect(messages(page).nth(3)).toHaveText('那數學呢？');
@@ -408,7 +408,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
     });
 
     for (const [when, chunk, expectSettled] of SETTLE) {
-        test(`焦點停在「取消」上時${when} → 焦點交給輸入框，#chat-progress 不留 tabindex`, async ({ page }) => {
+        test(`焦點停在「取消」上時${when} → 焦點交給「發送」，#chat-progress 不留 tabindex`, async ({ page }) => {
             await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
             await ask(page, '我喜歡畫畫');
             const cancel = progress(page).getByRole('button', { name: '取消' });
@@ -416,8 +416,8 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
             await expect(cancel).toBeFocused();
             await push(page, chunk);
             await expectSettled(page);
-            await expect(page.locator('#chat-input')).toBeFocused();
-            for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
+            await expect(page.locator('#chat-submit')).toBeFocused();
+            for (const el of ['#chat-submit', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
         });
     }
 
@@ -426,7 +426,7 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         ['incomplete', 'AI 的回答太長，沒能在時限內寫完。請把問題縮小一點再試。'],
         ['timeout', 'AI 思考的時間超過上限了，請稍後再試，或把內容寫得更具體一些。'],
     ];
-    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到回答之後收到 ${code} → 已收到的部分標明沒有寫完、進了紀錄，紅字訊息接在後面；草稿移除，焦點回到輸入框`, async ({ page }) => {
+    for (const [code, message] of PARTIAL_ERRORS) test(`已經收到回答之後收到 ${code} → 已收到的部分標明沒有寫完、進了紀錄，紅字訊息接在後面；草稿移除，焦點回到「發送」`, async ({ page }) => {
         await installFakeGateway(page, { chunks: [ACCEPTED, delta('推薦你 **資訊學群**：'), delta('因為你')], hang: true });
         await ask(page, '我喜歡電腦');
         await expect(draft(page).locator('strong')).toHaveText(['資訊學群']);
@@ -440,10 +440,10 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(aiText(page, 3)).toHaveText(message);
         await expect(aiText(page, 3)).toHaveClass(/text-red-700/);
         await expect(draft(page)).toHaveCount(0);
-        await expect(page.locator('#chat-input')).toBeFocused();
+        await expect(page.locator('#chat-submit')).toBeFocused();
         // 答案已經留在紀錄裡，問題不放回輸入框
         await expect(page.locator('#chat-input')).toHaveValue('');
-        for (const el of ['#chat-input', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
+        for (const el of ['#chat-submit', '#chat-progress']) await expect(page.locator(el)).not.toHaveAttribute('tabindex');
     });
 
     test('收到的片段只有看不見的字元、之後收到錯誤：錯誤不帶 partial，草稿移除，紀錄裡只有紅字訊息', async ({ page }) => {
@@ -534,28 +534,59 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(search).toBeFocused();
     });
 
+    // 焦點留在輸入框的話，學生一打字報讀軟體就停止唸回答。焦點在按鈕上，回答只由紀錄唸一次。
+    test('送出後焦點在「發送」上，回答到的時候不搬；回答只在紀錄裡一份，按鈕的名稱不含回答；Shift+Tab 回到輸入框可以先打下一題', async ({ page }) => {
+        await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
+        const input = page.locator('#chat-input');
+        const button = page.locator('#chat-submit');
+        await input.fill('我喜歡畫畫');
+        await input.press('Enter');
+        await expect(button).toBeFocused();
+        await expect(button).toHaveAttribute('aria-disabled', 'true');
+        await expect(button).toHaveAccessibleName('思考中...');
+
+        await push(page, done('推薦你 **設計學群**。'));
+        await expect(aiText(page, 2)).toHaveText('推薦你 設計學群。');
+        await expect(button).toBeFocused();
+        await expect(button).toHaveAccessibleName('發送');
+        await expect(page.locator('#ai-advisor .chat-bubble-ai', { hasText: '推薦你' })).toHaveCount(1);
+        expect(await page.evaluate(() => Boolean(document.activeElement.closest('#chat-window')))).toBe(false);
+        expect(await page.evaluate(() => document.querySelectorAll('#chat-window [tabindex="-1"]').length)).toBe(0);
+
+        // 學生自己回到輸入框打下一題，回答到的時候焦點和打到一半的字都留著。
+        await ask(page, '那數學呢？');
+        await expect(button).toBeFocused();
+        await page.keyboard.press('Shift+Tab');
+        await expect(input).toBeFocused();
+        await page.keyboard.type('那英文');
+        await push(page, done('也可以看看 **數理化學群**。'));
+        await expect(aiText(page, 4)).toHaveText('也可以看看 數理化學群。');
+        await expect(input).toBeFocused();
+        await expect(input).toHaveValue('那英文');
+    });
+
     // Safari 點按鈕不給按鈕焦點（MDN <button> 的 Clicking and focus），mousedown 時還會清掉輸入框的
     // 焦點（WebKit 的 EventHandler::dispatchMouseEvent）。這裡在 mousedown 時 preventDefault 再 blur。
-    test('像 Safari 那樣點按鈕不給焦點：用滑鼠送出、取消之後，焦點都回到輸入框', async ({ page }) => {
+    test('像 Safari 那樣點按鈕不給焦點：用滑鼠送出、取消之後，焦點都在「發送」上', async ({ page }) => {
         await page.evaluate(() => document.addEventListener('mousedown', (e) => {
             if (!e.target.closest('button')) return;
             e.preventDefault();
             document.activeElement.blur();
         }, true));
         await installFakeGateway(page, { chunks: [ACCEPTED], hang: true });
-        const input = page.locator('#chat-input');
+        const button = page.locator('#chat-submit');
 
         await ask(page, '我喜歡畫畫');
         await expect(messages(page)).toHaveCount(2);
-        await expect(input).toBeFocused();
+        await expect(button).toBeFocused();
         await push(page, done('推薦你 **設計學群**。'));
         await expect(messages(page)).toHaveCount(3);
-        await expect(input).toBeFocused();
+        await expect(button).toBeFocused();
 
         await ask(page, '那數學呢？');
         await progress(page).getByRole('button', { name: '取消' }).click();
         await expect(aiText(page, 4)).toHaveText('已取消。');
-        await expect(input).toBeFocused();
+        await expect(button).toBeFocused();
     });
 
     test('輸入框最多 200 字（與閘道的任務規格相同）；輸入框與按鈕都有無障礙名稱，窄螢幕上也是', async ({ page }) => {
@@ -633,6 +664,8 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         await expect(messages(page)).toHaveCount(3);
 
         const chatWindow = page.getByRole('region', { name: 'AI 推薦學群', exact: true });
+        await expect(page.locator('#chat-submit')).toBeFocused();
+        await page.keyboard.press('Shift+Tab');
         await expect(page.locator('#chat-input')).toBeFocused();
         await page.keyboard.press('Shift+Tab');
         await expect(chatWindow).toBeFocused();
