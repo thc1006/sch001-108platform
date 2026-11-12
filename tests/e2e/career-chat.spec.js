@@ -603,6 +603,33 @@ test.describe('生涯探索首頁：AI 推薦學群（career-chat 任務）', ()
         }
     });
 
+    // 閘道忙線、失敗時拿不到 AI 給的號碼，頁面上要固定寫著。
+    test('輸入列下方固定寫著求助專線，不在 live region 裡、不是輸入框的描述；號碼是 tel: 連結，名稱聽得出用途', async ({ page }) => {
+        const help = page.locator('#chat-help');
+        await expect(help).toHaveText('想傷害自己時，打衛福部安心專線 1925，有立即危險撥 119；被家暴、被大人虐待、性侵害或性騷擾時，打衛福部保護專線 113，正在被打或被侵害撥 110。兩支專線都是 24 小時。');
+        const links = help.getByRole('link');
+        await expect(links).toHaveText(['衛福部安心專線 1925', '有立即危險撥 119', '衛福部保護專線 113', '正在被打或被侵害撥 110']);
+        expect(await links.evaluateAll((els) => els.map((a) => a.getAttribute('href')))).toEqual(['tel:1925', 'tel:119', 'tel:113', 'tel:110']);
+        expect(await inLiveRegion(help)).toBe(false);
+        expect((await page.locator('#chat-input').getAttribute('aria-describedby')).split(/\s+/)).not.toContain('chat-help');
+
+        // 在輸入列下方；從「發送」按 Tab 就到這一行。
+        const box = await help.evaluate((el) => {
+            const input = document.getElementById('chat-input').getBoundingClientRect();
+            return { top: el.getBoundingClientRect().top, inputBottom: input.bottom };
+        });
+        expect(box.top).toBeGreaterThanOrEqual(box.inputBottom);
+        await page.locator('#chat-submit').focus();
+        await page.keyboard.press('Tab');
+        await expect(links.first()).toBeFocused();
+
+        // AI 失敗之後還在。
+        await installFakeGateway(page, { chunks: [ACCEPTED, sse('error', { code: 'busy', message: BUSY, retryable: true })] });
+        await ask(page, '我不想活了');
+        await expect(aiText(page, 2)).toHaveText(BUSY);
+        await expect(links).toHaveCount(4);
+    });
+
     // 草稿每收到一段就重畫，放進 live region 會一路重唸。Safari 連 aria-live="off" 子樹裡的變化都算進
     // 外層的 live region，所以草稿與進度區塊（含計時器、取消鈕）不能有身為 live region 的祖先。
     test('對話紀錄是 role="log"；草稿與進度區塊不在任何 live region 裡，完成的回答加進紀錄，頭像不給螢幕閱讀器', async ({ page }) => {
