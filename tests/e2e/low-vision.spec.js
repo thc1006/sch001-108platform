@@ -384,6 +384,33 @@ test('競賽卡片的狀態說明在 320px 寬不會超出卡片', async ({ page
     expect(clipped).toEqual([]);
 });
 
+// 320px 寬時三個分頁排不下。按鈕被壓窄時，中文字會斷成「核心素／養」；換行後兩行貼在一起時，
+// 第一行的底線也是第二行的上緣，看不出選中的是哪一個。
+test('科系羅盤的分頁按鈕在 320px 寬時，字都在同一行，每個至少 24×24，不超出卡片，兩行之間至少 8px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto(P('career-exploration/index.html'), { waitUntil: 'networkidle' });
+    const tabs = page.getByRole('group', { name: '工程學群的資訊' }).getByRole('button');
+    await expect(tabs).toHaveText(['核心素養', '生涯發展', '歷程建議']);
+    const boxes = await tabs.evaluateAll((els) => els.map((el) => {
+        const r = el.getBoundingClientRect();
+        const card = document.getElementById('cluster-details').getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const lines = new Set([...range.getClientRects()].map((x) => Math.round(x.top))).size;
+        return { text: el.textContent, lines, top: r.top, bottom: r.bottom, w: r.width, h: r.height, inside: r.left >= card.left && r.right <= card.right };
+    }));
+    for (const b of boxes) {
+        expect(b.lines, b.text).toBe(1);
+        expect(b.w, b.text).toBeGreaterThanOrEqual(24);
+        expect(b.h, b.text).toBeGreaterThanOrEqual(24);
+        expect(b.inside, b.text).toBe(true);
+    }
+    const firstRow = boxes.filter((b) => Math.abs(b.top - boxes[0].top) < 1);
+    const nextRow = boxes.filter((b) => b.top >= boxes[0].bottom - 1);
+    expect(nextRow.length, '320px 寬時應該換成兩行').toBeGreaterThan(0);
+    expect(Math.min(...nextRow.map((b) => b.top)) - Math.max(...firstRow.map((b) => b.bottom))).toBeGreaterThanOrEqual(8);
+});
+
 // 欄數照 rem 算。用 px 的媒體查詢時，只放大文字到 200% 的 1280 寬仍是三欄，每欄只剩約 6 個中文字。
 test('只放大文字到 200% 時，1280 寬的競賽卡片文字至少 15em 寬', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
