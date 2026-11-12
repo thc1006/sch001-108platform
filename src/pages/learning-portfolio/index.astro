@@ -21,7 +21,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </section>
 
         <!-- AI 學習歷程健檢 -->
-        <section class="bg-white p-8 rounded-xl shadow-lg mb-16">
+        <section class="bg-white p-4 sm:p-8 rounded-xl shadow-lg mb-16">
              <h2 class="text-2xl font-bold mb-2">AI 學習歷程健檢</h2>
              <p class="text-gray-600 mb-6">貼上寫好的心得反思，AI 會依 STAR 四項（情境、任務、行動、結果）給評語和建議，附一段修改範例。</p>
              <div>
@@ -168,7 +168,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             analysisResult.textContent = '';
 
             const container = document.createElement('div');
-            container.className = 'bg-gray-50 p-6 rounded-lg';
+            // 窄螢幕上外面已經有兩層 padding，不再加底色和 padding，文字欄才不會太窄
+            container.className = 'sm:bg-gray-50 sm:p-6 sm:rounded-lg';
 
             // 總評標題
             const overallTitle = document.createElement('h3');

@@ -92,6 +92,19 @@ for (const p of PAGES) {
             await expect(button.locator('svg')).toHaveCount(p.icon ? 1 : 0);
         });
 
+        // 頁面外框、區塊、結果容器各有 padding，320px 寬時總評原本只剩 160～176px 寬，一行八、九個字。
+        test('320px 寬時，總評至少 236px 寬，修改範例至少 200px 寬，整頁不橫向捲動', async ({ page }) => {
+            await page.setViewportSize({ width: 320, height: 800 });
+            await installFakeGateway(page, { chunks: [ACCEPTED, done(RESULT)] });
+            await page.fill('#reflectionInput', '心得');
+            await page.click('#analyzeBtn');
+            const result = page.locator('#analysisResult');
+            const width = (text) => result.getByText(text).evaluate((el) => el.getBoundingClientRect().width);
+            expect(await width(RESULT.overall_comment)).toBeGreaterThanOrEqual(236);
+            expect(await width(RESULT.revised_example)).toBeGreaterThanOrEqual(200);
+            expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+        });
+
         test('總評與修改範例裡的 # 標題是 h3 底下的 h4，清單項目在 <ul> 裡；評語與建議裡的 # 照舊是粗體', async ({ page }) => {
             const marked = {
                 ...RESULT,
