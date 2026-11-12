@@ -651,6 +651,23 @@ test('AI 功能進行中的送出鈕換成灰底、不透明；hover 時白字�
     }
 });
 
+// 強制色彩模式會換掉 ai-busy 的灰底，進行中靠 GrayText 的文字色和平常分開。
+test('強制色彩模式下，AI 功能進行中的送出鈕文字是 GrayText，和平常不同', async ({ page }) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.goto(P('learning-portfolio/index.html'));
+    await page.addStyleTag({ content: '* { transition: none !important; }' });
+    const c = await page.locator('#analyzeBtn').evaluate((el) => {
+        const idle = getComputedStyle(el).color;
+        el.classList.add('ai-busy');
+        const probe = document.createElement('span');
+        probe.style.color = 'GrayText';
+        document.body.append(probe);
+        return { idle, busy: getComputedStyle(el).color, gray: getComputedStyle(probe).color };
+    });
+    expect(c.busy).toBe(c.gray);
+    expect(c.busy).not.toBe(c.idle);
+});
+
 // 選單在自己裡面捲動。<html> 的 scroll-padding 被頁首裡的負 scroll-margin 抵掉了，選單自己要再加回來。
 for (const viewport of [{ width: 390, height: 260 }, { width: 320, height: 256 }]) {
     test(`手機選單 ${viewport.width}x${viewport.height}：Tab 往下、Shift+Tab 往回，每個選項都整個看得到，整頁不捲`, async ({ page }) => {
