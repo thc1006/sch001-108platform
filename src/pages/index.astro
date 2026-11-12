@@ -339,11 +339,15 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
         console.log('🔍 搜尋引擎已準備就緒！共 ' + data.length + ' 筆資料');
       }
 
-      searchInput.addEventListener('input', function () {
+      // 選字途中框裡還有注音符號時不搜，免得打出「ㄏ」就搜出 0 筆，並清掉還沒到的計時器；選完（compositionend）再補搜。
+      // 沒有跳過時 compositionend 不重畫：點卡片時 Chrome 會先結束選字，重畫會換掉正要點的那張。
+      const ZHUYIN = /[\u3100-\u312F\u31A0-\u31BF]/;
+      let skipped = false;
+      function onSearch() {
         if (!fuse) return;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          const query = this.value.trim();
+          const query = searchInput.value.trim();
           clearBtn.classList.toggle('hidden', query.length === 0);
           resultsContainer.textContent = '';
           if (query.length > 0) {
@@ -354,9 +358,18 @@ const vendorBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
             selectedIndex = -1;
           }
         }, 200);
+      }
+      searchInput.addEventListener('input', (e) => {
+        clearBtn.classList.toggle('hidden', searchInput.value.trim().length === 0);
+        skipped = e.isComposing && ZHUYIN.test(searchInput.value);
+        if (skipped) clearTimeout(debounceTimer);
+        else onSearch();
       });
+      searchInput.addEventListener('compositionend', () => { if (skipped) { skipped = false; onSearch(); } });
 
       searchInput.addEventListener('keydown', (e) => {
+        // 選字時按的 Enter、方向鍵、Esc 是輸入法的。Safari 結束選字那次的 isComposing 是 false，keyCode 229 也擋。
+        if (e.isComposing || e.keyCode === 229) return;
         if (e.key === 'ArrowDown') {
           e.preventDefault();
           selectedIndex = Math.min(selectedIndex + 1, resultElements.length - 1);

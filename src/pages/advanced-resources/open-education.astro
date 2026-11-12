@@ -145,7 +145,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
     }
 
-    searchInput.addEventListener('input', () => { render(); announceCount(400); });
+    // 選字途中框裡還有注音符號時不搜，免得打出「ㄏ」就搜出 0 筆，並清掉還沒到的計時器；選完（compositionend）再補搜。
+    // 沒有跳過時 compositionend 不重畫：點卡片時 Chrome 會先結束選字，重畫會換掉正要點的那張。
+    const ZHUYIN = /[\u3100-\u312F\u31A0-\u31BF]/;
+    let skipped = false;
+    const onSearch = () => { render(); announceCount(400); };
+    searchInput.addEventListener('input', (e) => {
+        skipped = e.isComposing && ZHUYIN.test(searchInput.value);
+        if (skipped) clearTimeout(announceTimer);
+        else onSearch();
+    });
+    searchInput.addEventListener('compositionend', () => { if (skipped) { skipped = false; onSearch(); } });
     categoryFilters.addEventListener('click', (e) => {
       const btn = e.target.closest('.filter-btn');
       if (!btn) return;

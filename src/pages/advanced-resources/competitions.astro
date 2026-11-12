@@ -656,12 +656,24 @@ import data from '../../../public/advanced-resources/competitions.json';
       }
 
       let debounce;
-      searchInput.addEventListener('input', function () {
-        searchClear.hidden = this.value.length === 0;
+      // 選字途中框裡還有注音符號時不搜，免得打出「ㄏ」就搜出 0 筆，並清掉還沒到的計時器；選完（compositionend）再補搜。
+      // 沒有跳過時 compositionend 不重畫：點卡片時 Chrome 會先結束選字，重畫會換掉正要點的那張。
+      const ZHUYIN = /[\u3100-\u312F\u31A0-\u31BF]/;
+      let skipped = false;
+      const onSearch = () => {
         clearTimeout(debounce);
         debounce = setTimeout(render, 160);
+      };
+      searchInput.addEventListener('input', (e) => {
+        searchClear.hidden = searchInput.value.length === 0;
+        skipped = e.isComposing && ZHUYIN.test(searchInput.value);
+        if (skipped) clearTimeout(debounce);
+        else onSearch();
       });
+      searchInput.addEventListener('compositionend', () => { if (skipped) { skipped = false; onSearch(); } });
       searchInput.addEventListener('keydown', (e) => {
+        // 選字時按 Esc 是取消選字，不清空搜尋框。
+        if (e.isComposing || e.keyCode === 229) return;
         if (e.key === 'Escape') { searchInput.value = ''; searchClear.hidden = true; render(); }
       });
       // 點 × 時面板可能還在滑回來，focus() 會照它在畫面外的位置把整頁往上捲，所以釘住時不捲。
