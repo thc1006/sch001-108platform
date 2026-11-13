@@ -480,11 +480,9 @@ test('star-analysis：修改範例列出可以做的改動，收穫照學生的�
 test('star-analysis：suggestion 不提括號和修改範例的寫法，寫出錯字的正確寫法，全篇「我們」時問學生自己負責的部分', () => {
     const { instructions } = catalog.get('star-analysis');
     const line = instructions.split('\n').find((l) => l.startsWith('- analysis：'));
-    assert.ok(line.startsWith('- analysis：S、T、A、R 四個項目各寫一則 comment（針對該項目的評論，點出優點或缺失）與 suggestion（具體的修改建議），各一到兩句。suggestion 用「你」稱呼學生，直接寫可以補什麼、怎麼改，不提括號和修改範例的寫法。'));
-    // 範例會改對錯字，建議不寫的話學生不知道自己哪裡寫錯；把台灣用字當成錯字會讓學生改錯。
-    assert.ok(line.includes('。心得有寫錯的字時，在錯字出現的那一項的 suggestion 寫出原本的字和正確的寫法，全篇最多三處，只列確定寫錯的字；口語、台語、異體字和台灣常用的寫法不算錯字。'));
-    // 學習歷程要看得出學生自己的角色；範例照樣不替學生編角色（revised_example 那行的「我們」規則）。
-    assert.ok(line.endsWith('。心得裡做的事都寫成「我們」、沒有一件寫出是自己做的時，T 的 suggestion 問學生自己負責哪一部分，心得寫了自己做的事就不問'));
+    // 整行比對，中間插進或改掉任何一句都會失敗。把台灣用字當成錯字會讓學生改錯；
+    // 範例照樣不替學生編角色（revised_example 那行的「我們」規則）。
+    assert.equal(line, '- analysis：S、T、A、R 四個項目各寫一則 comment（針對該項目的評論，點出優點或缺失）與 suggestion（具體的修改建議），各一到兩句。suggestion 用「你」稱呼學生，直接寫可以補什麼、怎麼改，不提括號和修改範例的寫法。心得有寫錯的字時，在錯字出現的那一項的 suggestion 寫出原本的字和正確的寫法，全篇最多三處，只列確定寫錯的字；口語、台語、異體字和台灣常用的寫法不算錯字。心得裡做的事都寫成「我們」、沒有一件寫出是自己做的時，T 的 suggestion 問學生自己負責哪一部分，心得寫了自己做的事就不問');
 });
 
 test('study-plan：自主學習主題最多 100 字（頁面的輸入框同樣限制 100）', () => {
