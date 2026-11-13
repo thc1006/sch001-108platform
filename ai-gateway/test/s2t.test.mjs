@@ -442,6 +442,49 @@ test('ALWAYS 的 在于、這里、這几、之后、看着、愿意 這類詞�
     }
 });
 
+// 采 在台灣也是正字（神采、風采、文采、精采、采邑），逐字對照不轉
+test('ALWAYS 的 采计、采用、采取、采访、采收、采摘 整句都是繁體也轉；神采用、文采取勝、精采收場 這類不動', () => {
+    const cases = [
+        // 2026-11-08 到 11-13 調研資料夾的模型回答
+        ['查想報的牙醫系采計哪些科目、是否加權', '查想報的牙醫系採計哪些科目、是否加權'],
+        ['確認采計科目、檢定或備審資料要求', '確認採計科目、檢定或備審資料要求'],
+        ['遇到問題時采取哪些步驟', '遇到問題時採取哪些步驟'],
+        ['說明最終呈現結果時采用了什麼依據', '說明最終呈現結果時採用了什麼依據'],
+        ['透過簡短采訪與現場錄音', '透過簡短採訪與現場錄音'],
+        ['可先聚焦降雨天數和采收日期', '可先聚焦降雨天數和採收日期'],
+        ['自家茶園在不同時間采摘的茶', '自家茶園在不同時間採摘的茶'],
+        // 文采 是擋詞，英文采計 靠 文采计 轉
+        ['英文采計、國文采計', '英文採計、國文採計'],
+        // 有采、得采、大采、下采、没采、多采 不當擋詞
+        ['知道有采取行動', '知道有採取行動'],
+        ['沒有采計、不得采計、以下采計、沒采用、大多采用', '沒有採計、不得採計、以下採計、沒採用、大多採用'],
+        ['年终大采购', '年終大採購'],
+    ];
+    for (const [input, expected] of cases) {
+        assert.equal(toTraditional(input), expected, input);
+        assert.equal(toTraditional(`${input}，这`), `${expected}，這`, input);
+    }
+    for (const word of ['採計', '採用', '採取', '採訪', '採收', '採摘']) {
+        const input = word.replace('採', '采');
+        assert.equal(toTraditional(input), word, input);
+        assert.equal(toTraditional(`${input}。`), `${word}。`, input);
+    }
+    const traditional = '神采奕奕、他的神采用筆墨難以形容、文采取勝、以文采取勝、精采、精采紛呈、精采集錦、比賽精采收場、精采訪談、'
+        + '精采摘要、精采計畫、風采、風采依舊、風采訪談、光采奪目、喝采聲、無精打采、興高采烈、大放異采、多采多姿、多姿多采、'
+        + '采邑、采風、采采、尼采取向、楊采妮、郭采潔';
+    assert.equal(toTraditional(traditional), traditional);
+    assert.equal(toTraditional(`${traditional}，这`), `${traditional}，這`);
+    for (const sample of [...cases.map(([input]) => input), traditional]) {
+        const chars = [...sample];
+        const whole = toTraditional(sample);
+        for (let cut = 0; cut <= chars.length; cut++) {
+            const convert = createTraditionalStream();
+            const streamed = convert(chars.slice(0, cut).join('')) + convert(chars.slice(cut).join('')) + convert.flush();
+            assert.equal(streamed, whole, `${sample} 切在第 ${cut} 個字`);
+        }
+    }
+});
+
 test('預設轉法的字寫成繁體也對得上擋詞：繁體的「獲准」對得上「获准」，准 不跟後面湊成 准备', () => {
     assert.equal(toTraditional('獲准備案这样'), '獲准備案這樣');
 });
@@ -635,7 +678,7 @@ test('詞組表的完整性：鍵和轉法一樣長、PHRASES 都有簡體專用
     }
     for (const [key, value] of entries(S2T_CURATED)) assert.notDeepEqual(baseline(key), value, key.join(''));
     // ALWAYS 不看整句就轉，繁體也用的字只能改這幾個（计划 的 划 轉成 畫）
-    const always = { 划: '劃畫', 于: '於', 里: '裡', 几: '幾', 后: '後', 着: '著', 愿: '願', 万: '萬' };
+    const always = { 划: '劃畫', 于: '於', 里: '裡', 几: '幾', 后: '後', 着: '著', 愿: '願', 万: '萬', 采: '採' };
     for (const [key, value] of entries(S2T_ALWAYS)) {
         baseline(key).forEach((ch, i) => assert.ok(ch === value[i] || simplified.has(ch) || always[ch]?.includes(value[i]), `${key.join('')} 的 ${ch} 改成 ${value[i]}`));
         assert.notDeepEqual(baseline(key), value, key.join(''));
