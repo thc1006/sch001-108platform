@@ -61,7 +61,7 @@
   "license": "MIT",
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "astro": "^7.4.7",
     "cheerio": "^1.2.0",
     "feather-icons": "^4.29.2",
