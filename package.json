@@ -60,9 +60,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/sitemap": "^3.7.5",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.4.8",
+    "astro": "^7.4.12",
     "cheerio": "^1.2.0",
     "feather-icons": "^4.29.2",
     "fuse.js": "^7.5.0",
